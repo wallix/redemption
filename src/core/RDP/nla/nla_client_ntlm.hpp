@@ -314,29 +314,25 @@ public:
                 //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
                 
                 size_t mic_offset = 0;
-                std::array<uint8_t, 16> mic;
-                auto result = emitNTLMAuthenticateMessageNew(AuthenticateMessage.negoFlags.flags,
+                auto auth_message = emitNTLMAuthenticateMessage(AuthenticateMessage.negoFlags.flags,
                     LmChallengeResponse,
                     NtChallengeResponse,
                     this->identity_Domain,
                     this->identity_User,
                     (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?this->Workstation:bytes_view({}),
                     AuthenticateMessage.EncryptedRandomSessionKey.buffer,
-                    mic,
                     this->UseMIC,
                     mic_offset);
-
-                hexdump_d(result);
 
                 if (this->UseMIC) {
                     array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey,
                                                             this->SavedNegotiateMessage,
                                                             this->SavedChallengeMessage,
-                                                            result);
-                    memcpy(result.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size()); 
+                                                            auth_message);
+                    memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size()); 
                 }
                 StaticOutStream<65535> out_stream;
-                out_stream.out_copy_bytes(result);
+                out_stream.out_copy_bytes(auth_message);
                 
                 auto out_stream_bytes = out_stream.get_bytes();
 

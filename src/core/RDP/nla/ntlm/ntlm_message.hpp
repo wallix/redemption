@@ -1219,14 +1219,14 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self)
     hexdump_d(self.MIC, 16);
 }
 
-inline std::vector<uint8_t> emitNTLMAuthenticateMessageNew(uint32_t negoFlags, 
+inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags, 
                                         bytes_view LmChallengeResponse,
                                         bytes_view NtChallengeResponse,
                                         bytes_view DomainName,
                                         bytes_view UserName,
                                         bytes_view Workstation,
                                         bytes_view EncryptedRandomSessionKey,
-                                        bytes_view MIC, bool has_mic, size_t & mic_offset)
+                                        bool has_mic, size_t & mic_offset)
 {
     uint32_t payloadOffset = 12+8+8+8+8+8+8+4
                             +8*bool(negoFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -1297,77 +1297,6 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessageNew(uint32_t negoFlags,
 
     return result;
 }
-
-inline void emitNTLMAuthenticateMessage(OutStream & stream, uint32_t negoFlags, 
-                                        bytes_view LmChallengeResponse,
-                                        bytes_view NtChallengeResponse,
-                                        bytes_view DomainName,
-                                        bytes_view UserName,
-                                        bytes_view Workstation,
-                                        bytes_view EncryptedRandomSessionKey,
-                                        bytes_view MIC, bool has_mic, bool ignore_mic)
-//                                         NTLMAuthenticateMessage & self, bool ignore_mic)
-{
-    uint32_t payloadOffset = 12+8+8+8+8+8+8+4
-                            +8*bool(negoFlags & NTLMSSP_NEGOTIATE_VERSION)
-                            +16*has_mic;
-
-    stream.out_copy_bytes("NTLMSSP\0"_av);
-    stream.out_uint32_le(NtlmAuthenticate);
-
-    struct TmpNtlmField {
-        uint16_t offset;
-        bytes_view f;
-    };
-
-    std::array<TmpNtlmField, 6> l{{
-         {0, LmChallengeResponse},
-         {0, NtChallengeResponse},
-         {0, DomainName},
-         {0, UserName},
-         {0, Workstation},
-         {0, EncryptedRandomSessionKey}}};
-
-    for (auto field: l){
-        stream.out_uint16_le(field.f.size());
-        stream.out_uint16_le(field.f.size());
-        stream.out_uint32_le(payloadOffset);
-        payloadOffset += field.f.size();
-        field.offset = payloadOffset;
-    }
-
-// Check that when reading buffer
-//    if (self.LmChallengeResponse.buffer.size() != 24) {
-//        // This is some message format error
-//    }
-
-    stream.out_uint32_le(negoFlags);
-    if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        stream.out_uint8(WINDOWS_MAJOR_VERSION_6);
-        stream.out_uint8(WINDOWS_MINOR_VERSION_1);
-        stream.out_uint16_le(7601);
-        stream.out_clear_bytes(3);
-        stream.out_uint8(NTLMSSP_REVISION_W2K3);
-    }
-
-    if (has_mic) {
-        if (ignore_mic) {
-            stream.out_clear_bytes(16);
-        }
-        else {
-            stream.out_copy_bytes(MIC);
-        }
-    }
-
-    // PAYLOAD
-    for (auto field: l){
-        stream.out_copy_bytes(field.f);
-    }
-
-//    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Sent)");
-//    hexdump_d(stream.get_bytes());
-}
-
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
 //    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");

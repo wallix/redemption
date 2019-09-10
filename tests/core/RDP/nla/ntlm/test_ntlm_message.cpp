@@ -732,14 +732,13 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     StaticOutStream<65635> tosend;
     size_t mic_offset;
-    auto auth_message = emitNTLMAuthenticateMessageNew(AuthMsg.negoFlags.flags,
+    auto auth_message = emitNTLMAuthenticateMessage(AuthMsg.negoFlags.flags,
                         AuthMsg.LmChallengeResponse.buffer,
                         AuthMsg.NtChallengeResponse.buffer,
                         AuthMsg.DomainName.buffer,
                         AuthMsg.UserName.buffer,
                         AuthMsg.Workstation.buffer,
                         AuthMsg.EncryptedRandomSessionKey.buffer,
-                        {AuthMsg.MIC, 16},
                         AuthMsg.has_mic,
                         mic_offset);
     tosend.out_copy_bytes(auth_message);
@@ -1673,7 +1672,7 @@ public:
                                              this->Workstation);
 
         size_t mic_offset = 0;
-        auto auth_message = emitNTLMAuthenticateMessageNew(
+        auto auth_message = emitNTLMAuthenticateMessage(
             this->AUTHENTICATE_MESSAGE.negoFlags.flags,
             this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
             this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
@@ -1681,7 +1680,6 @@ public:
             this->AUTHENTICATE_MESSAGE.UserName.buffer,
             this->AUTHENTICATE_MESSAGE.Workstation.buffer,
             this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
-            {this->AUTHENTICATE_MESSAGE.MIC, 16},
             this->UseMIC,
             mic_offset);
 
@@ -2397,7 +2395,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     // send AUTHENTICATE MESSAGE
     StaticOutStream<65535> out_client_to_server;
     size_t mic_offset = 0;
-    auto auth_message = emitNTLMAuthenticateMessageNew(
+    auto auth_message = emitNTLMAuthenticateMessage(
                         client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
                         client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
                         client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
@@ -2405,7 +2403,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
                         client_context.AUTHENTICATE_MESSAGE.UserName.buffer,
                         client_context.AUTHENTICATE_MESSAGE.Workstation.buffer,
                         client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
-                        {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
                         client_context.AUTHENTICATE_MESSAGE.has_mic,
                         mic_offset);
     memcpy(auth_message.data()+mic_offset, client_context.AUTHENTICATE_MESSAGE.MIC, 16);
@@ -2509,14 +2506,13 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     // send AUTHENTICATE MESSAGE
     uint8_t client_to_server_buf[65535];
     size_t mic_offset = 0;
-    auto auth_message = emitNTLMAuthenticateMessageNew(client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
+    auto auth_message = emitNTLMAuthenticateMessage(client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
                     client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
                     client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
                     client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,
                     client_context.AUTHENTICATE_MESSAGE.UserName.buffer,
                     client_context.AUTHENTICATE_MESSAGE.Workstation.buffer,
                     client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
-                    {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
                     client_context.AUTHENTICATE_MESSAGE.has_mic,
                     mic_offset);
 
