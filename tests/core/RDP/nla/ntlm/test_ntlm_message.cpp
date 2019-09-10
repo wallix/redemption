@@ -1671,27 +1671,9 @@ public:
 
         this->ntlm_client_build_authenticate(password_av, user_av, domain_av,
                                              this->Workstation);
-        StaticOutStream<65535> out_stream;
-        if (this->UseMIC) {
-            emitNTLMAuthenticateMessage(out_stream, 
-                this->AUTHENTICATE_MESSAGE.negoFlags.flags,
-                this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
-                this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
-                this->AUTHENTICATE_MESSAGE.DomainName.buffer,
-                this->AUTHENTICATE_MESSAGE.UserName.buffer,
-                this->AUTHENTICATE_MESSAGE.Workstation.buffer,
-                this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
-                {this->AUTHENTICATE_MESSAGE.MIC, 16},
-                this->AUTHENTICATE_MESSAGE.has_mic,
-                true);
 
-            this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
-            this->ntlm_compute_MIC();
-            memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
-            // this->AUTHENTICATE_MESSAGE.has_mic = true;
-        }
-        out_stream.rewind();
-        emitNTLMAuthenticateMessage(out_stream, 
+        size_t mic_offset = 0;
+        auto auth_message = emitNTLMAuthenticateMessageNew(
             this->AUTHENTICATE_MESSAGE.negoFlags.flags,
             this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
             this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
@@ -1700,9 +1682,16 @@ public:
             this->AUTHENTICATE_MESSAGE.Workstation.buffer,
             this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
             {this->AUTHENTICATE_MESSAGE.MIC, 16},
-            this->AUTHENTICATE_MESSAGE.has_mic,
-            false);
-        output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
+            this->UseMIC,
+            mic_offset);
+
+        if (this->UseMIC) {
+            this->SavedAuthenticateMessage = auth_message;
+            this->ntlm_compute_MIC();
+            memcpy(auth_message.data()+mic_offset, this->MessageIntegrityCheck, 16);
+        }
+
+        output_buffer = auth_message;
         return SEC_I_COMPLETE_NEEDED;
     }
 
