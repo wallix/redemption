@@ -1770,7 +1770,7 @@ public:
             this->context->Workstation.clear();
             if (this->context->SendWorkstationName) {
                 size_t host_len = UTF8Len(workstation.data());
-                this->context->Workstation.assign(workstation.data(), workstation.data() + (host_len * 2));
+                this->context->Workstation.resize(host_len * 2);
                 UTF8toUTF16(workstation, this->context->Workstation.data(), host_len * 2);
             }
 
