@@ -646,6 +646,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // hexdump_c(to_send3.get_data(), to_send3.size());
 
     NTLMAuthenticateMessage AuthMsg;
+    RED_CHECK_EQUAL(AuthMsg.has_mic, true);
     // AuthMsg.recv(ts_req.negoTokens);
 
     InStream token({ts_req.negoTokens.data(), ts_req.negoTokens.size()});
@@ -665,6 +666,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(AuthMsg.Workstation.buffer.size(), 10);
     RED_CHECK_EQUAL(AuthMsg.Workstation.bufferOffset, 96);
     RED_CHECK_EQUAL(AuthMsg.EncryptedRandomSessionKey.buffer.size(), 16);
+    RED_CHECK_EQUAL(AuthMsg.has_mic, false);
 
     // LmChallengeResponse
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
@@ -729,8 +731,8 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     );
 
     StaticOutStream<65635> tosend;
-    emitNTLMAuthenticateMessage(tosend,
-                        AuthMsg.negoFlags.flags,
+    size_t mic_offset;
+    auto auth_message = emitNTLMAuthenticateMessageNew(AuthMsg.negoFlags.flags,
                         AuthMsg.LmChallengeResponse.buffer,
                         AuthMsg.NtChallengeResponse.buffer,
                         AuthMsg.DomainName.buffer,
@@ -739,7 +741,8 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
                         AuthMsg.EncryptedRandomSessionKey.buffer,
                         {AuthMsg.MIC, 16},
                         AuthMsg.has_mic,
-                        false);
+                        mic_offset);
+    tosend.out_copy_bytes(auth_message);
 
     NTLMAuthenticateMessage AuthMsgDuplicate;
 

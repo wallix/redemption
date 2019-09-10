@@ -1136,7 +1136,6 @@ struct NTLMAuthenticateMessage {
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16]{};                      /* 16 Bytes */
-//    bool ignore_mic{false};
     bool has_mic{true};
     uint32_t PayloadOffset;
     std::vector<uint8_t> message_bytes_dump;
@@ -1241,6 +1240,9 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessageNew(uint32_t negoFlags,
                         + Workstation.size()
                         + EncryptedRandomSessionKey.size()
                         ;
+    if (has_mic) {
+        mic_offset = payloadOffset-16;
+    }
 
     std::vector<uint8_t> result(message_size);
     OutStream stream(result);
@@ -1283,7 +1285,6 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessageNew(uint32_t negoFlags,
         stream.out_uint8(NTLMSSP_REVISION_W2K3);
     }
 
-    mic_offset = payloadOffset-16;
 
     if (has_mic) {
         stream.out_clear_bytes(16);
