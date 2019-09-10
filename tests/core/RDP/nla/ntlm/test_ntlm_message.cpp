@@ -768,9 +768,10 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
 class NTLMContext
 {
+public:
     TimeObj & timeobj;
     Random & rand;
-
+private:
     const bool server = false;
     const bool NTLMv2 = true;
     bool UseMIC{};
@@ -797,7 +798,7 @@ private:
 public:
     uint32_t NegotiateFlags = 0;
 
-private:
+public:
     //int LmCompatibilityLevel;
     bool SendWorkstationName = true;
 public:
@@ -819,7 +820,7 @@ public:
     std::vector<uint8_t> SavedAuthenticateMessage;
 
     uint8_t Timestamp[8]{};
-private:
+public:
     uint8_t ChallengeTimestamp[8]{};
 public:
     array_challenge ServerChallenge{};
@@ -866,50 +867,6 @@ public:
 
     NTLMContext(NTLMContext const &) = delete;
     NTLMContext& operator = (NTLMContext const &) = delete;
-
-    /**
-     * Generate timestamp for AUTHENTICATE_MESSAGE.
-     */
-    void ntlm_generate_timestamp()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContext TimeStamp");
-        uint8_t ZeroTimestamp[8] = {};
-
-        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-            memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-        }
-        else {
-            const timeval tv = this->timeobj.get_time();
-            OutStream out_stream(this->Timestamp);
-            out_stream.out_uint32_le(tv.tv_usec);
-            out_stream.out_uint32_le(tv.tv_sec);
-        }
-    }
-
-    /**
-     * Generate client challenge (8-byte nonce).
-     */
-    // client method
-    void ntlm_generate_client_challenge()
-    {
-        // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Client Challenge");
-        this->rand.random(this->ClientChallenge.data(), this->ClientChallenge.size());
-
-    }
-    /**
-     * Generate server challenge (8-byte nonce).
-     */
-    // server method
-    void ntlm_generate_server_challenge()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Server Challenge");
-        this->rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
-    }
-    // client method
-    void ntlm_get_server_challenge() {
-        this->ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
-    }
 
     /**
      * Generate RandomSessionKey (16-byte nonce).
@@ -1019,9 +976,22 @@ public:
         temp[0] = 0x01;
         temp[1] = 0x01;
         // compute ClientTimeStamp
-        this->ntlm_generate_timestamp();
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext TimeStamp");
+        uint8_t ZeroTimestamp[8] = {};
+
+        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+            memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+        }
+        else {
+            const timeval tv = this->timeobj.get_time();
+            OutStream out_stream(this->Timestamp);
+            out_stream.out_uint32_le(tv.tv_usec);
+            out_stream.out_uint32_le(tv.tv_sec);
+        }
         // compute ClientChallenge (nonce(8))
-        this->ntlm_generate_client_challenge();
+        // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Client Challenge");
+        this->rand.random(this->ClientChallenge.data(), this->ClientChallenge.size());
         memcpy(&temp[1+1+6], this->Timestamp, 8);
         memcpy(&temp[1+1+6+8], this->ClientChallenge.data(), this->ClientChallenge.size());
         memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
@@ -1033,7 +1003,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: NtProofStr");
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
 
-        this->ntlm_get_server_challenge();
+        this->ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
         hmac_md5resp.update(this->ServerChallenge);
         hmac_md5resp.update({temp, temp_size});
         hmac_md5resp.final(NtProofStr);
@@ -1466,9 +1436,21 @@ public:
         }
         this->NegotiateFlags = negoFlag;
 
-        this->ntlm_generate_server_challenge();
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Server Challenge");
+        this->rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
         this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
-        this->ntlm_generate_timestamp();
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext TimeStamp");
+        uint8_t ZeroTimestamp[8] = {};
+
+        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+            memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+        }
+        else {
+            const timeval tv = this->timeobj.get_time();
+            OutStream out_stream(this->Timestamp);
+            out_stream.out_uint32_le(tv.tv_usec);
+            out_stream.out_uint32_le(tv.tv_sec);
+        }
 
         std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
         std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
@@ -1585,17 +1567,6 @@ public:
         }
         this->state = NTLM_STATE_FINAL;
         return SEC_I_COMPLETE_NEEDED;
-    }
-
-    void ntlm_SetContextWorkstation(array_view_const_char workstation) {
-        // CHECK UTF8 or UTF16 (should store in UTF16)
-        this->SendWorkstationName = !workstation.empty();
-        this->Workstation.clear();
-        if (this->SendWorkstationName) {
-            size_t host_len = UTF8Len(workstation.data());
-            this->Workstation.assign(workstation.data(), workstation.data() + (host_len * 2));
-            UTF8toUTF16(workstation, this->Workstation.data(), host_len * 2);
-        }
     }
 
     void ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
@@ -1791,7 +1762,18 @@ public:
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            this->context->ntlm_SetContextWorkstation(pszTargetName);
+            
+            // CHECK UTF8 or UTF16 (should store in UTF16)
+            array_view_const_char workstation = pszTargetName;
+            
+            this->context->SendWorkstationName = !workstation.empty();
+            this->context->Workstation.clear();
+            if (this->context->SendWorkstationName) {
+                size_t host_len = UTF8Len(workstation.data());
+                this->context->Workstation.assign(workstation.data(), workstation.data() + (host_len * 2));
+                UTF8toUTF16(workstation, this->context->Workstation.data(), host_len * 2);
+            }
+
             this->context->ntlm_SetContextServicePrincipalName(pszTargetName);
 
             this->context->identity.CopyAuthIdentity(this->identity->get_user_utf16_av()
@@ -2233,7 +2215,17 @@ RED_AUTO_TEST_CASE(TestSetters)
     auto spn = "Sustine et abstine"_av;
 
     RED_CHECK_EQUAL(context.Workstation.size(), 0);
-    context.ntlm_SetContextWorkstation(work);
+
+    array_view_const_char workstation = work;
+    // CHECK UTF8 or UTF16 (should store in UTF16)
+    context.SendWorkstationName = !workstation.empty();
+    context.Workstation.clear();
+    if (context.SendWorkstationName) {
+        size_t host_len = UTF8Len(workstation.data());
+        context.Workstation.resize(host_len*2);
+        UTF8toUTF16(workstation, context.Workstation.data(), host_len * 2);
+    }
+
     RED_CHECK_EQUAL(context.Workstation.size(), work.size() * 2);
     // TODO TEST bad test
     RED_CHECK(memcmp(work.data(), context.Workstation.data(), work.size()+1));
@@ -2322,9 +2314,24 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
         result = true;
     }
     RED_CHECK(result);
-    server_context.ntlm_generate_server_challenge();
+    LOG_IF(server_context.verbose, LOG_INFO, "NTLMContext Generate Server Challenge");
+    server_context.rand.random(server_context.ServerChallenge.data(), server_context.ServerChallenge.size());
+
     server_context.ServerChallenge = server_context.CHALLENGE_MESSAGE.serverChallenge;
-    server_context.ntlm_generate_timestamp();
+
+    LOG_IF(server_context.verbose, LOG_INFO, "NTLMContext TimeStamp");
+    uint8_t ZeroTimestamp[8] = {};
+
+    if (memcmp(ZeroTimestamp, server_context.ChallengeTimestamp, 8) != 0) {
+        memcpy(server_context.Timestamp, server_context.ChallengeTimestamp, 8);
+    }
+    else {
+        const timeval tv = server_context.timeobj.get_time();
+        OutStream out_stream(server_context.Timestamp);
+        out_stream.out_uint32_le(tv.tv_usec);
+        out_stream.out_uint32_le(tv.tv_sec);
+    }
+
 
     uint8_t win7[] =  {0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00};
     uint8_t upwin7[] = {0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00};
