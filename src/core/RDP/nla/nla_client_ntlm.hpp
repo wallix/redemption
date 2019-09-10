@@ -328,13 +328,8 @@ public:
                                                             auth_message);
                     memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size()); 
                 }
-                StaticOutStream<65535> out_stream;
-                out_stream.out_copy_bytes(auth_message);
-                
-                auto out_stream_bytes = out_stream.get_bytes();
 
-                TSRequest ts_request_anwer;
-                std::vector<uint8_t> answer_negoTokens(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
+                std::vector<uint8_t> answer_negoTokens = auth_message;
                 if (this->verbose) {
                     logNTLMAuthenticateMessage(AuthenticateMessage);
                 }
@@ -374,11 +369,8 @@ public:
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
-                auto v = emitTSRequest(ts_request_anwer.version,
-                                       answer_negoTokens,
-                                       {}, // authInfo,
-                                       pubKeyAuth,
-                                       0,
+                // TODO: check that I should be able to use negotiated version in version variable
+                auto v = emitTSRequest(6, answer_negoTokens, {}, pubKeyAuth, 0,
                                        this->SavedClientNonce.clientNonce,
                                        this->SavedClientNonce.initialized);
                 ts_request_emit.out_copy_bytes(v);
