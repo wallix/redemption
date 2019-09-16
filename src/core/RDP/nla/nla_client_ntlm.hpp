@@ -461,15 +461,10 @@ public:
                     }
                     else {
                         // Card Reader Not Supported Yet
-                        bytes_view pin;
-                        bytes_view userHint;
-                        bytes_view domainHint;
-                        uint32_t keySpec = 0;
-                        bytes_view cardName;
-                        bytes_view readerName;
-                        bytes_view containerName;
-                        bytes_view cspName;
-                        ts_credentials = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
+                        ts_credentials = emitTSCredentialsSmartCard(
+                                        /*pin*/{},/*userHint*/{},/*domainHint*/{},
+                                        /*keySpec*/0,/*cardName*/{},/*readerName*/{},
+                                        /*containerName*/{}, /*cspName*/{});
                     }
                     
                     unsigned long MessageSeqNo = this->send_seq_num++;
