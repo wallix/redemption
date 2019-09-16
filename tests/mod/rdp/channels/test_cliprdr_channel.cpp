@@ -565,7 +565,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_CHECK(report_message.messages.size() == 1);
     RED_CHECK_SMEM(buf_trans.buf,
-        "\x00\x00\x00\x00\x11\x00\x00\x00\x01\x00\x00\x00\x03""abc\x00\x00\x00\x02""up"
+        "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b""filename\x00\x03""abc"
         ""_av);
 
     buf_trans.buf.clear();
@@ -639,9 +639,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_CHECK_SMEM(report_message.messages[2],
         "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=CF_TEXT(1) size=3"_av);
     RED_CHECK_SMEM(buf_trans.buf,
-        "\x07\x00\x00\x00\x0e\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x02up\x01"
-        "\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"
-        ""_av);
+        "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up\x00\x01\x00\x13microsoft_locale_id\x00\x01"
+        "0\x01\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av);
 
     buf_trans.buf.clear();
 

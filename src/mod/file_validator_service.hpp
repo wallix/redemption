@@ -32,6 +32,7 @@
 #include <string>
 #include <numeric>
 #include <string_view>
+#include <cinttypes>
 
 #include "utils/log.hpp"
 
@@ -54,7 +55,7 @@ inline FileValidatorId recv_file_id(InStream& stream) noexcept
 enum class MsgType : uint8_t
 {
     // Create a new file to analyse
-    NewFile = 0x00,
+    // NewFile = 0x00, // deprecated
     // Send data from a file
     DataFile = 0x01,
     // Close the session
@@ -68,7 +69,7 @@ enum class MsgType : uint8_t
     // map with key(string), value(string)
     Infos = 0x06,
     // Create a new data text to analyse
-    NewText = 0x07,
+    NewData = 0x07,
 
     Unknown,
 };
@@ -199,45 +200,91 @@ struct FileValidatorResultHeader
     }
 };
 
-inline FileValidatorId send_open_file(
-    OutTransport trans, FileValidatorId file_id, std::string_view file_name, std::string_view target_name)
+inline std::size_t open_data_map_len(std::initializer_list<bytes_view> data_map)
 {
-    file_name = std::string_view(file_name.data(), std::min(std::size_t(512), file_name.size()));
+    assert(0 == (data_map.size() & 1));
 
-    StaticOutStream<1024> message;
-
-    FileValidatorHeader(MsgType::NewFile, 4u + 4u + file_name.size() + 4u + target_name.size())
-    .emit(message);
-
-    emit_file_id(message, file_id);
-
-    message.out_uint32_be(file_name.size());
-    message.out_copy_bytes(file_name);
-
-    message.out_uint32_be(target_name.size());
-    message.out_copy_bytes(target_name);
-
-    trans.send(message.get_bytes());
-
-    return file_id;
+    const std::size_t data_len = std::accumulate(data_map.begin(), data_map.end(), std::size_t(),
+        [](auto n, auto const av) { return n + av.size(); });
+    return 2u + data_len + data_map.size() * 2u;
 }
 
-inline FileValidatorId send_open_text(
-    OutTransport trans, FileValidatorId file_id, uint32_t locale_identifier, std::string_view target_name)
+inline void send_data_map(
+    OutTransport trans, OutStream& message, std::initializer_list<bytes_view> data_map)
 {
-    StaticOutStream<1024> message;
+    message.out_uint16_be(data_map.size() / 2);
 
-    FileValidatorHeader(MsgType::NewText, 4u + 4u + 4u + target_name.size())
-    .emit(message);
+    for (auto const& data : data_map) {
+        if (!message.has_room(data.size() + 2u)) {
+            trans.send(message.get_bytes());
+            message.rewind();
+        }
+        assert(message.has_room(data.size() + 2u));
+        message.out_uint16_be(checked_int(data.size()));
+        message.out_copy_bytes(data);
+    }
+
+    trans.send(message.get_bytes());
+}
+
+inline FileValidatorId send_open_data(
+    OutTransport trans, FileValidatorId file_id, std::string_view target_name,
+    std::initializer_list<bytes_view> data_map)
+{
+    /*
+    NewData
+
+    This message is sent to create a new data to request icap analyse
+    for. It begins with an ICAPHeader, its msg_type must be NewData.
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                            file_id                            |
+    +---------------------------------------------------------------+
+    |        target_name_size       |       target_name_data        |
+    +---------------------------------------------------------------+
+    |           nb_items            |       item1_key_length        |
+    +---------------------------------------------------------------+
+    |                    item1_key      ...                         |
+    +---------------------------------------------------------------+
+    |      item1_value_length       |       item1_value ...         |
+    +---------------------------------------------------------------+
+    |       item2_key_length        |        item2_key ...          |
+    +---------------------------------------------------------------+
+    |      item2_value_length       |       item2_value ...         |
+    +---------------------------------------------------------------+
+    |                              ...                              |
+    +---------------------------------------------------------------+
+
+    file_id: 32-bits integer
+
+    target_name_size: 16-bits integer
+    target_name_data: String of size target_name_size
+
+    nb_items: An unsigned, 16-bits integer that the number of items.
+
+    item<i>_key_length: An unsigned, 16-bits integer size of the <i>th
+                         item key length.
+    item<i>_key: String of size item<i>_key_length
+    item<i>_value_length: An unsigned, 16-bits integer size of the <i>th
+                           item value length.
+    item<i>_value: String of size item<i>_value_length
+    */
+
+    const std::size_t pkt_len = 4u + 2u + target_name.size() + open_data_map_len(data_map);
+
+    StaticOutStream<8*1024> message;
+
+    FileValidatorHeader(MsgType::NewData, pkt_len).emit(message);
 
     emit_file_id(message, file_id);
 
-    message.out_uint32_be(locale_identifier);
-
-    message.out_uint32_be(target_name.size());
+    message.out_uint16_be(checked_int(target_name.size()));
     message.out_copy_bytes(target_name);
 
-    trans.send(message.get_bytes());
+    send_data_map(trans, message, data_map);
 
     return file_id;
 }
@@ -306,28 +353,12 @@ inline void send_infos(OutTransport trans, std::initializer_list<bytes_view> dat
     item<i>_value : String of size item<i>_value_length
     */
 
-    assert(0 == (data_map.size() & 1));
-
-    const std::size_t data_len = std::accumulate(data_map.begin(), data_map.end(), 0l,
-        [](auto n, auto const av) { return n + av.size(); });
-    const std::size_t pkt_len = 2u + data_len + data_map.size() * 2u;
+    const std::size_t pkt_len = open_data_map_len(data_map);
 
     StaticOutStream<8*1024> message;
 
     FileValidatorHeader(MsgType::Infos, pkt_len).emit(message);
-    message.out_uint16_be(data_map.size() / 2);
-
-    for (auto const& data : data_map) {
-        if (!message.has_room(data.size() + 2u)) {
-            trans.send(message.get_bytes());
-            message.rewind();
-        }
-        assert(message.has_room(data.size() + 2u));
-        message.out_uint16_be(checked_int(data.size()));
-        message.out_copy_bytes(data);
-    }
-
-    trans.send(message.get_bytes());
+    send_data_map(trans, message, data_map);
 }
 
 } // namespace LocalFileValidatorProtocol
@@ -338,14 +369,20 @@ struct FileValidatorService
     : trans(trans)
     {}
 
-    FileValidatorId open_file(std::string_view file_name, std::string_view target_name)
+    FileValidatorId open_file(std::string_view filename, std::string_view target_name)
     {
-        return LocalFileValidatorProtocol::send_open_file(this->trans, this->generate_id(), file_name, target_name);
+        return LocalFileValidatorProtocol::send_open_data(
+            this->trans, this->generate_id(), target_name,
+            {"filename"_av, filename});
     }
 
     FileValidatorId open_text(uint32_t locale_identifier, std::string_view target_name)
     {
-        return LocalFileValidatorProtocol::send_open_text(this->trans, this->generate_id(), locale_identifier, target_name);
+        char buf[24];
+        unsigned n = std::sprintf(buf, "%" PRIu32, locale_identifier);
+        return LocalFileValidatorProtocol::send_open_data(
+            this->trans, this->generate_id(), target_name,
+            {"microsoft_locale_id"_av, {buf, n}});
     }
 
     void send_data(FileValidatorId file_id, bytes_view data)

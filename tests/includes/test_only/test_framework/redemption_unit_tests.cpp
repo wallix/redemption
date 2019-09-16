@@ -30,6 +30,7 @@ Author(s): Jonathan Poelen
 
 #include <algorithm>
 #include <ostream>
+#include <iomanip>
 
 
 namespace redemption_unit_test__
@@ -175,7 +176,10 @@ namespace redemption_unit_test__
         }
         if (q%split != 0){
             if (x.size()>split) {
-                out << "\" //";
+                out << "\" "
+                    << std::setfill(' ')
+                    << std::setw((split - q % split) * 4 + 2)
+                    << "//";
                 for (size_t v = 0 ; v < i ; v++){
                     if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] <= 127)) {
                         out << char(tmpbuf[v]);
