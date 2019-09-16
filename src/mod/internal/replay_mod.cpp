@@ -110,7 +110,7 @@ public:
         this->drawable.draw(cmd, clip, color_ctx, gly_cache);
     }
     void draw(RDPSetSurfaceCommand const & cmd) override {
-    	this->drawable.draw(cmd);
+        this->drawable.draw(cmd);
     }
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
         this->drawable.draw(cmd, content);

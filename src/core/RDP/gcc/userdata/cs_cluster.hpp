@@ -183,7 +183,7 @@ struct CSCluster {
         if (this->length < 12) { return; }
 
         if (this->flags & REDIRECTED_SESSIONID_FIELD_VALID) {
-        	LOG(LOG_INFO, "cs_cluster::redirectedSessionID = %u", this->redirectedSessionID);
+            LOG(LOG_INFO, "cs_cluster::redirectedSessionID = %u", this->redirectedSessionID);
         }
     }
 };

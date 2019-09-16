@@ -452,7 +452,7 @@ class rdpCredsspServerKerberos final
             inbuf.length = data_in.size();
             // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
             major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
-				    GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
+                    GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
             if (GSS_ERROR(major_status)) {
                 LOG(LOG_INFO, "MAJOR ERROR");
                 this->report_error(GSS_C_GSS_CODE, "CredSSP: GSS WRAP failed.",
@@ -513,15 +513,15 @@ class rdpCredsspServerKerberos final
             gss_buffer_desc status_string;
 
             LOG(LOG_ERR, "GSS error [%u:%u:%u]: %s",
-                (major_status & 0xff000000) >> 24,	// Calling error
-                (major_status & 0xff0000) >> 16,	// Routine error
-                major_status & 0xffff,	// Supplementary info bits
+                (major_status & 0xff000000) >> 24,    // Calling error
+                (major_status & 0xff0000) >> 16,    // Routine error
+                major_status & 0xffff,    // Supplementary info bits
                 str);
 
             LOG(LOG_ERR, "GSS Minor status error [%u:%u:%u]:%u %s",
-                (minor_status & 0xff000000) >> 24,	// Calling error
-                (minor_status & 0xff0000) >> 16,	// Routine error
-                minor_status & 0xffff,	// Supplementary info bits
+                (minor_status & 0xff000000) >> 24,    // Calling error
+                (minor_status & 0xff0000) >> 16,    // Routine error
+                minor_status & 0xffff,    // Supplementary info bits
                 minor_status,
                 str);
 
@@ -529,7 +529,7 @@ class rdpCredsspServerKerberos final
                 ms = gss_display_status(
                     &minor_status, major_status,
                     code, GSS_C_NULL_OID, &msgctx, &status_string);
-            	if (ms != GSS_S_COMPLETE) {
+                if (ms != GSS_S_COMPLETE) {
                     continue;
                 }
 

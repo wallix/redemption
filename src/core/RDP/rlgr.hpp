@@ -26,21 +26,21 @@
  */
 class Rlgr {
 public:
-	/** @brief RLGR mode */
-	enum RlgrMode {
-		RLGR1,
-		RLGR3
-	};
+    /** @brief RLGR mode */
+    enum RlgrMode {
+        RLGR1,
+        RLGR3
+    };
 
 public:
 
-	/**
-	 * @param mode the RLGR mode
-	 * @param pSrcData source bytes
-	 * @param srcSize size of source
-	 * @param pDstData destination buffer
-	 * @param dstSize size of destination buffer
-	 * @return if the operation was successful
-	 */
-	static bool decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int16_t *pDstData, uint32_t dstSize);
+    /**
+     * @param mode the RLGR mode
+     * @param pSrcData source bytes
+     * @param srcSize size of source
+     * @param pDstData destination buffer
+     * @param dstSize size of destination buffer
+     * @return if the operation was successful
+     */
+    static bool decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int16_t *pDstData, uint32_t dstSize);
 };

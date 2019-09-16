@@ -27,44 +27,44 @@
 
 struct RDPDiskConfig {
 
-	struct DeviceInfo {
-		char name[8] = {0};
-		rdpdr::RDPDR_DTYP type = rdpdr::RDPDR_DTYP_UNSPECIFIED;
+    struct DeviceInfo {
+        char name[8] = {0};
+        rdpdr::RDPDR_DTYP type = rdpdr::RDPDR_DTYP_UNSPECIFIED;
 
-		DeviceInfo(const char * name, rdpdr::RDPDR_DTYP type)
-		: type(type)
-		{
-			for (int i = 0; i < 8; i++) {
-				this->name[i] = name[i];
-			}
-		}
-	};
+        DeviceInfo(const char * name, rdpdr::RDPDR_DTYP type)
+        : type(type)
+        {
+            for (int i = 0; i < 8; i++) {
+                this->name[i] = name[i];
+            }
+        }
+    };
 
-	std::vector<DeviceInfo> device_list;
+    std::vector<DeviceInfo> device_list;
 
-	void add_drive(const std::string & name, const rdpdr::RDPDR_DTYP type) {
- 		std::string tmp(name);
-		int pos(tmp.find('/'));
-		while (pos != -1) {
-		    tmp = tmp.substr(pos+1, tmp.length());
-		    pos = tmp.find('/');
-		}
-		size_t size(tmp.size());
-		if (size > 8) {
-		    size = 8;
-		}
-		char final_name[8] = {0};
-		for (size_t i = 0; i < size; i++) {
-		    final_name[i] = tmp.data()[i];
-		}
-		DeviceInfo drive(final_name, type);
-		this->device_list.push_back(drive);
-	}
+    void add_drive(const std::string & name, const rdpdr::RDPDR_DTYP type) {
+         std::string tmp(name);
+        int pos(tmp.find('/'));
+        while (pos != -1) {
+            tmp = tmp.substr(pos+1, tmp.length());
+            pos = tmp.find('/');
+        }
+        size_t size(tmp.size());
+        if (size > 8) {
+            size = 8;
+        }
+        char final_name[8] = {0};
+        for (size_t i = 0; i < size; i++) {
+            final_name[i] = tmp.data()[i];
+        }
+        DeviceInfo drive(final_name, type);
+        this->device_list.push_back(drive);
+    }
 
-	bool enable_drive_type = true;
-	bool enable_printer_type = true;
-	bool enable_port_type = true;
-	bool enable_smart_card_type = true;
+    bool enable_drive_type = true;
+    bool enable_printer_type = true;
+    bool enable_port_type = true;
+    bool enable_smart_card_type = true;
 
     uint32_t ioCode1 = rdpdr::SUPPORT_ALL_REQUEST;
     uint32_t extendedPDU = rdpdr::RDPDR_DEVICE_REMOVE_PDUS |

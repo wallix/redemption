@@ -33,11 +33,11 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
         "\x14\x00\x00\x00" // TS_UD_CS_MONITOR_EX::monitorAttributeSize 20 bytes = size of TS_MONITOR_ATTRIBUTES
         "\x01\x00\x00\x00" // TS_UD_CS_MONITOR_EX::monitorCount
 
-        				           // TS_UD_CS_MONITOR_EX::monitorAttributesArray
-    		"\x96\x00\x00\x00" // | physicalWidth = 150 mm
-    		"\x64\x00\x00\x00" // | physicalHeight = 100 mm
-    		"\x5A\x00\x00\x00" // | orientation = ORIENTATION_PORTRAIT = 90
-    		"\x78\x00\x00\x00" // | desktopScaleFactor // 120%
+                                   // TS_UD_CS_MONITOR_EX::monitorAttributesArray
+            "\x96\x00\x00\x00" // | physicalWidth = 150 mm
+            "\x64\x00\x00\x00" // | physicalHeight = 100 mm
+            "\x5A\x00\x00\x00" // | orientation = ORIENTATION_PORTRAIT = 90
+            "\x78\x00\x00\x00" // | desktopScaleFactor // 120%
         "\x64\x00\x00\x00" // | deviceScaleFactor // 100%
         ""_av);
     GCC::UserData::CSMonitorEx cs_monitor_ex;

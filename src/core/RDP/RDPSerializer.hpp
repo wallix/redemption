@@ -169,7 +169,7 @@ public:
         primary_orders      = 32,
         secondary_orders    = 64,
         bitmap_update       = 128,
-		surface_commands	= 256,
+        surface_commands    = 256,
         bmp_cache           = 512,
         internal_buffer     = 1024
     };
@@ -385,21 +385,21 @@ public:
     }
 
     void draw(RDPSetSurfaceCommand const & cmd) override {
-    	this->reserve_order(19 + cmd.bitmapDataLength);
+        this->reserve_order(19 + cmd.bitmapDataLength);
 
-    	cmd.emit(this->stream_orders);
-    	if (bool(this->verbose & Verbose::surface_commands)) {
-    		// cmd.log(LOG_INFO, content);
-    	}
+        cmd.emit(this->stream_orders);
+        if (bool(this->verbose & Verbose::surface_commands)) {
+            // cmd.log(LOG_INFO, content);
+        }
     }
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
-    	this->reserve_order(19 + cmd.bitmapDataLength);
+        this->reserve_order(19 + cmd.bitmapDataLength);
 
-    	cmd.emit(this->stream_orders);
-    	if (bool(this->verbose & Verbose::surface_commands)) {
-    		cmd.log(LOG_INFO, content);
-    	}
+        cmd.emit(this->stream_orders);
+        if (bool(this->verbose & Verbose::surface_commands)) {
+            cmd.log(LOG_INFO, content);
+        }
     }
 
 
@@ -418,9 +418,19 @@ protected:
         RDPBmpCache cmd_cache(bmp, cache_id, cache_idx,
             this->bmp_cache.is_cache_persistent(cache_id), in_wait_list,
             bool(this->verbose & Verbose::secondary_orders));
-        this->reserve_order(cmd_cache.bmp.bmp_size() + 16);
+        bool really_use_bitmap_comp = this->use_bitmap_comp;
+        if (really_use_bitmap_comp) {
+            if (!cmd_cache.bmp.has_data_compressed()) {
+                StaticOutStream<65535> bmp_stream;
+                cmd_cache.bmp.compress(this->capture_bpp, bmp_stream);
+            }
+            if (cmd_cache.bmp.data_compressed().size() >= cmd_cache.bmp.bmp_size()) {
+                really_use_bitmap_comp = false;
+            }
+        }
+        this->reserve_order(cmd_cache.bmp.bmp_size() + 32);
         cmd_cache.emit( this->capture_bpp, this->stream_orders, this->bitmap_cache_version
-                      , this->use_bitmap_comp, this->use_compact_packets);
+                      , really_use_bitmap_comp, this->use_compact_packets);
 
         if (bool(this->verbose & Verbose::secondary_orders)) {
             cmd_cache.log(LOG_INFO);

@@ -324,7 +324,7 @@ struct NSCodecCaps
 
 struct RFXSrvrCaps
 {
-	uint16_t len{0};
+    uint16_t len{0};
 
     RFXSrvrCaps() = default;
 
@@ -351,9 +351,9 @@ struct RFXSrvrCaps
 
 struct RFXICap
 {
-	enum {
-	   CT_TILE_64X64 = 0x40
-	};
+    enum {
+       CT_TILE_64X64 = 0x40
+    };
 
     uint16_t version{CLW_VERSION_1_0};          // MUST be set to 0x0100 CLW_VERSION_1_0
     uint16_t tileSize{CT_TILE_64X64};           // MUST be set to CT_TILE_64x64 (0x0040)
@@ -457,14 +457,14 @@ struct RFXClntCaps
     std::vector<RFXICap> icapsData{RFXICap{}};
 
     RFXClntCaps() {
-    	icapsData.resize(2);
-    	icapsData[0].entropyBits = CLW_ENTROPY_RLGR1;
-    	icapsData[1].entropyBits = CLW_ENTROPY_RLGR3;
+        icapsData.resize(2);
+        icapsData[0].entropyBits = CLW_ENTROPY_RLGR1;
+        icapsData[1].entropyBits = CLW_ENTROPY_RLGR3;
     }
 
     void emit(OutStream & out) const
     {
-    	/* TS_RFX_CLNT_CAPS_CONTAINER */
+        /* TS_RFX_CLNT_CAPS_CONTAINER */
         out.out_uint32_le(this->length);
         out.out_uint32_le(this->captureFlags);
         out.out_uint32_le(this->capsLength);
@@ -472,7 +472,7 @@ struct RFXClntCaps
         /* TS_RFX_CAPS */
         out.out_uint16_le(CBY_CAPS); /* blockType */
         out.out_uint32_le(8);        /* blockLen */
-        out.out_uint16_le(1);		 /* numCapsets */
+        out.out_uint16_le(1);         /* numCapsets */
 
         /* TS_RFX_CAPSET */
         out.out_uint16_le(CBY_CAPSET); /* blockType */
@@ -483,7 +483,7 @@ struct RFXClntCaps
         out.out_uint16_le(8); /* icapLen */
 
         for (RFXICap const& cap : icapsData) {
-        	cap.emit(out);
+            cap.emit(out);
         }
     }
 
@@ -552,7 +552,7 @@ struct RFXClntCaps
 
         // TODO this->icapsData.size() == 2, but loop from 0 to numIcaps
         for (int i = 0; i < numIcaps; i++) {
-        	this->icapsData[i].recv(stream, icapLen);
+            this->icapsData[i].recv(stream, icapLen);
         }
     }
 
@@ -702,16 +702,16 @@ struct BitmapCodec
     }
 
     static const char *bitmapCodecTypeStr(BitmapCodecType btype) {
-    	const char *types[] = {
-    			"RemoteFx",	"NSCodec", "IGNORE", "UNKNOWN"
-      	};
+        const char *types[] = {
+                "RemoteFx",    "NSCodec", "IGNORE", "UNKNOWN"
+          };
 
-    	return types[btype];
+        return types[btype];
     }
 
     void log() const {
-    	LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu", bitmapCodecTypeStr(this->codecType),
-    			this->codecID, this->computeSize(), this->codecProperties.computeSize());
+        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu", bitmapCodecTypeStr(this->codecType),
+                this->codecID, this->computeSize(), this->codecProperties.computeSize());
     }
 };
 
@@ -737,7 +737,7 @@ struct BitmapCodecCaps : public Capability {
     {}
 
     uint8_t addCodec(uint8_t codecType) {
-    	uint8_t ret = 1;
+        uint8_t ret = 1;
 
         switch(codecType) {
         case CODEC_GUID_REMOTEFX:
@@ -749,12 +749,12 @@ struct BitmapCodecCaps : public Capability {
             bitmapCodecCount++;
             codecCounter++;
             if (codecCounter == 1) { /* reserved for NSCodec */
-            	codecCounter++;
+                codecCounter++;
             }
             break;
         }
         case CODEC_GUID_NSCODEC:
-        	/* TODO */
+            /* TODO */
         default:
             LOG(LOG_ERR, "unsupported codecType=%u", codecType);
             break;
@@ -816,7 +816,7 @@ struct BitmapCodecCaps : public Capability {
         LOG(LOG_INFO, "BitmapCodecsCaps::BitmapCodecs::bitmapCodecCount %u", this->bitmapCodecCount);
 
         for (auto i = 0; i < this->bitmapCodecCount; i++) {
-        	this->bitmapCodecArray[i].log();
+            this->bitmapCodecArray[i].log();
         }
     }
 };

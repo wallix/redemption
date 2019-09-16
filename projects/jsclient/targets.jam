@@ -45,7 +45,6 @@ exe-js js_client :
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
   src/utils/bitmap.bc
-  src/utils/cfgloader.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/primitives/primitives.bc
@@ -99,7 +98,6 @@ test-run-js tests/red_channels/test_js_channel :
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/stacktrace.bc
-  src/utils/utf.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run-js tests/redjs/test_browser_transport :
@@ -118,7 +116,6 @@ test-run-js tests/redjs/test_image_data_test_from_bitmap :
   src/utils/bitmap.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
-  src/utils/utf.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run-js tests/redjs/test_image_data_test_from_pointer :
@@ -127,7 +124,6 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
   src/redjs/image_data_from_pointer.bc
   src/core/error.bc
   src/utils/stacktrace.bc
-  src/utils/utf.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
@@ -161,7 +157,6 @@ objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
-objjs src/utils/cfgloader.bc : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/primitives/primitives.bc : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
