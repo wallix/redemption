@@ -665,7 +665,7 @@ namespace cfg {
         type value{0};
     };
     /// type: bool <br/>
-    /// value{0} <br/>
+    /// value{1} <br/>
     struct globals::experimental_support_resize_session_during_recording {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -674,7 +674,19 @@ namespace cfg {
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value{1};
+    };
+    /// type: bool <br/>
+    /// value{1} <br/>
+    struct globals::support_connection_redirection_during_recording {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "globals"; }
+        static constexpr char const * name() { return "support_connection_redirection_during_recording"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{1};
     };
     /// Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client. <br/>
     /// !!!May cause FreeRDP-based client to CRASH!!! <br/>
@@ -4851,6 +4863,7 @@ struct globals
 , cfg::globals::spark_view_specific_glyph_width
 , cfg::globals::experimental_enable_serializer_data_block_size_limit
 , cfg::globals::experimental_support_resize_session_during_recording
+, cfg::globals::support_connection_redirection_during_recording
 , cfg::globals::rdp_keepalive_connection_interval
 { static constexpr bool is_section = true; };
 
