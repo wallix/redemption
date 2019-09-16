@@ -74,9 +74,7 @@ private:
     std::vector<uint8_t> SavedNegotiateMessage;
     std::vector<uint8_t> SavedChallengeMessage;
 
-    array_md5 SessionBaseKey;
     array_md5 ExportedSessionKey;
-    array_md5 EncryptedRandomSessionKey;
     array_md5 ClientSealingKey;
     array_md5 sspi_context_ServerSigningKey;
     array_md5 ServerSealingKey;
@@ -259,20 +257,11 @@ public:
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
                 // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-                this->SessionBaseKey = ::HmacMd5(ResponseKeyNT, NtProofStr);
-
-                // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
-                // ExportedSessionKey = NONCE(16) (random 16bytes number)
-                // KeyExchangeKey = SessionBaseKey
+                // generate NONCE(16) ExportedSessionKey
                 // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
-
-                // generate NONCE(16) exportedsessionkey
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
+                array_md5 SessionBaseKey = ::HmacMd5(ResponseKeyNT, NtProofStr);
                 this->rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
-                this->EncryptedRandomSessionKey = ::Rc4Key(this->SessionBaseKey, this->ExportedSessionKey);
-
-                auto AuthEncryptedRSK = std::vector<uint8_t>{} << this->EncryptedRandomSessionKey;
+                auto AuthEncryptedRSK = std::vector<uint8_t>{} << ::Rc4Key(SessionBaseKey, this->ExportedSessionKey);
 
                 // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
                 this->ClientSealingKey = ::Md5(this->ExportedSessionKey,
@@ -291,10 +280,11 @@ public:
                                     server_challenge.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
 
-                this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                this->version.ProductBuild        = 7601;
-                this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+                NtlmVersion ntlm_version;
+                ntlm_version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+                ntlm_version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+                ntlm_version.ProductBuild        = 7601;
+                ntlm_version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
                 NTLMAuthenticateMessage AuthenticateMessage;
                 AuthenticateMessage.version = this->version;
@@ -321,9 +311,17 @@ public:
                     memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size()); 
                 }
 
-                std::vector<uint8_t> answer_negoTokens = auth_message;
                 if (this->verbose) {
-                    logNTLMAuthenticateMessage(AuthenticateMessage);
+                    logNTLMAuthenticateMessage(flags,
+                                ntlm_version,
+                                LmChallengeResponse,
+                                NtChallengeResponse,
+                                this->identity_Domain,
+                                this->identity_User,
+                                this->Workstation,
+                                AuthEncryptedRSK,
+                                {auth_message.data()+mic_offset,this->UseMIC?16U:0U},
+                                auth_message); 
                 }
                 this->sspi_context_state = NTLM_STATE_FINAL;
 
@@ -356,13 +354,13 @@ public:
                 
                 std::vector<uint8_t> pubKeyAuth = CryptAndSign(this->SendRc4Seal, MessageSeqNo, public_key);
                 /* send authentication token to server */
-                if (answer_negoTokens.size() > 0){
+                if (auth_message.size() > 0){
                     LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Sending Authentication Token");
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
                 // TODO: check that I should be able to use negotiated version in version variable
-                auto v = emitTSRequest(6, answer_negoTokens, {}, pubKeyAuth, 0,
+                auto v = emitTSRequest(6, auth_message, {}, pubKeyAuth, 0,
                                        this->SavedClientNonce.clientNonce,
                                        this->SavedClientNonce.initialized);
                 ts_request_emit.out_copy_bytes(v);
@@ -489,7 +487,7 @@ public:
          * ISC_REQ_MUTUAL_AUTH
          * ISC_REQ_CONFIDENTIALITY
          * ISC_REQ_USE_SESSION_KEY
-         * ISC_REQ_ALLOCATE_MEMORY
+         * ISC_REQ_ALLOCATE_MEMORYSessionBaseKey
          */
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;

@@ -1215,9 +1215,42 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self)
     logNtlmFlags(self.negoFlags.flags);
     
     LogNtlmVersion(self.version);
-    LOG(LOG_DEBUG, "MIC");
+    LOG(LOG_INFO, "MIC");
     hexdump_d(self.MIC, 16);
 }
+
+
+inline void logNTLMAuthenticateMessage(uint32_t negoFlags, 
+                                const NtlmVersion & version,
+                                bytes_view LmChallengeResponse,
+                                bytes_view NtChallengeResponse,
+                                bytes_view DomainName,
+                                bytes_view UserName,
+                                bytes_view Workstation,
+                                bytes_view EncryptedRandomSessionKey,
+                                bytes_view mic,
+                                bytes_view full) 
+{
+    LOG(LOG_INFO, "Field LmChallengeResponse, len: %lu", LmChallengeResponse.size());
+    hexdump_d(LmChallengeResponse);
+    LOG(LOG_INFO, "Field NtChallengeResponse, len: %lu", NtChallengeResponse.size());
+    hexdump_d(NtChallengeResponse);
+    LOG(LOG_INFO, "Field DomainName, len: %lu", DomainName.size());
+    hexdump_d(DomainName);
+    LOG(LOG_INFO, "Field UserName, len: %lu", UserName.size());
+    hexdump_d(UserName);
+    LOG(LOG_INFO, "Field Workstation, len: %lu", Workstation.size());
+    hexdump_d(Workstation);
+    LOG(LOG_INFO, "Field EncryptedRandomSessionKey, len: %lu", EncryptedRandomSessionKey.size());
+    hexdump_d(EncryptedRandomSessionKey);
+    logNtlmFlags(negoFlags);
+    LogNtlmVersion(version);
+    LOG(LOG_INFO, "Field MIC, len: %lu", mic.size());
+    hexdump_d(mic);
+    LOG(LOG_INFO, "Full NTLMAuthenticate Dump, len: %lu", full.size());
+    hexdump_d(full);
+}
+
 
 inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags, 
                                         bytes_view LmChallengeResponse,
