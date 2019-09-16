@@ -439,6 +439,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::experimental_support_resize_session_during_recording&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "support_connection_redirection_during_recording")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::support_connection_redirection_during_recording&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::globals::support_connection_redirection_during_recording&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "rdp_keepalive_connection_interval")) {
             ::configs::parse_and_log(
                 context, key,

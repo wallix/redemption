@@ -1338,8 +1338,17 @@ public:
                 //    // default is "allow", do nothing special
                 //}
 
-                unique_fd client_sck = this->connect_to_target_host(
-                    report_message, trkeys::authentification_rdp_fail);
+                unique_fd client_sck = [this, &report_message]() {
+                    try {
+                        return this->connect_to_target_host(
+                            report_message, trkeys::authentification_rdp_fail);
+                    }
+                    catch (...) {
+                        this->front.must_be_stop_capture();
+
+                        throw;
+                    }
+                }();
 
                 // BEGIN READ PROXY_OPT
                 if (this->ini.get<cfg::globals::enable_wab_integration>()) {
@@ -1550,6 +1559,9 @@ public:
 
                 mod_rdp_params.experimental_fix_input_event_sync   = this->ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
 
+                mod_rdp_params.support_connection_redirection_during_recording =
+                                                                     this->ini.get<cfg::globals::support_connection_redirection_during_recording>();
+
                 mod_rdp_params.split_domain                        = this->ini.get<cfg::mod_rdp::split_domain>();
 
                 try {
@@ -1684,6 +1696,8 @@ public:
                 }
                 catch (...) {
                     report_message.log5("type=\"SESSION_CREATION_FAILED\"");
+
+                    this->front.must_be_stop_capture();
 
                     throw;
                 }
