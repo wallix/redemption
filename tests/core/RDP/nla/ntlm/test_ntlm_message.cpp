@@ -2169,14 +2169,9 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     NTLMContext context_read(true, rand, timeobj, true);
     SEC_STATUS status;
 
-    ;
-    
     LOG_IF(context_write.verbose, LOG_INFO, "NTLMContext Write Negotiate");
     context_write.ntlm_client_build_negotiate();
     context_write.SavedNegotiateMessage = emitNTLMNegotiateMessage();;
-    context_write.state = NTLM_STATE_CHALLENGE;
-
-    RED_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
     status = context_read.read_negotiate(context_write.SavedNegotiateMessage);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
