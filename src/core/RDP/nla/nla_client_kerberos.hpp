@@ -236,159 +236,6 @@ private:
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    SEC_STATUS sspi_InitializeSecurityContext(
-        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t> & output_buffer
-    ) 
-    {
-        OM_uint32 major_status, minor_status;
-
-        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        if (!this->sspi_krb_ctx) {
-            // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
-            this->sspi_krb_ctx = std::make_unique<KERBEROSContext>();
-
-            // Target name (server name, ip ...)
-            if (!this->sspi_get_service_name(pszTargetName, &this->sspi_krb_ctx->target_name)) {
-                return SEC_E_WRONG_PRINCIPAL;
-            }
-        }
-        // else {
-        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
-        // }
-
-        // Token Buffer
-        gss_buffer_desc input_tok, output_tok;
-        output_tok.length = 0;
-        // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
-        //     input_buffer->Buffer.size());
-        input_tok.length = input_buffer.size();
-        input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
-
-        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
-        if (!this->sspi_mech_available(&desired_mech)) {
-            LOG(LOG_ERR, "Desired Mech unavailable");
-            return SEC_E_CRYPTO_SYSTEM_INVALID;
-        }
-// OM_uint32 gss_init_sec_context
-//                  (OM_uint32 ,             /* minor_status */
-//                   const gss_cred_id_t,    /* initiator_cred_handle */
-//                   gss_ctx_id_t ,          /* context_handle */
-//                   const gss_name_t,       /* target_name */
-//                   const gss_OID,          /* mech_type */
-//                   OM_uint32,              /* req_flags */
-//                   OM_uint32,              /* time_req */
-//                   const gss_channel_bindings_t,
-//                                           /* input_chan_bindings */
-//                   const gss_buffer_t,     /* input_token */
-//                   gss_OID ,               /* actual_mech_type */
-//                   gss_buffer_t,           /* output_token */
-//                   OM_uint32 ,             /* ret_flags */
-//                   OM_uint32 *             /* time_rec */
-//                  );
-        major_status = gss_init_sec_context(&minor_status,
-                                            gss_no_cred,
-                                            &this->sspi_krb_ctx->gss_ctx,
-                                            this->sspi_krb_ctx->target_name,
-                                            &desired_mech,
-                                            GSS_C_MUTUAL_FLAG,
-                                            GSS_C_INDEFINITE,
-                                            GSS_C_NO_CHANNEL_BINDINGS,
-                                            &input_tok,
-                                            &this->sspi_krb_ctx->actual_mech,
-                                            &output_tok,
-                                            &this->sspi_krb_ctx->actual_services,
-                                            &this->sspi_krb_ctx->actual_time);
-
-        if (GSS_ERROR(major_status)) {
-            LOG(LOG_INFO, "MAJOR ERROR");
-            this->sspi_report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
-                               major_status, minor_status);
-            return SEC_E_OUT_OF_SEQUENCE;
-        }
-
-        // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
-
-        (void) gss_release_buffer(&minor_status, &output_tok);
-
-        if (major_status & GSS_S_CONTINUE_NEEDED) {
-            // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
-            (void) gss_release_buffer(&minor_status, &input_tok);
-            return SEC_I_CONTINUE_NEEDED;
-        }
-        // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
-        return SEC_I_COMPLETE_NEEDED;
-    }
-
-
-    SEC_STATUS sspi_InitializeSecurityContextCstr(
-        array_view_const_char pszTargetName, std::vector<uint8_t> & output_buffer
-    ) 
-    {
-        OM_uint32 major_status, minor_status;
-
-        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        if (!this->sspi_krb_ctx) {
-            // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
-            this->sspi_krb_ctx = std::make_unique<KERBEROSContext>();
-
-            // Target name (server name, ip ...)
-            if (!this->sspi_get_service_name(pszTargetName, &this->sspi_krb_ctx->target_name)) {
-                // SEC_E_WRONG_PRINCIPAL;
-                throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
-            }
-        }
-        // else {
-        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
-        // }
-
-        // Token Buffer
-        gss_buffer_desc input_tok, output_tok;
-        output_tok.length = 0;
-        input_tok.length = 0;
-        input_tok.value = nullptr;
-
-        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
-        if (!this->sspi_mech_available(&desired_mech)) {
-            LOG(LOG_ERR, "Desired Mech unavailable");
-            // SEC_E_CRYPTO_SYSTEM_INVALID;
-            throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
-        }
-        major_status = gss_init_sec_context(&minor_status,
-                                            gss_no_cred,
-                                            &this->sspi_krb_ctx->gss_ctx,
-                                            this->sspi_krb_ctx->target_name,
-                                            &desired_mech,
-                                            GSS_C_MUTUAL_FLAG,
-                                            GSS_C_INDEFINITE,
-                                            GSS_C_NO_CHANNEL_BINDINGS,
-                                            &input_tok,
-                                            &this->sspi_krb_ctx->actual_mech,
-                                            &output_tok,
-                                            &this->sspi_krb_ctx->actual_services,
-                                            &this->sspi_krb_ctx->actual_time);
-
-        if (GSS_ERROR(major_status)) {
-            LOG(LOG_INFO, "MAJOR ERROR");
-            this->sspi_report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
-                               major_status, minor_status);
-            // SEC_E_OUT_OF_SEQUENCE;
-            throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
-        }
-
-        // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
-
-        (void) gss_release_buffer(&minor_status, &output_tok);
-
-        if (major_status & GSS_S_CONTINUE_NEEDED) {
-            // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
-            (void) gss_release_buffer(&minor_status, &input_tok);
-            return SEC_I_CONTINUE_NEEDED;
-        }
-        // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
-        return SEC_I_COMPLETE_NEEDED;
-    }
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
@@ -720,51 +567,109 @@ private:
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        SEC_STATUS status = this->sspi_InitializeSecurityContext(
-            bytes_view(this->ServicePrincipalName).as_chars(),
-            this->client_auth_data.input_buffer, /*output*/this->ts_request.negoTokens);
-        if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
-            (status != SEC_I_COMPLETE_NEEDED) &&
-            (status != SEC_E_OK) &&
-            (status != SEC_I_CONTINUE_NEEDED)) {
+        array_view_const_char pszTargetName = bytes_view(this->ServicePrincipalName).as_chars();
+        array_view_const_u8 input_buffer = this->client_auth_data.input_buffer;
+        /*output*/std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
+
+        OM_uint32 major_status, minor_status;
+
+        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
+
+        // Target name (server name, ip ...)
+        if (!this->sspi_get_service_name(pszTargetName, &this->sspi_krb_ctx->target_name)) {
+            // SEC_E_WRONG_PRINCIPAL;
+            LOG(LOG_ERR, "Initialize Security Context Error !");
+            return Res::Err;
+        }
+        // else {
+        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
+        // }
+
+        // Token Buffer
+        gss_buffer_desc input_tok, output_tok;
+        output_tok.length = 0;
+        // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
+        //     input_buffer->Buffer.size());
+        input_tok.length = input_buffer.size();
+        input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
+
+        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
+        if (!this->sspi_mech_available(&desired_mech)) {
+            LOG(LOG_ERR, "Desired Mech unavailable");
+            // SEC_E_CRYPTO_SYSTEM_INVALID;
+            LOG(LOG_ERR, "Initialize Security Context Error !");
+            return Res::Err;
+        }
+// OM_uint32 gss_init_sec_context
+//                  (OM_uint32 ,             /* minor_status */
+//                   const gss_cred_id_t,    /* initiator_cred_handle */
+//                   gss_ctx_id_t ,          /* context_handle */
+//                   const gss_name_t,       /* target_name */
+//                   const gss_OID,          /* mech_type */
+//                   OM_uint32,              /* req_flags */
+//                   OM_uint32,              /* time_req */
+//                   const gss_channel_bindings_t,
+//                                           /* input_chan_bindings */
+//                   const gss_buffer_t,     /* input_token */
+//                   gss_OID ,               /* actual_mech_type */
+//                   gss_buffer_t,           /* output_token */
+//                   OM_uint32 ,             /* ret_flags */
+//                   OM_uint32 *             /* time_rec */
+//                  );
+        major_status = gss_init_sec_context(&minor_status,
+                                            gss_no_cred,
+                                            &this->sspi_krb_ctx->gss_ctx,
+                                            this->sspi_krb_ctx->target_name,
+                                            &desired_mech,
+                                            GSS_C_MUTUAL_FLAG,
+                                            GSS_C_INDEFINITE,
+                                            GSS_C_NO_CHANNEL_BINDINGS,
+                                            &input_tok,
+                                            &this->sspi_krb_ctx->actual_mech,
+                                            &output_tok,
+                                            &this->sspi_krb_ctx->actual_services,
+                                            &this->sspi_krb_ctx->actual_time);
+
+        if (GSS_ERROR(major_status)) {
+            LOG(LOG_INFO, "MAJOR ERROR");
+            this->sspi_report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
+                               major_status, minor_status);
+            // SEC_E_OUT_OF_SEQUENCE;
             LOG(LOG_ERR, "Initialize Security Context Error !");
             return Res::Err;
         }
 
-        this->client_auth_data.input_buffer.clear();
+        // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
+        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
 
-        SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
-        if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
-            (status == SEC_I_COMPLETE_NEEDED) ||
-            (status == SEC_E_OK)) {
-            // have_pub_key_auth = true;
-            encrypted = this->credssp_encrypt_public_key_echo();
-            if (status == SEC_I_COMPLETE_NEEDED) {
-                status = SEC_E_OK;
+        (void) gss_release_buffer(&minor_status, &output_tok);
+
+        if (major_status & GSS_S_CONTINUE_NEEDED) {
+            // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
+            (void) gss_release_buffer(&minor_status, &input_tok);
+            this->client_auth_data.input_buffer.clear();
+            if (this->ts_request.negoTokens.size() > 0) {
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+                this->credssp_send();
             }
-            else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
-                status = SEC_I_CONTINUE_NEEDED;
+        }
+        else {
+            // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
+            SEC_STATUS encrypted = this->credssp_encrypt_public_key_echo();
+            this->client_auth_data.input_buffer.clear();
+
+            if (this->ts_request.negoTokens.size() > 0) {
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+                this->credssp_send();
             }
-        }
+            else if (encrypted == SEC_E_OK) {
+                this->credssp_send();
+            }
 
-        /* send authentication token to server */
-
-        if (this->ts_request.negoTokens.size() > 0) {
-            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-            this->credssp_send();
-        }
-        else if (encrypted == SEC_E_OK) {
-            this->credssp_send();
-        }
-
-        if (status != SEC_I_CONTINUE_NEEDED) {
             LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
-
             this->client_auth_data.state = ClientAuthenticateData::Final;
-            return Res::Ok;
+            /* receive server response and place in input buffer */
         }
-        /* receive server response and place in input buffer */
-
         return Res::Ok;
     }
 
@@ -895,9 +800,6 @@ public:
                 throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
             }
         }
-        // else {
-        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
-        // }
 
         // Token Buffer
         gss_buffer_desc input_tok, output_tok;
