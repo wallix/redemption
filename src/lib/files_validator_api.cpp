@@ -23,8 +23,6 @@
 #include "utils/c_interface.hpp"
 #include "utils/netutils.hpp"
 
-#include <array>
-
 
 namespace
 {
