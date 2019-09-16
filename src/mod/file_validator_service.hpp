@@ -67,6 +67,8 @@ enum class MsgType : uint8_t
     Result = 0x05,
     // map with key(string), value(string)
     Infos = 0x06,
+    // Create a new data text to analyse
+    NewText = 0x07,
 
     Unknown,
 };
@@ -204,13 +206,33 @@ inline FileValidatorId send_open_file(
 
     StaticOutStream<1024> message;
 
-    FileValidatorHeader(MsgType::NewFile, 4u + 8u + file_name.size() + target_name.size())
+    FileValidatorHeader(MsgType::NewFile, 4u + 4u + file_name.size() + 4u + target_name.size())
     .emit(message);
 
     emit_file_id(message, file_id);
 
     message.out_uint32_be(file_name.size());
     message.out_copy_bytes(file_name);
+
+    message.out_uint32_be(target_name.size());
+    message.out_copy_bytes(target_name);
+
+    trans.send(message.get_bytes());
+
+    return file_id;
+}
+
+inline FileValidatorId send_open_text(
+    OutTransport trans, FileValidatorId file_id, uint32_t locale_identifier, std::string_view target_name)
+{
+    StaticOutStream<1024> message;
+
+    FileValidatorHeader(MsgType::NewText, 4u + 4u + 4u + target_name.size())
+    .emit(message);
+
+    emit_file_id(message, file_id);
+
+    message.out_uint32_be(locale_identifier);
 
     message.out_uint32_be(target_name.size());
     message.out_copy_bytes(target_name);
@@ -319,6 +341,11 @@ struct FileValidatorService
     FileValidatorId open_file(std::string_view file_name, std::string_view target_name)
     {
         return LocalFileValidatorProtocol::send_open_file(this->trans, this->generate_id(), file_name, target_name);
+    }
+
+    FileValidatorId open_text(uint32_t locale_identifier, std::string_view target_name)
+    {
+        return LocalFileValidatorProtocol::send_open_text(this->trans, this->generate_id(), locale_identifier, target_name);
     }
 
     void send_data(FileValidatorId file_id, bytes_view data)

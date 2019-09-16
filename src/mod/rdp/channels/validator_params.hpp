@@ -28,4 +28,6 @@ struct ValidatorParams
     std::string up_target_name;
     std::string down_target_name;
     bool log_if_accepted = false;
+    bool validate_up_text = false;
+    bool validate_down_text = false;
 };

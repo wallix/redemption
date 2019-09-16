@@ -581,4 +581,80 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     buf_trans.buf.assign(av.data(), av.size());
 
     clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+    RED_REQUIRE(report_message.messages.size() == 2);
+    RED_CHECK_SMEM(report_message.messages[1],
+        "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av);
+
+    // check TEXT_VALIDATION
+
+    buf_trans.buf.clear();
+
+    {
+        StaticOutStream<1600> out;
+        Cliprdr::format_list_serialize_with_header(
+            out,
+            Cliprdr::IsLongFormat(use_long_format),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr}});
+
+        process_client_message(out.get_bytes());
+    }
+    RED_REQUIRE(to_client_sender.total_in_stream == 3);
+    RED_REQUIRE(to_server_sender.total_in_stream == 4);
+    RED_CHECK_MEM(to_server_sender.bytes(3),
+        "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
+        ""_av);
+    RED_CHECK(report_message.messages.size() == 2);
+    RED_CHECK(buf_trans.buf.size() == 0);
+
+    // skip format list response
+
+    {
+        Buffer buf;
+        auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+            out.out_uint32_le(RDPECLIP::CF_TEXT);
+        });
+        process_server_message(av);
+    }
+    RED_REQUIRE(to_client_sender.total_in_stream == 4);
+    RED_REQUIRE(to_server_sender.total_in_stream == 4);
+    RED_CHECK_MEM(to_client_sender.bytes(3),
+        "\x04\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
+        ""_av);
+    RED_CHECK(report_message.messages.size() == 2);
+    RED_CHECK(buf_trans.buf.size() == 0);
+
+    {
+        using namespace Cliprdr;
+        Buffer buf;
+        auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
+            out.out_copy_bytes("abc"_av);
+        });
+        process_client_message(av);
+    }
+    RED_REQUIRE(to_client_sender.total_in_stream == 4);
+    RED_REQUIRE(to_server_sender.total_in_stream == 5);
+    RED_CHECK_MEM(to_server_sender.bytes(4),
+        "\x05\x00\x01\x00\x03\x00\x00\x00""abc"_av);
+    RED_REQUIRE(report_message.messages.size() == 3);
+    RED_CHECK_SMEM(report_message.messages[2],
+        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=CF_TEXT(1) size=3"_av);
+    RED_CHECK_SMEM(buf_trans.buf,
+        "\x07\x00\x00\x00\x0e\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x02up\x01"
+        "\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"
+        ""_av);
+
+    buf_trans.buf.clear();
+
+    out.rewind();
+    FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
+    FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(2),
+        checked_int(status.size())}.emit(out);
+    out.out_copy_bytes(status);
+    av = out.get_bytes().as_chars();
+    buf_trans.buf.assign(av.data(), av.size());
+
+    clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+    RED_REQUIRE(report_message.messages.size() == 4);
+    RED_CHECK_SMEM(report_message.messages[3],
+        "TEXT_VERIFICATION direction=UP copy_id=2 status=ok"_av);
 }

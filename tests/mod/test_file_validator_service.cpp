@@ -27,7 +27,7 @@
 #include "utils/sugar/algostring.hpp"
 
 
-RED_AUTO_TEST_CASE(file_validatorSend)
+RED_AUTO_TEST_CASE(file_validatorSendFile)
 {
     BufTransport trans;
     FileValidatorService file_validator{trans};
@@ -52,6 +52,27 @@ RED_AUTO_TEST_CASE(file_validatorSend)
     RED_CHECK_MEM(trans.data(), data_ref);
 
     RED_CHECK(file_validator.open_file(filename, "clamav") == FileValidatorId(2));
+}
+
+RED_AUTO_TEST_CASE(file_validatorSendText)
+{
+    BufTransport trans;
+    FileValidatorService file_validator{trans};
+
+    FileValidatorId id = file_validator.open_text(0x12345678, "clamav");
+    RED_CHECK(id == FileValidatorId(1));
+
+    file_validator.send_data(id, "papa pas à pou"_av);
+    file_validator.send_eof(id);
+
+    const auto data_ref =
+        "\x07\x00\x00\x00\x12\x00\x00\x00\x01\x12\x34\x56\x78\x00\x00\x00" //..........4Vx... !
+        "\x06\x63\x6c\x61\x6d\x61\x76\x01\x00\x00\x00\x13\x00\x00\x00\x01" //.clamav......... !
+        "\x70\x61\x70\x61\x20\x70\x61\x73\x20\xc3\xa0\x20\x70\x6f\x75\x03" //papa pas .. pou. !
+        "\x00\x00\x00\x04\x00\x00\x00\x01"_av;                             //........ !"
+    RED_CHECK_HMEM(trans.data(), data_ref);
+
+    RED_CHECK(file_validator.open_file("filename", "clamav") == FileValidatorId(2));
 }
 
 RED_AUTO_TEST_CASE(file_validatorSendInfos)

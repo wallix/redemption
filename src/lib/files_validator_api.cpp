@@ -149,6 +149,15 @@ ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_na
     return safe_int(file_id);
 }
 
+ValidatorFileId validator_open_text(ValidatorApi* validator, uint32_t locale_identifier, char const* target_name) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    auto file_id = validator->file_validator.open_text(locale_identifier, target_name);
+    CHECK_ERRNUM(validator);
+    return safe_int(file_id);
+}
+
 int validator_send_data(ValidatorApi* validator, ValidatorFileId id, char const* data, const unsigned size) noexcept
 {
     SCOPED_TRACE;

@@ -177,9 +177,9 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                const bool from_remote_session = false;
+                const bool is_from_remote_session = false;
                 send_message_to_server = this->process_filecontents_response_pdu(
-                    flags, chunk, header, this->clip_data.server_data, from_remote_session);
+                    flags, chunk, header, this->clip_data.server_data, is_from_remote_session);
             }
             break;
 
@@ -373,6 +373,24 @@ public:
             }
 
             auto file_validator_id = this->file_validator->last_file_id();
+            auto& result_content = this->file_validator->get_content();
+
+            bool is_client_text = this->clip_data.client_data.remove_text_id(file_validator_id);
+            bool is_server_text = not is_client_text
+                               && this->clip_data.server_data.remove_text_id(file_validator_id);
+
+            if (is_client_text || is_server_text) {
+                auto str_direction = is_client_text ? "UP"_av : "DOWN"_av;
+                char buf[24];
+                unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32, file_validator_id);
+                this->report_message.log6(LogId::TEXT_VERIFICATION, this->session_reactor.get_current_time(), {
+                    KVLog("direction"_av, str_direction),
+                    KVLog("copy_id"_av, {buf, n}),
+                    KVLog("status"_av, result_content),
+                });
+                continue;
+            }
+
             Direction direction = Direction::FileFromClient;
             auto* file = this->clip_data.server_data.find_file_by_file_validator_id(file_validator_id);
             if (!file) {
@@ -394,7 +412,6 @@ public:
             auto& file_data = file->file_data;
             file_data.file_validator_id = FileValidatorId();
 
-            auto& result_content = this->file_validator->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
             this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
@@ -674,9 +691,41 @@ private:
             this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
         }
         else {
+            auto original_chunk = chunk.clone();
             FormatDataResponseReceive receiver(requested_format_id, chunk, flags);
 
             this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+
+            std::string const& target_name = is_from_remote_session
+                ? this->params.validator_params.down_target_name
+                : this->params.validator_params.up_target_name;
+
+            if (!target_name.empty()) {
+                switch (requested_format_id) {
+                    case RDPECLIP::CF_TEXT:
+                    case RDPECLIP::CF_UNICODETEXT:
+                        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                            if (bool(side_data.clip_text_id)) {
+                                this->file_validator->send_eof(side_data.clip_text_id);
+                                side_data.push_clip_text_to_list();
+                            }
+                            side_data.clip_text_id = this->file_validator->open_text(
+                                RDPECLIP::CF_TEXT == requested_format_id
+                                    ? 0u : side_data.clip_text_locale_identifier,
+                                target_name);
+                        }
+                        this->file_validator->send_data(
+                            side_data.clip_text_id, original_chunk.remaining_bytes());
+                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            this->file_validator->send_eof(side_data.clip_text_id);
+                            side_data.push_clip_text_to_list();
+                        }
+                        break;
+                    case RDPECLIP::CF_LOCALE:
+                        side_data.clip_text_locale_identifier = original_chunk.in_uint32_le();
+                        break;
+                }
+            }
         }
 
         return true;
@@ -791,7 +840,7 @@ private:
                             this->session_reactor.get_current_time(), {
                             KVLog("format"_av, format),
                             KVLog("size"_av, size_str),
-                            });
+                        });
                     }
                     else {
                         this->report_message.log6(is_from_remote_session
@@ -801,7 +850,7 @@ private:
                             KVLog("format"_av, format),
                             KVLog("size"_av, size_str),
                             KVLog("partial_data"_av, data_to_dump),
-                            });
+                        });
                     }
                 }
 

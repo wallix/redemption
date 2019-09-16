@@ -49,6 +49,9 @@ extern "C"
     ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_name, char const* target_name) noexcept;
 
     REDEMPTION_LIB_EXPORT
+    ValidatorFileId validator_open_text(ValidatorApi* validator, uint32_t locale_identifier, char const* target_name) noexcept;
+
+    REDEMPTION_LIB_EXPORT
     int validator_send_data(ValidatorApi* validator, ValidatorFileId id, char const* data, unsigned size) noexcept;
 
     REDEMPTION_LIB_EXPORT

@@ -37,6 +37,9 @@ struct ClipboardSideData
     uint16_t current_message_type = 0;
     bool use_long_format_names = false;
     uint32_t file_list_format_id = 0;
+    FileValidatorId clip_text_id {};
+    // https://docs.microsoft.com/en-us/windows/win32/intl/language-identifier-constants-and-strings
+    uint32_t clip_text_locale_identifier = 0;
     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
     enum class StreamId : uint32_t;
@@ -151,6 +154,7 @@ struct ClipboardSideData
         }
     };
 
+    std::vector<FileValidatorId> clip_text_id_list;
     std::vector<FileContent> file_contents_list;
     std::vector<uint32_t> lock_id_list;
 
@@ -161,6 +165,24 @@ private:
     }
 
 public:
+    bool remove_text_id(FileValidatorId file_validator_id)
+    {
+        auto it = std::find(this->clip_text_id_list.begin(), this->clip_text_id_list.end(),
+            file_validator_id);
+        if (it != this->clip_text_id_list.end()) {
+            *it = std::move(this->clip_text_id_list.back());
+            this->clip_text_id_list.pop_back();
+            return true;
+        }
+        return false;
+    }
+
+    void push_clip_text_to_list()
+    {
+        this->clip_text_id_list.push_back(this->clip_text_id);
+        this->clip_text_id = FileValidatorId();
+    }
+
     bool has_lock_id(uint32_t id) const
     {
         return this->_find_lock_id_it(id) != this->lock_id_list.end();
