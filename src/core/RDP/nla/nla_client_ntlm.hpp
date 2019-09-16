@@ -206,13 +206,8 @@ public:
                 // - LmChallengeResponse
                 // all strings are in unicode utf16
 
-                array_md4 md4password = ::Md4(this->identity_Password);
-                auto userNameUppercase = ::UTF16_to_upper(this->identity_User);
-                array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->identity_Domain);
-
-                array_md4 md4password_b = ::Md4(this->identity_Password);
-                auto userNameUppercase_b = ::UTF16_to_upper(this->identity_User);
-                array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->identity_Domain);
+                array_md5 ResponseKeyNT = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->identity_Domain);
+                array_md5 ResponseKeyLM = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->identity_Domain);
 
                 // NTLMv2_Client_Challenge = { 0x01, 0x01, Zero(6), Time, ClientChallenge, Zero(4), ServerName , Zero(4) }
                 // Zero(n) = { 0x00, ... , 0x00 } n times
@@ -244,9 +239,8 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
                 array_challenge ServerChallenge = server_challenge.serverChallenge;
-                array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
+                array_md5 NtProofStr = ::HmacMd5(ResponseKeyNT,ServerChallenge,temp);
 
-                NTLMAuthenticateMessage AuthenticateMessage;
 
                 // NtChallengeResponse = Concat(NtProofStr, temp)
                 auto NtChallengeResponse = std::vector<uint8_t>{} << NtProofStr << temp;
@@ -265,7 +259,7 @@ public:
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
                 // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-                this->SessionBaseKey = ::HmacMd5(make_array_view(ResponseKeyNT), NtProofStr);
+                this->SessionBaseKey = ::HmacMd5(ResponseKeyNT, NtProofStr);
 
                 // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
                 // ExportedSessionKey = NONCE(16) (random 16bytes number)
@@ -279,9 +273,6 @@ public:
                 this->EncryptedRandomSessionKey = ::Rc4Key(this->SessionBaseKey, this->ExportedSessionKey);
 
                 auto AuthEncryptedRSK = std::vector<uint8_t>{} << this->EncryptedRandomSessionKey;
-
-               
-                AuthenticateMessage.EncryptedRandomSessionKey.buffer = AuthEncryptedRSK;
 
                 // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
                 this->ClientSealingKey = ::Md5(this->ExportedSessionKey,
@@ -299,25 +290,26 @@ public:
                                     this->Workstation.size() != 0, 
                                     server_challenge.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
-                AuthenticateMessage.negoFlags.flags = flags;
 
                 this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
                 this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                 this->version.ProductBuild        = 7601;
                 this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+
+                NTLMAuthenticateMessage AuthenticateMessage;
                 AuthenticateMessage.version = this->version;
 
                 //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
                 
                 size_t mic_offset = 0;
                 auto auth_message = emitNTLMAuthenticateMessage(
-                    AuthenticateMessage.negoFlags.flags,
+                    flags,
                     LmChallengeResponse,
                     NtChallengeResponse,
                     this->identity_Domain,
                     this->identity_User,
                     this->Workstation,
-                    AuthenticateMessage.EncryptedRandomSessionKey.buffer,
+                    AuthEncryptedRSK,
                     this->UseMIC,
                     mic_offset);
 
