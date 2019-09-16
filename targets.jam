@@ -4277,11 +4277,6 @@ test-run tests/mod/xup/test_xup :
   <covfile>src/mod/xup/xup.cpp
   <covfile>src/mod/xup/xup.hpp
 ;
-test-run tests/proto/test_desc :
-  $(REDEMPTION_TEST_PATH)/proto/test_desc.cpp
-:
-  <covfile>src/proto/desc.hpp
-;
 test-run tests/proxy_recorder/test_proxy_recorder :
   $(REDEMPTION_TEST_PATH)/proxy_recorder/test_proxy_recorder.cpp
 :
@@ -5693,7 +5688,6 @@ alias test_newline_convert : tests/mod/vnc/test_newline_convert ;
 alias test_vnc : tests/mod/vnc/test_vnc ;
 alias test_vnc_metrics : tests/mod/vnc/test_vnc_metrics ;
 alias test_xup : tests/mod/xup/test_xup ;
-alias test_desc : tests/proto/test_desc ;
 alias test_proxy_recorder : tests/proxy_recorder/test_proxy_recorder ;
 alias test_regex : tests/regex/test_regex ;
 alias test_regex_automate : tests/regex/test_regex_automate ;
@@ -6022,7 +6016,6 @@ alias test_newline_convert.coverage : tests/mod/vnc/test_newline_convert.coverag
 alias test_vnc.coverage : tests/mod/vnc/test_vnc.coverage ;
 alias test_vnc_metrics.coverage : tests/mod/vnc/test_vnc_metrics.coverage ;
 alias test_xup.coverage : tests/mod/xup/test_xup.coverage ;
-alias test_desc.coverage : tests/proto/test_desc.coverage ;
 alias test_proxy_recorder.coverage : tests/proxy_recorder/test_proxy_recorder.coverage ;
 alias test_regex.coverage : tests/regex/test_regex.coverage ;
 alias test_regex_automate.coverage : tests/regex/test_regex_automate.coverage ;
@@ -6432,9 +6425,6 @@ alias tests/mod/vnc.norec :
 alias tests/mod/xup.norec :
   tests/mod/xup/test_xup
 ;
-alias tests/proto.norec :
-  tests/proto/test_desc
-;
 alias tests/proxy_recorder.norec :
   tests/proxy_recorder/test_proxy_recorder
 ;
@@ -6582,7 +6572,6 @@ alias tests :
   tests/keyboard
   tests/lib
   tests/mod
-  tests/proto
   tests/proxy_recorder
   tests/regex
   tests/server
@@ -6727,9 +6716,6 @@ alias tests/mod/vnc :
 alias tests/mod/xup :
   tests/mod/xup.norec
 ;
-alias tests/proto :
-  tests/proto.norec
-;
 alias tests/proxy_recorder :
   tests/proxy_recorder.norec
 ;
@@ -6812,7 +6798,6 @@ explicit
   tests/mod/vnc/encoder.norec
   tests/mod/vnc.norec
   tests/mod/xup.norec
-  tests/proto.norec
   tests/proxy_recorder.norec
   tests/regex.norec
   tests/server.norec
@@ -6867,7 +6852,6 @@ explicit
   tests/mod/vnc/encoder
   tests/mod/vnc
   tests/mod/xup
-  tests/proto
   tests/proxy_recorder
   tests/regex
   tests/server
