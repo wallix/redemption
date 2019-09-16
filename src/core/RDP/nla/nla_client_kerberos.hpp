@@ -696,43 +696,6 @@ private:
         return Res::Ok;
     }
 
-    Res sm_credssp_client_authenticate_stop(bytes_view in_data)
-    {
-        /* Encrypted Public Key +1 */
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
-
-        this->ts_request = recvTSRequest(in_data);
-
-        /* Verify Server Public Key Echo */
-
-        SEC_STATUS status = this->credssp_decrypt_public_key_echo();
-        this->credssp_buffer_free();
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "Could not verify public key echo!");
-            this->credssp_buffer_free();
-            return Res::Err;
-        }
-
-        /* Send encrypted credentials */
-
-        status = this->credssp_encrypt_ts_credentials();
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
-            return Res::Err;
-        }
-
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
-
-        this->credssp_send();
-
-        /* Free resources */
-        this->credssp_buffer_free();
-
-
-        return Res::Ok;
-    }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
 
@@ -861,12 +824,44 @@ public:
                     return credssp::State::Err;
                 }
                 return credssp::State::Cont;
+                
             case ClientAuthenticateData::Final:
-                if (Res::Err == this->sm_credssp_client_authenticate_stop(in_data)) {
+            {
+                /* Encrypted Public Key +1 */
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
+
+                this->ts_request = recvTSRequest(in_data);
+
+                /* Verify Server Public Key Echo */
+
+                SEC_STATUS status = this->credssp_decrypt_public_key_echo();
+                this->credssp_buffer_free();
+
+                if (status != SEC_E_OK) {
+                    LOG(LOG_ERR, "Could not verify public key echo!");
+                    this->credssp_buffer_free();
                     return credssp::State::Err;
                 }
+
+                /* Send encrypted credentials */
+
+                status = this->credssp_encrypt_ts_credentials();
+
+                if (status != SEC_E_OK) {
+                    LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
+                    return credssp::State::Err;
+                }
+
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
+
+                this->credssp_send();
+
+                /* Free resources */
+                this->credssp_buffer_free();
+
                 this->client_auth_data.state = ClientAuthenticateData::Start;
                 return credssp::State::Finish;
+            }
         }
 
         return credssp::State::Err;

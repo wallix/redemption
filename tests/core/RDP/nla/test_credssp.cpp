@@ -708,7 +708,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 
     // Credssp contains NTLM Authenticate response message
     {
-        //Credssp recvTSRequest() Remote Version 6, Negotiated version 6
+        //Credssp emit TSRequest() Remote Version 6, Negotiated version 6
         
         //NTLMContextClient Compute response from challenge
         //NTLMContextClient TimeStamp
@@ -924,7 +924,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
     }
 
     {
-        //Credssp recvTSCredentials() Remote Version 6, Negotiated version 6
+        //Credssp emit TSCredentials() Remote Version 6, Negotiated version 6
         //rdpClientNTLM::encrypt_ts_credentials
         //TSRequest hexdump ---------------------------------
         //TSRequest version 6 ------------------------------
