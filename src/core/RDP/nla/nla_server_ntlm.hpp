@@ -341,7 +341,7 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE");
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
                     InStream in_stream(this->ts_request.negoTokens);
-                    recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
+                    this->AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_stream);
 
                     if (this->AUTHENTICATE_MESSAGE.has_mic) {
                         this->UseMIC = true;

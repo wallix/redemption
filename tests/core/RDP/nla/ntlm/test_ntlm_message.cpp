@@ -650,7 +650,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // AuthMsg.recv(ts_req.negoTokens);
 
     InStream token({ts_req.negoTokens.data(), ts_req.negoTokens.size()});
-    recvNTLMAuthenticateMessage(token, AuthMsg);
+    AuthMsg = recvNTLMAuthenticateMessage(token);
 
     RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
     // AuthMsg.negoFlags.print();
@@ -746,7 +746,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     NTLMAuthenticateMessage AuthMsgDuplicate;
 
     InStream in_tosend(tosend.get_bytes());
-    recvNTLMAuthenticateMessage(in_tosend, AuthMsgDuplicate);
+    AuthMsgDuplicate = recvNTLMAuthenticateMessage(in_tosend);
 
     RED_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
     logNtlmFlags(AuthMsgDuplicate.negoFlags.flags);
@@ -1583,16 +1583,6 @@ public:
 
 
     // READ WRITE FUNCTIONS
-    SEC_STATUS write_negotiate(std::vector<uint8_t>& output_buffer) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Negotiate");
-        this->ntlm_client_build_negotiate();
-        auto negotiate = emitNTLMNegotiateMessage();
-        output_buffer = negotiate;
-        this->SavedNegotiateMessage = std::move(negotiate);
-        this->state = NTLM_STATE_CHALLENGE;
-        return SEC_I_CONTINUE_NEEDED;
-    }
-
     SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Negotiate");
         this->NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(input_buffer);
@@ -1663,35 +1653,6 @@ public:
 
         output_buffer = auth_message;
         return SEC_I_COMPLETE_NEEDED;
-    }
-
-    SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Authenticate");
-        InStream in_stream(input_buffer);
-        recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
-        if (this->AUTHENTICATE_MESSAGE.has_mic) {
-            this->UseMIC = true;
-            this->SavedAuthenticateMessage = std::vector<uint8_t>(in_stream.get_offset());
-            constexpr std::size_t null_data_sz = 16;
-            uint8_t const null_data[null_data_sz]{0u};
-            auto const p = in_stream.get_data();
-            std::size_t offset = 0u;
-            memcpy(this->SavedAuthenticateMessage.data()+offset, p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset);
-            offset += this->AUTHENTICATE_MESSAGE.PayloadOffset;
-            memcpy(this->SavedAuthenticateMessage.data()+offset, null_data, null_data_sz);
-            offset += null_data_sz;
-            memcpy(this->SavedAuthenticateMessage.data()+offset, p + offset, in_stream.get_offset() - offset);
-        }
-
-        this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer);
-        this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer);
-
-        if (this->identity.is_empty_user_domain()){
-            LOG(LOG_ERR, "ANONYMOUS User not allowed");
-            return SEC_E_LOGON_DENIED;
-        }
-
-        return SEC_I_CONTINUE_NEEDED;
     }
 
     SEC_STATUS check_authenticate() {
@@ -2058,7 +2019,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     
     InStream in_client_to_server(auth_message);
-    recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
+    server_context.AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_client_to_server);
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
@@ -2174,14 +2135,12 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     out_client_to_server.out_copy_bytes(auth_message);
     
     in_client_to_server = InStream(out_client_to_server.get_bytes());
-    recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
-    if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
-        memset(client_to_server_buf +
-               server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
-        server_context.SavedAuthenticateMessage = std::vector<uint8_t>(in_client_to_server.get_offset());
-        memcpy(server_context.SavedAuthenticateMessage.data(),
-               in_client_to_server.get_data(), in_client_to_server.get_offset());
-    }
+    server_context.AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_client_to_server);
+    RED_CHECK_EQUAL(server_context.AUTHENTICATE_MESSAGE.has_mic, true);
+    RED_CHECK_EQUAL(12+8+8+8+8+8+8+4+8, server_context.AUTHENTICATE_MESSAGE.PayloadOffset);
+    memset(client_to_server_buf + server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
+    server_context.SavedAuthenticateMessage = std::vector<uint8_t>(in_client_to_server.get_offset());
+    memcpy(server_context.SavedAuthenticateMessage.data(), in_client_to_server.get_data(), in_client_to_server.get_offset());
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
@@ -2210,11 +2169,15 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     NTLMContext context_read(true, rand, timeobj, true);
     SEC_STATUS status;
 
-    std::vector<uint8_t> nego;
-    status = context_write.write_negotiate(nego);
-    RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    ;
+    
+    LOG_IF(context_write.verbose, LOG_INFO, "NTLMContext Write Negotiate");
+    context_write.ntlm_client_build_negotiate();
+    context_write.SavedNegotiateMessage = emitNTLMNegotiateMessage();;
+    context_write.state = NTLM_STATE_CHALLENGE;
+
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
-    status = context_read.read_negotiate(nego);
+    status = context_read.read_negotiate(context_write.SavedNegotiateMessage);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
 
@@ -2230,8 +2193,35 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     status = context_write.write_authenticate(auth);
     RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
-    status = context_read.read_authenticate(auth);
-    RED_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
+    
+    array_view_const_u8 input_buffer = auth;
+    LOG_IF(context_read.verbose, LOG_INFO, "NTLMContext Read Authenticate");
+    InStream in_stream(input_buffer);
+    context_read.AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_stream);
+    size_t PayloadOffset = 12+8+8+8+8+8+8+4+8;
+    if (context_read.AUTHENTICATE_MESSAGE.has_mic) {
+        context_read.SavedAuthenticateMessage = std::vector<uint8_t>(in_stream.get_offset());
+        constexpr std::size_t null_data_sz = 16;
+        uint8_t const null_data[null_data_sz]{0u};
+        auto const p = in_stream.get_data();
+        std::size_t offset = 0u;
+        memcpy(context_read.SavedAuthenticateMessage.data()+offset, p + offset, PayloadOffset);
+        offset += PayloadOffset;
+        memcpy(context_read.SavedAuthenticateMessage.data()+offset, null_data, null_data_sz);
+        offset += null_data_sz;
+        memcpy(context_read.SavedAuthenticateMessage.data()+offset, p + offset, in_stream.get_offset() - offset);
+    }
+
+    context_read.identity.user_init_copy(context_read.AUTHENTICATE_MESSAGE.UserName.buffer);
+    context_read.identity.domain_init_copy(context_read.AUTHENTICATE_MESSAGE.DomainName.buffer);
+
+    if (context_read.identity.is_empty_user_domain()){
+        LOG(LOG_ERR, "ANONYMOUS User not allowed");
+        RED_CHECK_EQUAL(SEC_E_LOGON_DENIED, SEC_E_LOGON_DENIED);
+    }
+    else  {    
+        RED_CHECK_EQUAL(SEC_I_CONTINUE_NEEDED, SEC_E_LOGON_DENIED);
+    }
 }
 
 

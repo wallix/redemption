@@ -1337,10 +1337,11 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
     return result;
 }
 
-inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
+inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(InStream & stream) {
 //    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
 //    hexdump_d(stream.remaining_bytes());
 
+    NTLMAuthenticateMessage self;
     uint8_t const * pBegin = stream.get_current();
     
     // Read Message Header
@@ -1422,6 +1423,7 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         push_back_array(v, {stream.get_data() + 12+8+8+8+8+8+8+4+8 + 16, stream.get_offset() - (12+8+8+8+8+8+8+4+8 + 16)});
         self.message_bytes_dump = v;
     }
+    return self;
 }
 
 // 2.2.2.3   LM_RESPONSE
