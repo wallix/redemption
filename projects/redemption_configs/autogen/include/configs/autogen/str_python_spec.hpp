@@ -8,6 +8,7 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 #_advanced
 glyph_cache = boolean(default=False)
 
+#_iptables
 #_advanced
 port = integer(min=0, default=3389)
 
