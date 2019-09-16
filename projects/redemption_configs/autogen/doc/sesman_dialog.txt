@@ -167,7 +167,6 @@ cfg::mod_rdp::server_cert -> server_cert   [std::string]
 cfg::mod_rdp::server_cert_response <- server_cert_response   [std::string]
     empty string for wait, 'Ok' or error message
 
-
 cfg::mod_vnc::clipboard_up <- clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).
 cfg::mod_vnc::clipboard_down <- clipboard_down   [bool]
@@ -180,6 +179,17 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop <- vnc_bogus_clipboard_infinite_loop
       2: continued
 cfg::mod_vnc::server_is_apple <- server_is_apple   [bool]
 cfg::mod_vnc::server_unix_alt <- server_unix_alt   [bool]
+
+
+cfg::file_verification::enable_up <- enable_up   [bool]
+cfg::file_verification::enable_down <- enable_down   [bool]
+cfg::file_verification::log_if_accepted <- log_if_accepted   [bool]
+
+cfg::icap_server_down::clipboard_text_data <- clipboard_text_data   [bool]
+    Verify text data via clipboard
+
+cfg::icap_server_up::clipboard_text_data <- clipboard_text_data   [bool]
+    Verify text data via clipboard
 
 cfg::mod_replay::replay_on_loop <- replay_on_loop   [bool]
     0 - replay once, 1 - loop replay
@@ -204,12 +214,6 @@ cfg::remote_program::allow_resize_hosted_desktop <- allow_resize_hosted_desktop 
 cfg::translation::language <- language   [Language]
 cfg::translation::password_en <- password_en   [std::string]
 cfg::translation::password_fr <- password_fr   [std::string]
-
-
-cfg::file_verification::enable_up <- enable_up   [bool]
-cfg::file_verification::enable_down <- enable_down   [bool]
-cfg::file_verification::log_if_accepted <- log_if_accepted   [bool]
-
 
 
 cfg::context::psid -> psid   [std::string]

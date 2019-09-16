@@ -181,6 +181,16 @@ namespace cfg {
         struct session_shadowing_support;
     };
 
+    struct mod_vnc {
+        struct clipboard_up;
+        struct clipboard_down;
+        struct encodings;
+        struct server_clipboard_encoding_type;
+        struct bogus_clipboard_infinite_loop;
+        struct server_is_apple;
+        struct server_unix_alt;
+    };
+
     struct metrics {
         struct enable_rdp_metrics;
         struct enable_vnc_metrics;
@@ -190,14 +200,29 @@ namespace cfg {
         struct sign_key;
     };
 
-    struct mod_vnc {
-        struct clipboard_up;
-        struct clipboard_down;
-        struct encodings;
-        struct server_clipboard_encoding_type;
-        struct bogus_clipboard_infinite_loop;
-        struct server_is_apple;
-        struct server_unix_alt;
+    struct file_verification {
+        struct socket_path;
+        struct enable_up;
+        struct enable_down;
+        struct log_if_accepted;
+    };
+
+    struct icap_server_down {
+        struct clipboard_text_data;
+        struct host;
+        struct port;
+        struct service_name;
+        struct tls;
+        struct enable_x_context;
+    };
+
+    struct icap_server_up {
+        struct clipboard_text_data;
+        struct host;
+        struct port;
+        struct service_name;
+        struct tls;
+        struct enable_x_context;
     };
 
     struct mod_replay {
@@ -293,29 +318,6 @@ namespace cfg {
 
     struct internal_mod {
         struct theme;
-    };
-
-    struct file_verification {
-        struct socket_path;
-        struct enable_up;
-        struct enable_down;
-        struct log_if_accepted;
-    };
-
-    struct icap_server_up {
-        struct host;
-        struct port;
-        struct service_name;
-        struct tls;
-        struct enable_x_context;
-    };
-
-    struct icap_server_down {
-        struct host;
-        struct port;
-        struct service_name;
-        struct tls;
-        struct enable_x_context;
     };
 
     struct context {

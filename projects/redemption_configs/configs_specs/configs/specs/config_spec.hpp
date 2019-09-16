@@ -76,8 +76,11 @@ void config_spec_definition(Writer && W)
             "session_log",
             "client",
             "mod_rdp",
-            "metrics",
             "mod_vnc",
+            "metrics",
+            "file_verification",
+            "icap_server_down",
+            "icap_server_up",
             "mod_replay",
             "ocr",
             "video",
@@ -614,27 +617,26 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
     });
 
-    // TODO temporary
-    W.section("icap_server_up", [&]
-    {
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
-                 desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
-    });
+    for (char const* section_name : {"icap_server_up", "icap_server_down"}) {
+        // TODO temporary
+        W.section(section_name, [&]
+        {
+            W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_data", desc{"Verify text data via clipboard"});
 
-    // TODO temporary
-    W.section("icap_server_down", [&]
-    {
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
-                 desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
-    });
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"});
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
+
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
+            // for validator only
+            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
+                    desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
+        });
+    }
 
     W.section("context", [&]
     {

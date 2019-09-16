@@ -263,6 +263,25 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 #_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
 
+[file_verification]
+
+enable_up = boolean(default=False)
+
+enable_down = boolean(default=False)
+
+#_advanced
+log_if_accepted = boolean(default=True)
+
+[icap_server_down]
+
+# Verify text data via clipboard
+clipboard_text_data = boolean(default=False)
+
+[icap_server_up]
+
+# Verify text data via clipboard
+clipboard_text_data = boolean(default=False)
+
 [video]
 
 # Disable keyboard log:
@@ -273,14 +292,5 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hex
 disable_keyboard_log = integer(min=0, max=3, default=1)
-
-[file_verification]
-
-enable_up = boolean(default=False)
-
-enable_down = boolean(default=False)
-
-#_advanced
-log_if_accepted = boolean(default=True)
 
 )xxxyyyzzz";

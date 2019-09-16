@@ -623,29 +623,6 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 #_advanced
 session_shadowing_support = boolean(default=True)
 
-[metrics]
-
-#_advanced
-enable_rdp_metrics = boolean(default=False)
-
-#_advanced
-enable_vnc_metrics = boolean(default=False)
-
-#_hidden
-log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
-
-# (is in second)
-#_advanced
-log_interval = integer(min=0, default=5)
-
-# (is in hour)
-#_advanced
-log_file_turnover_interval = integer(min=0, default=24)
-
-# signature key to digest log metrics header info
-#_advanced
-sign_key = string(default='')
-
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -678,6 +655,87 @@ server_is_apple = boolean(default=False)
 
 #_hidden
 server_unix_alt = boolean(default=False)
+
+[metrics]
+
+#_advanced
+enable_rdp_metrics = boolean(default=False)
+
+#_advanced
+enable_vnc_metrics = boolean(default=False)
+
+#_hidden
+log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
+
+# (is in second)
+#_advanced
+log_interval = integer(min=0, default=5)
+
+# (is in hour)
+#_advanced
+log_file_turnover_interval = integer(min=0, default=24)
+
+# signature key to digest log metrics header info
+#_advanced
+sign_key = string(default='')
+
+[file_verification]
+
+#_hidden
+socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
+
+#_hidden
+enable_up = boolean(default=False)
+
+#_hidden
+enable_down = boolean(default=False)
+
+#_hidden
+log_if_accepted = boolean(default=True)
+
+[icap_server_down]
+
+# Verify text data via clipboard
+#_hidden
+clipboard_text_data = boolean(default=False)
+
+# Ip or fqdn of ICAP server
+host = string(default='')
+
+# Port of ICAP server
+port = integer(min=0, default=0)
+
+# Service name on ICAP server
+service_name = string(default='avscan')
+
+# ICAP server uses tls
+tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
+
+[icap_server_up]
+
+# Verify text data via clipboard
+#_hidden
+clipboard_text_data = boolean(default=False)
+
+# Ip or fqdn of ICAP server
+host = string(default='')
+
+# Port of ICAP server
+port = integer(min=0, default=0)
+
+# Service name on ICAP server
+service_name = string(default='avscan')
+
+# ICAP server uses tls
+tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
 
 [mod_replay]
 
@@ -994,55 +1052,5 @@ password_fr = string(default='')
 
 #_advanced
 load_theme = string(default='')
-
-[file_verification]
-
-#_hidden
-socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
-
-#_hidden
-enable_up = boolean(default=False)
-
-#_hidden
-enable_down = boolean(default=False)
-
-#_hidden
-log_if_accepted = boolean(default=True)
-
-[icap_server_up]
-
-# Ip or fqdn of ICAP server
-host = string(default='')
-
-# Port of ICAP server
-port = integer(min=0, default=0)
-
-# Service name on ICAP server
-service_name = string(default='avscan')
-
-# ICAP server uses tls
-tls = boolean(default=False)
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-#_advanced
-enable_x_context = boolean(default=True)
-
-[icap_server_down]
-
-# Ip or fqdn of ICAP server
-host = string(default='')
-
-# Port of ICAP server
-port = integer(min=0, default=0)
-
-# Service name on ICAP server
-service_name = string(default='avscan')
-
-# ICAP server uses tls
-tls = boolean(default=False)
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-#_advanced
-enable_x_context = boolean(default=True)
 
 )gen_config_ini"

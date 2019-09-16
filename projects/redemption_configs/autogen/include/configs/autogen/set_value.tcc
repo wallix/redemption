@@ -1185,6 +1185,69 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
+    else if (0 == strcmp(context, "mod_vnc")) {
+        if (0) {}
+        else if (0 == strcmp(key, "clipboard_up")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::clipboard_up&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "clipboard_down")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::clipboard_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "encodings")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::encodings&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::list<int>>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "server_clipboard_encoding_type")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::server_clipboard_encoding_type&>(this->variables).value,
+                ::configs::spec_type<ClipboardEncodingType>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::bogus_clipboard_infinite_loop&>(this->variables).value,
+                ::configs::spec_type<VncBogusClipboardInfiniteLoop>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "server_is_apple")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::server_is_apple&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "server_unix_alt")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::server_unix_alt&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
     else if (0 == strcmp(context, "metrics")) {
         if (0) {}
         else if (0 == strcmp(key, "enable_rdp_metrics")) {
@@ -1240,60 +1303,146 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
-    else if (0 == strcmp(context, "mod_vnc")) {
+    else if (0 == strcmp(context, "file_verification")) {
         if (0) {}
-        else if (0 == strcmp(key, "clipboard_up")) {
+        else if (0 == strcmp(key, "socket_path")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_vnc::clipboard_up&>(this->variables).value,
+                static_cast<cfg::file_verification::socket_path&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_up")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_verification::enable_up&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "clipboard_down")) {
+        else if (0 == strcmp(key, "enable_down")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_vnc::clipboard_down&>(this->variables).value,
+                static_cast<cfg::file_verification::enable_down&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "encodings")) {
+        else if (0 == strcmp(key, "log_if_accepted")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_vnc::encodings&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<int>>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "server_clipboard_encoding_type")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::mod_vnc::server_clipboard_encoding_type&>(this->variables).value,
-                ::configs::spec_type<ClipboardEncodingType>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::mod_vnc::bogus_clipboard_infinite_loop&>(this->variables).value,
-                ::configs::spec_type<VncBogusClipboardInfiniteLoop>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "server_is_apple")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::mod_vnc::server_is_apple&>(this->variables).value,
+                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "server_unix_alt")) {
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "icap_server_down")) {
+        if (0) {}
+        else if (0 == strcmp(key, "clipboard_text_data")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_vnc::server_unix_alt&>(this->variables).value,
+                static_cast<cfg::icap_server_down::clipboard_text_data&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "host")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::host&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "port")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::port&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "service_name")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::service_name&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tls")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::tls&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_x_context")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::enable_x_context&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "icap_server_up")) {
+        if (0) {}
+        else if (0 == strcmp(key, "clipboard_text_data")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::clipboard_text_data&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "host")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::host&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "port")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::port&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "service_name")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::service_name&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tls")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::tls&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_x_context")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::enable_x_context&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -1919,139 +2068,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::internal_mod::theme&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
-    else if (0 == strcmp(context, "file_verification")) {
-        if (0) {}
-        else if (0 == strcmp(key, "socket_path")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_verification::socket_path&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "enable_up")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_verification::enable_up&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "enable_down")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_verification::enable_down&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "log_if_accepted")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
-    else if (0 == strcmp(context, "icap_server_up")) {
-        if (0) {}
-        else if (0 == strcmp(key, "host")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_up::host&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "port")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_up::port&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "service_name")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_up::service_name&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "tls")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_up::tls&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "enable_x_context")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_up::enable_x_context&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
-    else if (0 == strcmp(context, "icap_server_down")) {
-        if (0) {}
-        else if (0 == strcmp(key, "host")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_down::host&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "port")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_down::port&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "service_name")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_down::service_name&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "tls")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_down::tls&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "enable_x_context")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_down::enable_x_context&>(this->variables).value,
-                ::configs::spec_type<bool>{},
                 av
             );
         }

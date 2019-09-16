@@ -68,13 +68,19 @@ cp_spec = {
     u'server_cert_success_message': ('server_cert_success_message', 1),
     u'server_cert_failure_message': ('server_cert_failure_message', 1),
   },
-  'video': {
-    u'disable_keyboard_log': ('disable_keyboard_log', 1),
-  },
   'file_verification': {
     u'enable_up': ('enable_up', False),
     u'enable_down': ('enable_down', False),
     u'log_if_accepted': ('log_if_accepted', True),
+  },
+  'icap_server_down': {
+    u'clipboard_text_data': ('clipboard_text_data', False),
+  },
+  'icap_server_up': {
+    u'clipboard_text_data': ('clipboard_text_data', False),
+  },
+  'video': {
+    u'disable_keyboard_log': ('disable_keyboard_log', 1),
   },
   'vnc': {
     u'server_is_apple': ('server_is_apple', False),

@@ -739,32 +739,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #session_shadowing_support = 1
 
-[metrics]
-
-# value: 0 or 1
-#_advanced
-#enable_rdp_metrics = 0
-
-# value: 0 or 1
-#_advanced
-#enable_vnc_metrics = 0
-
-# maxlen = 4096
-#_hidden
-#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
-
-# (is in second)
-#_advanced
-#log_interval = 5
-
-# (is in hour)
-#_advanced
-#log_file_turnover_interval = 24
-
-# signature key to digest log metrics header info
-#_advanced
-#sign_key = 
-
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -803,6 +777,101 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #server_unix_alt = 0
+
+[metrics]
+
+# value: 0 or 1
+#_advanced
+#enable_rdp_metrics = 0
+
+# value: 0 or 1
+#_advanced
+#enable_vnc_metrics = 0
+
+# maxlen = 4096
+#_hidden
+#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
+
+# (is in second)
+#_advanced
+#log_interval = 5
+
+# (is in hour)
+#_advanced
+#log_file_turnover_interval = 24
+
+# signature key to digest log metrics header info
+#_advanced
+#sign_key = 
+
+[file_verification]
+
+#_hidden
+#socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
+
+# value: 0 or 1
+#_hidden
+#enable_up = 0
+
+# value: 0 or 1
+#_hidden
+#enable_down = 0
+
+# value: 0 or 1
+#_hidden
+#log_if_accepted = 1
+
+[icap_server_down]
+
+# Verify text data via clipboard
+# value: 0 or 1
+#_hidden
+#clipboard_text_data = 0
+
+# Ip or fqdn of ICAP server
+#host = 
+
+# Port of ICAP server
+# min = 0
+#port = 0
+
+# Service name on ICAP server
+#service_name = avscan
+
+# ICAP server uses tls
+# value: 0 or 1
+#tls = 0
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+# value: 0 or 1
+#_advanced
+#enable_x_context = 1
+
+[icap_server_up]
+
+# Verify text data via clipboard
+# value: 0 or 1
+#_hidden
+#clipboard_text_data = 0
+
+# Ip or fqdn of ICAP server
+#host = 
+
+# Port of ICAP server
+# min = 0
+#port = 0
+
+# Service name on ICAP server
+#service_name = avscan
+
+# ICAP server uses tls
+# value: 0 or 1
+#tls = 0
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+# value: 0 or 1
+#_advanced
+#enable_x_context = 1
 
 [mod_replay]
 
@@ -1180,64 +1249,5 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 #_advanced
 #load_theme = 
-
-[file_verification]
-
-#_hidden
-#socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
-
-# value: 0 or 1
-#_hidden
-#enable_up = 0
-
-# value: 0 or 1
-#_hidden
-#enable_down = 0
-
-# value: 0 or 1
-#_hidden
-#log_if_accepted = 1
-
-[icap_server_up]
-
-# Ip or fqdn of ICAP server
-#host = 
-
-# Port of ICAP server
-# min = 0
-#port = 0
-
-# Service name on ICAP server
-#service_name = avscan
-
-# ICAP server uses tls
-# value: 0 or 1
-#tls = 0
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-# value: 0 or 1
-#_advanced
-#enable_x_context = 1
-
-[icap_server_down]
-
-# Ip or fqdn of ICAP server
-#host = 
-
-# Port of ICAP server
-# min = 0
-#port = 0
-
-# Service name on ICAP server
-#service_name = avscan
-
-# ICAP server uses tls
-# value: 0 or 1
-#tls = 0
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-# value: 0 or 1
-#_advanced
-#enable_x_context = 1
 
 )gen_config_ini"
