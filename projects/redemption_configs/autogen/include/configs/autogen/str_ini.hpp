@@ -8,6 +8,7 @@
 "#glyph_cache = 0\n\n"
 
 "# min = 0\n"
+"#_iptables\n"
 "#_advanced\n"
 "#port = 3389\n\n"
 

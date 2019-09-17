@@ -6,6 +6,7 @@
 "#_advanced\n"
 "glyph_cache = boolean(default=False)\n\n"
 
+"#_iptables\n"
 "#_advanced\n"
 "port = integer(min=0, default=3389)\n\n"
 
