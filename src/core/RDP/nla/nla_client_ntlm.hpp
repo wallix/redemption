@@ -277,21 +277,15 @@ public:
                                     this->Workstation.size() != 0, 
                                     server_challenge.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
-
-                NtlmVersion ntlm_version;
-                ntlm_version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                ntlm_version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                ntlm_version.ProductBuild        = 7601;
-                ntlm_version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
                 NTLMAuthenticateMessage AuthenticateMessage;
                 AuthenticateMessage.version = this->version;
 
                 //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
-                
+                NtlmVersion ntlm_version{WINDOWS_MAJOR_VERSION_6,WINDOWS_MINOR_VERSION_1,7601,NTLMSSP_REVISION_W2K3};
                 size_t mic_offset = 0;
                 auto auth_message = emitNTLMAuthenticateMessage(
                     flags,
+                    ntlm_version,
                     LmChallengeResponse,
                     NtChallengeResponse,
                     this->identity_Domain,
@@ -359,7 +353,7 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
                 // TODO: check that I should be able to use negotiated version in version variable
                 auto v = emitTSRequest(6, auth_message, {}, pubKeyAuth, 0,
-                                       this->SavedClientNonce.clientNonce,
+                                       (version >= 5)?bytes_view(this->SavedClientNonce.clientNonce):bytes_view({}),
                                        this->SavedClientNonce.initialized);
                 ts_request_emit.out_copy_bytes(v);
 

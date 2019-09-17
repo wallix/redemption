@@ -434,7 +434,13 @@ struct NtlmVersion {
     /* 3 Bytes Reserved */
     uint8_t NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
-//    bool ignore_version{true};
+//    NtlmVersion() = default;
+//    
+//    NtlmVersion(uint8_t major, uint8_t minor, uint16_t build, uint8_t revision)
+//        : ProductMajorVersion(major)
+//        , ProductMinorVersion(minor)
+//        , ProductBuild(build)
+//        , ProductBuild(revision)
 };
 
 inline void LogNtlmVersion(const NtlmVersion & self) {
@@ -1252,7 +1258,8 @@ inline void logNTLMAuthenticateMessage(uint32_t negoFlags,
 }
 
 
-inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags, 
+inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
+                                        NtlmVersion ntlm_version, 
                                         bytes_view LmChallengeResponse,
                                         bytes_view NtChallengeResponse,
                                         bytes_view DomainName,
@@ -1317,11 +1324,11 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
 
     stream.out_uint32_le(negoFlags);
     if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        stream.out_uint8(WINDOWS_MAJOR_VERSION_6);
-        stream.out_uint8(WINDOWS_MINOR_VERSION_1);
-        stream.out_uint16_le(7601);
+        stream.out_uint8(ntlm_version.ProductMajorVersion);
+        stream.out_uint8(ntlm_version.ProductMinorVersion);
+        stream.out_uint16_le(ntlm_version.ProductBuild);
         stream.out_clear_bytes(3);
-        stream.out_uint8(NTLMSSP_REVISION_W2K3);
+        stream.out_uint8(ntlm_version.NtlmRevisionCurrent);
     }
 
 

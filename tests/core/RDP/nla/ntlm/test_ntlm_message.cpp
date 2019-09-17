@@ -733,6 +733,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     StaticOutStream<65635> tosend;
     size_t mic_offset;
     auto auth_message = emitNTLMAuthenticateMessage(AuthMsg.negoFlags.flags,
+                        NtlmVersion(),
                         AuthMsg.LmChallengeResponse.buffer,
                         AuthMsg.NtChallengeResponse.buffer,
                         AuthMsg.DomainName.buffer,
@@ -1636,6 +1637,7 @@ public:
         size_t mic_offset = 0;
         auto auth_message = emitNTLMAuthenticateMessage(
             this->AUTHENTICATE_MESSAGE.negoFlags.flags,
+            NtlmVersion(),
             this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
             this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
             this->AUTHENTICATE_MESSAGE.DomainName.buffer,
@@ -2007,6 +2009,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     size_t mic_offset = 0;
     auto auth_message = emitNTLMAuthenticateMessage(
                         client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
+                        NtlmVersion(),
                         client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
                         client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
                         client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,
@@ -2117,6 +2120,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     uint8_t client_to_server_buf[65535];
     size_t mic_offset = 0;
     auto auth_message = emitNTLMAuthenticateMessage(client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
+                    NtlmVersion(),
                     client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
                     client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
                     client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,

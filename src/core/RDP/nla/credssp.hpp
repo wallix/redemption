@@ -726,11 +726,11 @@ struct TSRequest final {
 
 
 inline std::vector<uint8_t> emitTSRequest(uint32_t version,
-                                          const std::vector<uint8_t> & negoTokens,
-                                          const std::vector<uint8_t> & authInfo,
-                                          const std::vector<uint8_t> & pubKeyAuth,
+                                          bytes_view negoTokens,
+                                          bytes_view authInfo,
+                                          bytes_view pubKeyAuth,
                                           uint32_t error_code,
-                                          const std::vector<uint8_t> & clientNonce,
+                                          bytes_view clientNonce,
                                           bool nonce_initialized)
 {
     
