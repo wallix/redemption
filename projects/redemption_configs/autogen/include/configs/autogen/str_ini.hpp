@@ -262,11 +262,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #max_color_depth = 24
 
-# Enable front remoteFx
-# value: 0 or 1
-#_advanced
-#front_remotefx = 1
-
 # Persistent Disk Bitmap Cache on the front side.
 # value: 0 or 1
 #_advanced
@@ -291,11 +286,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #fast_path = 1
-
-# Enables support of the remoteFX codec.
-# value: 0 or 1
-#_advanced
-#remotefx = 0
 
 # value: 0 or 1
 #enable_suppress_output = 1
@@ -331,6 +321,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #enable_osd_4_eyes = 0
+
+# Enable front remoteFx
+# value: 0 or 1
+#_advanced
+#front_remotefx = 1
 
 [mod_rdp]
 
@@ -1250,5 +1245,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 #_advanced
 #load_theme = 
+
+[context]
+
+# Enables support of the remoteFX codec.
+# value: 0 or 1
+#_advanced
+#remotefx = 0
 
 )gen_config_ini"

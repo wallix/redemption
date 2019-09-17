@@ -81,13 +81,11 @@ namespace cfg {
         struct disable_tsk_switch_shortcuts;
         struct rdp_compression;
         struct max_color_depth;
-        struct front_remotefx;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;
         struct persist_bitmap_cache_on_disk;
         struct bitmap_compression;
         struct fast_path;
-        struct remotefx;
         struct enable_suppress_output;
         struct ssl_cipher_list;
         struct show_target_user_in_f12_message;
@@ -97,6 +95,7 @@ namespace cfg {
         struct bogus_number_of_fastpath_input_event;
         struct recv_timeout;
         struct enable_osd_4_eyes;
+        struct front_remotefx;
     };
 
     struct mod_rdp {
@@ -409,6 +408,7 @@ namespace cfg {
         struct rd_shadow_invitation_id;
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
+        struct remotefx;
     };
 
 } // namespace cfg

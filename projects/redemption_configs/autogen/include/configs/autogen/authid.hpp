@@ -32,7 +32,6 @@ constexpr array_view_const_char const authstr[] = {
     "keyboard_input_masking_level"_av,
     "keyboard_layout"_av,
     "disable_tsk_switch_shortcuts"_av,
-    "remotefx"_av,
     "enable_nla"_av,
     "enable_kerberos"_av,
     "server_redirection"_av,
@@ -188,4 +187,5 @@ constexpr array_view_const_char const authstr[] = {
     "rd_shadow_invitation_id"_av,
     "rd_shadow_invitation_addr"_av,
     "rd_shadow_invitation_port"_av,
+    "remotefx"_av,
 };
