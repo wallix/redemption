@@ -384,22 +384,22 @@ public:
         });
     }
 
-    void draw(RDPSetSurfaceCommand const & cmd) override {
-        this->reserve_order(19 + cmd.bitmapDataLength);
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
+        /*this->reserve_order(19 + cmd.bitmapDataLength);
 
         cmd.emit(this->stream_orders);
         if (bool(this->verbose & Verbose::surface_commands)) {
             // cmd.log(LOG_INFO, content);
-        }
+        }*/
     }
 
-    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
-        this->reserve_order(19 + cmd.bitmapDataLength);
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {
+        /*this->reserve_order(19 + cmd.bitmapDataLength);
 
         cmd.emit(this->stream_orders);
         if (bool(this->verbose & Verbose::surface_commands)) {
             cmd.log(LOG_INFO, content);
-        }
+        }*/
     }
 
 

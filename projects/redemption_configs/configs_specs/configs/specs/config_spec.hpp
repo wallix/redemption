@@ -228,7 +228,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<RdpCompression>{}, "rdp_compression", set(RdpCompression::rdp6_1));
 
         W.member(advanced_in_gui, no_sesman, L, type_<ColorDepth>{}, "max_color_depth", set(ColorDepth::depth24));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "front_remotefx", desc{"Enable front remoteFx"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the front side."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(false));
@@ -237,7 +236,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client Fast-Path Input Event PDUs."}, set(true));
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_suppress_output", set(true));
 
@@ -260,6 +258,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "recv_timeout", set(1000));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "enable_osd_4_eyes", set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "front_remotefx", desc{"Enable front remoteFx"}, set(true));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
@@ -782,6 +782,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_id");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_addr");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_port");
+
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
     });
 }
 

@@ -223,10 +223,6 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 max_color_depth = option(8, 15, 16, 24, 32, default=24)
 
-# Enable front remoteFx
-#_advanced
-front_remotefx = boolean(default=True)
-
 # Persistent Disk Bitmap Cache on the front side.
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
@@ -246,10 +242,6 @@ bitmap_compression = boolean(default=True)
 # Enables support of Client Fast-Path Input Event PDUs.
 #_advanced
 fast_path = boolean(default=True)
-
-# Enables support of the remoteFX codec.
-#_advanced
-remotefx = boolean(default=False)
 
 enable_suppress_output = boolean(default=True)
 
@@ -277,6 +269,10 @@ recv_timeout = integer(min=100, max=10000, default=1000)
 
 #_advanced
 enable_osd_4_eyes = boolean(default=False)
+
+# Enable front remoteFx
+#_advanced
+front_remotefx = boolean(default=True)
 
 [mod_rdp]
 
@@ -1053,5 +1049,11 @@ password_fr = string(default='')
 
 #_advanced
 load_theme = string(default='')
+
+[context]
+
+# Enables support of the remoteFX codec.
+#_advanced
+remotefx = boolean(default=False)
 
 )gen_config_ini"

@@ -453,14 +453,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "front_remotefx")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::client::front_remotefx&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
             ::configs::parse_and_log(
                 context, key,
@@ -497,14 +489,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::client::fast_path&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "remotefx")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::client::remotefx&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -577,6 +561,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::client::enable_osd_4_eyes&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "front_remotefx")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::front_remotefx&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -2068,6 +2060,21 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::internal_mod::theme&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "context")) {
+        if (0) {}
+        else if (0 == strcmp(key, "remotefx")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::context::remotefx&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 av
             );
         }
