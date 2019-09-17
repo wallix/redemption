@@ -10,6 +10,7 @@
 "#_advanced\n"
 "#glyph_cache = 0\n\n"
 
+"#_iptables\n"
 "#_advanced\n"
 "#port = 3389\n\n"
 
