@@ -29,6 +29,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
+#include <array>
 #include <string>
 #include <numeric>
 #include <string_view>
@@ -200,7 +201,7 @@ struct FileValidatorResultHeader
     }
 };
 
-inline std::size_t open_data_map_len(std::initializer_list<bytes_view> data_map)
+inline std::size_t open_data_map_len(array_view<const bytes_view> data_map)
 {
     assert(0 == (data_map.size() & 1));
 
@@ -210,7 +211,7 @@ inline std::size_t open_data_map_len(std::initializer_list<bytes_view> data_map)
 }
 
 inline void send_data_map(
-    OutTransport trans, OutStream& message, std::initializer_list<bytes_view> data_map)
+    OutTransport trans, OutStream& message, array_view<const bytes_view> data_map)
 {
     message.out_uint16_be(data_map.size() / 2);
 
@@ -229,7 +230,7 @@ inline void send_data_map(
 
 inline FileValidatorId send_open_data(
     OutTransport trans, FileValidatorId file_id, std::string_view target_name,
-    std::initializer_list<bytes_view> data_map)
+    array_view<const bytes_view> data_map)
 {
     /*
     NewData
@@ -369,20 +370,31 @@ struct FileValidatorService
     : trans(trans)
     {}
 
+    template<class... Ts>
+    static std::array<bytes_view, sizeof...(Ts)> data_map_array(Ts&&... xs)
+    {
+        return std::array{bytes_view(xs)...};
+    }
+
     FileValidatorId open_file(std::string_view filename, std::string_view target_name)
     {
-        return LocalFileValidatorProtocol::send_open_data(
-            this->trans, this->generate_id(), target_name,
-            {"filename"_av, filename});
+        return this->open_raw_data(target_name, data_map_array("filename"_av, filename));
     }
 
     FileValidatorId open_text(uint32_t locale_identifier, std::string_view target_name)
     {
         char buf[24];
         unsigned n = std::sprintf(buf, "%" PRIu32, locale_identifier);
+        return this->open_raw_data(target_name,
+            data_map_array("microsoft_locale_id"_av, bytes_view{buf, n}));
+    }
+
+    using DataMap = array_view<const bytes_view>;
+
+    FileValidatorId open_raw_data(std::string_view target_name, DataMap data_map)
+    {
         return LocalFileValidatorProtocol::send_open_data(
-            this->trans, this->generate_id(), target_name,
-            {"microsoft_locale_id"_av, {buf, n}});
+            this->trans, this->generate_id(), target_name, data_map);
     }
 
     void send_data(FileValidatorId file_id, bytes_view data)

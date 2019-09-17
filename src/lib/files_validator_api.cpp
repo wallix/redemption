@@ -72,6 +72,14 @@ namespace
             }
         }
     };
+
+    using DataMap = FileValidatorService::DataMap;
+
+    template<class... Ts>
+    auto to_data_map(Ts... xs)
+    {
+        return std::array{bytes_view(std::string_view(xs))...};
+    }
 } // anonymous namespace
 
 
@@ -91,6 +99,45 @@ struct ValidatorApi
     FileValidatorService::ResponseType response_type = FileValidatorService::ResponseType::WaitingData;
 };
 
+struct ValidatorKeyValueList
+{
+    static constexpr std::size_t str_max_length = ~uint16_t{};
+
+    void push(char const* key, char const* value)
+    {
+        auto key_len = strnlen(key, str_max_length);
+        auto value_len = strnlen(value, str_max_length);
+
+        this->chars.insert(this->chars.end(), key, key + key_len);
+        this->chars.insert(this->chars.end(), value, value + value_len);
+
+        this->lengths.emplace_back(key_len);
+        this->lengths.emplace_back(value_len);
+    }
+
+    void clear()
+    {
+        this->chars.clear();
+        this->lengths.clear();
+    }
+
+    DataMap data_map()
+    {
+        this->views.clear();
+        auto p = this->chars.data();
+        for (auto len : lengths) {
+            this->views.emplace_back(p, p+len);
+            p += len;
+        }
+        return this->views;
+    }
+
+private:
+    std::vector<char> chars;
+    std::vector<uint16_t> lengths;
+    std::vector<bytes_view> views;
+};
+
 
 #define CHECK_ERRNUM(validator)              \
     if (validator->transport.errnum)         \
@@ -101,6 +148,35 @@ struct ValidatorApi
 
 extern "C"
 {
+
+ValidatorKeyValueList* validator_key_value_list_alloc() noexcept
+{
+    SCOPED_TRACE;
+    return new (std::nothrow) ValidatorKeyValueList; /*NOLINT*/
+}
+
+void validator_key_value_list_free(ValidatorKeyValueList* key_value_list) noexcept
+{
+    SCOPED_TRACE;
+    delete key_value_list; /*NOLINT*/
+}
+
+int validator_key_value_list_clear(ValidatorKeyValueList* key_value_list) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(key_value_list);
+    key_value_list->clear();
+    return 0;
+}
+
+int validator_key_value_list_push_value(ValidatorKeyValueList* key_value_list, char const* key, char const* value) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(key_value_list);
+    key_value_list->push(key, value);
+    return 0;
+}
+
 
 ValidatorApi* validator_open_session(char const* socket_path) noexcept
 {
@@ -147,11 +223,60 @@ ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_na
     return safe_int(file_id);
 }
 
-ValidatorFileId validator_open_text(ValidatorApi* validator, uint32_t locale_identifier, char const* target_name) noexcept
+ValidatorFileId validator_open_data(ValidatorApi* validator, char const* target_name, ValidatorKeyValueList* key_value_list) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    auto file_id = validator->file_validator.open_text(locale_identifier, target_name);
+    auto file_id = validator->file_validator.open_raw_data(
+        target_name, key_value_list ? key_value_list->data_map() : DataMap{});
+    CHECK_ERRNUM(validator);
+    return safe_int(file_id);
+}
+
+ValidatorFileId validator_open_data0(ValidatorApi* validator, char const* target_name) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    auto file_id = validator->file_validator.open_raw_data(target_name, {});
+    CHECK_ERRNUM(validator);
+    return safe_int(file_id);
+}
+
+ValidatorFileId validator_open_data1(
+    ValidatorApi* validator, char const* target_name,
+    char const* key1, char const* value1) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    auto file_id = validator->file_validator.open_raw_data(
+        target_name, to_data_map(key1, value1));
+    CHECK_ERRNUM(validator);
+    return safe_int(file_id);
+}
+
+ValidatorFileId validator_open_data2(
+    ValidatorApi* validator, char const* target_name,
+    char const* key1, char const* value1,
+    char const* key2, char const* value2) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    auto file_id = validator->file_validator.open_raw_data(
+        target_name, to_data_map(key1, value1, key2, value2));
+    CHECK_ERRNUM(validator);
+    return safe_int(file_id);
+}
+
+ValidatorFileId validator_open_data3(
+    ValidatorApi* validator, char const* target_name,
+    char const* key1, char const* value1,
+    char const* key2, char const* value2,
+    char const* key3, char const* value3) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    auto file_id = validator->file_validator.open_raw_data(
+        target_name, to_data_map(key1, value1, key2, value2, key3, value3));
     CHECK_ERRNUM(validator);
     return safe_int(file_id);
 }
