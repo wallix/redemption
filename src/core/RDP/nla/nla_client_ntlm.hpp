@@ -59,7 +59,6 @@ private:
     // NTLMContextClient
     const bool NTLMv2 = true;
     bool UseMIC = true; // like NTLMv2
-    NtlmState sspi_context_state = NTLM_STATE_INITIAL;
 
     SslRC4 SendRc4Seal {};
 
@@ -161,7 +160,6 @@ public:
         ts_request_emit.out_copy_bytes(v);
 
         this->SavedNegotiateMessage = std::move(negoTokens);
-        this->sspi_context_state = NTLM_STATE_CHALLENGE;
         this->client_auth_data_state = Loop;
         return;
     }
@@ -173,25 +171,9 @@ public:
         {
             case Loop:
             {
-                LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Authentication Token");
+                LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Authentication Token - Challenge");
                 TSRequest ts_request = recvTSRequest(in_data);
-                
-                // TODO: add error code management if server returns some error code at that point
-
-                /*
-                 * from tspkg.dll: 0x00000132
-                 * ISC_REQ_MUTUAL_AUTH
-                 * ISC_REQ_CONFIDENTIALITY
-                 * ISC_REQ_USE_SESSION_KEY
-                 * ISC_REQ_ALLOCATE_MEMORY
-                 */
-                //unsigned long const fContextReq
-                //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
-
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
                 NTLMChallengeMessage server_challenge = recvNTLMChallengeMessage(ts_request.negoTokens);
-
-                this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
 
@@ -205,52 +187,30 @@ public:
                 array_md5 ResponseKeyNT = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->identity_Domain);
                 array_md5 ResponseKeyLM = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->identity_Domain);
 
+                const timeval tv = this->timeobj.get_time(); // Timestamp
+                array_challenge ClientChallenge; // Nonce(8)
+                this->rand.random(ClientChallenge.data(), 8);
+
                 // NTLMv2_Client_Challenge = { 0x01, 0x01, Zero(6), Time, ClientChallenge, Zero(4), ServerName , Zero(4) }
                 // Zero(n) = { 0x00, ... , 0x00 } n times
                 // ServerName = AvPairs received in Challenge message
+                auto NTLMv2_Client_Challenge = std::vector<uint8_t>{} 
+                     << std::array<uint8_t,8>{1, 1, 0, 0, 0, 0, 0, 0}
+                     << out_uint32_le(tv.tv_usec) << out_uint32_le(tv.tv_sec)
+                     << bytes_view({ClientChallenge.data(), 8})
+                     << std::array<uint8_t,4>{0, 0, 0, 0}
+                     << server_challenge.TargetInfo.buffer
+                     << std::array<uint8_t,4>{0, 0, 0, 0};
 
-                std::vector<uint8_t> temp;
-                for (auto x: {1, 1, 0, 0, 0, 0, 0, 0}){
-                    temp.push_back(x);
+                // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain), Concat(ServerChallenge, NTLMv2_Client_Challenge))
+                array_md5 NtProofStr = ::HmacMd5(ResponseKeyNT, server_challenge.serverChallenge, NTLMv2_Client_Challenge);
+                // NtChallengeResponse = Concat(NtProofStr, NTLMv2_Client_Challenge)
+                auto NtChallengeResponse = std::vector<uint8_t>{} << NtProofStr << NTLMv2_Client_Challenge;
 
-                }
-
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
-
-                // compute ClientTimeStamp
-                const timeval tv = this->timeobj.get_time();
-                push_back_array(temp, out_uint32_le(tv.tv_usec));
-                push_back_array(temp, out_uint32_le(tv.tv_sec));
-
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge nonce(8)");
-                // ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-                array_challenge ClientChallenge;
-                this->rand.random(ClientChallenge.data(), 8);
-                push_back_array(temp, {ClientChallenge.data(), 8});
-                push_back_array(temp, out_uint32_le(0));
-                push_back_array(temp, server_challenge.TargetInfo.buffer);
-                push_back_array(temp, out_uint32_le(0));
-                // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain), Concat(ServerChallenge, temp))
-
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
-
-                array_challenge ServerChallenge = server_challenge.serverChallenge;
-                array_md5 NtProofStr = ::HmacMd5(ResponseKeyNT,ServerChallenge,temp);
-
-
-                // NtChallengeResponse = Concat(NtProofStr, temp)
-                auto NtChallengeResponse = std::vector<uint8_t>{} << NtProofStr << temp;
-
-
-                LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
-
-                // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
-                //                                         Concat(ServerChallenge, ClientChallenge))
+                // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain), Concat(ServerChallenge, ClientChallenge))
                 // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
-
                 auto LmChallengeResponse = std::vector<uint8_t>{}
-                    << compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge) 
+                    << compute_LMv2_Response(ResponseKeyLM, server_challenge.serverChallenge, ClientChallenge) 
                     << ClientChallenge;
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
@@ -315,8 +275,6 @@ public:
                                 {auth_message.data()+mic_offset,this->UseMIC?16U:0U},
                                 auth_message); 
                 }
-                this->sspi_context_state = NTLM_STATE_FINAL;
-
                 // have_pub_key_auth = true;
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_public_key_echo");
@@ -334,7 +292,6 @@ public:
                     uint8_t hash[SslSha256::DIGEST_LENGTH];
                     sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
                     sha256.update(this->SavedClientNonce.clientNonce);
-
                     sha256.update({this->PublicKey.data(),this->PublicKey.size()});
                     sha256.final(hash);
                     this->ClientServerHash.assign(hash, hash+sizeof(hash));
