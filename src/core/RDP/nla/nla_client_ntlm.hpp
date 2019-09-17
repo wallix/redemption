@@ -72,7 +72,6 @@ private:
 
     NtlmVersion version;
     std::vector<uint8_t> SavedNegotiateMessage;
-    std::vector<uint8_t> SavedChallengeMessage;
 
     array_md5 ExportedSessionKey;
     array_md5 ClientSealingKey;
@@ -191,7 +190,6 @@ public:
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
                 NTLMChallengeMessage server_challenge = recvNTLMChallengeMessage(ts_request.negoTokens);
-                this->SavedChallengeMessage = server_challenge.raw_bytes;
 
                 this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
 
@@ -306,7 +304,7 @@ public:
                 if (this->UseMIC) {
                     array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey,
                                                             this->SavedNegotiateMessage,
-                                                            this->SavedChallengeMessage,
+                                                            server_challenge.raw_bytes,
                                                             auth_message);
                     memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size()); 
                 }
