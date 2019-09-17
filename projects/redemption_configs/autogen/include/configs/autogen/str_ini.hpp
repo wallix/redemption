@@ -10,6 +10,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #glyph_cache = 0
 
 # min = 0
+#_iptables
 #_advanced
 #port = 3389
 
