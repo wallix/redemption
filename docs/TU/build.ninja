@@ -1,0 +1,5 @@
+rule pdflatex
+  command = pdflatex -interaction=nonstopmode $in
+  pool = console
+
+build unit_test.pdf: pdflatex unit_test.tex
