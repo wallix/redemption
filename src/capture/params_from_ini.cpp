@@ -25,59 +25,40 @@
 #include "configs/config.hpp"
 
 
-VideoParams video_params_from_ini(
-    uint16_t original_width, uint16_t original_height,
-    std::chrono::seconds video_break_interval,
-    const Inifile & ini)
+VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, const Inifile & ini)
 {
-    VideoParams video_params = [&]() {
-        auto create_params = [&](auto... xs) {
-            return VideoParams{
-                xs...,
-                ini.get<cfg::globals::codec_id>(),
-                ini.get<cfg::globals::notimestamp>(),
-                ini.get<cfg::globals::capture_chunk>(),
-                ini.get<cfg::video::bogus_vlc_frame_rate>(),
-                video_break_interval,
-                ini.get<cfg::debug::ffmpeg>()
-            };
+    auto create_params = [&](auto... xs) {
+        return VideoParams{
+            xs...,
+            ini.get<cfg::globals::codec_id>(),
+            ini.get<cfg::globals::notimestamp>(),
+            ini.get<cfg::globals::capture_chunk>(),
+            ini.get<cfg::video::bogus_vlc_frame_rate>(),
+            video_break_interval,
+            ini.get<cfg::debug::ffmpeg>()
         };
-        switch (ini.get<cfg::globals::video_quality>()) {
-            // TODO What to do if aspect ratio is not 4:3 ?
-            case Level::low: return create_params(
-                Level::low,
-                ini.get<cfg::video::l_width>(),
-                ini.get<cfg::video::l_height>(),
-                ini.get<cfg::video::l_framerate>(),
-                ini.get<cfg::video::l_qscale>(),
-                ini.get<cfg::video::l_bitrate>()
-            );
-            case Level::high: return create_params(
-                Level::high,
-                original_width,
-                original_height,
-                ini.get<cfg::video::h_framerate>(),
-                ini.get<cfg::video::h_qscale>(),
-                ini.get<cfg::video::h_bitrate>()
-            );
-            case Level::medium:
-            default: return create_params(
-                Level::medium,
-                ini.get<cfg::video::m_width>(),
-                ini.get<cfg::video::m_height>(),
-                ini.get<cfg::video::m_framerate>(),
-                ini.get<cfg::video::m_qscale>(),
-                ini.get<cfg::video::m_bitrate>()
-            );
-        }
-    }();
-
-    if (video_params.target_width > original_width && video_params.target_height > original_height) {
-        video_params.target_width = original_width;
-        video_params.target_height = original_height;
+    };
+    switch (ini.get<cfg::globals::video_quality>()) {
+        case Level::low: return create_params(
+            Level::low,
+            ini.get<cfg::video::l_framerate>(),
+            ini.get<cfg::video::l_qscale>(),
+            ini.get<cfg::video::l_bitrate>()
+        );
+        case Level::high: return create_params(
+            Level::high,
+            ini.get<cfg::video::h_framerate>(),
+            ini.get<cfg::video::h_qscale>(),
+            ini.get<cfg::video::h_bitrate>()
+        );
+        case Level::medium:
+        default: return create_params(
+            Level::medium,
+            ini.get<cfg::video::m_framerate>(),
+            ini.get<cfg::video::m_qscale>(),
+            ini.get<cfg::video::m_bitrate>()
+        );
     }
-
-    return video_params;
 }
 
 OcrParams ocr_params_from_ini(const Inifile & ini)

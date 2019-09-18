@@ -1475,8 +1475,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ini.set<cfg::globals::video_quality>(video_params.video_quality);
                         ini.set<cfg::globals::codec_id>(video_params.codec);
                         video_params = video_params_from_ini(
-//                            player.screen_rect.cx, player.screen_rect.cy,
-                            max_screen_dim.w, max_screen_dim.h,
                             std::chrono::seconds{video_break_interval}, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();

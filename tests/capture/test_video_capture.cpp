@@ -89,8 +89,7 @@ namespace
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
-            Level::high, drawable.width(), drawable.height(),
-            25, 15, 100000, format, false, false, false, video_interval, 0};
+            Level::high, 25, 15, 100000, format, false, false, false, video_interval, 0};
         CaptureParams capture_params{
             now, "video", nullptr, dirname, 0 /* groupid */, nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
@@ -106,8 +105,7 @@ namespace
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
-            Level::high, drawable.width(), drawable.height(),
-            25, 15, 100000, format, false, false, false, video_interval, 0};
+            Level::high, 25, 15, 100000, format, false, false, false, video_interval, 0};
         CaptureParams capture_params{
             now, "video", nullptr, dirname, 0 /* groupid */, nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
