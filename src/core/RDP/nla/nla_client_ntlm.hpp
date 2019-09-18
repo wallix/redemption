@@ -269,15 +269,15 @@ public:
                     auto client_to_server_hash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av, 
                                     this->SavedClientNonce.clientNonce,
                                     this->PublicKey);
-                    unsigned long MessageSeqNo = this->send_seq_num++;
+                    this->send_seq_num++;
                     v = emitTSRequest(6, auth_message, {}, 
-                                      CryptAndSign(this->SendRc4Seal, MessageSeqNo, client_to_server_hash),
+                                      CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, client_to_server_hash),
                                       0, this->SavedClientNonce.clientNonce, true);
                 }
                 else {
-                    unsigned long MessageSeqNo = this->send_seq_num++;
+                    this->send_seq_num++;
                     v = emitTSRequest(6, auth_message, {},
-                                      CryptAndSign(this->SendRc4Seal, MessageSeqNo, this->PublicKey),
+                                      CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, this->PublicKey),
                                       0, {}, false);
                 }
                 ts_request_emit.out_copy_bytes(v);
