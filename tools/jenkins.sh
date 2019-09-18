@@ -22,6 +22,8 @@ git submodule update --init
 eval `luarocks path`
 find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/c++-analyzer/check_log6.lua '{}' '+'
 
+./tools/c++-analyzer/unused_config.sh
+
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
