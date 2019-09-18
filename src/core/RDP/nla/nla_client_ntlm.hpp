@@ -22,9 +22,7 @@
 #pragma once
 
 #include "core/RDP/nla/credssp.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
-#include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
 #include "system/ssl_md4.hpp"
 #include "utils/difftimeval.hpp"
@@ -263,38 +261,25 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_public_key_echo");
                 uint32_t version = ts_request.use_version;
 
-
-                array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
+                // send authentication token to server
+                std::vector<uint8_t> v;
                 if (version >= 5) {
-                    LOG(LOG_INFO, "rdpClientNTLM::generate client nonce");
                     this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
-                    
-                    LOG(LOG_INFO, "rdpClientNTLM::generate public key hash (client->server)");
-                    SslSha256 sha256;
-                    uint8_t hash[SslSha256::DIGEST_LENGTH];
-                    sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-                    sha256.update(this->SavedClientNonce.clientNonce);
-                    sha256.update({this->PublicKey.data(),this->PublicKey.size()});
-                    sha256.final(hash);
-                    this->ClientServerHash.assign(hash, hash+sizeof(hash));
-                    public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
+                    auto client_to_server_hash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av, 
+                                    this->SavedClientNonce.clientNonce,
+                                    this->PublicKey);
+                    unsigned long MessageSeqNo = this->send_seq_num++;
+                    v = emitTSRequest(6, auth_message, {}, 
+                                      CryptAndSign(this->SendRc4Seal, MessageSeqNo, client_to_server_hash),
+                                      0, this->SavedClientNonce.clientNonce, true);
                 }
-
-                unsigned long MessageSeqNo = this->send_seq_num++;
-                // pubKeyAuth [signature][data_buffer]
-                
-                std::vector<uint8_t> pubKeyAuth = CryptAndSign(this->SendRc4Seal, MessageSeqNo, public_key);
-                /* send authentication token to server */
-                if (auth_message.size() > 0){
-                    LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Sending Authentication Token");
+                else {
+                    unsigned long MessageSeqNo = this->send_seq_num++;
+                    v = emitTSRequest(6, auth_message, {},
+                                      CryptAndSign(this->SendRc4Seal, MessageSeqNo, this->PublicKey),
+                                      0, {}, false);
                 }
-
-                LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
-                // TODO: check that I should be able to use negotiated version in version variable
-                auto v = emitTSRequest(6, auth_message, {}, pubKeyAuth, 0,
-                                       (version >= 5)?bytes_view(this->SavedClientNonce.clientNonce):bytes_view({}),
-                                       this->SavedClientNonce.initialized);
                 ts_request_emit.out_copy_bytes(v);
 
                 this->client_auth_data_state = Final;
