@@ -525,20 +525,14 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_bitrate", desc{"Bitrate for low quality."}, set(10000));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_framerate", desc{"Framerate for low quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_height", desc{"Height for low quality."}, set(480));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_width", desc{"Width for low quality."}, set(640));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_qscale", desc{"Qscale (parameter given to ffmpeg) for low quality."}, set(28));
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_bitrate", desc{"Bitrate for medium quality."}, set(20000));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_framerate", desc{"Framerate for medium quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_height", desc{"Height for medium quality."}, set(768));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_width", desc{"Width for medium quality."}, set(1024));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_qscale", desc{"Qscale (parameter given to ffmpeg) for medium quality."}, set(14));
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_bitrate", desc{"Bitrate for high quality."}, set(30000));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_framerate", desc{"Framerate for high quality."}, set(5));
-        // W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
-        // W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));

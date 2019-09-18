@@ -1026,16 +1026,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #l_framerate = 5
 
-# Height for low quality.
-# min = 0
-#_advanced
-#l_height = 480
-
-# Width for low quality.
-# min = 0
-#_advanced
-#l_width = 640
-
 # Qscale (parameter given to ffmpeg) for low quality.
 # min = 0
 #_advanced
@@ -1050,16 +1040,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 0
 #_advanced
 #m_framerate = 5
-
-# Height for medium quality.
-# min = 0
-#_advanced
-#m_height = 768
-
-# Width for medium quality.
-# min = 0
-#_advanced
-#m_width = 1024
 
 # Qscale (parameter given to ffmpeg) for medium quality.
 # min = 0

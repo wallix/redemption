@@ -1668,22 +1668,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "l_height")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::l_height&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "l_width")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::l_width&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "l_qscale")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1704,22 +1688,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::video::m_framerate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "m_height")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::m_height&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "m_width")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::m_width&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
             );

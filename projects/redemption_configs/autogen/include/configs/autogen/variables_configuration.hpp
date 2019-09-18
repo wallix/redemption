@@ -3145,32 +3145,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    /// Height for low quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{480} <br/>
-    struct video::l_height {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "l_height";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{480};
-    };
-    /// Width for low quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{640} <br/>
-    struct video::l_width {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "l_width";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{640};
-    };
     /// Qscale (parameter given to ffmpeg) for low quality. <br/>
     /// type: unsigned int <br/>
     /// value{28} <br/>
@@ -3209,32 +3183,6 @@ namespace cfg {
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{5};
-    };
-    /// Height for medium quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{768} <br/>
-    struct video::m_height {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "m_height";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{768};
-    };
-    /// Width for medium quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{1024} <br/>
-    struct video::m_width {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "m_width";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{1024};
     };
     /// Qscale (parameter given to ffmpeg) for medium quality. <br/>
     /// type: unsigned int <br/>
@@ -5289,13 +5237,9 @@ struct video
 , cfg::video::png_limit
 , cfg::video::l_bitrate
 , cfg::video::l_framerate
-, cfg::video::l_height
-, cfg::video::l_width
 , cfg::video::l_qscale
 , cfg::video::m_bitrate
 , cfg::video::m_framerate
-, cfg::video::m_height
-, cfg::video::m_width
 , cfg::video::m_qscale
 , cfg::video::h_bitrate
 , cfg::video::h_framerate

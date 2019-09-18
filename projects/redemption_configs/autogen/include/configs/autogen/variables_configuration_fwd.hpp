@@ -257,13 +257,9 @@ namespace cfg {
         struct bogus_vlc_frame_rate;
         struct l_bitrate;
         struct l_framerate;
-        struct l_height;
-        struct l_width;
         struct l_qscale;
         struct m_bitrate;
         struct m_framerate;
-        struct m_height;
-        struct m_width;
         struct m_qscale;
         struct h_bitrate;
         struct h_framerate;

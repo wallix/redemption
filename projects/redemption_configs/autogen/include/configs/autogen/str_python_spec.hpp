@@ -869,14 +869,6 @@ l_bitrate = integer(min=0, default=10000)
 #_advanced
 l_framerate = integer(min=0, default=5)
 
-# Height for low quality.
-#_advanced
-l_height = integer(min=0, default=480)
-
-# Width for low quality.
-#_advanced
-l_width = integer(min=0, default=640)
-
 # Qscale (parameter given to ffmpeg) for low quality.
 #_advanced
 l_qscale = integer(min=0, default=28)
@@ -888,14 +880,6 @@ m_bitrate = integer(min=0, default=20000)
 # Framerate for medium quality.
 #_advanced
 m_framerate = integer(min=0, default=5)
-
-# Height for medium quality.
-#_advanced
-m_height = integer(min=0, default=768)
-
-# Width for medium quality.
-#_advanced
-m_width = integer(min=0, default=1024)
 
 # Qscale (parameter given to ffmpeg) for medium quality.
 #_advanced
