@@ -1618,10 +1618,6 @@ test-run tests/core/RDP/mppc/test_mppc_61 :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/mppc/mppc_61.hpp
 ;
-test-run tests/core/RDP/nla/asn1/test_ber :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/asn1/test_ber.cpp
-:
-;
 test-run tests/core/RDP/nla/kerberos/test_credentials :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_credentials.cpp
 :
@@ -1678,6 +1674,17 @@ test-run tests/core/RDP/nla/test_nla :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
+test-run tests/core/RDP/nla/test_nla2 :
+  $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_nla2.cpp
+:
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -5536,13 +5543,13 @@ alias test_mppc_40 : tests/core/RDP/mppc/test_mppc_40 ;
 alias test_mppc_50 : tests/core/RDP/mppc/test_mppc_50 ;
 alias test_mppc_60 : tests/core/RDP/mppc/test_mppc_60 ;
 alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
-alias test_ber : tests/core/RDP/nla/asn1/test_ber ;
 alias test_credentials : tests/core/RDP/nla/kerberos/test_credentials ;
 alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
 alias test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair ;
 alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
 alias test_credssp : tests/core/RDP/nla/test_credssp ;
 alias test_nla : tests/core/RDP/nla/test_nla ;
+alias test_nla2 : tests/core/RDP/nla/test_nla2 ;
 alias test_sspi : tests/core/RDP/nla/test_sspi ;
 alias test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing ;
 alias test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon ;
@@ -6229,9 +6236,6 @@ alias tests/core/RDP/mppc.norec :
   tests/core/RDP/mppc/test_mppc_60
   tests/core/RDP/mppc/test_mppc_61
 ;
-alias tests/core/RDP/nla/asn1.norec :
-  tests/core/RDP/nla/asn1/test_ber
-;
 alias tests/core/RDP/nla/kerberos.norec :
   tests/core/RDP/nla/kerberos/test_credentials
   tests/core/RDP/nla/kerberos/test_kerberos
@@ -6243,6 +6247,7 @@ alias tests/core/RDP/nla/ntlm.norec :
 alias tests/core/RDP/nla.norec :
   tests/core/RDP/nla/test_credssp
   tests/core/RDP/nla/test_nla
+  tests/core/RDP/nla/test_nla2
   tests/core/RDP/nla/test_sspi
 ;
 alias tests/core/RDP/orders.norec :
@@ -6653,17 +6658,13 @@ alias tests/core/RDP/gcc :
 alias tests/core/RDP/mppc :
   tests/core/RDP/mppc.norec
 ;
-alias tests/core/RDP/nla/asn1 :
-  tests/core/RDP/nla/asn1.norec
+alias tests/core/RDP/nla/kerberos :
+  tests/core/RDP/nla/kerberos.norec
 ;
 alias tests/core/RDP/nla :
-  tests/core/RDP/nla/asn1
   tests/core/RDP/nla/kerberos
   tests/core/RDP/nla/ntlm
   tests/core/RDP/nla.norec
-;
-alias tests/core/RDP/nla/kerberos :
-  tests/core/RDP/nla/kerberos.norec
 ;
 alias tests/core/RDP/nla/ntlm :
   tests/core/RDP/nla/ntlm.norec
@@ -6789,7 +6790,6 @@ explicit
   tests/core/RDP/channels.norec
   tests/core/RDP/gcc/userdata.norec
   tests/core/RDP/mppc.norec
-  tests/core/RDP/nla/asn1.norec
   tests/core/RDP/nla/kerberos.norec
   tests/core/RDP/nla/ntlm.norec
   tests/core/RDP/nla.norec
@@ -6846,9 +6846,8 @@ explicit
   tests/core/RDP/gcc/userdata
   tests/core/RDP/gcc
   tests/core/RDP/mppc
-  tests/core/RDP/nla/asn1
-  tests/core/RDP/nla
   tests/core/RDP/nla/kerberos
+  tests/core/RDP/nla
   tests/core/RDP/nla/ntlm
   tests/core/RDP/orders
   tests/core/RDPEA
