@@ -131,7 +131,10 @@
 "#experimental_enable_serializer_data_block_size_limit = 0\n\n"
 
 "#_advanced\n"
-"#experimental_support_resize_session_during_recording = 0\n\n"
+"#experimental_support_resize_session_during_recording = 1\n\n"
+
+"#_advanced\n"
+"#support_connection_redirection_during_recording = 1\n\n"
 
 "# Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
 "# !!!May cause FreeRDP-based client to CRASH!!!\n"

@@ -58,8 +58,17 @@ void ModuleManager::create_mod_rdp(
     //    // default is "allow", do nothing special
     //}
 
-    unique_fd client_sck = this->connect_to_target_host(
-        report_message, trkeys::authentification_rdp_fail);
+    unique_fd client_sck = [this, &report_message]() {
+            try {
+                return this->connect_to_target_host(
+                    report_message, trkeys::authentification_rdp_fail);
+            }
+            catch (...) {
+                this->front.must_be_stop_capture();
+
+                throw;
+            }
+        }();
 
     // BEGIN READ PROXY_OPT
     if (ini.get<cfg::globals::enable_wab_integration>()) {
@@ -276,6 +285,10 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.experimental_fix_input_event_sync   = ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
     mod_rdp_params.experimental_fix_too_long_cookie    = ini.get<cfg::mod_rdp::experimental_fix_too_long_cookie>();
+
+    mod_rdp_params.support_connection_redirection_during_recording =
+                                                         ini.get<cfg::globals::support_connection_redirection_during_recording>();
+
     mod_rdp_params.log_only_relevant_clipboard_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
@@ -421,6 +434,8 @@ void ModuleManager::create_mod_rdp(
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "FAIL";
         report_message.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, this->session_reactor.get_current_time());
+
+        this->front.must_be_stop_capture();
 
         throw;
     }

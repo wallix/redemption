@@ -383,6 +383,8 @@ private:
     const bool                        experimental_fix_input_event_sync;
     const bool                        experimental_fix_too_long_cookie;
 
+    const bool                        support_connection_redirection_during_recording;
+
     std::string session_probe_target_informations;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
@@ -815,6 +817,7 @@ public:
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
+        , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -2717,7 +2720,9 @@ public:
                 LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
 
                 if (e.id == ERR_RDP_SERVER_REDIR) {
-                    this->front.must_be_stop_capture();
+                    if (!this->support_connection_redirection_during_recording) {
+                        this->front.must_be_stop_capture();
+                    }
                     throw;
                 }
 
