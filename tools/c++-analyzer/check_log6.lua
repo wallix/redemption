@@ -1,5 +1,4 @@
-#!lua
-
+#!/usr/bin/env lua
 function readall(fname)
     f,e = io.open(fname)
     if e then
@@ -38,9 +37,9 @@ do
 
     Log6 = P{
         Ct(Ct( Until('log6') * Cp * '('
-            * Ct(Until(LogId, logid+kvlog)^0)
-            * Ct(Until(KVArgs, kvlog+';')^0)
-            )^0),
+             * Ct(Until(LogId, logid+kvlog)^0)
+             * Ct(Until(KVArgs, kvlog+';')^0)
+             )^0),
         Balanced = Balanced,
     }
 
@@ -80,7 +79,7 @@ for _,v in ipairs(LogIds:match(readall('src/core/log_id.hpp'))) do
     ids[v] = 0
     i = i + 1
 end
-assert(i > 10) -- random number
+assert(i > 10) -- random magic number
 
 logs = {}
 for _,fname in ipairs(arg) do
