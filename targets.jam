@@ -1638,10 +1638,6 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/nla/kerberos/kerberos.hpp
 ;
-test-run tests/core/RDP/nla/ntlm/test_ntlm_avpair :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_avpair.cpp
-:
-;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
 :
@@ -1687,10 +1683,6 @@ test-run tests/core/RDP/nla/test_nla2 :
   <library>src/utils/stacktrace.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/core/RDP/nla/test_sspi :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_sspi.cpp
-:
 ;
 test-run tests/core/RDP/orders/test_AlternateSecondaryWindowing :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_AlternateSecondaryWindowing.cpp
@@ -5545,12 +5537,10 @@ alias test_mppc_60 : tests/core/RDP/mppc/test_mppc_60 ;
 alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
 alias test_credentials : tests/core/RDP/nla/kerberos/test_credentials ;
 alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
-alias test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair ;
 alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
 alias test_credssp : tests/core/RDP/nla/test_credssp ;
 alias test_nla : tests/core/RDP/nla/test_nla ;
 alias test_nla2 : tests/core/RDP/nla/test_nla2 ;
-alias test_sspi : tests/core/RDP/nla/test_sspi ;
 alias test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing ;
 alias test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon ;
 alias test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt ;
@@ -6241,14 +6231,12 @@ alias tests/core/RDP/nla/kerberos.norec :
   tests/core/RDP/nla/kerberos/test_kerberos
 ;
 alias tests/core/RDP/nla/ntlm.norec :
-  tests/core/RDP/nla/ntlm/test_ntlm_avpair
   tests/core/RDP/nla/ntlm/test_ntlm_message
 ;
 alias tests/core/RDP/nla.norec :
   tests/core/RDP/nla/test_credssp
   tests/core/RDP/nla/test_nla
   tests/core/RDP/nla/test_nla2
-  tests/core/RDP/nla/test_sspi
 ;
 alias tests/core/RDP/orders.norec :
   tests/core/RDP/orders/test_AlternateSecondaryWindowing
