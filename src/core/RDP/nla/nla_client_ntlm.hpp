@@ -75,21 +75,6 @@ private:
     array_md5 ExportedSessionKey;
     array_md5 ClientSealingKey;
     array_md5 sspi_context_ServerSigningKey;
-    array_md5 ServerSealingKey;
-    // uint8_t NtProofStr[16];
-
-    // GSS_Acquire_cred
-    // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    // Inlined
-
-    // GSS_Init_sec_context
-    // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-
-    // GSS_Wrap
-    // ENCRYPT_MESSAGE EncryptMessage;
-
-    // GSS_Unwrap
-    // DECRYPT_MESSAGE DecryptMessage;
     bool restricted_admin_mode;
 
     const bool verbose;
@@ -226,8 +211,6 @@ public:
                         "session key to client-to-server sealing key magic constant\0"_av);
                 this->sspi_context_ServerSigningKey = ::Md5(this->ExportedSessionKey,
                         "session key to server-to-client signing key magic constant\0"_av);
-                this->ServerSealingKey = ::Md5(this->ExportedSessionKey,
-                        "session key to server-to-client sealing key magic constant\0"_av);
 
                 this->SendRc4Seal.set_key(this->ClientSealingKey);
 
@@ -341,7 +324,7 @@ public:
                 array_view_const_u8 pubkeyAuth_signature = {ts_request.pubKeyAuth.data(),cbMaxSignature};
 
                 SslRC4 RecvRc4Seal {};
-                RecvRc4Seal.set_key(this->ServerSealingKey);
+                RecvRc4Seal.set_key(::Md5(this->ExportedSessionKey, "session key to server-to-client sealing key magic constant\0"_av));
                 // decrypt message using RC4
                 auto pubkeyAuth_encrypted_payload = Rc4CryptVector(RecvRc4Seal, pubkeyAuth_payload);
 
