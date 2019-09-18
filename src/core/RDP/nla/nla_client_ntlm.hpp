@@ -306,21 +306,18 @@ public:
 
                 SslRC4 RecvRc4Seal {};
                 RecvRc4Seal.set_key(::Md5(this->ExportedSessionKey, "session key to server-to-client sealing key magic constant\0"_av));
-                // decrypt message using RC4
-                auto pubkeyAuth_encrypted_payload = Rc4CryptVector(RecvRc4Seal, pubkeyAuth_payload);
-
+                auto pubkeyAuth_encrypted_payload = Rc4CryptVector(RecvRc4Seal, pubkeyAuth_payload); // decrypt message using RC4
                 array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, out_uint32_le(recv_seqno), pubkeyAuth_encrypted_payload);
-                /* RC4-encrypt first 8 bytes of digest (digest is 16 bytes long)*/
-                auto checksum = Rc4Crypt<8>(RecvRc4Seal, digest);
-                /* Concatenate version, ciphertext and sequence number to build signature */
-                StaticOutStream<16> expected_signature;
-                expected_signature.out_uint32_le(1); // version 1
-                expected_signature.out_copy_bytes(checksum);
-                expected_signature.out_uint32_le(recv_seqno);
 
-                if (!are_buffer_equal(pubkeyAuth_signature, expected_signature.get_bytes())) {
+                // Concatenate version, ciphertext and sequence number to build signature
+                auto expected_signature = std::vector<uint8_t>{} 
+                    << out_uint32_le(1)                 // version 1
+                    << Rc4Crypt<8>(RecvRc4Seal, digest) // RC4-encrypt first 8 bytes of digest (digest is 16 bytes long)
+                    << out_uint32_le(recv_seqno);       // sequence number 
+
+                if (!are_buffer_equal(pubkeyAuth_signature, expected_signature)) {
                     LOG(LOG_ERR, "public key echo signature verification failed, something nasty is going on!");
-                    LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature.get_bytes());
+                    LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
                     LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
                     return credssp::State::Err;
                 }
@@ -330,7 +327,7 @@ public:
                     ::ap_integer_decrement_le(pubkeyAuth_encrypted_payload);
                     if (!are_buffer_equal(this->PublicKey, pubkeyAuth_encrypted_payload)){
                         LOG(LOG_ERR, "Server's public key echo signature verification failed");
-                        LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature.get_bytes());
+                        LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
                         LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
                         return credssp::State::Err;
                     }
@@ -341,13 +338,12 @@ public:
                            this->PublicKey);
                     if (!are_buffer_equal(hash, pubkeyAuth_encrypted_payload)){
                         LOG(LOG_ERR, "Server's public key echo signature verification failed");
-                        LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature.get_bytes());
+                        LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
                         LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
                         return credssp::State::Err;
                     }
                 }
 
-                /* Send encrypted credentials */
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_ts_credentials");
 
                 {
@@ -359,6 +355,8 @@ public:
                         }
                         else {
                             ts_credentials = emitTSCredentialsPassword(this->identity_Domain,this->identity_User,this->identity_Password);
+                            LOG(LOG_INFO, "TSCredentialsPassword: Domain User Password");
+                            hexdump_d(ts_credentials);
                         }
                     }
                     else {
