@@ -38,7 +38,6 @@ class rdpClientNTLM
 {
     static constexpr uint32_t cbMaxSignature = 16;
 private:
-    int send_seq_num = 0;
     int recv_seq_num = 0;
 
     TSCredentials ts_credentials;
@@ -269,13 +268,11 @@ public:
                     auto client_to_server_hash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av, 
                                     this->SavedClientNonce.clientNonce,
                                     this->PublicKey);
-                    this->send_seq_num++;
                     v = emitTSRequest(6, auth_message, {}, 
                                       CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, client_to_server_hash),
                                       0, this->SavedClientNonce.clientNonce, true);
                 }
                 else {
-                    this->send_seq_num++;
                     v = emitTSRequest(6, auth_message, {},
                                       CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, this->PublicKey),
                                       0, {}, false);
@@ -374,7 +371,7 @@ public:
                                         /*containerName*/{}, /*cspName*/{});
                     }
                     
-                    unsigned long MessageSeqNo = this->send_seq_num++;
+                    unsigned long MessageSeqNo = 1;
 
                     // authInfo [signature][data_buffer]
                     std::vector<uint8_t> authInfo = CryptAndSign(this->SendRc4Seal, MessageSeqNo, ts_credentials);
