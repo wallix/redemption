@@ -298,10 +298,9 @@ public:
                 }
 
                 /* Verify Server Public Key Echo */
-                unsigned long MessageSeqNo = this->recv_seq_num++;
-
                 // data_in [signature][data_buffer]
 
+                const unsigned recv_seqno = 0;
                 array_view_const_u8 pubkeyAuth_payload = {ts_request.pubKeyAuth.data()+cbMaxSignature, ts_request.pubKeyAuth.size()-cbMaxSignature};
                 array_view_const_u8 pubkeyAuth_signature = {ts_request.pubKeyAuth.data(),cbMaxSignature};
 
@@ -310,15 +309,14 @@ public:
                 // decrypt message using RC4
                 auto pubkeyAuth_encrypted_payload = Rc4CryptVector(RecvRc4Seal, pubkeyAuth_payload);
 
-                std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-                array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, pubkeyAuth_encrypted_payload);
+                array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, out_uint32_le(recv_seqno), pubkeyAuth_encrypted_payload);
                 /* RC4-encrypt first 8 bytes of digest (digest is 16 bytes long)*/
                 auto checksum = Rc4Crypt<8>(RecvRc4Seal, digest);
                 /* Concatenate version, ciphertext and sequence number to build signature */
                 StaticOutStream<16> expected_signature;
                 expected_signature.out_uint32_le(1); // version 1
                 expected_signature.out_copy_bytes(checksum);
-                expected_signature.out_uint32_le(MessageSeqNo);
+                expected_signature.out_uint32_le(recv_seqno);
 
                 if (!are_buffer_equal(pubkeyAuth_signature, expected_signature.get_bytes())) {
                     LOG(LOG_ERR, "public key echo signature verification failed, something nasty is going on!");
