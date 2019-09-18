@@ -1810,22 +1810,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "sec")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::sec&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "rdp")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::rdp&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "primary_orders")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1846,14 +1830,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::debug::bitmap_update&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "bitmap")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::bitmap&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
             );
@@ -1918,22 +1894,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::debug::mod_xup&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "widget")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::widget&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "input")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::input&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
             );

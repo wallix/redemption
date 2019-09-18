@@ -216,9 +216,6 @@ cfg::translation::password_fr <- password_fr   [std::string]
 
 cfg::context::psid -> psid   [std::string]
     Proxy session log id
-cfg::context::opt_bitrate <- bitrate   [unsigned int]
-cfg::context::opt_framerate <- framerate   [unsigned int]
-cfg::context::opt_qscale <- qscale   [unsigned int]
 cfg::context::opt_bpp <-> bpp   [ColorDepth]
     Specifies the maximum color resolution (color depth) for client session:
       8: 8-bit

@@ -938,14 +938,6 @@ fake_target_ip = string(default='')
 
 #_advanced
 #_hex
-sec = integer(min=0, default=0)
-
-#_advanced
-#_hex
-rdp = integer(min=0, default=0)
-
-#_advanced
-#_hex
 primary_orders = integer(min=0, default=0)
 
 #_advanced
@@ -955,10 +947,6 @@ secondary_orders = integer(min=0, default=0)
 #_advanced
 #_hex
 bitmap_update = integer(min=0, default=0)
-
-#_advanced
-#_hex
-bitmap = integer(min=0, default=0)
 
 #_advanced
 #_hex
@@ -991,14 +979,6 @@ mod_internal = integer(min=0, default=0)
 #_advanced
 #_hex
 mod_xup = integer(min=0, default=0)
-
-#_advanced
-#_hex
-widget = integer(min=0, default=0)
-
-#_advanced
-#_hex
-input = integer(min=0, default=0)
 
 #_hidden
 password = integer(min=0, default=0)

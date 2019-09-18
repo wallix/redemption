@@ -279,12 +279,9 @@ namespace cfg {
 
     struct debug {
         struct fake_target_ip;
-        struct sec;
-        struct rdp;
         struct primary_orders;
         struct secondary_orders;
         struct bitmap_update;
-        struct bitmap;
         struct capture;
         struct auth;
         struct session;
@@ -293,8 +290,6 @@ namespace cfg {
         struct mod_vnc;
         struct mod_internal;
         struct mod_xup;
-        struct widget;
-        struct input;
         struct password;
         struct compression;
         struct cache;
@@ -321,9 +316,6 @@ namespace cfg {
 
     struct context {
         struct psid;
-        struct opt_bitrate;
-        struct opt_framerate;
-        struct opt_qscale;
         struct opt_bpp;
         struct opt_height;
         struct opt_width;

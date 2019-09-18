@@ -129,11 +129,8 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
                                                                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -142,8 +139,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -198,10 +193,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
-
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
@@ -435,11 +426,8 @@ RED_AUTO_TEST_CASE(TestConfig1)
                                                                "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88"
                                                                "\x77\x66\x55\x44\x33\x22\x11\x00", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -448,8 +436,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(1,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(256,                              ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(128,                              ini.get<cfg::debug::cache>());
@@ -507,9 +493,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -649,11 +632,8 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
                                                                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -662,8 +642,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -716,9 +694,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
 
     RED_CHECK_EQUAL(1,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -823,11 +798,8 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -836,8 +808,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -894,9 +864,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -1008,11 +975,8 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1021,8 +985,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1079,9 +1041,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -1168,11 +1127,8 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1181,8 +1137,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1238,9 +1192,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -1328,11 +1279,8 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1341,8 +1289,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(3,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(3,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1398,9 +1344,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -1474,11 +1417,8 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1487,8 +1427,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1544,9 +1482,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -1622,11 +1557,8 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::bitmap>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1635,8 +1567,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::widget>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::input>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1692,9 +1622,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
 
-    RED_CHECK_EQUAL(40000,                            ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(5,                                ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
@@ -1787,20 +1714,6 @@ RED_AUTO_TEST_CASE(TestLogPolicy)
 RED_AUTO_TEST_CASE(TestContextSetValue)
 {
     Inifile             ini;
-
-    // bitrate, framerate, qscale
-    ini.get_acl_field(cfg::context::opt_bitrate::index).set(cstr_array_view("80000"));
-    ini.get_acl_field(cfg::context::opt_framerate::index).set(cstr_array_view("6"));
-    ini.get_acl_field(cfg::context::opt_qscale::index).set(cstr_array_view("16"));
-
-    RED_CHECK_EQUAL(80000, ini.get<cfg::context::opt_bitrate>());
-    RED_CHECK_EQUAL(6,     ini.get<cfg::context::opt_framerate>());
-    RED_CHECK_EQUAL(16,    ini.get<cfg::context::opt_qscale>());
-
-    RED_CHECK_EQUAL("80000", ini.get_acl_field(cfg::context::opt_bitrate::index).to_string_view().data());
-    RED_CHECK_EQUAL("6",     ini.get_acl_field(cfg::context::opt_framerate::index).to_string_view().data());
-    RED_CHECK_EQUAL("16",    ini.get_acl_field(cfg::context::opt_qscale::index).to_string_view().data());
-
 
     // bpp, height, width
     ini.get_acl_field(cfg::context::opt_bpp::index).ask();

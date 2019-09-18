@@ -563,14 +563,11 @@ void config_spec_definition(Writer && W)
     W.section("debug", [&]
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "fake_target_ip");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sec");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "rdp");
 
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "primary_orders");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "secondary_orders");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "bitmap_update");
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "bitmap");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "capture");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "auth");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "session");
@@ -581,8 +578,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_internal");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_xup");
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "widget");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "input");
         W.member(hidden_in_gui, no_sesman, L, type_<types::u32>(), "password");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "compression");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "cache");
@@ -644,10 +639,6 @@ void config_spec_definition(Writer && W)
         auto co_probe = connpolicy::section{"session_probe"};
 
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "psid", desc{"Proxy session log id"});
-
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "opt_bitrate", sesman::name{"bitrate"}, set(40000));
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "opt_framerate", sesman::name{"framerate"}, set(5));
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "opt_qscale", sesman::name{"qscale"}, set(15));
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<ColorDepth>(), "opt_bpp", sesman::name{"bpp"}, set(ColorDepth::depth24));
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<types::u16>(), "opt_height", sesman::name{"height"}, set(600));
