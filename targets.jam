@@ -47,6 +47,7 @@ exe headlessclient :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -180,6 +181,7 @@ exe rdpproxy :
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -292,6 +294,7 @@ exe rdpclient :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -536,6 +539,7 @@ test-run tests/acl/test_dispatch_report_message :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
@@ -639,6 +643,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -890,6 +895,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
@@ -968,6 +974,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
@@ -1023,6 +1030,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
@@ -1065,6 +1073,7 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -1105,6 +1114,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -1145,6 +1155,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -1185,6 +1196,7 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -1224,6 +1236,7 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -1936,6 +1949,7 @@ test-run tests/core/RDP/test_clipboard :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -2143,6 +2157,7 @@ test-run tests/core/RDPEA/test_audio_output :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2182,6 +2197,7 @@ test-run tests/core/test_channel_list :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2347,6 +2363,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -2487,6 +2504,7 @@ test-run tests/core/test_session :
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -2589,6 +2607,7 @@ test-run tests/front/test_front :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -2775,6 +2794,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
@@ -2804,6 +2824,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
@@ -2846,6 +2867,7 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2891,6 +2913,7 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2931,6 +2954,7 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2973,6 +2997,7 @@ test-run tests/mod/internal/test_flat_wait_mod :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -3013,6 +3038,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -3090,6 +3116,7 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -3132,6 +3159,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
@@ -3826,6 +3854,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3839,6 +3868,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3861,6 +3891,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -3878,6 +3909,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/report_error.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -3897,6 +3929,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/report_error.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -3926,6 +3959,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -3951,6 +3985,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -3972,6 +4007,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4028,6 +4064,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
@@ -4059,6 +4096,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/mod/metrics.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4083,6 +4121,7 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>src/core/font.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -4214,6 +4253,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
   <library>src/mod/metrics.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -4370,6 +4410,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -4429,6 +4470,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -4488,6 +4530,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -5398,6 +5441,7 @@ obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/parse_extra_orders.o : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
+obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
 obj src/mod/vnc/encoder/copyrect.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/copyrect.cpp ;
 obj src/mod/vnc/encoder/cursor.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/cursor.cpp ;
 obj src/mod/vnc/encoder/hextile.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/hextile.cpp ;

@@ -47,7 +47,7 @@ private:
     std::vector<uint8_t> PublicKey;
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> identity_User;
-    std::vector<uint8_t> identity_Domain;
+    std::vector<uint8_t> utf16_domain;
     std::vector<uint8_t> identity_Password;
 
     TimeObj & timeobj;
@@ -107,7 +107,7 @@ private:
 
 public:
     rdpClientNTLM(uint8_t * user,
-               uint8_t * domain,
+               bytes_view domain,
                uint8_t * pass,
                uint8_t * hostname,
                const char * target_host,
@@ -118,7 +118,7 @@ public:
                const bool verbose = false)
         : PublicKey(public_key.data(), public_key.data()+public_key.size())
         , identity_User(::UTF8toUTF16({user,strlen(reinterpret_cast<char*>(user))}))
-        , identity_Domain(::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))}))
+        , utf16_domain(::UTF8toUTF16(domain))
         , identity_Password(::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))}))
         , timeobj(timeobj)
         , rand(rand)
@@ -166,8 +166,8 @@ public:
                 // - LmChallengeResponse
                 // all strings are in unicode utf16
 
-                array_md5 ResponseKeyNT = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->identity_Domain);
-                array_md5 ResponseKeyLM = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->identity_Domain);
+                array_md5 ResponseKeyNT = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->utf16_domain);
+                array_md5 ResponseKeyLM = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->identity_User), this->utf16_domain);
 
                 const timeval tv = this->timeobj.get_time(); // Timestamp
                 array_challenge ClientChallenge; // Nonce(8)
@@ -228,7 +228,7 @@ public:
                     ntlm_version,
                     LmChallengeResponse,
                     NtChallengeResponse,
-                    this->identity_Domain,
+                    this->utf16_domain,
                     this->identity_User,
                     this->Workstation,
                     AuthEncryptedRSK,
@@ -248,7 +248,7 @@ public:
                                 ntlm_version,
                                 LmChallengeResponse,
                                 NtChallengeResponse,
-                                this->identity_Domain,
+                                this->utf16_domain,
                                 this->identity_User,
                                 this->Workstation,
                                 AuthEncryptedRSK,
@@ -354,7 +354,7 @@ public:
                             ts_credentials = emitTSCredentialsPassword({},{},{});
                         }
                         else {
-                            ts_credentials = emitTSCredentialsPassword(this->identity_Domain,this->identity_User,this->identity_Password);
+                            ts_credentials = emitTSCredentialsPassword(this->utf16_domain,this->identity_User,this->identity_Password);
                             LOG(LOG_INFO, "TSCredentialsPassword: Domain User Password");
                             hexdump_d(ts_credentials);
                         }

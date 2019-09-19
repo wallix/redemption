@@ -4714,10 +4714,10 @@ public:
         //    "Domain username format 0=(%s) Domain username format 1=(%s)",
         //    domain_username_format_0, domain_username_format_0);
 
-        if (this->disconnect_on_logon_user_change &&
-            ((0 != ::strcasecmp(domain, this->logon_info.domain())
+        if (this->disconnect_on_logon_user_change 
+            && ((0 != ::strcasecmp(domain, this->logon_info.domain().c_str())
              || 0 != ::strcasecmp(username, this->logon_info.username())) &&
-             (this->logon_info.domain()[0] ||
+             (this->logon_info.domain().c_str() ||
               (0 != ::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
                0 != ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
                0 != ::strcasecmp(username, this->logon_info.username()))))) {
@@ -4732,8 +4732,8 @@ public:
             LOG(LOG_ERR,
                 "Unauthorized logon user change detected on %s (%s%s%s) -> (%s%s%s). "
                     "The session will be disconnected.",
-                this->logon_info.hostname(), this->logon_info.domain(),
-                (*this->logon_info.domain() ? "\\" : ""),
+                this->logon_info.hostname(), this->logon_info.domain().c_str(),
+                (*this->logon_info.domain().c_str() ? "\\" : ""),
                 this->logon_info.username(), domain,
                 ((domain && *domain) ? "\\" : ""),
                 username);

@@ -113,16 +113,9 @@ private:
             }
         }
 
-        void SetDomainFromUtf8(const uint8_t * domain)
+        void SetDomainFromUtf8(bytes_view domain)
         {
-            if (domain) {
-                size_t domain_len = UTF8Len(domain);
-                this->Domain = std::vector<uint8_t>(domain_len * 2);
-                UTF8toUTF16({domain, strlen(char_ptr_cast(domain))}, this->Domain.data(), domain_len * 2);
-            }
-            else {
-                this->Domain.clear();
-            }
+            this->Domain = ::UTF8toUTF16(domain);
         }
 
         void SetPasswordFromUtf8(const uint8_t * password)
@@ -709,7 +702,7 @@ private:
     }
 
 private:
-    void set_credentials(uint8_t const* user, uint8_t const* domain,
+    void set_credentials(uint8_t const* user, bytes_view domain,
                          uint8_t const* pass, uint8_t const* hostname) {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::set_credentials");
         this->identity.SetUserFromUtf8(user);
@@ -717,7 +710,6 @@ private:
         this->identity.SetPasswordFromUtf8(pass);
         this->SetHostnameFromUtf8(hostname);
         // hexdump_c(user, strlen((char*)user));
-        // hexdump_c(domain, strlen((char*)domain));
         // hexdump_c(pass, strlen((char*)pass));
         // hexdump_c(hostname, strlen((char*)hostname));
         this->identity.SetKrbAuthIdentity(user, pass);
@@ -726,7 +718,7 @@ private:
 public:
     rdpCredsspClientKerberos(OutTransport transport,
                uint8_t * user,
-               uint8_t * domain,
+               bytes_view domain,
                uint8_t * pass,
                uint8_t * hostname,
                const char * target_host,

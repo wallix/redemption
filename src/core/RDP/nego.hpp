@@ -65,7 +65,7 @@ private:
     uint8_t hostname[16];
     uint8_t user[128];
     uint8_t password[2048];
-    uint8_t domain[256];
+    std::vector<uint8_t> domain;
     const char * target_host;
 
     uint8_t * current_password;
@@ -111,7 +111,7 @@ public:
 
     ~RdpNego();
 
-    void set_identity(char const * user, char const * domain, char const * pass, char const * hostname);
+    void set_identity(char const * user, bytes_view domain, char const * pass, char const * hostname);
 
     void send_negotiation_request(OutTransport trans);
 

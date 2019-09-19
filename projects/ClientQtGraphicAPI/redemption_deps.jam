@@ -27,6 +27,7 @@ add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/wi
 add_obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 add_obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 add_obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
+add_obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
 add_obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 add_obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 add_obj src/mod/vnc/encoder/copyrect.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/copyrect.cpp ;
@@ -102,6 +103,7 @@ requirement_list += <library>src/mod/internal/widget/label.o ;
 requirement_list += <library>src/mod/metrics.o ;
 requirement_list += <library>src/mod/rdp/channels/sespro_channel_params.o ;
 requirement_list += <library>src/mod/rdp/new_mod_rdp.o ;
+requirement_list += <library>src/mod/rdp/rdp_negociation_data.o ;
 requirement_list += <library>src/mod/rdp/rdp_negociation.o ;
 requirement_list += <library>src/mod/rdp/rdp.o ;
 requirement_list += <library>src/mod/vnc/encoder/copyrect.o ;

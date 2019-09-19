@@ -23,7 +23,6 @@
 */
 
 #include "mod/rdp/rdp_negociation.hpp"
-#include "mod/rdp/rdp_negociation.hpp"
 #include "core/log_id.hpp"
 #include "core/app_path.hpp"
 #include "core/RDP/autoreconnect.hpp"
@@ -50,85 +49,6 @@
 #include <cstring>
 
 
-RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name,
-                           char const* target_user, bool split_domain) noexcept
-{
-    if (::strlen(hostname) >= sizeof(this->_hostname)) {
-        LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(hostname), sizeof(this->_hostname));
-    }
-    if (hide_client_name) {
-        ::gethostname(this->_hostname, sizeof(this->_hostname));
-        this->_hostname[sizeof(this->_hostname) - 1] = 0;
-        char* separator = strchr(this->_hostname, '.');
-        if (separator) *separator = 0;
-    }
-    else{
-        ::strncpy(this->_hostname, hostname, sizeof(this->_hostname) - 1);
-        this->_hostname[sizeof(this->_hostname) - 1] = 0;
-    }
-
-    const char * domain_pos   = nullptr;
-    size_t       domain_len   = 0;
-    const char * username_pos = nullptr;
-    size_t       username_len = 0;
-    const char * separator = strchr(target_user, '\\');
-    const char * separator_a = strchr(target_user, '@');
-
-    username_pos = target_user;
-    username_len = strlen(username_pos);
-
-    if (separator && !separator_a)
-    {
-        // Legacy username
-        // Split only if there's no @, otherwise not a legacy username
-        domain_pos   = target_user;
-        domain_len   = separator - target_user;
-        username_pos = ++separator;
-        username_len = strlen(username_pos);
-    }
-    else if (split_domain)
-    {
-        // Old behavior
-        if (separator)
-        {
-            domain_pos   = target_user;
-            domain_len   = separator - target_user;
-            username_pos = ++separator;
-            username_len = strlen(username_pos);
-        }
-        else if (separator_a)
-        {
-            domain_pos   = separator_a + 1;
-            domain_len   = strlen(domain_pos);
-            username_pos = target_user;
-            username_len = separator_a - target_user;
-            LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
-        }
-    }
-
-    if (username_len >= sizeof(this->_username)) {
-        LOG(LOG_WARNING, "mod_rdp: username too long! %zu >= %zu", username_len, sizeof(this->_username));
-    }
-    size_t count = std::min(sizeof(this->_username) - 1, username_len);
-    // username_pos is nullptr if count is 0, but strncpy parameters must be nonnull
-    if (count) {
-        strncpy(this->_username, username_pos, count);
-    }
-    this->_username[count] = 0;
-
-    if (domain_len >= sizeof(this->_domain)) {
-        LOG(LOG_WARNING, "mod_rdp: domain too long! %zu >= %zu", domain_len, sizeof(this->_domain));
-    }
-    count = std::min(sizeof(this->_domain) - 1, domain_len);
-    // username_pos is nullptr if count is 0, but strncpy parameters must be nonnull
-    if (count) {
-        strncpy(this->_domain, domain_pos, count);
-    }
-    this->_domain[count] = 0;
-
-    LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
-        this->_domain, this->_username, this->_hostname);
-}
 
 
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
@@ -1349,9 +1269,9 @@ bool RdpNegociation::get_license(InStream & stream)
     const char * hostname = this->logon_info.hostname();
     const char * username;
     char username_a_domain[512];
-    if (this->logon_info.domain()[0]) {
+    if (this->logon_info.domain().c_str()[0]) {
         snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s",
-            this->logon_info.username(), this->logon_info.domain());
+            this->logon_info.username(), this->logon_info.domain().c_str());
         username = username_a_domain;
     }
     else {
@@ -1575,7 +1495,7 @@ void RdpNegociation::send_client_info_pdu()
         "mod_rdp::send_client_info_pdu");
 
     InfoPacket infoPacket( this->negociation_result.use_rdp5
-                            , this->logon_info.domain()
+                            , this->logon_info.domain().c_str()
                             , this->logon_info.username()
                             , this->password
                             , this->program

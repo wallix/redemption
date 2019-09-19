@@ -80,16 +80,15 @@ RdpNego::RdpNego(
     memset(this->hostname, 0, sizeof(this->hostname));
     memset(this->user,     0, sizeof(this->user));
     memset(this->password, 0, sizeof(this->password));
-    memset(this->domain,   0, sizeof(this->domain));
 }
 
 RdpNego::~RdpNego() = default;
 
-void RdpNego::set_identity(char const * user, char const * domain, char const * pass, char const * hostname)
+void RdpNego::set_identity(char const * user, bytes_view domain, char const * pass, char const * hostname)
 {
     if (this->nla) {
         snprintf(char_ptr_cast(this->user), sizeof(this->user), "%s", user);
-        snprintf(char_ptr_cast(this->domain), sizeof(this->domain), "%s", domain);
+        this->domain = std::vector<uint8_t>{} << domain;
 
         // Password is a multi-sz!
         MultiSZCopy(char_ptr_cast(this->password), sizeof(this->password), pass);
@@ -413,7 +412,8 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         try {
             this->NTLM = std::make_unique<rdpClientNTLM>(
                 this->user,
-                this->domain, this->current_password,
+                this->domain,
+                this->current_password,
                 this->hostname, this->target_host,
                 trans.get_transport().get_public_key(),
                 this->restricted_admin_mode,
