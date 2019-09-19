@@ -124,8 +124,7 @@
     fv(ERR_SESSION_UNKNOWN_BACKEND, 13000)                          \
                                                                     \
     fv(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, 13006)              \
-    f(ERR_RECORDER_FAILED_TO_ALLOC_STREAM)                          \
-    f(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE_BUF)                  \
+                                                                    \
     fv(ERR_RECORDER_FAILED_TO_INITIALIZE_CONVERSION_CONTEXT, 13010) \
     fv(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME, 13012)           \
     f(ERR_RECORDER_FAILED_TO_FOUND_PATH)                            \
@@ -153,7 +152,6 @@
                                                                     \
     fv(ERR_RDP61_DECOMPRESS, 22000)                                 \
     f(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED)                          \
-    f(ERR_RDP61_DECOMPRESS_LEVEL_2)                                 \
                                                                     \
     fv(ERR_RDP45_COMPRESS_BUFFER_OVERFLOW, 22100)                   \
                                                                     \
