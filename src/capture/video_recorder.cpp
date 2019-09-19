@@ -28,14 +28,6 @@
 
 #ifndef REDEMPTION_NO_FFMPEG
 
-#include <cstdint>
-#include <cstdlib>
-#include <cmath>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 extern "C" {
     // On Debian lenny and on higher debian/ubuntu distribution, ffmpeg includes
     // aren't localized on the same path (usr/include/ffmpeg for lenny,
@@ -68,7 +60,6 @@ extern "C" {
 # undef exit
 #endif
 
-#define STREAM_PIX_FMT AV_PIX_FMT_YUV420P /* default pix_fmt */
 #ifndef AV_PKT_FLAG_KEY
 #define AV_PKT_FLAG_KEY PKT_FLAG_KEY
 #define AVMEDIA_TYPE_VIDEO CODEC_TYPE_VIDEO
@@ -107,10 +98,31 @@ video_recorder::AVFramePtr::~AVFramePtr() /*NOLINT*/
     av_frame_free(&this->frame);
 }
 
+static void throw_if(bool test, char const* msg, error_type id)
+{
+    if (test) {
+        LOG(LOG_ERR, "video recorder: %s", msg);
+        throw Error(id);
+    }
+}
+
+static void check_errnum(int errnum, char const* msg, error_type id)
+{
+    if (errnum < 0) {
+        char errbuf[AV_ERROR_MAX_STRING_SIZE]{};
+        LOG(LOG_ERR, "video recorder: %s: %s",
+            msg, av_make_error_string(errbuf, AV_ERROR_MAX_STRING_SIZE, errnum));
+        throw Error(id);
+    }
+}
+
+// https://libav.org/documentation/doxygen/master/output_8c-example.html
+// https://libav.org/documentation/doxygen/master/encode_video_8c-example.html
+
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
     ConstImageDataView const & image_view, int bitrate,
-    int frame_rate, int qscale, const char * codec_id,
+    int frame_rate, int qscale, const char * codec_name,
     int log_level
 )
 : original_height(image_view.height())
@@ -121,27 +133,24 @@ video_recorder::video_recorder(
     /* initialize libavcodec, and register all codecs and formats */
     av_register_all();
 
+    av_log_set_level(log_level);
+
+
     this->oc.reset(avformat_alloc_context());
-    if (!this->oc) {
-        LOG(LOG_ERR, "recorder failed allocating output media context");
-        throw Error(ERR_RECORDER_FAILED_ALLOCATING_OUTPUT_MEDIA_CONTEXT);
-    }
+    throw_if(!this->oc, "failed allocating output media context",
+        ERR_RECORDER_FAILED_ALLOCATING_OUTPUT_MEDIA_CONTEXT);
 
     /* auto detect the output format from the name. default is mpeg. */
-    AVOutputFormat *fmt = av_guess_format(codec_id, nullptr, nullptr);
+    AVOutputFormat *fmt = av_guess_format(codec_name, nullptr, nullptr);
     if (!fmt) {
         LOG(LOG_WARNING, "Could not deduce output format from codec: falling back to MPEG.");
         fmt = av_guess_format("mpeg", nullptr, nullptr);
     }
-    if (!fmt) {
-        LOG(LOG_ERR, "Could not find suitable output format");
-        throw Error(ERR_RECORDER_NO_OUTPUT_CODEC);
-    }
+    throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE,
+        "Could not find codec", ERR_RECORDER_CODEC_NOT_FOUND);
 
-    if (fmt->video_codec == AV_CODEC_ID_NONE) {
-        LOG(LOG_ERR, "video recorder error : no codec defined");
-        throw Error(ERR_RECORDER_CODEC_NOT_FOUND);
-    }
+    const auto codec_id = fmt->video_codec;
+    const AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
 
     this->oc->oformat = fmt;
     //strncpy(this->oc->filename, file, sizeof(this->oc->filename));
@@ -149,10 +158,8 @@ video_recorder::video_recorder(
     // add the video streams using the default format codecs and initialize the codecs
     this->video_st = avformat_new_stream(this->oc.get(), nullptr);
 
-    if (!this->video_st) {
-        LOG(LOG_ERR, "Could not find suitable output format");
-        throw Error(ERR_RECORDER_FAILED_TO_ALLOC_STREAM);
-    }
+    throw_if(!this->video_st, "Could not find suitable output format",
+        ERR_RECORDER_FAILED_TO_ALLOC_STREAM);
 
     this->video_st->r_frame_rate.num = 1;
     this->video_st->r_frame_rate.den = frame_rate;
@@ -160,76 +167,70 @@ video_recorder::video_recorder(
     this->video_st->time_base.num = 1;
     this->video_st->time_base.den = frame_rate;
 
-    this->video_st->codec->codec_id = fmt->video_codec;
-    this->video_st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
+    auto* codec_ctx = this->video_st->codec;
 
-    this->video_st->codec->bit_rate = bitrate;
-    this->video_st->codec->bit_rate_tolerance = bitrate;
+    codec_ctx->codec_id = codec_id;
+    codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
+
+    codec_ctx->bit_rate = bitrate;
+    codec_ctx->bit_rate_tolerance = bitrate;
     // resolution must be a multiple of 2
-    this->video_st->codec->width = image_view_width & ~1;
-    this->video_st->codec->height = image_view_height & ~1;
+    codec_ctx->width = image_view_width & ~1;
+    codec_ctx->height = image_view_height & ~1;
 
     // time base: this is the fundamental unit of time (in seconds)
     // in terms of which frame timestamps are represented.
     // for fixed-fps content, timebase should be 1/framerate
     // and timestamp increments should be identically 1
-    this->video_st->codec->time_base.num = 1;
-    this->video_st->codec->time_base.den = frame_rate;
+    codec_ctx->time_base.num = 1;
+    codec_ctx->time_base.den = frame_rate;
 
     // impact: keyframe, filesize and time of generating
     // high value = ++time, --size
     // keyframe managed by this->pkt.flags |= AV_PKT_FLAG_KEY and av_interleaved_write_frame
-    this->video_st->codec->gop_size = std::max(2, frame_rate);
+    codec_ctx->gop_size = std::max(2, frame_rate);
 
-    this->video_st->codec->pix_fmt = STREAM_PIX_FMT;
-    this->video_st->codec->flags |= CODEC_FLAG_QSCALE; // TODO
-    this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale; // TODO
+    codec_ctx->pix_fmt = pix_fmt;
+    codec_ctx->flags |= CODEC_FLAG_QSCALE; // TODO
+    codec_ctx->global_quality = FF_QP2LAMBDA * qscale; // TODO
 
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-    switch (this->video_st->codec->codec_id){
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wswitch")
+    switch (codec_id){
         case AV_CODEC_ID_H264:
-            //this->video_st->codec->coder_type = FF_CODER_TYPE_AC;
-            //this->video_st->codec->flags2 = CODEC_FLAG2_WPRED | CODEC_FLAG2_MIXED_REFS |
+            //codec_ctx->coder_type = FF_CODER_TYPE_AC;
+            //codec_ctx->flags2 = CODEC_FLAG2_WPRED | CODEC_FLAG2_MIXED_REFS |
             //                                CODEC_FLAG2_8X8DCT | CODEC_FLAG2_FASTPSKIP;
 
-            //this->video_st->codec->partitions = X264_PART_I8X8 | X264_PART_P8X8 | X264_PART_I4X4;
-            this->video_st->codec->me_range = 16;
-            //this->video_st->codec->refs = 1;
-            //this->video_st->codec->flags = CODEC_FLAG_4MV | CODEC_FLAG_LOOP_FILTER;
-            this->video_st->codec->flags |= AVFMT_NOTIMESTAMPS;
-            this->video_st->codec->qcompress = 0.0;
-            this->video_st->codec->max_qdiff = 4;
-            //this->video_st->codec->gop_size = frame_rate;
+            //codec_ctx->partitions = X264_PART_I8X8 | X264_PART_P8X8 | X264_PART_I4X4;
+            codec_ctx->me_range = 16;
+            //codec_ctx->refs = 1;
+            //codec_ctx->flags = CODEC_FLAG_4MV | CODEC_FLAG_LOOP_FILTER;
+            codec_ctx->flags |= AVFMT_NOTIMESTAMPS;
+            codec_ctx->qcompress = 0.0;
+            codec_ctx->max_qdiff = 4;
+            //codec_ctx->gop_size = frame_rate;
         break;
         case AV_CODEC_ID_MPEG2VIDEO:
-            //this->video_st->codec->gop_size = frame_rate;
+            //codec_ctx->gop_size = frame_rate;
         break;
         case AV_CODEC_ID_MPEG1VIDEO:
             // Needed to avoid using macroblocks in which some coeffs overflow.
             // This does not happen with normal video, it just happens here as
             // the motion of the chroma plane does not match the luma plane.
-            this->video_st->codec->mb_decision = 2;
-        break;
-        case AV_CODEC_ID_MPEG4:
-        break;
-        case AV_CODEC_ID_FLV1:
-        break;
-        default:
+            codec_ctx->mb_decision = 2;
         break;
     }
     REDEMPTION_DIAGNOSTIC_POP
 
     // some formats want stream headers to be separate
-    if(this->oc->oformat->flags & AVFMT_GLOBALHEADER){
-        this->video_st->codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
+    if(fmt->flags & AVFMT_GLOBALHEADER){
+        codec_ctx->flags |= CODEC_FLAG_GLOBAL_HEADER;
     }
 
-    AVCodec * codec = avcodec_find_encoder(this->video_st->codec->codec_id);
-    if (codec == nullptr) {
-        LOG(LOG_ERR, "video recorder error : codec not found");
-        throw Error(ERR_RECORDER_CODEC_NOT_FOUND);
-    }
+    AVCodec * codec = avcodec_find_encoder(codec_id);
+    throw_if(!codec, "codec not found", ERR_RECORDER_CODEC_NOT_FOUND);
 
     // dump_format can be handy for debugging
     // it dump information about file to stderr
@@ -239,8 +240,6 @@ video_recorder::video_recorder(
     // now we can open the audio and video codecs
     // and allocate the necessary encode buffers
     // find the video encoder
-
-    int const video_outbuf_size = image_view_width * image_view_height * 3 * 5;
 
     {
         struct AVDict {
@@ -253,7 +252,7 @@ video_recorder::video_recorder(
             AVDictionary *d = nullptr;
         } av_dict;
 
-        if (this->video_st->codec->codec_id == AV_CODEC_ID_H264) {
+        if (codec_id == AV_CODEC_ID_H264) {
             // low quality  (baseline, main, hight, ...)
             av_dict.add("profile", "baseline");
             av_dict.add("preset", "ultrafast");
@@ -261,10 +260,8 @@ video_recorder::video_recorder(
         }
 
         // open the codec
-        if (avcodec_open2(this->video_st->codec, codec, &av_dict.d) < 0) {
-            LOG(LOG_ERR, "video recorder error : failed to open codec");
-            throw Error(ERR_RECORDER_FAILED_TO_OPEN_CODEC);
-        }
+        check_errnum(avcodec_open2(this->video_st->codec, codec, &av_dict.d),
+            "failed to open codec", ERR_RECORDER_FAILED_TO_OPEN_CODEC);
     }
 
     struct AvCodecPtr
@@ -278,32 +275,24 @@ video_recorder::video_recorder(
     };
     AvCodecPtr av_codec_close_if_fails{this};
 
-    if (!(this->oc->oformat->flags & AVFMT_RAWPICTURE)) {
-        /* allocate output buffer */
-        /* XXX: API change will be done */
-        /* buffers passed into lav* can be allocated any way you prefer,
-            as long as they're aligned enough for the architecture, and
-            they're freed appropriately (such as using av_free for buffers
-            allocated with av_malloc) */
-        this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
-        if (!this->video_outbuf){
-            LOG(LOG_ERR, "video recorder error : failed to allocate video output buffer");
-            throw Error(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE);
-        }
-    }
+    int const video_outbuf_size = image_view_width * image_view_height * 3 * 5;
+
+    this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
+    throw_if(!this->video_outbuf, "failed to allocate video output buffer",
+        ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE);
+    av_init_packet(&this->pkt);
+    this->pkt.data = this->video_outbuf.get();
+    this->pkt.size = video_outbuf_size;
 
     // init picture frame
     {
-        AVPixelFormat const pix_fmt = this->video_st->codec->pix_fmt;
         int const size = av_image_get_buffer_size(pix_fmt, image_view_width, image_view_height, 1);
         if (size) {
             this->picture_buf.reset(static_cast<uint8_t*>(av_malloc(size)));
             std::fill_n(this->picture_buf.get(), size, 0);
         }
-        if (!this->picture_buf) {
-            LOG(LOG_ERR, "video recorder error : failed to allocate picture buf");
-            throw Error(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE_BUF);
-        }
+        throw_if(!this->picture_buf, "failed to allocate picture buf",
+            ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE_BUF);
         av_image_fill_arrays(
             this->picture->data, this->picture->linesize,
             this->picture_buf.get(), pix_fmt, image_view_width, image_view_height, 1
@@ -311,18 +300,18 @@ video_recorder::video_recorder(
 
         this->picture->width = image_view_width;
         this->picture->height = image_view_height;
-        this->picture->format = this->video_st->codec->codec_id;
-        this->original_picture->format = this->video_st->codec->codec_id;
+        this->picture->format = codec_id;
+        this->original_picture->format = codec_id;
     }
 
-    this->custom_io_buffer.reset(static_cast<unsigned char *>(av_malloc(32768)));
-    if (!this->custom_io_buffer) {
-        throw Error(ERR_RECORDER_ALLOCATION_FAILED);
-    }
+    const std::size_t io_buffer_size = 32768;
+
+    this->custom_io_buffer.reset(static_cast<unsigned char *>(av_malloc(io_buffer_size)));
+    throw_if(!this->custom_io_buffer, "failed to allocate io", ERR_RECORDER_ALLOCATION_FAILED);
 
     this->custom_io_context.reset(avio_alloc_context(
         this->custom_io_buffer.get(), // buffer
-        32768,                        // buffer size
+        io_buffer_size,               // buffer size
         1,                            // writable
         io_params,                    // user-specific data
         nullptr,                      // function for refilling the buffer, may be nullptr.
@@ -337,7 +326,7 @@ video_recorder::video_recorder(
 
     int res = avformat_write_header(this->oc.get(), nullptr);
     if (res < 0){
-        LOG(LOG_ERR, "video recorder error : failed to write header");
+        LOG(LOG_ERR, "video recorder: failed to write header");
     }
 
     av_image_fill_arrays(
@@ -347,22 +336,14 @@ video_recorder::video_recorder(
 
     this->img_convert_ctx.reset(sws_getContext(
         image_view.width(), image_view.height(), AV_PIX_FMT_BGR24,
-        image_view_width, image_view_height, STREAM_PIX_FMT,
+        image_view_width, image_view_height, pix_fmt,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     ));
 
-    if (!this->img_convert_ctx) {
-        LOG(LOG_ERR, "Cannot initialize the conversion context");
-        throw Error(ERR_RECORDER_FAILED_TO_INITIALIZE_CONVERSION_CONTEXT);
-    }
+    throw_if(!this->img_convert_ctx, "Cannot initialize the conversion context",
+        ERR_RECORDER_FAILED_TO_INITIALIZE_CONVERSION_CONTEXT);
 
     av_codec_close_if_fails.ptr = nullptr;
-
-    av_init_packet(&this->pkt);
-    this->pkt.data = this->video_outbuf.get();
-    this->pkt.size = video_outbuf_size;
-
-    av_log_set_level(log_level);
 }
 
 video_recorder::~video_recorder() /*NOLINT*/
@@ -471,13 +452,7 @@ void video_recorder::encoding_video_frame(uint64_t frame_index)
         err = av_interleaved_write_frame(this->oc.get(), &this->pkt);
     }
 
-    if (err) {
-        const size_t errbuf_size = 1024;
-        char errbuf[errbuf_size]{};
-        LOG(LOG_ERR, "video recorder: failed to write encoded frame: %s",
-            av_make_error_string(errbuf, errbuf_size, err));
-        throw Error(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
-    }
+    check_errnum(err, "failed to write encoded frame", ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
 }
 
 #else

@@ -28,10 +28,6 @@
 
 #include <memory>
 
-#ifndef M_PI
-# define M_PI 3.14159265358979323846
-#endif
-
 extern "C" {
     // On Debian lenny and on higher debian/ubuntu distribution, ffmpeg includes
     // aren't localized on the same path (usr/include/ffmpeg for lenny,
