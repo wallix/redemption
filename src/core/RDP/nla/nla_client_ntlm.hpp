@@ -211,11 +211,21 @@ public:
 
                 this->SendRc4Seal.set_key(this->ClientSealingKey);
 
-                uint32_t flags = set_negotiate_flags(
-                                    this->NTLMv2, 
-                                    this->UseMIC, 
-                                    this->Workstation.size() != 0, 
-                                    server_challenge.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
+                auto flag_if = [](uint32_t flag, bool cond) -> uint32_t { return flag * cond; };
+
+                uint32_t flags = flag_if(NTLMSSP_NEGOTIATE_56, this->NTLMv2)
+                               | flag_if(NTLMSSP_NEGOTIATE_TARGET_INFO, this->UseMIC)
+                               | flag_if(NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED, this->Workstation.size() != 0)
+                               | flag_if(NTLMSSP_NEGOTIATE_KEY_EXCH ,server_challenge.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH)
+                               | NTLMSSP_NEGOTIATE_SEAL
+                               | NTLMSSP_NEGOTIATE_128
+                               | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+                               | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                               | NTLMSSP_NEGOTIATE_NTLM
+                               | NTLMSSP_NEGOTIATE_SIGN
+                               | NTLMSSP_REQUEST_TARGET
+                               | NTLMSSP_NEGOTIATE_UNICODE
+                               | NTLMSSP_NEGOTIATE_VERSION;
 
                 NTLMAuthenticateMessage AuthenticateMessage;
                 AuthenticateMessage.version = this->version;
@@ -388,44 +398,6 @@ public:
                 return credssp::State::Err;
         }
         return credssp::State::Err;
-    }
-
-    uint32_t set_negotiate_flags(bool ntlmv2, bool use_mic, bool send_workstation_name, bool negotiate_key_exchange)
-    {
-        /*
-         * from tspkg.dll: 0x00000132
-         * ISC_REQ_MUTUAL_AUTH
-         * ISC_REQ_CONFIDENTIALITY
-         * ISC_REQ_USE_SESSION_KEY
-         * ISC_REQ_ALLOCATE_MEMORYSessionBaseKey
-         */
-        //unsigned long const fContextReq
-        //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
-
-        uint32_t flags = 0;
-        if (ntlmv2) {
-            flags |= NTLMSSP_NEGOTIATE_56;
-        }
-
-        if (use_mic) {
-            flags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
-        }
-        if (send_workstation_name) {
-            flags |= NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED;
-        }
-        flags |= NTLMSSP_NEGOTIATE_SEAL;
-        if (negotiate_key_exchange) {
-            flags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-        }
-        flags |= (NTLMSSP_NEGOTIATE_128
-              | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
-              | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-              | NTLMSSP_NEGOTIATE_NTLM
-              | NTLMSSP_NEGOTIATE_SIGN
-              | NTLMSSP_REQUEST_TARGET
-              | NTLMSSP_NEGOTIATE_UNICODE
-              | NTLMSSP_NEGOTIATE_VERSION);
-        return flags;
     }
 };
 

@@ -806,9 +806,9 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
 
 inline TSRequest recvTSRequest(bytes_view data, uint32_t version = 6) 
 {
-    LOG(LOG_INFO, "recv TSRequest full dump--------------------------------");
-    hexdump_c(data);
-    LOG(LOG_INFO, "recv TSRequest hexdump - START PARSING DATA-------------");
+    LOG(LOG_INFO, "recv TSRequest full dump++++++++++++++++++++++++++++++++");
+    hexdump_d(data);
+    LOG(LOG_INFO, "recv TSRequest hexdump - START PARSING DATA+++++++++++++");
 
     InStream stream(data);
     TSRequest self(version);
