@@ -1846,7 +1846,9 @@ class mod_rdp : public mod_api, public rdp_api
 
     bool delayed_start_capture = false;
 
-    const bool                        experimental_fix_input_event_sync;
+    const bool experimental_fix_input_event_sync;
+
+    const bool support_connection_redirection_during_recording;
 
     size_t recv_bmp_update = 0;
 
@@ -2010,6 +2012,7 @@ public:
             }(info.order_caps.orderSupport))
         // info.order_caps.orderSupport
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
+        , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
@@ -3199,7 +3202,9 @@ public:
                 LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
 
                 if (e.id == ERR_RDP_SERVER_REDIR) {
-                    this->front.must_be_stop_capture();
+                    if (!this->support_connection_redirection_during_recording) {
+                        this->front.must_be_stop_capture();
+                    }
                     throw;
                 }
 

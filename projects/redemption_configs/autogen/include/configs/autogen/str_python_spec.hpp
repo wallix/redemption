@@ -128,7 +128,10 @@ spark_view_specific_glyph_width = boolean(default=False)
 experimental_enable_serializer_data_block_size_limit = boolean(default=False)
 
 #_advanced
-experimental_support_resize_session_during_recording = boolean(default=False)
+experimental_support_resize_session_during_recording = boolean(default=True)
+
+#_advanced
+support_connection_redirection_during_recording = boolean(default=True)
 
 # Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
