@@ -174,7 +174,9 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_enable_serializer_data_block_size_limit",set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_support_resize_session_during_recording",set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_support_resize_session_during_recording",set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "support_connection_redirection_during_recording",set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::milliseconds>(), "rdp_keepalive_connection_interval", desc{
             "Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
