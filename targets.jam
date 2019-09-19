@@ -1673,17 +1673,6 @@ test-run tests/core/RDP/nla/test_nla :
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run tests/core/RDP/nla/test_nla2 :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_nla2.cpp
-:
-  <library>crypto
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>tests/includes/test_only/transport/test_transport.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
 test-run tests/core/RDP/orders/test_AlternateSecondaryWindowing :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_AlternateSecondaryWindowing.cpp
 :
@@ -5540,7 +5529,6 @@ alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
 alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
 alias test_credssp : tests/core/RDP/nla/test_credssp ;
 alias test_nla : tests/core/RDP/nla/test_nla ;
-alias test_nla2 : tests/core/RDP/nla/test_nla2 ;
 alias test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing ;
 alias test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon ;
 alias test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt ;
@@ -6236,7 +6224,6 @@ alias tests/core/RDP/nla/ntlm.norec :
 alias tests/core/RDP/nla.norec :
   tests/core/RDP/nla/test_credssp
   tests/core/RDP/nla/test_nla
-  tests/core/RDP/nla/test_nla2
 ;
 alias tests/core/RDP/orders.norec :
   tests/core/RDP/orders/test_AlternateSecondaryWindowing
