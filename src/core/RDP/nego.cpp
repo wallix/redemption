@@ -78,16 +78,15 @@ RdpNego::RdpNego(
     this->username[127] = 0;
 
     memset(this->hostname, 0, sizeof(this->hostname));
-    memset(this->user,     0, sizeof(this->user));
     memset(this->password, 0, sizeof(this->password));
 }
 
 RdpNego::~RdpNego() = default;
 
-void RdpNego::set_identity(char const * user, bytes_view domain, char const * pass, char const * hostname)
+void RdpNego::set_identity(bytes_view user, bytes_view domain, char const * pass, char const * hostname)
 {
     if (this->nla) {
-        snprintf(char_ptr_cast(this->user), sizeof(this->user), "%s", user);
+        this->user = std::vector<uint8_t>{} << user;
         this->domain = std::vector<uint8_t>{} << domain;
 
         // Password is a multi-sz!
@@ -390,8 +389,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         #ifndef __EMSCRIPTEN__
         try {
             this->credsspKerberos = std::make_unique<rdpCredsspClientKerberos>(
-                trans, this->user,
-                this->domain, this->current_password,
+                trans, this->user, this->domain, this->current_password,
                 this->hostname, this->target_host,
                 this->restricted_admin_mode,
                 this->rand, this->extra_message, this->lang,
@@ -411,8 +409,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
     if (!this->krb) {
         try {
             this->NTLM = std::make_unique<rdpClientNTLM>(
-                this->user,
-                this->domain,
+                this->user, this->domain,
                 this->current_password,
                 this->hostname, this->target_host,
                 trans.get_transport().get_public_key(),

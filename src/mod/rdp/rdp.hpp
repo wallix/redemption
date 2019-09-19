@@ -4716,11 +4716,11 @@ public:
 
         if (this->disconnect_on_logon_user_change 
             && ((0 != ::strcasecmp(domain, this->logon_info.domain().c_str())
-             || 0 != ::strcasecmp(username, this->logon_info.username())) &&
+             || 0 != ::strcasecmp(username, this->logon_info.username().c_str())) &&
              (this->logon_info.domain().c_str() ||
-              (0 != ::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
-               0 != ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
-               0 != ::strcasecmp(username, this->logon_info.username()))))) {
+              (0 != ::strcasecmp(domain_username_format_0, this->logon_info.username().c_str()) &&
+               0 != ::strcasecmp(domain_username_format_1, this->logon_info.username().c_str()) &&
+               0 != ::strcasecmp(username, this->logon_info.username().c_str()))))) {
             if (this->error_message) {
                 *this->error_message = "Unauthorized logon user change detected!";
             }
@@ -4734,7 +4734,7 @@ public:
                     "The session will be disconnected.",
                 this->logon_info.hostname(), this->logon_info.domain().c_str(),
                 (*this->logon_info.domain().c_str() ? "\\" : ""),
-                this->logon_info.username(), domain,
+                this->logon_info.username().c_str(), domain,
                 ((domain && *domain) ? "\\" : ""),
                 username);
             throw Error(ERR_RDP_LOGON_USER_CHANGED);

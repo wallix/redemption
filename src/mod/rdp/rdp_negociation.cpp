@@ -1271,11 +1271,11 @@ bool RdpNegociation::get_license(InStream & stream)
     char username_a_domain[512];
     if (this->logon_info.domain().c_str()[0]) {
         snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s",
-            this->logon_info.username(), this->logon_info.domain().c_str());
+            this->logon_info.username().c_str(), this->logon_info.domain().c_str());
         username = username_a_domain;
     }
     else {
-        username = this->logon_info.username();
+        username = this->logon_info.username().c_str();
     }
     LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
     // read tpktHeader (4 bytes = 3 0 len)
@@ -1496,7 +1496,7 @@ void RdpNegociation::send_client_info_pdu()
 
     InfoPacket infoPacket( this->negociation_result.use_rdp5
                             , this->logon_info.domain().c_str()
-                            , this->logon_info.username()
+                            , this->logon_info.username().c_str()
                             , this->password
                             , this->program
                             , this->directory

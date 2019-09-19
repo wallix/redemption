@@ -43,12 +43,12 @@ struct RdpLogonInfo
     RdpLogonInfo(char const* hostname, bool hide_client_name,
                  char const* target_user, bool split_domain) noexcept;
 
-    char const* username()  const noexcept { return this->_username; }
+    const std::string & username()  const noexcept { return this->_username; }
     const std::string & domain() const noexcept { return this->_domain; }
     char const* hostname()  const noexcept { return this->_hostname; }
 
 private:
-    char _username[128] = {};
+    std::string _username = {};
     std::string _domain;
     char _hostname[HOST_NAME_MAX + 1] = {};
 };

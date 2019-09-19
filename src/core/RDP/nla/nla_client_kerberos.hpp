@@ -101,16 +101,9 @@ private:
             return this->Domain;
         }
 
-        void SetUserFromUtf8(const uint8_t * user)
+        void SetUserFromUtf8(bytes_view user)
         {
-            if (user) {
-                size_t user_len = UTF8Len(user);
-                this->User = std::vector<uint8_t>(user_len * 2);
-                UTF8toUTF16({user, strlen(char_ptr_cast(user))}, this->User.data(), user_len * 2);
-            }
-            else {
-                this->User.clear();
-            }
+            this->User = ::UTF8toUTF16(user);
         }
 
         void SetDomainFromUtf8(bytes_view domain)
@@ -130,7 +123,7 @@ private:
             }
         }
 
-        void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
+        void SetKrbAuthIdentity(bytes_view user, const uint8_t * pass)
         {
             auto copy = [](char (&arr)[256], uint8_t const* data){
                 if (data) {
@@ -141,7 +134,9 @@ private:
                 }
             };
 
-            copy(this->princname, user);
+            
+            memcpy(this->princname, user.data(), (user.size()>=sizeof(this->princname))?user.size():sizeof(this->princname));
+            this->princname[sizeof(this->princname)-1] = 0;
             copy(this->princpass, pass);
         }
 
@@ -702,14 +697,13 @@ private:
     }
 
 private:
-    void set_credentials(uint8_t const* user, bytes_view domain,
+    void set_credentials(bytes_view user, bytes_view domain,
                          uint8_t const* pass, uint8_t const* hostname) {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::set_credentials");
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
         this->SetHostnameFromUtf8(hostname);
-        // hexdump_c(user, strlen((char*)user));
         // hexdump_c(pass, strlen((char*)pass));
         // hexdump_c(hostname, strlen((char*)hostname));
         this->identity.SetKrbAuthIdentity(user, pass);
@@ -717,7 +711,7 @@ private:
 
 public:
     rdpCredsspClientKerberos(OutTransport transport,
-               uint8_t * user,
+               bytes_view user,
                bytes_view domain,
                uint8_t * pass,
                uint8_t * hostname,

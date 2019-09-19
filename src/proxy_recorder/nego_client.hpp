@@ -47,7 +47,7 @@ public:
         to_verbose_flags(verbosity))
     {
         auto [username, domain] = extract_user_domain(target_user);
-        nego.set_identity(username.c_str(), domain, password, "ProxyRecorder");
+        nego.set_identity(username, domain, password, "ProxyRecorder");
         // static char ln_info[] = "tsv://MS Terminal Services Plugin.1.Sessions\x0D\x0A";
         // nego.set_lb_info(byte_ptr_cast(ln_info), sizeof(ln_info)-1);
     }

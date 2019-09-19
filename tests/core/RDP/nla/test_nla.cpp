@@ -95,15 +95,14 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 
     TestTransport logtrans(server, client);
     logtrans.set_public_key("1245789652325415"_av);
-    uint8_t user[] = "Ulysse";
-    uint8_t domain[] = "Ithaque";
+    std::string user("Ulysse");
+    std::string domain("Ithaque");
     uint8_t pass[] = "Pénélope";
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
-    rdpClientNTLM credssp(user,
-                         {domain,strlen(reinterpret_cast<char*>(domain))},
+    rdpClientNTLM credssp(user, domain,
                           pass, host, "107.0.0.1",
                                 logtrans.get_public_key(),
                                 false, rand, timeobj);
