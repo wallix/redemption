@@ -98,21 +98,21 @@ video_recorder::AVFramePtr::~AVFramePtr() /*NOLINT*/
     av_frame_free(&this->frame);
 }
 
-static void throw_if(bool test, char const* msg, error_type id)
+static void throw_if(bool test, char const* msg)
 {
     if (test) {
         LOG(LOG_ERR, "video recorder: %s", msg);
-        throw Error(id);
+        throw Error(ERR_VIDEO_RECORDER);
     }
 }
 
-static void check_errnum(int errnum, char const* msg, error_type id)
+static void check_errnum(int errnum, char const* msg)
 {
     if (errnum < 0) {
         char errbuf[AV_ERROR_MAX_STRING_SIZE]{};
         LOG(LOG_ERR, "video recorder: %s: %s",
             msg, av_make_error_string(errbuf, AV_ERROR_MAX_STRING_SIZE, errnum));
-        throw Error(id);
+        throw Error(ERR_VIDEO_RECORDER);
     }
 }
 
@@ -137,8 +137,7 @@ video_recorder::video_recorder(
 
 
     this->oc.reset(avformat_alloc_context());
-    throw_if(!this->oc, "failed allocating output media context",
-        ERR_RECORDER_FAILED_ALLOCATING_OUTPUT_MEDIA_CONTEXT);
+    throw_if(!this->oc, "Failed allocating output media context");
 
     /* auto detect the output format from the name. default is mpeg. */
     AVOutputFormat *fmt = av_guess_format(codec_name, nullptr, nullptr);
@@ -146,8 +145,7 @@ video_recorder::video_recorder(
         LOG(LOG_WARNING, "Could not deduce output format from codec: falling back to MPEG.");
         fmt = av_guess_format("mpeg", nullptr, nullptr);
     }
-    throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE,
-        "Could not find codec", ERR_RECORDER_CODEC_NOT_FOUND);
+    throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE, "Could not find codec");
 
     const auto codec_id = fmt->video_codec;
     const AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
@@ -158,8 +156,7 @@ video_recorder::video_recorder(
     // add the video streams using the default format codecs and initialize the codecs
     this->video_st = avformat_new_stream(this->oc.get(), nullptr);
 
-    throw_if(!this->video_st, "Could not find suitable output format",
-        ERR_RECORDER_FAILED_TO_ALLOC_STREAM);
+    throw_if(!this->video_st, "Could not find suitable output format");
 
     this->video_st->r_frame_rate.num = 1;
     this->video_st->r_frame_rate.den = frame_rate;
@@ -230,7 +227,7 @@ video_recorder::video_recorder(
     }
 
     AVCodec * codec = avcodec_find_encoder(codec_id);
-    throw_if(!codec, "codec not found", ERR_RECORDER_CODEC_NOT_FOUND);
+    throw_if(!codec, "Codec not found");
 
     // dump_format can be handy for debugging
     // it dump information about file to stderr
@@ -260,8 +257,7 @@ video_recorder::video_recorder(
         }
 
         // open the codec
-        check_errnum(avcodec_open2(this->video_st->codec, codec, &av_dict.d),
-            "failed to open codec", ERR_RECORDER_FAILED_TO_OPEN_CODEC);
+        check_errnum(avcodec_open2(this->video_st->codec, codec, &av_dict.d), "Failed to open codec");
     }
 
     struct AvCodecPtr
@@ -278,8 +274,7 @@ video_recorder::video_recorder(
     int const video_outbuf_size = image_view_width * image_view_height * 3 * 5;
 
     this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
-    throw_if(!this->video_outbuf, "failed to allocate video output buffer",
-        ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE);
+    throw_if(!this->video_outbuf, "Failed to allocate video output buffer");
     av_init_packet(&this->pkt);
     this->pkt.data = this->video_outbuf.get();
     this->pkt.size = video_outbuf_size;
@@ -291,8 +286,7 @@ video_recorder::video_recorder(
             this->picture_buf.reset(static_cast<uint8_t*>(av_malloc(size)));
             std::fill_n(this->picture_buf.get(), size, 0);
         }
-        throw_if(!this->picture_buf, "failed to allocate picture buf",
-            ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE_BUF);
+        throw_if(!this->picture_buf, "Failed to allocate picture buf");
         av_image_fill_arrays(
             this->picture->data, this->picture->linesize,
             this->picture_buf.get(), pix_fmt, image_view_width, image_view_height, 1
@@ -307,7 +301,7 @@ video_recorder::video_recorder(
     const std::size_t io_buffer_size = 32768;
 
     this->custom_io_buffer.reset(static_cast<unsigned char *>(av_malloc(io_buffer_size)));
-    throw_if(!this->custom_io_buffer, "failed to allocate io", ERR_RECORDER_ALLOCATION_FAILED);
+    throw_if(!this->custom_io_buffer, "Failed to allocate io");
 
     this->custom_io_context.reset(avio_alloc_context(
         this->custom_io_buffer.get(), // buffer
@@ -340,8 +334,7 @@ video_recorder::video_recorder(
         SWS_BICUBIC, nullptr, nullptr, nullptr
     ));
 
-    throw_if(!this->img_convert_ctx, "Cannot initialize the conversion context",
-        ERR_RECORDER_FAILED_TO_INITIALIZE_CONVERSION_CONTEXT);
+    throw_if(!this->img_convert_ctx, "Cannot initialize the conversion context");
 
     av_codec_close_if_fails.ptr = nullptr;
 }
@@ -452,7 +445,7 @@ void video_recorder::encoding_video_frame(uint64_t frame_index)
         err = av_interleaved_write_frame(this->oc.get(), &this->pkt);
     }
 
-    check_errnum(err, "failed to write encoded frame", ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
+    check_errnum(err, "Failed to write encoded frame");
 }
 
 #else

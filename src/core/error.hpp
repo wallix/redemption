@@ -123,11 +123,6 @@
                                                                     \
     fv(ERR_SESSION_UNKNOWN_BACKEND, 13000)                          \
                                                                     \
-    fv(ERR_RECORDER_NO_OUTPUT_CODEC, 16000)                         \
-    f(ERR_RECORDER_FAILED_ALLOCATING_OUTPUT_MEDIA_CONTEXT)          \
-    f(ERR_RECORDER_FAILED_TO_OPEN_CODEC)                            \
-    f(ERR_RECORDER_CODEC_NOT_FOUND)                                 \
-    f(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE)                      \
     fv(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, 13006)              \
     f(ERR_RECORDER_FAILED_TO_ALLOC_STREAM)                          \
     f(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE_BUF)                  \
@@ -137,6 +132,8 @@
     f(ERR_RECORDER_ALLOCATION_FAILED)                               \
     fv(ERR_RECORDER_EMPTY_IMAGE, 13016)                             \
     fv(ERR_RECORDER_SNAPSHOT_FAILED, 13020)                         \
+                                                                    \
+    fv(ERR_VIDEO_RECORDER, 16000)                                   \
                                                                     \
     fv(ERR_BITMAP_CACHE, 18000)                                     \
     f(ERR_BITMAP_CACHE_TOO_BIG)                                     \
