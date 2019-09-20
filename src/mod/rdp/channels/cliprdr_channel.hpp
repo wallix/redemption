@@ -382,7 +382,8 @@ public:
             if (is_client_text || is_server_text) {
                 auto str_direction = is_client_text ? "UP"_av : "DOWN"_av;
                 char buf[24];
-                unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32, file_validator_id);
+                unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
+                    underlying_cast(file_validator_id));
                 this->report_message.log6(LogId::TEXT_VERIFICATION, this->session_reactor.get_current_time(), {
                     KVLog("direction"_av, str_direction),
                     KVLog("copy_id"_av, {buf, n}),
