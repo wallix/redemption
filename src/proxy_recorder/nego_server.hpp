@@ -32,52 +32,61 @@ class NegoServer
     FixedRandom rand;
     LCGTime timeobj;
     std::string extra_message;
+    std::string user;
+    std::string password;
     NtlmServer credssp;
+
+    auto get_password(bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array)
+    {
+        LOG(LOG_INFO, "NTLM Check identity");
+        
+        // fROM COMMAND LINE
+        auto [username, domain] = extract_user_domain(this->user.c_str());
+        // from protocol
+        auto utf8_user = ::encode_UTF16_to_UTF8(user_av);
+        auto utf8_domain = ::encode_UTF16_to_UTF8(domain_av);
+
+        LOG(LOG_INFO, "NTML IDENTITY: identity.User=%*s identity.Domain=%*s username=%s, domain=%s",
+            int(utf8_user.size()),reinterpret_cast<char*>(utf8_user.data()), 
+            int(utf8_domain.size()),reinterpret_cast<char*>(utf8_domain.data()), username, domain);
+
+        if (utf8_domain.size() == 0){
+            auto [identity_username, identity_domain] = extract_user_domain(utf8_user);
+
+            LOG(LOG_INFO, "NTML IDENTITY: identity.User=%*s identity.Domain=%*s username=%s, domain=%s",
+                int(identity_username.size()),reinterpret_cast<char*>(identity_username.data()), 
+                int(identity_domain.size()),reinterpret_cast<char*>(identity_domain.data()), username, domain);
+
+            if (are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(username.data())),
+                username.size()}, identity_username)
+            && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
+                domain.size()}, identity_domain)) {
+                LOG(LOG_INFO, "identity match");
+                password_array = UTF8toUTF16(this->password);
+                return PasswordCallback::Ok;
+            }
+        }
+
+        if ((utf8_domain.size() != 0) 
+        && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(username.data())),
+                username.size()}, utf8_user)
+        && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
+                domain.size()}, utf8_domain)) {
+            password_array = UTF8toUTF16(this->password);
+            return PasswordCallback::Ok;
+        }
+
+        LOG(LOG_ERR, "Ntlm: bad identity");
+        return PasswordCallback::Error;
+    }
 
 public:
     NegoServer(array_view_u8 key, std::string const& user, std::string const& password, uint64_t verbosity)
-    : credssp(key, rand, timeobj,
-        [&](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
-            LOG(LOG_INFO, "NTLM Check identity");
-            
-            // fROM COMMAND LINE
-            auto [username, domain] = extract_user_domain(user.c_str());
-            // from protocol
-            auto utf8_user = ::encode_UTF16_to_UTF8(user_av);
-            auto utf8_domain = ::encode_UTF16_to_UTF8(domain_av);
-
-            LOG(LOG_INFO, "NTML IDENTITY: identity.User=%*s identity.Domain=%*s username=%s, domain=%s",
-                int(utf8_user.size()),reinterpret_cast<char*>(utf8_user.data()), 
-                int(utf8_domain.size()),reinterpret_cast<char*>(utf8_domain.data()), username, domain);
-
-            if (utf8_domain.size() == 0){
-                auto [identity_username, identity_domain] = extract_user_domain(utf8_user);
-
-                LOG(LOG_INFO, "NTML IDENTITY: identity.User=%*s identity.Domain=%*s username=%s, domain=%s",
-                    int(identity_username.size()),reinterpret_cast<char*>(identity_username.data()), 
-                    int(identity_domain.size()),reinterpret_cast<char*>(identity_domain.data()), username, domain);
-
-                if (are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(username.data())),
-                    username.size()}, identity_username)
-                && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
-                    domain.size()}, identity_domain)) {
-                    LOG(LOG_INFO, "identity match");
-                    password_array = UTF8toUTF16(password);
-                    return PasswordCallback::Ok;
-                }
-            }
-
-            if ((utf8_domain.size() != 0) 
-            && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(username.data())),
-                    username.size()}, utf8_user)
-            && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
-                    domain.size()}, utf8_domain)) {
-                password_array = UTF8toUTF16(password);
-                return PasswordCallback::Ok;
-            }
-
-            LOG(LOG_ERR, "Ntlm: bad identity");
-            return PasswordCallback::Error;
+    : user(user)
+    , password(password)
+    , credssp(key, rand, timeobj,
+        [this](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
+            return this->get_password(user_av, domain_av, password_array);
         }, verbosity)
     {
     }
