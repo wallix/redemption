@@ -28,11 +28,11 @@
 
 #include "test_only/lcg_random.hpp"
 
-
 RED_TEST_DELEGATE_PRINT_ENUM(credssp::State);
 
 RED_AUTO_TEST_CASE(TestNlaclient)
 {
+    RED_TEST_MESSAGE("==================== TestNlaClient ===================");
     auto public_key = std::vector<uint8_t>{} << bytes_view("1245789652325415"_av); 
     std::string user("Ulysse");
     std::string domain("Ithaque");
@@ -49,6 +49,8 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0020 */ 0xe2, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00,  // .....(.......(..
 /* 0030 */ 0x00, 0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f,  
     };
+
+    RED_TEST_MESSAGE("+++++++++++++ Client sending NTLM Negotiate");
 
     auto negotiate_message = ntlm_client.authenticate_start();
     RED_CHECK_HMEM(negotiate_message, expected_negotiate);
@@ -89,10 +91,12 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     /* 0140 */ 0x00, 0x89, 0xe2, 0xda, 0x48, 0x17, 0x29, 0xb5, 0x08, 0x00, 0x00, 0x00, 0x00, 0x20, 0x59, 0x27,  // ....H.)...... Y'
     /* 0150 */ 0x3f, 0x08, 0xd0, 0xc2, 0xe4, 0x75, 0x66, 0x10, 0x49, 0x7b, 0xbd, 0x8d, 0xf7,                    // ?....uf.I{...
     };
-    StaticOutStream<65536> buffer_to_send_authenticate;
-    credssp::State st1 = ntlm_client.authenticate_next(server_answer_challenge, buffer_to_send_authenticate);
-    RED_CHECK(credssp::State::Cont == st1);
-    RED_CHECK_HMEM(buffer_to_send_authenticate.get_bytes(), expected_authenticate);
+
+    RED_TEST_MESSAGE("+++++++++++++ Client receive NTLM Challenge -> reply with NTLM Authenticate");
+
+    auto v1 = ntlm_client.authenticate_next(server_answer_challenge);
+    RED_CHECK(credssp::State::Cont == ntlm_client.state);
+    RED_CHECK_HMEM(v1, expected_authenticate);
 
     std::vector<uint8_t> server_answer_pubauthkey{
         /* 0000 */ 0x30, 0x29, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa3, 0x22, 0x04, 0x20, 0x01, 0x00, 0x00, 0x00, 0xa2,  // 0)......". .....
@@ -109,43 +113,33 @@ RED_AUTO_TEST_CASE(TestNlaclient)
         /* 0050 */ 0xd5, 0xf3, 0xa7, 0xb5, 0x33, 0xd5, 0x62, 0x8d, 0x93, 0x18, 0x54, 0x39, 0x8a, 0xe7,              // ....3.b...T9..
     };
     
-    StaticOutStream<65536> buffer_to_send_tscredentials;
-    credssp::State st2 = ntlm_client.authenticate_next(server_answer_pubauthkey, buffer_to_send_tscredentials);
-    RED_CHECK(credssp::State::Finish == st2);
-    RED_CHECK_HMEM(buffer_to_send_tscredentials.get_bytes(), expected_tscredentials);
+    RED_TEST_MESSAGE("+++++++++++++ Client receive NTLM pubauthkey -> reply with NTLM TS Credentials");
+    auto v2 = ntlm_client.authenticate_next(server_answer_pubauthkey);
+    RED_CHECK(credssp::State::Finish == ntlm_client.state);
+    RED_CHECK_HMEM(v2, expected_tscredentials);
+    RED_TEST_MESSAGE("\n");
 }
-
-
 
 RED_AUTO_TEST_CASE(TestNlaserver)
 {
-    auto user = "Ulysse"_av;
-    auto domain = "Ithaque"_av;
-    auto pass = "Pénélope"_av;
-//    auto host = "Télémaque"_av;
+    RED_TEST_MESSAGE("==================== TestNlaserver ===================");
     LCGRandom rand(0);
     LCGTime timeobj;
-    std::string extra_message;
-    Translation::language_t lang = Translation::EN;
 
     auto get_password = [&](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
-            std::vector<uint8_t> vec;
-            vec.resize(user.size() * 2);
-            UTF8toUTF16(user, vec.data(), vec.size());
-            RED_CHECK_MEM(user_av, vec);
-            vec.resize(domain.size() * 2);
-            UTF8toUTF16(domain, vec.data(), vec.size());
-            RED_CHECK_MEM(domain_av, vec);
-            size_t user_len = UTF8Len(byte_ptr_cast(pass.data()));
-            LOG(LOG_INFO, "callback lambda: user_len=%lu", user_len);
-            password_array = std::vector<uint8_t>(user_len * 2);
-            UTF8toUTF16({pass.data(), strlen(char_ptr_cast(byte_ptr_cast(pass.data())))}, password_array.data(), user_len * 2);
+            auto user_str = ::UTF16toUTF8(user_av);
+            auto domain_str = ::UTF16toUTF8(domain_av);
+            RED_TEST_MESSAGE("+++++++++++++ Password Callback" 
+                          << " user (" << user_av.size() << "):" << user_str.c_str()
+                          << " domain (" << domain_av.size() << "):" << domain_str.c_str());
+            RED_CHECK(user_str == std::string("Ulysse"));
+            RED_CHECK(domain_str == std::string("Ithaque"));
+            password_array = ::UTF8toUTF16("Pénélope"_av);
             return PasswordCallback::Ok;
         }; 
 
     auto public_key = std::vector<uint8_t>{} << bytes_view("1245789652325415"_av); 
-    NtlmServer ntlm_server(public_key, rand, timeobj, extra_message, lang, get_password, true);
-    credssp::State st = credssp::State::Cont;
+    NtlmServer ntlm_server(public_key, rand, timeobj, get_password, true);
 
     std::vector<uint8_t> negotiate{ 
        0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04, //07......00.0,.*. !
@@ -154,28 +148,23 @@ RED_AUTO_TEST_CASE(TestNlaserver)
        0x00, 0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f                                            //......... !
     };
     // Recv negotiate, send challenge
-    {
-        StaticOutStream<65536> out_stream;
-        LOG(LOG_INFO, "Recv Negotiate");
-        st = ntlm_server.authenticate_next(negotiate, out_stream);
+    std::vector<uint8_t> challenge{
+        0x30, 0x81, 0x88, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x81, 0x80, 0x30, 0x7e, 0x30, 0x7c, 0xa0, //0..........0~0|. !
+        0x7a, 0x04, 0x78, 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, //z.xNTLMSSP...... !
+        0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0xb7, 0x82, 0x08, 0xe2, 0xb8, 0x6c, 0xda, 0xa6, 0xf0, //...8........l... !
+        0xf6, 0x30, 0x8d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x40, 0x00, 0x38, //.0.........@.@.8 !
+        0x00, 0x00, 0x00, 0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f, 0x01, 0x00, 0x08, 0x00, 0x57, //...............W !
+        0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00, 0x02, 0x00, 0x08, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, //.I.N.7.....W.I.N !
+        0x00, 0x37, 0x00, 0x03, 0x00, 0x08, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00, 0x04, //.7.....w.i.n.7.. !
+        0x00, 0x08, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00, 0x07, 0x00, 0x08, 0x00, 0x67, //...w.i.n.7.....g !
+        0x95, 0x0e, 0x5a, 0x4e, 0x56, 0x76, 0xd6, 0x00, 0x00, 0x00, 0x00                                //..ZNVv..... !]
+    };
 
-        std::vector<uint8_t> challenge{
-            0x30, 0x81, 0x88, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x81, 0x80, 0x30, 0x7e, 0x30, 0x7c, 0xa0, //0..........0~0|. !
-            0x7a, 0x04, 0x78, 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, //z.xNTLMSSP...... !
-            0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0xb7, 0x82, 0x08, 0xe2, 0xb8, 0x6c, 0xda, 0xa6, 0xf0, //...8........l... !
-            0xf6, 0x30, 0x8d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x40, 0x00, 0x38, //.0.........@.@.8 !
-            0x00, 0x00, 0x00, 0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f, 0x01, 0x00, 0x08, 0x00, 0x57, //...............W !
-            0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00, 0x02, 0x00, 0x08, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, //.I.N.7.....W.I.N !
-            0x00, 0x37, 0x00, 0x03, 0x00, 0x08, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00, 0x04, //.7.....w.i.n.7.. !
-            0x00, 0x08, 0x00, 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00, 0x07, 0x00, 0x08, 0x00, 0x67, //...w.i.n.7.....g !
-            0x95, 0x0e, 0x5a, 0x4e, 0x56, 0x76, 0xd6, 0x00, 0x00, 0x00, 0x00                                //..ZNVv..... !]
-        };
-        RED_CHECK_HMEM(challenge, out_stream.get_bytes());
-    }
-    
-    RED_CHECK_EQUAL(credssp::State::Cont, st);
+    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Negotiate --> answer with NTLM Challenge");
 
-    // authenticate + pubauthkey
+    RED_CHECK_HMEM(challenge, ntlm_server.authenticate_next(negotiate));
+    RED_CHECK_EQUAL(credssp::State::Cont, ntlm_server.state);
+
     std::vector<uint8_t> authenticate{ 
         0x30, 0x82, 0x01, 0x59, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa1, 0x82, 0x01, 0x2c, 0x30, 0x82, 0x01, //0..Y........,0.. !
         0x28, 0x30, 0x82, 0x01, 0x24, 0xa0, 0x82, 0x01, 0x20, 0x04, 0x82, 0x01, 0x1c, 0x4e, 0x54, 0x4c, //(0..$... ....NTL !
@@ -201,22 +190,16 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         0x3f, 0x08, 0xd0, 0xc2, 0xe4, 0x75, 0x66, 0x10, 0x49, 0x7b, 0xbd, 0x8d, 0xf7                    //?....uf.I{... !]
     };
 
-    // Recv authenticate + pubauthkey, send pubauthkey
-    {
-        StaticOutStream<65536> out_stream;
-        LOG(LOG_INFO, "Recv authenticate");
-        
-        st = ntlm_server.authenticate_next(authenticate, out_stream);
+    std::vector<uint8_t> pubauthkey{
+        0x30, 0x29, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa3, 0x22, 0x04, 0x20, 0x01, 0x00, 0x00, 0x00, 0xa2, //0)......". .....
+        0xe0, 0x5b, 0x50, 0x97, 0x8e, 0x99, 0x27, 0x00, 0x00, 0x00, 0x00, 0xdc, 0xa7, 0x0b, 0xfe, 0x37, //.[P...'........7
+        0x45, 0x3d, 0x1b, 0x05, 0x15, 0xce, 0x56, 0x0a, 0x54, 0xa1, 0xf1,                     //E=....V.T..
+    };
 
-        std::vector<uint8_t> pubauthkey{
-            0x30, 0x29, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa3, 0x22, 0x04, 0x20, 0x01, 0x00, 0x00, 0x00, 0xa2, //0)......". .....
-            0xe0, 0x5b, 0x50, 0x97, 0x8e, 0x99, 0x27, 0x00, 0x00, 0x00, 0x00, 0xdc, 0xa7, 0x0b, 0xfe, 0x37, //.[P...'........7
-            0x45, 0x3d, 0x1b, 0x05, 0x15, 0xce, 0x56, 0x0a, 0x54, 0xa1, 0xf1,                     //E=....V.T..
-        };
-        RED_CHECK_HMEM(pubauthkey, out_stream.get_bytes());
-    }
+    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> answer with NTLM Pubauthkey");
+    RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next(authenticate));
     
-    RED_CHECK_EQUAL(credssp::State::Cont, st);
+    RED_CHECK_EQUAL(credssp::State::Cont, ntlm_server.state);
     
     std::vector<uint8_t>  ts_credentials{
         0x30, 0x5c, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa2, 0x55, 0x04, 0x53, 0x01, 0x00, 0x00, 0x00, 0xaf, // 0.......U.S.....
@@ -226,21 +209,27 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         0xd9, 0x52, 0x72, 0x92, 0xfa, 0x41, 0xa5, 0xb4, 0x9d, 0x94, 0xfb, 0x0e, 0xe2, 0x61, 0xba, 0xfc, // .Rr..A.......a..
         0xd5, 0xf3, 0xa7, 0xb5, 0x33, 0xd5, 0x62, 0x8d, 0x93, 0x18, 0x54, 0x39, 0x8a, 0xe7              // ....3.b...T9..
     };
+
+    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM TS Credentials --> NTLM Finished");
     
     // Recv ts_credential, -> finished
-    {
-        StaticOutStream<65536> out_stream;
-        st = ntlm_server.authenticate_next(ts_credentials, out_stream);
-        RED_CHECK_EQUAL(out_stream.get_bytes().size(), 0);
-    }
-    RED_CHECK_EQUAL(st, credssp::State::Finish);
+    RED_CHECK_EQUAL(ntlm_server.authenticate_next(ts_credentials).size(), 0);
+    RED_CHECK_EQUAL(ntlm_server.state, credssp::State::Finish);
+    RED_TEST_MESSAGE("\n");
 }
 
+
+RED_AUTO_TEST_CASE(TestClientToServerInteraction)
+{
+    RED_TEST_MESSAGE("==================== TestClientToServerInteraction ===================");
+}
 
 // Tpdu class is used to extract one Credssp packet from stream in authentication sequence
 // and afterward to commute to extraction of an RDP TPKT (PDU)
 RED_AUTO_TEST_CASE(TestTpdu)
 {
+    RED_TEST_MESSAGE("==================== TestTpdu (extraction of full packets - Credssp or TPKT - from input stream) ===================");
+
     RED_TEST_PASSPOINT();
     auto client =
         // negotiate
@@ -382,4 +371,5 @@ RED_AUTO_TEST_CASE(TestTpdu)
     RED_CHECK_HMEM(ts_credentials, buf.current_pdu_buffer());
     RED_CHECK_EQUAL(false, buf.next(TpduBuffer::CREDSSP));
     RED_CHECK_EQUAL(buf.remaining(), 0);
+    RED_TEST_MESSAGE("\n");
 }

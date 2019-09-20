@@ -71,8 +71,6 @@ class NtlmServer final
 
     private:
     std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb;
-    std::string& extra_message;
-    Translation::language_t lang;
     const bool verbose;
 
     array_sha256 ClientServerHash;
@@ -80,6 +78,7 @@ class NtlmServer final
 
 public:
 
+    credssp::State state = credssp::State::Cont; 
     struct ServerAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
@@ -95,7 +94,7 @@ protected:
     const bool NTLMv2 = true;
     bool UseMIC = true; // NTLMv2
 public:
-    NtlmState state = NTLM_STATE_INITIAL;
+    NtlmState ntlm_state = NTLM_STATE_INITIAL;
 
 private:
     uint8_t MachineID[32];
@@ -188,16 +187,12 @@ public:
     NtlmServer(array_view_u8 key,
                Random & rand,
                TimeObj & timeobj,
-               std::string& extra_message,
-               Translation::language_t lang,
                std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
                const bool verbose = false)
         : timeobj(timeobj)
         , rand(rand)
         , public_key(key)
         , set_password_cb(set_password_cb)
-        , extra_message(extra_message)
-        , lang(lang)
         , verbose(verbose)
     {
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
@@ -221,7 +216,7 @@ public:
     }
 
 public:
-    credssp::State authenticate_next(bytes_view in_data, OutStream & out_stream)
+    std::vector<uint8_t> authenticate_next(bytes_view in_data)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLMServer::authenticate_next");
 
@@ -229,9 +224,11 @@ public:
         {
             case ServerAuthenticateData::Start:
               LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Start");
-              return credssp::State::Err;
+              this->state = credssp::State::Err;
+              return {};
             case ServerAuthenticateData::Loop:
             {
+                std::vector<uint8_t> result;
                 if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
                     /* receive authentication token */
                     this->ts_request = recvTSRequest(in_data);
@@ -241,7 +238,8 @@ public:
                 if (this->ts_request.negoTokens.size() < 1) {
                     LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                    return credssp::State::Err;
+                    this->state = credssp::State::Err;
+                    return {};
                 }
 
                 // unsigned long const fContextReq = 0
@@ -258,12 +256,12 @@ public:
 
                 LOG_IF(this->verbose, LOG_INFO, "--------------------- NTLM_SSPI::AcceptSecurityContext ---------------------");
 
-                switch (this->state) {
+                switch (this->ntlm_state) {
                 case NTLM_STATE_INITIAL:
                 {
                     LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL");
 
-                    this->state = NTLM_STATE_NEGOTIATE;
+                    this->ntlm_state = NTLM_STATE_NEGOTIATE;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
                     this->NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(this->ts_request.negoTokens);
@@ -293,7 +291,7 @@ public:
                         memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
                     }
                     else {
-                        const timeval tv = timeobj.get_time();
+                        const timeval tv = timeobj.get_time();  
                         OutStream out_stream(this->Timestamp);
                         out_stream.out_uint32_le(tv.tv_usec);
                         out_stream.out_uint32_le(tv.tv_sec);
@@ -316,7 +314,6 @@ public:
                         this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                         this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
                         this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
                     }
 
                     StaticOutStream<65535> out_stream;
@@ -326,7 +323,7 @@ public:
                     this->SavedChallengeMessage.clear();
                     push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
 
-                    this->state = NTLM_STATE_AUTHENTICATE;
+                    this->ntlm_state = NTLM_STATE_AUTHENTICATE;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL::SEC_I_CONTINUE_NEEDED");
                     status = SEC_I_CONTINUE_NEEDED;
@@ -343,7 +340,6 @@ public:
                     if (this->AUTHENTICATE_MESSAGE.has_mic) {
                         this->UseMIC = true;
                     }
-
 
                     auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
                     this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
@@ -365,7 +361,7 @@ public:
                         break;
                     }
 
-                    this->state = NTLM_STATE_WAIT_PASSWORD;
+                    this->ntlm_state = NTLM_STATE_WAIT_PASSWORD;
 
                     if (res == PasswordCallback::Wait) {
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_I_LOCAL_LOGON");
@@ -422,7 +418,7 @@ public:
                             break;
                         }
                     }
-                    this->state = NTLM_STATE_FINAL;
+                    this->ntlm_state = NTLM_STATE_FINAL;
                     if (status == SEC_I_CONTINUE_NEEDED || status == SEC_I_COMPLETE_NEEDED) {
                         this->ts_request.negoTokens.clear();
                     }
@@ -482,7 +478,7 @@ public:
                             break;
                         }
                     }
-                    this->state = NTLM_STATE_FINAL;
+                    this->ntlm_state = NTLM_STATE_FINAL;
                     if (status == SEC_I_CONTINUE_NEEDED || status == SEC_I_COMPLETE_NEEDED) {
                         this->ts_request.negoTokens.clear();
                     }
@@ -496,7 +492,8 @@ public:
 
                 this->state_accept_security_context = status;
                 if (status == SEC_I_LOCAL_LOGON) {
-                    return credssp::State::Cont;
+                    this->state = credssp::State::Cont;
+                    return {};
                 }
 
                 if (status == SEC_I_COMPLETE_NEEDED) {
@@ -515,15 +512,14 @@ public:
                     if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
                         if (this->ts_request.pubKeyAuth.size() == 0) {
                             // report_error
-                            this->extra_message = " ";
-                            this->extra_message.append(TR(trkeys::err_login_password, this->lang));
                             LOG(LOG_INFO, "Provided login/password is probably incorrect.");
                         }
                         LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN 0x%08X", SEC_E_INVALID_TOKEN);
                         // SEC_E_INVALID_TOKEN; /* DO NOT SEND CREDENTIALS! */
                         LOG(LOG_ERR, "Error: could not verify client's public key echo");
                         LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        return credssp::State::Err;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
 
                     // this->ts_request.pubKeyAuth [signature][data_buffer]
@@ -557,15 +553,14 @@ public:
 
                         if (this->ts_request.pubKeyAuth.size() == 0) {
                             // report_error
-                            this->extra_message = " ";
-                            this->extra_message.append(TR(trkeys::err_login_password, this->lang));
                             LOG(LOG_INFO, "Provided login/password is probably incorrect.");
                         }
                         LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED 0x%08X", SEC_E_MESSAGE_ALTERED);
                         // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
                         LOG(LOG_ERR, "Error: could not verify client's public key echo");
                         LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        return credssp::State::Err;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
 
                     if (this->ts_request.use_version >= 5) {
@@ -583,7 +578,8 @@ public:
                         // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
                         LOG(LOG_ERR, "Error: could not verify client's public key echo");
                         LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        return credssp::State::Err;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
                     if (memcmp(this->public_key.data(), result_buffer.data(), public_key.size()) != 0) {
                         LOG(LOG_ERR, "Could not verify server's public key echo");
@@ -597,7 +593,8 @@ public:
                         // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
                         LOG(LOG_ERR, "Error: could not verify client's public key echo");
                         LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        return credssp::State::Err;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
 
                     this->ts_request.negoTokens.clear();
@@ -653,10 +650,11 @@ public:
                 if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
                     LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                    return credssp::State::Err;
+                    this->state = credssp::State::Err;
+                    return {};
                 }
 
-                auto v = emitTSRequest(this->ts_request.version,
+                result = emitTSRequest(this->ts_request.version,
                                        this->ts_request.negoTokens,
                                        this->ts_request.authInfo,
                                        this->ts_request.pubKeyAuth,
@@ -664,7 +662,6 @@ public:
                                        this->ts_request.clientNonce.clientNonce,
                                        this->ts_request.clientNonce.initialized);
                 this->error_code = this->ts_request.error_code;
-                out_stream.out_copy_bytes(v);
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
                 this->ts_request.negoTokens.clear();
@@ -677,12 +674,14 @@ public:
                     if (status != SEC_E_OK) {
                         LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
                         LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        return credssp::State::Err;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
                     this->server_auth_data.state = ServerAuthenticateData::Final;
                 }
+                this->state = credssp::State::Cont;
+                return result;
             }
-            return credssp::State::Cont;
 
             case ServerAuthenticateData::Final:
             {
@@ -694,7 +693,8 @@ public:
                     LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    return credssp::State::Err;
+                    this->state = credssp::State::Err;
+                    return {};
                 }
 
                 unsigned long MessageSeqNo = this->recv_seq_num++;
@@ -702,7 +702,8 @@ public:
                 if (this->ts_request.authInfo.size() < cbMaxSignature) {
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    return credssp::State::Err;
+                    this->state = credssp::State::Err;
+                    return {};
                 }
                 // this->ts_request.authInfo [signature][data_buffer]
 
@@ -738,16 +739,18 @@ public:
 
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_MESSAGE_ALTERED);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    return credssp::State::Err;
+                    this->state = credssp::State::Err;
+                    return {};
                 }
 
                 this->ts_credentials = recvTSCredentials(decrypted_creds);
                 this->server_auth_data.state = ServerAuthenticateData::Start;
-                return credssp::State::Finish;
+                this->state = credssp::State::Finish;
+                return {};
             }
         }
-
-        return credssp::State::Err;
+        this->state = credssp::State::Err;
+        return {};
     }
 
 };

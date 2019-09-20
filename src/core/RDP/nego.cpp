@@ -452,17 +452,17 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, bytes_view data)
         #endif
     }
     else {
-        StaticOutStream<65536> ts_request_emit;
-        switch (this->NTLM->authenticate_next(data, ts_request_emit))
+        auto v = this->NTLM->authenticate_next(data);
+        switch (this->NTLM->state)
         {
             case credssp::State::Cont:
-                trans.send(ts_request_emit.get_bytes());
+                trans.send(v);
                 break;
             case credssp::State::Err:
                 LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
                 return this->fallback_to_tls(trans);
             case credssp::State::Finish:
-                trans.send(ts_request_emit.get_bytes());
+                trans.send(v);
                 this->NTLM.reset();
                 return State::Final;
         }

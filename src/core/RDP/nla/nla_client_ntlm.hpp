@@ -78,6 +78,10 @@ private:
 
     enum class Res : bool { Err, Ok };
 
+    public:
+    credssp::State state;
+    
+    private:
     enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
 
     auto CryptAndSign(SslRC4 & rc4, uint32_t mseqno, bytes_view payload) -> std::vector<uint8_t>
@@ -138,7 +142,7 @@ public:
     }
 
 
-    credssp::State authenticate_next(bytes_view in_data, StaticOutStream<65536> & ts_request_emit)
+    std::vector<uint8_t> authenticate_next(bytes_view in_data)
     {
         switch (this->client_auth_data_state)
         {
@@ -278,10 +282,10 @@ public:
                                       CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, this->PublicKey),
                                       0, {}, false);
                 }
-                ts_request_emit.out_copy_bytes(v);
 
                 this->client_auth_data_state = Final;
-                return credssp::State::Cont;
+                this->state = credssp::State::Cont;
+                return v;
             }
             case Final:
             {
@@ -295,7 +299,8 @@ public:
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
                     // return SEC_E_INVALID_TOKEN;
                     LOG(LOG_ERR, "Could not verify public key echo!");
-                    return credssp::State::Err;
+                    this->state = credssp::State::Err;
+                    return {};
                 }
 
                 /* Verify Server Public Key Echo */
@@ -320,7 +325,8 @@ public:
                     LOG(LOG_ERR, "public key echo signature verification failed, something nasty is going on!");
                     LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
                     LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
-                    return credssp::State::Err;
+                    this->state = credssp::State::Err;
+                    return {};
                 }
 
                 if (ts_request.use_version < 5) {
@@ -330,7 +336,8 @@ public:
                         LOG(LOG_ERR, "Server's public key echo signature verification failed");
                         LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
                         LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
-                        return credssp::State::Err;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
                 }
                 else {
@@ -341,54 +348,52 @@ public:
                         LOG(LOG_ERR, "Server's public key echo signature verification failed");
                         LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
                         LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
-                        return credssp::State::Err;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_ts_credentials");
 
-                {
-                    std::vector<uint8_t> ts_credentials;
-                    if (this->ts_credentials.credType == 1){
-                        if (this->restricted_admin_mode) {
-                            LOG(LOG_INFO, "Restricted Admin Mode");
-                            ts_credentials = emitTSCredentialsPassword({},{},{});
-                        }
-                        else {
-                            ts_credentials = emitTSCredentialsPassword(this->utf16_domain,this->utf16_user,this->identity_Password);
-                            LOG(LOG_INFO, "TSCredentialsPassword: Domain User Password");
-                            hexdump_d(ts_credentials);
-                        }
+                std::vector<uint8_t> ts_credentials;
+                if (this->ts_credentials.credType == 1){
+                    if (this->restricted_admin_mode) {
+                        LOG(LOG_INFO, "Restricted Admin Mode");
+                        ts_credentials = emitTSCredentialsPassword({},{},{});
                     }
                     else {
-                        // Card Reader Not Supported Yet
-                        ts_credentials = emitTSCredentialsSmartCard(
-                                        /*pin*/{},/*userHint*/{},/*domainHint*/{},
-                                        /*keySpec*/0,/*cardName*/{},/*readerName*/{},
-                                        /*containerName*/{}, /*cspName*/{});
+                        ts_credentials = emitTSCredentialsPassword(this->utf16_domain,this->utf16_user,this->identity_Password);
+                        LOG(LOG_INFO, "TSCredentialsPassword: Domain User Password");
+//                            hexdump_d(ts_credentials);
                     }
-                    
-                    unsigned long MessageSeqNo = 1;
-
-                    // authInfo [signature][data_buffer]
-                    std::vector<uint8_t> authInfo = CryptAndSign(this->SendRc4Seal, MessageSeqNo, ts_credentials);
-                    auto v = emitTSRequest(ts_request.version,
-                                           {}, // negoTokens
-                                           authInfo,
-                                           {}, // pubKeyAuth
-                                           error_code,
-                                           this->SavedClientNonce.clientNonce,
-                                           this->SavedClientNonce.initialized);
-                    ts_request_emit.out_copy_bytes(v);
-
                 }
+                else {
+                    // Card Reader Not Supported Yet
+                    ts_credentials = emitTSCredentialsSmartCard(
+                                    /*pin*/{},/*userHint*/{},/*domainHint*/{},
+                                    /*keySpec*/0,/*cardName*/{},/*readerName*/{},
+                                    /*containerName*/{}, /*cspName*/{});
+                }
+                
+                // authInfo [signature][data_buffer]
+                std::vector<uint8_t> authInfo = CryptAndSign(this->SendRc4Seal, 1 /* seqno */, ts_credentials);
+                auto v = emitTSRequest(ts_request.version,
+                                       {}, // negoTokens
+                                       authInfo,
+                                       {}, // pubKeyAuth
+                                       error_code,
+                                       this->SavedClientNonce.clientNonce,
+                                       this->SavedClientNonce.initialized);
+
                 this->client_auth_data_state = Start;
-                return credssp::State::Finish;
+                this->state = credssp::State::Finish;
+                return v;
             }
             default:
-                return credssp::State::Err;
+            break;
         }
-        return credssp::State::Err;
+        this->state = credssp::State::Err;
+        return {};
     }
 };
 

@@ -42,6 +42,7 @@ Author(s): Jonathan Poelen
 #if defined(REDEMPTION_UNIT_TEST_FAST_CHECK) && REDEMPTION_UNIT_TEST_FAST_CHECK == 1
 //@{
 #  define RED_TEST_CHECKPOINT(...)
+#  define RED_TEST_MESSAGE(...)
 #  define RED_TEST_PASSPOINT(...)
 #  define RED_TEST_CONTEXT(...)
 
@@ -81,6 +82,7 @@ Author(s): Jonathan Poelen
 #else
 //@{
 #  define RED_TEST_CHECKPOINT(...) BOOST_TEST_CHECKPOINT(__VA_ARGS__) /*NOLINT*/
+#  define RED_TEST_MESSAGE(...) BOOST_TEST_MESSAGE(__VA_ARGS__) /*NOLINT*/
 #  define RED_TEST_PASSPOINT(...) BOOST_TEST_PASSPOINT(__VA_ARGS__) /*NOLINT*/
 
 #  define RED_TEST_CONTEXT(...) BOOST_TEST_CONTEXT(__VA_ARGS__) /*NOLINT*/

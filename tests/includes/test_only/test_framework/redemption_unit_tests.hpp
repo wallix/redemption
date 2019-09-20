@@ -67,6 +67,7 @@ namespace redemption_unit_test__
 # define RED_FAIL(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_ERROR(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_CHECKPOINT(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_TEST_MESSAGE(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_PASSPOINT() do { } while(0)
 # define RED_TEST_DONT_PRINT_LOG_VALUE(type)
 # define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
