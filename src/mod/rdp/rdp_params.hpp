@@ -200,6 +200,8 @@ struct ModRDPParams
 
     bool experimental_fix_input_event_sync = true;
 
+    bool support_connection_redirection_during_recording = true;
+
     bool split_domain = false;
 
     RDPVerbose verbose;
@@ -405,6 +407,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_timeout);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_input_event_sync);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             support_connection_redirection_during_recording);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.log_only_relevant_activities);
 

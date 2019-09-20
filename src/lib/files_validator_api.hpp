@@ -28,7 +28,20 @@
 extern "C"
 {
     class ValidatorApi;
+    class ValidatorKeyValueList;
     using ValidatorFileId = uint32_t;
+
+    REDEMPTION_LIB_EXPORT
+    ValidatorKeyValueList* validator_key_value_list_alloc() noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    void validator_key_value_list_free(ValidatorKeyValueList* key_value_list) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    int validator_key_value_list_clear(ValidatorKeyValueList* key_value_list) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    int validator_key_value_list_push_value(ValidatorKeyValueList* key_value_list, char const* key, char const* value) noexcept;
 
     REDEMPTION_LIB_EXPORT
     ValidatorApi* validator_open_session(char const* socket_path) noexcept;
@@ -47,6 +60,34 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_name, char const* target_name) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    ValidatorFileId validator_open_data(ValidatorApi* validator, char const* target_name, ValidatorKeyValueList* key_value_list) noexcept;
+
+    /// Facility for validator_open_data with 0, 1, 2 or 3 key/value
+    //@{
+    REDEMPTION_LIB_EXPORT
+    ValidatorFileId validator_open_data0(
+        ValidatorApi* validator, char const* target_name) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    ValidatorFileId validator_open_data1(
+        ValidatorApi* validator, char const* target_name,
+        char const* key1, char const* value1) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    ValidatorFileId validator_open_data2(
+        ValidatorApi* validator, char const* target_name,
+        char const* key1, char const* value1,
+        char const* key2, char const* value2) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    ValidatorFileId validator_open_data3(
+        ValidatorApi* validator, char const* target_name,
+        char const* key1, char const* value1,
+        char const* key2, char const* value2,
+        char const* key3, char const* value3) noexcept;
+    //@}
 
     REDEMPTION_LIB_EXPORT
     int validator_send_data(ValidatorApi* validator, ValidatorFileId id, char const* data, unsigned size) noexcept;

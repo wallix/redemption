@@ -54,6 +54,7 @@ namespace cfg {
         struct spark_view_specific_glyph_width;
         struct experimental_enable_serializer_data_block_size_limit;
         struct experimental_support_resize_session_during_recording;
+        struct support_connection_redirection_during_recording;
         struct rdp_keepalive_connection_interval;
     };
 
@@ -81,13 +82,11 @@ namespace cfg {
         struct disable_tsk_switch_shortcuts;
         struct rdp_compression;
         struct max_color_depth;
-        struct front_remotefx;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;
         struct persist_bitmap_cache_on_disk;
         struct bitmap_compression;
         struct fast_path;
-        struct remotefx;
         struct enable_suppress_output;
         struct ssl_cipher_list;
         struct show_target_user_in_f12_message;
@@ -97,6 +96,7 @@ namespace cfg {
         struct bogus_number_of_fastpath_input_event;
         struct recv_timeout;
         struct enable_osd_4_eyes;
+        struct front_remotefx;
     };
 
     struct mod_rdp {
@@ -181,6 +181,16 @@ namespace cfg {
         struct session_shadowing_support;
     };
 
+    struct mod_vnc {
+        struct clipboard_up;
+        struct clipboard_down;
+        struct encodings;
+        struct server_clipboard_encoding_type;
+        struct bogus_clipboard_infinite_loop;
+        struct server_is_apple;
+        struct server_unix_alt;
+    };
+
     struct metrics {
         struct enable_rdp_metrics;
         struct enable_vnc_metrics;
@@ -190,14 +200,29 @@ namespace cfg {
         struct sign_key;
     };
 
-    struct mod_vnc {
-        struct clipboard_up;
-        struct clipboard_down;
-        struct encodings;
-        struct server_clipboard_encoding_type;
-        struct bogus_clipboard_infinite_loop;
-        struct server_is_apple;
-        struct server_unix_alt;
+    struct file_verification {
+        struct socket_path;
+        struct enable_up;
+        struct enable_down;
+        struct log_if_accepted;
+    };
+
+    struct icap_server_down {
+        struct clipboard_text_data;
+        struct host;
+        struct port;
+        struct service_name;
+        struct tls;
+        struct enable_x_context;
+    };
+
+    struct icap_server_up {
+        struct clipboard_text_data;
+        struct host;
+        struct port;
+        struct service_name;
+        struct tls;
+        struct enable_x_context;
     };
 
     struct mod_replay {
@@ -233,13 +258,9 @@ namespace cfg {
         struct bogus_vlc_frame_rate;
         struct l_bitrate;
         struct l_framerate;
-        struct l_height;
-        struct l_width;
         struct l_qscale;
         struct m_bitrate;
         struct m_framerate;
-        struct m_height;
-        struct m_width;
         struct m_qscale;
         struct h_bitrate;
         struct h_framerate;
@@ -255,12 +276,9 @@ namespace cfg {
 
     struct debug {
         struct fake_target_ip;
-        struct sec;
-        struct rdp;
         struct primary_orders;
         struct secondary_orders;
         struct bitmap_update;
-        struct bitmap;
         struct capture;
         struct auth;
         struct session;
@@ -269,8 +287,6 @@ namespace cfg {
         struct mod_vnc;
         struct mod_internal;
         struct mod_xup;
-        struct widget;
-        struct input;
         struct password;
         struct compression;
         struct cache;
@@ -295,34 +311,8 @@ namespace cfg {
         struct theme;
     };
 
-    struct file_verification {
-        struct socket_path;
-        struct enable_up;
-        struct enable_down;
-        struct log_if_accepted;
-    };
-
-    struct icap_server_up {
-        struct host;
-        struct port;
-        struct service_name;
-        struct tls;
-        struct enable_x_context;
-    };
-
-    struct icap_server_down {
-        struct host;
-        struct port;
-        struct service_name;
-        struct tls;
-        struct enable_x_context;
-    };
-
     struct context {
         struct psid;
-        struct opt_bitrate;
-        struct opt_framerate;
-        struct opt_qscale;
         struct opt_bpp;
         struct opt_height;
         struct opt_width;
@@ -407,6 +397,7 @@ namespace cfg {
         struct rd_shadow_invitation_id;
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
+        struct remotefx;
     };
 
 } // namespace cfg

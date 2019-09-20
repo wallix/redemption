@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(175);
+constexpr authid_t MAX_AUTHID = authid_t(174);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -32,7 +32,6 @@ constexpr array_view_const_char const authstr[] = {
     "keyboard_input_masking_level"_av,
     "keyboard_layout"_av,
     "disable_tsk_switch_shortcuts"_av,
-    "remotefx"_av,
     "enable_nla"_av,
     "enable_kerberos"_av,
     "server_redirection"_av,
@@ -90,6 +89,11 @@ constexpr array_view_const_char const authstr[] = {
     "vnc_bogus_clipboard_infinite_loop"_av,
     "server_is_apple"_av,
     "server_unix_alt"_av,
+    "enable_up"_av,
+    "enable_down"_av,
+    "log_if_accepted"_av,
+    "clipboard_text_data"_av,
+    "clipboard_text_data"_av,
     "replay_on_loop"_av,
     "disable_keyboard_log"_av,
     "rt_display"_av,
@@ -99,13 +103,7 @@ constexpr array_view_const_char const authstr[] = {
     "language"_av,
     "password_en"_av,
     "password_fr"_av,
-    "enable_up"_av,
-    "enable_down"_av,
-    "log_if_accepted"_av,
     "psid"_av,
-    "bitrate"_av,
-    "framerate"_av,
-    "qscale"_av,
     "bpp"_av,
     "height"_av,
     "width"_av,
@@ -186,4 +184,5 @@ constexpr array_view_const_char const authstr[] = {
     "rd_shadow_invitation_id"_av,
     "rd_shadow_invitation_addr"_av,
     "rd_shadow_invitation_port"_av,
+    "remotefx"_av,
 };

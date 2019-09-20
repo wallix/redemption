@@ -8,6 +8,7 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 #_advanced
 glyph_cache = boolean(default=False)
 
+#_iptables
 #_advanced
 port = integer(min=0, default=3389)
 
@@ -127,7 +128,10 @@ spark_view_specific_glyph_width = boolean(default=False)
 experimental_enable_serializer_data_block_size_limit = boolean(default=False)
 
 #_advanced
-experimental_support_resize_session_during_recording = boolean(default=False)
+experimental_support_resize_session_during_recording = boolean(default=True)
+
+#_advanced
+support_connection_redirection_during_recording = boolean(default=True)
 
 # Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
@@ -222,10 +226,6 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 max_color_depth = option(8, 15, 16, 24, 32, default=24)
 
-# Enable front remoteFx
-#_advanced
-front_remotefx = boolean(default=True)
-
 # Persistent Disk Bitmap Cache on the front side.
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
@@ -245,10 +245,6 @@ bitmap_compression = boolean(default=True)
 # Enables support of Client Fast-Path Input Event PDUs.
 #_advanced
 fast_path = boolean(default=True)
-
-# Enables support of the remoteFX codec.
-#_advanced
-remotefx = boolean(default=False)
 
 enable_suppress_output = boolean(default=True)
 
@@ -276,6 +272,10 @@ recv_timeout = integer(min=100, max=10000, default=1000)
 
 #_advanced
 enable_osd_4_eyes = boolean(default=False)
+
+# Enable front remoteFx
+#_advanced
+front_remotefx = boolean(default=True)
 
 [mod_rdp]
 
@@ -623,29 +623,6 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 #_advanced
 session_shadowing_support = boolean(default=True)
 
-[metrics]
-
-#_advanced
-enable_rdp_metrics = boolean(default=False)
-
-#_advanced
-enable_vnc_metrics = boolean(default=False)
-
-#_hidden
-log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
-
-# (is in second)
-#_advanced
-log_interval = integer(min=0, default=5)
-
-# (is in hour)
-#_advanced
-log_file_turnover_interval = integer(min=0, default=24)
-
-# signature key to digest log metrics header info
-#_advanced
-sign_key = string(default='')
-
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -678,6 +655,87 @@ server_is_apple = boolean(default=False)
 
 #_hidden
 server_unix_alt = boolean(default=False)
+
+[metrics]
+
+#_advanced
+enable_rdp_metrics = boolean(default=False)
+
+#_advanced
+enable_vnc_metrics = boolean(default=False)
+
+#_hidden
+log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
+
+# (is in second)
+#_advanced
+log_interval = integer(min=0, default=5)
+
+# (is in hour)
+#_advanced
+log_file_turnover_interval = integer(min=0, default=24)
+
+# signature key to digest log metrics header info
+#_advanced
+sign_key = string(default='')
+
+[file_verification]
+
+#_hidden
+socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
+
+#_hidden
+enable_up = boolean(default=False)
+
+#_hidden
+enable_down = boolean(default=False)
+
+#_hidden
+log_if_accepted = boolean(default=True)
+
+[icap_server_down]
+
+# Verify text data via clipboard
+#_hidden
+clipboard_text_data = boolean(default=False)
+
+# Ip or fqdn of ICAP server
+host = string(default='')
+
+# Port of ICAP server
+port = integer(min=0, default=0)
+
+# Service name on ICAP server
+service_name = string(default='avscan')
+
+# ICAP server uses tls
+tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
+
+[icap_server_up]
+
+# Verify text data via clipboard
+#_hidden
+clipboard_text_data = boolean(default=False)
+
+# Ip or fqdn of ICAP server
+host = string(default='')
+
+# Port of ICAP server
+port = integer(min=0, default=0)
+
+# Service name on ICAP server
+service_name = string(default='avscan')
+
+# ICAP server uses tls
+tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
 
 [mod_replay]
 
@@ -814,14 +872,6 @@ l_bitrate = integer(min=0, default=10000)
 #_advanced
 l_framerate = integer(min=0, default=5)
 
-# Height for low quality.
-#_advanced
-l_height = integer(min=0, default=480)
-
-# Width for low quality.
-#_advanced
-l_width = integer(min=0, default=640)
-
 # Qscale (parameter given to ffmpeg) for low quality.
 #_advanced
 l_qscale = integer(min=0, default=28)
@@ -833,14 +883,6 @@ m_bitrate = integer(min=0, default=20000)
 # Framerate for medium quality.
 #_advanced
 m_framerate = integer(min=0, default=5)
-
-# Height for medium quality.
-#_advanced
-m_height = integer(min=0, default=768)
-
-# Width for medium quality.
-#_advanced
-m_width = integer(min=0, default=1024)
 
 # Qscale (parameter given to ffmpeg) for medium quality.
 #_advanced
@@ -883,14 +925,6 @@ fake_target_ip = string(default='')
 
 #_advanced
 #_hex
-sec = integer(min=0, default=0)
-
-#_advanced
-#_hex
-rdp = integer(min=0, default=0)
-
-#_advanced
-#_hex
 primary_orders = integer(min=0, default=0)
 
 #_advanced
@@ -900,10 +934,6 @@ secondary_orders = integer(min=0, default=0)
 #_advanced
 #_hex
 bitmap_update = integer(min=0, default=0)
-
-#_advanced
-#_hex
-bitmap = integer(min=0, default=0)
 
 #_advanced
 #_hex
@@ -936,14 +966,6 @@ mod_internal = integer(min=0, default=0)
 #_advanced
 #_hex
 mod_xup = integer(min=0, default=0)
-
-#_advanced
-#_hex
-widget = integer(min=0, default=0)
-
-#_advanced
-#_hex
-input = integer(min=0, default=0)
 
 #_hidden
 password = integer(min=0, default=0)
@@ -995,54 +1017,10 @@ password_fr = string(default='')
 #_advanced
 load_theme = string(default='')
 
-[file_verification]
+[context]
 
-#_hidden
-socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
-
-#_hidden
-enable_up = boolean(default=False)
-
-#_hidden
-enable_down = boolean(default=False)
-
-#_hidden
-log_if_accepted = boolean(default=True)
-
-[icap_server_up]
-
-# Ip or fqdn of ICAP server
-host = string(default='')
-
-# Port of ICAP server
-port = integer(min=0, default=0)
-
-# Service name on ICAP server
-service_name = string(default='avscan')
-
-# ICAP server uses tls
-tls = boolean(default=False)
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+# Enables support of the remoteFX codec.
 #_advanced
-enable_x_context = boolean(default=True)
-
-[icap_server_down]
-
-# Ip or fqdn of ICAP server
-host = string(default='')
-
-# Port of ICAP server
-port = integer(min=0, default=0)
-
-# Service name on ICAP server
-service_name = string(default='avscan')
-
-# ICAP server uses tls
-tls = boolean(default=False)
-
-# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
-#_advanced
-enable_x_context = boolean(default=True)
+remotefx = boolean(default=False)
 
 )gen_config_ini"

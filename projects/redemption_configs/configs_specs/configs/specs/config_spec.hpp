@@ -76,8 +76,11 @@ void config_spec_definition(Writer && W)
             "session_log",
             "client",
             "mod_rdp",
-            "metrics",
             "mod_vnc",
+            "metrics",
+            "file_verification",
+            "icap_server_down",
+            "icap_server_up",
             "mod_replay",
             "ocr",
             "video",
@@ -122,7 +125,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, NL, type_<std::string>(), "target_application_password");
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "glyph_cache", set(false));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "port", set(3389));
+        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", set(3389));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "notimestamp", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
@@ -171,7 +174,9 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_enable_serializer_data_block_size_limit",set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_support_resize_session_during_recording",set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_support_resize_session_during_recording",set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "support_connection_redirection_during_recording",set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::milliseconds>(), "rdp_keepalive_connection_interval", desc{
             "Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
@@ -225,7 +230,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<RdpCompression>{}, "rdp_compression", set(RdpCompression::rdp6_1));
 
         W.member(advanced_in_gui, no_sesman, L, type_<ColorDepth>{}, "max_color_depth", set(ColorDepth::depth24));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "front_remotefx", desc{"Enable front remoteFx"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the front side."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(false));
@@ -234,7 +238,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client Fast-Path Input Event PDUs."}, set(true));
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_suppress_output", set(true));
 
@@ -257,6 +260,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "recv_timeout", set(1000));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "enable_osd_4_eyes", set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "front_remotefx", desc{"Enable front remoteFx"}, set(true));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
@@ -522,20 +527,14 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_bitrate", desc{"Bitrate for low quality."}, set(10000));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_framerate", desc{"Framerate for low quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_height", desc{"Height for low quality."}, set(480));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_width", desc{"Width for low quality."}, set(640));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_qscale", desc{"Qscale (parameter given to ffmpeg) for low quality."}, set(28));
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_bitrate", desc{"Bitrate for medium quality."}, set(20000));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_framerate", desc{"Framerate for medium quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_height", desc{"Height for medium quality."}, set(768));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_width", desc{"Width for medium quality."}, set(1024));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_qscale", desc{"Qscale (parameter given to ffmpeg) for medium quality."}, set(14));
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_bitrate", desc{"Bitrate for high quality."}, set(30000));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_framerate", desc{"Framerate for high quality."}, set(5));
-        // W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
-        // W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));
@@ -560,14 +559,11 @@ void config_spec_definition(Writer && W)
     W.section("debug", [&]
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "fake_target_ip");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sec");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "rdp");
 
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "primary_orders");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "secondary_orders");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "bitmap_update");
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "bitmap");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "capture");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "auth");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "session");
@@ -578,8 +574,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_internal");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_xup");
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "widget");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "input");
         W.member(hidden_in_gui, no_sesman, L, type_<types::u32>(), "password");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "compression");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "cache");
@@ -614,27 +608,26 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
     });
 
-    // TODO temporary
-    W.section("icap_server_up", [&]
-    {
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
-                 desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
-    });
+    for (char const* section_name : {"icap_server_up", "icap_server_down"}) {
+        // TODO temporary
+        W.section(section_name, [&]
+        {
+            W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_data", desc{"Verify text data via clipboard"});
 
-    // TODO temporary
-    W.section("icap_server_down", [&]
-    {
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"});
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
-                 desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
-    });
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"});
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
+
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
+            // for validator only
+            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
+                    desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
+        });
+    }
 
     W.section("context", [&]
     {
@@ -642,10 +635,6 @@ void config_spec_definition(Writer && W)
         auto co_probe = connpolicy::section{"session_probe"};
 
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "psid", desc{"Proxy session log id"});
-
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "opt_bitrate", sesman::name{"bitrate"}, set(40000));
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "opt_framerate", sesman::name{"framerate"}, set(5));
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "opt_qscale", sesman::name{"qscale"}, set(15));
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<ColorDepth>(), "opt_bpp", sesman::name{"bpp"}, set(ColorDepth::depth24));
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<types::u16>(), "opt_height", sesman::name{"height"}, set(600));
@@ -780,6 +769,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_id");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_addr");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_port");
+
+        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
     });
 }
 

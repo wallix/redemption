@@ -111,6 +111,7 @@ namespace redemption_unit_test__
 # define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_BMEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_HMEM(mem, memref) void(mem), void(memref)
+# define RED_CHECK_CMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// REQUIRE
@@ -138,6 +139,7 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_SMEM(mem, memref) void(mem), void(memref)
 # define RED_REQUIRE_RMEM(mem, memref) void(mem), void(memref)
 # define RED_REQUIRE_HMEM(mem, memref) void(mem), void(memref)
+# define RED_REQUIRE_CMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// WARN

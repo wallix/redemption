@@ -432,6 +432,7 @@ bool AgentDataExtractor::relevant_log_id(LogId id) noexcept
         case LogId::KILL_PATTERN_DETECTED:
         case LogId::NOTIFY_PATTERN_DETECTED:
         case LogId::SESSION_DISCONNECTION:
+        case LogId::TEXT_VERIFICATION:
             ;
     }
     return true;

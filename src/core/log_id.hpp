@@ -111,7 +111,8 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(WEB_NAVIGATE_ERROR, Web)                                   \
     f(WEB_NAVIGATION, Web)                                       \
     f(WEB_PRIVACY_IMPACTED, Web)                                 \
-    f(WEB_THIRD_PARTY_URL_BLOCKED, Web)
+    f(WEB_THIRD_PARTY_URL_BLOCKED, Web)                          \
+    f(TEXT_VERIFICATION, FileVerification)
 
 
 enum class LogId : unsigned

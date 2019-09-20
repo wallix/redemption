@@ -4,7 +4,7 @@ REDEMPTION_CXXFLAGS +=
     <cxxflags>-std=c++17
     <cxxflags>-msse3
 
-    <cxx-linker-default>gold
+    # <cxx-linker-default>gold # add automatically by bjam
     <cxx-color-default>always
     <variant>debug:<cxx-stl-debug-default>allow-broken-abi
 

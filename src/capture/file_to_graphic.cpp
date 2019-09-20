@@ -784,9 +784,11 @@ void FileToGraphic::interpret_order()
 
             auto log_id = in.in_uint32_le();
 
-            if (is_valid_log_id(safe_int(log_id))
-             && AgentDataExtractor::relevant_log_id(LogId(log_id))
-            ) {
+            if (REDEMPTION_UNLIKELY(!is_valid_log_id(safe_int(log_id)))) {
+                LOG(LOG_WARNING, "FileToGraphic::interpret_order(): "
+                    "Invalid LogId %" PRIu32, log_id);
+            }
+            else if (AgentDataExtractor::relevant_log_id(LogId(log_id))) {
                 KVLog kvlogs[12];
                 auto* pkv = kvlogs;
 
@@ -805,10 +807,6 @@ void FileToGraphic::interpret_order()
                 for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
                     cap_probe->session_update(this->record_now, LogId(log_id), {{kvlogs, pkv}});
                 }
-            }
-            else {
-                LOG(LOG_WARNING, "FileToGraphic::interpret_order(): "
-                    "Invalid LogId %" PRIu32, log_id);
             }
         }
 

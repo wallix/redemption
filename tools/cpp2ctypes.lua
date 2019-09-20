@@ -1,4 +1,4 @@
-#!lua
+#!/usr/bin/env lua
 re = require're'
 
 typemap = {

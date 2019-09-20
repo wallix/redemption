@@ -394,6 +394,15 @@ struct IOVideoRecorderWithTransport
 
 //@}
 
+static void log_video_params(VideoParams const& video_params)
+{
+    if (video_params.verbosity) {
+        LOG(LOG_INFO, "Video recording: rate: %u, qscale: %u, brate: %u, codec: %s",
+            video_params.frame_rate, video_params.qscale, video_params.bitrate,
+            video_params.codec.c_str());
+    }
+}
+
 using TraceTimestamp = VideoCaptureCtx::TraceTimestamp;
 using ImageByInterval = VideoCaptureCtx::ImageByInterval;
 
@@ -422,13 +431,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     video_params.codec.c_str(),
     video_params.verbosity)
 {
-    if (video_params.verbosity) {
-        LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
-            video_params.target_width, video_params.target_height,
-            video_params.frame_rate, video_params.qscale, video_params.bitrate,
-            video_params.codec.c_str()
-        );
-    }
+    log_video_params(video_params);
 }
 
 FullVideoCaptureImpl::~FullVideoCaptureImpl()
@@ -577,7 +580,6 @@ Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
         now, cursor_x, cursor_y, ignore_frame_in_timeval));
 }
 
-
 SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     const timeval & now,
     SequenceTransport & trans,
@@ -592,13 +594,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
 , video_params(video_params)
 , image_frame_api(imageFrameApi)
 {
-    if (video_params.verbosity) {
-        LOG(LOG_INFO, "Video recording %u x %u, rate: %u, qscale: %u, brate: %u, codec: %s",
-            video_params.target_width, video_params.target_height,
-            video_params.frame_rate, video_params.qscale, video_params.bitrate,
-            video_params.codec.c_str());
-    }
-
+    log_video_params(video_params);
     this->next_video();
 }
 

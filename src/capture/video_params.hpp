@@ -29,8 +29,6 @@ struct VideoParams
 {
     Level video_quality;
 
-    unsigned target_width;
-    unsigned target_height;
     unsigned frame_rate;
     unsigned qscale;
     unsigned bitrate;

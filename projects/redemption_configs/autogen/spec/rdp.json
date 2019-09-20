@@ -636,6 +636,52 @@
       ]
     },
     {
+      "name": "file_verification",
+      "members": [
+        {
+          "name": "enable_up",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "enable_down",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "log_if_accepted",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "icap_server_down",
+      "members": [
+        {
+          "name": "clipboard_text_data",
+          "type": "bool",
+          "default": false,
+          "description": "Verify text data via clipboard"
+        }
+      ]
+    },
+    {
+      "name": "icap_server_up",
+      "members": [
+        {
+          "name": "clipboard_text_data",
+          "type": "bool",
+          "default": false,
+          "description": "Verify text data via clipboard"
+        }
+      ]
+    },
+    {
       "name": "video",
       "members": [
         {
@@ -664,30 +710,6 @@
           ],
           "prefered_representation": "hex",
           "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
-        }
-      ]
-    },
-    {
-      "name": "file_verification",
-      "members": [
-        {
-          "name": "enable_up",
-          "type": "bool",
-          "default": false,
-          "description": ""
-        },
-        {
-          "name": "enable_down",
-          "type": "bool",
-          "default": false,
-          "description": ""
-        },
-        {
-          "name": "log_if_accepted",
-          "type": "bool",
-          "default": true,
-          "advanced": true,
-          "description": ""
         }
       ]
     }
