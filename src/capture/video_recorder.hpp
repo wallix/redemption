@@ -44,6 +44,7 @@ extern "C" {
 #endif
 
 class AVFormatContext;
+class AVCodecContext;
 class AVIOContext;
 class AVStream;
 class SwsContext;
@@ -59,6 +60,7 @@ class video_recorder
 
     struct default_av_free { void operator()(void * ptr); };
     struct default_av_free_format_context { void operator()(AVFormatContext * ctx); };
+    struct default_av_free_context_context { void operator()(AVCodecContext * ctx); };
     struct default_sws_free_context { void operator()(SwsContext * sws_ctx); };
 
     class AVFramePtr
@@ -75,7 +77,6 @@ class video_recorder
 
 
     const int original_height;
-    uint64_t old_frame_index = 0;
 
     /* video output */
 
@@ -86,6 +87,7 @@ class video_recorder
     AVFramePtr original_picture;
     std::unique_ptr<uint8_t, default_av_free> video_outbuf;
 
+    std::unique_ptr<AVCodecContext, default_av_free_context_context> codec_ctx;
     std::unique_ptr<AVFormatContext, default_av_free_format_context> oc;
     std::unique_ptr<SwsContext, default_sws_free_context> img_convert_ctx;
 

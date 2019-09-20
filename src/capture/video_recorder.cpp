@@ -84,6 +84,11 @@ void video_recorder::default_av_free_format_context::operator()(AVFormatContext 
     avformat_free_context(ctx);
 }
 
+void video_recorder::default_av_free_context_context::operator()(AVCodecContext * ctx)
+{
+    avcodec_free_context(&ctx);
+}
+
 void video_recorder::default_sws_free_context::operator()(SwsContext * sws_ctx)
 {
     sws_freeContext(sws_ctx);
@@ -106,12 +111,17 @@ static void throw_if(bool test, char const* msg)
     }
 }
 
+static void log_av_errnum(int errnum, char const* msg)
+{
+    char errbuf[AV_ERROR_MAX_STRING_SIZE]{};
+    LOG(LOG_ERR, "video recorder: %s: %s",
+        msg, av_make_error_string(errbuf, AV_ERROR_MAX_STRING_SIZE, errnum));
+}
+
 static void check_errnum(int errnum, char const* msg)
 {
     if (errnum < 0) {
-        char errbuf[AV_ERROR_MAX_STRING_SIZE]{};
-        LOG(LOG_ERR, "video recorder: %s: %s",
-            msg, av_make_error_string(errbuf, AV_ERROR_MAX_STRING_SIZE, errnum));
+        log_av_errnum(errnum, msg);
         throw Error(ERR_VIDEO_RECORDER);
     }
 }
@@ -164,7 +174,10 @@ video_recorder::video_recorder(
     this->video_st->time_base.num = 1;
     this->video_st->time_base.den = frame_rate;
 
-    auto* codec_ctx = this->video_st->codec;
+    AVCodec * codec = avcodec_find_encoder(codec_id);
+    throw_if(!codec, "Codec not found");
+
+    this->codec_ctx.reset(avcodec_alloc_context3(codec));
 
     codec_ctx->codec_id = codec_id;
     codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -204,7 +217,7 @@ video_recorder::video_recorder(
             codec_ctx->me_range = 16;
             //codec_ctx->refs = 1;
             //codec_ctx->flags = CODEC_FLAG_4MV | CODEC_FLAG_LOOP_FILTER;
-            codec_ctx->flags |= AVFMT_NOTIMESTAMPS;
+            // codec_ctx->flags |= AVFMT_NOTIMESTAMPS;
             codec_ctx->qcompress = 0.0;
             codec_ctx->max_qdiff = 4;
             //codec_ctx->gop_size = frame_rate;
@@ -225,9 +238,6 @@ video_recorder::video_recorder(
     if(fmt->flags & AVFMT_GLOBALHEADER){
         codec_ctx->flags |= CODEC_FLAG_GLOBAL_HEADER;
     }
-
-    AVCodec * codec = avcodec_find_encoder(codec_id);
-    throw_if(!codec, "Codec not found");
 
     // dump_format can be handy for debugging
     // it dump information about file to stderr
@@ -257,19 +267,11 @@ video_recorder::video_recorder(
         }
 
         // open the codec
-        check_errnum(avcodec_open2(this->video_st->codec, codec, &av_dict.d), "Failed to open codec");
+        check_errnum(avcodec_open2(this->codec_ctx.get(), codec, &av_dict.d), "Failed to open codec");
     }
 
-    struct AvCodecPtr
-    {
-        video_recorder * ptr;
-        ~AvCodecPtr() {
-            if (ptr) {
-                avcodec_close(ptr->video_st->codec);
-            }
-        }
-    };
-    AvCodecPtr av_codec_close_if_fails{this};
+    check_errnum(avcodec_parameters_from_context(video_st->codecpar, this->codec_ctx.get()),
+        "Failed to copy codec parameters");
 
     int const video_outbuf_size = image_view_width * image_view_height * 3 * 5;
 
@@ -318,10 +320,7 @@ video_recorder::video_recorder(
 
     this->oc->pb = this->custom_io_context.get();
 
-    int res = avformat_write_header(this->oc.get(), nullptr);
-    if (res < 0){
-        LOG(LOG_ERR, "video recorder: failed to write header");
-    }
+    check_errnum(avformat_write_header(this->oc.get(), nullptr), "video recorder: Failed to write header");
 
     av_image_fill_arrays(
         this->original_picture->data, this->original_picture->linesize,
@@ -335,36 +334,56 @@ video_recorder::video_recorder(
     ));
 
     throw_if(!this->img_convert_ctx, "Cannot initialize the conversion context");
+}
 
-    av_codec_close_if_fails.ptr = nullptr;
+static std::pair<int, char const*> encode_frame(
+    AVFrame* picture, AVFormatContext* oc, AVCodecContext* codec_ctx,
+    AVStream* video_st, AVPacket* pkt)
+{
+    int errnum = avcodec_send_frame(codec_ctx, picture);
+
+    if (errnum < 0) {
+        return {errnum, "Failed encoding a video frame"};
+    }
+
+    while (errnum >= 0) {
+        av_init_packet(pkt);
+        errnum = avcodec_receive_packet(codec_ctx, pkt);
+
+        if (errnum < 0) {
+            if (errnum == AVERROR(EAGAIN) || errnum == AVERROR_EOF) {
+                errnum = 0;
+            }
+            break;
+        }
+        else {
+            av_packet_rescale_ts(pkt, codec_ctx->time_base, video_st->time_base);
+            pkt->stream_index = video_st->index;
+            /* Write the compressed frame to the media file. */
+            errnum = av_interleaved_write_frame(oc, pkt);
+        }
+        // av_packet_unref(&this->pkt);
+    }
+
+    return {errnum, "Failed while writing video frame"};
 }
 
 video_recorder::~video_recorder() /*NOLINT*/
 {
-    // write last frame : we must ensure writing at least one frame to avoid empty movies
-    // encoding_video_frame();
+    // flush the encoder
+    auto [errnum, errmsg] = encode_frame(
+        nullptr, this->oc.get(), this->codec_ctx.get(),
+        this->video_st, &this->pkt);
 
-    // write the last second for mp4 (if preset != ultrafast ...)
-    //if (bool(this->video_st->codec->flags & AVFMT_NOTIMESTAMPS)) {
-    //    auto const frame_rate = 1000u / this->duration_frame.count();
-    //    int const loop = frame_rate - this->frame_key % frame_rate;
-    //    for (int i = 0; i < loop; ++i) {
-    //        encoding_video_frame();
-    //    }
-    // --- or --- ?
-    // int got_packet = 1;
-    // for(; got_packet;)
-    //    avcodec_encode_video2(this->video_st->codec, &this->pkt, nullptr, &got_packet);
-    //}
+    if (errnum < 0) {
+        log_av_errnum(errnum, errmsg);
+    }
 
     /* write the trailer, if any.  the trailer must be written
         * before you close the CodecContexts open when you wrote the
         * header; otherwise write_trailer may try to use memory that
         * was freed on av_codec_close() */
     av_write_trailer(this->oc.get());
-
-    // close each codec */
-    avcodec_close(this->video_st->codec);
 }
 
 void video_recorder::preparing_video_frame()
@@ -380,72 +399,12 @@ void video_recorder::encoding_video_frame(uint64_t frame_index)
 {
     /* stat */// LOG(LOG_INFO, "encoding_video_frame");
 
-    /**
-    * Encode a frame of video.
-    *
-    * Takes input raw video data from frame and writes the next output packet, if
-    * available, to avpkt. The output packet does not necessarily contain data for
-    * the most recent frame, as encoders can delay and reorder input frames
-    * internally as needed.
-    *
-    * @param avctx     codec context
-    * @param avpkt     output AVPacket.
-    *                  The user can supply an output buffer by setting
-    *                  avpkt->data and avpkt->size prior to calling the
-    *                  function, but if the size of the user-provided data is not
-    *                  large enough, encoding will fail. All other AVPacket fields
-    *                  will be reset by the encoder using av_init_packet(). If
-    *                  avpkt->data is NULL, the encoder will allocate it.
-    *                  The encoder will set avpkt->size to the size of the
-    *                  output packet. The returned data (if any) belongs to the
-    *                  caller, he is responsible for freeing it.
-    * @param[in] frame AVFrame containing the raw video data to be encoded.
-    *                  May be NULL when flushing an encoder that has the
-    *                  CODEC_CAP_DELAY capability set.
-    * @param[out] got_packet_ptr This field is set to 1 by libavcodec if the
-    *                            output packet is non-empty, and to 0 if it is
-    *                            empty. If the function returns an error, the
-    *                            packet can be assumed to be invalid, and the
-    *                            value of got_packet_ptr is undefined and should
-    *                            not be used.
-    * @return          0 on success, negative error code on failure
-    */
-    // int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt, const AVFrame *frame, int *got_packet_ptr);
+    picture->pts = frame_index;
+    auto [errnum, errmsg] = encode_frame(
+        this->picture.get(), this->oc.get(), this->codec_ctx.get(),
+        this->video_st, &this->pkt);
 
-    auto const frame_interval = this->video_st->r_frame_rate.den;
-    auto const pts = this->video_st->time_base.den * frame_index / frame_interval;
-    auto const old_pts = this->video_st->time_base.den * this->old_frame_index / frame_interval;
-    auto const dur = pts - old_pts;
-    //auto const dur = this->video_st->time_base.den * (frame_index - this->old_frame_index) / frame_interval;
-
-    this->pkt.pts = pts;
-    this->picture->pts = pts;
-    this->pkt.duration = dur;
-
-    int got_packet = 0;
-    int err = avcodec_encode_video2(
-        this->video_st->codec,
-        &this->pkt,
-        this->picture.get(),
-        &got_packet);
-
-    if (err == 0 && got_packet) {
-        //if (this->frame_key == frame_key_limit) {
-        //    this->pkt.flags |= AV_PKT_FLAG_KEY;
-        //    this->frame_key = 0;
-        //}
-        //++this->frame_key;
-        this->pkt.stream_index = this->video_st->index;
-        this->pkt.duration = dur;
-        this->pkt.pts = pts;
-        this->pkt.dts = old_pts;
-
-        this->old_frame_index = frame_index;
-
-        err = av_interleaved_write_frame(this->oc.get(), &this->pkt);
-    }
-
-    check_errnum(err, "Failed to write encoded frame");
+    check_errnum(errnum, errmsg);
 }
 
 #else

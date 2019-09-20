@@ -2415,7 +2415,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n"_av);
 
-        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.mp4"), 5881 +- 200_v);
         RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.png"), 244);
         RED_TEST_FILE_SIZE(output_wd.add_file("test_capture.pgs"), 37);
 
@@ -2448,7 +2448,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"_av);
 
 
-        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.mp4"), 5881 +- 200_v);
         RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.png"), 244);
         RED_TEST_FILE_SIZE(output_wd.add_file("test_capture.pgs"), 37);
 

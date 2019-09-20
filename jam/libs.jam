@@ -36,7 +36,7 @@ if $(NO_FFMPEG) = 0
 
     lib pthread ;
 
-    FFMPEG_CXXFLAGS = <cxxflags>-Wno-deprecated-declarations ;
+    FFMPEG_CXXFLAGS = ;
     if $(FFMPEG_INC_PATH) != ""
     {
         FFMPEG_CXXFLAGS += <cxxflags>-isystem" $(FFMPEG_INC_PATH)" ;
