@@ -14,10 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
-
+   Copyright (C) Wallix 2010-2019
+   Author(s): Christophe Grosjean, Jonathan Poelen
 */
 
 // TODO: this should move to src/system as results are highly dependent on compilation system
@@ -44,28 +42,6 @@ extern "C" {
     #include <libswscale/swscale.h>
 }
 
-#ifndef CODEC_FLAG_QSCALE
-#define CODEC_FLAG_QSCALE AV_CODEC_FLAG_QSCALE
-#endif
-
-#ifndef CODEC_FLAG_GLOBAL_HEADER
-#define CODEC_FLAG_GLOBAL_HEADER AV_CODEC_FLAG_GLOBAL_HEADER
-#endif
-
-#ifndef AVFMT_RAWPICTURE
-#define AVFMT_RAWPICTURE AVFMT_NOFILE
-#endif
-
-#ifdef exit
-# undef exit
-#endif
-
-#ifndef AV_PKT_FLAG_KEY
-#define AV_PKT_FLAG_KEY PKT_FLAG_KEY
-#define AVMEDIA_TYPE_VIDEO CODEC_TYPE_VIDEO
-#define av_guess_format guess_format
-#endif
-
 #include "core/error.hpp"
 #include "cxx/diagnostic.hpp"
 #include "utils/image_data_view.hpp"
@@ -73,35 +49,53 @@ extern "C" {
 
 #include <algorithm>
 
-
-void video_recorder::default_av_free::operator()(void * ptr)
+namespace
 {
-    av_free(ptr);
+    struct default_av_free
+    {
+        void operator()(void * ptr) noexcept
+        {
+            av_free(ptr);
+        }
+    };
 }
 
-void video_recorder::default_av_free_format_context::operator()(AVFormatContext * ctx)
+struct video_recorder::D
 {
-    avformat_free_context(ctx);
-}
+    AVStream* video_st = nullptr;
 
-void video_recorder::default_av_free_context_context::operator()(AVCodecContext * ctx)
-{
-    avcodec_free_context(&ctx);
-}
+    AVFrame* picture = nullptr;
+    AVFrame* original_picture = nullptr;
 
-void video_recorder::default_sws_free_context::operator()(SwsContext * sws_ctx)
-{
-    sws_freeContext(sws_ctx);
-}
+    AVCodecContext* codec_ctx = nullptr;
+    AVFormatContext* oc = nullptr;
+    SwsContext* img_convert_ctx = nullptr;
 
-video_recorder::AVFramePtr::AVFramePtr() /*NOLINT*/
-    : frame(av_frame_alloc())
-{}
+    AVPacket pkt;
+    int original_height;
 
-video_recorder::AVFramePtr::~AVFramePtr() /*NOLINT*/
-{
-    av_frame_free(&this->frame);
-}
+    std::unique_ptr<uint8_t, default_av_free> picture_buf;
+    std::unique_ptr<uint8_t, default_av_free> video_outbuf;
+
+    /* custom IO */
+    std::unique_ptr<uint8_t, default_av_free> custom_io_buffer;
+    AVIOContext* custom_io_context = nullptr;
+
+    D()
+    : picture(av_frame_alloc())
+    , original_picture(av_frame_alloc())
+    {}
+
+    ~D()
+    {
+        avio_context_free(&this->custom_io_context);
+        sws_freeContext(this->img_convert_ctx);
+        avformat_free_context(this->oc);
+        avcodec_free_context(&this->codec_ctx);
+        av_frame_free(&this->picture);
+        av_frame_free(&this->original_picture);
+    }
+};
 
 static void throw_if(bool test, char const* msg)
 {
@@ -135,8 +129,9 @@ video_recorder::video_recorder(
     int frame_rate, int qscale, const char * codec_name,
     int log_level
 )
-: original_height(image_view.height())
+: d(new D)
 {
+    d->original_height = image_view.height();
     const int image_view_width = image_view.width();
     const int image_view_height = image_view.height();
 
@@ -146,8 +141,8 @@ video_recorder::video_recorder(
     av_log_set_level(log_level);
 
 
-    this->oc.reset(avformat_alloc_context());
-    throw_if(!this->oc, "Failed allocating output media context");
+    this->d->oc = avformat_alloc_context();
+    throw_if(!this->d->oc, "Failed allocating output media context");
 
     /* auto detect the output format from the name. default is mpeg. */
     AVOutputFormat *fmt = av_guess_format(codec_name, nullptr, nullptr);
@@ -160,53 +155,46 @@ video_recorder::video_recorder(
     const auto codec_id = fmt->video_codec;
     const AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
 
-    this->oc->oformat = fmt;
-    //strncpy(this->oc->filename, file, sizeof(this->oc->filename));
+    this->d->oc->oformat = fmt;
+    //strncpy(this->d->oc->filename, file, sizeof(this->d->oc->filename));
 
     // add the video streams using the default format codecs and initialize the codecs
-    this->video_st = avformat_new_stream(this->oc.get(), nullptr);
+    this->d->video_st = avformat_new_stream(this->d->oc, nullptr);
+    throw_if(!this->d->video_st, "Could not find suitable output format");
 
-    throw_if(!this->video_st, "Could not find suitable output format");
-
-    this->video_st->r_frame_rate.num = 1;
-    this->video_st->r_frame_rate.den = frame_rate;
-
-    this->video_st->time_base.num = 1;
-    this->video_st->time_base.den = frame_rate;
+    this->d->video_st->time_base = AVRational{1, frame_rate};
 
     AVCodec * codec = avcodec_find_encoder(codec_id);
     throw_if(!codec, "Codec not found");
 
-    this->codec_ctx.reset(avcodec_alloc_context3(codec));
+    this->d->codec_ctx = avcodec_alloc_context3(codec);
 
-    codec_ctx->codec_id = codec_id;
-    codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
+    this->d->codec_ctx->codec_id = codec_id;
+    this->d->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
 
-    codec_ctx->bit_rate = bitrate;
-    codec_ctx->bit_rate_tolerance = bitrate;
+    this->d->codec_ctx->bit_rate = bitrate;
+    this->d->codec_ctx->bit_rate_tolerance = bitrate;
     // resolution must be a multiple of 2
-    codec_ctx->width = image_view_width & ~1;
-    codec_ctx->height = image_view_height & ~1;
+    this->d->codec_ctx->width = image_view_width & ~1;
+    this->d->codec_ctx->height = image_view_height & ~1;
 
     // time base: this is the fundamental unit of time (in seconds)
     // in terms of which frame timestamps are represented.
     // for fixed-fps content, timebase should be 1/framerate
     // and timestamp increments should be identically 1
-    codec_ctx->time_base.num = 1;
-    codec_ctx->time_base.den = frame_rate;
+    this->d->codec_ctx->time_base = AVRational{1, frame_rate};
 
     // impact: keyframe, filesize and time of generating
     // high value = ++time, --size
-    // keyframe managed by this->pkt.flags |= AV_PKT_FLAG_KEY and av_interleaved_write_frame
-    codec_ctx->gop_size = std::max(2, frame_rate);
+    // keyframe managed by this->d->pkt.flags |= AV_PKT_FLAG_KEY and av_interleaved_write_frame
+    this->d->codec_ctx->gop_size = std::max(2, frame_rate);
 
-    codec_ctx->pix_fmt = pix_fmt;
-    codec_ctx->flags |= CODEC_FLAG_QSCALE; // TODO
-    codec_ctx->global_quality = FF_QP2LAMBDA * qscale; // TODO
+    this->d->codec_ctx->pix_fmt = pix_fmt;
+    this->d->codec_ctx->flags |= AV_CODEC_FLAG_QSCALE;
+    this->d->codec_ctx->global_quality = FF_QP2LAMBDA * qscale;
 
     REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wswitch")
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch")
     switch (codec_id){
         case AV_CODEC_ID_H264:
             //codec_ctx->coder_type = FF_CODER_TYPE_AC;
@@ -214,34 +202,30 @@ video_recorder::video_recorder(
             //                                CODEC_FLAG2_8X8DCT | CODEC_FLAG2_FASTPSKIP;
 
             //codec_ctx->partitions = X264_PART_I8X8 | X264_PART_P8X8 | X264_PART_I4X4;
-            codec_ctx->me_range = 16;
+            this->d->codec_ctx->me_range = 16;
             //codec_ctx->refs = 1;
             //codec_ctx->flags = CODEC_FLAG_4MV | CODEC_FLAG_LOOP_FILTER;
-            // codec_ctx->flags |= AVFMT_NOTIMESTAMPS;
-            codec_ctx->qcompress = 0.0;
-            codec_ctx->max_qdiff = 4;
-            //codec_ctx->gop_size = frame_rate;
-        break;
-        case AV_CODEC_ID_MPEG2VIDEO:
-            //codec_ctx->gop_size = frame_rate;
+            // this->d->codec_ctx->flags |= AVFMT_NOTIMESTAMPS;
+            this->d->codec_ctx->qcompress = 0.0;
+            this->d->codec_ctx->max_qdiff = 4;
         break;
         case AV_CODEC_ID_MPEG1VIDEO:
             // Needed to avoid using macroblocks in which some coeffs overflow.
             // This does not happen with normal video, it just happens here as
             // the motion of the chroma plane does not match the luma plane.
-            codec_ctx->mb_decision = 2;
+            this->d->codec_ctx->mb_decision = 2;
         break;
     }
     REDEMPTION_DIAGNOSTIC_POP
 
     // some formats want stream headers to be separate
     if(fmt->flags & AVFMT_GLOBALHEADER){
-        codec_ctx->flags |= CODEC_FLAG_GLOBAL_HEADER;
+        this->d->codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
     // dump_format can be handy for debugging
     // it dump information about file to stderr
-    // dump_format(this->oc, 0, file, 1);
+    // dump_format(this->d->oc, 0, file, 1);
 
     // ************** open_video ****************
     // now we can open the audio and video codecs
@@ -267,73 +251,73 @@ video_recorder::video_recorder(
         }
 
         // open the codec
-        check_errnum(avcodec_open2(this->codec_ctx.get(), codec, &av_dict.d), "Failed to open codec");
+        check_errnum(avcodec_open2(this->d->codec_ctx, codec, &av_dict.d), "Failed to open codec");
     }
 
-    check_errnum(avcodec_parameters_from_context(video_st->codecpar, this->codec_ctx.get()),
+    check_errnum(avcodec_parameters_from_context(this->d->video_st->codecpar, this->d->codec_ctx),
         "Failed to copy codec parameters");
 
     int const video_outbuf_size = image_view_width * image_view_height * 3 * 5;
 
-    this->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
-    throw_if(!this->video_outbuf, "Failed to allocate video output buffer");
-    av_init_packet(&this->pkt);
-    this->pkt.data = this->video_outbuf.get();
-    this->pkt.size = video_outbuf_size;
+    this->d->video_outbuf.reset(static_cast<uint8_t*>(av_malloc(video_outbuf_size)));
+    throw_if(!this->d->video_outbuf, "Failed to allocate video output buffer");
+    av_init_packet(&this->d->pkt);
+    this->d->pkt.data = this->d->video_outbuf.get();
+    this->d->pkt.size = video_outbuf_size;
 
     // init picture frame
     {
         int const size = av_image_get_buffer_size(pix_fmt, image_view_width, image_view_height, 1);
         if (size) {
-            this->picture_buf.reset(static_cast<uint8_t*>(av_malloc(size)));
-            std::fill_n(this->picture_buf.get(), size, 0);
+            this->d->picture_buf.reset(static_cast<uint8_t*>(av_malloc(size)));
+            std::fill_n(this->d->picture_buf.get(), size, 0);
         }
-        throw_if(!this->picture_buf, "Failed to allocate picture buf");
+        throw_if(!this->d->picture_buf, "Failed to allocate picture buf");
         av_image_fill_arrays(
-            this->picture->data, this->picture->linesize,
-            this->picture_buf.get(), pix_fmt, image_view_width, image_view_height, 1
+            this->d->picture->data, this->d->picture->linesize,
+            this->d->picture_buf.get(), pix_fmt, image_view_width, image_view_height, 1
         );
 
-        this->picture->width = image_view_width;
-        this->picture->height = image_view_height;
-        this->picture->format = codec_id;
-        this->original_picture->format = codec_id;
+        this->d->picture->width = image_view_width;
+        this->d->picture->height = image_view_height;
+        this->d->picture->format = codec_id;
+        this->d->original_picture->format = codec_id;
     }
 
     const std::size_t io_buffer_size = 32768;
 
-    this->custom_io_buffer.reset(static_cast<unsigned char *>(av_malloc(io_buffer_size)));
-    throw_if(!this->custom_io_buffer, "Failed to allocate io");
+    this->d->custom_io_buffer.reset(static_cast<unsigned char *>(av_malloc(io_buffer_size)));
+    throw_if(!this->d->custom_io_buffer, "Failed to allocate io");
 
-    this->custom_io_context.reset(avio_alloc_context(
-        this->custom_io_buffer.get(), // buffer
+    this->d->custom_io_context = avio_alloc_context(
+        this->d->custom_io_buffer.get(), // buffer
         io_buffer_size,               // buffer size
         1,                            // writable
         io_params,                    // user-specific data
         nullptr,                      // function for refilling the buffer, may be nullptr.
         write_packet_fn,              // function for writing the buffer contents, may be nullptr.
         seek_fn                       // function for seeking to specified byte position, may be nullptr.
-    ));
-    if (!this->custom_io_context) {
+    );
+    if (!this->d->custom_io_context) {
         throw Error(ERR_RECORDER_ALLOCATION_FAILED);
     }
 
-    this->oc->pb = this->custom_io_context.get();
+    this->d->oc->pb = this->d->custom_io_context;
 
-    check_errnum(avformat_write_header(this->oc.get(), nullptr), "video recorder: Failed to write header");
+    check_errnum(avformat_write_header(this->d->oc, nullptr), "video recorder: Failed to write header");
 
     av_image_fill_arrays(
-        this->original_picture->data, this->original_picture->linesize,
+        this->d->original_picture->data, this->d->original_picture->linesize,
         image_view.data(), AV_PIX_FMT_BGR24, image_view.width(), image_view.height(), 1
     );
 
-    this->img_convert_ctx.reset(sws_getContext(
+    this->d->img_convert_ctx = sws_getContext(
         image_view.width(), image_view.height(), AV_PIX_FMT_BGR24,
         image_view_width, image_view_height, pix_fmt,
         SWS_BICUBIC, nullptr, nullptr, nullptr
-    ));
+    );
 
-    throw_if(!this->img_convert_ctx, "Cannot initialize the conversion context");
+    throw_if(!this->d->img_convert_ctx, "Cannot initialize the conversion context");
 }
 
 static std::pair<int, char const*> encode_frame(
@@ -362,7 +346,7 @@ static std::pair<int, char const*> encode_frame(
             /* Write the compressed frame to the media file. */
             errnum = av_interleaved_write_frame(oc, pkt);
         }
-        // av_packet_unref(&this->pkt);
+        // av_packet_unref(&this->d->pkt);
     }
 
     return {errnum, "Failed while writing video frame"};
@@ -372,42 +356,44 @@ video_recorder::~video_recorder() /*NOLINT*/
 {
     // flush the encoder
     auto [errnum, errmsg] = encode_frame(
-        nullptr, this->oc.get(), this->codec_ctx.get(),
-        this->video_st, &this->pkt);
+        nullptr, this->d->oc, this->d->codec_ctx,
+        this->d->video_st, &this->d->pkt);
 
     if (errnum < 0) {
         log_av_errnum(errnum, errmsg);
     }
 
     /* write the trailer, if any.  the trailer must be written
-        * before you close the CodecContexts open when you wrote the
-        * header; otherwise write_trailer may try to use memory that
-        * was freed on av_codec_close() */
-    av_write_trailer(this->oc.get());
+     * before you close the CodecContexts open when you wrote the
+     * header; otherwise write_trailer may try to use memory that
+     * was freed on av_codec_close() */
+    av_write_trailer(this->d->oc);
 }
 
 void video_recorder::preparing_video_frame()
 {
     /* stat */// LOG(LOG_INFO, "%s", "preparing_video_frame");
     sws_scale(
-        this->img_convert_ctx.get(),
-        this->original_picture->data, this->original_picture->linesize,
-        0, this->original_height, this->picture->data, this->picture->linesize);
+        this->d->img_convert_ctx,
+        this->d->original_picture->data, this->d->original_picture->linesize,
+        0, this->d->original_height, this->d->picture->data, this->d->picture->linesize);
 }
 
 void video_recorder::encoding_video_frame(uint64_t frame_index)
 {
     /* stat */// LOG(LOG_INFO, "encoding_video_frame");
 
-    picture->pts = frame_index;
+    this->d->picture->pts = frame_index;
     auto [errnum, errmsg] = encode_frame(
-        this->picture.get(), this->oc.get(), this->codec_ctx.get(),
-        this->video_st, &this->pkt);
+        this->d->picture, this->d->oc, this->d->codec_ctx,
+        this->d->video_st, &this->d->pkt);
 
     check_errnum(errnum, errmsg);
 }
 
 #else
+
+struct video_recorder::D {};
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t /*seek_fn*/, void * io_params,
