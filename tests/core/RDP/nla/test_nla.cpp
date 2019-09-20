@@ -43,7 +43,6 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     std::string extra_message;
     rdpClientNTLM credssp(user, domain, pass, host, "107.0.0.1", public_key, false, rand, timeobj);
 
-
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
 /* 0010 */ 0x28, 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x01, 0x00, 0x00, 0x00, 0xb7, 0x82, 0x08,  // (NTLMSSP........
@@ -51,9 +50,8 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0030 */ 0x00, 0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f,  
     };
 
-    StaticOutStream<65536> buffer_to_send_negotiate;
-    credssp.client_authenticate_start(buffer_to_send_negotiate);
-    RED_CHECK_HMEM(buffer_to_send_negotiate.get_bytes(), expected_negotiate);
+    auto negotiate_message = credssp.client_authenticate_start();
+    RED_CHECK_HMEM(negotiate_message, expected_negotiate);
 
     std::vector<uint8_t> server_answer_challenge{
     /* 0000 */ 0x30, 0x81, 0x88, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa1, 0x81, 0x80, 0x30, 0x7e, 0x30, 0x7c, 0xa0,  // 0..........0~0|.
@@ -147,10 +145,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
     auto public_key = std::vector<uint8_t>{} << bytes_view("1245789652325415"_av); 
     rdpCredsspServerNTLM credssp(public_key, rand, timeobj, extra_message, lang, get_password, true);
-
     credssp::State st = credssp::State::Cont;
-    RED_CHECK_EQUAL(int(credssp::State::Cont), int(st));
-
 
     std::vector<uint8_t> negotiate{ 
        0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04, //07......00.0,.*. !
@@ -178,7 +173,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         RED_CHECK_HMEM(challenge, out_stream.get_bytes());
     }
     
-    RED_CHECK_EQUAL(int(credssp::State::Cont), int(st));
+    RED_CHECK_EQUAL(credssp::State::Cont, st);
 
     // authenticate + pubauthkey
     std::vector<uint8_t> authenticate{ 
@@ -221,7 +216,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         RED_CHECK_HMEM(pubauthkey, out_stream.get_bytes());
     }
     
-    RED_CHECK_EQUAL(int(credssp::State::Cont), int(st));
+    RED_CHECK_EQUAL(credssp::State::Cont, st);
     
     std::vector<uint8_t>  ts_credentials{
         0x30, 0x5c, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa2, 0x55, 0x04, 0x53, 0x01, 0x00, 0x00, 0x00, 0xaf, // 0.......U.S.....
@@ -238,9 +233,12 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         st = credssp.credssp_server_authenticate_next(ts_credentials, out_stream);
         RED_CHECK_EQUAL(out_stream.get_bytes().size(), 0);
     }
-    RED_CHECK_EQUAL(int(st), int(credssp::State::Finish));
+    RED_CHECK_EQUAL(st, credssp::State::Finish);
 }
 
+
+// Tpdu class is used to extract one Credssp packet from stream in authentication sequence
+// and afterward to commute to extraction of an RDP TPKT (PDU)
 RED_AUTO_TEST_CASE(TestTpdu)
 {
     RED_TEST_PASSPOINT();

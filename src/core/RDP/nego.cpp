@@ -417,9 +417,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 this->rand, this->timeobj,
                 bool(this->verbose & Verbose::credssp)
             );
-            StaticOutStream<65536> ts_request_emit;
-            this->NTLM->client_authenticate_start(ts_request_emit);
-            trans.send(ts_request_emit.get_bytes());
+            trans.send(this->NTLM->client_authenticate_start());
         }
         catch (const Error &){
             LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");

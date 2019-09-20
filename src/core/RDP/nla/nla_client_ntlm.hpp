@@ -67,7 +67,7 @@ private:
 //    NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
     NtlmVersion version;
-    std::vector<uint8_t> SavedNegotiateMessage;
+    std::vector<uint8_t> savedNegotiateMessage;
 
     array_md5 ExportedSessionKey;
     array_md5 ClientSealingKey;
@@ -129,21 +129,12 @@ public:
     }
 
 
-    void client_authenticate_start(StaticOutStream<65536> & ts_request_emit)
+    std::vector<uint8_t> client_authenticate_start()
     {
-        LOG(LOG_INFO, "Credssp: NTLM Authentication");
-
-        /* receive server response and place in input buffer */
-        LOG_IF(this->verbose, LOG_INFO, "NTLM Send Negotiate");
-        auto negoTokens = emitNTLMNegotiateMessage();
-
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-        auto v = emitTSRequest(6, negoTokens, {}, {}, 0, {}, false);
-        ts_request_emit.out_copy_bytes(v);
-
-        this->SavedNegotiateMessage = std::move(negoTokens);
+        LOG(LOG_INFO, "NTLM Authentication : Negotiate - sending Authentication Token");
+        this->savedNegotiateMessage = emitNTLMNegotiateMessage();
         this->client_auth_data_state = Loop;
-        return;
+        return emitTSRequest(6, this->savedNegotiateMessage, {}, {}, 0, {}, false);
     }
 
 
@@ -247,7 +238,7 @@ public:
 
                 if (this->UseMIC) {
                     array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey,
-                                                            this->SavedNegotiateMessage,
+                                                            this->savedNegotiateMessage,
                                                             server_challenge.raw_bytes,
                                                             auth_message);
                     memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size()); 
