@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
-    rdpClientNTLM credssp(user, domain, pass, host, "107.0.0.1", public_key, false, rand, timeobj);
+    rdpClientNTLM ntlm_client(user, domain, pass, host, "107.0.0.1", public_key, false, rand, timeobj);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0030 */ 0x00, 0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f,  
     };
 
-    auto negotiate_message = credssp.client_authenticate_start();
+    auto negotiate_message = ntlm_client.client_authenticate_start();
     RED_CHECK_HMEM(negotiate_message, expected_negotiate);
 
     std::vector<uint8_t> server_answer_challenge{
@@ -90,7 +90,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     /* 0150 */ 0x3f, 0x08, 0xd0, 0xc2, 0xe4, 0x75, 0x66, 0x10, 0x49, 0x7b, 0xbd, 0x8d, 0xf7,                    // ?....uf.I{...
     };
     StaticOutStream<65536> buffer_to_send_authenticate;
-    credssp::State st1 = credssp.client_authenticate_next(server_answer_challenge, buffer_to_send_authenticate);
+    credssp::State st1 = ntlm_client.client_authenticate_next(server_answer_challenge, buffer_to_send_authenticate);
     RED_CHECK(credssp::State::Cont == st1);
     RED_CHECK_HMEM(buffer_to_send_authenticate.get_bytes(), expected_authenticate);
 
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     };
     
     StaticOutStream<65536> buffer_to_send_tscredentials;
-    credssp::State st2 = credssp.client_authenticate_next(server_answer_pubauthkey, buffer_to_send_tscredentials);
+    credssp::State st2 = ntlm_client.client_authenticate_next(server_answer_pubauthkey, buffer_to_send_tscredentials);
     RED_CHECK(credssp::State::Finish == st2);
     RED_CHECK_HMEM(buffer_to_send_tscredentials.get_bytes(), expected_tscredentials);
 }
