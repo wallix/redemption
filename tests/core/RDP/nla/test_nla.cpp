@@ -197,9 +197,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     memcpy(front_public_key, key.data(), key.size());
     front_public_key_av = array_view(front_public_key, key.size());
 
-    rdpCredsspServerNTLM credssp(
-        front_public_key_av, rand, timeobj, extra_message, lang,
-        [&](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
+    auto get_password = [&](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
             std::vector<uint8_t> vec;
             vec.resize(user.size() * 2);
             UTF8toUTF16(user, vec.data(), vec.size());
@@ -212,8 +210,9 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             password_array = std::vector<uint8_t>(user_len * 2);
             UTF8toUTF16({pass.data(), strlen(char_ptr_cast(byte_ptr_cast(pass.data())))}, password_array.data(), user_len * 2);
             return PasswordCallback::Ok;
-        }, true
-    );
+        }; 
+
+    rdpCredsspServerNTLM credssp(front_public_key_av, rand, timeobj, extra_message, lang, get_password, true);
 
     credssp::State st = credssp::State::Cont;
     TpduBuffer buf;
