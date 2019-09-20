@@ -51,7 +51,7 @@ static const uint8_t server_seal_magic[] =
 #include "transport/transport.hpp"
 
 
-class rdpCredsspServerNTLM final
+class NtlmServer final
 {
     static constexpr uint32_t cbMaxSignature = 16;
 
@@ -185,7 +185,7 @@ private:
     // DECRYPT_MESSAGE DecryptMessage;
 
 public:
-    rdpCredsspServerNTLM(array_view_u8 key,
+    NtlmServer(array_view_u8 key,
                Random & rand,
                TimeObj & timeobj,
                std::string& extra_message,
@@ -221,9 +221,9 @@ public:
     }
 
 public:
-    credssp::State credssp_server_authenticate_next(bytes_view in_data, OutStream & out_stream)
+    credssp::State authenticate_next(bytes_view in_data, OutStream & out_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
+        LOG_IF(this->verbose, LOG_INFO, "NTLMServer::authenticate_next");
 
         switch (this->server_auth_data.state)
         {
@@ -232,9 +232,6 @@ public:
               return credssp::State::Err;
             case ServerAuthenticateData::Loop:
             {
-                LOG(LOG_INFO, "ServerAuthenticateData::Loop");
-                LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
-
                 if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
                     /* receive authentication token */
                     this->ts_request = recvTSRequest(in_data);
@@ -510,7 +507,7 @@ public:
                 }
 
                 if (status == SEC_E_OK) {
-                    LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_public_key_echo");
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMServer::decrypt_public_key_echo");
 
                     unsigned long MessageSeqNo = this->recv_seq_num++;
                     LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
@@ -605,7 +602,7 @@ public:
 
                     this->ts_request.negoTokens.clear();
 
-                    LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMServer::encrypt_public_key_echo");
                     uint32_t version = this->ts_request.use_version;
 
                     if (version >= 5) {
@@ -669,7 +666,7 @@ public:
                 this->error_code = this->ts_request.error_code;
                 out_stream.out_copy_bytes(v);
 
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
+                LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
                 this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.clear();
                 this->ts_request.authInfo.clear();
@@ -689,7 +686,7 @@ public:
 
             case ServerAuthenticateData::Final:
             {
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
+                LOG_IF(this->verbose, LOG_INFO, "rdpNTLMServer::server_authenticate_final");
                 this->ts_request = recvTSRequest(in_data);
                 this->error_code = this->ts_request.error_code;
 

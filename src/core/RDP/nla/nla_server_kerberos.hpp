@@ -696,9 +696,9 @@ public:
     }
 
 public:
-    credssp::State credssp_server_authenticate_next(bytes_view in_data, OutStream & out_stream)
+    credssp::State authenticate_next(bytes_view in_data, OutStream & out_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::authenticate_next");
 
         switch (this->server_auth_data.state)
         {
@@ -707,14 +707,14 @@ public:
               return credssp::State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
-                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_data, out_stream)) {
+                if (Res::Err == this->authenticate_recv(in_data, out_stream)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     return credssp::State::Err;
                 }
                 return credssp::State::Cont;
             case ServerAuthenticateData::Final:
                LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
-               if (Res::Err == this->sm_credssp_server_authenticate_final(in_data)) {
+               if (Res::Err == this->authenticate_final(in_data)) {
                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
                     return credssp::State::Err;
                 }
@@ -827,9 +827,9 @@ private:
         return SEC_E_OK;
     }
 
-    Res sm_credssp_server_authenticate_recv(bytes_view in_data, OutStream & out_stream)
+    Res authenticate_recv(bytes_view in_data, OutStream & out_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
+        LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::authenticate_recv");
 
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
@@ -906,7 +906,7 @@ private:
         return Res::Ok;
     }
 
-    Res sm_credssp_server_authenticate_final(bytes_view in_data)
+    Res authenticate_final(bytes_view in_data)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */

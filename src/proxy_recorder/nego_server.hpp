@@ -32,7 +32,7 @@ class NegoServer
     FixedRandom rand;
     LCGTime timeobj;
     std::string extra_message;
-    rdpCredsspServerNTLM credssp;
+    NtlmServer credssp;
 
 public:
     NegoServer(array_view_u8 key, std::string const& user, std::string const& password, uint64_t verbosity)
@@ -86,7 +86,7 @@ public:
     {
         credssp::State st = credssp::State::Cont;
         while (buffer.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
-            st = this->credssp.credssp_server_authenticate_next(buffer.current_pdu_buffer(), out_stream);
+            st = this->credssp.authenticate_next(buffer.current_pdu_buffer(), out_stream);
         }
         return st;
     }

@@ -129,7 +129,7 @@ public:
     }
 
 
-    std::vector<uint8_t> client_authenticate_start()
+    std::vector<uint8_t> authenticate_start()
     {
         LOG(LOG_INFO, "NTLM Authentication : Negotiate - sending Authentication Token");
         this->savedNegotiateMessage = emitNTLMNegotiateMessage();
@@ -138,7 +138,7 @@ public:
     }
 
 
-    credssp::State client_authenticate_next(bytes_view in_data, StaticOutStream<65536> & ts_request_emit)
+    credssp::State authenticate_next(bytes_view in_data, StaticOutStream<65536> & ts_request_emit)
     {
         switch (this->client_auth_data_state)
         {

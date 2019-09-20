@@ -543,7 +543,7 @@ private:
     };
     ClientAuthenticateData client_auth_data;
 
-    Res sm_credssp_client_authenticate_send()
+    Res authenticate_send()
     {
         /*
          * from tspkg.dll: 0x00000132
@@ -862,7 +862,7 @@ public:
         unsetenv("KRB5CCNAME");
     }
 
-    credssp::State credssp_client_authenticate_next(bytes_view in_data)
+    credssp::State authenticate_next(bytes_view in_data)
     {
         switch (this->client_auth_data.state)
         {
@@ -877,7 +877,7 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
             
-                if (Res::Err == this->sm_credssp_client_authenticate_send()) {
+                if (Res::Err == this->authenticate_send()) {
                     return credssp::State::Err;
                 }
                 return credssp::State::Cont;

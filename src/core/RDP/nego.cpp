@@ -417,7 +417,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 this->rand, this->timeobj,
                 bool(this->verbose & Verbose::credssp)
             );
-            trans.send(this->NTLM->client_authenticate_start());
+            trans.send(this->NTLM->authenticate_start());
         }
         catch (const Error &){
             LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");
@@ -435,7 +435,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, bytes_view data)
 
     if (this->krb) {
         #ifndef __EMSCRIPTEN__
-        switch (this->credsspKerberos->credssp_client_authenticate_next(data))
+        switch (this->credsspKerberos->authenticate_next(data))
         {
             case credssp::State::Cont:
                 break;
@@ -453,7 +453,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, bytes_view data)
     }
     else {
         StaticOutStream<65536> ts_request_emit;
-        switch (this->NTLM->client_authenticate_next(data, ts_request_emit))
+        switch (this->NTLM->authenticate_next(data, ts_request_emit))
         {
             case credssp::State::Cont:
                 trans.send(ts_request_emit.get_bytes());
