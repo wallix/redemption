@@ -144,7 +144,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         }; 
 
     auto public_key = std::vector<uint8_t>{} << bytes_view("1245789652325415"_av); 
-    rdpCredsspServerNTLM credssp(public_key, rand, timeobj, extra_message, lang, get_password, true);
+    rdpCredsspServerNTLM ntlm_server(public_key, rand, timeobj, extra_message, lang, get_password, true);
     credssp::State st = credssp::State::Cont;
 
     std::vector<uint8_t> negotiate{ 
@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     {
         StaticOutStream<65536> out_stream;
         LOG(LOG_INFO, "Recv Negotiate");
-        st = credssp.credssp_server_authenticate_next(negotiate, out_stream);
+        st = ntlm_server.credssp_server_authenticate_next(negotiate, out_stream);
 
         std::vector<uint8_t> challenge{
             0x30, 0x81, 0x88, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x81, 0x80, 0x30, 0x7e, 0x30, 0x7c, 0xa0, //0..........0~0|. !
@@ -206,7 +206,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         StaticOutStream<65536> out_stream;
         LOG(LOG_INFO, "Recv authenticate");
         
-        st = credssp.credssp_server_authenticate_next(authenticate, out_stream);
+        st = ntlm_server.credssp_server_authenticate_next(authenticate, out_stream);
 
         std::vector<uint8_t> pubauthkey{
             0x30, 0x29, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa3, 0x22, 0x04, 0x20, 0x01, 0x00, 0x00, 0x00, 0xa2, //0)......". .....
@@ -230,7 +230,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     // Recv ts_credential, -> finished
     {
         StaticOutStream<65536> out_stream;
-        st = credssp.credssp_server_authenticate_next(ts_credentials, out_stream);
+        st = ntlm_server.credssp_server_authenticate_next(ts_credentials, out_stream);
         RED_CHECK_EQUAL(out_stream.get_bytes().size(), 0);
     }
     RED_CHECK_EQUAL(st, credssp::State::Finish);
