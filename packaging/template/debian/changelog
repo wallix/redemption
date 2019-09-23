@@ -1,3 +1,9 @@
+redemption (7.2.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Increase the maximum delay before showing Remote Program disconnection message.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Sep 2019 14:31:06 +0200
+
 redemption (7.2.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Send uncompressed bitmap is the compression is less efficient.
