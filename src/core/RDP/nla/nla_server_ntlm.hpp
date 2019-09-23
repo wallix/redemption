@@ -615,10 +615,6 @@ public:
                     }
                     status = SEC_I_COMPLETE_NEEDED;
                    this->state_accept_security_context = status;
-                    if (status == SEC_I_LOCAL_LOGON) {
-                        this->state = credssp::State::Cont;
-                        return {};
-                    }
 
                     if (status == SEC_I_COMPLETE_NEEDED) {
                         status = SEC_E_OK;
@@ -866,10 +862,6 @@ public:
                     }
                     status = SEC_I_COMPLETE_NEEDED;
                    this->state_accept_security_context = status;
-                    if (status == SEC_I_LOCAL_LOGON) {
-                        this->state = credssp::State::Cont;
-                        return {};
-                    }
 
                     if (status == SEC_I_COMPLETE_NEEDED) {
                         status = SEC_E_OK;
@@ -1059,199 +1051,13 @@ public:
                     break;
                 }
                 default:
-                   LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext:: OTHER UNEXPECTED NTLM STATE");
-                   this->state_accept_security_context = status;
-                    if (status == SEC_I_LOCAL_LOGON) {
-                        this->state = credssp::State::Cont;
-                        return {};
-                    }
-
-                    if (status == SEC_I_COMPLETE_NEEDED) {
-                        status = SEC_E_OK;
-                    }
-                    else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
-                        status = SEC_I_CONTINUE_NEEDED;
-                    }
-
-                    if (status == SEC_E_OK) {
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMServer::decrypt_public_key_echo");
-
-                        unsigned long MessageSeqNo = this->recv_seq_num++;
-                        LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-
-                        if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
-                            if (this->ts_request.pubKeyAuth.size() == 0) {
-                                // report_error
-                                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
-                            }
-                            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN 0x%08X", SEC_E_INVALID_TOKEN);
-                            // SEC_E_INVALID_TOKEN; /* DO NOT SEND CREDENTIALS! */
-                            LOG(LOG_ERR, "Error: could not verify client's public key echo");
-                            LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                            this->state = credssp::State::Err;
-                            return {};
-                        }
-
-                        // this->ts_request.pubKeyAuth [signature][data_buffer]
-                        array_view_u8 data_buffer = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
-                        std::vector<uint8_t> result_buffer(data_buffer.size());
-
-                        /* Decrypt message using with RC4 */
-                        // context->confidentiality == true
-                        this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), result_buffer.data());
-
-                        array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), result_buffer);
-                        uint8_t checksum[8];
-                        /* RC4-encrypt first 8 bytes of digest */
-                        this->RecvRc4Seal.crypt(8, digest.data(), checksum);
-
-                        std::vector<uint8_t> expected_signature;
-                        uint32_t seal_version = 1;
-                        /* Concatenate version, ciphertext and sequence number to build signature */
-
-                        push_back_array(expected_signature, out_uint32_le(seal_version));
-                        push_back_array(expected_signature, {checksum, 8});
-                        push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
-
-                        if (memcmp(this->ts_request.pubKeyAuth.data(), expected_signature.data(),  expected_signature.size()) != 0) {
-                            /* signature verification failed! */
-                            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-                            LOG(LOG_ERR, "Expected Signature:");
-                            hexdump_c(expected_signature);
-                            LOG(LOG_ERR, "Actual Signature:");
-                            hexdump_c(this->ts_request.pubKeyAuth.data(), 16);
-
-                            if (this->ts_request.pubKeyAuth.size() == 0) {
-                                // report_error
-                                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
-                            }
-                            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED 0x%08X", SEC_E_MESSAGE_ALTERED);
-                            // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-                            LOG(LOG_ERR, "Error: could not verify client's public key echo");
-                            LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                            this->state = credssp::State::Err;
-                            return {};
-                        }
-
-                        if (this->ts_request.use_version >= 5) {
-                            if (this->ts_request.clientNonce.isset()){
-                                this->SavedClientNonce = this->ts_request.clientNonce;
-                            }
-                            this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
-                                                    this->SavedClientNonce.clientNonce,
-                                                    this->public_key);
-                            this->public_key = this->ClientServerHash;
-                        }
-
-                        if (result_buffer.size() != this->public_key.size()) {
-                            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", result_buffer.size(), this->public_key.size());
-                            // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-                            LOG(LOG_ERR, "Error: could not verify client's public key echo");
-                            LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                            this->state = credssp::State::Err;
-                            return {};
-                        }
-                        if (memcmp(this->public_key.data(), result_buffer.data(), public_key.size()) != 0) {
-                            LOG(LOG_ERR, "Could not verify server's public key echo");
-
-                            LOG(LOG_ERR, "Expected (length = %zu):", this->public_key.size());
-                            hexdump_c(this->public_key);
-
-                            LOG(LOG_ERR, "Actual (length = %zu):", this->public_key.size());
-                            hexdump_c(result_buffer);
-
-                            // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-                            LOG(LOG_ERR, "Error: could not verify client's public key echo");
-                            LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                            this->state = credssp::State::Err;
-                            return {};
-                        }
-
-                        this->ts_request.negoTokens.clear();
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMServer::encrypt_public_key_echo");
-                        uint32_t version = this->ts_request.use_version;
-
-                        if (version >= 5) {
-                            if (this->ts_request.clientNonce.isset()){
-                                this->SavedClientNonce = this->ts_request.clientNonce;
-                            }
-                            this->ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
-                                                        this->SavedClientNonce.clientNonce,
-                                                        this->public_key);
-                            this->public_key = this->ServerClientHash;
-                        }
-                        else {
-                            // if we are server and protocol is 2,3,4
-                            // then echos the public key +1
-                            ::ap_integer_increment_le(this->public_key);
-                        }
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
-
-                        // data_out [signature][data_buffer]
-                        std::vector<uint8_t> data_out(cbMaxSignature+this->public_key.size());
-                        // data_buffer
-                        {
-                            array_view_u8 data_buffer = {&data_out.data()[cbMaxSignature], this->public_key.size()};
-                            this->SendRc4Seal.crypt(this->public_key.size(), this->public_key.data(), data_buffer.data());
-                        }
-                        // signature
-                        {
-                            unsigned long MessageSeqNo = this->send_seq_num++;
-                            array_md5 digest = HmacMd5(this->ServerSigningKey, out_uint32_le(MessageSeqNo), this->public_key);
-                            array_view_u8 signature{data_out.data(), cbMaxSignature};
-                            uint8_t checksum[8];
-                            /* RC4-encrypt first 8 bytes of digest */
-                            this->SendRc4Seal.crypt(8, digest.data(), checksum);
-
-                            uint32_t seal_version = 1;
-                            /* Concatenate version, ciphertext and sequence number to build signature */
-                            auto av_version = out_uint32_le(seal_version);
-                            memcpy(signature.data(), av_version.data(), av_version.size());
-                            memcpy(signature.data()+4, checksum, 8);
-                            auto av_seqno = out_uint32_le(MessageSeqNo);
-                            memcpy(signature.data()+12, av_seqno.data(), av_seqno.size());
-                        }
-
-                        this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
-                    }
-
-                    if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
-                        LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
-                        LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        this->state = credssp::State::Err;
-                        return {};
-                    }
-
-                    result = emitTSRequest(this->ts_request.version,
-                                           this->ts_request.negoTokens,
-                                           this->ts_request.authInfo,
-                                           this->ts_request.pubKeyAuth,
-                                           this->ts_request.error_code,
-                                           this->ts_request.clientNonce.clientNonce,
-                                           this->ts_request.clientNonce.initialized);
-                    this->error_code = this->ts_request.error_code;
-
-                    LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
-                    this->error_code = 0;
-
-                    if (status != SEC_I_CONTINUE_NEEDED) {
-                        if (status != SEC_E_OK) {
-                            LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
-                            LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                            this->state = credssp::State::Err;
-                            return {};
-                        }
-                        this->server_auth_data.state = ServerAuthenticateData::Final;
-                    }
-                    this->state = credssp::State::Cont;
-                    return result;                    
-                    break;
+                    LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext:: OTHER UNEXPECTED NTLM STATE");
+                    status = SEC_E_OUT_OF_SEQUENCE;
+                    this->state_accept_security_context = status;
+                    LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
+                    LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
+                    this->state = credssp::State::Err;
+                    return {};
                 } // Switch
 
  
