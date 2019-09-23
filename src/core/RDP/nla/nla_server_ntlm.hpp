@@ -113,7 +113,6 @@ public:
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
-    NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMChallengeMessage CHALLENGE_MESSAGE;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
@@ -264,21 +263,18 @@ public:
                     this->ntlm_state = NTLM_STATE_NEGOTIATE;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-                    this->NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(this->ts_request.negoTokens);
-                    uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-                    uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                                        | NTLMSSP_NEGOTIATE_NTLM
-                                        | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                                        | NTLMSSP_NEGOTIATE_UNICODE;
+                    NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(this->ts_request.negoTokens);
+                    uint32_t const negoFlag = negotiate_message.negoFlags.flags;
+                    uint32_t const mask = NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
 
                     if ((negoFlag & mask) != mask) {
-                        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL::SEC_E_INVALID_TOKEN (1)");
-                        status = SEC_E_INVALID_TOKEN;
-                        break;
+                        LOG_IF(this->verbose, LOG_INFO, "NTLM Negotiate : unsupported negotiate flag %u", negoFlag);
+                        this->state = credssp::State::Err;
+                        return {};
                     }
 
                     this->NegotiateFlags = negoFlag;
-                    this->SavedNegotiateMessage = this->NEGOTIATE_MESSAGE.raw_bytes;
+                    this->SavedNegotiateMessage = negotiate_message.raw_bytes;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
 
@@ -369,7 +365,8 @@ public:
                         LOG(LOG_ERR, "ANONYMOUS User not allowed");
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED");
                         status = SEC_E_LOGON_DENIED;
-                        break;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
 
                     auto res = (set_password_cb(this->identity_User, this->identity_Domain, this->identity_Password));
@@ -377,7 +374,8 @@ public:
                     if (res == PasswordCallback::Error){
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (3)");
                         status = SEC_E_LOGON_DENIED;
-                        break;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
 
                     this->ntlm_state = NTLM_STATE_WAIT_PASSWORD;
@@ -385,7 +383,8 @@ public:
                     if (res == PasswordCallback::Wait) {
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_I_LOCAL_LOGON");
                         status = SEC_I_LOCAL_LOGON;
-                        break;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
 
                     array_md4 hash;
@@ -395,11 +394,13 @@ public:
                     if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
                         LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                         status = SEC_E_LOGON_DENIED;
-                        break;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
                     if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
                         status = SEC_E_LOGON_DENIED;
-                        break;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
                     this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
@@ -434,7 +435,8 @@ public:
                             hexdump_c(this->MessageIntegrityCheck.data(), 16);
                             hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
                             status = SEC_E_MESSAGE_ALTERED;
-                            break;
+                            this->state = credssp::State::Err;
+                            return {};
                         }
                     }
                     this->ntlm_state = NTLM_STATE_FINAL;
@@ -620,7 +622,8 @@ public:
                     }
                     if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
                         status = SEC_E_LOGON_DENIED;
-                        break;
+                        this->state = credssp::State::Err;
+                        return {};
                     }
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
                     this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
