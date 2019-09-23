@@ -135,8 +135,10 @@ video_recorder::video_recorder(
     const int image_view_width = image_view.width();
     const int image_view_height = image_view.height();
 
+    #if LIBAVCODEC_VERSION_MAJOR <= 57
     /* initialize libavcodec, and register all codecs and formats */
     av_register_all();
+    #endif
 
     av_log_set_level(log_level);
 
