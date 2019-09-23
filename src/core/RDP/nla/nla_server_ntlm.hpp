@@ -298,13 +298,14 @@ public:
                     }
 
                     // NTLM: construct challenge target info
-                    std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
                     std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
-
                     challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, upwin7}));
                     challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, upwin7}));
+
+                    std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
                     challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, win7}));
                     challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, win7}));
+
                     challenge_message.AvPairList.push_back(AvPair({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))}));
 
                     challenge_message.negoFlags.flags = negoFlag;
