@@ -102,8 +102,6 @@ private:
 public:
     SslRC4 SendRc4Seal {};
     SslRC4 RecvRc4Seal {};
-private:
-    uint32_t NegotiateFlags = 0;
 
 public:
 
@@ -273,7 +271,6 @@ public:
                         return {};
                     }
 
-                    this->NegotiateFlags = negoFlag;
                     this->SavedNegotiateMessage = negotiate_message.raw_bytes;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
