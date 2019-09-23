@@ -111,7 +111,6 @@ public:
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
-    NTLMChallengeMessage CHALLENGE_MESSAGE;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
 private:
@@ -276,7 +275,9 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
 
                     rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
-                    this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
+
+                    NTLMChallengeMessage challenge_message;
+                    challenge_message.serverChallenge = this->ServerChallenge;
 
                     uint8_t ZeroTimestamp[8] = {};
 
@@ -294,23 +295,20 @@ public:
                     std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
                     std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
 
-                    auto & list = this->CHALLENGE_MESSAGE.AvPairList;
+                    auto & list = challenge_message.AvPairList;
                     list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
                     list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
                     list.push_back(AvPair({MsvAvDnsComputerName, win7}));
                     list.push_back(AvPair({MsvAvDnsDomainName, win7}));
                     list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
 
-                    this->CHALLENGE_MESSAGE.negoFlags.flags = negoFlag;
+                    challenge_message.negoFlags.flags = negoFlag;
                     if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-                        this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                        this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                        this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
-                        this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+                        challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
                     }
 
                     StaticOutStream<65535> out_stream;
-                    EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
+                    EmitNTLMChallengeMessage(out_stream, challenge_message);
                     this->ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
                     this->SavedChallengeMessage.clear();
@@ -861,8 +859,8 @@ public:
                     this->state = credssp::State::Err;
                     return {};
                 } // Switch
-
- 
+                this->state = credssp::State::Err;
+                return {};
             }
 
             case ServerAuthenticateData::Final:
