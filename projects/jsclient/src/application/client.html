@@ -43,6 +43,7 @@
 <canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
 <section>
     <form id="login" method="get" action="#">
+        <input type="text" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/>
         <input type="text" id="user" name="user" value="x" placeholder="Username"/>
         <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
         <input type="submit" value="New Connection">
@@ -99,6 +100,7 @@ const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
 const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
+const ws_input = document.getElementById('ws');
 const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
 const cbDownload = document.getElementById('cbDownload');
@@ -341,7 +343,7 @@ class OutStream
 
 function run()
 {
-    const socket = newRDPSocket('ws://localhost:3390');
+    const socket = newRDPSocket(ws_input.value);
     socket.onopen = function(event) {
         console.log('RdpClient open');
         rdpclient = new RDPClient(
@@ -672,7 +674,7 @@ canvas.fillStyle = 'black';
 canvas.fillRect(0,0,800,600);
 
 const url = new URL(window.location.href)
-const inputs = {user: user_input, pass: pass_input};
+const inputs = {user: user_input, pass: pass_input, ws: ws_input};
 for (const k in inputs) {
     const x = url.searchParams.get(k);
     if (x) {
