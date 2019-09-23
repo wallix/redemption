@@ -4594,7 +4594,7 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(154);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 3000, 120000>;
         using mapped_type = sesman_and_spec_type;
         type value{3000};
     };
@@ -4993,7 +4993,6 @@ struct context
 , cfg::context::auth_command_rail_exec_arguments
 , cfg::context::auth_command_rail_exec_account
 , cfg::context::auth_command_rail_exec_password
-, cfg::context::rail_disconnect_message_delay
 , cfg::context::session_probe_launch_error_message
 , cfg::context::close_box_extra_message
 , cfg::context::opt_bitrate
@@ -5026,6 +5025,7 @@ struct context
 , cfg::context::recording_started
 , cfg::context::rt_ready
 , cfg::context::perform_automatic_reconnection
+, cfg::context::rail_disconnect_message_delay
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::is_wabam
 { static constexpr bool is_section = true; };
