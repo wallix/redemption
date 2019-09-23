@@ -752,7 +752,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "auth_command_rail_exec_account");
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, NL, type_<std::string>(), "auth_command_rail_exec_password");
 
-        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, co_rdp, L, type_<std::chrono::milliseconds>(), "rail_disconnect_message_delay", connpolicy::name{"remote_programs_disconnect_message_delay"}, desc{"Delay before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, co_rdp, L, type_<types::range<std::chrono::milliseconds, 3000, 120000>>(), "rail_disconnect_message_delay", connpolicy::name{"remote_programs_disconnect_message_delay"}, desc{"Delay before showing disconnect message after the last RemoteApp window is closed."}, set(3000));
 
         W.member(no_ini_no_gui, rdp_connpolicy, co_rdp, L, type_<bool>(), "use_session_probe_to_launch_remote_program", desc{"Use Session Probe to launch Remote Program as much as possible."}, set(true));
 

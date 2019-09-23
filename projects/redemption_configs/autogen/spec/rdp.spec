@@ -64,7 +64,7 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced
-remote_programs_disconnect_message_delay = integer(min=0, default=3000)
+remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default=3000)
 
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
