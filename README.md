@@ -67,10 +67,9 @@ Submodule ($ `git submodule update --init`):
 - libavutil-dev
 - libswscale-dev
 - libx264-dev
-- libbz2-dev
 
 ```sh
-apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libbz2-dev
+apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev
 ```
 
 <!-- ok with 53 (?) and 54 version-->

@@ -29,10 +29,10 @@ find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/c++-analyzer/ch
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
 # BJAM Build Test
-echo -e "using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 6.0 : clang++-6.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-valgrind_compiler=gcc-8
-toolset_gcc=toolset=gcc-8
-toolset_clang=toolset=clang-6.0
+echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 8.0 : clang++-8.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
+valgrind_compiler=gcc-9
+toolset_gcc=toolset=gcc-9
+toolset_clang=toolset=clang-8.0
 export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
 export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
 export FFMPEG_LINK_MODE=static
@@ -93,7 +93,7 @@ dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
 # debug with coverage
 build -q $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
 
-#bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
+#bjam -a -q toolset=clang-8.0 -sNO_FFMPEG=1 san
 # multi-thread
 build -q $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
 build -q $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
@@ -116,7 +116,7 @@ find \
 #set -o pipefail
 
 # clang analyzer
-CLANG_TIDY=clang-tidy-6.0 ./tools/c++-analyzer/clang-tidy \
+CLANG_TIDY=clang-tidy-8.0 ./tools/c++-analyzer/clang-tidy \
   | sed -E '/^(.+\/|)modules\//,/\^/d'
 
 
