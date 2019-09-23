@@ -51,6 +51,18 @@ static const uint8_t server_seal_magic[] =
 #include "transport/transport.hpp"
 
 
+static inline std::vector<AvPair> && operator<<(std::vector<AvPair>&& v, array_view<AvPair const> a)
+{
+    v.insert(v.end(), a.begin(), a.end());
+    return std::move(v);
+}
+
+static inline std::vector<AvPair> & operator<<(std::vector<AvPair> & v, array_view<AvPair const> a)
+{
+    v.insert(v.end(), a.begin(), a.end());
+    return v;
+}
+
 class NtlmServer final
 {
     static constexpr uint32_t cbMaxSignature = 16;
@@ -225,11 +237,9 @@ public:
             case ServerAuthenticateData::Loop:
             {
                 std::vector<uint8_t> result;
-                if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
-                    /* receive authentication token */
-                    this->ts_request = recvTSRequest(in_data);
-                    this->error_code = this->ts_request.error_code;
-                }
+                /* receive authentication token */
+                this->ts_request = recvTSRequest(in_data);
+                this->error_code = this->ts_request.error_code;
 
                 if (this->ts_request.negoTokens.size() < 1) {
                     LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
@@ -247,8 +257,6 @@ public:
                 //     | ASC_REQ_SEQUENCE_DETECT
                 //     | ASC_REQ_EXTENDED_ERROR;
 
-
-                LOG_IF(this->verbose, LOG_INFO, "--------------------- NTLM_SSPI::AcceptSecurityContext ---------------------");
 
                 switch (this->ntlm_state) {
                 case NTLM_STATE_INITIAL:
@@ -293,12 +301,11 @@ public:
                     std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
                     std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
 
-                    auto & list = challenge_message.AvPairList;
-                    list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
-                    list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
-                    list.push_back(AvPair({MsvAvDnsComputerName, win7}));
-                    list.push_back(AvPair({MsvAvDnsDomainName, win7}));
-                    list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
+                    challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, upwin7}));
+                    challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, upwin7}));
+                    challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, win7}));
+                    challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, win7}));
+                    challenge_message.AvPairList.push_back(AvPair({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))}));
 
                     challenge_message.negoFlags.flags = negoFlag;
                     if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
