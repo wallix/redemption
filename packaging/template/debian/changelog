@@ -1,3 +1,9 @@
+redemption (1.3.185%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Increase the maximum delay before showing Remote Program disconnection message.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Sep 2019 12:34:49 +0200
+
 redemption (1.3.183%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * refs #21927: OCR patterns doesn't work with VNC sessions.
