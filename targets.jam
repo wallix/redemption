@@ -738,7 +738,6 @@ test-run tests/capture/test_capture :
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
-  $(FFMPEG_CXXFLAGS)
   <covfile>src/capture/capture.cpp
   <covfile>src/capture/capture.hpp
   <define>ZLIB_CONST
@@ -809,7 +808,6 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  $(FFMPEG_CXXFLAGS)
   <covfile>src/capture/video_capture.cpp
   <covfile>src/capture/video_capture.hpp
 ;
@@ -2631,6 +2629,7 @@ test-run tests/front/test_front :
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/front/front.hpp
+  <noopstacktrace>on
 ;
 test-run tests/gdi/test_graphic_api :
   $(REDEMPTION_TEST_PATH)/gdi/test_graphic_api.cpp
@@ -5315,7 +5314,7 @@ obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/modu
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
-obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPEG_CXXFLAGS) <define>ZLIB_CONST ;
+obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 obj src/capture/ocr/main/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/display_learning.cc ;
