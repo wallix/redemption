@@ -189,6 +189,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
     getpeername(0, &u.s, &sock_len);
     strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+    const int source_port = u.s4.sin_port;
 
     union
     {
@@ -209,7 +210,6 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
     strlcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
     if (ini.get<cfg::globals::enable_transparent_mode>()) {
-        const int source_port = 0;
         char target_ip[256];
         strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
         int fd = open("/proc/net/nf_conntrack", O_RDONLY);
@@ -220,10 +220,12 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
             LOG(LOG_WARNING, "Failed to read conntrack file");
         }
         // source and dest are inverted because we get the information we want from reply path rule
+        LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%d:%d", source_ip, source_port, target_ip, target_port);
         int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));
         if (res){
             LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack");
         }
+        LOG(LOG_INFO, "transparent proxy: real target %s", real_target_ip);
         close(fd);
     }
 

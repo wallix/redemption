@@ -121,7 +121,7 @@ RED_AUTO_TEST_CASE(ParseIpConntrack2)
 }
 
 
-RED_AUTO_TEST_CASE(ParseIpConntrack3)
+RED_AUTO_TEST_CASE(ParseNfConntrack3)
 {
     char tmpname[] = "/tmp/test_conntrack_XXXXXX";
     int fd = ::mkostemp(tmpname, O_RDWR|O_CREAT);
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(ParseIpConntrack3)
     unlink(tmpname);
 }
 
-RED_AUTO_TEST_CASE(ParseIpConntrack4)
+RED_AUTO_TEST_CASE(ParseNfConntrack4)
 {
     // ip_conntrack without packets and
 
@@ -208,6 +208,29 @@ RED_AUTO_TEST_CASE(ParseIpConntrack4)
     res = parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target));
     RED_CHECK_EQUAL(res, -1);
     RED_CHECK_EQUAL(0, strcmp(transparent_target, ""));
+
+    close(fd);
+    unlink(tmpname);
+}
+
+RED_AUTO_TEST_CASE(ParseNfConntrackBug)
+{
+    // ip_conntrack without packets and
+
+    char tmpname[] = "/tmp/test_conntrack_XXXXXX";
+    int fd = ::mkostemp(tmpname, O_RDWR|O_CREAT);
+    char conntrack[] =
+        "ipv4     2 tcp      6 431980 ESTABLISHED src=10.10.45.2 dst=10.10.45.82 sport=45516 dport=3389 src=10.10.45.32 dst=10.10.45.2 sport=3389 dport=45516 [ASSURED] mark=0 zone=0 use=2\n";
+    int res = write(fd, conntrack, sizeof(conntrack)-1);
+    RED_CHECK_EQUAL(res, sizeof(conntrack)-1);
+
+    // ----------------------------------------------------
+    RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    char transparent_target[256] = {};
+
+    res = parse_ip_conntrack(fd, "10.10.45.32", "10.10.45.2", 3389, 45516, transparent_target, sizeof(transparent_target));
+    RED_CHECK_EQUAL(res, 0);
+    RED_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.45.82"));
 
     close(fd);
     unlink(tmpname);

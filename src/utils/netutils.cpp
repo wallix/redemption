@@ -295,8 +295,10 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
                        char * transparent_dest, size_t sz_transparent_dest, uint32_t verbose)
 {
     LineBuffer line(fd);
+    // ip_conntrack
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
-
+    // nf_conntrack
+    //"ipv4     2 tcp      6 431980 ESTABLISHED src=10.10.45.2 dst=10.10.45.82 sport=45516 dport=3389 src=10.10.45.32 dst=10.10.45.2 sport=3389 dport=45516 [ASSURED] mark=0 zone=0 use=2"
     char strre[512];
 #define RE_IP_DEF "\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?"
     // sprintf(strre,
