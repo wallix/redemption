@@ -98,10 +98,16 @@ struct video_recorder::D
     }
 };
 
-static void throw_if(bool test, char const* msg)
+template<class... ExtraMsg>
+static void throw_if(bool test, char const* msg, ExtraMsg const& ... extra_msg)
 {
     if (test) {
-        LOG(LOG_ERR, "video recorder: %s", msg);
+        if constexpr (sizeof...(ExtraMsg) == 0) {
+            LOG(LOG_ERR, "video recorder: %s", msg);
+        }
+        else {
+            LOG(LOG_ERR, "video recorder: %s%s", msg, extra_msg...);
+        }
         throw Error(ERR_VIDEO_RECORDER);
     }
 }
@@ -148,11 +154,7 @@ video_recorder::video_recorder(
 
     /* auto detect the output format from the name. default is mpeg. */
     AVOutputFormat *fmt = av_guess_format(codec_name, nullptr, nullptr);
-    if (!fmt) {
-        LOG(LOG_WARNING, "Could not deduce output format from codec '%s': falling back to MPEG.", codec_name);
-        fmt = av_guess_format("mpeg", nullptr, nullptr);
-    }
-    throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE, "Could not find codec");
+    throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE, "Could not find codec ", codec_name);
 
     const auto codec_id = fmt->video_codec;
     const AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
