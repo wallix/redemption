@@ -36,9 +36,8 @@ public:
 
     video_recorder(
         write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-        ConstImageDataView const & image_view, int bitrate,
-        int frame_rate, int qscale, const char * codec_id,
-        int log_level
+        ConstImageDataView const & image_view, int frame_rate,
+        const char * codec_id, int log_level
     );
 
     ~video_recorder();

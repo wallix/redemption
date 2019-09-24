@@ -125,8 +125,7 @@ static void check_errnum(int errnum, char const* msg)
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-    ConstImageDataView const & image_view, int bitrate,
-    int frame_rate, int qscale, const char * codec_name,
+    ConstImageDataView const & image_view, int frame_rate, const char * codec_name,
     int log_level
 )
 : d(new D)
@@ -174,8 +173,8 @@ video_recorder::video_recorder(
     this->d->codec_ctx->codec_id = codec_id;
     this->d->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
 
-    this->d->codec_ctx->bit_rate = bitrate;
-    this->d->codec_ctx->bit_rate_tolerance = bitrate;
+    // this->d->codec_ctx->bit_rate = bitrate;
+    // this->d->codec_ctx->bit_rate_tolerance = bitrate;
     // resolution must be a multiple of 2
     this->d->codec_ctx->width = image_view_width & ~1;
     this->d->codec_ctx->height = image_view_height & ~1;
@@ -192,8 +191,6 @@ video_recorder::video_recorder(
     this->d->codec_ctx->gop_size = std::max(2, frame_rate);
 
     this->d->codec_ctx->pix_fmt = pix_fmt;
-    this->d->codec_ctx->flags |= AV_CODEC_FLAG_QSCALE;
-    this->d->codec_ctx->global_quality = FF_QP2LAMBDA * qscale;
 
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch")
@@ -222,7 +219,7 @@ video_recorder::video_recorder(
 
     // some formats want stream headers to be separate
     if(fmt->flags & AVFMT_GLOBALHEADER){
-        this->d->codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        // this->d->codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
     // dump_format can be handy for debugging
@@ -238,13 +235,15 @@ video_recorder::video_recorder(
         struct AVDict {
             void add(char const * k, char const * v) {
                 if (av_dict_set(&this->d, k, v, 0) < 0) {
-                    LOG(LOG_ERR, "av_dict_set error on '%s' with '%s'", k, v);
+                    LOG(LOG_WARNING, "av_dict_set error on '%s' with '%s'", k, v);
                 }
             }
             ~AVDict() { av_dict_free(&this->d); } /*NOLINT*/
             AVDictionary *d = nullptr;
         } av_dict;
 
+        av_dict.add("flags", "+qscale");
+        av_dict.add("b", "100000");
         if (codec_id == AV_CODEC_ID_H264) {
             // low quality  (baseline, main, hight, ...)
             av_dict.add("profile", "baseline");
@@ -399,9 +398,8 @@ struct video_recorder::D {};
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t /*seek_fn*/, void * io_params,
-    ConstImageDataView const & /*image_view*/, int /*bitrate*/,
-    int /*frame_rate*/, int /*qscale*/, const char * /*codec_id*/,
-    int /*log_level*/
+    ConstImageDataView const & /*image_view*/, int /*frame_rate*/,
+    const char * /*codec_id*/, int /*log_level*/
 ) {
     uint8_t buf[1]{};
     // force file create

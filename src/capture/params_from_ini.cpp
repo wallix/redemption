@@ -40,23 +40,14 @@ VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, con
     };
     switch (ini.get<cfg::globals::video_quality>()) {
         case Level::low: return create_params(
-            Level::low,
-            ini.get<cfg::video::l_framerate>(),
-            ini.get<cfg::video::l_qscale>(),
-            ini.get<cfg::video::l_bitrate>()
+            ini.get<cfg::video::l_framerate>()
         );
         case Level::high: return create_params(
-            Level::high,
-            ini.get<cfg::video::h_framerate>(),
-            ini.get<cfg::video::h_qscale>(),
-            ini.get<cfg::video::h_bitrate>()
+            ini.get<cfg::video::h_framerate>()
         );
         case Level::medium:
         default: return create_params(
-            Level::medium,
-            ini.get<cfg::video::m_framerate>(),
-            ini.get<cfg::video::m_qscale>(),
-            ini.get<cfg::video::m_bitrate>()
+            ini.get<cfg::video::m_framerate>()
         );
     }
 }
