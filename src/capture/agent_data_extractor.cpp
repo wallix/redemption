@@ -48,7 +48,8 @@ namespace
         };
     }
 
-    // TODO constexpr with C++20
+    // TODO constexpr with C++20;
+    // TODO sould be a hash map
     inline auto const sorted_log_id_string = []() noexcept {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
@@ -56,6 +57,17 @@ namespace
             #define f(x, cat) Pair(#x "", LogId::x),
             X_LOG_ID(f)
             #undef f
+            // old format name
+            Pair("EndingInProgress", LogId::SESSION_ENDING_IN_PROGRESS),
+            Pair("PasswordTextBox.SetFocus", LogId::PASSWORD_TEXT_BOX_GET_FOCUS),
+            Pair("ConsentUI.IsVisible", LogId::UAC_PROMPT_BECOME_VISIBLE),
+            Pair("InputLanguage", LogId::INPUT_LANGUAGE),
+            Pair("NewProcess", LogId::NEW_PROCESS),
+            Pair("CompletedProcess", LogId::COMPLETED_PROCESS),
+            Pair("OutboundConnectionBlocked", LogId::OUTBOUND_CONNECTION_BLOCKED),
+            Pair("ForegroundWindowChanged", LogId::FOREGROUND_WINDOW_CHANGED),
+            Pair("Button.Clicked", LogId::BUTTON_CLICKED),
+            Pair("Edit.Changed", LogId::EDIT_CHANGED),
         };
         REDEMPTION_DIAGNOSTIC_POP
 
@@ -201,7 +213,7 @@ bool AgentDataExtractor::extract_list(Av data)
             return false;
         };
 
-        std::string_view order_sv{order.data(), data.size()};
+        std::string_view order_sv{order.data(), order.size()};
         auto it = std::lower_bound(begin(sorted_log_id_string), end(sorted_log_id_string),
             Pair{order_sv, LogId()}, pair_comparator());
 
@@ -214,7 +226,7 @@ bool AgentDataExtractor::extract_list(Av data)
 
         this->id = it->second;
 
-        switch (id) {
+        switch (this->id) {
             case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
             case LogId::UAC_PROMPT_BECOME_VISIBLE:
             case LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS:
