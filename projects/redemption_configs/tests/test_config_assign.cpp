@@ -208,7 +208,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::movie_path>(cpath);
     ini.set<cfg::globals::globals::movie_path>(spath);
     ini.set<cfg::globals::globals::nomouse>(true);
-    ini.set<cfg::globals::globals::notimestamp>(true);
+    ini.set<cfg::video::notimestamp>(true);
     ini.set<cfg::globals::globals::port>(1);
     ini.set<cfg::globals::globals::session_timeout>(std::chrono::seconds{1});
     ini.set_acl<cfg::globals::globals::target>(cs);

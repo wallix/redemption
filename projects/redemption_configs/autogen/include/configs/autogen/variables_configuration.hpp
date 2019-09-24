@@ -219,18 +219,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// type: bool <br/>
-    /// value{false} <br/>
-    struct globals::notimestamp {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "globals";
-        static constexpr char const * name = "notimestamp";
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{false};
-    };
     /// type: Level <br/>
     /// value = static_cast<type>(0) <br/>
     struct globals::encryptionLevel {
@@ -538,30 +526,6 @@ namespace cfg {
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
-    };
-    /// type: std::string <br/>
-    /// value = "flv" <br/>
-    struct globals::codec_id {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "globals";
-        static constexpr char const * name = "codec_id";
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value = "flv";
-    };
-    /// type: Level <br/>
-    /// value = static_cast<type>(2) <br/>
-    struct globals::video_quality {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "globals";
-        static constexpr char const * name = "video_quality";
-        using type = Level;
-        using sesman_and_spec_type = Level;
-        using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(2);
     };
     /// type: bool <br/>
     /// value{true} <br/>
@@ -3131,122 +3095,54 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// Bitrate for low quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{10000} <br/>
-    struct video::l_bitrate {
+    /// type: std::string <br/>
+    /// value = "mp4" <br/>
+    struct video::codec_id {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "video";
-        static constexpr char const * name = "l_bitrate";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        static constexpr char const * name = "codec_id";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value{10000};
+        type value = "mp4";
     };
-    /// Framerate for low quality. <br/>
     /// type: unsigned int <br/>
     /// value{5} <br/>
-    struct video::l_framerate {
+    struct video::framerate {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "video";
-        static constexpr char const * name = "l_framerate";
+        static constexpr char const * name = "framerate";
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    /// Qscale (parameter given to ffmpeg) for low quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{28} <br/>
-    struct video::l_qscale {
+    /// FFmpeg optons for video codec. <br/>
+    /// type: std::string <br/>
+    /// value = "profile=baseline preset=ultrafast flags=+qscale b=30000" <br/>
+    struct video::ffmpeg_options {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "video";
-        static constexpr char const * name = "l_qscale";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        static constexpr char const * name = "ffmpeg_options";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value{28};
+        type value = "profile=baseline preset=ultrafast flags=+qscale b=30000";
     };
-    /// Bitrate for medium quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{20000} <br/>
-    struct video::m_bitrate {
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct video::notimestamp {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "video";
-        static constexpr char const * name = "m_bitrate";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        static constexpr char const * name = "notimestamp";
+        using type = bool;
+        using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{20000};
-    };
-    /// Framerate for medium quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{5} <br/>
-    struct video::m_framerate {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "m_framerate";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{5};
-    };
-    /// Qscale (parameter given to ffmpeg) for medium quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{14} <br/>
-    struct video::m_qscale {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "m_qscale";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{14};
-    };
-    /// Bitrate for high quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{30000} <br/>
-    struct video::h_bitrate {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "h_bitrate";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{30000};
-    };
-    /// Framerate for high quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{5} <br/>
-    struct video::h_framerate {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "h_framerate";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{5};
-    };
-    /// Qscale (parameter given to ffmpeg) for high quality. <br/>
-    /// type: unsigned int <br/>
-    /// value{7} <br/>
-    struct video::h_qscale {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "video";
-        static constexpr char const * name = "h_qscale";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
-        using mapped_type = sesman_and_spec_type;
-        type value{7};
+        type value{false};
     };
     /// type: SmartVideoCropping <br/>
     /// value = static_cast<type>(0) <br/>
@@ -5031,13 +4927,11 @@ struct globals
 , cfg::globals::authentication_timeout
 , cfg::globals::close_timeout
 , cfg::globals::movie_path
-, cfg::globals::codec_id
 , cfg::globals::rdp_keepalive_connection_interval
 , cfg::globals::port
 , cfg::globals::capture_chunk
 , cfg::globals::glyph_cache
 , cfg::globals::nomouse
-, cfg::globals::notimestamp
 , cfg::globals::encryptionLevel
 , cfg::globals::enable_websocket
 , cfg::globals::trace_type
@@ -5052,7 +4946,6 @@ struct globals
 , cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::bogus_refresh_rect
-, cfg::globals::video_quality
 , cfg::globals::large_pointer_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
@@ -5244,19 +5137,13 @@ struct ocr
 
 struct video
 : cfg::video::break_interval
+, cfg::video::codec_id
+, cfg::video::ffmpeg_options
 , cfg::video::capture_groupid
 , cfg::video::png_interval
 , cfg::video::frame_interval
 , cfg::video::png_limit
-, cfg::video::l_bitrate
-, cfg::video::l_framerate
-, cfg::video::l_qscale
-, cfg::video::m_bitrate
-, cfg::video::m_framerate
-, cfg::video::m_qscale
-, cfg::video::h_bitrate
-, cfg::video::h_framerate
-, cfg::video::h_qscale
+, cfg::video::framerate
 , cfg::video::capture_flags
 , cfg::video::replay_path
 , cfg::video::hash_path
@@ -5269,6 +5156,7 @@ struct video
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
 , cfg::video::bogus_vlc_frame_rate
+, cfg::video::notimestamp
 , cfg::video::smart_video_cropping
 , cfg::video::play_video_with_corrupted_bitmap
 { static constexpr bool is_section = true; };

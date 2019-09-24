@@ -397,8 +397,8 @@ struct IOVideoRecorderWithTransport
 static void log_video_params(VideoParams const& video_params)
 {
     if (video_params.verbosity) {
-        LOG(LOG_INFO, "Video recording: rate: %u, codec: %s",
-            video_params.frame_rate, video_params.codec.c_str());
+        LOG(LOG_INFO, "Video recording: codec: %s, frame_rate: %u, options: %s",
+            video_params.codec, video_params.frame_rate, video_params.codec_options);
     }
 }
 
@@ -426,6 +426,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     imageFrameApi.get_image_view(),
     video_params.frame_rate,
     video_params.codec.c_str(),
+    video_params.codec_options.c_str(),
     video_params.verbosity)
 {
     log_video_params(video_params);
@@ -615,6 +616,7 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->image_frame_api.get_image_view(),
         this->video_params.frame_rate,
         this->video_params.codec.c_str(),
+        this->video_params.codec_options.c_str(),
         this->video_params.verbosity
     );
     this->recorder->preparing_video_frame();

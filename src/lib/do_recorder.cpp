@@ -1472,8 +1472,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         }
 
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
-                        ini.set<cfg::globals::video_quality>(video_params.video_quality);
-                        ini.set<cfg::globals::codec_id>(video_params.codec);
+                        ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
+                        ini.set<cfg::video::codec_id>(video_params.codec);
                         video_params = video_params_from_ini(
                             std::chrono::seconds{video_break_interval}, ini);
 
@@ -1780,7 +1780,6 @@ struct RecorderParams {
     // video output options
     bool full_video; // create full video
     uint32_t    video_break_interval = 10*60;
-    std::string video_quality;
 
     // wrm output options
     int wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
@@ -1873,11 +1872,11 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
         {'a', "video-break-interval", &recorder.video_break_interval, "number of seconds between splitting video files (by default, one video every 10 minutes)"},
 
-        {'q', "video-quality", &recorder.video_quality, "video quality (high, medium, low)"},
+        {'q', "video-codec-options", &recorder.video_params.codec_options, "FFmpeg codec option, format: key1=value1 key2=value2"},
 
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
-        {"video-codec", &recorder.video_params.codec, "ffmpeg video codec id (flv, mp4, etc)"},
+        {"video-codec", &recorder.video_params.codec, "ffmpeg video codec name (flv, mp4, etc)"},
         {"bogus-vlc", "Needed to play a video with ffplay or VLC."},
         {"disable-bogus-vlc", ""},
 
@@ -1939,7 +1938,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         recorder.full_video_params.bogus_vlc_frame_rate = false;
         recorder.video_params.bogus_vlc_frame_rate = false;
     }
-    recorder.video_params.video_quality = Level::high;
     recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags
       = (                   options.count("wrm")    ? CaptureFlags::wrm   : CaptureFlags::none)
@@ -1947,19 +1945,12 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
       | ((recorder.chunk || options.count("video")) ? CaptureFlags::video : CaptureFlags::none)
       | ((recorder.chunk || options.count("ocr"))   ? CaptureFlags::ocr   : CaptureFlags::none);
 
-    if (options.count("video-quality") > 0) {
-        if      (0 == strcmp(recorder.video_quality.c_str(), "high")) {
-            recorder.video_params.video_quality = Level::high;
-        }
-        else if (0 == strcmp(recorder.video_quality.c_str(), "low")) {
-            recorder.video_params.video_quality = Level::low;
-        }
-        else if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
-            recorder.video_params.video_quality = Level::medium;
-        }
-        else {
-            return cl_error("Unknown video quality");
-        }
+    if (options.count("video-codec-options") == 0) {
+        recorder.video_params.codec_options = ini.get<cfg::video::ffmpeg_options>();
+    }
+
+    if (options.count("video-codec") == 0) {
+        recorder.video_params.codec = ini.get<cfg::video::codec_id>();
     }
 
     recorder.remove_input_file  = (options.count("remove-input-file") > 0);

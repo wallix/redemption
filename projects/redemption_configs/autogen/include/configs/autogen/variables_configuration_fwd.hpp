@@ -22,7 +22,6 @@ namespace cfg {
         struct glyph_cache;
         struct port;
         struct nomouse;
-        struct notimestamp;
         struct encryptionLevel;
         struct authfile;
         struct enable_websocket;
@@ -46,8 +45,6 @@ namespace cfg {
         struct enable_wab_integration;
         struct allow_using_multiple_monitors;
         struct bogus_refresh_rect;
-        struct codec_id;
-        struct video_quality;
         struct large_pointer_support;
         struct unicode_keyboard_event_support;
         struct mod_recv_timeout;
@@ -256,15 +253,10 @@ namespace cfg {
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
         struct bogus_vlc_frame_rate;
-        struct l_bitrate;
-        struct l_framerate;
-        struct l_qscale;
-        struct m_bitrate;
-        struct m_framerate;
-        struct m_qscale;
-        struct h_bitrate;
-        struct h_framerate;
-        struct h_qscale;
+        struct codec_id;
+        struct framerate;
+        struct ffmpeg_options;
+        struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
     };

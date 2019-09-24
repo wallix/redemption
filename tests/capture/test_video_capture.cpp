@@ -82,13 +82,22 @@ namespace
         }
     } next_video_notifier;
 
+    struct Codec
+    {
+        char const* name;
+        char const* options;
+    };
+    constexpr Codec flv{"flv", "flags=+qscale b=100000"};
+    constexpr Codec mp4{"mp4", "profile=baseline preset=ultrafast b=100000"};
+
     void simple_sequenced_video(
-        char const* dirname, char const* format, std::chrono::seconds video_interval,
+        char const* dirname, Codec const& codec, std::chrono::seconds video_interval,
         unsigned loop_duration, bool ignore_frame_in_timeval, bool mouse)
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
-        VideoParams video_params{25, format, false, false, false, video_interval, 0};
+        VideoParams video_params{
+            25, codec.name, codec.options, false, false, false, video_interval, 0};
         CaptureParams capture_params{
             now, "video", nullptr, dirname, 0 /* groupid */, nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
@@ -98,12 +107,13 @@ namespace
     }
 
     void simple_full_video(
-        char const* dirname, char const* format, std::chrono::seconds video_interval,
+        char const* dirname, Codec const& codec, std::chrono::seconds video_interval,
         unsigned loop_duration, bool ignore_frame_in_timeval, bool mouse)
     {
         timeval now; now.tv_sec = 1353055800; now.tv_usec = 0;
         RDPDrawable drawable(800, 600);
-        VideoParams video_params{25, format, false, false, false, video_interval, 0};
+        VideoParams video_params{
+            25, codec.name, codec.options, false, false, false, video_interval, 0};
         CaptureParams capture_params{
             now, "video", nullptr, dirname, 0 /* groupid */, nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
@@ -115,7 +125,7 @@ namespace
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCapture, wd)
 {
-    simple_sequenced_video(wd.dirname(), "flv", 2s, 250, false, true);
+    simple_sequenced_video(wd.dirname(), flv, 2s, 250, false, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.png"), 3099);
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.flv"), 77155);
@@ -133,7 +143,7 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCapture, wd)
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
 {
-    simple_sequenced_video(wd.dirname(), "mp4", 2s, 250, false, true);
+    simple_sequenced_video(wd.dirname(), mp4, 2s, 250, false, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.png"), 3099);
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 23021 +- 2000_v);
@@ -151,7 +161,7 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
 
 RED_AUTO_TEST_CASE_WD(TestVideoCaptureOneChunkFLV, wd)
 {
-    simple_sequenced_video(wd.dirname(), "flv", 1000s, 1000, false, true);
+    simple_sequenced_video(wd.dirname(), flv, 1000s, 1000, false, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.png"), 3099);
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.flv"), 1185483);
@@ -159,7 +169,7 @@ RED_AUTO_TEST_CASE_WD(TestVideoCaptureOneChunkFLV, wd)
 
 RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureFLV, wd)
 {
-    simple_sequenced_video(wd.dirname(), "flv", 1s, 250, false, true);
+    simple_sequenced_video(wd.dirname(), flv, 1s, 250, false, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.png"), 3099);
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.flv"), 47215);
@@ -187,7 +197,7 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureFLV, wd)
 
 RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
 {
-    simple_sequenced_video(wd.dirname(), "mp4", 1s, 250, false, true);
+    simple_sequenced_video(wd.dirname(), mp4, 1s, 250, false, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.png"), 3099);
     RED_TEST_FILE_SIZE(wd.add_file("video-000000.mp4"), 13584 +- 1000_v);
@@ -215,21 +225,21 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureFlv, wd)
 {
-    simple_full_video(wd.dirname(), "flv", 0s, 250, false, true);
+    simple_full_video(wd.dirname(), flv, 0s, 250, false, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video.flv"), 307698 +- 15000_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureFlv2, wd)
 {
-    simple_full_video(wd.dirname(), "flv", 0s, 250, false, false);
+    simple_full_video(wd.dirname(), flv, 0s, 250, false, false);
 
     RED_TEST_FILE_SIZE(wd.add_file("video.flv"), 298467 +- 5000_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264, wd)
 {
-    simple_full_video(wd.dirname(), "mp4", 0s, 250, false, true);
+    simple_full_video(wd.dirname(), mp4, 0s, 250, false, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 106930 +- 6000_v);
 }

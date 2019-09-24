@@ -18,10 +18,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #nomouse = 0
 
-# value: 0 or 1
-#_advanced
-#notimestamp = 0
-
 # values: 'low', 'medium', 'high', 
 #_advanced
 #encryptionLevel = low
@@ -121,13 +117,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #bogus_refresh_rect = 1
-
-#_advanced
-#codec_id = flv
-
-# values: 'low', 'medium', 'high', 
-#_advanced
-#video_quality = high
 
 # value: 0 or 1
 #_advanced
@@ -1020,50 +1009,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #bogus_vlc_frame_rate = 1
 
-# Bitrate for low quality.
-# min = 0
 #_advanced
-#l_bitrate = 10000
+#codec_id = mp4
 
-# Framerate for low quality.
 # min = 0
 #_advanced
-#l_framerate = 5
+#framerate = 5
 
-# Qscale (parameter given to ffmpeg) for low quality.
-# min = 0
+# FFmpeg optons for video codec.
 #_advanced
-#l_qscale = 28
+#ffmpeg_options = profile=baseline preset=ultrafast flags=+qscale b=30000
 
-# Bitrate for medium quality.
-# min = 0
+# value: 0 or 1
 #_advanced
-#m_bitrate = 20000
-
-# Framerate for medium quality.
-# min = 0
-#_advanced
-#m_framerate = 5
-
-# Qscale (parameter given to ffmpeg) for medium quality.
-# min = 0
-#_advanced
-#m_qscale = 14
-
-# Bitrate for high quality.
-# min = 0
-#_advanced
-#h_bitrate = 30000
-
-# Framerate for high quality.
-# min = 0
-#_advanced
-#h_framerate = 5
-
-# Qscale (parameter given to ffmpeg) for high quality.
-# min = 0
-#_advanced
-#h_qscale = 7
+#notimestamp = 0
 
 # min = 0, max = 3
 #   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop

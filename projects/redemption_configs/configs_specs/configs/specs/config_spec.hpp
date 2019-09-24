@@ -127,7 +127,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "glyph_cache", set(false));
         W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", set(3389));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "notimestamp", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
 
@@ -160,9 +159,6 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_using_multiple_monitors", set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_refresh_rect", desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "codec_id", set("flv"));
-        W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "video_quality", set(Level::high));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "large_pointer_support", set(true));
 
@@ -525,17 +521,10 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_vlc_frame_rate", desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_bitrate", desc{"Bitrate for low quality."}, set(10000));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_framerate", desc{"Framerate for low quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "l_qscale", desc{"Qscale (parameter given to ffmpeg) for low quality."}, set(28));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_bitrate", desc{"Bitrate for medium quality."}, set(20000));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_framerate", desc{"Framerate for medium quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "m_qscale", desc{"Qscale (parameter given to ffmpeg) for medium quality."}, set(14));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_bitrate", desc{"Bitrate for high quality."}, set(30000));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_framerate", desc{"Framerate for high quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "codec_id", set("mp4"));
+        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "framerate", set(5));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{"FFmpeg optons for video codec."}, set("profile=baseline preset=ultrafast flags=+qscale b=30000"));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "notimestamp", set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));
 

@@ -29,6 +29,7 @@ struct VideoParams
 {
     unsigned frame_rate;
     std::string codec;
+    std::string codec_options;
     bool no_timestamp;
     bool capture_chunk;
     bool bogus_vlc_frame_rate;

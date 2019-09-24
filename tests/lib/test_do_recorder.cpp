@@ -33,8 +33,17 @@
 #include <iostream>
 #include <sstream>
 
+namespace
+{
 
-inline int hmac_fn(uint8_t * buffer)
+struct Codec
+{
+    char const* name;
+    char const* options;
+};
+constexpr Codec flv{"flv", "flags=+qscale b=30000"};
+
+int hmac_fn(uint8_t * buffer)
 {
     // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
     uint8_t hmac_key[] = {
@@ -47,7 +56,7 @@ inline int hmac_fn(uint8_t * buffer)
     return 0;
 }
 
-inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
+int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
 {
     // in real uses actual trace_key is derived from base and some master key
     (void)base;
@@ -63,6 +72,8 @@ inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned ol
     memcpy(buffer, trace_key, sizeof(trace_key));
     return 0;
 }
+
+} // anonymous namespace
 
 #define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output, output_error) { \
     int argc = sizeof(argv)/sizeof(char*);                                        \
@@ -868,7 +879,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorder, wd)
         "--video",
         "--full",
         "--video-break-interval", "500",
-        "--video-codec", "flv",
+        "--video-codec", flv.name,
+        "--video-codec-options", flv.options,
         "--disable-bogus-vlc",
     };
 
@@ -901,7 +913,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderVlc, wd)
         "--video",
         "--full",
         "--video-break-interval", "500",
-        "--video-codec", "flv",
+        "--video-codec", flv.name,
+        "--video-codec-options", flv.options,
         "--bogus-vlc",
     };
 

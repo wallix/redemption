@@ -45,6 +45,7 @@ extern "C" {
 #include "core/error.hpp"
 #include "cxx/diagnostic.hpp"
 #include "utils/image_data_view.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "utils/log.hpp"
 
 #include <algorithm>
@@ -125,8 +126,8 @@ static void check_errnum(int errnum, char const* msg)
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-    ConstImageDataView const & image_view, int frame_rate, const char * codec_name,
-    int log_level
+    ConstImageDataView const & image_view, int frame_rate,
+    const char * codec_name, char const* codec_options, int log_level
 )
 : d(new D)
 {
@@ -148,7 +149,7 @@ video_recorder::video_recorder(
     /* auto detect the output format from the name. default is mpeg. */
     AVOutputFormat *fmt = av_guess_format(codec_name, nullptr, nullptr);
     if (!fmt) {
-        LOG(LOG_WARNING, "Could not deduce output format from codec: falling back to MPEG.");
+        LOG(LOG_WARNING, "Could not deduce output format from codec '%s': falling back to MPEG.", codec_name);
         fmt = av_guess_format("mpeg", nullptr, nullptr);
     }
     throw_if(!fmt || fmt->video_codec == AV_CODEC_ID_NONE, "Could not find codec");
@@ -219,7 +220,7 @@ video_recorder::video_recorder(
 
     // some formats want stream headers to be separate
     if(fmt->flags & AVFMT_GLOBALHEADER){
-        // this->d->codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        this->d->codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
     // dump_format can be handy for debugging
@@ -232,27 +233,15 @@ video_recorder::video_recorder(
     // find the video encoder
 
     {
-        struct AVDict {
-            void add(char const * k, char const * v) {
-                if (av_dict_set(&this->d, k, v, 0) < 0) {
-                    LOG(LOG_WARNING, "av_dict_set error on '%s' with '%s'", k, v);
-                }
-            }
-            ~AVDict() { av_dict_free(&this->d); } /*NOLINT*/
-            AVDictionary *d = nullptr;
-        } av_dict;
-
-        av_dict.add("flags", "+qscale");
-        av_dict.add("b", "100000");
-        if (codec_id == AV_CODEC_ID_H264) {
-            // low quality  (baseline, main, hight, ...)
-            av_dict.add("profile", "baseline");
-            av_dict.add("preset", "ultrafast");
-            //av_dict.add("vsync", "2");
+        AVDictionary *av_dict = nullptr;
+        SCOPE_EXIT(av_dict_free(&av_dict));
+        int errnum = av_dict_parse_string(&av_dict, codec_options, "=", " ", 0);
+        if (errnum < 0) {
+            log_av_errnum(errnum, "av_dict_parse_string error");
         }
 
-        // open the codec
-        check_errnum(avcodec_open2(this->d->codec_ctx, codec, &av_dict.d), "Failed to open codec");
+        check_errnum(avcodec_open2(this->d->codec_ctx, codec, &av_dict),
+            "Failed to open codec, possible bad codec option");
     }
 
     check_errnum(avcodec_parameters_from_context(this->d->video_st->codecpar, this->d->codec_ctx),
@@ -399,7 +388,7 @@ struct video_recorder::D {};
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t /*seek_fn*/, void * io_params,
     ConstImageDataView const & /*image_view*/, int /*frame_rate*/,
-    const char * /*codec_id*/, int /*log_level*/
+    const char * /*codec_name*/, char const* /*codec_options*/, int /*log_level*/
 ) {
     uint8_t buf[1]{};
     // force file create

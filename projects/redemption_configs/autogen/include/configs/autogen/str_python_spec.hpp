@@ -16,9 +16,6 @@ port = integer(min=0, default=3389)
 nomouse = boolean(default=False)
 
 #_advanced
-notimestamp = boolean(default=False)
-
-#_advanced
 encryptionLevel = option('low', 'medium', 'high', default='low')
 
 #_advanced
@@ -105,12 +102,6 @@ allow_using_multiple_monitors = boolean(default=True)
 # Needed to refresh screen of Windows Server 2012.
 #_advanced
 bogus_refresh_rect = boolean(default=True)
-
-#_advanced
-codec_id = string(default='flv')
-
-#_advanced
-video_quality = option('low', 'medium', 'high', default='high')
 
 #_advanced
 large_pointer_support = boolean(default=True)
@@ -864,41 +855,18 @@ wrm_compression_algorithm = option(0, 1, 2, default=1)
 #_advanced
 bogus_vlc_frame_rate = boolean(default=True)
 
-# Bitrate for low quality.
 #_advanced
-l_bitrate = integer(min=0, default=10000)
+codec_id = string(default='mp4')
 
-# Framerate for low quality.
 #_advanced
-l_framerate = integer(min=0, default=5)
+framerate = integer(min=0, default=5)
 
-# Qscale (parameter given to ffmpeg) for low quality.
+# FFmpeg optons for video codec.
 #_advanced
-l_qscale = integer(min=0, default=28)
+ffmpeg_options = string(default='profile=baseline preset=ultrafast flags=+qscale b=30000')
 
-# Bitrate for medium quality.
 #_advanced
-m_bitrate = integer(min=0, default=20000)
-
-# Framerate for medium quality.
-#_advanced
-m_framerate = integer(min=0, default=5)
-
-# Qscale (parameter given to ffmpeg) for medium quality.
-#_advanced
-m_qscale = integer(min=0, default=14)
-
-# Bitrate for high quality.
-#_advanced
-h_bitrate = integer(min=0, default=30000)
-
-# Framerate for high quality.
-#_advanced
-h_framerate = integer(min=0, default=5)
-
-# Qscale (parameter given to ffmpeg) for high quality.
-#_advanced
-h_qscale = integer(min=0, default=7)
+notimestamp = boolean(default=False)
 
 #   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
 #   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
