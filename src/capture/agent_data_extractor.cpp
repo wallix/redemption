@@ -48,30 +48,40 @@ namespace
         };
     }
 
-    // TODO constexpr with C++20;
+    // TODO constexpr with C++20
     // TODO sould be a hash map
-    inline auto const sorted_log_id_string = []() noexcept {
+    inline auto const sorted_log_id_strings = []() noexcept {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
         std::array pairs{
             #define f(x, cat) Pair(#x "", LogId::x),
             X_LOG_ID(f)
             #undef f
-            // old format name
-            Pair("EndingInProgress", LogId::SESSION_ENDING_IN_PROGRESS),
-            Pair("PasswordTextBox.SetFocus", LogId::PASSWORD_TEXT_BOX_GET_FOCUS),
-            Pair("ConsentUI.IsVisible", LogId::UAC_PROMPT_BECOME_VISIBLE),
-            Pair("InputLanguage", LogId::INPUT_LANGUAGE),
-            Pair("NewProcess", LogId::NEW_PROCESS),
-            Pair("CompletedProcess", LogId::COMPLETED_PROCESS),
-            Pair("OutboundConnectionBlocked", LogId::OUTBOUND_CONNECTION_BLOCKED),
-            Pair("ForegroundWindowChanged", LogId::FOREGROUND_WINDOW_CHANGED),
-            Pair("Button.Clicked", LogId::BUTTON_CLICKED),
-            Pair("Edit.Changed", LogId::EDIT_CHANGED),
         };
         REDEMPTION_DIAGNOSTIC_POP
 
         std::sort(begin(pairs), end(pairs), pair_comparator());
+
+        return pairs;
+    }();
+
+    // TODO constexpr with C++20
+    inline auto const sorted_old_log_names = []() noexcept {
+        using namespace std::string_view_literals;
+        std::array pairs{
+            "EndingInProgress"sv,
+            "PasswordTextBox.SetFocus"sv,
+            "ConsentUI.IsVisible"sv,
+            "InputLanguage"sv,
+            "NewProcess"sv,
+            "CompletedProcess"sv,
+            "OutboundConnectionBlocked"sv,
+            "ForegroundWindowChanged"sv,
+            "Button.Clicked"sv,
+            "Edit.Changed"sv,
+        };
+
+        std::sort(begin(pairs), end(pairs));
 
         return pairs;
     }();
@@ -214,14 +224,18 @@ bool AgentDataExtractor::extract_list(Av data)
         };
 
         std::string_view order_sv{order.data(), order.size()};
-        auto it = std::lower_bound(begin(sorted_log_id_string), end(sorted_log_id_string),
+        auto it = std::lower_bound(begin(sorted_log_id_strings), end(sorted_log_id_strings),
             Pair{order_sv, LogId()}, pair_comparator());
 
-        if (it == end(sorted_log_id_string) || it->first != order_sv) {
-            LOG(LOG_WARNING,
-                "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
-                int(data.size()), data.data());
-            return {};
+        if (it == end(sorted_log_id_strings) || it->first != order_sv) {
+            if (std::lower_bound(begin(sorted_old_log_names), end(sorted_old_log_names), order_sv)
+                == end(sorted_old_log_names)
+            ) {
+                LOG(LOG_WARNING,
+                    "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
+                    int(data.size()), data.data());
+            }
+            return false;
         }
 
         this->id = it->second;
