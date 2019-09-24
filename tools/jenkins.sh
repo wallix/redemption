@@ -33,9 +33,6 @@ echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARN
 valgrind_compiler=gcc-9
 toolset_gcc=toolset=gcc-9
 toolset_clang=toolset=clang-8.0
-export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
-export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
-export FFMPEG_LINK_MODE=static
 
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 
@@ -70,7 +67,7 @@ mkdir bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
-#bjam -q $toolset_gcc cxxflags=-g
+# build $toolset_gcc cxxflags=-g
 # multi-thread
 big_mem='exe libs
   tests/capture
@@ -80,9 +77,9 @@ big_mem='exe libs
   tests/client_redemption/client_channels
   tests/mod/rdp.norec
   tests/mod/vnc.norec'
-build -q $toolset_gcc cxxflags=-g -j2 ocr_tools
-build -q $toolset_gcc cxxflags=-g $big_mem
-build -q $toolset_gcc cxxflags=-g -j2
+build $toolset_gcc cxxflags=-g -j2 ocr_tools
+build $toolset_gcc cxxflags=-g $big_mem
+build $toolset_gcc cxxflags=-g -j2
 
 dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
   echo 'New file(s):'
@@ -91,13 +88,13 @@ dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
 }
 
 # debug with coverage
-build -q $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
+build $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
 
 #bjam -a -q toolset=clang-8.0 -sNO_FFMPEG=1 san
 # multi-thread
-build -q $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
-build -q $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
-build -q $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
+build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
+build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
+build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
 
 # cppcheck
 # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
