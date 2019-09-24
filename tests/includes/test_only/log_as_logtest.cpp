@@ -69,21 +69,40 @@ namespace
 # endif
 
 #ifdef __EMSCRIPTEN__
-    RED_EM_JS(bool, red_is_loggable_impl, (), {
-        return !ENVIRONMENT_IS_NODE || process.env["REDEMPTION_LOG_PRINT"] === "1";
+    RED_EM_JS(int, red_is_loggable_impl, (), {
+        if (!ENVIRONMENT_IS_NODE) {
+            return 49 /* '1' */;
+        }
+        const s = process.env["REDEMPTION_LOG_PRINT"];
+        return (s && s[0]) ? s.charCodeAt(0) : 48 /* '0' */;
     })
 #else
-    bool red_is_loggable_impl()
+    int red_is_loggable_impl()
     {
         auto s = std::getenv("REDEMPTION_LOG_PRINT");
-        return s && s[0] == '1';
+        return (s && s[0]) ? s[0] : '0';
     }
 #endif
 
-    bool is_loggable()
+    bool is_loggable(int priority)
     {
-        static bool logprint = red_is_loggable_impl();
-        return logprint;
+        static char logprint = []{
+            switch (red_is_loggable_impl()) {
+                case '1' : return 1;
+                case 'd' : return 2;
+                case 'e' : return 3;
+                case 'w' : return 4;
+            }
+            return 0;
+        }();
+        switch (logprint) {
+            default:
+            case 0: return false;
+            case 1: return true;
+            case 2: return (priority == LOG_DEBUG);
+            case 3: return (priority == LOG_DEBUG || priority == LOG_ERR);
+            case 4: return (priority != LOG_INFO);
+        }
     }
 } // namespace
 
@@ -136,7 +155,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
             log_buf.erase(p, e-p);
         }
     }
-    else if (is_loggable())
+    else if (is_loggable(priority))
     {
         va_list ap;
         va_start(ap, format);
