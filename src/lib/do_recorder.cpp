@@ -59,6 +59,7 @@
 #include <cstring>
 #include <iostream>
 #include <iomanip>
+#include <optional>
 
 // opendir/closedir
 #include <sys/types.h>
@@ -1570,34 +1571,9 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             ini
                         );
 
-                        // std::optional<Capture> storage;
-                        class CaptureStorage
-                        {
-                            union U {
-                                char dummy;
-                                Capture capture;
-
-                                U() : dummy(){}
-                                ~U() {} /*NOLINT*/
-                            } u;
-                            bool is_loaded = false;
-
-                        public:
-                            void * get_storage()
-                            {
-                                this->is_loaded = true;
-                                return &this->u.capture;
-                            }
-
-                            ~CaptureStorage()
-                            {
-                                if (this->is_loaded) {
-                                    this->u.capture.~Capture();
-                                }
-                            }
-                        } storage;
-
-                        auto set_capture_consumer = [&](timeval const & now) {
+                        auto set_capture_consumer = [
+                            &, capture = std::optional<Capture>()
+                        ](timeval const & now) mutable {
                             CaptureParams capture_params{
                                 now,
                                 basename,
@@ -1608,7 +1584,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 ini.get<cfg::video::smart_video_cropping>(),
                                 0
                             };
-                            auto * capture = new(storage.get_storage()) Capture( /*NOLINT*/
+                            auto* ptr = &capture.emplace(
                                   capture_params
                                 , drawable_params
                                 , capture_wrm, wrm_params
@@ -1622,10 +1598,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , video_params
                                 , &update_progress_data
                                 , crop_rect
-                                );
+                            );
 
                             player.clear_consumer();
-                            player.add_consumer(capture, capture, capture, capture, capture, capture);
+                            player.add_consumer(ptr, ptr, ptr, ptr, ptr, ptr);
                         };
 
                         auto lazy_capture = [&](timeval const & now) {
