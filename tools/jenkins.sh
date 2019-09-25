@@ -24,6 +24,7 @@ find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/c++-analyzer/ch
 
 ./tools/c++-analyzer/unused_config.sh
 ./tools/c++-analyzer/unused_error.sh
+./tools/c++-analyzer/unused_type.sh
 
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
