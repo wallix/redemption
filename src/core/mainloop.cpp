@@ -215,15 +215,22 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
         int fd = open("/proc/net/nf_conntrack", O_RDONLY);
         if (fd < 0) {
             fd = open("/proc/net/ip_conntrack", O_RDONLY);
+            if (fd < 0) {
+                LOG(LOG_WARNING, "Failed to read ip_conntrack file");
+            }
+            else {
+                LOG(LOG_WARNING, "Reading /proc/net/ip_conntrack");
+            }
         }
-        if (fd < 0) {
-            LOG(LOG_WARNING, "Failed to read conntrack file");
+        else {
+            LOG(LOG_WARNING, "Reading /proc/net/nf_conntrack");
         }
         // source and dest are inverted because we get the information we want from reply path rule
-        LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%d:%d", source_ip, source_port, target_ip, target_port);
-        int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));
+        LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%s:%d", source_ip, source_port, target_ip, target_port);
+        uint32_t verbose = ini.get<cfg::debug::auth>();
+        int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), verbose);
         if (res){
-            LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack");
+            LOG(LOG_WARNING, "Failed to get transparent proxy target from conntrack");
         }
         LOG(LOG_INFO, "transparent proxy: real target %s", real_target_ip);
         close(fd);
