@@ -1798,6 +1798,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     std::string wrm_compression_algorithm;  // output compression algorithm.
     std::string color_depth;
     uint32_t png_interval = 0;
+    std::string ignored_value;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -1848,7 +1849,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
         {'a', "video-break-interval", &recorder.video_break_interval, "number of seconds between splitting video files (by default, one video every 10 minutes)"},
 
-        {'q', "video-codec-options", &recorder.video_params.codec_options, "FFmpeg codec option, format: key1=value1 key2=value2"},
+        {'q', "video-quality", &ignored_value, "video quality (ignored, please use --video-codec-options)"},
+        {'D', "video-codec-options", &recorder.video_params.codec_options, "FFmpeg codec option, format: key1=value1 key2=value2"},
 
         {"ocr-version", &recorder.ocr_version, "version 1 or 2"},
 
