@@ -33,7 +33,7 @@ find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/c++-analyzer/ch
 echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 8.0 : clang++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 valgrind_compiler=gcc-9
 toolset_gcc=toolset=gcc-9
-toolset_clang=toolset=clang-8
+toolset_clang=toolset=clang-8.0
 
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 
