@@ -30,9 +30,9 @@ find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/c++-analyzer/ch
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
 # BJAM Build Test
-echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 8.0 : clang++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-valgrind_compiler=gcc-9
-toolset_gcc=toolset=gcc-9
+echo -e "using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 8.0 : clang++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
+valgrind_compiler=gcc-8
+toolset_gcc=toolset=gcc-8
 toolset_clang=toolset=clang-8.0
 
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
