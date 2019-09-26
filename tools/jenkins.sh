@@ -13,7 +13,7 @@ set -ex
 # Cleaning
 #rm -fr cmake_temp
 
-git clean -f
+git clean -fd
 git submodule update --init
 
 # apt install lua luarocks
