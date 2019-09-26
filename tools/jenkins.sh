@@ -16,15 +16,7 @@ set -ex
 git clean -fd
 git submodule update --init
 
-# apt install lua luarocks
-# luarocks --local install lpeg
-# lua >= 5.0
-eval `luarocks path`
-find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/c++-analyzer/check_log6.lua '{}' '+'
-
-./tools/c++-analyzer/unused_config.sh
-./tools/c++-analyzer/unused_error.sh
-./tools/c++-analyzer/unused_type.sh
+./tools/c++-analyzer/redemption-analyzer.sh
 
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
