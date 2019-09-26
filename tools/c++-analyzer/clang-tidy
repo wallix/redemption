@@ -97,7 +97,8 @@ $(find tests/ -name 'test_*.cpp' \
 -DFIXTURES_PATH='"mypath" /*NOLINT*/' \
 -DREDEMPTION_DECL_LOG_TEST \
 -DBOOST_AUTO_TEST_MAIN \
--DBOOST_TEST_DYN_LINK
+-DBOOST_TEST_DYN_LINK \
+-DFAST_CHECK=1
 
 # highlighting
 # sed "s#`pwd`/##" | colout '(^[pst][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w
