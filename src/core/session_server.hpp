@@ -134,13 +134,28 @@ public:
                 }
 
                 char real_target_ip[256];
-                if (ini.get<cfg::globals::enable_transparent_mode>() &&
-                    (0 != strcmp(source_ip, "127.0.0.1"))) {
-                    int fd = open("/proc/net/ip_conntrack", O_RDONLY);
+                if (ini.get<cfg::globals::enable_transparent_mode>() 
+                && (0 != strcmp(source_ip, "127.0.0.1"))) {
+                    int fd = open("/proc/net/nf_conntrack", O_RDONLY);
+                    if (fd < 0) {
+                        int errno_nf = errno;
+                        fd = open("/proc/net/ip_conntrack", O_RDONLY);
+                        if (fd < 0) {
+                            LOG(LOG_WARNING, "Failed to read conntrack file, no /proc/net/ip_conntrack or /proc/net/nf_conntrack: %d,%d", errno_nf, errno);
+                        }
+                        else {
+                            LOG(LOG_WARNING, "Reading /proc/net/ip_conntrack");
+                        }
+                    }
+                    else {
+                        LOG(LOG_WARNING, "Reading /proc/net/nf_conntrack");
+                    }
+                    uint32_t verbose = ini.get<cfg::debug::auth>();
                     // source and dest are inverted because we get the information we want from reply path rule
-                    int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
+                    LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%s:%d", source_ip, source_port, target_ip, target_port);
+                    int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), verbose);
                     if (res){
-                        LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
+                        LOG(LOG_WARNING, "Failed to get transparent proxy target from conntrack");
                     }
                     close(fd);
 
