@@ -212,7 +212,7 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
     RED_TEST_FILE_SIZE(wd.add_file("video-000005.png"), 3101);
     RED_TEST_FILE_SIZE(wd.add_file("video-000005.mp4"), 14264 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000006.png"), 3099);
-    RED_TEST_FILE_SIZE(wd.add_file("video-000006.mp4"), 13949 +- 2000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video-000006.mp4"), 13949 +- 3100_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000007.png"), 3101);
     RED_TEST_FILE_SIZE(wd.add_file("video-000007.mp4"), 13385 +- 2000_v);
     RED_TEST_FILE_SIZE(wd.add_file("video-000008.png"), 3098);
