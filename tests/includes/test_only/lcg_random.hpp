@@ -24,6 +24,7 @@
 #pragma once
 
 #include "utils/genrandom.hpp"
+#include <vector>
 
 class LCGRandom : public Random
 {
@@ -64,5 +65,26 @@ private:
     uint32_t rand32()
     {
         return this->seed = 999331UL * this->seed + 200560490131ULL;
+    }
+};
+
+class ReplayRandom : public Random
+{
+    // caller responsibility to provide enough data
+    // or access to vector will throw an error
+    std::vector<uint8_t> seed;
+    uint32_t i;
+public:
+    explicit ReplayRandom(bytes_view seed)
+    : seed(seed.data(), seed.data()+seed.size())
+    {
+    }
+
+    void random(void * dest, size_t size) override
+    {
+        uint8_t * p = static_cast<uint8_t*>(dest);
+        for (size_t x = 0; x < size ; ++x) {
+            p[x] = seed[this->i++];
+        }
     }
 };

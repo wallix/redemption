@@ -167,7 +167,13 @@ public:
                 const timeval tv = this->timeobj.get_time(); // Timestamp
                 array_challenge ClientChallenge; // Nonce(8)
                 this->rand.random(ClientChallenge.data(), 8);
-
+                if (this->verbose){
+                    LOG(LOG_INFO, "Time Stamp (%ld, %ld)", tv.tv_sec, tv.tv_usec);
+                    LOG(LOG_INFO, "Client Random Challenge {0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x}",
+                        ClientChallenge[0], ClientChallenge[1], ClientChallenge[2], ClientChallenge[3],
+                        ClientChallenge[4], ClientChallenge[5], ClientChallenge[6], ClientChallenge[7]
+                    );                
+                }
                 // NTLMv2_Client_Challenge = { 0x01, 0x01, Zero(6), Time, ClientChallenge, Zero(4), ServerName , Zero(4) }
                 // Zero(n) = { 0x00, ... , 0x00 } n times
                 // ServerName = AvPairs received in Challenge message
@@ -196,6 +202,10 @@ public:
                 // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
                 array_md5 SessionBaseKey = ::HmacMd5(ResponseKeyNT, NtProofStr);
                 this->rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
+                if (this->verbose){
+                    LOG(LOG_INFO, "Random ExportedSessionKey");
+                    hexdump_d(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
+                }
                 auto AuthEncryptedRSK = std::vector<uint8_t>{} << ::Rc4Key(SessionBaseKey, this->ExportedSessionKey);
 
                 // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
@@ -269,6 +279,11 @@ public:
                 std::vector<uint8_t> v;
                 if (version >= 5) {
                     this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Random Client Nonce");
+                        hexdump_d(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
+                     }
+
                     this->SavedClientNonce.initialized = true;
                     auto client_to_server_hash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av, 
                                     this->SavedClientNonce.clientNonce,

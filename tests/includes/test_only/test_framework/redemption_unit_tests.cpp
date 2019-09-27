@@ -152,7 +152,7 @@ namespace redemption_unit_test__
                     out << "\"";
                 }
             }
-            if (q++ == pos){ out << "\x1b[31m";}
+            if (q++ == pos){ out << "\x1b[35m";}
             out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
             tmpbuf[i++] = c;
             if (q%split == 0){
@@ -230,20 +230,20 @@ namespace redemption_unit_test__
             while (p != end) {
                 consume_char([&]{
                     if (is_markable) {
-                        out << "\x1b[31m";
+                        out << "\x1b[35m";
                         is_marked = true;
                     }
                 });
             }
 
             if (is_markable && !is_marked) {
-                out << "\x1b[31m";
+                out << "\x1b[35m";
             }
         };
 
         print(v.first(pos), pos != v.size());
         if (pos != v.size()) {
-            out << "\x1b[31m";
+            out << "\x1b[35m";
             print(v.from_offset(pos), false);
             out << "\x1b[0m";
         }
@@ -269,7 +269,7 @@ namespace redemption_unit_test__
 
         print(v.first(pos));
         if (pos != v.size()) {
-            out << "\x1b[31m";
+            out << "\x1b[35m";
             print(v.from_offset(pos));
             out << "\x1b[0m";
         }
@@ -291,7 +291,7 @@ namespace redemption_unit_test__
 
         print(v.first(pos));
         if (pos != v.size()) {
-            out << "\x1b[31m";
+            out << "\x1b[35m";
             print(v.from_offset(pos));
             out << "\x1b[0m";
         }

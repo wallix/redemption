@@ -25,6 +25,7 @@
 #include "utils/timeval_ops.hpp"
 
 #include <chrono>
+#include <vector>
 
 
 class TimeObj {
@@ -57,6 +58,21 @@ public:
         return tv;
     }
 };
+
+
+class ReplayTime : public TimeObj {
+    std::vector<timeval> tvvec;
+    uint32_t index = 0;
+public:
+    explicit ReplayTime(const std::vector<timeval> tvv)
+       : tvvec(tvv.data(),tvv.data()+tvv.size())
+    {}
+    ~ReplayTime() override = default;
+    timeval get_time() override {
+        return this->tvvec[index++];
+    }
+};
+
 
 class LCGTime : public TimeObj {
     uint32_t seed;
