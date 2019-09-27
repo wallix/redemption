@@ -130,6 +130,15 @@ public:
         , restricted_admin_mode(restricted_admin_mode)
         , verbose(verbose)
     {
+        if (this->verbose){
+            LOG(LOG_INFO, "rdpNTLMClient datas: (restricted_admin=%s)", (restricted_admin_mode?"true":"false"));
+            hexdump_d(this->PublicKey);
+            hexdump_d(this->utf16_user);
+            hexdump_d(this->utf16_domain);
+            hexdump_d(this->identity_Password);
+            hexdump_d(this->Workstation);
+            LOG(LOG_INFO, "rdpNTLMClient datas done ==============");
+        }
     }
 
 
