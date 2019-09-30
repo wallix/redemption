@@ -26,9 +26,11 @@ REDEMPTION_CXXFLAGS +=
 # remove:
 #   else if $(toolset) = msvc
 # replace:
-#   cxx_flags by flags
+#   jln_flags by flags
 #
-# https://boostorg.github.io/build/manual/develop/index.html
+# Generated file with https://github.com/jonathanpoelen/cpp-compiler-options
+
+# jam reference: https://boostorg.github.io/build/manual/develop/index.html
 
 import feature : feature ;
 import modules ;
@@ -36,60 +38,62 @@ import modules ;
 CXX_BJAM_YEAR_VERSION = [ modules.peek : JAMVERSION ] ;
 
 feature <cxx-color> : _ default auto never always : propagated ;
-feature <cxx-control-flow> : _ default off on : incidental ;
+feature <cxx-control-flow> : _ default off on allow-bugs : incidental ;
 feature <cxx-cpu> : _ default generic native : incidental ;
 feature <cxx-debug> : _ default off on line-tables-only gdb lldb sce : incidental ;
 feature <cxx-diagnostics-format> : _ default fixits patch print-source-range-info : propagated ;
 feature <cxx-diagnostics-show-template-tree> : _ default off on : propagated ;
 feature <cxx-elide-type> : _ default off on : propagated ;
+feature <cxx-fix-compiler-error> : _ on default off : incidental ;
 feature <cxx-linker> : _ default bfd gold lld : propagated ;
 feature <cxx-lto> : _ default off on fat linker-plugin : incidental ;
-feature <cxx-narrowing-error> : _ on default off : incidental ;
-feature <cxx-optimize> : _ default off debugoptimized minsize release fast : incidental ;
+feature <cxx-optimization> : _ default 0 g 1 2 3 fast size : incidental ;
 feature <cxx-pedantic> : _ on default off as-error : incidental ;
 feature <cxx-relro> : _ default off on full : incidental ;
 feature <cxx-reproducible-build-warnings> : _ default off on : propagated ;
 feature <cxx-sanitizers> : _ default off on : incidental ;
 feature <cxx-shadow-warnings> : _ off default on local compatible-local all : propagated ;
 feature <cxx-stack-protector> : _ default off on strong all : incidental ;
-feature <cxx-stl-debug> : _ default off on allow-broken-abi assert-as-exception : incidental ;
-feature <cxx-suggests> : _ default off on : propagated ;
+feature <cxx-stl-debug> : _ default off on allow-broken-abi allow-broken-abi-and-bugs assert-as-exception : incidental ;
+feature <cxx-suggestions> : _ default off on : propagated ;
 feature <cxx-warnings> : _ on default off strict very-strict : propagated ;
+feature <cxx-warnings-as-error> : _ default off on basic : propagated ;
 feature <cxx-whole-program> : _ default off on strip-all : incidental ;
 
-feature <cxx-control-flow-incidental> : _ default off on : incidental ;
+feature <cxx-control-flow-incidental> : _ default off on allow-bugs : incidental ;
 feature <cxx-cpu-incidental> : _ default generic native : incidental ;
 feature <cxx-debug-incidental> : _ default off on line-tables-only gdb lldb sce : incidental ;
+feature <cxx-fix-compiler-error-incidental> : _ on default off : incidental ;
 feature <cxx-lto-incidental> : _ default off on fat linker-plugin : incidental ;
-feature <cxx-narrowing-error-incidental> : _ on default off : incidental ;
-feature <cxx-optimize-incidental> : _ default off debugoptimized minsize release fast : incidental ;
+feature <cxx-optimization-incidental> : _ default 0 g 1 2 3 fast size : incidental ;
 feature <cxx-pedantic-incidental> : _ on default off as-error : incidental ;
 feature <cxx-relro-incidental> : _ default off on full : incidental ;
 feature <cxx-sanitizers-incidental> : _ default off on : incidental ;
 feature <cxx-stack-protector-incidental> : _ default off on strong all : incidental ;
-feature <cxx-stl-debug-incidental> : _ default off on allow-broken-abi assert-as-exception : incidental ;
+feature <cxx-stl-debug-incidental> : _ default off on allow-broken-abi allow-broken-abi-and-bugs assert-as-exception : incidental ;
 feature <cxx-whole-program-incidental> : _ default off on strip-all : incidental ;
 
 feature <cxx-color-default> : default auto never always : incidental ;
-feature <cxx-control-flow-default> : default off on : incidental ;
+feature <cxx-control-flow-default> : default off on allow-bugs : incidental ;
 feature <cxx-cpu-default> : default generic native : incidental ;
 feature <cxx-debug-default> : default off on line-tables-only gdb lldb sce : incidental ;
 feature <cxx-diagnostics-format-default> : default fixits patch print-source-range-info : incidental ;
 feature <cxx-diagnostics-show-template-tree-default> : default off on : incidental ;
 feature <cxx-elide-type-default> : default off on : incidental ;
+feature <cxx-fix-compiler-error-default> : on default off : incidental ;
 feature <cxx-linker-default> : default bfd gold lld : incidental ;
 feature <cxx-lto-default> : default off on fat linker-plugin : incidental ;
-feature <cxx-narrowing-error-default> : on default off : incidental ;
-feature <cxx-optimize-default> : default off debugoptimized minsize release fast : incidental ;
+feature <cxx-optimization-default> : default 0 g 1 2 3 fast size : incidental ;
 feature <cxx-pedantic-default> : on default off as-error : incidental ;
 feature <cxx-relro-default> : default off on full : incidental ;
 feature <cxx-reproducible-build-warnings-default> : default off on : incidental ;
 feature <cxx-sanitizers-default> : default off on : incidental ;
 feature <cxx-shadow-warnings-default> : off default on local compatible-local all : incidental ;
 feature <cxx-stack-protector-default> : default off on strong all : incidental ;
-feature <cxx-stl-debug-default> : default off on allow-broken-abi assert-as-exception : incidental ;
-feature <cxx-suggests-default> : default off on : incidental ;
+feature <cxx-stl-debug-default> : default off on allow-broken-abi allow-broken-abi-and-bugs assert-as-exception : incidental ;
+feature <cxx-suggestions-default> : default off on : incidental ;
 feature <cxx-warnings-default> : on default off strict very-strict : incidental ;
+feature <cxx-warnings-as-error-default> : default off on basic : incidental ;
 feature <cxx-whole-program-default> : default off on strip-all : incidental ;
 
 
@@ -116,25 +120,26 @@ rule jln-get-env ( env : values * )
 }
 
 constant jln_env_color : [ jln-get-env cxx_color : default auto never always ] ;
-constant jln_env_control_flow : [ jln-get-env cxx_control_flow : default off on ] ;
+constant jln_env_control_flow : [ jln-get-env cxx_control_flow : default off on allow-bugs ] ;
 constant jln_env_cpu : [ jln-get-env cxx_cpu : default generic native ] ;
 constant jln_env_debug : [ jln-get-env cxx_debug : default off on line-tables-only gdb lldb sce ] ;
 constant jln_env_diagnostics_format : [ jln-get-env cxx_diagnostics_format : default fixits patch print-source-range-info ] ;
 constant jln_env_diagnostics_show_template_tree : [ jln-get-env cxx_diagnostics_show_template_tree : default off on ] ;
 constant jln_env_elide_type : [ jln-get-env cxx_elide_type : default off on ] ;
+constant jln_env_fix_compiler_error : [ jln-get-env cxx_fix_compiler_error : on default off ] ;
 constant jln_env_linker : [ jln-get-env cxx_linker : default bfd gold lld ] ;
 constant jln_env_lto : [ jln-get-env cxx_lto : default off on fat linker-plugin ] ;
-constant jln_env_narrowing_error : [ jln-get-env cxx_narrowing_error : on default off ] ;
-constant jln_env_optimize : [ jln-get-env cxx_optimize : default off debugoptimized minsize release fast ] ;
+constant jln_env_optimization : [ jln-get-env cxx_optimization : default 0 g 1 2 3 fast size ] ;
 constant jln_env_pedantic : [ jln-get-env cxx_pedantic : on default off as-error ] ;
 constant jln_env_relro : [ jln-get-env cxx_relro : default off on full ] ;
 constant jln_env_reproducible_build_warnings : [ jln-get-env cxx_reproducible_build_warnings : default off on ] ;
 constant jln_env_sanitizers : [ jln-get-env cxx_sanitizers : default off on ] ;
 constant jln_env_shadow_warnings : [ jln-get-env cxx_shadow_warnings : off default on local compatible-local all ] ;
 constant jln_env_stack_protector : [ jln-get-env cxx_stack_protector : default off on strong all ] ;
-constant jln_env_stl_debug : [ jln-get-env cxx_stl_debug : default off on allow-broken-abi assert-as-exception ] ;
-constant jln_env_suggests : [ jln-get-env cxx_suggests : default off on ] ;
+constant jln_env_stl_debug : [ jln-get-env cxx_stl_debug : default off on allow-broken-abi allow-broken-abi-and-bugs assert-as-exception ] ;
+constant jln_env_suggestions : [ jln-get-env cxx_suggestions : default off on ] ;
 constant jln_env_warnings : [ jln-get-env cxx_warnings : on default off strict very-strict ] ;
+constant jln_env_warnings_as_error : [ jln-get-env cxx_warnings_as_error : default off on basic ] ;
 constant jln_env_whole_program : [ jln-get-env cxx_whole_program : default off on strip-all ] ;
 
 if $(CXX_BJAM_YEAR_VERSION) < 2016.00
@@ -146,12 +151,12 @@ if $(CXX_BJAM_YEAR_VERSION) < 2016.00
   toolset.flags cxx-cpu-incidental CXX_CPU_INCIDENTAL : <cxx-cpu-incidental> ;
   toolset.flags cxx-debug CXX_DEBUG : <cxx-debug> ;
   toolset.flags cxx-debug-incidental CXX_DEBUG_INCIDENTAL : <cxx-debug-incidental> ;
+  toolset.flags cxx-fix-compiler-error CXX_FIX_COMPILER_ERROR : <cxx-fix-compiler-error> ;
+  toolset.flags cxx-fix-compiler-error-incidental CXX_FIX_COMPILER_ERROR_INCIDENTAL : <cxx-fix-compiler-error-incidental> ;
   toolset.flags cxx-lto CXX_LTO : <cxx-lto> ;
   toolset.flags cxx-lto-incidental CXX_LTO_INCIDENTAL : <cxx-lto-incidental> ;
-  toolset.flags cxx-narrowing-error CXX_NARROWING_ERROR : <cxx-narrowing-error> ;
-  toolset.flags cxx-narrowing-error-incidental CXX_NARROWING_ERROR_INCIDENTAL : <cxx-narrowing-error-incidental> ;
-  toolset.flags cxx-optimize CXX_OPTIMIZE : <cxx-optimize> ;
-  toolset.flags cxx-optimize-incidental CXX_OPTIMIZE_INCIDENTAL : <cxx-optimize-incidental> ;
+  toolset.flags cxx-optimization CXX_OPTIMIZATION : <cxx-optimization> ;
+  toolset.flags cxx-optimization-incidental CXX_OPTIMIZATION_INCIDENTAL : <cxx-optimization-incidental> ;
   toolset.flags cxx-pedantic CXX_PEDANTIC : <cxx-pedantic> ;
   toolset.flags cxx-pedantic-incidental CXX_PEDANTIC_INCIDENTAL : <cxx-pedantic-incidental> ;
   toolset.flags cxx-relro CXX_RELRO : <cxx-relro> ;
@@ -241,13 +246,13 @@ rule flags ( properties * )
   local flags = ;
   if $(CXX_BJAM_YEAR_VERSION) >= 2016.00
   {
-    flags += 
+    flags +=
       <relevant>cxx-control-flow
       <relevant>cxx-cpu
       <relevant>cxx-debug
+      <relevant>cxx-fix-compiler-error
       <relevant>cxx-lto
-      <relevant>cxx-narrowing-error
-      <relevant>cxx-optimize
+      <relevant>cxx-optimization
       <relevant>cxx-pedantic
       <relevant>cxx-relro
       <relevant>cxx-sanitizers
@@ -264,10 +269,10 @@ rule flags ( properties * )
   local x_diagnostics_format = [ jln-get-value $(ps) : cxx-diagnostics-format : $(jln_env_diagnostics_format) ] ;
   local x_diagnostics_show_template_tree = [ jln-get-value $(ps) : cxx-diagnostics-show-template-tree : $(jln_env_diagnostics_show_template_tree) ] ;
   local x_elide_type = [ jln-get-value $(ps) : cxx-elide-type : $(jln_env_elide_type) ] ;
+  local x_fix_compiler_error = [ jln-get-value2 $(ps) : cxx-fix-compiler-error : cxx-fix-compiler-error-incidental : $(jln_env_fix_compiler_error) ] ;
   local x_linker = [ jln-get-value $(ps) : cxx-linker : $(jln_env_linker) ] ;
   local x_lto = [ jln-get-value2 $(ps) : cxx-lto : cxx-lto-incidental : $(jln_env_lto) ] ;
-  local x_narrowing_error = [ jln-get-value2 $(ps) : cxx-narrowing-error : cxx-narrowing-error-incidental : $(jln_env_narrowing_error) ] ;
-  local x_optimize = [ jln-get-value2 $(ps) : cxx-optimize : cxx-optimize-incidental : $(jln_env_optimize) ] ;
+  local x_optimization = [ jln-get-value2 $(ps) : cxx-optimization : cxx-optimization-incidental : $(jln_env_optimization) ] ;
   local x_pedantic = [ jln-get-value2 $(ps) : cxx-pedantic : cxx-pedantic-incidental : $(jln_env_pedantic) ] ;
   local x_relro = [ jln-get-value2 $(ps) : cxx-relro : cxx-relro-incidental : $(jln_env_relro) ] ;
   local x_reproducible_build_warnings = [ jln-get-value $(ps) : cxx-reproducible-build-warnings : $(jln_env_reproducible_build_warnings) ] ;
@@ -275,27 +280,38 @@ rule flags ( properties * )
   local x_shadow_warnings = [ jln-get-value $(ps) : cxx-shadow-warnings : $(jln_env_shadow_warnings) ] ;
   local x_stack_protector = [ jln-get-value2 $(ps) : cxx-stack-protector : cxx-stack-protector-incidental : $(jln_env_stack_protector) ] ;
   local x_stl_debug = [ jln-get-value2 $(ps) : cxx-stl-debug : cxx-stl-debug-incidental : $(jln_env_stl_debug) ] ;
-  local x_suggests = [ jln-get-value $(ps) : cxx-suggests : $(jln_env_suggests) ] ;
+  local x_suggestions = [ jln-get-value $(ps) : cxx-suggestions : $(jln_env_suggestions) ] ;
   local x_warnings = [ jln-get-value $(ps) : cxx-warnings : $(jln_env_warnings) ] ;
+  local x_warnings_as_error = [ jln-get-value $(ps) : cxx-warnings-as-error : $(jln_env_warnings_as_error) ] ;
   local x_whole_program = [ jln-get-value2 $(ps) : cxx-whole-program : cxx-whole-program-incidental : $(jln_env_whole_program) ] ;
 
   if (  $(toolset) = "gcc" || $(toolset) = "clang"  )
   {
-    if ( $(x_narrowing_error) != "default" )
+    if ( $(x_fix_compiler_error) != "default" )
     {
-      if ( $(x_narrowing_error) = "on" )
+      if ( $(x_fix_compiler_error) = "on" )
       {
-        if (  $(toolset) = "gcc" && ! (  $(version) < "04.07"  )  )
+        if $(toolset) = "gcc"
         {
-          flags +=
-            <cxxflags>"-Werror=narrowing"
-          ;
+          if ! (  $(version) < "04.07"  )
+          {
+            flags +=
+              <cxxflags>"-Werror=narrowing"
+            ;
+            if ! (  $(version) < "07.01"  )
+            {
+              flags +=
+                <cxxflags>"-Werror=literal-suffix"
+              ;
+            }
+          }
         }
       }
       else if $(toolset) = "clang"
       {
         flags +=
           <cxxflags>"-Wno-error=c++11-narrowing"
+          <cxxflags>"-Wno-reserved-user-defined-literal"
         ;
       }
     }
@@ -355,7 +371,7 @@ rule flags ( properties * )
           <linkflags>"-fuse-ld=bfd"
         ;
       }
-      else if (  ( $(x_linker) = "gold" ) || $(toolset) = "gcc"  )
+      else if (  ( $(x_linker) = "gold" ) || ! (  $(toolset) = "gcc" && ! (  $(version) < "09.00"  )  )  )
       {
         flags +=
           <linkflags>"-fuse-ld=gold"
@@ -377,13 +393,13 @@ rule flags ( properties * )
           <linkflags>"-fno-lto"
         ;
       }
-      else
+      else if $(toolset) = "gcc"
       {
         flags +=
           <cxxflags>"-flto"
           <linkflags>"-flto"
         ;
-        if (  $(toolset) = "gcc" && ! (  $(version) < "05.00"  )  )
+        if ! (  $(version) < "05.00"  )
         {
           if ( $(x_warnings) != "default" )
           {
@@ -409,17 +425,31 @@ rule flags ( properties * )
           }
         }
       }
+      else if (  ( $(x_lto) = "linker-plugin" ) && (  $(toolset) = "clang" && ! (  $(version) < "06.00"  )  )  )
+      {
+        flags +=
+          <cxxflags>"-flto=thin"
+          <linkflags>"-flto=thin"
+        ;
+      }
+      else
+      {
+        flags +=
+          <cxxflags>"-flto"
+          <linkflags>"-flto"
+        ;
+      }
     }
-    if ( $(x_optimize) != "default" )
+    if ( $(x_optimization) != "default" )
     {
-      if ( $(x_optimize) = "off" )
+      if ( $(x_optimization) = "0" )
       {
         flags +=
           <cxxflags>"-O0"
           <linkflags>"-O0"
         ;
       }
-      else if ( $(x_optimize) = "debugoptimized" )
+      else if ( $(x_optimization) = "g" )
       {
         flags +=
           <cxxflags>"-Og"
@@ -431,21 +461,35 @@ rule flags ( properties * )
         flags +=
           <cxxflags>"-DNDEBUG"
         ;
-        if ( $(x_optimize) = "minsize" )
+        if ( $(x_optimization) = "size" )
         {
           flags +=
             <cxxflags>"-Os"
             <linkflags>"-Os"
           ;
         }
-        else if ( $(x_optimize) = "fast" )
+        else if ( $(x_optimization) = "fast" )
         {
           flags +=
             <cxxflags>"-Ofast"
             <linkflags>"-Ofast"
           ;
         }
-        else if ( $(x_optimize) = "release" )
+        else if ( $(x_optimization) = "1" )
+        {
+          flags +=
+            <cxxflags>"-O1"
+            <linkflags>"-O1"
+          ;
+        }
+        else if ( $(x_optimization) = "2" )
+        {
+          flags +=
+            <cxxflags>"-O2"
+            <linkflags>"-O2"
+          ;
+        }
+        else if ( $(x_optimization) = "3" )
         {
           flags +=
             <cxxflags>"-O3"
@@ -626,9 +670,9 @@ rule flags ( properties * )
         ;
       }
     }
-    if ( $(x_suggests) != "default" )
+    if ( $(x_suggestions) != "default" )
     {
-      if ! ( $(x_suggests) = "off" )
+      if ! ( $(x_suggestions) = "off" )
       {
         if $(toolset) = "gcc"
         {
@@ -656,17 +700,23 @@ rule flags ( properties * )
     {
       if ! ( $(x_stl_debug) = "off" )
       {
-        # flags +=
-        #   <cxxflags>"-D_LIBCPP_DEBUG=1"
-        # ;
         if ( $(x_stl_debug) = "assert-as-exception" )
         {
           flags +=
             <cxxflags>"-D_LIBCPP_DEBUG_USE_EXCEPTIONS"
           ;
         }
-        if ( $(x_stl_debug) = "allow-broken-abi" )
+        if (  ( $(x_stl_debug) = "allow-broken-abi" ) || ( $(x_stl_debug) = "allow-broken-abi-and-bugs" )  )
         {
+          if $(toolset) = "clang"
+          {
+            if (  ! (  $(version) < "08.00"  ) || ( $(x_stl_debug) = "allow-broken-abi-and-bugs" )  )
+            {
+              flags +=
+                <cxxflags>"-D_LIBCPP_DEBUG=1"
+              ;
+            }
+          }
           flags +=
             <cxxflags>"-D_GLIBCXX_DEBUG"
           ;
@@ -695,6 +745,12 @@ rule flags ( properties * )
         flags +=
           <cxxflags>"-Wno-shadow"
         ;
+        if (  $(toolset) = "clang" && ! (  $(version) < "08.00"  )  )
+        {
+          flags +=
+            <cxxflags>"-Wno-shadow-field"
+          ;
+        }
       }
       else if ( $(x_shadow_warnings) = "on" )
       {
@@ -956,7 +1012,7 @@ rule flags ( properties * )
             <cxxflags>"-fcf-protection=none"
           ;
         }
-        if $(toolset) = "clang"
+        else if $(toolset) = "clang"
         {
           flags +=
             <cxxflags>"-fno-sanitize=cfi"
@@ -972,7 +1028,7 @@ rule flags ( properties * )
             <cxxflags>"-fcf-protection=full"
           ;
         }
-        if $(toolset) = "clang"
+        else if (  ( $(x_control_flow) = "allow-bugs" ) && $(toolset) = "clang"  )
         {
           flags +=
             <cxxflags>"-fsanitize=cfi"
@@ -1028,20 +1084,20 @@ rule flags ( properties * )
     }
     if ( $(x_elide_type) != "default" )
     {
-      if (  (  $(toolset) = "gcc" && ! (  $(version) < "08.00"  )  ) || (  $(toolset) = "clang" && ! (  $(version) < "03.04"  )  )  )
+      if ( $(x_elide_type) = "on" )
       {
-        if ( $(x_elide_type) = "on" )
+        if (  $(toolset) = "gcc" && ! (  $(version) < "08.00"  )  )
         {
           flags +=
             <cxxflags>"-felide-type"
           ;
         }
-        else
-        {
-          flags +=
-            <cxxflags>"-fno-elide-type"
-          ;
-        }
+      }
+      else if (  (  $(toolset) = "gcc" && ! (  $(version) < "08.00"  )  ) || (  $(toolset) = "clang" && ! (  $(version) < "03.04"  )  )  )
+      {
+        flags +=
+          <cxxflags>"-fno-elide-type"
+        ;
       }
     }
     if ( $(x_diagnostics_show_template_tree) != "default" )
@@ -1092,7 +1148,62 @@ rule flags ( properties * )
         }
       }
     }
+    if ( $(x_warnings_as_error) != "default" )
+    {
+      if ( $(x_warnings_as_error) = "on" )
+      {
+        flags +=
+          <cxxflags>"-Werror"
+        ;
+      }
+      else if ( $(x_warnings_as_error) = "basic" )
+      {
+        flags +=
+          <cxxflags>"-Werror=non-virtual-dtor"
+          <cxxflags>"-Werror=return-type"
+          <cxxflags>"-Werror=init-self"
+        ;
+        if (  $(toolset) = "gcc" && ! (  $(version) < "05.01"  )  )
+        {
+          flags +=
+            <cxxflags>"-Werror=array-bounds"
+            <cxxflags>"-Werror=logical-op"
+            <cxxflags>"-Werror=logical-not-parentheses"
+          ;
+        }
+        else if $(toolset) = "clang"
+        {
+          flags +=
+            <cxxflags>"-Werror=array-bounds"
+            <cxxflags>"-Werror=division-by-zero"
+          ;
+          if ! (  $(version) < "03.04"  )
+          {
+            flags +=
+              <cxxflags>"-Werror=logical-not-parentheses"
+            ;
+            if ! (  $(version) < "03.06"  )
+            {
+              flags +=
+                <cxxflags>"-Werror=delete-incomplete"
+              ;
+              if ! (  $(version) < "07.00"  )
+              {
+                flags +=
+                  <cxxflags>"-Werror=dynamic-class-memaccess"
+                ;
+              }
+            }
+          }
+        }
+      }
+      else
+      {
+        flags +=
+          <cxxflags>"-Wno-error"
+        ;
+      }
+    }
   }
-
   return $(flags) ;
 }
