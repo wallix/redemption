@@ -846,7 +846,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t version = 6)
     self.pubKeyAuth   = BER::read_optional_octet_string(stream, 3, "TSRequest [2] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
 
     /* [4] errorCode (INTEGER) */
-    if (remote_version >= 3 && remote_version != 5){
+    if (self.use_version >= 3 && self.use_version != 5){
         if (BER::check_ber_ctxt_tag(stream, 4)){
             self.error_code = BER::read_integer_field(stream, 4, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
             LOG(LOG_INFO, "Credssp recvTSCredentials() "
@@ -859,7 +859,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t version = 6)
     }
 
     /* [5] clientNonce (OCTET STRING) */
-    if (remote_version >= 5){
+    if (self.use_version >= 5){
         self.clientNonce.clientNonce = BER::read_optional_octet_string(stream, 5, "TSRequest [5] clientNonce", ERR_CREDSSP_TS_REQUEST);
         if (self.clientNonce.clientNonce.size() > 0){
             self.clientNonce.initialized = true;

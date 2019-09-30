@@ -73,7 +73,7 @@ class ReplayRandom : public Random
     // caller responsibility to provide enough data
     // or access to vector will throw an error
     std::vector<uint8_t> seed;
-    uint32_t i;
+    uint32_t i = 0;
 public:
     explicit ReplayRandom(bytes_view seed)
     : seed(seed.data(), seed.data()+seed.size())

@@ -72,6 +72,9 @@ class NtlmServer final
 
     TSCredentials ts_credentials;
 
+public:
+    uint8_t credssp_version;
+private:
     TSRequest ts_request = {6}; // Credssp Version 6 Supported
     uint32_t error_code = 0;
     static const size_t CLIENT_NONCE_LENGTH = 32;
@@ -197,14 +200,14 @@ public:
                TimeObj & timeobj,
                std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
                const bool verbose = false)
-        : timeobj(timeobj)
+        : credssp_version(credssp_version)
+        , timeobj(timeobj)
         , rand(rand)
         , public_key(key)
         , set_password_cb(set_password_cb)
         , verbose(verbose)
     {
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
-        memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
 
         LOG_IF(this->verbose, LOG_INFO, "this->server_auth_data.state = ServerAuthenticateData::Start");
         this->server_auth_data.state = ServerAuthenticateData::Start;
