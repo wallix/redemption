@@ -64,7 +64,7 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -readability-magic-numbers,
 ' \
 -config='{CheckOptions: [
-{key: llvm-namespace-comment.ShortNamespaceLines, value: 10}
+{key: llvm-namespace-comment.ShortNamespaceLines, value: 10},
 {key: readability-uppercase-literal-suffix.NewSuffixes, value: L;LL}
 ]}' \
 -header-filter='.*' \
