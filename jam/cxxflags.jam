@@ -6,9 +6,9 @@ REDEMPTION_CXXFLAGS +=
 
     # <cxx-linker-default>gold # add automatically by bjam
     <cxx-color-default>always
+    <cxx-shadow-warnings-default>off
     <variant>debug:<cxx-stl-debug-default>allow-broken-abi
 
-    <cxx-shadow-warnings>off
     <toolset>clang:<cxxflags>-Wno-overlength-strings
     <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
     <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
