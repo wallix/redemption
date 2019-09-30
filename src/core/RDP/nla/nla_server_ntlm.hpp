@@ -73,9 +73,14 @@ class NtlmServer final
     TSCredentials ts_credentials;
 
 public:
+    std::vector<uint8_t> TargetName;
+    std::vector<uint8_t> netbiosComputerName;
+    std::vector<uint8_t> netbiosDomainName;
+    std::vector<uint8_t> dnsComputerName;
+    std::vector<uint8_t> dnsDomainName;
     uint8_t credssp_version;
-private:
     TSRequest ts_request = {6}; // Credssp Version 6 Supported
+private:
     uint32_t error_code = 0;
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
@@ -195,12 +200,20 @@ private:
     // DECRYPT_MESSAGE DecryptMessage;
 
 public:
-    NtlmServer(array_view_u8 key,
+    NtlmServer(bytes_view TargetName, bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
+               bytes_view DnsComputerName, bytes_view DnsDomainName,
+               array_view_u8 key,
                Random & rand,
                TimeObj & timeobj,
                std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
+               uint32_t credssp_version,
                const bool verbose = false)
-        : credssp_version(credssp_version)
+        : TargetName(TargetName.data(), TargetName.data()+TargetName.size())
+        , netbiosComputerName(NetbiosComputerName.data(), NetbiosComputerName.data()+NetbiosComputerName.size())
+        , netbiosDomainName(NetbiosDomainName.data(), NetbiosDomainName.data()+NetbiosDomainName.size())
+        , dnsComputerName(DnsComputerName.data(), DnsComputerName.data()+DnsComputerName.size())
+        , dnsDomainName(DnsDomainName.data(), DnsDomainName.data()+DnsDomainName.size())
+        , credssp_version(credssp_version)
         , timeobj(timeobj)
         , rand(rand)
         , public_key(key)
@@ -241,7 +254,7 @@ public:
             {
                 std::vector<uint8_t> result;
                 /* receive authentication token */
-                this->ts_request = recvTSRequest(in_data);
+                this->ts_request = recvTSRequest(in_data, this->credssp_version);
                 this->error_code = this->ts_request.error_code;
 
                 if (this->ts_request.negoTokens.size() < 1) {
@@ -286,6 +299,7 @@ public:
                     rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
 
                     NTLMChallengeMessage challenge_message;
+                    challenge_message.TargetName.buffer = ::UTF8toUTF16(this->TargetName);
                     challenge_message.serverChallenge = this->ServerChallenge;
 
                     uint8_t ZeroTimestamp[8] = {};
@@ -301,14 +315,39 @@ public:
                     }
 
                     // NTLM: construct challenge target info
-                    std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
-                    challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, upwin7}));
-                    challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, upwin7}));
+                    // WIN7
+                    if (challenge_message.TargetName.buffer.size() > 0){
+                        // NETBIOS Domain Name
+                        std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
+                        // NETBIOS Computer Name
+                        std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
 
-                    std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
-                    challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, win7}));
-                    challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, win7}));
+                        // win7
+                        // DNS Domain Name
+                        auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
+                        // DNS Computer Name
+                        auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
+                    }
+                    else{
+                        // NETBIOS Computer Name
+                        std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
+                        // NETBIOS Domain Name
+                        std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
 
+                        // win7
+                        // DNS Computer Name
+                        auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
+                        // DNS Domain Name
+                        auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
+                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
+                    }
                     challenge_message.AvPairList.push_back(AvPair({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))}));
 
                     challenge_message.negoFlags.flags = negoFlag;
@@ -624,7 +663,7 @@ public:
             case ServerAuthenticateData::Final:
             {
                 LOG_IF(this->verbose, LOG_INFO, "rdpNTLMServer::server_authenticate_final");
-                this->ts_request = recvTSRequest(in_data);
+                this->ts_request = recvTSRequest(in_data, this->credssp_version);
                 this->error_code = this->ts_request.error_code;
 
                 if (this->ts_request.authInfo.size() < 1) {

@@ -1825,20 +1825,77 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
 
         uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
 
+        LOG(LOG_INFO, "Target Name: size = %04x", self.TargetName.buffer.size());
+
         stream.out_uint16_le(self.TargetName.buffer.size());
         stream.out_uint16_le(self.TargetName.buffer.size());
         stream.out_uint32_le(payloadOffset);
         payloadOffset += self.TargetName.buffer.size();
-        
+
+        //// Expected
+        //negotiateFlags "0xE28A8235"{
+                                        //    |NTLMSSP_NEGOTIATE_56, // (31)
+                                        //    |NTLMSSP_NEGOTIATE_KEY_EXCH, // (30)
+                                        //    |NTLMSSP_NEGOTIATE_128, // (29)
+                                        //    |NTLMSSP_NEGOTIATE_VERSION, // (25)
+        //    |NTLMSSP_NEGOTIATE_TARGET_INFO, // (23)
+                                        //    |NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY, // (19)
+        //    |NTLMSSP_TARGET_TYPE_SERVER, // (17)
+                                        //    |NTLMSSP_NEGOTIATE_ALWAYS_SIGN, // (15)
+                                        //    |NTLMSSP_NEGOTIATE_NTLM, // (9)
+                                        //    |NTLMSSP_NEGOTIATE_SEAL, // (5)
+                                        //    |NTLMSSP_NEGOTIATE_SIGN, // (4)
+                                        //    |NTLMSSP_REQUEST_TARGET, // (2)
+                                        //    |NTLMSSP_NEGOTIATE_UNICODE, // (0)
+        //}
+
+        //// WE HAVE
+        //negotiateFlags "0xE20882B7"{
+                                        //    |NTLMSSP_NEGOTIATE_56, // (31)
+                                        //    |NTLMSSP_NEGOTIATE_KEY_EXCH, // (30)
+                                        //    |NTLMSSP_NEGOTIATE_128, // (29)
+                                        //    |NTLMSSP_NEGOTIATE_VERSION, // (25)
+                                        //    |NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY, // (19)
+                                        //    |NTLMSSP_NEGOTIATE_ALWAYS_SIGN, // (15)
+                                        //    |NTLMSSP_NEGOTIATE_NTLM, // (9)
+        //    |NTLMSSP_NEGOTIATE_LM_KEY, // (7)
+                                        //    |NTLMSSP_NEGOTIATE_SEAL, // (5)
+                                        //    |NTLMSSP_NEGOTIATE_SIGN, // (4)
+                                        //    |NTLMSSP_REQUEST_TARGET, // (2)
+        //    |NTLMSSP_NEGOTIATE_OEM, // (1)
+                                        //    |NTLMSSP_NEGOTIATE_UNICODE, // (0)
+        //}
+
+
+        LOG(LOG_INFO, "Nego Flags: size = %08x", self.negoFlags.flags);
+        logNtlmFlags(self.negoFlags.flags);
+        if (self.TargetName.buffer.size() > 0){
+            self.negoFlags.flags |= (NTLMSSP_TARGET_TYPE_SERVER|NTLMSSP_NEGOTIATE_TARGET_INFO);
+            self.negoFlags.flags &= (~NTLMSSP_NEGOTIATE_LM_KEY)&(~NTLMSSP_NEGOTIATE_OEM);
+        }
+//        logNtlmFlags(0xe20882b7);
+//        logNtlmFlags(0xe28A8235);
+        logNtlmFlags(self.negoFlags.flags);
         stream.out_uint32_le(self.negoFlags.flags);
+
+        LOG(LOG_INFO, "Server Challenge");
+        hexdump_d(self.serverChallenge);
+
         stream.out_copy_bytes(self.serverChallenge);
         stream.out_clear_bytes(8);
 
         self.TargetInfo.buffer.clear();
+        LOG(LOG_INFO, "before AvPairField");
+        hexdump_d(self.TargetInfo.buffer);
+
         for (auto & avp: self.AvPairList) {
+            int i = 0;
             push_back_array(self.TargetInfo.buffer, out_uint16_le(avp.id));
             push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
             push_back_array(self.TargetInfo.buffer, avp.data);
+            LOG(LOG_INFO, "adding AvPairField %d %d size=%d", i, avp.id, avp.data.size());
+            hexdump_d(avp.data);
+            hexdump_d(self.TargetInfo.buffer);
         }
         push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
         push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
@@ -1923,8 +1980,14 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     self.TargetName.buffer.assign(pBegin + self.TargetName.bufferOffset, 
                          pBegin + self.TargetName.bufferOffset + TargetName_len);
 
+    LOG(LOG_INFO, "Target Name (%u %u)", self.TargetName.bufferOffset, self.TargetName.buffer.size());
+    hexdump_d(self.TargetName.buffer);
+
     self.TargetInfo.buffer.assign(pBegin + self.TargetInfo.bufferOffset, 
                          pBegin + self.TargetInfo.bufferOffset + TargetInfo_len);
+
+    LOG(LOG_INFO, "Target Info (%u %u)", self.TargetInfo.bufferOffset, self.TargetInfo.buffer.size());
+    hexdump_d(self.TargetInfo.buffer);
     
     InStream in_stream(self.TargetInfo.buffer);
     

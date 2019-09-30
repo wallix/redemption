@@ -761,8 +761,9 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
 
     auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
-    std::vector<uint8_t> result = std::move(ber_ts_request_header);
-    result << ber_version_field 
+    std::vector<uint8_t> result = std::vector<uint8_t>{} 
+           << ber_ts_request_header
+           << ber_version_field 
            << ber_nego_tokens_header << negoTokens
            << ber_auth_info_header << authInfo
            << ber_pub_key_auth_header << pubKeyAuth
@@ -784,7 +785,7 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
     LOG(LOG_INFO, "TSRequest clientNonce -----------------------------");
     hexdump_d(clientNonce);
 
-    LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
+    LOG(LOG_INFO, "TSRequest ts_request_header --(request length = %u)-", ts_request_length);
     hexdump_d(ber_ts_request_header);
     LOG(LOG_INFO, "TSRequest version_field ---------------------------");
     hexdump_d(ber_version_field);
