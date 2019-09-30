@@ -319,7 +319,7 @@ RED_AUTO_TEST_CASE(TestWriteFilename)
 
 #define TEST_WRITE_FILENAME(origin_filename, wrote_filename)    \
     RED_CHECK_EQUAL(wrmcapture_write_filename(origin_filename), \
-    wrote_filename " 0 0 0 0 0 0 0 0 0 0\n");                   \
+    wrote_filename " 0 0 0 0 0 0 0 0 0 0\n")                    \
 
     TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
 

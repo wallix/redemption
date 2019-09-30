@@ -57,7 +57,7 @@ void MMIni::new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessa
         break;
     default:
         break;
-    };
+    }
 }
 
 void MMIni::invoke_close_box(

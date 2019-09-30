@@ -194,7 +194,7 @@ std::vector<uint8_t> UTF8toUTF16(bytes_view source) noexcept
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
                 if (i + 2 > source.size()){
-                    return result;;
+                    return result;
                 }
                 ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;

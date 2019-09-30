@@ -87,4 +87,4 @@ cp_spec = {
     u'server_unix_alt': ('server_unix_alt', False),
   },
 }
-)xxxyyyzzz";
+)xxxyyyzzz"

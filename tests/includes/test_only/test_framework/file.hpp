@@ -59,8 +59,8 @@ namespace tu
     inline redemption_unit_test__::int_variation int_(redemption_unit_test__::int_variation n) { return n; }
 } // namespace tu
 
-#define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
-#define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
+#define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len))
+#define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len))
 
 # define RED_TEST_GET_FILE_CONTENTS(lvl, filename) [](auto&& filename__){                \
     std::string s;                                                                       \

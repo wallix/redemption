@@ -167,7 +167,7 @@ private:
         }
 
     } identity;
-        
+
     struct Krb5Creds_deleter
     {
         void operator()(Krb5Creds* credentials) const
@@ -238,7 +238,7 @@ private:
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS sspi_InitializeSecurityContext(
         array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t> & output_buffer
-    ) 
+    )
     {
         OM_uint32 major_status, minor_status;
 
@@ -524,7 +524,7 @@ private:
         sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
-        
+
         this->ClientServerHash.assign(hash, hash+sizeof(hash));
     }
 
@@ -543,7 +543,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
-        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};;
+        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
             this->credssp_generate_client_nonce();
             this->credssp_generate_public_key_hash_client_to_server();
@@ -750,7 +750,7 @@ private:
             // Card Reader Not Supported Yet
             bytes_view pin;
             bytes_view userHint;
-            bytes_view domainHint; 
+            bytes_view domainHint;
             uint32_t keySpec = 0;
             bytes_view cardName;
             bytes_view readerName;
@@ -847,11 +847,11 @@ public:
             case ClientAuthenticateData::Start:
                 return credssp::State::Err;
             case ClientAuthenticateData::Loop:
-            
+
                 this->ts_request = recvTSRequest(in_data, this->error_code, 6);
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
-            
+
                 if (Res::Err == this->sm_credssp_client_authenticate_send()) {
                     return credssp::State::Err;
                 }

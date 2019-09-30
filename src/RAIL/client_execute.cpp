@@ -126,7 +126,7 @@ Rect ClientExecute::get_current_work_area_rect() const
             }
         }
 
-        return current_work_area.offset(-this->window_offset_x, -this->window_offset_y);;
+        return current_work_area.offset(-this->window_offset_x, -this->window_offset_y);
     }
 
     return this->work_areas[0].offset(-this->window_offset_x, -this->window_offset_y);
