@@ -333,6 +333,8 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::context::remotefx>();
 
+    mod_rdp_params.use_license_store                   = ini.get<cfg::mod_rdp::use_license_store>();
+
     try {
         using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
 

@@ -176,6 +176,7 @@ namespace cfg {
         struct server_cert;
         struct server_cert_response;
         struct session_shadowing_support;
+        struct use_license_store;
     };
 
     struct mod_vnc {

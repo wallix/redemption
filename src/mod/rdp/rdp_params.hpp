@@ -204,6 +204,8 @@ struct ModRDPParams
 
     bool split_domain = false;
 
+    bool use_license_store = true;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -411,6 +413,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             support_connection_redirection_during_recording);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.log_only_relevant_activities);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             use_license_store);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

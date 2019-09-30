@@ -163,12 +163,15 @@ private:
 
     size_t send_channel_index;
 
+    char license_dir_path[1024] = {};
     size_t lic_layer_license_size = 0;
     uint8_t lic_layer_license_key[16] = {};
     uint8_t lic_layer_license_sign_key[16] = {};
     std::unique_ptr<uint8_t[]> lic_layer_license_data;
 
     uint8_t client_random[SEC_RANDOM_SIZE] = { 0 };
+
+    const bool use_license_store;
 
 public:
     RdpNegociation(

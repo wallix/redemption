@@ -614,6 +614,10 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 #_advanced
 session_shadowing_support = boolean(default=True)
 
+# Stores CALs issued by the terminal servers.
+#_advanced
+use_license_store = boolean(default=True)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

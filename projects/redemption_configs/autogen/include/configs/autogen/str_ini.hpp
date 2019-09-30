@@ -728,6 +728,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #session_shadowing_support = 1
 
+# Stores CALs issued by the terminal servers.
+# value: 0 or 1
+#_advanced
+#use_license_store = 1
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

@@ -433,6 +433,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "server_cert_response", desc{"empty string for wait, 'Ok' or error message"});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_shadowing_support", desc{"Enables Session Shadowing Support."}, set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "use_license_store", desc{"Stores CALs issued by the terminal servers."}, set(true));
     });
 
     W.section("metrics", [&]
