@@ -1564,6 +1564,8 @@ public:
 
                 mod_rdp_params.split_domain                        = this->ini.get<cfg::mod_rdp::split_domain>();
 
+                mod_rdp_params.use_license_store                   = ini.get<cfg::mod_rdp::use_license_store>();
+
                 try {
                     const char * const name = "RDP Target";
 

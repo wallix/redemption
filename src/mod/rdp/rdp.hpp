@@ -112,6 +112,7 @@
 #include "utils/timeout.hpp"
 
 #include <cstdlib>
+#include <iomanip>
 #define IF_EXISTS(p, m) do { if (p) p->m; } while (0)
 
 class mod_rdp : public mod_api, public rdp_api
@@ -264,6 +265,7 @@ protected:
 
     int  keylayout;
 
+    char license_dir_path[1024] = {};
     uint8_t   lic_layer_license_key[16];
     uint8_t   lic_layer_license_sign_key[16];
     std::unique_ptr<uint8_t[]> lic_layer_license_data;
@@ -941,6 +943,8 @@ protected:
 
     InfoPacketFlags info_packet_extra_flags;
 
+    const bool use_license_store;
+
 public:
     RDPMetrics * metrics;
 
@@ -1148,6 +1152,7 @@ public:
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
         , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
+        , use_license_store(mod_rdp_params.use_license_store)
         , metrics(metrics)
 //        , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
 //                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
@@ -1230,22 +1235,10 @@ public:
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
-        // TODO CGR: license loading should be done before creating protocol layers
-        struct stat st;
-        char path[256];
-        snprintf(path, sizeof(path), "%s/license.%s", app_path(AppPath::License), info.hostname);
-        int fd = open(path, O_RDONLY);
-        if (fd != -1){
-            if (fstat(fd, &st) != 0){
-                this->lic_layer_license_data.reset(new uint8_t[this->lic_layer_license_size]);
-                if (this->lic_layer_license_data){
-                    size_t lic_size = read(fd, this->lic_layer_license_data.get(), this->lic_layer_license_size);
-                    if (lic_size != this->lic_layer_license_size){
-                        LOG(LOG_ERR, "license file truncated : expected %zu, got %zu", this->lic_layer_license_size, lic_size);
-                    }
-                }
-            }
-            close(fd);
+        ::snprintf(this->license_dir_path, sizeof(this->license_dir_path), "%s/%s", app_path(AppPath::License), info.hostname);
+        if (::recursive_create_directory(this->license_dir_path,
+                S_IRWXU | S_IRWXG, -1) != 0) {
+            LOG(LOG_INFO, "mod_rdp: Failed to create directory: \"%s\"", this->license_dir_path);
         }
 
         // from rdp_sec
@@ -3607,26 +3600,90 @@ public:
         if (sec.flags & SEC::SEC_LICENSE_PKT) {
             LIC::RecvFactory flic(sec.payload);
 
+            LOG(LOG_INFO, "Rdp: Licensing bMsgType=%u", flic.tag);
+
             switch (flic.tag) {
             case LIC::LICENSE_REQUEST:
                 if (bool(this->verbose & RDPVerbose::license)) {
-                    LOG(LOG_INFO, "Rdp::License Request");
+                    LOG(LOG_INFO, "Rdp::Server License Request");
                 }
                 {
-                    LIC::LicenseRequest_Recv lic(sec.payload);
+                    LIC::ServerLicenseRequest SvrLicReq = LIC::ServerLicenseRequest_Receiver(sec.payload);
+                    if (bool(this->verbose & RDPVerbose::license)) {
+                        SvrLicReq.log(LOG_INFO);
+                    }
                     uint8_t null_data[48]{};
                     /* We currently use null client keys. This is a bit naughty but, hey,
                         the security of license negotiation isn't exactly paramount. */
-                    SEC::SessionKey keyblock(null_data, null_data, lic.server_random);
+                    SEC::SessionKey keyblock(null_data, null_data, SvrLicReq.ServerRandom);
 
                     /* Store first 16 bytes of session key as MAC secret */
                     memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
                     memcpy(this->lic_layer_license_key, keyblock.get_LicensingEncryptionKey(), 16);
+
+                    if (this->use_license_store) {
+                        uint8_t CompanyNameU8[4096] {};
+                        ::UTF16toUTF8(SvrLicReq.ProductInfo.CompanyName.data(), SvrLicReq.ProductInfo.CompanyName.size() / sizeof(uint16_t),
+                            CompanyNameU8, sizeof(CompanyNameU8));
+
+                        uint8_t ProductIdU8[4096] {};
+                        ::UTF16toUTF8(SvrLicReq.ProductInfo.ProductId.data(), SvrLicReq.ProductInfo.ProductId.size() / sizeof(uint16_t),
+                            ProductIdU8, sizeof(ProductIdU8));
+
+                        for (uint32_t i = 0; i < SvrLicReq.ScopeList.ScopeCount; ++i) {
+                            std::ostringstream oss;
+                            oss << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << SvrLicReq.ProductInfo.dwVersion << "_";
+                            oss << SvrLicReq.ScopeList.ScopeArray[i].blobData.data() << "_";
+                            oss << CompanyNameU8 << "_";
+                            oss << ProductIdU8;
+                            std::string license_file_name = oss.str();
+                            std::replace_if(license_file_name.begin(), license_file_name.end(),
+                                            [](unsigned char c) { return (' ' == c); }, '-');
+
+                            if (bool(this->verbose & RDPVerbose::license)) {
+                                LOG(LOG_INFO, "Rdp: LicenseFileName=\"%s\"", license_file_name.c_str());
+                            }
+
+                            {
+                                char license_file_path[2048] = {};
+                                ::snprintf(license_file_path, sizeof(license_file_path), "%s/%s", this->license_dir_path, license_file_name.c_str());
+                                if (unique_fd ufd{::open(license_file_path, O_RDONLY)}) {
+                                    uint32_t license_size = 0;
+                                    size_t number_of_bytes_read = ::read(ufd.fd(), &license_size, sizeof(license_size));
+                                    if (number_of_bytes_read != sizeof(license_size)) {
+                                        LOG(LOG_ERR, "Rdp: license file truncated (1) : expected %zu, got %zu", sizeof(license_size), number_of_bytes_read);
+                                    }
+                                    else {
+                                        this->lic_layer_license_data = std::make_unique<uint8_t[]>(license_size);
+                                        size_t number_of_bytes_read = ::read(ufd.fd(), this->lic_layer_license_data.get(), license_size);
+                                        if (number_of_bytes_read != license_size) {
+                                            LOG(LOG_ERR, "Rdp: license file truncated (2) : expected %u, got %zu", license_size, number_of_bytes_read);
+
+                                            this->lic_layer_license_data.reset(nullptr);
+                                        }
+                                        else {
+                                            this->lic_layer_license_size = license_size;
+
+                                            LOG(LOG_ERR, "Rdp: LicenseSize=%u", license_size);
+
+                                            break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    LOG(LOG_WARNING, "Rdp: Failed to open license file! Path=\"%s\" errno=%s(%d)", license_file_path, strerror(errno), errno);
+                                }
+                            }
+                        }
+                    }
                 }
                 this->send_data_request(
                     GCC::MCS_GLOBAL_CHANNEL,
                     [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
                         if (this->lic_layer_license_size > 0) {
+                            if (bool(this->verbose & RDPVerbose::license)) {
+                                LOG(LOG_INFO, "Rdp::Client License Info");
+                            }
                             uint8_t hwid[LIC::LICENSE_HWID_SIZE];
                             buf_out_uint32(hwid, 2);
                             memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
@@ -3661,6 +3718,9 @@ public:
                             );
                         }
                         else {
+                            if (bool(this->verbose & RDPVerbose::license)) {
+                                LOG(LOG_INFO, "Rdp::Client New License Request");
+                            }
                             LIC::NewLicenseRequest_Send(
                                 lic_data, this->use_rdp5?3:2, username, hostname
                             );
@@ -3671,9 +3731,13 @@ public:
                 break;
             case LIC::PLATFORM_CHALLENGE:
                 if (bool(this->verbose & RDPVerbose::license)){
-                    LOG(LOG_INFO, "Rdp::Platform Challenge");
+                    LOG(LOG_INFO, "Rdp::Server Platform Challenge");
                 }
                 {
+                    if (bool(this->verbose & RDPVerbose::license)) {
+                        LOG(LOG_INFO, "Rdp::Client Platform Challenge Response");
+                    }
+
                     LIC::PlatformChallenge_Recv lic(sec.payload);
 
                     uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
@@ -3727,34 +3791,91 @@ public:
                 }
                 break;
             case LIC::NEW_LICENSE:
-                {
-                    if (bool(this->verbose & RDPVerbose::license)){
-                        LOG(LOG_INFO, "Rdp::New License");
-                    }
-
-                    LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
-
-                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect.
-                    // Not obvious files is the best choice to do that
-                        this->state = MOD_RDP_CONNECTED;
-
-                    LOG(LOG_WARNING, "New license not saved");
-                }
-                break;
             case LIC::UPGRADE_LICENSE:
                 {
                     if (bool(this->verbose & RDPVerbose::license)){
-                        LOG(LOG_INFO, "Rdp::Upgrade License");
+                        LOG(LOG_INFO, "Rdp::Server %s License", ((LIC::NEW_LICENSE == flic.tag) ? "New" : "Upgrade"));
                     }
-                    LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                    LOG(LOG_WARNING, "Upgraded license not saved");
+                    LIC::NewOrUpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key,
+                        ((LIC::NEW_LICENSE == flic.tag) ? LIC::NewOrUpgradeLicense_Recv::Type::New : LIC::NewOrUpgradeLicense_Recv::Type::Upgrade));
+                    if (bool(this->verbose & RDPVerbose::license)) {
+                        lic.log(LOG_INFO);
+                    }
+
+                    bool license_saved = false;
+
+                    if (this->use_license_store) {
+                        uint8_t CompanyNameU8[4096] {};
+                        ::UTF16toUTF8(lic.licenseInfo.pbCompanyName, lic.licenseInfo.cbCompanyName / sizeof(uint16_t), CompanyNameU8, sizeof(CompanyNameU8));
+
+                        uint8_t ProductIdU8[4096] {};
+                        ::UTF16toUTF8(lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId / sizeof(uint16_t), ProductIdU8, sizeof(ProductIdU8));
+
+                        std::ostringstream oss;
+                        oss << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << lic.licenseInfo.dwVersion << "_";
+                        oss << lic.licenseInfo.pbScope << "_";
+                        oss << CompanyNameU8 << "_";
+                        oss << ProductIdU8;
+                        std::string license_file_name = oss.str();
+                        std::replace_if(license_file_name.begin(), license_file_name.end(),
+                                        [](unsigned char c) { return (' ' == c); }, '-');
+
+                        if (bool(this->verbose & RDPVerbose::license)) {
+                            LOG(LOG_INFO, "Rdp: LicenseFileName=\"%s\"", license_file_name.c_str());
+                        }
+
+                        {
+                            char filename_temporary[2048];
+                            ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/%s-XXXXXX.tmp",
+                                this->license_dir_path, license_file_name.c_str());
+                            filename_temporary[sizeof(filename_temporary) - 1] = '\0';
+
+                            int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
+                            if (fd == -1) {
+                                LOG( LOG_ERR
+                                   , "Rdp: Failed to open (temporary) license file for writing! filename=\"%s\" errno=%s(%d)"
+                                   , filename_temporary, strerror(errno), errno);
+                            }
+                            else {
+                                unique_fd ufd{fd};
+                                uint32_t const license_size = lic.licenseInfo.cbLicenseInfo;
+                                if (sizeof(license_size) == ::write(ufd.fd(), &license_size, sizeof(license_size))) {
+                                    if (license_size == ::write(ufd.fd(), lic.licenseInfo.pbLicenseInfo, license_size)) {
+                                        char filename[2048];
+                                        ::snprintf(filename, sizeof(filename) - 1, "%s/%s", this->license_dir_path, license_file_name.c_str());
+                                        filename[sizeof(filename) - 1] = '\0';
+
+                                        if (::rename(filename_temporary, filename) == 0) {
+                                            license_saved = true;
+                                        }
+                                        else {
+                                            LOG( LOG_ERR
+                                               , "Rdp: failed to rename the (temporary) license file! "
+                                                    "temporary_filename=\"%s\" filename=\"%s\" errno=%s(%d)"
+                                                , filename_temporary, filename, strerror(errno), errno);
+                                            ::unlink(filename_temporary);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect.
+                    // Not obvious files is the best choice to do that
+                    this->state = MOD_RDP_CONNECTED;
+
+                    if (!license_saved) {
+                        LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_WARNING, "Rdp: %s license not saved.",
+                            ((LIC::NEW_LICENSE == flic.tag) ? "New" : "Upgrade"));
+                    }
                 }
                 break;
             case LIC::ERROR_ALERT:
                 {
                     if (bool(this->verbose & RDPVerbose::license)){
-                        LOG(LOG_INFO, "Rdp::Get license status");
+                        LOG(LOG_INFO, "Rdp::Server License Error Message");
                     }
                     LIC::ErrorAlert_Recv lic(sec.payload);
                     if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT)
@@ -3762,8 +3883,9 @@ public:
                         this->state = MOD_RDP_CONNECTED;
                     }
                     else {
-                        LOG(LOG_ERR, "RDP::License Alert: error=%u transition=%u",
-                            lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+                        LOG(LOG_ERR, "Rdp::License Alert: dwErrorCode=%s(%u) dwStateTransition=%s(%u)",
+                            LIC::ValidClientMessage::ErrorCodeToString(lic.validClientMessage.dwErrorCode), lic.validClientMessage.dwErrorCode,
+                            LIC::ValidClientMessage::StateTransitionToString(lic.validClientMessage.dwStateTransition), lic.validClientMessage.dwStateTransition);
                     }
                     this->state = MOD_RDP_CONNECTED;
                 }

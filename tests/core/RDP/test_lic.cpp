@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(Test_lic_new_licence)
 
     InStream stream(indata);
     uint8_t license_key[16] = {};
-    LIC::NewLicense_Recv lic(stream, license_key);
+    LIC::NewOrUpgradeLicense_Recv lic(stream, license_key, LIC::NewOrUpgradeLicense_Recv::Type::New);
     RED_CHECK_EQUAL(LIC::NEW_LICENSE, lic.wMsgType);
     RED_CHECK_EQUAL(3, lic.bVersion);
     RED_CHECK_EQUAL(2055, lic.wMsgSize);
@@ -456,7 +456,7 @@ RED_AUTO_TEST_CASE(Test_lic_upgrade_licence)
 
     InStream stream(indata);
     uint8_t license_key[16] = {};
-    LIC::NewLicense_Recv lic(stream, license_key);
+    LIC::NewOrUpgradeLicense_Recv lic(stream, license_key, LIC::NewOrUpgradeLicense_Recv::Type::New);
     RED_CHECK_EQUAL(static_cast<uint8_t>(LIC::UPGRADE_LICENSE), lic.wMsgType);
     RED_CHECK_EQUAL(uint8_t(3), lic.bVersion);
     RED_CHECK_EQUAL(uint16_t(2055), lic.wMsgSize);

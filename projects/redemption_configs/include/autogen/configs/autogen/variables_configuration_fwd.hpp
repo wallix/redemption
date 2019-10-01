@@ -172,6 +172,7 @@ namespace cfg {
         struct experimental_fix_input_event_sync;
         struct split_domain;
         struct wabam_uses_translated_remoteapp;
+        struct use_license_store;
     };
 
     struct metrics {

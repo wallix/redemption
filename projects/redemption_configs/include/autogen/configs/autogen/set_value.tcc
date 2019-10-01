@@ -1708,6 +1708,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::wabam_uses_translated_remoteapp&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "use_license_store")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::use_license_store&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::use_license_store&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
