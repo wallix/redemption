@@ -140,7 +140,9 @@ fi
 # jsclient (emscripten)
 cd projects/jsclient
 source ~/emsdk-master/emsdk_set_env.sh
-rm -rf bin
+if [ $fast -eq 0 ]; then
+    rm -rf bin
+fi
 version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
 echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 if [ ! -d system_include/boost ]; then
