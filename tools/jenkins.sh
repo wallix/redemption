@@ -73,7 +73,7 @@ rootlist()
 }
 
 # implicitly created by bjam
-mkdir bin
+mkdir -p bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
