@@ -73,6 +73,7 @@ class NtlmServer final
     TSCredentials ts_credentials;
 
 public:
+    std::vector<NTLM_AV_ID> avFieldsTags;
     std::vector<uint8_t> TargetName;
     std::vector<uint8_t> netbiosComputerName;
     std::vector<uint8_t> netbiosDomainName;
@@ -203,12 +204,14 @@ public:
     NtlmServer(bytes_view TargetName, bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
                bytes_view DnsComputerName, bytes_view DnsDomainName,
                array_view_u8 key,
+               const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
                TimeObj & timeobj,
                std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
                uint32_t credssp_version,
                const bool verbose = false)
-        : TargetName(TargetName.data(), TargetName.data()+TargetName.size())
+        : avFieldsTags(avFieldsTags.data(),avFieldsTags.data()+avFieldsTags.size())
+        , TargetName(TargetName.data(), TargetName.data()+TargetName.size())
         , netbiosComputerName(NetbiosComputerName.data(), NetbiosComputerName.data()+NetbiosComputerName.size())
         , netbiosDomainName(NetbiosDomainName.data(), NetbiosDomainName.data()+NetbiosDomainName.size())
         , dnsComputerName(DnsComputerName.data(), DnsComputerName.data()+DnsComputerName.size())
@@ -316,39 +319,50 @@ public:
 
                     // NTLM: construct challenge target info
                     // WIN7
-                    if (challenge_message.TargetName.buffer.size() > 0){
-                        // NETBIOS Domain Name
-                        std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
-                        // NETBIOS Computer Name
-                        std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
-
-                        // win7
-                        // DNS Domain Name
-                        auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
-                        // DNS Computer Name
-                        auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
+                    if (this->avFieldsTags.size() == 0){
+                        this->avFieldsTags = {MsvAvNbComputerName, MsvAvNbDomainName, 
+                                              MsvAvDnsComputerName, MsvAvDnsDomainName, 
+                                              MsvAvDnsTreeName, MsvAvFlags, MsvAvTimestamp,
+                                              MsvAvSingleHost, MsvAvTargetName, MsvChannelBindings
+                                              };
                     }
-                    else{
-                        // NETBIOS Computer Name
-                        std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
-                        // NETBIOS Domain Name
-                        std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
-
-                        // win7
-                        // DNS Computer Name
-                        auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
-                        // DNS Domain Name
-                        auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
-                        challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
+                    for (auto tag: this->avFieldsTags){
+                        switch (tag){
+                        case MsvAvNbDomainName:
+                        {
+                            // NETBIOS Domain Name
+                            std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
+                            challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
+                        }
+                        break;
+                        case MsvAvNbComputerName:
+                        {
+                            // NETBIOS Computer Name
+                            std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
+                            challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
+                        }
+                        break;
+                        case MsvAvDnsDomainName:
+                        {
+                            // DNS Domain Name
+                            auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
+                            challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
+                        }
+                        break;
+                        case MsvAvDnsComputerName:
+                        {
+                            // DNS Computer Name
+                            auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
+                            challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
+                        }
+                        break;
+                        case MsvAvTimestamp:
+                            challenge_message.AvPairList.push_back(AvPair({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))}));
+                        break;
+                        default:
+                        break;
+                        }
                     }
-                    challenge_message.AvPairList.push_back(AvPair({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))}));
 
                     challenge_message.negoFlags.flags = negoFlag;
                     if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {

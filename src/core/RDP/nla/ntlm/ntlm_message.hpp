@@ -1825,7 +1825,7 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
 
         uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
 
-        LOG(LOG_INFO, "Target Name: size = %04x", self.TargetName.buffer.size());
+        LOG(LOG_INFO, "Target Name: size = %04x", unsigned(self.TargetName.buffer.size()));
 
         stream.out_uint16_le(self.TargetName.buffer.size());
         stream.out_uint16_le(self.TargetName.buffer.size());
@@ -1893,7 +1893,7 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
             push_back_array(self.TargetInfo.buffer, out_uint16_le(avp.id));
             push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
             push_back_array(self.TargetInfo.buffer, avp.data);
-            LOG(LOG_INFO, "adding AvPairField %d %d size=%d", i, avp.id, avp.data.size());
+            LOG(LOG_INFO, "adding AvPairField %d %d size=%u", i, int(avp.id), unsigned(avp.data.size()));
             hexdump_d(avp.data);
             hexdump_d(self.TargetInfo.buffer);
         }
@@ -1980,13 +1980,13 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     self.TargetName.buffer.assign(pBegin + self.TargetName.bufferOffset, 
                          pBegin + self.TargetName.bufferOffset + TargetName_len);
 
-    LOG(LOG_INFO, "Target Name (%u %u)", self.TargetName.bufferOffset, self.TargetName.buffer.size());
+    LOG(LOG_INFO, "Target Name (%u %u)", self.TargetName.bufferOffset, unsigned(self.TargetName.buffer.size()));
     hexdump_d(self.TargetName.buffer);
 
     self.TargetInfo.buffer.assign(pBegin + self.TargetInfo.bufferOffset, 
                          pBegin + self.TargetInfo.bufferOffset + TargetInfo_len);
 
-    LOG(LOG_INFO, "Target Info (%u %u)", self.TargetInfo.bufferOffset, self.TargetInfo.buffer.size());
+    LOG(LOG_INFO, "Target Info (%u %u)", self.TargetInfo.bufferOffset, unsigned(self.TargetInfo.buffer.size()));
     hexdump_d(self.TargetInfo.buffer);
     
     InStream in_stream(self.TargetInfo.buffer);

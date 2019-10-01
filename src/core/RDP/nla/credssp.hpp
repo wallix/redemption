@@ -785,7 +785,7 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
     LOG(LOG_INFO, "TSRequest clientNonce -----------------------------");
     hexdump_d(clientNonce);
 
-    LOG(LOG_INFO, "TSRequest ts_request_header --(request length = %u)-", ts_request_length);
+    LOG(LOG_INFO, "TSRequest ts_request_header --(request length = %u)-", unsigned(ts_request_length));
     hexdump_d(ber_ts_request_header);
     LOG(LOG_INFO, "TSRequest version_field ---------------------------");
     hexdump_d(ber_version_field);
