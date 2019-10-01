@@ -81,6 +81,7 @@ public:
     std::vector<uint8_t> dnsDomainName;
     uint8_t credssp_version;
     TSRequest ts_request = {6}; // Credssp Version 6 Supported
+    bool ignore_bogus_nego_flags = false;
 private:
     uint32_t error_code = 0;
     static const size_t CLIENT_NONCE_LENGTH = 32;
@@ -209,6 +210,7 @@ public:
                TimeObj & timeobj,
                std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
                uint32_t credssp_version,
+               bool ignore_bogus_nego_flags,
                const bool verbose = false)
         : avFieldsTags(avFieldsTags.data(),avFieldsTags.data()+avFieldsTags.size())
         , TargetName(TargetName.data(), TargetName.data()+TargetName.size())
@@ -217,6 +219,7 @@ public:
         , dnsComputerName(DnsComputerName.data(), DnsComputerName.data()+DnsComputerName.size())
         , dnsDomainName(DnsDomainName.data(), DnsDomainName.data()+DnsDomainName.size())
         , credssp_version(credssp_version)
+        , ignore_bogus_nego_flags(ignore_bogus_nego_flags)
         , timeobj(timeobj)
         , rand(rand)
         , public_key(key)
@@ -370,7 +373,7 @@ public:
                     }
 
                     StaticOutStream<65535> out_stream;
-                    EmitNTLMChallengeMessage(out_stream, challenge_message);
+                    EmitNTLMChallengeMessage(out_stream, challenge_message, this->ignore_bogus_nego_flags);
                     this->ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
                     this->SavedChallengeMessage.clear();

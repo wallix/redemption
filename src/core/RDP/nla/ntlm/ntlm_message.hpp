@@ -622,7 +622,7 @@ enum {
 //  NTLM v2 authentication session key generation MUST be supported by both the client and the
 //  DC in order to be used, and extended session security signing and sealing requires support
 //  from the client and the server to be used. An alternate name for this field is
-//  NTLMSSP_NEGOTIATE_LM_KEY.
+//  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
 
     NTLMSSP_NEGOTIATE_LM_KEY = 0x00000080, /* G   (24) */
 
@@ -1811,7 +1811,7 @@ public:
 };
 
 
-inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
+inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self, bool ignore_bogus_nego_flags)
 {
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
             self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
@@ -1831,6 +1831,39 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         stream.out_uint16_le(self.TargetName.buffer.size());
         stream.out_uint32_le(payloadOffset);
         payloadOffset += self.TargetName.buffer.size();
+
+        // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
+        //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
+        //  are mutually exclusive. If both NTLMSSP_NEGOTIATE_LM_KEY and
+        //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY are requested,
+        //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY alone MUST be returned to the client.
+        //  NTLM v2 authentication session key generation MUST be supported by both the client and the
+        //  DC in order to be used, and extended session security signing and sealing requires support
+        //  from the client and the server to be used. An alternate name for this field is
+        //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
+
+        if (!ignore_bogus_nego_flags 
+        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+            self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+        }
+
+        // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
+        //  NTLM_NEGOTIATE_OEM. See bit A for details.
+        //    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
+        // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
+        //  field is NTLMSSP_NEGOTIATE_UNICODE.
+        //  The A and B bits are evaluated together as follows:
+        //  - A==1: The choice of character set encoding MUST be Unicode.
+        //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
+        //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
+        //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
+
+        if (!ignore_bogus_nego_flags 
+        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_UNICODE)
+        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM)) {
+            self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_OEM;
+        }
 
         //// Expected
         //negotiateFlags "0xE28A8235"{
@@ -1858,6 +1891,8 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
                                         //    |NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY, // (19)
                                         //    |NTLMSSP_NEGOTIATE_ALWAYS_SIGN, // (15)
                                         //    |NTLMSSP_NEGOTIATE_NTLM, // (9)
+
+
         //    |NTLMSSP_NEGOTIATE_LM_KEY, // (7)
                                         //    |NTLMSSP_NEGOTIATE_SEAL, // (5)
                                         //    |NTLMSSP_NEGOTIATE_SIGN, // (4)
@@ -1870,8 +1905,8 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         LOG(LOG_INFO, "Nego Flags: size = %08x", self.negoFlags.flags);
         logNtlmFlags(self.negoFlags.flags);
         if (self.TargetName.buffer.size() > 0){
+            // forcing some flags
             self.negoFlags.flags |= (NTLMSSP_TARGET_TYPE_SERVER|NTLMSSP_NEGOTIATE_TARGET_INFO);
-            self.negoFlags.flags &= (~NTLMSSP_NEGOTIATE_LM_KEY)&(~NTLMSSP_NEGOTIATE_OEM);
         }
 //        logNtlmFlags(0xe20882b7);
 //        logNtlmFlags(0xe28A8235);

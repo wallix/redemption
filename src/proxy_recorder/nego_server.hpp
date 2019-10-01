@@ -88,7 +88,7 @@ public:
             {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, rand, timeobj,
         [this](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
             return this->get_password(user_av, domain_av, password_array);
-        }, 6, verbosity)
+        }, 6, false, verbosity)
     {
     }
 

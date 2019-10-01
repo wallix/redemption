@@ -286,8 +286,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     auto public_key = std::vector<uint8_t>{} << bytes_view("1245789652325415"_av); 
     
     NtlmServer ntlm_server(""_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av,public_key, 
-                          {},
-                          rand, timeobj, get_password, 6, true);
+                          {}, rand, timeobj, get_password, 6, true, true);
 
     std::vector<uint8_t> negotiate{ 
        0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04, //07......00.0,.*. !
@@ -389,7 +388,7 @@ RED_AUTO_TEST_CASE(TestClientToServerInteraction)
     auto public_key = std::vector<uint8_t>{} << bytes_view("1245789652325415"_av); 
     NtlmServer ntlm_server(""_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av,public_key, 
                            {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName},
-                           rand_server, timeobj_server, get_password, 6, true);
+                           rand_server, timeobj_server, get_password, 6, true, true);
 
     std::string user("Ulysse");
     std::string domain("Ithaque");
@@ -653,7 +652,8 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
 /* 0080 */ 0x2b, 0x2f, 0x03, 0xb5, 0x74, 0x5e, 0x35, 0x02, 0x03, 0x01, 0x00, 0x01,                          // +/..t^5.....
     }; 
     NtlmServer ntlm_server("RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,
-                           public_key, {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, rand, timeobj, get_password, 5, true);
+                           public_key, {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, 
+                           rand, timeobj, get_password, 5, false, true);
 
     std::vector<uint8_t> negotiate{ 
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
