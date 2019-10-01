@@ -343,12 +343,13 @@ RdpNegociation::RdpNegociation(
 
     strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
 
-
+#ifndef __EMSCRIPTEN__
     ::snprintf(this->license_dir_path, sizeof(this->license_dir_path), "%s/%s", app_path(AppPath::License), info.hostname);
     if (::recursive_create_directory(this->license_dir_path,
             S_IRWXU | S_IRWXG, -1) != 0) {
         LOG(LOG_INFO, "RdpNegociation: Failed to create directory: \"%s\"", this->license_dir_path);
     }
+#endif
 
     // Password is a multi-sz!
     // A multi-sz contains a sequence of null-terminated strings,

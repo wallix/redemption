@@ -964,7 +964,7 @@ namespace LIC
 
         for (uint32_t i = 0; i < ScopeList.ScopeCount; ++i)
         {
-            ScopeList.ScopeArray.emplace_back(std::move(LicensingBinaryBlob_Receiver(stream)));
+            ScopeList.ScopeArray.emplace_back(LicensingBinaryBlob_Receiver(stream));
         }
 
         return ScopeList;
