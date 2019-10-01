@@ -1,0 +1,116 @@
+TODO_Messages
+
+^TODO:([^:]+):(\d+): *(.*)
+
+import hudson.plugins.warnings.parser.Warning
+
+String fileName = matcher.group(1)
+String lineNumber = matcher.group(2)
+String message = matcher.group(3)
+
+for (String category : [
+ "ALERT", "SECURITY", "DANGER", "HACK", "ATTENTION",
+ "BUG", "FIXME", "TASK",
+ "CAUTION", "WARNING",
+ "TBD", "DEPRECATED",
+ "PERFORMANCE", "PERF",
+ "TESTING", "TEST",
+ "TODO", "NOTE", "NOTICE"
+]) {
+  if (message.contains(category)) {
+    return new Warning(fileName, Integer.parseInt(lineNumber), "message", category, message)
+  }
+}
+return new Warning(fileName, Integer.parseInt(lineNumber), "message", "TODO", message)
+
+TODO:core/RDP/x224.hpp:307: // BUG blah blah
+TODO:core/RDP/x224.hpp:307: /* BUG multi line * blah blah */
+
+
+
+Coverage_Warnings
+
+^WARNING[:]\s+(LOW COVERAGE|NO COVERAGE)\s+([^:]+)[:](\d+)\s(.*)$
+
+import hudson.plugins.warnings.parser.Warning
+
+String fileName = matcher.group(2)
+Integer lineNumber = matcher.group(3).toInteger()
+String category = matcher.group(1)
+String message = matcher.group(4)
+
+return new Warning(fileName, lineNumber, "message", category, message)
+
+WARNING: LOW COVERAGE core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp:138 [RDPDestBlt::str] 5/11
+
+
+
+Cppcheck
+
+^cppcheck \[([^:]+):(\d+)\]: \(([^)]+)\) \[([^\]]+)\] (.*)$
+
+import hudson.plugins.warnings.parser.Warning
+
+String fileName = matcher.group(1)
+Integer lineNumber = matcher.group(2).toInteger()
+String category = matcher.group(3)
+String type = matcher.group(4)
+String message = matcher.group(5)
+
+return new Warning(fileName, lineNumber, type, category, message)
+
+cppcheck [src/capture/FileToGraphic.hpp:998]: (style) [unreadVariable] Variable 'last_sent_record_now' is assigned a value that is never used.
+
+
+
+Compiler warning
+
+^([^:]+):(\d+):\d+: warning: (?:(.*) \[([^\]]+)\]|(.*))$
+
+import hudson.plugins.warnings.parser.Warning
+
+String fileName = matcher.group(1)
+String lineNumber = matcher.group(2)
+String category = matcher.group(4)
+String message = matcher.group(3)
+
+if (!message) {
+  message = matcher.group(5)
+  category = "unspecified"
+}
+
+return new Warning(fileName, Integer.parseInt(lineNumber), "gcc/clang warning", category, message)
+
+test.cpp:2:11: warning: ‘i’ is used uninitialized in this function [-Wuninitialized]
+
+
+
+Valgrind leak
+
+^valgrind leak: ([^ ]+): (.*)
+
+import hudson.plugins.warnings.parser.Warning
+
+String fileName = matcher.group(1) + ".exe"
+String category = "leak"
+String message = matcher.group(2)
+
+return new Warning(fileName, 0, "valgrind leak", category, message)
+
+valgrind leak: ./a.out: definitely lost: 4 bytes in 1 blocks
+
+
+
+Valgrind error
+
+^valgrind error: ([^ ]+): (.*)
+
+import hudson.plugins.warnings.parser.Warning
+
+String fileName = matcher.group(1) + ".exe"
+String category = "valgrind-error"
+String message = matcher.group(2)
+
+return new Warning(fileName, 0, "valgrind error", category, message)
+
+valgrind error: ./a.out: ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
