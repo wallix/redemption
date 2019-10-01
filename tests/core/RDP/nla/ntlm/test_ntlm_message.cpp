@@ -333,7 +333,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     ChallengeMsgDuplicate = recvNTLMChallengeMessage(tosend.get_bytes());
 
-    RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 3792339509);
     // ChallengeMsgDuplicate.negoFlags.print();
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.buffer.size(), 8);

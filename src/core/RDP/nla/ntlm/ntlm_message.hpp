@@ -1902,35 +1902,41 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         //}
 
 
-        LOG(LOG_INFO, "Nego Flags: size = %08x", self.negoFlags.flags);
-        logNtlmFlags(self.negoFlags.flags);
+        // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+        // and set the matching flag accordingly
         if (self.TargetName.buffer.size() > 0){
             // forcing some flags
-            self.negoFlags.flags |= (NTLMSSP_TARGET_TYPE_SERVER|NTLMSSP_NEGOTIATE_TARGET_INFO);
+            self.negoFlags.flags |= (NTLMSSP_TARGET_TYPE_SERVER);
         }
-//        logNtlmFlags(0xe20882b7);
-//        logNtlmFlags(0xe28A8235);
+
+        if (!ignore_bogus_nego_flags){
+            // Means TargetInfo contains something. As we indeed do have something
+            // this flag should always be set here (except in bogus configurations)
+            self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+        }
+
         logNtlmFlags(self.negoFlags.flags);
         stream.out_uint32_le(self.negoFlags.flags);
 
-        LOG(LOG_INFO, "Server Challenge");
         hexdump_d(self.serverChallenge);
 
         stream.out_copy_bytes(self.serverChallenge);
         stream.out_clear_bytes(8);
 
         self.TargetInfo.buffer.clear();
-        LOG(LOG_INFO, "before AvPairField");
         hexdump_d(self.TargetInfo.buffer);
+
+
+
 
         for (auto & avp: self.AvPairList) {
             int i = 0;
             push_back_array(self.TargetInfo.buffer, out_uint16_le(avp.id));
             push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
             push_back_array(self.TargetInfo.buffer, avp.data);
-            LOG(LOG_INFO, "adding AvPairField %d %d size=%u", i, int(avp.id), unsigned(avp.data.size()));
-            hexdump_d(avp.data);
-            hexdump_d(self.TargetInfo.buffer);
+//            LOG(LOG_INFO, "adding AvPairField %d %d size=%u", i, int(avp.id), unsigned(avp.data.size()));
+//            hexdump_d(avp.data);
+//            hexdump_d(self.TargetInfo.buffer);
         }
         push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
         push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
