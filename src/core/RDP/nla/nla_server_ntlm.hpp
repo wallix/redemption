@@ -79,7 +79,7 @@ public:
     std::vector<uint8_t> netbiosDomainName;
     std::vector<uint8_t> dnsComputerName;
     std::vector<uint8_t> dnsDomainName;
-    uint8_t credssp_version;
+    uint32_t credssp_version;
 //    TSRequest ts_request = {6}; // Credssp Version 6 Supported
     bool ignore_bogus_nego_flags = false;
 private:
@@ -259,7 +259,8 @@ public:
             {
                 std::vector<uint8_t> result;
                 /* receive authentication token */
-                TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_version);
+                TSRequest ts_request_in = recvTSRequest(in_data);
+                                    
                 this->error_code = ts_request_in.error_code;
 
                 if (ts_request_in.negoTokens.size() < 1) {
@@ -383,7 +384,7 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL::SEC_I_CONTINUE_NEEDED");
                     this->state_accept_security_context = SEC_I_CONTINUE_NEEDED;
 
-                    result = emitTSRequest(ts_request_in.version,
+                    result = emitTSRequest(std::min(ts_request_in.version,this->credssp_version),
                                            ts_request_in.negoTokens,
                                            ts_request_in.authInfo,
                                            ts_request_in.pubKeyAuth,
@@ -639,7 +640,7 @@ public:
 
                     ts_request_in.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
-                    result = emitTSRequest(ts_request_in.version,
+                    result = emitTSRequest(std::min(ts_request_in.version,this->credssp_version),
                                            ts_request_in.negoTokens,
                                            ts_request_in.authInfo,
                                            ts_request_in.pubKeyAuth,
@@ -668,7 +669,7 @@ public:
             case ServerAuthenticateData::Final:
             {
                 LOG_IF(this->verbose, LOG_INFO, "rdpNTLMServer::server_authenticate_final");
-                TSRequest ts_request_in_final = recvTSRequest(in_data, this->credssp_version);
+                TSRequest ts_request_in_final = recvTSRequest(in_data);
                 this->error_code = ts_request_in_final.error_code;
 
                 if (ts_request_in_final.authInfo.size() < 1) {

@@ -805,24 +805,21 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
     return result;
 }
 
-inline TSRequest recvTSRequest(bytes_view data, uint32_t version = 6) 
+inline TSRequest recvTSRequest(bytes_view data) 
 {
     LOG(LOG_INFO, "recv TSRequest full dump++++++++++++++++++++++++++++++++");
     hexdump_d(data);
     LOG(LOG_INFO, "recv TSRequest hexdump - START PARSING DATA+++++++++++++");
 
     InStream stream(data);
-    TSRequest self(version);
+    TSRequest self(6);
 
     /* TSRequest */
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
 
     // version    [0] INTEGER,
-    uint32_t remote_version = BER::read_integer_field(stream, 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
-    if (remote_version < self.use_version) {
-        self.use_version = remote_version;
-    }
-    LOG(LOG_INFO, "Credssp recvTSRequest() Remote Version %u, Negotiated version %u", remote_version, self.use_version);
+    self.use_version = BER::read_integer_field(stream, 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
+    LOG(LOG_INFO, "Credssp recvTSRequest() Remote Version %u", self.use_version);
 
     // [1] negoTokens (NegoData) OPTIONAL
     if (BER::check_ber_ctxt_tag(stream, 1)) {

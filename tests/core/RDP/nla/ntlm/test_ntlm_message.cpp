@@ -265,9 +265,9 @@ RED_AUTO_TEST_CASE(TestChallenge)
         0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet2), 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet2));
 
-    RED_CHECK_EQUAL(ts_req.version, 3);
+    RED_CHECK(ts_req.version == 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x80);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.error_code, 0);
@@ -275,6 +275,8 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     StaticOutStream<65536> to_send2;
 
+    ts_req.version = 3;
+    
     RED_CHECK_EQUAL(to_send2.get_offset(), 0);
     auto v = emitTSRequest(ts_req.version,
                            ts_req.negoTokens,
@@ -362,15 +364,16 @@ RED_AUTO_TEST_CASE(TestNegotiate)
         0x0f
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet), 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet));
 
-    RED_CHECK_EQUAL(ts_req.version, 3);
+    RED_CHECK_EQUAL(ts_req.version, 6);
 
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
     RED_CHECK_EQUAL(ts_req.error_code, 0);
 
+    ts_req.version = 3;
 
     StaticOutStream<65536> to_send;
 
@@ -619,13 +622,15 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet3),3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet3));
 
-    RED_CHECK_EQUAL(ts_req.version, 3);
+    RED_CHECK_EQUAL(ts_req.version, 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x102);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.error_code, 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
+
+    ts_req.version = 3;
 
     StaticOutStream<65536> to_send3;
     RED_CHECK_EQUAL(to_send3.get_offset(), 0);
