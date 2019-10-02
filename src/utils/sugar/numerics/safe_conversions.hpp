@@ -270,6 +270,9 @@ using is_safe_convertible = std::integral_constant<bool, detail::is_safe_convert
     detail::underlying_type_or_integral_t<To>
 >::value>;
 
+template<class From, class To>
+inline constexpr bool is_safe_convertible_v = is_safe_convertible<From, To>::value;
+
 template <class Dst, class Src>
 constexpr Dst safe_cast(Src value) noexcept
 {

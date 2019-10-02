@@ -209,6 +209,22 @@ void inplace_emit(Buf& buf, proto::tuple<Param...> const& def, Xs const&... xs)
 
 class native {};
 class view_buffer {};
+template<class T> struct ref { T& x; };
+template<class T> ref(T&) -> ref<T>;
+
+PROTO_IS_TYPE1(ref);
+
+
+inline std::ostream& operator<<(std::ostream& out, native const&)
+{
+    return out << "native";
+}
+
+template<class T>
+inline std::ostream& operator<<(std::ostream& out, ref<T> const& ref)
+{
+    return out << "ref(" << ref.x << ")";
+}
 
 template<class BasicType, class Binding, class UnCVBind>
 struct real_type_impl;
@@ -752,7 +768,12 @@ namespace test
         template<class Int, class Endianess, class T>
         struct stream_readable::value_variable_builder<datas::types::Integer<Int, Endianess>, T>
         {
-            static Int& make(Int& x)
+            static Int make(native)
+            {
+                return Int();
+            }
+
+            static ref<Int> make(ref<Int> x)
             {
                 return x;
             }
@@ -806,11 +827,16 @@ namespace test
         template<class Int, class Endianess>
         struct stream_readable::reader<datas::types::Integer<Int, Endianess>>
         {
-            static void read(InStream& in, bytes_size_ref ref)
+            static void read(InStream& in, bytes_size_ref bytes_ref)
             {
                 Int x;
                 read(in, x);
-                ref.bytes = {ref.bytes.data(), safe_cast<std::size_t>(x)};
+                bytes_ref.bytes = {bytes_ref.bytes.data(), safe_cast<std::size_t>(x)};
+            }
+
+            static void read(InStream& in, ref<Int> ref)
+            {
+                read(in, ref.x);
             }
 
             static void read(InStream& in, Int& x)
@@ -829,9 +855,9 @@ namespace test
         template<>
         struct stream_readable::reader<datas::types::BinaryData>
         {
-            static void read(InStream& in, bytes_data_ref ref)
+            static void read(InStream& in, bytes_data_ref bytes_ref)
             {
-                in.in_copy_bytes(ref.bytes);
+                in.in_copy_bytes(bytes_ref.bytes);
             }
         };
     }
@@ -1016,11 +1042,23 @@ namespace test
             (read(v), ...);
         });
 
+        auto unref = [](auto x) -> decltype(auto) {
+            if constexpr (is_ref_v<decltype(x)>)
+            {
+                // lvalue
+                return (x.x);
+            }
+            else
+            {
+                return x;
+            }
+        };
+
         auto f = [&](auto var){
             using Var = decltype(var);
             return typename decltype(
-                name_t<Var>::mem()(wrap_type<std::decay_t<detail::type_t<value_type_t<Var>>>>())
-            )::type{var.value.x};
+                name_t<Var>::mem()(wrap_type<decltype(unref(var.value.x))>())
+            )::type{unref(var.value.x)};
         };
 
         return tx.apply([f](auto... vars){
@@ -1047,8 +1085,9 @@ int main()
         proto::param<types::AsciiString<types::U16_le>, decltype(s.c)>{},
 
         proto::lazy_value<values::types::SizeBytes<proto::as_param>, decltype(s.c)>{},
+        proto::lazy_value<values::types::Data<proto::as_param>, decltype(s.c)>{},
 
-        proto::lazy_value<values::types::Data<proto::as_param>, decltype(s.c)>{}
+        proto::lazy_value<proto::as_param, decltype(s.a)>{}
     );
 
     auto print_list = [](char const* s, auto t){
@@ -1079,9 +1118,11 @@ int main()
     char strbuf[10];
     a = '0';
     b = 0;
-    auto datas = test::inplace_recv(out, def, s.b = b, s.a = a, s.c = make_array_view(strbuf));
+    auto datas = test::inplace_recv(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
     println("\n", type_name(datas));
-    println("a = ", std::hex, datas.a, " ", type_name(datas.a));
-    println("b = ", std::hex, datas.b, " ", type_name(datas.b));
-    println("c = ", datas.c, " ", type_name(datas.c));
+    println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+    println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
+    println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+    println("a = ", a);
+    println("b = ", b);
 }
