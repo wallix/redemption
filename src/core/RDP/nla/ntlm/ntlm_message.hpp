@@ -1812,6 +1812,19 @@ public:
 };
 
 
+inline std::vector<uint8_t> emitTargetInfo(const NtlmAvPairList & avPairList)
+{
+    std::vector<uint8_t> target_info;
+    for (auto & avp: avPairList) {
+        int i = 0;
+        target_info << ::out_uint16_le(avp.id) 
+                    << ::out_uint16_le(avp.data.size())
+                    << avp.data;
+    }
+    target_info << ::out_uint16_le(MsvAvEOL) << std::array<uint8_t,2>{0,0};
+    return target_info;
+}
+
 inline std::vector<uint8_t> emitNTLMChallengeMessage(NTLMChallengeMessage & self, bool ignore_bogus_nego_flags)
 {
     std::vector<uint8_t> result;
@@ -1886,14 +1899,7 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(NTLMChallengeMessage & self
     result << self.serverChallenge
            << std::array<uint8_t,8>{0,0,0,0,0,0,0,0};
 
-    std::vector<uint8_t> target_info;
-    for (auto & avp: self.AvPairList) {
-        int i = 0;
-        target_info << ::out_uint16_le(avp.id) 
-                    << ::out_uint16_le(avp.data.size())
-                    << avp.data;
-    }
-    target_info << ::out_uint16_le(MsvAvEOL) << std::array<uint8_t,2>{0,0};
+    std::vector<uint8_t> target_info = emitTargetInfo(self.AvPairList);
 
     result << ::out_uint16_le(target_info.size())
            << ::out_uint16_le(target_info.size())
