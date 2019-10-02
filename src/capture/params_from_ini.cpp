@@ -27,38 +27,16 @@
 
 VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, const Inifile & ini)
 {
-    auto create_params = [&](auto... xs) {
-        return VideoParams{
-            xs...,
-            ini.get<cfg::globals::codec_id>(),
-            ini.get<cfg::globals::notimestamp>(),
-            ini.get<cfg::globals::capture_chunk>(),
-            ini.get<cfg::video::bogus_vlc_frame_rate>(),
-            video_break_interval,
-            ini.get<cfg::debug::ffmpeg>()
-        };
+    return VideoParams{
+        ini.get<cfg::video::framerate>(),
+        ini.get<cfg::video::codec_id>(),
+        ini.get<cfg::video::ffmpeg_options>(),
+        ini.get<cfg::video::notimestamp>(),
+        ini.get<cfg::globals::capture_chunk>(),
+        ini.get<cfg::video::bogus_vlc_frame_rate>(),
+        video_break_interval,
+        ini.get<cfg::debug::ffmpeg>()
     };
-    switch (ini.get<cfg::globals::video_quality>()) {
-        case Level::low: return create_params(
-            Level::low,
-            ini.get<cfg::video::l_framerate>(),
-            ini.get<cfg::video::l_qscale>(),
-            ini.get<cfg::video::l_bitrate>()
-        );
-        case Level::high: return create_params(
-            Level::high,
-            ini.get<cfg::video::h_framerate>(),
-            ini.get<cfg::video::h_qscale>(),
-            ini.get<cfg::video::h_bitrate>()
-        );
-        case Level::medium:
-        default: return create_params(
-            Level::medium,
-            ini.get<cfg::video::m_framerate>(),
-            ini.get<cfg::video::m_qscale>(),
-            ini.get<cfg::video::m_bitrate>()
-        );
-    }
 }
 
 OcrParams ocr_params_from_ini(const Inifile & ini)

@@ -31,14 +31,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "notimestamp")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::notimestamp&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "encryptionLevel")) {
             ::configs::parse_and_log(
                 context, key,
@@ -212,22 +204,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::globals::bogus_refresh_rect&>(this->variables).value,
                 ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "codec_id")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::codec_id&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "video_quality")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::video_quality&>(this->variables).value,
-                ::configs::spec_type<Level>{},
                 av
             );
         }
@@ -1660,75 +1636,35 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "l_bitrate")) {
+        else if (0 == strcmp(key, "codec_id")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::video::l_bitrate&>(this->variables).value,
+                static_cast<cfg::video::codec_id&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "framerate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::framerate&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "l_framerate")) {
+        else if (0 == strcmp(key, "ffmpeg_options")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::video::l_framerate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                static_cast<cfg::video::ffmpeg_options&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "l_qscale")) {
+        else if (0 == strcmp(key, "notimestamp")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::video::l_qscale&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "m_bitrate")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::m_bitrate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "m_framerate")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::m_framerate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "m_qscale")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::m_qscale&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "h_bitrate")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::h_bitrate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "h_framerate")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::h_framerate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "h_qscale")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::h_qscale&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                static_cast<cfg::video::notimestamp&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 av
             );
         }

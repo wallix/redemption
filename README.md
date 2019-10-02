@@ -67,10 +67,9 @@ Submodule ($ `git submodule update --init`):
 - libavutil-dev
 - libswscale-dev
 - libx264-dev
-- libbz2-dev
 
 ```sh
-apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libbz2-dev
+apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev
 ```
 
 <!-- ok with 53 (?) and 54 version-->
@@ -107,6 +106,10 @@ Verbose tests:
 
 $ `export REDEMPTION_LOG_PRINT=1`\
 $ `bjam tests`
+
+- `REDEMPTION_LOG_PRINT=e` for error and debug only
+- `REDEMPTION_LOG_PRINT=d` for debug only
+- `REDEMPTION_LOG_PRINT=w` for other than info
 
 Note: `bjam tests.norec`, `bjam tests/front.norec` execute files directly in tests directory, but not recursively.
 

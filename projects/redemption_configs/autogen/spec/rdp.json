@@ -118,10 +118,9 @@
         {
           "name": "remote_programs_disconnect_message_delay",
           "type": "integer",
-          "min": 0,
+          "min": 3000,
+          "max": 120000,
           "default": 3000,
-          "subtype": "duration",
-          "unit": "ms",
           "advanced": true,
           "description": "Delay before showing disconnect message after the last RemoteApp window is closed."
         },

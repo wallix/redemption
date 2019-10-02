@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
@@ -372,7 +372,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
@@ -580,7 +580,7 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
@@ -758,7 +758,7 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -936,7 +936,7 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1087,7 +1087,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1239,7 +1239,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1376,7 +1376,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1516,7 +1516,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL("/tmp/redemption-sesman-sock",    ini.get<cfg::globals::authfile>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
+    RED_CHECK_EQUAL(false,                            ini.get<cfg::video::notimestamp>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());

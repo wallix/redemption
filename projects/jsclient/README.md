@@ -64,15 +64,20 @@ node test.js
 
 ## Run bjam
 
-    bjam -j7 toolset=clang debug js_client
+    bjam -j7 toolset=clang js_client
 
 Or with tests:
 
-    bjam -j7 toolset=clang debug
+    bjam -j7 toolset=clang
+
+Debug mode:
+
+    bjam -j7 toolset=clang debug js_client
+
 
 ## Install
 
-    bjam -j7 toolset=clang debug -s copy_application_mode=symbolic rdpclient
+    bjam -j7 toolset=clang -s copy_application_mode=symbolic rdpclient
 
 Set module name with `-s JS_MODULE_NAME=xxx`
 
@@ -105,4 +110,18 @@ cargo build --release --bin websocat
 
 ## Open rdpclient.html
 
-`bjam open_client` or `bjam open_client -s browser='my browser' -s username=x -p password=x`
+Create a server at build directory (see `bjam toolset=clang cwd`).
+
+    cd "$(bjam toolset=clang cwd | sed '/^CWD/!d;s/^CWD: //')"
+    python -m SimpleHTTPServer 7453 &
+    xdg-open client.html
+
+Or run
+
+    ./tools/open_client.sh
+
+    ./tools/open_client.sh debug
+
+Or with parameters
+
+    BROWSER=... WS=... USER=... PASSWORD=... PORT=... ./tools/open_client.sh

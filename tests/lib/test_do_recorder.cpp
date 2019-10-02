@@ -33,8 +33,17 @@
 #include <iostream>
 #include <sstream>
 
+namespace
+{
 
-inline int hmac_fn(uint8_t * buffer)
+struct Codec
+{
+    char const* name;
+    char const* options;
+};
+constexpr Codec flv{"flv", "flags=+qscale b=30000"};
+
+int hmac_fn(uint8_t * buffer)
 {
     // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
     uint8_t hmac_key[] = {
@@ -47,7 +56,7 @@ inline int hmac_fn(uint8_t * buffer)
     return 0;
 }
 
-inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
+int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
 {
     // in real uses actual trace_key is derived from base and some master key
     (void)base;
@@ -63,6 +72,8 @@ inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned ol
     memcpy(buffer, trace_key, sizeof(trace_key));
     return 0;
 }
+
+} // anonymous namespace
 
 #define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output, output_error) { \
     int argc = sizeof(argv)/sizeof(char*);                                        \
@@ -868,7 +879,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorder, wd)
         "--video",
         "--full",
         "--video-break-interval", "500",
-        "--video-codec", "flv",
+        "--video-codec", flv.name,
+        "--video-codec-options", flv.options,
         "--disable-bogus-vlc",
     };
 
@@ -901,7 +913,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderVlc, wd)
         "--video",
         "--full",
         "--video-break-interval", "500",
-        "--video-codec", "flv",
+        "--video-codec", flv.name,
+        "--video-codec-options", flv.options,
         "--bogus-vlc",
     };
 
@@ -941,8 +954,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
 
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.png"), 26981);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.png"), 27536);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.mp4"), 11226843 +- 100_v);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.mp4"), 86037 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.mp4"), 5806667 +- 10_percent);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.mp4"), 88098 +- 2000_v);
     RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.pgs"), R"js({"percentage":100,"eta":0,"videos":1})js"_av);
     RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.meta"), "2016-02-18 18:27:01 + (break)\n"_av);
 }
@@ -1032,9 +1045,9 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
         str_concat("Output file is \"", output, ".mwrm\".\n\n"), ""_av);
 
     RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk-meta.meta"), "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n"_av);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.mp4"), 411572 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.mp4"), 275000 +- 7_percent);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.png"), 15353 /*+- 0_v*/);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 734140 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 400000 +- 7_percent);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.png"), 40151 /*+- 0_v*/);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta.pgs"),        37 /*+- 0_v*/);
 }
@@ -1058,7 +1071,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
         str_concat("Output file is \"", output, ".mwrm\".\n\n"), ""_av);
 
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.mp4"), 17275);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.mp4"), 24536 +- 200_v);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.png"), 3972);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.meta"),       0);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.pgs"),        37);
@@ -1083,7 +1096,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
         str_concat("Output file is \"", output, ".mwrm\".\n\n"), ""_av);
 
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.mp4"), 16476);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.mp4"), 21265 +- 200_v);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.png"), 3080);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.meta"),       0);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.pgs"),        37);

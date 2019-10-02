@@ -38,6 +38,10 @@ JAM_INCLUDE_PATH ?= jam ;
 #   export REDEMPTION_LOG_PRINT=1
 #   bjam tests
 #
+#   REDEMPTION_LOG_PRINT=e  for error and debug only
+#   REDEMPTION_LOG_PRINT=d  for debug only
+#   REDEMPTION_LOG_PRINT=w  for other than info
+#
 #############################
 
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;

@@ -1,3 +1,12 @@
+redemption (7.3.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Increase the maximum delay before showing Remote Program disconnection message.
+  * Don't stop recording in case of session redirection.
+  * Fix sending compressed bitmap cache.
+  * Support of Session Shadowing.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Sep 2019 16:10:22 +0200
+
 redemption (7.2.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * 22115: Add log in siem/session log if connection to validator server fail

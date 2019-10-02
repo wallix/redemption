@@ -13,28 +13,27 @@ set -ex
 # Cleaning
 #rm -fr cmake_temp
 
-git clean -f
+git clean -fd
 git submodule update --init
 
-# apt install lua luarocks
-# luarocks --local install lpeg
-# lua >= 5.0
-eval `luarocks path`
-find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/c++-analyzer/check_log6.lua '{}' '+'
-
-./tools/c++-analyzer/unused_config.sh
+./tools/c++-analyzer/redemption-analyzer.sh
 
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
+# use libstdc++-8 with clang-8 because version 9 fails with -D_GLIBCXX_DEBUG (ok with clang-9)
+libstdcxx_compact_version=8
+mkdir -p \
+    libstdc++-compact/include/c++ \
+    libstdc++-compact/lib/gcc/x86_64-unknown-linux-gnu
+ln -s /usr/include/c++/$libstdcxx_compact_version libstdc++-compact/include/c++
+ln -s /usr/lib/gcc/x86_64-linux-gnu/$libstdcxx_compact_version libstdc++-compact/lib/gcc/x86_64-unknown-linux-gnu
+
 # BJAM Build Test
-echo -e "using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 6.0 : clang++-6.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-valgrind_compiler=gcc-8
-toolset_gcc=toolset=gcc-8
-toolset_clang=toolset=clang-6.0
-export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
-export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
-export FFMPEG_LINK_MODE=static
+echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 8.0 : clang++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING --gcc-toolchain=libstdc++-compact ;" > project-config.jam
+valgrind_compiler=gcc-9
+toolset_gcc=toolset=gcc-9
+toolset_clang=toolset=clang-8.0
 
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 
@@ -69,7 +68,7 @@ mkdir bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
-#bjam -q $toolset_gcc cxxflags=-g
+# build $toolset_gcc cxxflags=-g
 # multi-thread
 big_mem='exe libs
   tests/capture
@@ -79,9 +78,9 @@ big_mem='exe libs
   tests/client_redemption/client_channels
   tests/mod/rdp.norec
   tests/mod/vnc.norec'
-build -q $toolset_gcc cxxflags=-g -j2 ocr_tools
-build -q $toolset_gcc cxxflags=-g $big_mem
-build -q $toolset_gcc cxxflags=-g -j2
+build $toolset_gcc cxxflags=-g -j2 ocr_tools
+build $toolset_gcc cxxflags=-g $big_mem
+build $toolset_gcc cxxflags=-g -j2
 
 dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
   echo 'New file(s):'
@@ -90,13 +89,13 @@ dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
 }
 
 # debug with coverage
-build -q $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
+build $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
 
-#bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
+#bjam -a -q toolset=clang-8 -sNO_FFMPEG=1 san
 # multi-thread
-build -q $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
-build -q $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
-build -q $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
+build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
+build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
+build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
 
 # cppcheck
 # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
@@ -115,7 +114,7 @@ find \
 #set -o pipefail
 
 # clang analyzer
-CLANG_TIDY=clang-tidy-6.0 ./tools/c++-analyzer/clang-tidy \
+CLANG_TIDY=clang-tidy-8 ./tools/c++-analyzer/clang-tidy \
   | sed -E '/^(.+\/|)modules\//,/\^/d'
 
 

@@ -49,7 +49,8 @@ namespace
     }
 
     // TODO constexpr with C++20
-    inline auto const sorted_log_id_string = []() noexcept {
+    // TODO sould be a hash map
+    inline auto const sorted_log_id_strings = []() noexcept {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
         std::array pairs{
@@ -60,6 +61,27 @@ namespace
         REDEMPTION_DIAGNOSTIC_POP
 
         std::sort(begin(pairs), end(pairs), pair_comparator());
+
+        return pairs;
+    }();
+
+    // TODO constexpr with C++20
+    inline auto const sorted_old_log_names = []() noexcept {
+        using namespace std::string_view_literals;
+        std::array pairs{
+            "EndingInProgress"sv,
+            "PasswordTextBox.SetFocus"sv,
+            "ConsentUI.IsVisible"sv,
+            "InputLanguage"sv,
+            "NewProcess"sv,
+            "CompletedProcess"sv,
+            "OutboundConnectionBlocked"sv,
+            "ForegroundWindowChanged"sv,
+            "Button.Clicked"sv,
+            "Edit.Changed"sv,
+        };
+
+        std::sort(begin(pairs), end(pairs));
 
         return pairs;
     }();
@@ -201,20 +223,24 @@ bool AgentDataExtractor::extract_list(Av data)
             return false;
         };
 
-        std::string_view order_sv{order.data(), data.size()};
-        auto it = std::lower_bound(begin(sorted_log_id_string), end(sorted_log_id_string),
+        std::string_view order_sv{order.data(), order.size()};
+        auto it = std::lower_bound(begin(sorted_log_id_strings), end(sorted_log_id_strings),
             Pair{order_sv, LogId()}, pair_comparator());
 
-        if (it == end(sorted_log_id_string) || it->first != order_sv) {
-            LOG(LOG_WARNING,
-                "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
-                int(data.size()), data.data());
-            return {};
+        if (it == end(sorted_log_id_strings) || it->first != order_sv) {
+            if (std::lower_bound(begin(sorted_old_log_names), end(sorted_old_log_names), order_sv)
+                == end(sorted_old_log_names)
+            ) {
+                LOG(LOG_WARNING,
+                    "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
+                    int(data.size()), data.data());
+            }
+            return false;
         }
 
         this->id = it->second;
 
-        switch (id) {
+        switch (this->id) {
             case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
             case LogId::UAC_PROMPT_BECOME_VISIBLE:
             case LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS:

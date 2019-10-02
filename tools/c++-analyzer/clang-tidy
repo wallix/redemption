@@ -18,8 +18,13 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -cppcoreguidelines-pro-type-union-access,
 -cppcoreguidelines-pro-type-vararg,
 -cppcoreguidelines-special-member-functions,
+-cppcoreguidelines-avoid-magic-numbers,
+-cppcoreguidelines-avoid-c-arrays,
+-cppcoreguidelines-non-private-member-variables-in-classes,
 -fuchsia-default-arguments,
 -fuchsia-overloaded-operator,
+-fuchsia-trailing-return,
+-fuchsia-multiple-inheritance,
 -google-build-using-namespace,
 -google-explicit-constructor,
 -google-readability-namespace-comments,
@@ -42,18 +47,26 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -hicpp-use-equals-delete,
 -hicpp-use-override,
 -hicpp-vararg,
+-hicpp-uppercase-literal-suffix,
 -llvm-header-guard,
 -llvm-include-order,
 -misc-macro-parentheses,
 -misc-unused-parameters,
+-misc-non-private-member-variables-in-classes,
 -modernize-raw-string-literal,
 -modernize-use-auto,
 -modernize-use-override,
+-modernize-avoid-c-arrays,
 -readability-avoid-const-params-in-decls,
 -readability-braces-around-statements,
 -readability-implicit-bool-conversion,
--readability-static-accessed-through-instance,' \
--config='{CheckOptions: [{key: llvm-namespace-comment.ShortNamespaceLines, value: 10}]}' \
+-readability-static-accessed-through-instance,
+-readability-magic-numbers,
+' \
+-config='{CheckOptions: [
+{key: llvm-namespace-comment.ShortNamespaceLines, value: 10}
+{key: readability-uppercase-literal-suffix.NewSuffixes, value: L;LL}
+]}' \
 -header-filter='.*' \
 $(find src/ -name '*.cpp' \
     -a -not -path 'src/ftests/*' \
@@ -84,7 +97,8 @@ $(find tests/ -name 'test_*.cpp' \
 -DFIXTURES_PATH='"mypath" /*NOLINT*/' \
 -DREDEMPTION_DECL_LOG_TEST \
 -DBOOST_AUTO_TEST_MAIN \
--DBOOST_TEST_DYN_LINK
+-DBOOST_TEST_DYN_LINK \
+-DFAST_CHECK=1
 
 # highlighting
 # sed "s#`pwd`/##" | colout '(^[pst][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w

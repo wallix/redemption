@@ -52,6 +52,8 @@ inc_test_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for
 src_requirements = dict((
     ('src/lib/scytale.cpp', inc_test_dep),
     ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
+    # otherwise std::bad_alloc or mmap error
+    ('tests/front/test_front.cpp', Dep(linkflags=['<noopstacktrace>on'])),
 ))
 
 obj_requirements = dict((

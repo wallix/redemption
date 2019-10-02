@@ -172,7 +172,6 @@ alias z.bc ;
 alias png.bc : libpng.bc z.bc ;
 alias ffmpeg.bc ;
 alias ppocr.bc ;
-alias boost_stacktrace.bc ;
 
 # objjs program_options.bc : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
@@ -280,12 +279,9 @@ app common_js : rdp_graphics.js redemption_load_module.js : _dummy ;
 app rdpclient : to_scancode.js client.html : common_js ;
 app rdpplayer : player.html : common_js : player_server.py ;
 
-constant browser : [ setvar browser : xdg-open ] ;
-constant username : [ setvar username : '' ] ;
-constant password : [ setvar password : '' ] ;
-actions open_client
+actions cwd
 {
-    $(browser) $(>[1])"?user="$(username)"&pass="$(password)
+    echo "CWD: $(>[1]:D)"
 }
-make open_client : client.html client.html : @open_client ;
-explicit open_client ;
+make cwd : _dummy : @cwd ;
+explicit cwd ;
