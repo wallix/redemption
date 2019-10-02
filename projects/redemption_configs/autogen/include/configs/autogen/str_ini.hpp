@@ -9,6 +9,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #glyph_cache = 0
 
+# Service must be restarted
+# Warning: the port set in this field must not be already used, otherwise the service will not run.
 # min = 0
 #_iptables
 #_advanced

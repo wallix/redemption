@@ -125,7 +125,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, NL, type_<std::string>(), "target_application_password");
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "glyph_cache", set(false));
-        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", set(3389));
+        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Service must be restarted\nWarning: the port set in this field must not be already used, otherwise the service will not run."}, set(3389));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));

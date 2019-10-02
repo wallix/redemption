@@ -8,6 +8,8 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 #_advanced
 glyph_cache = boolean(default=False)
 
+# Service must be restarted
+# Warning: the port set in this field must not be already used, otherwise the service will not run.
 #_iptables
 #_advanced
 port = integer(min=0, default=3389)
