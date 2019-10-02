@@ -289,11 +289,13 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
                     NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(ts_request_in.negoTokens);
 
-                    uint32_t const negoFlag = negotiate_message.negoFlags.flags;
-                    uint32_t const mask = NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
+                    uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                                |NTLMSSP_NEGOTIATE_NTLM
+                                |NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                                |NTLMSSP_NEGOTIATE_UNICODE;
 
-                    if ((negoFlag & mask) != mask) {
-                        LOG_IF(this->verbose, LOG_INFO, "NTLM Negotiate : unsupported negotiate flag %u", negoFlag);
+                    if ((negotiate_message.negoFlags.flags & mask) != mask) {
+                        LOG_IF(this->verbose, LOG_INFO, "NTLM Negotiate : unsupported negotiate flag %u", negotiate_message.negoFlags.flags);
                         this->state = credssp::State::Err;
                         return {};
                     }
@@ -320,12 +322,11 @@ public:
                         out_stream.out_uint32_le(tv.tv_sec);
                     }
 
-                    challenge_message.negoFlags.flags = negoFlag;
-                    if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+                    uint32_t negoFlags = negotiate_message.negoFlags.flags;
+                    // flags from negotiate mandatory: NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
+                    if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
                         challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
                     }
-
-                    auto negoFlags = challenge_message.negoFlags.flags;
 
                     if (!ignore_bogus_nego_flags 
                     && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
