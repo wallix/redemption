@@ -204,6 +204,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Service must be restarted <br/>
+    /// Warning: the port set in this field must not be already used, otherwise the service will not run. <br/>
     /// type: unsigned int <br/>
     /// value{3389} <br/>
     struct globals::port {
