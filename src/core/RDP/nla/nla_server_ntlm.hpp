@@ -403,7 +403,7 @@ public:
                     }
 
                     auto target_info = emitTargetInfo(challenge_message.AvPairList);
-                    auto challenge = emitNTLMChallengeMessage(challenge_message, negoFlags, target_info, this->ignore_bogus_nego_flags);
+                    auto challenge = emitNTLMChallengeMessage(challenge_message, negoFlags, target_info);
                     auto negoTokens = std::vector<uint8_t>{} << challenge;
 
                     this->SavedChallengeMessage = challenge;

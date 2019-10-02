@@ -382,7 +382,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     logNtlmFlags(negoFlags);
     
-    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, negoFlags, target_info, ignore_bogus_nego_flags);
+    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, negoFlags, target_info);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
@@ -1719,7 +1719,7 @@ public:
 
         logNtlmFlags(negoFlags);
         
-        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, negoFlags, target_info, ignore_bogus_nego_flags);
+        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, negoFlags, target_info);
         
         this->SavedChallengeMessage = challenge;
         output_buffer = std::move(challenge);
@@ -2126,7 +2126,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     logNtlmFlags(negoFlags);
     
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, target_info, ignore_bogus_nego_flags);
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, target_info);
     client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge);
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
@@ -2314,7 +2314,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
 
     logNtlmFlags(negoFlags);
     
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, target_info, ignore_bogus_nego_flags);
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, target_info);
     server_context.SavedChallengeMessage = challenge;
 
     client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge);

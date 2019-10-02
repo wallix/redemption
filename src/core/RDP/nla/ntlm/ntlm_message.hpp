@@ -1824,7 +1824,7 @@ inline std::vector<uint8_t> emitTargetInfo(const NtlmAvPairList & avPairList)
     return target_info;
 }
 
-inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage & self, uint32_t negoFlags, bytes_view target_info, bool ignore_bogus_nego_flags)
+inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage & self, uint32_t negoFlags, bytes_view target_info)
 {
     std::vector<uint8_t> result;
 
