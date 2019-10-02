@@ -1926,9 +1926,6 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         self.TargetInfo.buffer.clear();
         hexdump_d(self.TargetInfo.buffer);
 
-
-
-
         for (auto & avp: self.AvPairList) {
             int i = 0;
             push_back_array(self.TargetInfo.buffer, out_uint16_le(avp.id));

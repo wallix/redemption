@@ -96,7 +96,6 @@ private:
     const bool verbose;
 
     array_sha256 ClientServerHash;
-    array_sha256 ServerClientHash;
 
 public:
 
@@ -604,10 +603,10 @@ public:
                         if (this->ts_request.clientNonce.isset()){
                             this->SavedClientNonce = this->ts_request.clientNonce;
                         }
-                        this->ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
+                        array_sha256 ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
                                                     this->SavedClientNonce.clientNonce,
                                                     this->public_key);
-                        this->public_key = this->ServerClientHash;
+                        this->public_key = ServerClientHash;
                     }
                     else {
                         // if we are server and protocol is 2,3,4
@@ -649,8 +648,8 @@ public:
                                            this->ts_request.authInfo,
                                            this->ts_request.pubKeyAuth,
                                            this->ts_request.error_code,
-                                           this->ts_request.clientNonce.clientNonce,
-                                           this->ts_request.clientNonce.initialized);
+                                           {},
+                                           false);
                     this->error_code = this->ts_request.error_code;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
