@@ -82,7 +82,10 @@ class VNCMetrics;
 class mod_vnc : public mod_api
 {
 
-       static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
+	static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
+	enum {
+		maxSpokenVncProcotol = 3 * 1000 + 8 // 3.8
+	};
 
     /* mod data */
     char mod_name[256] {0};
@@ -183,6 +186,7 @@ private:
         WAIT_SECURITY_TYPES_MS_LOGON,
         WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE,
         WAIT_SECURITY_TYPES_INVALID_AUTH,
+		WAIT_SECURITY_RESULT,
         SERVER_INIT,
         SERVER_INIT_RESPONSE,
         WAIT_CLIENT_UP_AND_RUNNING
@@ -1278,6 +1282,7 @@ protected:
     UpAndRunningCtx up_and_running_ctx;
 
     Buf64k server_data_buf;
+    int spokenProtocol;
 
 public:
     void draw_event(gdi::GraphicApi & gd)
@@ -1300,7 +1305,32 @@ public:
         this->check_timeout();
     }
 
+    typedef enum {
+		VNC_AUTH_INVALID 	= 0,
+		VNC_AUTH_NONE 		= 1,
+		VNC_AUTH_VNC 		= 2,
+		VNC_AUTH_TIGHT 		= 16,
+		VNC_AUTH_TLS 		= 18,
+		VNC_AUTH_MS_LOGON	= -6
+    } VncAuthType;
+
 private:
+    const char *securityTypeString(uint8_t t) {
+    	static char format[] = "<unknown 0xXX>";
+
+    	switch(t) {
+    	case VNC_AUTH_INVALID: return "invalid";
+    	case VNC_AUTH_NONE: return "None";
+    	case VNC_AUTH_VNC: return "VNC";
+    	case VNC_AUTH_TIGHT: return "TightVNC";
+    	case VNC_AUTH_TLS: return "TLS";
+    	case VNC_AUTH_MS_LOGON: return "MS logon";
+    	default:
+    		snprintf(format, sizeof(format), "<unknown %d>", t);
+    		return format;
+    	}
+    }
+
     bool draw_event_impl(gdi::GraphicApi & gd)
     {
         switch (this->state)
@@ -1341,16 +1371,50 @@ private:
                     return false;
                 }
 
-                // protocol_version_len - zero terminal
+                //
+                // the buffer is supposed to be
+                //      RFB XXX.YYY\n
+                // with XXX and YYY being major and minor version
+                //
+                const uint8_t *rfbString = this->server_data_buf.av().data();
+
+                if (memcmp(rfbString, "RFB ", 4) != 0) {
+                	LOG(LOG_INFO, "Invalid server handshake");
+                	throw Error(ERR_VNC_CONNECTION_ERROR);
+                }
+
+                if (rfbString[7] != '.') {
+                	LOG(LOG_INFO, "Invalid server handshake");
+                	throw Error(ERR_VNC_CONNECTION_ERROR);
+                }
+                auto versionParser = [](const uint8_t *str, int &v) {
+                	v = 0;
+                	for (int i = 0; i < 3; i++) {
+                		if (str[i] < '0' || str[i] > '9')
+                			return false;
+                		v = v * 10 + (str[i] - '0');
+                	}
+                	return true;
+                };
+
+                int major, minor;
+                if (!versionParser(&rfbString[4], major) || !versionParser(&rfbString[8], minor)) {
+                	LOG(LOG_INFO, "Invalid server handshake");
+                	throw Error(ERR_VNC_CONNECTION_ERROR);
+                }
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
-                    "Server Protocol Version=%.*s",
-                    int(protocol_version_len-1), this->server_data_buf.av().data());
+                		"Server Protocol Version=%d.%d", major, minor);
+
+                int serverProtocol = major * 1000 + minor;
+                this->spokenProtocol = std::min(static_cast<int>(maxSpokenVncProcotol), serverProtocol);
+
+                char handshakeAnswer[13];
+                snprintf(handshakeAnswer, sizeof(handshakeAnswer), "RFB %0.3d.%0.3d\n",
+                		this->spokenProtocol / 1000, this->spokenProtocol % 1000);
+                this->t.send(handshakeAnswer, 12);
 
                 this->server_data_buf.advance(protocol_version_len);
-
-                this->t.send("RFB 003.003", 12);
                 IF_ENABLE_METRICS(data_from_client(12));
-                // sec type
 
                 this->state = WAIT_SECURITY_TYPES_LEVEL;
             }
@@ -1358,35 +1422,167 @@ private:
 
         case WAIT_SECURITY_TYPES_LEVEL:
             {
-                if (this->server_data_buf.remaining() < 4) {
-                    return false;
-                }
-                int32_t const security_level = InStream(this->server_data_buf.av(4)).in_sint32_be();
-                this->server_data_buf.advance(4);
+            	InStream s(this->server_data_buf.av());
 
-                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
-                    "security level is %d (1 = none, 2 = standard, -6 = mslogon)",
-                    security_level);
+            	if (this->spokenProtocol >= 3007) {
+            		//
+            		// in version 3.7 or greater the packet has format
+            		// uint8 		number of security types
+            		// variable     array of security types
+            		//
+                    if (s.in_remain() < 1) {
+                        return false;
+                    }
 
-                switch (security_level){
-                    case 1: // none
-                        this->state = SERVER_INIT;
-                        break;
-                    case 2: // the password and the server random
-                        this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
-                        break;
-                    case -6: // MS-LOGON
-                        this->state = WAIT_SECURITY_TYPES_MS_LOGON;
-                        break;
-                    case 0:
-                        this->state = WAIT_SECURITY_TYPES_INVALID_AUTH;
-                        break;
-                    default:
-                        LOG(LOG_ERR, "vnc unexpected security level");
-                        throw Error(ERR_VNC_CONNECTION_ERROR);
-                }
+                    uint8_t nAuthTypes = s.in_uint8();
+                    if (s.in_remain() < nAuthTypes) {
+                        return false;
+                    }
+
+                    if (!nAuthTypes) {
+                    	// 0 authTypes means an error occurred and it's followed by a reason packet:
+                    	// u32 - reasonLength
+                    	// u8 array - reason string
+                    	if (s.in_remain() < 4)
+                    		return false;
+
+                    	uint32_t reasonLen = s.in_uint32_be();
+                    	if (s.in_remain() < reasonLen)
+                    		return false;
+
+                    	std::string reason;
+                    	reason.append(char_ptr_cast(s.get_current()), reasonLen);
+
+                    	LOG(LOG_INFO, "connection failed, reason=%s", reason.c_str());
+                    	throw Error(ERR_VNC_CONNECTION_ERROR);
+                    }
+
+                    VncAuthType preferedAuth = VNC_AUTH_INVALID;
+                    size_t preferedAuthIndex = 255;
+                    auto updatePreferedAuth = [&preferedAuth, &preferedAuthIndex](uint8_t authId) {
+                        VncAuthType preferedAuthTypes[] = {
+                        	VNC_AUTH_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
+                        };
+
+                    	const size_t nauths = sizeof(preferedAuthTypes) / sizeof(preferedAuthTypes[0]);
+                    	for (size_t i = 0; i < std::min(nauths, preferedAuthIndex); i++) {
+                    		if (preferedAuthTypes[i] == authId) {
+                    			preferedAuth = static_cast<VncAuthType>(authId);
+                    			preferedAuthIndex = i;
+                    			return;
+                    		}
+                    	}
+                    };
+                    LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+                        "got %d security types:", nAuthTypes);
+
+                    for (size_t i = 0; i < nAuthTypes; i++) {
+                    	VncAuthType authType = static_cast<VncAuthType>(s.in_uint8());
+                    	LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+                    	           "* %s", securityTypeString(authType));
+                    	updatePreferedAuth(authType);
+                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+                           "%s security choosen", securityTypeString(preferedAuth));
+
+                    this->server_data_buf.advance(1 + nAuthTypes);
+
+                    uint8_t authAnswer = static_cast<uint8_t>(preferedAuth);
+                    this->t.send(bytes_view{&authAnswer, 1});
+
+                    switch (preferedAuth){
+    					case VNC_AUTH_INVALID:
+    						this->state = WAIT_SECURITY_TYPES_INVALID_AUTH;
+    						break;
+                        case VNC_AUTH_NONE:
+                            this->state = WAIT_SECURITY_RESULT;
+                            break;
+                        case VNC_AUTH_VNC:
+                            this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
+                            break;
+                        case VNC_AUTH_MS_LOGON:
+                            this->state = WAIT_SECURITY_TYPES_MS_LOGON;
+                            break;
+                        default:
+                            LOG(LOG_ERR, "internal bug when computing prefered VNC auth");
+                            throw Error(ERR_VNC_CONNECTION_ERROR);
+                    }
+            	} else {
+            		// version 3.3 or less, the server decides the security type that
+            		// is used
+                    if (s.in_remain() < 4) {
+                        return false;
+                    }
+                    int32_t security_type = s.in_sint32_be();
+                    this->server_data_buf.advance(4);
+
+                    LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+                        "security level is %d (1 = none, 2 = standard, -6 = mslogon)",
+                        security_type);
+
+                    switch (security_type) {
+    					case VNC_AUTH_INVALID:// invalid
+    						this->state = WAIT_SECURITY_TYPES_INVALID_AUTH;
+    						break;
+                        case VNC_AUTH_NONE: // none
+                            this->state = SERVER_INIT;
+                            break;
+                        case VNC_AUTH_VNC: // the password and the server random
+                            this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
+                            break;
+                        case VNC_AUTH_MS_LOGON: // MS-LOGON
+                            this->state = WAIT_SECURITY_TYPES_MS_LOGON;
+                            break;
+                        default:
+                            LOG(LOG_ERR, "vnc unexpected security level");
+                            throw Error(ERR_VNC_CONNECTION_ERROR);
+                    }
+
+            	}
             }
             return true;
+
+        case WAIT_SECURITY_RESULT: {
+        	InStream s(this->server_data_buf.av());
+        	if (s.in_remain() < 4)
+        		return false;
+
+        	size_t skipLen = 4;
+        	uint32_t securityResult = s.in_uint32_be();
+        	switch(securityResult) {
+        	case 0:
+        		break;
+        	case 1:
+        	case 2: {
+        		std::string reasonString;
+        		const char *authErrorStr = (securityResult == 1) ? "failed" : "failed (too many attempts)";
+        		if (this->spokenProtocol >= 3008) {
+					if (s.in_remain() < 4)
+						return false;
+
+					uint32_t reasonLen = s.in_uint32_be();
+					if (s.in_remain() < reasonLen)
+						return false;
+
+					reasonString.append(reinterpret_cast<const char *>(s.get_current()), reasonLen);
+					skipLen += 4 + reasonLen;
+        		} else {
+        			reasonString = "<no reason>";
+        		}
+
+        		LOG(LOG_ERR, "vnc auth %s, reason=%s", authErrorStr, reasonString.c_str());
+        		throw Error(ERR_VNC_CONNECTION_ERROR);
+        	}
+
+        	default:
+        		LOG(LOG_ERR, "unknown auth failed reason 0x%x", securityResult);
+        		throw Error(ERR_VNC_CONNECTION_ERROR);
+        		break;
+        	}
+        	this->state = SERVER_INIT;
+        	this->server_data_buf.advance(skipLen);
+        	return true;
+        }
 
         case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Receiving VNC Server Random");
