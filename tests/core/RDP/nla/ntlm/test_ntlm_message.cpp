@@ -328,7 +328,8 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
-    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, false);
+    auto target_info = emitTargetInfo(ChallengeMsg.AvPairList);
+    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, target_info, false);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
@@ -1610,7 +1611,8 @@ public:
     SEC_STATUS write_challenge(std::vector<uint8_t>& output_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Challenge");
         this->ntlm_server_build_challenge();
-        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, false);
+        auto target_info = emitTargetInfo(this->CHALLENGE_MESSAGE.AvPairList);
+        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, target_info, false);
         
         this->SavedChallengeMessage = challenge;
         output_buffer = std::move(challenge);
@@ -1963,7 +1965,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
 
     // send CHALLENGE MESSAGE
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, false);
+    auto target_info = emitTargetInfo(server_context.CHALLENGE_MESSAGE.AvPairList);
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, target_info, false);
     client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge);
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
@@ -2097,7 +2100,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     server_context.ntlm_server_build_challenge();
 
     // send CHALLENGE MESSAGE
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, false);
+    auto target_info = emitTargetInfo(server_context.CHALLENGE_MESSAGE.AvPairList);
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, target_info, false);
     server_context.SavedChallengeMessage = challenge;
 
     client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge);

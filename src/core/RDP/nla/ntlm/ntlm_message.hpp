@@ -1816,7 +1816,6 @@ inline std::vector<uint8_t> emitTargetInfo(const NtlmAvPairList & avPairList)
 {
     std::vector<uint8_t> target_info;
     for (auto & avp: avPairList) {
-        int i = 0;
         target_info << ::out_uint16_le(avp.id) 
                     << ::out_uint16_le(avp.data.size())
                     << avp.data;
@@ -1825,7 +1824,7 @@ inline std::vector<uint8_t> emitTargetInfo(const NtlmAvPairList & avPairList)
     return target_info;
 }
 
-inline std::vector<uint8_t> emitNTLMChallengeMessage(NTLMChallengeMessage & self, bool ignore_bogus_nego_flags)
+inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage & self, bytes_view target_info, bool ignore_bogus_nego_flags)
 {
     std::vector<uint8_t> result;
 
@@ -1841,10 +1840,12 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(NTLMChallengeMessage & self
     //  from the client and the server to be used. An alternate name for this field is
     //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
 
+    auto negoFlags = self.negoFlags.flags;
+
     if (!ignore_bogus_nego_flags 
-    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
-    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_LM_KEY)) {
-        self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+    && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+    && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
     }
 
     // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
@@ -1859,27 +1860,27 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(NTLMChallengeMessage & self
     //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
 
     if (!ignore_bogus_nego_flags 
-    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_UNICODE)
-    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM)) {
-        self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_OEM;
+    && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
+    && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
     }
 
     // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
     // and set the matching flag accordingly
     if (self.TargetName.buffer.size() > 0){
         // forcing some flags
-        self.negoFlags.flags |= (NTLMSSP_TARGET_TYPE_SERVER);
+        negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
     }
 
     if (!ignore_bogus_nego_flags){
         // Means TargetInfo contains something. As we indeed do have something
         // this flag should always be set here (except in bogus configurations)
-        self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+        negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
     }
 
-    logNtlmFlags(self.negoFlags.flags);
+    logNtlmFlags(negoFlags);
 
-    uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
+    uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(negoFlags & NTLMSSP_NEGOTIATE_VERSION);
 
     LOG(LOG_INFO, "Target Name: size = %04x", unsigned(self.TargetName.buffer.size()));
 
@@ -1892,32 +1893,26 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(NTLMChallengeMessage & self
 
     payloadOffset += self.TargetName.buffer.size();
 
-    result << ::out_uint32_le(self.negoFlags.flags);
+    result << ::out_uint32_le(negoFlags);
 
     hexdump_d(self.serverChallenge);
 
     result << self.serverChallenge
            << std::array<uint8_t,8>{0,0,0,0,0,0,0,0};
 
-    std::vector<uint8_t> target_info = emitTargetInfo(self.AvPairList);
-
     result << ::out_uint16_le(target_info.size())
            << ::out_uint16_le(target_info.size())
            << ::out_uint32_le(payloadOffset);
 
-    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-        self.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-        self.version.ProductBuild        = 7601;
-        self.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-        result << ::out_uint8(self.version.ProductMajorVersion)
-               << ::out_uint8(self.version.ProductMinorVersion)
-               << ::out_uint16_le(self.version.ProductBuild)
+    if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
+        NtlmVersion v{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
+        result << ::out_uint8(v.ProductMajorVersion)
+               << ::out_uint8(v.ProductMinorVersion)
+               << ::out_uint16_le(v.ProductBuild)
                << std::array<uint8_t,3>{0,0,0}
-               << ::out_uint8(self.version.NtlmRevisionCurrent);
+               << ::out_uint8(v.NtlmRevisionCurrent);
     }
     // PAYLOAD
-    self.TargetInfo.buffer = target_info;
     result << self.TargetName.buffer << target_info;
         
 //        LOG(LOG_INFO, "NTLM Message Challenge Dump (Sent)");

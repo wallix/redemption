@@ -371,7 +371,8 @@ public:
                         challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
                     }
 
-                    auto challenge = emitNTLMChallengeMessage(challenge_message, this->ignore_bogus_nego_flags);
+                    auto target_info = emitTargetInfo(challenge_message.AvPairList);
+                    auto challenge = emitNTLMChallengeMessage(challenge_message, target_info, this->ignore_bogus_nego_flags);
                     auto negoTokens = std::vector<uint8_t>{} << challenge;
 
                     this->SavedChallengeMessage = challenge;
