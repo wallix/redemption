@@ -288,6 +288,7 @@ public:
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
                     NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(ts_request_in.negoTokens);
+
                     uint32_t const negoFlag = negotiate_message.negoFlags.flags;
                     uint32_t const mask = NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
 
@@ -318,6 +319,40 @@ public:
                         out_stream.out_uint32_le(tv.tv_usec);
                         out_stream.out_uint32_le(tv.tv_sec);
                     }
+
+                    challenge_message.negoFlags.flags = negoFlag;
+                    if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+                        challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
+                    }
+
+                    auto negoFlags = challenge_message.negoFlags.flags;
+
+                    if (!ignore_bogus_nego_flags 
+                    && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+                    && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+                        negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+                    }
+
+                    if (!ignore_bogus_nego_flags 
+                    && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
+                    && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
+                        negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
+                    }
+
+                    // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+                    // and set the matching flag accordingly
+                    if (challenge_message.TargetName.buffer.size() > 0){
+                        // forcing some flags
+                        negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
+                    }
+
+                    if (!ignore_bogus_nego_flags){
+                        // Means TargetInfo contains something. As we indeed do have something
+                        // this flag should always be set here (except in bogus configurations)
+                        negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+                    }
+
+                    logNtlmFlags(negoFlags);
 
                     // NTLM: construct challenge target info
                     // WIN7
@@ -366,13 +401,8 @@ public:
                         }
                     }
 
-                    challenge_message.negoFlags.flags = negoFlag;
-                    if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-                        challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
-                    }
-
                     auto target_info = emitTargetInfo(challenge_message.AvPairList);
-                    auto challenge = emitNTLMChallengeMessage(challenge_message, target_info, this->ignore_bogus_nego_flags);
+                    auto challenge = emitNTLMChallengeMessage(challenge_message, negoFlags, target_info, this->ignore_bogus_nego_flags);
                     auto negoTokens = std::vector<uint8_t>{} << challenge;
 
                     this->SavedChallengeMessage = challenge;

@@ -329,7 +329,60 @@ RED_AUTO_TEST_CASE(TestChallenge)
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
     auto target_info = emitTargetInfo(ChallengeMsg.AvPairList);
-    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, target_info, false);
+    
+    // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
+    //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
+    //  are mutually exclusive. If both NTLMSSP_NEGOTIATE_LM_KEY and
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY are requested,
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY alone MUST be returned to the client.
+    //  NTLM v2 authentication session key generation MUST be supported by both the client and the
+    //  DC in order to be used, and extended session security signing and sealing requires support
+    //  from the client and the server to be used. An alternate name for this field is
+    //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
+
+    auto negoFlags = ChallengeMsg.negoFlags.flags;
+
+    bool ignore_bogus_nego_flags = false;
+    
+    if (!ignore_bogus_nego_flags 
+    && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+    && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+    }
+
+    // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
+    //  NTLM_NEGOTIATE_OEM. See bit A for details.
+    //    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
+    // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
+    //  field is NTLMSSP_NEGOTIATE_UNICODE.
+    //  The A and B bits are evaluated together as follows:
+    //  - A==1: The choice of character set encoding MUST be Unicode.
+    //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
+    //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
+    //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
+
+    if (!ignore_bogus_nego_flags 
+    && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
+    && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
+    }
+
+    // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+    // and set the matching flag accordingly
+    if (ChallengeMsg.TargetName.buffer.size() > 0){
+        // forcing some flags
+        negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
+    }
+
+    if (!ignore_bogus_nego_flags){
+        // Means TargetInfo contains something. As we indeed do have something
+        // this flag should always be set here (except in bogus configurations)
+        negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+    }
+
+    logNtlmFlags(negoFlags);
+    
+    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, negoFlags, target_info, ignore_bogus_nego_flags);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
@@ -1611,8 +1664,62 @@ public:
     SEC_STATUS write_challenge(std::vector<uint8_t>& output_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Challenge");
         this->ntlm_server_build_challenge();
+        
         auto target_info = emitTargetInfo(this->CHALLENGE_MESSAGE.AvPairList);
-        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, target_info, false);
+        
+        // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
+        //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
+        //  are mutually exclusive. If both NTLMSSP_NEGOTIATE_LM_KEY and
+        //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY are requested,
+        //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY alone MUST be returned to the client.
+        //  NTLM v2 authentication session key generation MUST be supported by both the client and the
+        //  DC in order to be used, and extended session security signing and sealing requires support
+        //  from the client and the server to be used. An alternate name for this field is
+        //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
+
+        auto negoFlags = this->CHALLENGE_MESSAGE.negoFlags.flags;
+
+        bool ignore_bogus_nego_flags = false;
+
+        if (!ignore_bogus_nego_flags 
+        && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+        && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+            negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+        }
+
+        // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
+        //  NTLM_NEGOTIATE_OEM. See bit A for details.
+        //    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
+        // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
+        //  field is NTLMSSP_NEGOTIATE_UNICODE.
+        //  The A and B bits are evaluated together as follows:
+        //  - A==1: The choice of character set encoding MUST be Unicode.
+        //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
+        //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
+        //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
+
+        if (!ignore_bogus_nego_flags 
+        && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
+        && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
+            negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
+        }
+
+        // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+        // and set the matching flag accordingly
+        if (this->CHALLENGE_MESSAGE.TargetName.buffer.size() > 0){
+            // forcing some flags
+            negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
+        }
+
+        if (!ignore_bogus_nego_flags){
+            // Means TargetInfo contains something. As we indeed do have something
+            // this flag should always be set here (except in bogus configurations)
+            negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+        }
+
+        logNtlmFlags(negoFlags);
+        
+        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, negoFlags, target_info, ignore_bogus_nego_flags);
         
         this->SavedChallengeMessage = challenge;
         output_buffer = std::move(challenge);
@@ -1966,7 +2073,60 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // send CHALLENGE MESSAGE
     auto target_info = emitTargetInfo(server_context.CHALLENGE_MESSAGE.AvPairList);
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, target_info, false);
+
+    // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
+    //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
+    //  are mutually exclusive. If both NTLMSSP_NEGOTIATE_LM_KEY and
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY are requested,
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY alone MUST be returned to the client.
+    //  NTLM v2 authentication session key generation MUST be supported by both the client and the
+    //  DC in order to be used, and extended session security signing and sealing requires support
+    //  from the client and the server to be used. An alternate name for this field is
+    //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
+
+    auto negoFlags = server_context.CHALLENGE_MESSAGE.negoFlags.flags;
+
+    bool ignore_bogus_nego_flags = false;
+
+    if (!ignore_bogus_nego_flags 
+    && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+    && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+    }
+
+    // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
+    //  NTLM_NEGOTIATE_OEM. See bit A for details.
+    //    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
+    // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
+    //  field is NTLMSSP_NEGOTIATE_UNICODE.
+    //  The A and B bits are evaluated together as follows:
+    //  - A==1: The choice of character set encoding MUST be Unicode.
+    //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
+    //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
+    //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
+
+    if (!ignore_bogus_nego_flags 
+    && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
+    && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
+    }
+
+    // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+    // and set the matching flag accordingly
+    if (server_context.CHALLENGE_MESSAGE.TargetName.buffer.size() > 0){
+        // forcing some flags
+        negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
+    }
+
+    if (!ignore_bogus_nego_flags){
+        // Means TargetInfo contains something. As we indeed do have something
+        // this flag should always be set here (except in bogus configurations)
+        negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+    }
+
+    logNtlmFlags(negoFlags);
+    
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, target_info, ignore_bogus_nego_flags);
     client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge);
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
@@ -2101,7 +2261,60 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
 
     // send CHALLENGE MESSAGE
     auto target_info = emitTargetInfo(server_context.CHALLENGE_MESSAGE.AvPairList);
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, target_info, false);
+    
+    // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
+    //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
+    //  are mutually exclusive. If both NTLMSSP_NEGOTIATE_LM_KEY and
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY are requested,
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY alone MUST be returned to the client.
+    //  NTLM v2 authentication session key generation MUST be supported by both the client and the
+    //  DC in order to be used, and extended session security signing and sealing requires support
+    //  from the client and the server to be used. An alternate name for this field is
+    //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
+
+    auto negoFlags = server_context.CHALLENGE_MESSAGE.negoFlags.flags;
+
+    bool ignore_bogus_nego_flags = false;
+
+    if (!ignore_bogus_nego_flags 
+    && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+    && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+    }
+
+    // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
+    //  NTLM_NEGOTIATE_OEM. See bit A for details.
+    //    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
+    // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
+    //  field is NTLMSSP_NEGOTIATE_UNICODE.
+    //  The A and B bits are evaluated together as follows:
+    //  - A==1: The choice of character set encoding MUST be Unicode.
+    //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
+    //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
+    //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
+
+    if (!ignore_bogus_nego_flags 
+    && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
+    && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
+        negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
+    }
+
+    // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+    // and set the matching flag accordingly
+    if (server_context.CHALLENGE_MESSAGE.TargetName.buffer.size() > 0){
+        // forcing some flags
+        negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
+    }
+
+    if (!ignore_bogus_nego_flags){
+        // Means TargetInfo contains something. As we indeed do have something
+        // this flag should always be set here (except in bogus configurations)
+        negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+    }
+
+    logNtlmFlags(negoFlags);
+    
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, target_info, ignore_bogus_nego_flags);
     server_context.SavedChallengeMessage = challenge;
 
     client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge);
