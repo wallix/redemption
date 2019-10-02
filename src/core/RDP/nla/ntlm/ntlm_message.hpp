@@ -28,6 +28,7 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/serialize.hpp"
 
 #include "system/ssl_md5.hpp"
 #include "system/ssl_rc4.hpp"
@@ -1811,150 +1812,111 @@ public:
 };
 
 
-inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self, bool ignore_bogus_nego_flags)
+inline std::vector<uint8_t> emitNTLMChallengeMessage(NTLMChallengeMessage & self, bool ignore_bogus_nego_flags)
 {
-        if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-            self.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            self.version.ProductBuild        = 7601;
-            self.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-        }
+    std::vector<uint8_t> result;
 
-        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-        stream.out_uint32_le(NtlmChallenge);
+    // Flags Settings should move outside the function
+    
+    // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
+    //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
+    //  are mutually exclusive. If both NTLMSSP_NEGOTIATE_LM_KEY and
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY are requested,
+    //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY alone MUST be returned to the client.
+    //  NTLM v2 authentication session key generation MUST be supported by both the client and the
+    //  DC in order to be used, and extended session security signing and sealing requires support
+    //  from the client and the server to be used. An alternate name for this field is
+    //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
 
-        uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
+    if (!ignore_bogus_nego_flags 
+    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+        self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+    }
 
-        LOG(LOG_INFO, "Target Name: size = %04x", unsigned(self.TargetName.buffer.size()));
+    // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
+    //  NTLM_NEGOTIATE_OEM. See bit A for details.
+    //    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
+    // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
+    //  field is NTLMSSP_NEGOTIATE_UNICODE.
+    //  The A and B bits are evaluated together as follows:
+    //  - A==1: The choice of character set encoding MUST be Unicode.
+    //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
+    //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
+    //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
 
-        stream.out_uint16_le(self.TargetName.buffer.size());
-        stream.out_uint16_le(self.TargetName.buffer.size());
-        stream.out_uint32_le(payloadOffset);
-        payloadOffset += self.TargetName.buffer.size();
+    if (!ignore_bogus_nego_flags 
+    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_UNICODE)
+    && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM)) {
+        self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_OEM;
+    }
 
-        // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
-        //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
-        //  are mutually exclusive. If both NTLMSSP_NEGOTIATE_LM_KEY and
-        //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY are requested,
-        //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY alone MUST be returned to the client.
-        //  NTLM v2 authentication session key generation MUST be supported by both the client and the
-        //  DC in order to be used, and extended session security signing and sealing requires support
-        //  from the client and the server to be used. An alternate name for this field is
-        //  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
+    // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+    // and set the matching flag accordingly
+    if (self.TargetName.buffer.size() > 0){
+        // forcing some flags
+        self.negoFlags.flags |= (NTLMSSP_TARGET_TYPE_SERVER);
+    }
 
-        if (!ignore_bogus_nego_flags 
-        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
-        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_LM_KEY)) {
-            self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_LM_KEY;
-        }
+    if (!ignore_bogus_nego_flags){
+        // Means TargetInfo contains something. As we indeed do have something
+        // this flag should always be set here (except in bogus configurations)
+        self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+    }
 
-        // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
-        //  NTLM_NEGOTIATE_OEM. See bit A for details.
-        //    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
-        // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
-        //  field is NTLMSSP_NEGOTIATE_UNICODE.
-        //  The A and B bits are evaluated together as follows:
-        //  - A==1: The choice of character set encoding MUST be Unicode.
-        //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
-        //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
-        //    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
+    logNtlmFlags(self.negoFlags.flags);
 
-        if (!ignore_bogus_nego_flags 
-        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_UNICODE)
-        && (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM)) {
-            self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_OEM;
-        }
+    uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
 
-        //// Expected
-        //negotiateFlags "0xE28A8235"{
-                                        //    |NTLMSSP_NEGOTIATE_56, // (31)
-                                        //    |NTLMSSP_NEGOTIATE_KEY_EXCH, // (30)
-                                        //    |NTLMSSP_NEGOTIATE_128, // (29)
-                                        //    |NTLMSSP_NEGOTIATE_VERSION, // (25)
-        //    |NTLMSSP_NEGOTIATE_TARGET_INFO, // (23)
-                                        //    |NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY, // (19)
-        //    |NTLMSSP_TARGET_TYPE_SERVER, // (17)
-                                        //    |NTLMSSP_NEGOTIATE_ALWAYS_SIGN, // (15)
-                                        //    |NTLMSSP_NEGOTIATE_NTLM, // (9)
-                                        //    |NTLMSSP_NEGOTIATE_SEAL, // (5)
-                                        //    |NTLMSSP_NEGOTIATE_SIGN, // (4)
-                                        //    |NTLMSSP_REQUEST_TARGET, // (2)
-                                        //    |NTLMSSP_NEGOTIATE_UNICODE, // (0)
-        //}
+    LOG(LOG_INFO, "Target Name: size = %04x", unsigned(self.TargetName.buffer.size()));
 
-        //// WE HAVE
-        //negotiateFlags "0xE20882B7"{
-                                        //    |NTLMSSP_NEGOTIATE_56, // (31)
-                                        //    |NTLMSSP_NEGOTIATE_KEY_EXCH, // (30)
-                                        //    |NTLMSSP_NEGOTIATE_128, // (29)
-                                        //    |NTLMSSP_NEGOTIATE_VERSION, // (25)
-                                        //    |NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY, // (19)
-                                        //    |NTLMSSP_NEGOTIATE_ALWAYS_SIGN, // (15)
-                                        //    |NTLMSSP_NEGOTIATE_NTLM, // (9)
+    result << bytes_view{NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE)}
+           << ::out_uint32_le(NtlmChallenge);
+           
+    result << ::out_uint16_le(self.TargetName.buffer.size())
+           << ::out_uint16_le(self.TargetName.buffer.size())
+           << ::out_uint32_le(payloadOffset);
 
+    payloadOffset += self.TargetName.buffer.size();
 
-        //    |NTLMSSP_NEGOTIATE_LM_KEY, // (7)
-                                        //    |NTLMSSP_NEGOTIATE_SEAL, // (5)
-                                        //    |NTLMSSP_NEGOTIATE_SIGN, // (4)
-                                        //    |NTLMSSP_REQUEST_TARGET, // (2)
-        //    |NTLMSSP_NEGOTIATE_OEM, // (1)
-                                        //    |NTLMSSP_NEGOTIATE_UNICODE, // (0)
-        //}
+    result << ::out_uint32_le(self.negoFlags.flags);
 
+    hexdump_d(self.serverChallenge);
 
-        // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
-        // and set the matching flag accordingly
-        if (self.TargetName.buffer.size() > 0){
-            // forcing some flags
-            self.negoFlags.flags |= (NTLMSSP_TARGET_TYPE_SERVER);
-        }
+    result << self.serverChallenge
+           << std::array<uint8_t,8>{0,0,0,0,0,0,0,0};
 
-        if (!ignore_bogus_nego_flags){
-            // Means TargetInfo contains something. As we indeed do have something
-            // this flag should always be set here (except in bogus configurations)
-            self.negoFlags.flags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
-        }
+    std::vector<uint8_t> target_info;
+    for (auto & avp: self.AvPairList) {
+        int i = 0;
+        target_info << ::out_uint16_le(avp.id) 
+                    << ::out_uint16_le(avp.data.size())
+                    << avp.data;
+    }
+    target_info << ::out_uint16_le(MsvAvEOL) << std::array<uint8_t,2>{0,0};
 
-        logNtlmFlags(self.negoFlags.flags);
-        stream.out_uint32_le(self.negoFlags.flags);
+    result << ::out_uint16_le(target_info.size())
+           << ::out_uint16_le(target_info.size())
+           << ::out_uint32_le(payloadOffset);
 
-        hexdump_d(self.serverChallenge);
-
-        stream.out_copy_bytes(self.serverChallenge);
-        stream.out_clear_bytes(8);
-
-        self.TargetInfo.buffer.clear();
-        hexdump_d(self.TargetInfo.buffer);
-
-        for (auto & avp: self.AvPairList) {
-            int i = 0;
-            push_back_array(self.TargetInfo.buffer, out_uint16_le(avp.id));
-            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
-            push_back_array(self.TargetInfo.buffer, avp.data);
-//            LOG(LOG_INFO, "adding AvPairField %d %d size=%u", i, int(avp.id), unsigned(avp.data.size()));
-//            hexdump_d(avp.data);
-//            hexdump_d(self.TargetInfo.buffer);
-        }
-        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
-        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
-
-        stream.out_uint16_le(self.TargetInfo.buffer.size());
-        stream.out_uint16_le(self.TargetInfo.buffer.size());
-        stream.out_uint32_le(payloadOffset);
-
-        if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            stream.out_uint8(self.version.ProductMajorVersion);
-            stream.out_uint8(self.version.ProductMinorVersion);
-            stream.out_uint16_le(self.version.ProductBuild);
-            stream.out_clear_bytes(3);
-            stream.out_uint8(self.version.NtlmRevisionCurrent);
-        }
-        // PAYLOAD
-        stream.out_copy_bytes(self.TargetName.buffer);
-        stream.out_copy_bytes(self.TargetInfo.buffer);
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+        self.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+        self.version.ProductBuild        = 7601;
+        self.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+        result << ::out_uint8(self.version.ProductMajorVersion)
+               << ::out_uint8(self.version.ProductMinorVersion)
+               << ::out_uint16_le(self.version.ProductBuild)
+               << std::array<uint8_t,3>{0,0,0}
+               << ::out_uint8(self.version.NtlmRevisionCurrent);
+    }
+    // PAYLOAD
+    self.TargetInfo.buffer = target_info;
+    result << self.TargetName.buffer << target_info;
         
 //        LOG(LOG_INFO, "NTLM Message Challenge Dump (Sent)");
 //        hexdump_d(stream.get_bytes());
+    return result;
 }
 
 

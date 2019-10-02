@@ -258,31 +258,30 @@ public:
             case ServerAuthenticateData::Loop:
             {
                 std::vector<uint8_t> result;
-                /* receive authentication token */
-                TSRequest ts_request_in = recvTSRequest(in_data);
-                                    
-                this->error_code = ts_request_in.error_code;
-
-                if (ts_request_in.negoTokens.size() < 1) {
-                    LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
-                    LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                    this->state = credssp::State::Err;
-                    return {};
-                }
-
-                // unsigned long const fContextReq = 0
-                //     | ASC_REQ_MUTUAL_AUTH
-                //     | ASC_REQ_CONFIDENTIALITY
-                //     | ASC_REQ_CONNECTION
-                //     | ASC_REQ_USE_SESSION_KEY
-                //     | ASC_REQ_REPLAY_DETECT
-                //     | ASC_REQ_SEQUENCE_DETECT
-                //     | ASC_REQ_EXTENDED_ERROR;
-
-
                 switch (this->ntlm_state) {
                 case NTLM_STATE_INITIAL:
                 {
+                    /* receive authentication token */
+                    TSRequest ts_request_in = recvTSRequest(in_data);
+                                        
+                    this->error_code = ts_request_in.error_code;
+
+                    if (ts_request_in.negoTokens.size() < 1) {
+                        LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
+                        LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
+                        this->state = credssp::State::Err;
+                        return {};
+                    }
+
+                    // unsigned long const fContextReq = 0
+                    //     | ASC_REQ_MUTUAL_AUTH
+                    //     | ASC_REQ_CONFIDENTIALITY
+                    //     | ASC_REQ_CONNECTION
+                    //     | ASC_REQ_USE_SESSION_KEY
+                    //     | ASC_REQ_REPLAY_DETECT
+                    //     | ASC_REQ_SEQUENCE_DETECT
+                    //     | ASC_REQ_EXTENDED_ERROR;
+
                     LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL");
 
                     this->ntlm_state = NTLM_STATE_NEGOTIATE;
@@ -372,12 +371,10 @@ public:
                         challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
                     }
 
-                    StaticOutStream<65535> out_stream;
-                    EmitNTLMChallengeMessage(out_stream, challenge_message, this->ignore_bogus_nego_flags);
-                    ts_request_in.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
+                    auto challenge = emitNTLMChallengeMessage(challenge_message, this->ignore_bogus_nego_flags);
+                    auto negoTokens = std::vector<uint8_t>{} << challenge;
 
-                    this->SavedChallengeMessage.clear();
-                    push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
+                    this->SavedChallengeMessage = challenge;
 
                     this->ntlm_state = NTLM_STATE_AUTHENTICATE;
 
@@ -385,7 +382,7 @@ public:
                     this->state_accept_security_context = SEC_I_CONTINUE_NEEDED;
 
                     result = emitTSRequest(std::min(ts_request_in.version,this->credssp_version),
-                                           ts_request_in.negoTokens,
+                                           negoTokens,
                                            ts_request_in.authInfo,
                                            ts_request_in.pubKeyAuth,
                                            ts_request_in.error_code,
@@ -403,6 +400,27 @@ public:
 
                 case NTLM_STATE_AUTHENTICATE:
                 {
+                    /* receive authentication token */
+                    TSRequest ts_request_in = recvTSRequest(in_data);
+                                        
+                    this->error_code = ts_request_in.error_code;
+
+                    if (ts_request_in.negoTokens.size() < 1) {
+                        LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
+                        LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
+                        this->state = credssp::State::Err;
+                        return {};
+                    }
+
+                    // unsigned long const fContextReq = 0
+                    //     | ASC_REQ_MUTUAL_AUTH
+                    //     | ASC_REQ_CONFIDENTIALITY
+                    //     | ASC_REQ_CONNECTION
+                    //     | ASC_REQ_USE_SESSION_KEY
+                    //     | ASC_REQ_REPLAY_DETECT
+                    //     | ASC_REQ_SEQUENCE_DETECT
+                    //     | ASC_REQ_EXTENDED_ERROR;
+
                     LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE");
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
                     InStream in_stream(ts_request_in.negoTokens);
@@ -591,8 +609,6 @@ public:
                         return {};
                     }
 
-                    ts_request_in.negoTokens.clear();
-
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::encrypt_public_key_echo");
                     uint32_t version = ts_request_in.use_version;
 
@@ -641,7 +657,7 @@ public:
                     ts_request_in.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
                     result = emitTSRequest(std::min(ts_request_in.version,this->credssp_version),
-                                           ts_request_in.negoTokens,
+                                           {},
                                            ts_request_in.authInfo,
                                            ts_request_in.pubKeyAuth,
                                            ts_request_in.error_code,
