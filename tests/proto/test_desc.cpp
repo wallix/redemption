@@ -632,14 +632,14 @@ namespace test
     {
         struct stream_writable
         {
-            template<class BasicType>
-            struct writer;
-
             template<class BasicType, class T>
-            struct typed_value_builder;
+            struct value_variable_builder;
 
             template<class ValueBasicType, class BasicType, class T>
             struct value_builder;
+
+            template<class BasicType>
+            struct writer;
         };
 
 
@@ -679,7 +679,7 @@ namespace test
 
 
         template<class Int, class Endianess, class T>
-        struct stream_writable::typed_value_builder<datas::types::Integer<Int, Endianess>, T>
+        struct stream_writable::value_variable_builder<datas::types::Integer<Int, Endianess>, T>
         {
             static auto make(safe_int<Int> x)
             {
@@ -688,7 +688,7 @@ namespace test
         };
 
         template<class StringSize, class StringData, class T>
-        struct stream_writable::typed_value_builder<datas::types::String<StringSize, StringData, datas::types::no_zero>, T>
+        struct stream_writable::value_variable_builder<datas::types::String<StringSize, StringData, datas::types::no_zero>, T>
         {
             static auto make(bytes_view str)
             {
@@ -716,57 +716,122 @@ namespace test
         template<>
         struct stream_writable::writer<datas::types::BinaryData>
         {
-            static void write(OutStream& out, bytes_view datas)
+            static void write(OutStream& out, bytes_view bytes)
             {
-                out.out_copy_bytes(datas);
+                out.out_copy_bytes(bytes);
             }
         };
 
-        template<class Integer, class charset>
-        struct stream_writable::writer<datas::types::StringSize<Integer, charset>>
+
+        struct stream_readable
         {
-            static void write(OutStream& out, bytes_view str)
+            template<class BasicType, class T>
+            struct value_variable_builder;
+
+            template<class ValueBasicType, class BasicType, class T>
+            struct value_builder;
+
+            template<class BasicType>
+            struct reader;
+
+            struct bytes_size_ref { writable_bytes_view& bytes; };
+            struct bytes_data_ref { writable_bytes_view& bytes; };
+        };
+
+        inline std::ostream& operator<<(std::ostream& out, stream_readable::bytes_size_ref const& ref)
+        {
+            return out << "bytes_size_ref(" << ref.bytes.size() << ")";
+        }
+
+        inline std::ostream& operator<<(std::ostream& out, stream_readable::bytes_data_ref const& ref)
+        {
+            return out << "bytes_data_ref(" << ref.bytes << ")";
+        }
+
+
+        template<class Int, class Endianess, class T>
+        struct stream_readable::value_variable_builder<datas::types::Integer<Int, Endianess>, T>
+        {
+            static Int& make(Int& x)
             {
-                stream_writable::writer<Integer>::write(
-                    out, checked_cast<value_type_t<Integer>>(str.size()));
+                return x;
             }
         };
 
-        template<class Integer, class charset>
-        struct stream_writable::writer<datas::types::ZStringSize<Integer, charset>>
+        template<class StringSize, class StringData, class T>
+        struct stream_readable::value_variable_builder<datas::types::String<StringSize, StringData, datas::types::no_zero>, T>
         {
-            static void write(OutStream& out, bytes_view str)
+            static auto make(writable_bytes_view str)
             {
-                stream_writable::writer<Integer>::write(
-                    out, checked_cast<value_type_t<Integer>>(str.size()));
+                return str;
             }
         };
 
-        template<class charset>
-        struct stream_writable::writer<datas::types::StringData<charset>>
+
+        template<class BasicType, class T>
+        struct stream_readable::value_builder<as_param, BasicType, T>
         {
-            static void write(OutStream& out, bytes_view str)
+            static auto make(T& x)
             {
-                out.out_copy_bytes(str);
+                return typed_value<BasicType, T&>{x};
             }
         };
 
-        template<class charset>
-        struct stream_writable::writer<datas::types::ZStringData<charset>>
+        template<class StringSize, class StringData, class T>
+        struct stream_readable::value_builder<
+            datas::values::types::SizeBytes<as_param>,
+            datas::types::String<StringSize, StringData, datas::types::no_zero>,
+            T>
         {
-            static void write(OutStream& out, bytes_view str)
+            static auto make(writable_bytes_view& v)
             {
-                out.out_copy_bytes(str);
+                return typed_value<StringSize, stream_readable::bytes_size_ref>{v};
             }
         };
 
-        template<class StringSize, class StringData, class ZeroPolicy>
-        struct stream_writable::writer<datas::types::String<StringSize, StringData, ZeroPolicy>>
+        template<class StringSize, class StringData, class T>
+        struct stream_readable::value_builder<
+            datas::values::types::Data<as_param>,
+            datas::types::String<StringSize, StringData, datas::types::no_zero>,
+            T>
         {
-            static void write(OutStream& out, bytes_view str)
+            static auto make(writable_bytes_view& v)
             {
-                stream_writable::writer<StringSize>::write(out, str);
-                stream_writable::writer<StringData>::write(out, str);
+                // TODO lazy_param
+                return typed_value<datas::types::BinaryData, stream_readable::bytes_data_ref>{v};
+            }
+        };
+
+
+        template<class Int, class Endianess>
+        struct stream_readable::reader<datas::types::Integer<Int, Endianess>>
+        {
+            static void read(InStream& in, bytes_size_ref ref)
+            {
+                Int x;
+                read(in, x);
+                ref.bytes = {ref.bytes.data(), safe_cast<std::size_t>(x)};
+            }
+
+            static void read(InStream& in, Int& x)
+            {
+                auto* p = in.in_skip_bytes(sizeof(Int)).data();
+                using rng = mpe::make_int_sequence<mp::int_<sizeof(Int)>>;
+                using is_little_endian = std::is_same<Endianess, datas::types::le_tag>;
+                apply(rng{}, [&](auto... i) {
+                    ((
+                        x |= *p++ << ((is_little_endian::value ? i.value : sizeof(Int)-1u-i.value) * 8u)
+                    ), ...);
+                });
+            }
+        };
+
+        template<>
+        struct stream_readable::reader<datas::types::BinaryData>
+        {
+            static void read(InStream& in, bytes_data_ref ref)
+            {
+                in.in_copy_bytes(ref.bytes);
             }
         };
     }
@@ -835,7 +900,7 @@ namespace test
         using BasicType = proto_basic_type_t<Data>;
         using Name = name_t<Param>;
         using Value = std::remove_reference_t<X>;
-        using builder = typename Traits::template typed_value_builder<BasicType, Value>;
+        using builder = typename Traits::template value_variable_builder<BasicType, Value>;
 
         // TODO v.value&&
         using value_type = decltype(builder::make(v.value));
@@ -862,6 +927,7 @@ namespace test
         detail::check_unused_params<params, value_params, errors::missing_parameters>();
         detail::check_unused_params<value_params, params, errors::unknown_parameters>();
 
+        // TODO value_type_t must be rvalue or lvalue
         proto::tuple<Xs...> t{Xs{static_cast<value_type_t<Xs>>(xs.value)}...};
 
         return apply(Params{}, [&](auto... p){
@@ -900,45 +966,65 @@ namespace test
     template<class Params, class Values, class... Xs>
     writable_bytes_view inplace_emit(writable_bytes_view buf, Definition<Params, Values> const&, Xs const&... xs)
     {
+        using Traits = traits::stream_writable;
+
         OutStream out(buf);
 
-        auto tx = build_params<traits::stream_writable, Params>(xs...);
+        auto tx = build_params<Traits, Params>(xs...);
 
         tx.apply([&](auto... vars){
             (println("  ", type_name(vars), " = ", vars.value.x), ...);
         });
 
-        auto f = [&](auto v){
-            auto x = make_value<traits::stream_writable>(v, tx);
+        auto write = [&](auto v){
+            auto x = make_value<Traits>(v, tx);
             println("  ", type_name(x), " = ", x.x);
-            traits::stream_writable
-                ::template writer<proto_basic_type_t<typename decltype(x)::data_type>>
+            Traits::template writer<proto_basic_type_t<typename decltype(x)::data_type>>
                 ::write(out, x.x);
         };
 
         println();
         apply(Values{}, [&](auto... v){
-            (f(v), ...);
+            (write(v), ...);
         });
 
         return out.get_bytes();
     }
 
-    template<class Params, class Values>
-    auto inplace_recv(bytes_view buf, Definition<Params, Values> const&)
+    template<class Params, class Values, class... Xs>
+    auto inplace_recv(bytes_view buf, Definition<Params, Values> const&, Xs const&... xs)
     {
+        using Traits = traits::stream_readable;
+
         InStream in(buf);
 
-        auto f = [&](auto p){
-            using Param = decltype(p);
-            using BasicType = proto_basic_type_t<data_type_t<Param>>;
-            return typename decltype(
-                name_t<Param>::mem()(wrap_type<basic_type_to_cpp_type<BasicType>>())
-            )::type{read_buf(BasicType{}, in, native())};
+        auto tx = build_params<Traits, Params>(xs...);
+
+        tx.apply([&](auto... vars){
+            (println("  ", type_name(vars), " = ", vars.value.x), ...);
+        });
+
+        auto read = [&](auto v){
+            auto x = make_value<Traits>(v, tx);
+            Traits::template reader<proto_basic_type_t<typename decltype(x)::data_type>>
+                ::read(in, x.x);
+            println("  ", type_name(x), " = ", x.x);
         };
 
-        return apply(Params{}, [f](auto... p){
-            return proto::tuple{f(p)...};
+        println();
+        apply(Values{}, [&](auto... v){
+            (read(v), ...);
+        });
+
+        auto f = [&](auto var){
+            using Var = decltype(var);
+            return typename decltype(
+                name_t<Var>::mem()(wrap_type<std::decay_t<detail::type_t<value_type_t<Var>>>>())
+            )::type{var.value.x};
+        };
+
+        return tx.apply([f](auto... vars){
+            return proto::tuple{f(vars)...};
         });
     }
 }
@@ -980,20 +1066,22 @@ int main()
     uint16_t b = 0x1f23;
 
     // println('\n', type_name(test::definition2(u8[s.a])));
-    println("\n", type_name(def));
+    println("definition:\n  ", type_name(def));
     print_list("params", def.params());
     print_list("values", def.values());
-    println();
 
+    print("\n\ninplace_emit:\n\n");
     std::array<uint8_t, 30> buf {};
     auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av);
     dump(out);
 
-    println();
-
-    // auto datas = test::inplace_recv(out, def);
-    // println(type_name(datas));
-    // println("a = ", std::hex, int(datas.a));
-    // println("b = ", std::hex, datas.b);
-    // println("c = ", datas.c);
+    print("\n\ninplace_recv:\n\n");
+    char strbuf[10];
+    a = '0';
+    b = 0;
+    auto datas = test::inplace_recv(out, def, s.b = b, s.a = a, s.c = make_array_view(strbuf));
+    println("\n", type_name(datas));
+    println("a = ", std::hex, datas.a, " ", type_name(datas.a));
+    println("b = ", std::hex, datas.b, " ", type_name(datas.b));
+    println("c = ", datas.c, " ", type_name(datas.c));
 }

@@ -24,7 +24,7 @@
 
 # define REDEMPTION_PRAGMA(X) _Pragma(#X)
 
-#if !defined(IN_IDE_PARSER) && (defined(__GNUC__) || defined(__clang__))
+#if defined(__GNUC__) || defined(__clang__)
 # define REDEMPTION_DIAGNOSTIC_PUSH REDEMPTION_PRAGMA(GCC diagnostic push)
 # define REDEMPTION_DIAGNOSTIC_POP REDEMPTION_PRAGMA(GCC diagnostic pop)
 # define REDEMPTION_DIAGNOSTIC_GCC_IGNORE(X) REDEMPTION_PRAGMA(GCC diagnostic ignored X)
