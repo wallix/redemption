@@ -80,7 +80,7 @@ public:
     std::vector<uint8_t> dnsComputerName;
     std::vector<uint8_t> dnsDomainName;
     uint8_t credssp_version;
-    TSRequest ts_request = {6}; // Credssp Version 6 Supported
+//    TSRequest ts_request = {6}; // Credssp Version 6 Supported
     bool ignore_bogus_nego_flags = false;
 private:
     uint32_t error_code = 0;
@@ -259,10 +259,10 @@ public:
             {
                 std::vector<uint8_t> result;
                 /* receive authentication token */
-                this->ts_request = recvTSRequest(in_data, this->credssp_version);
-                this->error_code = this->ts_request.error_code;
+                TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_version);
+                this->error_code = ts_request_in.error_code;
 
-                if (this->ts_request.negoTokens.size() < 1) {
+                if (ts_request_in.negoTokens.size() < 1) {
                     LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     this->state = credssp::State::Err;
@@ -287,7 +287,7 @@ public:
                     this->ntlm_state = NTLM_STATE_NEGOTIATE;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-                    NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(this->ts_request.negoTokens);
+                    NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(ts_request_in.negoTokens);
                     uint32_t const negoFlag = negotiate_message.negoFlags.flags;
                     uint32_t const mask = NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
 
@@ -373,7 +373,7 @@ public:
 
                     StaticOutStream<65535> out_stream;
                     EmitNTLMChallengeMessage(out_stream, challenge_message, this->ignore_bogus_nego_flags);
-                    this->ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
+                    ts_request_in.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
                     this->SavedChallengeMessage.clear();
                     push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
@@ -383,20 +383,16 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL::SEC_I_CONTINUE_NEEDED");
                     this->state_accept_security_context = SEC_I_CONTINUE_NEEDED;
 
-                    result = emitTSRequest(this->ts_request.version,
-                                           this->ts_request.negoTokens,
-                                           this->ts_request.authInfo,
-                                           this->ts_request.pubKeyAuth,
-                                           this->ts_request.error_code,
-                                           this->ts_request.clientNonce.clientNonce,
-                                           this->ts_request.clientNonce.initialized);
-                    this->error_code = this->ts_request.error_code;
+                    result = emitTSRequest(ts_request_in.version,
+                                           ts_request_in.negoTokens,
+                                           ts_request_in.authInfo,
+                                           ts_request_in.pubKeyAuth,
+                                           ts_request_in.error_code,
+                                           ts_request_in.clientNonce.clientNonce,
+                                           ts_request_in.clientNonce.initialized);
+                    this->error_code = ts_request_in.error_code;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
                     this->error_code = 0;
 
                     this->state = credssp::State::Cont;
@@ -408,7 +404,7 @@ public:
                 {
                     LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE");
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
-                    InStream in_stream(this->ts_request.negoTokens);
+                    InStream in_stream(ts_request_in.negoTokens);
                     this->AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_stream);
 
                     if (this->AUTHENTICATE_MESSAGE.has_mic) {
@@ -506,8 +502,8 @@ public:
                     unsigned long MessageSeqNo = this->recv_seq_num++;
                     LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
-                    if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
-                        if (this->ts_request.pubKeyAuth.size() == 0) {
+                    if (ts_request_in.pubKeyAuth.size() < cbMaxSignature) {
+                        if (ts_request_in.pubKeyAuth.size() == 0) {
                             // report_error
                             LOG(LOG_INFO, "Provided login/password is probably incorrect.");
                         }
@@ -519,8 +515,8 @@ public:
                         return {};
                     }
 
-                    // this->ts_request.pubKeyAuth [signature][data_buffer]
-                    array_view_u8 data_buffer = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
+                    // ts_request_in.pubKeyAuth [signature][data_buffer]
+                    array_view_u8 data_buffer = {ts_request_in.pubKeyAuth.data()+cbMaxSignature, ts_request_in.pubKeyAuth.size()-cbMaxSignature};
                     std::vector<uint8_t> result_buffer(data_buffer.size());
 
                     /* Decrypt message using with RC4 */
@@ -540,15 +536,15 @@ public:
                     push_back_array(expected_signature, {checksum, 8});
                     push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
 
-                    if (memcmp(this->ts_request.pubKeyAuth.data(), expected_signature.data(),  expected_signature.size()) != 0) {
+                    if (memcmp(ts_request_in.pubKeyAuth.data(), expected_signature.data(),  expected_signature.size()) != 0) {
                         /* signature verification failed! */
                         LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
                         LOG(LOG_ERR, "Expected Signature:");
                         hexdump_c(expected_signature);
                         LOG(LOG_ERR, "Actual Signature:");
-                        hexdump_c(this->ts_request.pubKeyAuth.data(), 16);
+                        hexdump_c(ts_request_in.pubKeyAuth.data(), 16);
 
-                        if (this->ts_request.pubKeyAuth.size() == 0) {
+                        if (ts_request_in.pubKeyAuth.size() == 0) {
                             // report_error
                             LOG(LOG_INFO, "Provided login/password is probably incorrect.");
                         }
@@ -560,9 +556,9 @@ public:
                         return {};
                     }
 
-                    if (this->ts_request.use_version >= 5) {
-                        if (this->ts_request.clientNonce.isset()){
-                            this->SavedClientNonce = this->ts_request.clientNonce;
+                    if (ts_request_in.use_version >= 5) {
+                        if (ts_request_in.clientNonce.isset()){
+                            this->SavedClientNonce = ts_request_in.clientNonce;
                         }
                         this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
                                                 this->SavedClientNonce.clientNonce,
@@ -594,14 +590,14 @@ public:
                         return {};
                     }
 
-                    this->ts_request.negoTokens.clear();
+                    ts_request_in.negoTokens.clear();
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::encrypt_public_key_echo");
-                    uint32_t version = this->ts_request.use_version;
+                    uint32_t version = ts_request_in.use_version;
 
                     if (version >= 5) {
-                        if (this->ts_request.clientNonce.isset()){
-                            this->SavedClientNonce = this->ts_request.clientNonce;
+                        if (ts_request_in.clientNonce.isset()){
+                            this->SavedClientNonce = ts_request_in.clientNonce;
                         }
                         array_sha256 ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
                                                     this->SavedClientNonce.clientNonce,
@@ -641,22 +637,15 @@ public:
                         memcpy(signature.data()+12, av_seqno.data(), av_seqno.size());
                     }
 
-                    this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
+                    ts_request_in.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
-                    result = emitTSRequest(this->ts_request.version,
-                                           this->ts_request.negoTokens,
-                                           this->ts_request.authInfo,
-                                           this->ts_request.pubKeyAuth,
-                                           this->ts_request.error_code,
+                    result = emitTSRequest(ts_request_in.version,
+                                           ts_request_in.negoTokens,
+                                           ts_request_in.authInfo,
+                                           ts_request_in.pubKeyAuth,
+                                           ts_request_in.error_code,
                                            {},
                                            false);
-                    this->error_code = this->ts_request.error_code;
-
-                    LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
                     this->error_code = 0;
 
                     this->server_auth_data.state = ServerAuthenticateData::Final;
@@ -679,10 +668,10 @@ public:
             case ServerAuthenticateData::Final:
             {
                 LOG_IF(this->verbose, LOG_INFO, "rdpNTLMServer::server_authenticate_final");
-                this->ts_request = recvTSRequest(in_data, this->credssp_version);
-                this->error_code = this->ts_request.error_code;
+                TSRequest ts_request_in_final = recvTSRequest(in_data, this->credssp_version);
+                this->error_code = ts_request_in_final.error_code;
 
-                if (this->ts_request.authInfo.size() < 1) {
+                if (ts_request_in_final.authInfo.size() < 1) {
                     LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
@@ -692,15 +681,15 @@ public:
 
                 unsigned long MessageSeqNo = this->recv_seq_num++;
                 LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-                if (this->ts_request.authInfo.size() < cbMaxSignature) {
+                if (ts_request_in_final.authInfo.size() < cbMaxSignature) {
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
                     this->state = credssp::State::Err;
                     return {};
                 }
-                // this->ts_request.authInfo [signature][data_buffer]
+                // ts_request_in_final.authInfo [signature][data_buffer]
 
-                array_view_const_u8 data_buffer = {this->ts_request.authInfo.data()+cbMaxSignature, this->ts_request.authInfo.size()-cbMaxSignature};
+                array_view_const_u8 data_buffer = {ts_request_in_final.authInfo.data()+cbMaxSignature, ts_request_in_final.authInfo.size()-cbMaxSignature};
                 auto decrypted_creds = std::vector<uint8_t>(data_buffer.size());
 
                 /* Decrypt message using with RC4, result overwrites original buffer */
@@ -722,13 +711,13 @@ public:
                 memcpy(&signature[4], checksum, 8);
                 memcpy(&signature[12], &MessageSeqNo, 4);
 
-                if (memcmp(this->ts_request.authInfo.data(), expected_signature, 16) != 0) {
+                if (memcmp(ts_request_in_final.authInfo.data(), expected_signature, 16) != 0) {
                     /* signature verification failed! */
                     LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
                     LOG(LOG_ERR, "Expected Signature:");
                     hexdump_c(expected_signature, 16);
                     LOG(LOG_ERR, "Actual Signature:");
-                    hexdump_c(this->ts_request.authInfo.data(), 16);
+                    hexdump_c(ts_request_in_final.authInfo.data(), 16);
 
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_MESSAGE_ALTERED);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
