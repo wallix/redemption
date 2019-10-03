@@ -73,6 +73,8 @@ class NtlmServer final
     TSCredentials ts_credentials;
 
 public:
+    bool is_domain;
+    bool is_server;
     std::vector<NTLM_AV_ID> avFieldsTags;
     std::vector<uint8_t> TargetName;
     std::vector<uint8_t> netbiosComputerName;
@@ -80,6 +82,7 @@ public:
     std::vector<uint8_t> dnsComputerName;
     std::vector<uint8_t> dnsDomainName;
     uint32_t credssp_version;
+    const NtlmVersion ntlm_version;
 //    TSRequest ts_request = {6}; // Credssp Version 6 Supported
     bool ignore_bogus_nego_flags = false;
 private:
@@ -134,8 +137,6 @@ public:
     // NTLM_SINGLE_HOST_DATA SingleHostData;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
-private:
-    NtlmVersion version;
 public:
     std::vector<uint8_t> SavedNegotiateMessage;
     std::vector<uint8_t> SavedChallengeMessage;
@@ -201,23 +202,28 @@ private:
     // DECRYPT_MESSAGE DecryptMessage;
 
 public:
-    NtlmServer(bytes_view TargetName, bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
+    NtlmServer(bool is_domain,
+               bool is_server,
+               bytes_view TargetName, bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
                bytes_view DnsComputerName, bytes_view DnsDomainName,
                array_view_u8 key,
                const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
                TimeObj & timeobj,
                std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
-               uint32_t credssp_version,
+               uint32_t credssp_version, const NtlmVersion ntlm_version,
                bool ignore_bogus_nego_flags,
                const bool verbose = false)
-        : avFieldsTags(avFieldsTags.data(),avFieldsTags.data()+avFieldsTags.size())
+        : is_domain(is_domain)
+        , is_server(is_server)  
+        , avFieldsTags(avFieldsTags.data(),avFieldsTags.data()+avFieldsTags.size())
         , TargetName(TargetName.data(), TargetName.data()+TargetName.size())
         , netbiosComputerName(NetbiosComputerName.data(), NetbiosComputerName.data()+NetbiosComputerName.size())
         , netbiosDomainName(NetbiosDomainName.data(), NetbiosDomainName.data()+NetbiosDomainName.size())
         , dnsComputerName(DnsComputerName.data(), DnsComputerName.data()+DnsComputerName.size())
         , dnsDomainName(DnsDomainName.data(), DnsDomainName.data()+DnsDomainName.size())
         , credssp_version(credssp_version)
+        , ntlm_version(ntlm_version)
         , ignore_bogus_nego_flags(ignore_bogus_nego_flags)
         , timeobj(timeobj)
         , rand(rand)
@@ -403,7 +409,27 @@ public:
                     }
 
                     auto target_info = emitTargetInfo(challenge_message.AvPairList);
-                    auto challenge = emitNTLMChallengeMessage(challenge_message, negoFlags, target_info);
+                    auto raw_ntlm_version = emitNtlmVersion(
+                                                this->ntlm_version.ProductMajorVersion,
+                                                this->ntlm_version.ProductMinorVersion,
+                                                this->ntlm_version.ProductBuild,
+                                                this->ntlm_version.NtlmRevisionCurrent);
+                    if (this->is_server){
+                        negoFlags |= NTLMSSP_TARGET_TYPE_SERVER;
+                        negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
+                    }
+                    else {
+                        negoFlags &= ~NTLMSSP_TARGET_TYPE_SERVER;
+                    }
+                    if (this->is_domain){
+                        negoFlags |= NTLMSSP_TARGET_TYPE_DOMAIN;
+                        negoFlags &= ~NTLMSSP_TARGET_TYPE_SERVER;
+                    }
+                    else {
+                        negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
+                    }
+
+                    auto challenge = emitNTLMChallengeMessage(challenge_message, negoFlags, raw_ntlm_version, target_info);
                     auto negoTokens = std::vector<uint8_t>{} << challenge;
 
                     this->SavedChallengeMessage = challenge;

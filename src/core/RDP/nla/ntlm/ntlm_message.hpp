@@ -415,6 +415,7 @@ enum ProductMinorVersion : uint8_t
     WINDOWS_MINOR_VERSION_0 = 0x00,
     WINDOWS_MINOR_VERSION_1 = 0x01,
     WINDOWS_MINOR_VERSION_2 = 0x02,
+    WINDOWS_MINOR_VERSION_3 = 0x03,
 };
 
 enum ProductMajorVersion : uint8_t
@@ -434,14 +435,6 @@ struct NtlmVersion {
     uint16_t ProductBuild = 0;
     /* 3 Bytes Reserved */
     uint8_t NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
-//    NtlmVersion() = default;
-//    
-//    NtlmVersion(uint8_t major, uint8_t minor, uint16_t build, uint8_t revision)
-//        : ProductMajorVersion(major)
-//        , ProductMinorVersion(minor)
-//        , ProductBuild(build)
-//        , ProductBuild(revision)
 };
 
 inline void LogNtlmVersion(const NtlmVersion & self) {
@@ -1824,11 +1817,23 @@ inline std::vector<uint8_t> emitTargetInfo(const NtlmAvPairList & avPairList)
     return target_info;
 }
 
-inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage & self, uint32_t negoFlags, bytes_view target_info)
+
+inline std::vector<uint8_t> emitNtlmVersion(uint8_t major, uint8_t minor, uint16_t build, uint8_t revision)
+{
+    //WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_3, 9600, NTLMSSP_REVISION_W2K3
+    //WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3
+    return std::vector<uint8_t>{} << ::out_uint8(major)
+               << ::out_uint8(minor)
+               << ::out_uint16_le(build)
+               << std::array<uint8_t,3>{0,0,0}
+               << ::out_uint8(revision);
+}
+
+inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage & self, uint32_t negoFlags, bytes_view ntlm_version, bytes_view target_info)
 {
     std::vector<uint8_t> result;
 
-    uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(negoFlags & NTLMSSP_NEGOTIATE_VERSION);
+    uint32_t payloadOffset = 12+8+4+8+8+8+8*bool(ntlm_version.size()==8);
 
     LOG(LOG_INFO, "Target Name: size = %04x", unsigned(self.TargetName.buffer.size()));
 
@@ -1843,8 +1848,6 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage 
 
     result << ::out_uint32_le(negoFlags);
 
-    hexdump_d(self.serverChallenge);
-
     result << self.serverChallenge
            << std::array<uint8_t,8>{0,0,0,0,0,0,0,0};
 
@@ -1852,19 +1855,10 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage 
            << ::out_uint16_le(target_info.size())
            << ::out_uint32_le(payloadOffset);
 
-    if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        NtlmVersion v{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
-        result << ::out_uint8(v.ProductMajorVersion)
-               << ::out_uint8(v.ProductMinorVersion)
-               << ::out_uint16_le(v.ProductBuild)
-               << std::array<uint8_t,3>{0,0,0}
-               << ::out_uint8(v.NtlmRevisionCurrent);
+    if (ntlm_version.size()==8) {
+        result << ntlm_version;
     }
-    // PAYLOAD
     result << self.TargetName.buffer << target_info;
-        
-//        LOG(LOG_INFO, "NTLM Message Challenge Dump (Sent)");
-//        hexdump_d(stream.get_bytes());
     return result;
 }
 

@@ -345,7 +345,13 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     logNtlmFlags(negoFlags);
 
-    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, negoFlags, target_info);
+    NtlmVersion ntlm_version;
+    auto raw_ntlm_version = emitNtlmVersion(
+                                ntlm_version.ProductMajorVersion,
+                                ntlm_version.ProductMinorVersion,
+                                ntlm_version.ProductBuild,
+                                ntlm_version.NtlmRevisionCurrent);
+    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, negoFlags, raw_ntlm_version, target_info);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
@@ -1657,7 +1663,14 @@ public:
 
         logNtlmFlags(negoFlags);
         
-        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, negoFlags, target_info);
+        NtlmVersion ntlm_version;
+        auto raw_ntlm_version = emitNtlmVersion(
+                                    ntlm_version.ProductMajorVersion,
+                                    ntlm_version.ProductMinorVersion,
+                                    ntlm_version.ProductBuild,
+                                    ntlm_version.NtlmRevisionCurrent);
+        
+        auto challenge = emitNTLMChallengeMessage(this->CHALLENGE_MESSAGE, negoFlags, raw_ntlm_version, target_info);
         
         this->SavedChallengeMessage = challenge;
         output_buffer = std::move(challenge);
@@ -2027,7 +2040,14 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     logNtlmFlags(negoFlags);
 
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, target_info);
+    NtlmVersion ntlm_version;
+    auto raw_ntlm_version = emitNtlmVersion(
+                                ntlm_version.ProductMajorVersion,
+                                ntlm_version.ProductMinorVersion,
+                                ntlm_version.ProductBuild,
+                                ntlm_version.NtlmRevisionCurrent);
+
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, negoFlags, raw_ntlm_version, target_info);
     client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge);
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
@@ -2162,7 +2182,13 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
 
     // send CHALLENGE MESSAGE
     auto target_info = emitTargetInfo(server_context.CHALLENGE_MESSAGE.AvPairList);
-    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, NTLMSSP_NEGOTIATE_KEY_EXCH, target_info);
+    NtlmVersion ntlm_version;
+    auto raw_ntlm_version = emitNtlmVersion(
+                                ntlm_version.ProductMajorVersion,
+                                ntlm_version.ProductMinorVersion,
+                                ntlm_version.ProductBuild,
+                                ntlm_version.NtlmRevisionCurrent);    
+    auto challenge = emitNTLMChallengeMessage(server_context.CHALLENGE_MESSAGE, NTLMSSP_NEGOTIATE_KEY_EXCH, raw_ntlm_version, target_info);
     
     server_context.SavedChallengeMessage = challenge;
 

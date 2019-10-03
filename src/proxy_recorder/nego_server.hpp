@@ -84,11 +84,13 @@ public:
     NegoServer(array_view_u8 key, std::string const& user, std::string const& password, uint64_t verbosity)
     : user(user)
     , password(password)
-    , credssp("WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, key, 
+    , credssp(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, key, 
             {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, rand, timeobj,
         [this](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
             return this->get_password(user_av, domain_av, password_array);
-        }, 6, false, verbosity)
+        }, 6, 
+        NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
+        false, verbosity)
     {
     }
 
