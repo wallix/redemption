@@ -135,7 +135,6 @@ public:
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
-    NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
 public:
     std::vector<uint8_t> SavedNegotiateMessage;
@@ -482,15 +481,15 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE");
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
                     InStream in_stream(ts_request_in.negoTokens);
-                    this->AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_stream);
+                        NTLMAuthenticateMessage AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_stream);
 
-                    if (this->AUTHENTICATE_MESSAGE.has_mic) {
+                    if (AUTHENTICATE_MESSAGE.has_mic) {
                         this->UseMIC = true;
                     }
 
-                    auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
+                    auto & avuser = AUTHENTICATE_MESSAGE.UserName.buffer;
                     this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
-                    auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+                    auto & avdomain = AUTHENTICATE_MESSAGE.DomainName.buffer;
                     this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
 
                     if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
@@ -523,20 +522,22 @@ public:
                     if (this->identity_Password.size() > 0){
                         hash = Md4(this->identity_Password);
                     }
-                    if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
+                    
+                    
+                    if (!AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
                         LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                         // SEC_E_LOGON_DENIED;
                         this->state = credssp::State::Err;
                         return {};
                     }
-                    if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
+                    if (!AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
                         // SEC_E_LOGON_DENIED;
                         this->state = credssp::State::Err;
                         return {};
                     }
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
-                    this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
-                    this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
+                    this->SessionBaseKey = AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
+                    this->ExportedSessionKey = AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
                     this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
                     this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
                     this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
@@ -551,21 +552,21 @@ public:
 
                     // =======================================================
 
-                    if (this->AUTHENTICATE_MESSAGE.has_mic) {
+                    if (AUTHENTICATE_MESSAGE.has_mic) {
                         this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
                             this->SavedNegotiateMessage,
                             this->SavedChallengeMessage,
-                            this->AUTHENTICATE_MESSAGE.get_bytes());
+                            AUTHENTICATE_MESSAGE.get_bytes());
 
 //                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
 
 //                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
 //                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
 
-                        if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+                        if (0 != memcmp(this->MessageIntegrityCheck.data(), AUTHENTICATE_MESSAGE.MIC, 16)) {
                             LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
                             hexdump_c(this->MessageIntegrityCheck.data(), 16);
-                            hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+                            hexdump_c(AUTHENTICATE_MESSAGE.MIC, 16);
                             // SEC_E_MESSAGE_ALTERED;
                             this->state = credssp::State::Err;
                             return {};
@@ -596,7 +597,7 @@ public:
                     array_view_u8 data_buffer = {ts_request_in.pubKeyAuth.data()+cbMaxSignature, ts_request_in.pubKeyAuth.size()-cbMaxSignature};
                     std::vector<uint8_t> result_buffer(data_buffer.size());
 
-                    /* Decrypt message using with RC4 */
+                    /* Decrypt message using RC4 */
                     // context->confidentiality == true
                     this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), result_buffer.data());
 
@@ -640,10 +641,9 @@ public:
                         this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
                                                 this->SavedClientNonce.clientNonce,
                                                 this->public_key);
-                        this->public_key = this->ClientServerHash;
                     }
 
-                    if (result_buffer.size() != this->public_key.size()) {
+                    if (result_buffer.size() !=  this->ClientServerHash.size()) {
                         LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", result_buffer.size(), this->public_key.size());
                         // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
                         LOG(LOG_ERR, "Error: could not verify client's public key echo");
@@ -651,13 +651,13 @@ public:
                         this->state = credssp::State::Err;
                         return {};
                     }
-                    if (memcmp(this->public_key.data(), result_buffer.data(), public_key.size()) != 0) {
+                    if (memcmp(this->ClientServerHash.data(), result_buffer.data(), this->ClientServerHash.size()) != 0) {
                         LOG(LOG_ERR, "Could not verify server's public key echo");
 
-                        LOG(LOG_ERR, "Expected (length = %zu):", this->public_key.size());
-                        hexdump_c(this->public_key);
+                        LOG(LOG_ERR, "Expected (length = %zu):", this->ClientServerHash.size());
+                        hexdump_c(this->ClientServerHash);
 
-                        LOG(LOG_ERR, "Actual (length = %zu):", this->public_key.size());
+                        LOG(LOG_ERR, "Actual (length = %zu):", this->ClientServerHash.size());
                         hexdump_c(result_buffer);
 
                         // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
