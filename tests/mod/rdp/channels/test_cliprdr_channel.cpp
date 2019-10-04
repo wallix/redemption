@@ -611,14 +611,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     {
         Buffer buf;
         auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
-            out.out_uint32_le(RDPECLIP::CF_TEXT);
+            out.out_uint32_le(RDPECLIP::CF_UNICODETEXT);
         });
         process_server_message(av);
     }
     RED_REQUIRE(to_client_sender.total_in_stream == 4);
     RED_REQUIRE(to_server_sender.total_in_stream == 4);
     RED_CHECK_MEM(to_client_sender.bytes(3),
-        "\x04\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
+        "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
         ""_av);
     RED_CHECK(report_message.messages.size() == 2);
     RED_CHECK(buf_trans.buf.size() == 0);
@@ -627,17 +627,17 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         using namespace Cliprdr;
         Buffer buf;
         auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
-            out.out_copy_bytes("abc"_av);
+            out.out_copy_bytes("a\0b\0c\0"_av);
         });
         process_client_message(av);
     }
     RED_REQUIRE(to_client_sender.total_in_stream == 4);
     RED_REQUIRE(to_server_sender.total_in_stream == 5);
     RED_CHECK_MEM(to_server_sender.bytes(4),
-        "\x05\x00\x01\x00\x03\x00\x00\x00""abc"_av);
+        "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av);
     RED_REQUIRE(report_message.messages.size() == 3);
     RED_CHECK_SMEM(report_message.messages[2],
-        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=CF_TEXT(1) size=3"_av);
+        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av);
     RED_CHECK_SMEM(buf_trans.buf,
         "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up\x00\x01\x00\x13microsoft_locale_id\x00\x01"
         "0\x01\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av);
