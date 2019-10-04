@@ -130,8 +130,8 @@ public:
 
 public:
 
-    std::vector<uint8_t> identity_User;
-    std::vector<uint8_t> identity_Domain;
+    std::vector<uint8_t> user;
+    std::vector<uint8_t> domain;
     std::vector<uint8_t> identity_Password;
 
     // bool SendSingleHostData;
@@ -246,9 +246,6 @@ public:
         * ASC_REQ_ALLOCATE_MEMORY
         */
         this->server_auth_data.state = ServerAuthenticateData::Loop;
-        this->identity_User = {};
-        this->identity_Domain = {};
-        this->identity_Password = {};
     }
 
 public:
@@ -496,12 +493,7 @@ public:
                         this->UseMIC = true;
                     }
 
-                    auto & avuser = authenticate.UserName.buffer;
-                    this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
-                    auto & avdomain = authenticate.DomainName.buffer;
-                    this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
-
-                    if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
+                    if ((authenticate.UserName.buffer.size() == 0) && (authenticate.DomainName.buffer.size() == 0)){
                         LOG(LOG_ERR, "ANONYMOUS User not allowed");
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED");
                         // SEC_E_LOGON_DENIED;
@@ -509,7 +501,7 @@ public:
                         return {};
                     }
 
-                    auto res = (set_password_cb(this->identity_User, this->identity_Domain, this->identity_Password));
+                    auto res = (set_password_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer, this->identity_Password));
 
                     if (res == PasswordCallback::Error){
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (3)");
