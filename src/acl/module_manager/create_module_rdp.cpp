@@ -452,6 +452,7 @@ void ModuleManager::create_mod_rdp(
                 const ModRDPParams & mod_rdp_params,
                 AuthApi & authentifier,
                 ReportMessageApi & report_message,
+                LicenseApi & license_store,
                 LogCategoryFlags dont_log_category,
                 ModRdpVariables vars,
                 RDPMetrics * metrics,
@@ -460,7 +461,7 @@ void ModuleManager::create_mod_rdp(
             , mod_rdp(
                 trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
                 channels_authorizations, mod_rdp_params, authentifier,
-                static_cast<DispatchReportMessage&>(*this), vars,
+                static_cast<DispatchReportMessage&>(*this), license_store, vars,
                 metrics, file_validator_service)
             {}
         };
@@ -549,6 +550,7 @@ void ModuleManager::create_mod_rdp(
             mod_rdp_params,
             authentifier,
             report_message,
+            file_system_license_store,
             dont_log_category,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,

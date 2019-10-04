@@ -23,7 +23,6 @@
 */
 
 #include "mod/rdp/rdp_negociation.hpp"
-#include "mod/rdp/rdp_negociation.hpp"
 #include "core/log_id.hpp"
 #include "core/app_path.hpp"
 #include "core/RDP/autoreconnect.hpp"
@@ -245,6 +244,7 @@ RdpNegociation::RdpNegociation(
     TimeObj& timeobj,
     const ModRDPParams& mod_rdp_params,
     ReportMessageApi& report_message,
+    LicenseApi& license_store,
     bool has_managed_drive,
     bool convert_remoteapp_to_desktop
 )
@@ -328,6 +328,8 @@ RdpNegociation::RdpNegociation(
     , has_managed_drive(has_managed_drive)
     , convert_remoteapp_to_desktop(convert_remoteapp_to_desktop)
     , send_channel_index(0)
+    , license_client_name(info.hostname)
+    , license_store(license_store)
     , use_license_store(mod_rdp_params.use_license_store)
 {
     this->negociation_result.front_width = info.screen_info.width;
@@ -342,14 +344,6 @@ RdpNegociation::RdpNegociation(
         "RdpNegociation: enable_session_probe=%s", (this->enable_session_probe ? "yes" : "no"));
 
     strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
-
-#ifndef __EMSCRIPTEN__
-    ::snprintf(this->license_dir_path, sizeof(this->license_dir_path), "%s/%s", app_path(AppPath::License), info.hostname);
-    if (::recursive_create_directory(this->license_dir_path,
-            S_IRWXU | S_IRWXG, -1) != 0) {
-        LOG(LOG_INFO, "RdpNegociation: Failed to create directory: \"%s\"", this->license_dir_path);
-    }
-#endif
 
     // Password is a multi-sz!
     // A multi-sz contains a sequence of null-terminated strings,
@@ -1383,7 +1377,6 @@ bool RdpNegociation::get_license(InStream & stream)
                 memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
                 memcpy(this->lic_layer_license_key, keyblock.get_LicensingEncryptionKey(), 16);
 
-#ifndef __EMSCRIPTEN__
                 if (this->use_license_store) {
                     uint8_t CompanyNameU8[4096] {};
                     ::UTF16toUTF8_buf(SvrLicReq.ProductInfo.CompanyName, writable_bytes_view{CompanyNameU8, sizeof(CompanyNameU8)});
@@ -1392,50 +1385,25 @@ bool RdpNegociation::get_license(InStream & stream)
                     ::UTF16toUTF8_buf(SvrLicReq.ProductInfo.ProductId, writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
 
                     for (uint32_t i = 0; i < SvrLicReq.ScopeList.ScopeCount; ++i) {
-                        std::ostringstream oss;
-                        oss << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << SvrLicReq.ProductInfo.dwVersion << "_";
-                        oss << SvrLicReq.ScopeList.ScopeArray[i].blobData.data() << "_";
-                        oss << CompanyNameU8 << "_";
-                        oss << ProductIdU8;
-                        std::string license_file_name = oss.str();
-                        std::replace_if(license_file_name.begin(), license_file_name.end(),
-                                        [](unsigned char c) { return (' ' == c); }, '-');
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: LicenseFileName=\"%s\"", license_file_name.c_str());
-
+                        bytes_view out = this->license_store.get_license(
+                                this->license_client_name.c_str(),
+                                SvrLicReq.ProductInfo.dwVersion,
+                                ::char_ptr_cast(SvrLicReq.ScopeList.ScopeArray[i].blobData.data()),
+                                ::char_ptr_cast(CompanyNameU8),
+                                ::char_ptr_cast(ProductIdU8),
+                                writable_bytes_view(this->lic_layer_license_data, sizeof(lic_layer_license_data)),
+                                bool(this->verbose & RDPVerbose::license)
+                            );
+                        if (out.size())
                         {
-                            char license_file_path[2048] = {};
-                            ::snprintf(license_file_path, sizeof(license_file_path), "%s/%s", this->license_dir_path, license_file_name.c_str());
-                            if (unique_fd ufd{::open(license_file_path, O_RDONLY)}) {
-                                uint32_t license_size = 0;
-                                size_t number_of_bytes_read = ::read(ufd.fd(), &license_size, sizeof(license_size));
-                                if (number_of_bytes_read != sizeof(license_size)) {
-                                    LOG(LOG_ERR, "RdpNegociation: license file truncated (1) : expected %zu, got %zu", sizeof(license_size), number_of_bytes_read);
-                                }
-                                else {
-                                    this->lic_layer_license_data = std::make_unique<uint8_t[]>(license_size);
-                                    size_t number_of_bytes_read = ::read(ufd.fd(), this->lic_layer_license_data.get(), license_size);
-                                    if (number_of_bytes_read != license_size) {
-                                        LOG(LOG_ERR, "RdpNegociation: license file truncated (2) : expected %u, got %zu", license_size, number_of_bytes_read);
+                            this->lic_layer_license_size = out.size();
 
-                                        this->lic_layer_license_data.reset(nullptr);
-                                    }
-                                    else {
-                                        this->lic_layer_license_size = license_size;
+                            LOG(LOG_ERR, "RdpNegociation: LicenseSize=%zu", this->lic_layer_license_size);
 
-                                        LOG(LOG_ERR, "RdpNegociation: LicenseSize=%u", license_size);
-
-                                        break;
-                                    }
-                                }
-                            }
-                            else {
-                                LOG(LOG_WARNING, "RdpNegociation: Failed to open license file! Path=\"%s\" errno=%s(%d)", license_file_path, strerror(errno), errno);
-                            }
+                            break;
                         }
                     }
                 }
-#endif
             }
 
             this->send_data_request(
@@ -1460,7 +1428,6 @@ bool RdpNegociation::get_license(InStream & stream)
                         static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE));
                         sign.final(signature);
 
-
                         /* Now encrypt the HWID */
 
                         SslRC4 rc4;
@@ -1472,7 +1439,7 @@ bool RdpNegociation::get_license(InStream & stream)
                         LIC::ClientLicenseInfo_Send(
                             lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
                             this->lic_layer_license_size,
-                            this->lic_layer_license_data.get(),
+                            this->lic_layer_license_data,
                             hwid, signature
                         );
                     }
@@ -1563,7 +1530,6 @@ bool RdpNegociation::get_license(InStream & stream)
                 // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect.
                 // Not obvious files is the best choice to do that
 
-#ifndef __EMSCRIPTEN__
                 bool license_saved = false;
 
                 if (this->use_license_store) {
@@ -1573,59 +1539,21 @@ bool RdpNegociation::get_license(InStream & stream)
                     uint8_t ProductIdU8[4096] {};
                     ::UTF16toUTF8_buf(bytes_view(lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId), writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
 
-                    std::ostringstream oss;
-                    oss << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << lic.licenseInfo.dwVersion << "_";
-                    oss << lic.licenseInfo.pbScope << "_";
-                    oss << CompanyNameU8 << "_";
-                    oss << ProductIdU8;
-                    std::string license_file_name = oss.str();
-                    std::replace_if(license_file_name.begin(), license_file_name.end(),
-                                    [](unsigned char c) { return (' ' == c); }, '-');
-
-                    LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: LicenseFileName=\"%s\"", license_file_name.c_str());
-
-                    {
-                        char filename_temporary[2048];
-                        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/%s-XXXXXX.tmp",
-                            this->license_dir_path, license_file_name.c_str());
-                        filename_temporary[sizeof(filename_temporary) - 1] = '\0';
-
-                        int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
-                        if (fd == -1) {
-                            LOG( LOG_ERR
-                               , "RdpNegociation: Failed to open (temporary) license file for writing! filename=\"%s\" errno=%s(%d)"
-                               , filename_temporary, strerror(errno), errno);
-                        }
-                        else {
-                            unique_fd ufd{fd};
-                            uint32_t const license_size = lic.licenseInfo.cbLicenseInfo;
-                            if (sizeof(license_size) == ::write(ufd.fd(), &license_size, sizeof(license_size))) {
-                                if (license_size == ::write(ufd.fd(), lic.licenseInfo.pbLicenseInfo, license_size)) {
-                                    char filename[2048];
-                                    ::snprintf(filename, sizeof(filename) - 1, "%s/%s", this->license_dir_path, license_file_name.c_str());
-                                    filename[sizeof(filename) - 1] = '\0';
-
-                                    if (::rename(filename_temporary, filename) == 0) {
-                                        license_saved = true;
-                                    }
-                                    else {
-                                        LOG( LOG_ERR
-                                           , "RdpNegociation: failed to rename the (temporary) license file! "
-                                                "temporary_filename=\"%s\" filename=\"%s\" errno=%s(%d)"
-                                            , filename_temporary, filename, strerror(errno), errno);
-                                        ::unlink(filename_temporary);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    license_saved = this->license_store.put_license(
+                            this->license_client_name.c_str(),
+                            lic.licenseInfo.dwVersion,
+                            ::char_ptr_cast(lic.licenseInfo.pbScope),
+                            ::char_ptr_cast(CompanyNameU8),
+                            ::char_ptr_cast(ProductIdU8),
+                            bytes_view(lic.licenseInfo.pbLicenseInfo, lic.licenseInfo.cbLicenseInfo),
+                            bool(this->verbose & RDPVerbose::license)
+                        );
                 }
 
                 if (!license_saved) {
                     LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_WARNING, "RdpNegociation: %s license not saved.",
                         ((LIC::NEW_LICENSE == flic.tag) ? "New" : "Upgrade"));
                 }
-#endif
 
                 r = true;
             }

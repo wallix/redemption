@@ -25,6 +25,7 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
+#include "acl/license_api.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -1815,6 +1816,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     AuthApi & authentifier;
     ReportMessageApi & report_message;
+    LicenseApi& license_store;
 
     std::string& close_box_extra_message_ref;
 
@@ -1960,6 +1962,7 @@ public:
       , const ModRDPParams & mod_rdp_params
       , AuthApi & authentifier
       , ReportMessageApi & report_message
+      , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
       , [[maybe_unused]] FileValidatorService * file_validator_service
@@ -1982,6 +1985,7 @@ public:
         , cache_verbose(mod_rdp_params.cache_verbose)
         , authentifier(authentifier)
         , report_message(report_message)
+        , license_store(license_store)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
