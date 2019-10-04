@@ -145,8 +145,6 @@ private:
     uint8_t Timestamp[8]{};
     uint8_t ChallengeTimestamp[8]{};
     array_challenge ServerChallenge;
-    array_md5 SessionBaseKey;
-    array_md5 ExportedSessionKey;
 public:
     /**
      * Generate client signing key (ClientSigningKey).\n
@@ -547,12 +545,12 @@ public:
                         return {};
                     }
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
-                    this->SessionBaseKey = AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
-                    this->ExportedSessionKey = AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
-                    this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
-                    this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
-                    this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
-                    this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
+                    array_md5 SessionBaseKey = AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
+                    array_md5 ExportedSessionKey = AUTHENTICATE_MESSAGE.get_exported_session_key(SessionBaseKey);
+                    this->ClientSigningKey = Md5(ExportedSessionKey, make_array_view(client_sign_magic));
+                    this->ClientSealingKey = Md5(ExportedSessionKey, make_array_view(client_seal_magic));
+                    this->ServerSigningKey = Md5(ExportedSessionKey, make_array_view(server_sign_magic));
+                    this->ServerSealingKey  = Md5(ExportedSessionKey, make_array_view(server_seal_magic));
 
                     /**
                      * Initialize RC4 stream cipher states for sealing.
@@ -564,15 +562,10 @@ public:
                     // =======================================================
 
                     if (AUTHENTICATE_MESSAGE.has_mic) {
-                        this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
-                            this->SavedNegotiateMessage,
-                            this->SavedChallengeMessage,
-                            AUTHENTICATE_MESSAGE.get_bytes());
-
-//                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
-
-//                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
-//                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+                        this->MessageIntegrityCheck = HmacMd5(ExportedSessionKey, 
+                                                        this->SavedNegotiateMessage, 
+                                                        this->SavedChallengeMessage,
+                                                        AUTHENTICATE_MESSAGE.get_bytes());
 
                         if (0 != memcmp(this->MessageIntegrityCheck.data(), AUTHENTICATE_MESSAGE.MIC, 16)) {
                             LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
