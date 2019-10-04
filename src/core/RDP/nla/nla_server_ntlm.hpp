@@ -490,15 +490,15 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE");
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
                     InStream in_stream(ts_request_in.negoTokens);
-                        NTLMAuthenticateMessage AUTHENTICATE_MESSAGE = recvNTLMAuthenticateMessage(in_stream);
+                    NTLMAuthenticateMessage authenticate = recvNTLMAuthenticateMessage(in_stream);
 
-                    if (AUTHENTICATE_MESSAGE.has_mic) {
+                    if (authenticate.has_mic) {
                         this->UseMIC = true;
                     }
 
-                    auto & avuser = AUTHENTICATE_MESSAGE.UserName.buffer;
+                    auto & avuser = authenticate.UserName.buffer;
                     this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
-                    auto & avdomain = AUTHENTICATE_MESSAGE.DomainName.buffer;
+                    auto & avdomain = authenticate.DomainName.buffer;
                     this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
 
                     if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
@@ -533,20 +533,20 @@ public:
                     }
                     
                     
-                    if (!AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
+                    if (!authenticate.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
                         LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                         // SEC_E_LOGON_DENIED;
                         this->state = credssp::State::Err;
                         return {};
                     }
-                    if (!AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
+                    if (!authenticate.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
                         // SEC_E_LOGON_DENIED;
                         this->state = credssp::State::Err;
                         return {};
                     }
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
-                    array_md5 SessionBaseKey = AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
-                    array_md5 ExportedSessionKey = AUTHENTICATE_MESSAGE.get_exported_session_key(SessionBaseKey);
+                    array_md5 SessionBaseKey = authenticate.compute_session_base_key(hash);
+                    array_md5 ExportedSessionKey = authenticate.get_exported_session_key(SessionBaseKey);
                     this->ClientSigningKey = Md5(ExportedSessionKey, make_array_view(client_sign_magic));
                     this->ClientSealingKey = Md5(ExportedSessionKey, make_array_view(client_seal_magic));
                     this->ServerSigningKey = Md5(ExportedSessionKey, make_array_view(server_sign_magic));
@@ -561,16 +561,16 @@ public:
 
                     // =======================================================
 
-                    if (AUTHENTICATE_MESSAGE.has_mic) {
+                    if (authenticate.has_mic) {
                         this->MessageIntegrityCheck = HmacMd5(ExportedSessionKey, 
                                                         this->SavedNegotiateMessage, 
                                                         this->SavedChallengeMessage,
-                                                        AUTHENTICATE_MESSAGE.get_bytes());
+                                                        authenticate.get_bytes());
 
-                        if (0 != memcmp(this->MessageIntegrityCheck.data(), AUTHENTICATE_MESSAGE.MIC, 16)) {
+                        if (0 != memcmp(this->MessageIntegrityCheck.data(), authenticate.MIC, 16)) {
                             LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
                             hexdump_c(this->MessageIntegrityCheck.data(), 16);
-                            hexdump_c(AUTHENTICATE_MESSAGE.MIC, 16);
+                            hexdump_c(authenticate.MIC, 16);
                             // SEC_E_MESSAGE_ALTERED;
                             this->state = credssp::State::Err;
                             return {};
