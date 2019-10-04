@@ -33,7 +33,9 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/fileutils.hpp"
 
-using std::chrono_literals::operator""s;
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 namespace
 {

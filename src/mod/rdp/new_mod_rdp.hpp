@@ -30,6 +30,7 @@ Author(s): Jonathan Poelen
 class AuthApi;
 class ClientInfo;
 class FrontAPI;
+class LicenseApi;
 class ReportMessageApi;
 class SessionReactor;
 class TimeObj;
@@ -53,6 +54,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     const ModRDPParams& mod_rdp_params,
     AuthApi& authentifier,
     ReportMessageApi& report_message,
+    LicenseApi& license_store,
     ModRdpVariables vars,
     RDPMetrics * metrics,
     FileValidatorService * file_validator_service

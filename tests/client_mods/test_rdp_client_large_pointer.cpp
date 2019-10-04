@@ -25,6 +25,7 @@
 
 
 #include "acl/auth_api.hpp"
+#include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
@@ -129,13 +130,14 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
+    NullLicenseStore license_store;
     SessionReactor session_reactor;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, authentifier, report_message,
+        channels_authorizations, mod_rdp_params, authentifier, report_message, license_store,
         ini, nullptr, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -231,13 +233,14 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
+    NullLicenseStore license_store;
     SessionReactor session_reactor;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, authentifier, report_message,
+        channels_authorizations, mod_rdp_params, authentifier, report_message, license_store,
         ini, nullptr, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);

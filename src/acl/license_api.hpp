@@ -28,7 +28,39 @@ struct LicenseApi : noncopyable
     virtual ~LicenseApi() = default;
 
     // The functions shall return empty bytes_view to indicate the error.
-    virtual bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, writable_bytes_view out, bool enable_log) = 0;
+    virtual bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name,
+        char const* product_id, writable_bytes_view out, bool enable_log) = 0;
 
-    virtual bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name, char const* product_id, bytes_view in, bool enable_log) = 0;
+    virtual bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name,
+        char const* product_id, bytes_view in, bool enable_log) = 0;
+};
+
+struct NullLicenseStore : LicenseApi
+{
+    bytes_view get_license(char const* client_name, uint32_t version, char const* scope, char const* company_name,
+        char const* product_id, writable_bytes_view out, bool enable_log) override
+    {
+        (void)client_name;
+        (void)version;
+        (void)scope;
+        (void)company_name;
+        (void)product_id;
+        (void)enable_log;
+
+        return bytes_view(out.data(), 0);
+    }
+
+    bool put_license(char const* client_name, uint32_t version, char const* scope, char const* company_name,
+        char const* product_id, bytes_view in, bool enable_log) override
+    {
+        (void)client_name;
+        (void)version;
+        (void)scope;
+        (void)company_name;
+        (void)product_id;
+        (void)in;
+        (void)enable_log;
+
+        return false;
+    }
 };

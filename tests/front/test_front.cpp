@@ -26,6 +26,7 @@
 // Uncomment the code block below to generate testing data.
 
 #include "acl/auth_api.hpp"
+#include "acl/license_api.hpp"
 #include "capture/cryptofile.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -218,6 +219,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.clear_channels();
     NullAuthentifier authentifier;
+    NullLicenseStore license_store;
     class RDPMetrics * metrics = nullptr;
     const ChannelsAuthorizations channels_authorizations{};
 
@@ -225,7 +227,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     auto mod = new_mod_rdp(
         t, session_reactor, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen2, timeobj, channels_authorizations, mod_rdp_params, authentifier, report_message, ini, metrics, file_validator_service);
+        gen2, timeobj, channels_authorizations, mod_rdp_params, authentifier, report_message, license_store, ini, metrics, file_validator_service);
 
     // incoming connexion data
     RED_CHECK_EQUAL(front.screen_info().width, 1024);
