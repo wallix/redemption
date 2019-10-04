@@ -81,6 +81,7 @@ public:
     std::vector<uint8_t> netbiosDomainName;
     std::vector<uint8_t> dnsComputerName;
     std::vector<uint8_t> dnsDomainName;
+    std::vector<uint8_t> dnsTreeName;
     uint32_t credssp_version;
     const NtlmVersion ntlm_version;
 //    TSRequest ts_request = {6}; // Credssp Version 6 Supported
@@ -203,8 +204,10 @@ private:
 public:
     NtlmServer(bool is_domain,
                bool is_server,
-               bytes_view TargetName, bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
+               bytes_view TargetName, 
+               bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
                bytes_view DnsComputerName, bytes_view DnsDomainName,
+               bytes_view DnsTreeName,
                array_view_u8 key,
                const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
@@ -221,6 +224,7 @@ public:
         , netbiosDomainName(NetbiosDomainName.data(), NetbiosDomainName.data()+NetbiosDomainName.size())
         , dnsComputerName(DnsComputerName.data(), DnsComputerName.data()+DnsComputerName.size())
         , dnsDomainName(DnsDomainName.data(), DnsDomainName.data()+DnsDomainName.size())
+        , dnsTreeName(DnsTreeName.data(), DnsTreeName.data()+DnsTreeName.size())
         , credssp_version(credssp_version)
         , ntlm_version(ntlm_version)
         , ignore_bogus_nego_flags(ignore_bogus_nego_flags)
@@ -390,6 +394,13 @@ public:
                             // DNS Domain Name
                             auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
                             challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
+                        }
+                        break;
+                        case MsvAvDnsTreeName:
+                        {
+                            // DNS Domain Name
+                            auto dsn_tree_name_u16 = ::UTF8toUTF16(this->dnsTreeName);
+                            challenge_message.AvPairList.push_back(AvPair({MsvAvDnsTreeName, dsn_tree_name_u16}));
                         }
                         break;
                         case MsvAvDnsComputerName:
