@@ -1338,10 +1338,11 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
     return result;
 }
 
-inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(InStream & stream) {
+inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_message) {
 //    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
 //    hexdump_d(stream.remaining_bytes());
 
+    InStream stream(raw_message);
     NTLMAuthenticateMessage self;
     uint8_t const * pBegin = stream.get_current();
     
