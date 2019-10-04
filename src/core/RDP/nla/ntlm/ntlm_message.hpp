@@ -1392,7 +1392,7 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
         self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
 
-    // Read Mic is there is a gap between headers and payload
+    // Read Mic if there is a gap between headers and payload
     // TODO: don't we have a flag to know if we should read MIC ?
     self.has_mic = pBegin + min_offset > stream.get_current();
     if (self.has_mic){
@@ -1830,26 +1830,26 @@ inline std::vector<uint8_t> emitNtlmVersion(uint8_t major, uint8_t minor, uint16
                << ::out_uint8(revision);
 }
 
-inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage & self, uint32_t negoFlags, bytes_view ntlm_version, bytes_view target_info)
+inline std::vector<uint8_t> emitNTLMChallengeMessage(bytes_view target_name, bytes_view server_challenge, uint32_t negoFlags, bytes_view ntlm_version, bytes_view target_info)
 {
     std::vector<uint8_t> result;
 
     uint32_t payloadOffset = 12+8+4+8+8+8+8*bool(ntlm_version.size()==8);
 
-    LOG(LOG_INFO, "Target Name: size = %04x", unsigned(self.TargetName.buffer.size()));
+    LOG(LOG_INFO, "Target Name: size = %04x", unsigned(target_name.size()));
 
     result << bytes_view{NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE)}
            << ::out_uint32_le(NtlmChallenge);
            
-    result << ::out_uint16_le(self.TargetName.buffer.size())
-           << ::out_uint16_le(self.TargetName.buffer.size())
+    result << ::out_uint16_le(target_name.size())
+           << ::out_uint16_le(target_name.size())
            << ::out_uint32_le(payloadOffset);
 
-    payloadOffset += self.TargetName.buffer.size();
+    payloadOffset += target_name.size();
 
     result << ::out_uint32_le(negoFlags);
 
-    result << self.serverChallenge
+    result << server_challenge
            << std::array<uint8_t,8>{0,0,0,0,0,0,0,0};
 
     result << ::out_uint16_le(target_info.size())
@@ -1859,7 +1859,7 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(const NTLMChallengeMessage 
     if (ntlm_version.size()==8) {
         result << ntlm_version;
     }
-    result << self.TargetName.buffer << target_info;
+    result << target_name << target_info;
     return result;
 }
 
@@ -2083,7 +2083,7 @@ struct NTLMNegotiateMessage
     NtlmField Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
     
-    std::vector<uint8_t> raw_bytes;
+//    std::vector<uint8_t> raw_bytes;
 };
 
 
@@ -2165,7 +2165,7 @@ inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
 
     InStream stream(av);
     NTLMNegotiateMessage self;
-    self.raw_bytes.assign(av.begin(),av.end());
+//    self.raw_bytes.assign(av.begin(),av.end());
 //    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Recv)");
 //    hexdump_c(stream.remaining_bytes());
     uint8_t const * pBegin = stream.get_current();

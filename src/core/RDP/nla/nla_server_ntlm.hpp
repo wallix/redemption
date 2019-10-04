@@ -236,38 +236,26 @@ public:
                 switch (this->ntlm_state) {
                 case NTLM_STATE_INITIAL:
                 {
-                    /* receive authentication token */
+                    LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL");
                     TSRequest ts_request_in = recvTSRequest(in_data);
+                    auto raw_negotiate_message = ts_request_in.negoTokens;
+                    this->SavedNegotiateMessage = raw_negotiate_message;
                                         
                     this->error_code = ts_request_in.error_code;
+                    
+                    // TODO: to remove as soon as exceptions are managed for negotiate message
+//                    if (raw_negotiate_message.size() < 1) {
+//                        LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
+//                        LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
+//                        this->state = credssp::State::Err;
+//                        return {};
+//                    }
 
-                    if (ts_request_in.negoTokens.size() < 1) {
-                        LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
-                        LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        this->state = credssp::State::Err;
-                        return {};
-                    }
-
-                    // unsigned long const fContextReq = 0
-                    //     | ASC_REQ_MUTUAL_AUTH
-                    //     | ASC_REQ_CONFIDENTIALITY
-                    //     | ASC_REQ_CONNECTION
-                    //     | ASC_REQ_USE_SESSION_KEY
-                    //     | ASC_REQ_REPLAY_DETECT
-                    //     | ASC_REQ_SEQUENCE_DETECT
-                    //     | ASC_REQ_EXTENDED_ERROR;
-
-                    LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL");
-
-                    this->ntlm_state = NTLM_STATE_NEGOTIATE;
-
-                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-                    NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(ts_request_in.negoTokens);
-
-                    uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                                |NTLMSSP_NEGOTIATE_NTLM
-                                |NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                                |NTLMSSP_NEGOTIATE_UNICODE;
+                    // Manage Exceptions in Negotiate Message here
+                    NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(raw_negotiate_message);
+                    
+                    // TODO: mandatory flags expected for negotiate message could be managed in recv
+                    uint32_t const mask = NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
 
                     if ((negotiate_message.negoFlags.flags & mask) != mask) {
                         LOG_IF(this->verbose, LOG_INFO, "NTLM Negotiate : unsupported negotiate flag %u", negotiate_message.negoFlags.flags);
@@ -275,14 +263,12 @@ public:
                         return {};
                     }
 
-                    this->SavedNegotiateMessage = negotiate_message.raw_bytes;
-
-                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
-
                     rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
 
+
+                    auto target_name = ::UTF8toUTF16(this->TargetName);
                     NTLMChallengeMessage challenge_message;
-                    challenge_message.TargetName.buffer = ::UTF8toUTF16(this->TargetName);
+                    challenge_message.TargetName.buffer = target_name;
                     challenge_message.serverChallenge = this->ServerChallenge;
 
                     uint8_t ZeroTimestamp[8] = {};
@@ -317,7 +303,7 @@ public:
 
                     // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
                     // and set the matching flag accordingly
-                    if (challenge_message.TargetName.buffer.size() > 0){
+                    if (target_name.size() > 0){
                         // forcing some flags
                         negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
                     }
@@ -405,7 +391,7 @@ public:
                         negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
                     }
 
-                    auto challenge = emitNTLMChallengeMessage(challenge_message, negoFlags, raw_ntlm_version, target_info);
+                    auto challenge = emitNTLMChallengeMessage(target_name, challenge_message.serverChallenge, negoFlags, raw_ntlm_version, target_info);
                     auto negoTokens = std::vector<uint8_t>{} << challenge;
 
                     this->SavedChallengeMessage = challenge;

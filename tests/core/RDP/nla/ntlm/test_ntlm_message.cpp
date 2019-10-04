@@ -232,7 +232,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
                                 ntlm_version.ProductMinorVersion,
                                 ntlm_version.ProductBuild,
                                 ntlm_version.NtlmRevisionCurrent);
-    auto challenge = emitNTLMChallengeMessage(ChallengeMsg, negoFlags, raw_ntlm_version, target_info);
+    auto challenge = emitNTLMChallengeMessage(ChallengeMsg.TargetName.buffer,ChallengeMsg.serverChallenge, negoFlags, raw_ntlm_version, target_info);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
