@@ -428,16 +428,12 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xad, 0x62, 0xb1, 0xe4, 0x68, 0x0d, 0x3c}));
     ReplayTime timeobj({{0x01d5754E,0x9df41160}});
 
-    auto get_password = [&](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
+    auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av){
             auto user_str = ::UTF16toUTF8(user_av);
             auto domain_str = ::UTF16toUTF8(domain_av);
-            RED_TEST_MESSAGE("+++++++++++++ Password Callback" 
-                          << " user (" << user_av.size() << "):" << user_str.c_str()
-                          << " domain (" << domain_av.size() << "):" << domain_str.c_str());
             RED_CHECK(user_str == std::string("Christophe"));
             RED_CHECK(domain_str == std::string(""));
-            password_array = ::UTF8toUTF16("SecureLinux$42"_av);
-            return PasswordCallback::Ok;
+            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toUTF16("SecureLinux$42"_av))};
         }; 
 
     auto public_key = std::vector<uint8_t>{
@@ -454,7 +450,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     NtlmServer ntlm_server(false, true, "RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,
                            public_key, 
                            {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, 
-                           rand, timeobj, get_password, 5,
+                           rand, timeobj, get_password_hash, 5,
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
                            false, true);
 
@@ -575,16 +571,13 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
 
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xb8, 0x4d, 0x26, 0xe0, 0x87, 0x11, 0x87}));
     ReplayTime timeobj({{0x01D57877,0xC25FE69E}});
-    auto get_password = [&](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
+    auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av) -> std::pair<PasswordCallback,array_md4>{
             auto user_str = ::UTF16toUTF8(user_av);
             auto domain_str = ::UTF16toUTF8(domain_av);
-            RED_TEST_MESSAGE("+++++++++++++ Password Callback" 
-                          << " user (" << user_av.size() << "):" << user_str.c_str()
-                          << " domain (" << domain_av.size() << "):" << domain_str.c_str());
             RED_CHECK(user_str == user);
             RED_CHECK(domain_str == domain);
-            password_array = ::UTF8toUTF16(bytes_view{pass,sizeof(pass)});
-            return PasswordCallback::Ok;
+            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toUTF16({pass, sizeof(pass)}))};
+
         }; 
 
     auto public_key = std::vector<uint8_t>{
@@ -610,7 +603,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
                            public_key, 
 //                           {MsvAvNbDomainName, MsvAvDnsDomainName, MsvAvNbComputerName,MsvAvDnsComputerName,MsvAvTimestamp}, 
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, 
-                           rand, timeobj, get_password, 6, 
+                           rand, timeobj, get_password_hash, 6, 
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_3, 9600, NTLMSSP_REVISION_W2K3},
                            false, true);
 
@@ -739,16 +732,14 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
 ///* 0010 */ 0x79, 0x43, 0x0f, 0x1c, 0x87, 0xcf, 0xd2, 0xf5, 0xbc, 0x9e, 0xef, 0x9f, 0xd9, 0x11, 0xf1, 0xf0,  // yC..............
     ReplayRandom rand(std::vector<uint8_t>({0x72, 0xE9, 0x0E, 0x66, 0x83, 0x2E, 0x12, 0xC7}));
     ReplayTime timeobj({{0x01D57878,0x5A749CC1}});
-    auto get_password = [&](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
+    std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)>
+        get_password_hash = 
+        [&](bytes_view user_av, bytes_view domain_av) -> std::pair<PasswordCallback,array_md4> {
             auto user_str = ::UTF16toUTF8(user_av);
             auto domain_str = ::UTF16toUTF8(domain_av);
-            RED_TEST_MESSAGE("+++++++++++++ Password Callback" 
-                          << " user (" << user_av.size() << "):" << user_str.c_str()
-                          << " domain (" << domain_av.size() << "):" << domain_str.c_str());
             RED_CHECK(user_str == user);
             RED_CHECK(domain_str == domain);
-            password_array = ::UTF8toUTF16(bytes_view{pass,sizeof(pass)});
-            return PasswordCallback::Ok;
+            return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,::Md4(::UTF8toUTF16(bytes_view{pass,sizeof(pass)}))};
         }; 
 
     auto public_key = std::vector<uint8_t>{
@@ -775,7 +766,7 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
     NtlmServer ntlm_server(true, false, "PROXYKDC"_av, "WIN10CGR"_av, "PROXYKDC"_av, "WIN10CGR.proxykdc.lab"_av, "proxykdc.lab"_av, "proxykdc.lab"_av,
                            public_key, 
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName, MsvAvDnsComputerName, MsvAvDnsTreeName, MsvAvTimestamp}, 
-                           rand, timeobj, get_password, 6, 
+                           rand, timeobj, get_password_hash, 6, 
                            NtlmVersion{10, 0, 0x4563, NTLMSSP_REVISION_W2K3},
                            false, true);
 

@@ -96,7 +96,7 @@ private:
     array_view_u8 public_key;
 
     private:
-    std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb;
+    std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)> get_password_hash_cb;
     const bool verbose;
 
     array_sha256 ClientServerHash;
@@ -132,7 +132,6 @@ public:
 
     std::vector<uint8_t> user;
     std::vector<uint8_t> domain;
-    std::vector<uint8_t> identity_Password;
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -210,7 +209,7 @@ public:
                const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
                TimeObj & timeobj,
-               std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
+               std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)> get_password_hash_cb,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
                bool ignore_bogus_nego_flags,
                const bool verbose = false)
@@ -229,7 +228,7 @@ public:
         , timeobj(timeobj)
         , rand(rand)
         , public_key(key)
-        , set_password_cb(set_password_cb)
+        , get_password_hash_cb(get_password_hash_cb)
         , verbose(verbose)
     {
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
@@ -501,7 +500,7 @@ public:
                         return {};
                     }
 
-                    auto res = (set_password_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer, this->identity_Password));
+                    auto [res, password_hash] = get_password_hash_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer);
 
                     if (res == PasswordCallback::Error){
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (3)");
@@ -519,25 +518,25 @@ public:
                     // before continuing ongoing authentication protocol.
                     // I will see to that later.
 
-                    array_md4 hash;
-                    if (this->identity_Password.size() > 0){
-                        hash = Md4(this->identity_Password);
-                    }
+//                    array_md4 password_hash;
+//                    if (this->identity_Password.size() > 0){
+//                        password_hash = Md4(this->identity_Password);
+//                    }
                     
                     
-                    if (!authenticate.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
+                    if (!authenticate.check_nt_response_from_authenticate(password_hash, this->ServerChallenge)) {
                         LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                         // SEC_E_LOGON_DENIED;
                         this->state = credssp::State::Err;
                         return {};
                     }
-                    if (!authenticate.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
+                    if (!authenticate.check_lm_response_from_authenticate(password_hash, this->ServerChallenge)) {
                         // SEC_E_LOGON_DENIED;
                         this->state = credssp::State::Err;
                         return {};
                     }
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
-                    array_md5 SessionBaseKey = authenticate.compute_session_base_key(hash);
+                    array_md5 SessionBaseKey = authenticate.compute_session_base_key(password_hash);
                     array_md5 ExportedSessionKey = authenticate.get_exported_session_key(SessionBaseKey);
                     this->ClientSigningKey = Md5(ExportedSessionKey, make_array_view(client_sign_magic));
                     this->ClientSealingKey = Md5(ExportedSessionKey, make_array_view(client_seal_magic));

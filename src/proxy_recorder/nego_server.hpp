@@ -36,7 +36,7 @@ class NegoServer
     std::string password;
     NtlmServer credssp;
 
-    auto get_password(bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array)
+    std::pair<PasswordCallback,array_md4> get_password_hash(bytes_view user_av, bytes_view domain_av)
     {
         LOG(LOG_INFO, "NTLM Check identity");
         
@@ -62,8 +62,7 @@ class NegoServer
             && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
                 domain.size()}, identity_domain)) {
                 LOG(LOG_INFO, "identity match");
-                password_array = UTF8toUTF16(this->password);
-                return PasswordCallback::Ok;
+                return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->password))};
             }
         }
 
@@ -72,12 +71,11 @@ class NegoServer
                 username.size()}, utf8_user)
         && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
                 domain.size()}, utf8_domain)) {
-            password_array = UTF8toUTF16(this->password);
-            return PasswordCallback::Ok;
+            return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->password))};
         }
 
         LOG(LOG_ERR, "Ntlm: bad identity");
-        return PasswordCallback::Error;
+        return {PasswordCallback::Error, {}};
     }
 
 public:
@@ -86,8 +84,8 @@ public:
     , password(password)
     , credssp(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, "win7"_av, key, 
             {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, rand, timeobj,
-        [this](bytes_view user_av, bytes_view domain_av, std::vector<uint8_t> & password_array){
-            return this->get_password(user_av, domain_av, password_array);
+        [this](bytes_view user_av, bytes_view domain_av){
+            return this->get_password_hash(user_av, domain_av);
         }, 6, 
         NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
         false, verbosity)
