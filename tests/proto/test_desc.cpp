@@ -647,6 +647,47 @@ namespace test
     class none {};
     PROTO_IS_SAME_TYPE(none);
 
+    namespace errors
+    {
+        PROTO_ERROR_C(missing_parameters);
+        PROTO_ERROR_C(unknown_parameters);
+    }
+
+    namespace detail
+    {
+        template<class Traits, class Param, class X>
+        auto make_variable2(proto::value<X, name_t<Param>> const& v)
+        {
+            using builder = typename Traits::template value_variable_builder<
+                data_type_t<Param>,
+                std::remove_reference_t<X>>;
+            // TODO v.value&&
+            return variable<
+                decltype(builder::make(v.value)),
+                name_t<Param>
+            >{builder::make(v.value)};
+        }
+
+        template<class Traits, class Params, class... Xs>
+        auto build_params2(Xs const&... xs)
+        {
+            PROTO_ASSERT_TYPES(proto::is_value, Xs);
+
+            using params = mp::call<mp::unpack<mp::cfe<detail::param_list>>, Params>;
+            using value_params = detail::param_list<Xs...>;
+
+            detail::check_unused_params<params, value_params, errors::missing_parameters>();
+            detail::check_unused_params<value_params, params, errors::unknown_parameters>();
+
+            // TODO value_type_t must be rvalue or lvalue
+            proto::tuple<Xs...> t{Xs{static_cast<value_type_t<Xs>>(xs.value)}...};
+
+            return apply(Params{}, [&](auto... p){
+                return tuple{make_variable2<Traits, decltype(p)>(t)...};
+            });
+        }
+    }
+
     namespace traits
     {
         struct stream_writable
@@ -864,6 +905,27 @@ namespace test
             }
         };
 
+        template<class Tuple>
+        struct Ctx
+        {
+            InStream in;
+            Tuple params;
+        };
+
+        template<class Tuple>
+        Ctx(InStream, Tuple&&) -> Ctx<Tuple>;
+
+
+        template<class Params, class R>
+        struct State
+        {
+            InStream& in;
+            Params params;
+            R result;
+        };
+
+        template<class Params, class R>
+        State(InStream&, Params&&, R&&) -> State<Params, R>;
 
         struct stream_readable2
         {
@@ -890,6 +952,37 @@ namespace test
 
             template<class> class lazy {};
             template<class Data, class T> struct val { T x; };
+
+            template<class Params, class Values, class... Xs>
+            static auto make_context(bytes_view buf, Xs const&... xs)
+            {
+                return Ctx{InStream{buf}, detail::build_params2<stream_readable2, Params>(xs...)};
+            }
+
+            template<class... Ts>
+            static auto make_state(Ctx<tuple<Ts...>>& ctx)
+            {
+                return State{
+                    ctx.in,
+                    ctx.params, //tuple<val<void, Ts&>...>{{static_cast<Ts&>(ctx.params)}...}
+                    tuple<>{}
+                };
+            }
+
+            template<class State, class Data, class... Name>
+            static auto next_state(State& state, lazy_value<Data, Name...>)
+            {
+                using builder = value_builder<
+                    proto_basic_type_t<Data>,
+                    std::remove_reference_t<decltype(get_var<Name>(state.params))>...>;
+                return builder::make(state, get_var<Name>(state.params).value...);
+            }
+
+            template<class State>
+            static auto final(State& state)
+            {
+                return state.result;
+            }
         };
 
         template<class T>
@@ -968,14 +1061,24 @@ namespace test
             using type = StringSize;
         };
 
+        template<class... Ts, class X>
+        auto tuple_add(tuple<Ts...>& t, X&& x)
+        {
+            return tuple<Ts..., X>{static_cast<Ts&>(t)..., {static_cast<X&&>(x)}};
+        }
+
         template<class Name, class Data>
         struct stream_readable2::value_builder<as_param,
             variable<stream_readable2::lazy<Data>, Name>>
         {
-            template<class Tuple>
-            static auto make(InStream& in, Tuple& tx, stream_readable2::lazy<Data>)
+            template<class St>
+            static auto make(St& state, stream_readable2::lazy<Data>)
             {
-                return pair(tx, make_mem<Name>(read_data<Data>::read(in)));
+                return State{
+                    state.in,
+                    state.params,
+                    tuple_add(state.result, make_mem<Name>(read_data<Data>::read(state.in)))
+                };
             }
         };
 
@@ -983,11 +1086,15 @@ namespace test
         struct stream_readable2::value_builder<as_param,
             variable<stream_readable2::val<Data, T&>, Name>>
         {
-            template<class Tuple>
-            static auto make(InStream& in, Tuple& tx, stream_readable2::val<Data, T&> v)
+            template<class St>
+            static auto make(St& state, stream_readable2::val<Data, T&> v)
             {
-                v.x = read_data<Data>::read(in);
-                return pair(tx, make_mem<Name>(v.x));
+                v.x = read_data<Data>::read(state.in);
+                return State{
+                    state.in,
+                    state.params,
+                    tuple_add(state.result, make_mem<Name>(v.x))
+                };
             }
         };
 
@@ -996,16 +1103,18 @@ namespace test
             datas::values::types::SizeBytes<as_param>,
             variable<stream_readable2::val<Data, writable_bytes_view>, Name>>
         {
-            template<class... Ts>
-            static auto make(InStream& in, tuple<Ts...>& tx, stream_readable2::val<Data, writable_bytes_view>& v)
+            template<class Tuple, class R>
+            static auto make(State<Tuple, R>& state, stream_readable2::val<Data, writable_bytes_view>&)
             {
-                auto n = read_data<data_to_value_size<Data>>::read(in);
-                return pair(
-                    tuple<Ts..., variable<decltype(n), datas::values::types::SizeBytes<Name>>>{
-                        static_cast<Ts&>(tx)..., {n}
-                    },
-                    none()
-                );
+                auto n = read_data<data_to_value_size<Data>>::read(state.in);
+                return State{
+                    state.in,
+                    tuple_add(
+                        state.params,
+                        variable<decltype(n), datas::values::types::SizeBytes<Name>>{n}
+                    ),
+                    state.result
+                };
             }
         };
 
@@ -1014,13 +1123,17 @@ namespace test
             datas::values::types::Data<as_param>,
             variable<stream_readable2::val<Data, writable_bytes_view>, Name>>
         {
-            template<class Tuple>
-            static auto make(InStream& in, Tuple& tx, stream_readable2::val<Data, writable_bytes_view>& v)
+            template<class St>
+            static auto make(St& state, stream_readable2::val<Data, writable_bytes_view>& v)
             {
-                auto n = get_var<datas::values::types::SizeBytes<Name>>(tx).value;
+                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
                 v.x = {v.x.data(), std::size_t(n)};
-                in.in_copy_bytes(v.x);
-                return pair(tx, make_mem<Name>(v.x));
+                state.in.in_copy_bytes(v.x);
+                return State{
+                    state.in,
+                    state.params,
+                    tuple_add(state.result, make_mem<Name>(v.x))
+                };
             }
         };
 
@@ -1039,12 +1152,6 @@ namespace test
                 });
             }
         };
-    }
-
-    namespace errors
-    {
-        PROTO_ERROR_C(missing_parameters);
-        PROTO_ERROR_C(unknown_parameters);
     }
 
     template<class Tag, class BasicType, class T>
@@ -1239,77 +1346,23 @@ namespace test
         });
     }
 
-    template<class Traits, class Data, class Tuple, class... Name>
-    auto make_value2(InStream& in, lazy_value<Data, Name...>, Tuple&& tx)
-    {
-        using builder = typename Traits::template value_builder<
-            proto_basic_type_t<Data>,
-            std::remove_reference_t<decltype(get_var<Name>(tx))>...>;
-        return builder::make(in, tx, get_var<Name>(tx).value...);
-    }
-
     namespace detail
     {
-        template<class Traits, class... Rs>
-        struct recursive_inplace_recv2
+        template<class Traits, class State>
+        auto recursive_inplace_recv2(State&& state)
         {
-            template<class Tuple>
-            static auto _(InStream&, Tuple&&, Rs... rs)
-            {
-                println();
-                (println("  ", type_name<Rs>(), " = ", rs), ...);
-            }
+            return Traits::final(state);
+        }
 
-            template<class... Ts, class V, class... Vs>
-            static auto _(InStream& in, tuple<Ts...>& tx, Rs... rs, V&& v, Vs&&... vs)
-            {
-                auto [new_tx, x] = make_value2<Traits>(in, v, tx);
-                println("  ", type_name(x)/*, " = ", x*/);
-                // auto [new_tx, y] = typename Traits::template reader<decltype(x)>::read(in, tx, x);
-                return recursive_inplace_recv2<Traits, Rs...>::_(in, new_tx, rs..., vs...);
+        template<class Traits, class State, class V, class... Vs>
+        auto recursive_inplace_recv2(State&& state, V&& v, Vs&&... vs)
+        {
+            auto&& new_state = Traits::next_state(state, v);
+            println("  ", type_name(new_state)/*, " = ", x*/);
+            // auto [new_tx, y] = typename Traits::template reader<decltype(x)>::read(in, tx, x);
 
-
-                /*if constexpr (std::is_same_v<void, decltype(reader::read(in, x))>)
-                {
-                    reader::read(in, x);
-                    return recursive_inplace_recv2<Traits, Rs...>::_(in, tx, rs..., vs...);
-                }
-                else
-                {
-                    return recursive_inplace_recv2<Traits, Rs..., decltype(reader::read(in, x))>
-                        ::_(in, tx, rs..., reader::read(in, x), vs...);
-                }*/
-            }
-        };
-    }
-
-    template<class Traits, class Param, class X>
-    auto make_variable2(proto::value<X, name_t<Param>> const& v)
-    {
-        using builder = typename Traits::template value_variable_builder<
-            data_type_t<Param>,
-            std::remove_reference_t<X>>;
-        // TODO v.value&&
-        return variable<decltype(builder::make(v.value)), name_t<Param>>{builder::make(v.value)};
-    }
-
-    template<class Traits, class Params, class... Xs>
-    auto build_params2(Xs const&... xs)
-    {
-        PROTO_ASSERT_TYPES(proto::is_value, Xs);
-
-        using params = mp::call<mp::unpack<mp::cfe<detail::param_list>>, Params>;
-        using value_params = detail::param_list<Xs...>;
-
-        detail::check_unused_params<params, value_params, errors::missing_parameters>();
-        detail::check_unused_params<value_params, params, errors::unknown_parameters>();
-
-        // TODO value_type_t must be rvalue or lvalue
-        proto::tuple<Xs...> t{Xs{static_cast<value_type_t<Xs>>(xs.value)}...};
-
-        return apply(Params{}, [&](auto... p){
-            return tuple{make_variable2<Traits, decltype(p)>(t)...};
-        });
+            return recursive_inplace_recv2<Traits>(new_state, vs...);
+        }
     }
 
     template<class Params, class Values, class... Xs>
@@ -1317,27 +1370,18 @@ namespace test
     {
         using Traits = traits::stream_readable2;
 
-        InStream in(buf);
+        auto ctx = Traits::make_context<Params, Values>(buf, xs...);
 
-        auto tx = build_params2<Traits, Params>(xs...);
-
-        tx.apply([&](auto... vars){
+        ctx.params.apply([&](auto... vars){
             (println("  ", type_name(vars), " = ", vars.value), ...);
         });
 
-        // auto f = [&](auto v){
-        //     auto x = make_value2<Traits>(v, tx);
-        //     println("  ", type_name(x), " = ", x);
-        // };
-        // println();
-        // apply(Values{}, [&](auto... v){
-        //     (f(v), ...);
-        // });
-
         println();
-        apply(Values{}, [&](auto... v){
-            detail::recursive_inplace_recv2<Traits>::_(in, tx, v...);
+        auto r = apply(Values{}, [&](auto... v){
+            return detail::recursive_inplace_recv2<Traits>(Traits::make_state(ctx), v...);
         });
+        println();
+        println(type_name(r));
     }
 }
 
