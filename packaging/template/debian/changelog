@@ -1,3 +1,9 @@
+redemption (7.3.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Support RDP upgrade license flow.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 Oct 2019 18:02:10 +0200
+
 redemption (7.3.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Increase the maximum delay before showing Remote Program disconnection message.
