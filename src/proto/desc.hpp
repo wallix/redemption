@@ -132,15 +132,6 @@ struct value
 
 PROTO_IS_TYPE_VA(value);
 
-template<class Data, class Name>
-struct param_and_lazy_value
-{
-    using name = Name;
-    using data_type = Data;
-};
-
-PROTO_IS_TYPE_VA(param_and_lazy_value);
-
 template<class Data, class... Names>
 struct lazy_value
 {
@@ -150,6 +141,25 @@ struct lazy_value
 };
 
 PROTO_IS_TYPE_VA(lazy_value);
+
+struct as_param
+{
+    using proto_basic_type = as_param;
+};
+
+PROTO_IS_SAME_TYPE(as_param);
+
+template<class Data, class Name>
+struct param_and_lazy_value
+{
+    using name = Name;
+    using data_type = Data;
+
+    static lazy_value<proto::as_param, Name> value() { return {}; }
+    static param<Data, Name> type() { return {}; }
+};
+
+PROTO_IS_TYPE_VA(param_and_lazy_value);
 
 
 template<class... xs>
@@ -195,13 +205,6 @@ struct named
 };
 
 class no_type {};
-
-struct as_param
-{
-    using proto_basic_type = as_param;
-};
-
-PROTO_IS_SAME_TYPE(as_param);
 
 
 template<class Name>
@@ -265,24 +268,36 @@ struct wrap_type
 template<class Type>
 struct data : Type
 {
-    using Type::Type;
-
-    // template<class X>
-    // constexpr auto operator=(X&& x) const
-    // {
-    //     return value<data, X&&>{static_cast<Type const&>(*this), FWD(x)};
-    // }
-    //
-    // template<class X>
-    // constexpr auto operator()(X&& x) const
-    // {
-    //     return value<data, X&&>{static_cast<Type const&>(*this), FWD(x)};
-    // }
-
     template<class Name>
-    constexpr auto operator[](label<Name>) const
+    constexpr param_and_lazy_value<Type, Name> operator[](Name const&) const
     {
-        return param<data, Name>{/*static_cast<Type const&>(*this)*/};
+        return {};
+    }
+};
+
+template<template<class...> class Tpl>
+struct tpl_data
+{
+    template<class... Type>
+    constexpr data<Tpl<Type...>> operator()(Type const&...) const
+    {
+        return {};
+    }
+};
+
+template<template<class...> class Tpl>
+struct value_data
+{
+    template<class Name>
+    constexpr lazy_value<Tpl<as_param>, Name> operator[](Name const&) const
+    {
+        return {};
+    }
+
+    template<class... Type>
+    constexpr data<Tpl<Type...>> operator()(Type const&...) const
+    {
+        return {};
     }
 };
 
@@ -318,12 +333,12 @@ namespace datas
 
 #define PROTO_ALIAS_TPL_TYPE(value_name, type_name, ...)                        \
     namespace types { template<class Type> struct type_name : __VA_ARGS__ {}; } \
-    template<class Type> inline constexpr ::proto::data<types::type_name<Type>> value_name {}
+    inline constexpr ::proto::tpl_data<types::type_name> value_name {}
 
-#define PROTO_ALIAS_TPL_TYPE_DECL(value_name, type_name)      \
+#define PROTO_ALIAS_TPL_VALUE_TYPE(value_name, type_name)      \
     namespace types { template<class Type> struct type_name { \
         using proto_basic_type = type_name; }; }              \
-    template<class Type> inline constexpr ::proto::data<types::type_name<Type>> value_name {}
+    inline constexpr ::proto::value_data<types::type_name> value_name {}
 
     /**
     * fixed width integer types
@@ -439,15 +454,15 @@ namespace datas
 
     namespace values
     {
-        PROTO_ALIAS_TPL_TYPE_DECL(size_bytes, SizeBytes);
-        PROTO_ALIAS_TPL_TYPE_DECL(data, Data);
+        PROTO_ALIAS_TPL_VALUE_TYPE(size_bytes, SizeBytes);
+        PROTO_ALIAS_TPL_VALUE_TYPE(data, Data);
 
         PROTO_ALIAS_TYPE(bytes, Bytes, Data<datas::types::U8>);
     }
 
 #undef PROTO_ALIAS_TYPE
 #undef PROTO_ALIAS_TPL_TYPE
-#undef PROTO_ALIAS_TPL_TYPE_DECL
+#undef PROTO_ALIAS_TPL_VALUE_TYPE
 
 }
 

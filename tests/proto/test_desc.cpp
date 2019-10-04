@@ -937,7 +937,7 @@ namespace test
                 = value_variable_builder_impl<Data, proto_basic_type_t<Data>>;
 
             template<class BasicType, class... NamedValues>
-            struct value_builder;
+            struct next_value;
 
             struct reader_impl;
 
@@ -962,25 +962,22 @@ namespace test
             template<class... Ts>
             static auto make_state(Ctx<tuple<Ts...>>& ctx)
             {
-                return State{
-                    ctx.in,
-                    ctx.params, //tuple<val<void, Ts&>...>{{static_cast<Ts&>(ctx.params)}...}
-                    tuple<>{}
-                };
+                return State{ctx.in, ctx.params, tuple<>{}};
             }
 
             template<class State, class Data, class... Name>
             static auto next_state(State& state, lazy_value<Data, Name...>)
             {
-                using builder = value_builder<
+                using builder = next_value<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(state.params))>...>;
                 return builder::make(state, get_var<Name>(state.params).value...);
             }
 
             template<class State>
-            static auto final(State& state)
+            static auto final(State&& state)
             {
+                // TODO sort by alignement ?
                 return state.result;
             }
         };
@@ -1024,12 +1021,6 @@ namespace test
         };
 
 
-        template<class T, class U>
-        auto pair(T&& a, U&& b)
-        {
-            return std::pair<T, U>(static_cast<T&&>(a), static_cast<U&&>(b));
-        }
-
         template<class Name, class T>
         auto make_mem(T&& x)
         {
@@ -1068,7 +1059,7 @@ namespace test
         }
 
         template<class Name, class Data>
-        struct stream_readable2::value_builder<as_param,
+        struct stream_readable2::next_value<as_param,
             variable<stream_readable2::lazy<Data>, Name>>
         {
             template<class St>
@@ -1083,7 +1074,7 @@ namespace test
         };
 
         template<class Name, class Data, class T>
-        struct stream_readable2::value_builder<as_param,
+        struct stream_readable2::next_value<as_param,
             variable<stream_readable2::val<Data, T&>, Name>>
         {
             template<class St>
@@ -1099,7 +1090,7 @@ namespace test
         };
 
         template<class Name, class Data>
-        struct stream_readable2::value_builder<
+        struct stream_readable2::next_value<
             datas::values::types::SizeBytes<as_param>,
             variable<stream_readable2::val<Data, writable_bytes_view>, Name>>
         {
@@ -1119,7 +1110,7 @@ namespace test
         };
 
         template<class Name, class Data>
-        struct stream_readable2::value_builder<
+        struct stream_readable2::next_value<
             datas::values::types::Data<as_param>,
             variable<stream_readable2::val<Data, writable_bytes_view>, Name>>
         {
@@ -1132,7 +1123,7 @@ namespace test
                 return State{
                     state.in,
                     state.params,
-                    tuple_add(state.result, make_mem<Name>(v.x))
+                    tuple_add(state.result, make_mem<Name>(writable_bytes_view(v.x)))
                 };
             }
         };
@@ -1351,17 +1342,14 @@ namespace test
         template<class Traits, class State>
         auto recursive_inplace_recv2(State&& state)
         {
-            return Traits::final(state);
+            return Traits::final(static_cast<State&&>(state));
         }
 
         template<class Traits, class State, class V, class... Vs>
         auto recursive_inplace_recv2(State&& state, V&& v, Vs&&... vs)
         {
-            auto&& new_state = Traits::next_state(state, v);
-            println("  ", type_name(new_state)/*, " = ", x*/);
-            // auto [new_tx, y] = typename Traits::template reader<decltype(x)>::read(in, tx, x);
-
-            return recursive_inplace_recv2<Traits>(new_state, vs...);
+            println("  ", type_name<decltype(Traits::next_state(state, v))>());
+            return recursive_inplace_recv2<Traits>(Traits::next_state(state, v), vs...);
         }
     }
 
@@ -1376,12 +1364,9 @@ namespace test
             (println("  ", type_name(vars), " = ", vars.value), ...);
         });
 
-        println();
-        auto r = apply(Values{}, [&](auto... v){
+        return apply(Values{}, [&](auto... v){
             return detail::recursive_inplace_recv2<Traits>(Traits::make_state(ctx), v...);
         });
-        println();
-        println(type_name(r));
     }
 }
 
@@ -1396,15 +1381,54 @@ int main()
     using namespace proto::datas;
 
     auto def = test::definition2(
-        proto::param_and_lazy_value<types::U8, decltype(s.a)>{},
+        u8[s.a],
 
-        proto::param_and_lazy_value<types::U16_le, decltype(s.b)>{},
+        ascii_string(u16_be)[s.c].type(),
 
-        proto::param<types::AsciiString<types::U16_le>, decltype(s.c)>{},
-
-        proto::lazy_value<values::types::SizeBytes<proto::as_param>, decltype(s.c)>{},
-        proto::lazy_value<values::types::Data<proto::as_param>, decltype(s.c)>{}
+        values::size_bytes[s.c],
+        u16_le[s.b],
+        values::data[s.c]
     );
+
+    // auto def = test::definition2(
+    //     s.a = as(u8),
+    //
+    //     s.c = type(ascii_string(u16_be)),
+    //
+    //     s.c = values::size_bytes(),
+    //     s.b = as(u16_le),
+    //     s.c = values::data(),
+    // );
+
+    // auto def = test::definition2(
+    //     s.a.as(u8),
+    //
+    //     s.c.type(ascii_string(u16_be)),
+    //
+    //     s.c.value(values::size_bytes()),
+    //     s.b.as(u16_le),
+    //     s.c.value(values::data()),
+    // );
+
+    // auto def = test::definition2(
+    //     bind(s.a, as(u8)),
+    //
+    //     bind(s.c, type(ascii_string(u16_be))),
+    //
+    //     bind(s.c, value(values::size_bytes())),
+    //     bind(s.b, as(u16_le)),
+    //     bind(s.c, value(values::data())),
+    // );
+
+    // auto def = test::definition2(
+    //     bind(s.a, u8),
+    //
+    //     type(s.c, ascii_string(u16_be)),
+    //
+    //     value(s.c, values::size_bytes()),
+    //     as(s.b, u16_le),
+    //     value(s.c, values::data()),
+    // );
 
     auto print_list = [](char const* s, auto t){
         println("  ", s, ":");
@@ -1430,18 +1454,27 @@ int main()
     auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av);
     dump(out);
 
-    print("\n\ninplace_recv:\n\n");
-    char strbuf[10];
-    a = '0';
-    b = 0;
-    auto datas = test::inplace_recv(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
-    println("\n", type_name(datas));
-    println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-    println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
-    println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-    println("a = ", a);
-    println("b = ", b);
+    {
+        print("\n\ninplace_recv:\n\n");
+        char strbuf[10];
+        a = '0';
+        auto datas = test::inplace_recv(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
+        println("\n", type_name(datas));
+        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+        println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
+        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+        println("a = ", a);
+    }
 
-    print("\n\ninplace_recv2:\n\n");
-    test::inplace_recv2(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
+    {
+        print("\n\ninplace_recv2:\n\n");
+        char strbuf[10];
+        a = '0';
+        auto datas = test::inplace_recv2(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
+        println("\n", type_name(datas));
+        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+        println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
+        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+        println("a = ", a);
+    }
 }
