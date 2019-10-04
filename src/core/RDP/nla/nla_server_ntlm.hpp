@@ -166,37 +166,9 @@ public:
 
     array_md5 ServerSigningKey;
 private:
-    /**
-     * Generate server sealing key (ServerSealingKey).\n
-     * @msdn{cc236712}
-     */
-
     array_md5 ServerSealingKey;
-    array_md5 MessageIntegrityCheck;
+    
     // uint8_t NtProofStr[16];
-
-    private:
-
-    // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
-
-    // SERVER PROCEED RESPONSE CHECKING
-    public:
-
-    // GSS_Acquire_cred
-    // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-
-    // GSS_Init_sec_context
-    // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext
-    // -> only for clients : unused for NTLM server
-
-    // GSS_Accept_sec_context
-    // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-
-private:
-    // ENCRYPT_MESSAGE EncryptMessage;
-
-    // GSS_Unwrap
-    // DECRYPT_MESSAGE DecryptMessage;
 
 public:
     NtlmServer(bool is_domain,
@@ -509,21 +481,6 @@ public:
                         return {};
                     }
 
-                    // TODO: NTLM_STATE_WAIT_PASSWORD
-                    // CGR: I removed support for interactive local password typing
-                    // I don't see it as relevant in the context. However it could
-                    // be useful to take into account that password callback 
-                    // (check of password for provided user/domain)
-                    // could not be immediate and may need some waiting
-                    // before continuing ongoing authentication protocol.
-                    // I will see to that later.
-
-//                    array_md4 password_hash;
-//                    if (this->identity_Password.size() > 0){
-//                        password_hash = Md4(this->identity_Password);
-//                    }
-                    
-                    
                     if (!authenticate.check_nt_response_from_authenticate(password_hash, this->ServerChallenge)) {
                         LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                         // SEC_E_LOGON_DENIED;
@@ -553,14 +510,14 @@ public:
                     // =======================================================
 
                     if (authenticate.has_mic) {
-                        this->MessageIntegrityCheck = HmacMd5(ExportedSessionKey, 
+                        array_md5 MessageIntegrityCheck = HmacMd5(ExportedSessionKey, 
                                                         this->SavedNegotiateMessage, 
                                                         this->SavedChallengeMessage,
                                                         authenticate.get_bytes());
 
-                        if (0 != memcmp(this->MessageIntegrityCheck.data(), authenticate.MIC, 16)) {
+                        if (0 != memcmp(MessageIntegrityCheck.data(), authenticate.MIC, 16)) {
                             LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
-                            hexdump_c(this->MessageIntegrityCheck.data(), 16);
+                            hexdump_c(MessageIntegrityCheck.data(), 16);
                             hexdump_c(authenticate.MIC, 16);
                             // SEC_E_MESSAGE_ALTERED;
                             this->state = credssp::State::Err;
