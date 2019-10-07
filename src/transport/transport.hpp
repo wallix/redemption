@@ -66,12 +66,13 @@ public:
     }
 
     virtual void enable_server_tls(const char * certificate_password,
-        const char * ssl_cipher_list, uint32_t tls_min_level)
+        const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level)
     {
         // default enable_tls do nothing
         (void)certificate_password;
         (void)ssl_cipher_list;
         (void)tls_min_level;
+        (void)tls_max_level;
     }
 
     virtual array_view_const_u8 get_public_key() const
@@ -236,8 +237,8 @@ struct InTransport
         return this->t.enable_client_tls(server_notifier);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
-    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level); }
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level)
+    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level); }
 
     array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
@@ -271,8 +272,8 @@ struct OutTransport
         return this->t.enable_client_tls(server_notifier);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
-    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level); }
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level)
+    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level); }
 
     array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 

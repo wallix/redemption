@@ -302,7 +302,7 @@ public:
         return Transport::TlsResult::Fail;
     }
 
-    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
+    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level)
     {
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -498,6 +498,12 @@ public:
 
         switch (tls_min_level){
         default:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            break;
+        case 3:
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
@@ -508,6 +514,25 @@ public:
             break;
         case 1:
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            break;
+        case 0:
+            break;
+        }
+
+        switch (tls_max_level){
+        default:
+            break;
+        case 3:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            break;
+        case 2:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            break;
+        case 1:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             break;
         case 0:
             break;

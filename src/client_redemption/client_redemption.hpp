@@ -28,6 +28,7 @@
 #include "utils/sugar/algostring.hpp"
 
 #include "acl/auth_api.hpp"
+#include "acl/license_api.hpp"
 
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
@@ -85,6 +86,7 @@ private:
     TimeSystem        timeSystem;
     NullAuthentifier  authentifier;
     NullReportMessage reportMessage;
+    NullLicenseStore  licensestore;
 
 public:
     ClientCallback _callback;
@@ -419,6 +421,7 @@ public:
                   , mod_rdp_params
                   , this->authentifier
                   , this->reportMessage
+                  , this->licensestore
                   , this->ini
                   , nullptr
                   , nullptr

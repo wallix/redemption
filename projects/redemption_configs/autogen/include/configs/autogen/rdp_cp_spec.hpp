@@ -293,4 +293,4 @@ clipboard_text_data = boolean(default=False)
 #_hex
 disable_keyboard_log = integer(min=0, max=3, default=1)
 
-)xxxyyyzzz";
+)xxxyyyzzz"

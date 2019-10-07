@@ -74,6 +74,7 @@ namespace cfg {
         struct tls_fallback_legacy;
         struct tls_support;
         struct tls_min_level;
+        struct tls_max_level;
         struct bogus_neg_request;
         struct bogus_user_id;
         struct disable_tsk_switch_shortcuts;
@@ -176,6 +177,7 @@ namespace cfg {
         struct server_cert;
         struct server_cert_response;
         struct session_shadowing_support;
+        struct use_license_store;
     };
 
     struct mod_vnc {

@@ -155,7 +155,7 @@ private:
         }
 
     } identity;
-        
+
     struct Krb5Creds_deleter
     {
         void operator()(Krb5Creds* credentials) const
@@ -441,7 +441,7 @@ private:
         sha256.update(this->SavedClientNonce.clientNonce);
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
-        
+
         this->ClientServerHash.assign(hash, hash+sizeof(hash));
     }
 
@@ -460,7 +460,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
-        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};;
+        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
             this->credssp_generate_client_nonce();
             this->credssp_generate_public_key_hash_client_to_server();
@@ -681,7 +681,7 @@ private:
             // Card Reader Not Supported Yet
             bytes_view pin;
             bytes_view userHint;
-            bytes_view domainHint; 
+            bytes_view domainHint;
             uint32_t keySpec = 0;
             bytes_view cardName;
             bytes_view readerName;
@@ -870,7 +870,6 @@ public:
                 return credssp::State::Err;
                 
             case ClientAuthenticateData::Loop:
-            
                 this->ts_request = recvTSRequest(in_data);
                 this->error_code = this->ts_request.error_code;
 

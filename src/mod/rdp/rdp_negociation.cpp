@@ -43,12 +43,13 @@
 #include "utils/sugar/zstring_view.hpp"
 
 #include "utils/difftimeval.hpp"
+#include "utils/fileutils.hpp"
 
 #include "system/tls_check_certificate.hpp"
 
 #include <cstring>
-
-
+#include <iomanip>
+#include <sstream>
 
 
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
@@ -162,6 +163,7 @@ RdpNegociation::RdpNegociation(
     TimeObj& timeobj,
     const ModRDPParams& mod_rdp_params,
     ReportMessageApi& report_message,
+    LicenseApi& license_store,
     bool has_managed_drive,
     bool convert_remoteapp_to_desktop
 )
@@ -245,6 +247,9 @@ RdpNegociation::RdpNegociation(
     , has_managed_drive(has_managed_drive)
     , convert_remoteapp_to_desktop(convert_remoteapp_to_desktop)
     , send_channel_index(0)
+    , license_client_name(info.hostname)
+    , license_store(license_store)
+    , use_license_store(mod_rdp_params.use_license_store)
 {
     this->negociation_result.front_width = info.screen_info.width;
     this->negociation_result.front_width -= this->negociation_result.front_width % 4;
@@ -255,27 +260,9 @@ RdpNegociation::RdpNegociation(
     }
 
     LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
-        "enable_session_probe=%s", (this->enable_session_probe ? "yes" : "no"));
+        "RdpNegociation: enable_session_probe=%s", (this->enable_session_probe ? "yes" : "no"));
 
     strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
-
-#ifndef __EMSCRIPTEN__
-    // TODO CGR: license loading should be done before creating protocol layers
-    {
-        char path[256];
-        snprintf(path, sizeof(path), "%s/license.%s", app_path(AppPath::License), info.hostname);
-        if (unique_fd ufd{open(path, O_RDONLY)}){
-            struct stat st;
-            if (fstat(ufd.fd(), &st) != 0){
-                this->lic_layer_license_data = std::make_unique<uint8_t[]>(this->lic_layer_license_size);
-                size_t lic_size = read(ufd.fd(), this->lic_layer_license_data.get(), this->lic_layer_license_size);
-                if (lic_size != this->lic_layer_license_size){
-                    LOG(LOG_ERR, "license file truncated : expected %zu, got %zu", this->lic_layer_license_size, lic_size);
-                }
-            }
-        }
-    }
-#endif
 
     // Password is a multi-sz!
     // A multi-sz contains a sequence of null-terminated strings,
@@ -311,7 +298,7 @@ RdpNegociation::RdpNegociation(
                 this->redir_info.lb_info_length = load_balance_info_length + 2;
             }
             else {
-                LOG(LOG_WARNING, "mod_rdp: load balance info too long! %zu >= %zu",
+                LOG(LOG_WARNING, "RdpNegociation: load balance info too long! %zu >= %zu",
                     load_balance_info_length, sizeof(this->redir_info.lb_info));
             }
         }
@@ -410,11 +397,11 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                     // Client                                                     Server
                     //    |------Security Exchange PDU ---------------------------> |
                     LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
-                        "mod_rdp::RDP Security Commencement");
+                        "RdpNegociation: RDP Security Commencement");
 
                     if (this->negociation_result.encryptionLevel){
                         LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
-                            "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
+                            "RdpNegociation: SecExchangePacket keylen=%u", this->server_public_key_len);
 
                         this->send_data_request(
                             GCC::MCS_GLOBAL_CHANNEL,
@@ -439,7 +426,7 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                     //    |------ Client Info PDU      ---------------------------> |
 
                     LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
-                        "mod_rdp::Secure Settings Exchange");
+                        "RdpNegociation: Secure Settings Exchange");
 
                     this->send_client_info_pdu();
                     this->state = State::GET_LICENSE;
@@ -458,7 +445,7 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
 
 bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 {
-    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "mod_rdp::Basic Settings Exchange");
+    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "RdpNegociation: Basic Settings Exchange");
 
     {
         X224::DT_TPDU_Recv x224(x224_data);
@@ -631,7 +618,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 
                         /* Generate a client random, and determine encryption keys */
                         this->gen.random(this->client_random, SEC_RANDOM_SIZE);
-                        LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "mod_rdp: Generate client random");
+                        LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "RdpNegociation: Generate client random");
 
 //                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
 //                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
@@ -711,7 +698,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
         }
     }
 
-    LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO, "mod_rdp::Channel Connection");
+    LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO, "RdpNegociation: Channel Connection");
 
     // Channel Connection
     // ------------------
@@ -773,7 +760,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
     );
 
     LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO,
-        "mod_rdp::Basic Settings Exchange end");
+        "RdpNegociation: Basic Settings Exchange end");
 
     return true;
 }
@@ -1124,7 +1111,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 bool RdpNegociation::channel_connection_attach_user(InStream & stream)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
-        "mod_rdp::Channel Connection Attach User");
+        "RdpNegociation: Channel Connection Attach User");
 
     X224::DT_TPDU_Recv x224(stream);
     InStream & mcs_cjcf_data = x224.payload;
@@ -1159,8 +1146,8 @@ bool RdpNegociation::channel_connection_attach_user(InStream & stream)
     }
 
     if (bool(this->verbose & RDPVerbose::channels)){
-        LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User end");
-        LOG(LOG_INFO, "Waiting for Channel Join Confirm");
+        LOG(LOG_INFO, "RdpNegociation: Channel Connection Attach User end");
+        LOG(LOG_INFO, "RdpNegociation: Waiting for Channel Join Confirm");
     }
 
     this->send_channel_index = 0;
@@ -1183,13 +1170,13 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
         return false;
     }
     LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
-        "mod_rdp::Channel Join Confirme end");
+        "RdpNegociation: Channel Join Confirme end");
     return true;
 }
 
 bool RdpNegociation::get_license(InStream & stream)
 {
-    LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "mod_rdp::Licensing");
+    LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Licensing");
 
     bool r = false;
 
@@ -1277,7 +1264,7 @@ bool RdpNegociation::get_license(InStream & stream)
     else {
         username = this->logon_info.username().c_str();
     }
-    LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
+    LOG(LOG_INFO, "RdpNegociation: Get license: username=\"%s\"", username);
     // read tpktHeader (4 bytes = 3 0 len)
     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
@@ -1290,26 +1277,59 @@ bool RdpNegociation::get_license(InStream & stream)
     if (sec.flags & SEC::SEC_LICENSE_PKT) {
         LIC::RecvFactory flic(sec.payload);
 
-        LOG(LOG_INFO, "RdpNegociation::get_license LIC::RecvFactory::flic.tag=%u", flic.tag);
+        LOG(LOG_INFO, "RdpNegociation: get_license LIC::RecvFactory::bMsgType=%u", flic.tag);
 
         switch (flic.tag) {
         case LIC::LICENSE_REQUEST:
-            LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "Rdp::License Request");
+            LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Server License Request");
             {
-                LIC::LicenseRequest_Recv lic(sec.payload);
+                LIC::ServerLicenseRequest SvrLicReq = LIC::ServerLicenseRequest_Receiver(sec.payload);
+                if (bool(this->verbose & RDPVerbose::license)) {
+                    SvrLicReq.log(LOG_INFO);
+                }
                 uint8_t null_data[48]{};
                 /* We currently use null client keys. This is a bit naughty but, hey,
                     the security of license negotiation isn't exactly paramount. */
-                SEC::SessionKey keyblock(null_data, null_data, lic.server_random);
+                SEC::SessionKey keyblock(null_data, null_data, SvrLicReq.ServerRandom);
 
                 /* Store first 16 bytes of session key as MAC secret */
                 memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
                 memcpy(this->lic_layer_license_key, keyblock.get_LicensingEncryptionKey(), 16);
+
+                if (this->use_license_store) {
+                    uint8_t CompanyNameU8[4096] {};
+                    ::UTF16toUTF8_buf(SvrLicReq.ProductInfo.CompanyName, writable_bytes_view{CompanyNameU8, sizeof(CompanyNameU8)});
+
+                    uint8_t ProductIdU8[4096] {};
+                    ::UTF16toUTF8_buf(SvrLicReq.ProductInfo.ProductId, writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
+
+                    for (uint32_t i = 0; i < SvrLicReq.ScopeList.ScopeCount; ++i) {
+                        bytes_view out = this->license_store.get_license(
+                                this->license_client_name.c_str(),
+                                SvrLicReq.ProductInfo.dwVersion,
+                                ::char_ptr_cast(SvrLicReq.ScopeList.ScopeArray[i].blobData.data()),
+                                ::char_ptr_cast(CompanyNameU8),
+                                ::char_ptr_cast(ProductIdU8),
+                                writable_bytes_view(this->lic_layer_license_data, sizeof(lic_layer_license_data)),
+                                bool(this->verbose & RDPVerbose::license)
+                            );
+                        if (out.size())
+                        {
+                            this->lic_layer_license_size = out.size();
+
+                            LOG(LOG_ERR, "RdpNegociation: LicenseSize=%zu", this->lic_layer_license_size);
+
+                            break;
+                        }
+                    }
+                }
             }
+
             this->send_data_request(
                 GCC::MCS_GLOBAL_CHANNEL,
                 [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
                     if (this->lic_layer_license_size > 0) {
+                        LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Client License Info");
                         uint8_t hwid[LIC::LICENSE_HWID_SIZE];
                         OutStream(hwid).out_uint32_le(2);
                         memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
@@ -1327,7 +1347,6 @@ bool RdpNegociation::get_license(InStream & stream)
                         static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE));
                         sign.final(signature);
 
-
                         /* Now encrypt the HWID */
 
                         SslRC4 rc4;
@@ -1339,11 +1358,12 @@ bool RdpNegociation::get_license(InStream & stream)
                         LIC::ClientLicenseInfo_Send(
                             lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
                             this->lic_layer_license_size,
-                            this->lic_layer_license_data.get(),
+                            this->lic_layer_license_data,
                             hwid, signature
                         );
                     }
                     else {
+                        LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Client New License Request");
                         LIC::NewLicenseRequest_Send(
                             lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
                             username, hostname
@@ -1355,9 +1375,12 @@ bool RdpNegociation::get_license(InStream & stream)
             break;
         case LIC::PLATFORM_CHALLENGE:
             LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
-                "Rdp::Platform Challenge");
+                "RdpNegociation: Server Platform Challenge");
 
             {
+                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
+                    "RdpNegociation: Client Platform Challenge Response");
+
                 LIC::PlatformChallenge_Recv lic(sec.payload);
 
                 uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
@@ -1412,54 +1435,75 @@ bool RdpNegociation::get_license(InStream & stream)
             }
             break;
         case LIC::NEW_LICENSE:
+        case LIC::UPGRADE_LICENSE:
             {
-                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "Rdp::New License");
+                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "RdpNegociation: Server %s License",
+                    ((LIC::NEW_LICENSE == flic.tag) ? "New" : "Upgrade"));
 
-                LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
+                LIC::NewOrUpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key,
+                    ((LIC::NEW_LICENSE == flic.tag) ? LIC::NewOrUpgradeLicense_Recv::Type::New : LIC::NewOrUpgradeLicense_Recv::Type::Upgrade));
+                if (bool(this->verbose & RDPVerbose::license)) {
+                    lic.log(LOG_INFO);
+                }
 
                 // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect.
                 // Not obvious files is the best choice to do that
+
+                bool license_saved = false;
+
+                if (this->use_license_store) {
+                    uint8_t CompanyNameU8[4096] {};
+                    ::UTF16toUTF8_buf(bytes_view(lic.licenseInfo.pbCompanyName, lic.licenseInfo.cbCompanyName), writable_bytes_view{CompanyNameU8, sizeof(CompanyNameU8)});
+
+                    uint8_t ProductIdU8[4096] {};
+                    ::UTF16toUTF8_buf(bytes_view(lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId), writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
+
+                    license_saved = this->license_store.put_license(
+                            this->license_client_name.c_str(),
+                            lic.licenseInfo.dwVersion,
+                            ::char_ptr_cast(lic.licenseInfo.pbScope),
+                            ::char_ptr_cast(CompanyNameU8),
+                            ::char_ptr_cast(ProductIdU8),
+                            bytes_view(lic.licenseInfo.pbLicenseInfo, lic.licenseInfo.cbLicenseInfo),
+                            bool(this->verbose & RDPVerbose::license)
+                        );
+                }
+
+                if (!license_saved) {
+                    LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_WARNING, "RdpNegociation: %s license not saved.",
+                        ((LIC::NEW_LICENSE == flic.tag) ? "New" : "Upgrade"));
+                }
+
                 r = true;
-
-                LOG(LOG_WARNING, "New license not saved");
-            }
-            break;
-        case LIC::UPGRADE_LICENSE:
-            {
-                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
-                    "Rdp::Upgrade License");
-
-                LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
-
-                LOG(LOG_WARNING, "Upgraded license not saved");
             }
             break;
         case LIC::ERROR_ALERT:
             {
                 LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
-                    "Rdp::Get license status");
+                    "RdpNegociation: Server License Error Message");
 
                 LIC::ErrorAlert_Recv lic(sec.payload);
                 if ((lic.validClientMessage.dwErrorCode != LIC::STATUS_VALID_CLIENT)
                  || (lic.validClientMessage.dwStateTransition != LIC::ST_NO_TRANSITION)){
-                    LOG(LOG_ERR, "RDP::License Alert: error=%u transition=%u",
-                        lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+                    LOG(LOG_ERR, "RdpNegociation: License Alert: dwErrorCode=%s(%u) dwStateTransition=%s(%u)",
+                        LIC::ValidClientMessage::ErrorCodeToString(lic.validClientMessage.dwErrorCode), lic.validClientMessage.dwErrorCode,
+                        LIC::ValidClientMessage::StateTransitionToString(lic.validClientMessage.dwStateTransition), lic.validClientMessage.dwStateTransition);
                 }
                 r = true;
             }
             break;
         default:
-            LOG(LOG_ERR, "Unexpected license tag sent from server (tag = 0x%x)", flic.tag);
+            LOG(LOG_ERR, "RdpNegociation: Unexpected licensing packet sent from server. bMsgType = 0x%X", flic.tag);
             throw Error(ERR_SEC);
         }
 
         if (sec.payload.get_current() != sec.payload.get_data_end()){
-            LOG(LOG_ERR, "RdpNego: all data should have been consumed, tag = 0x%x", flic.tag);
+            LOG(LOG_ERR, "RdpNegociation: All data should have been consumed. bMsgType= 0x%X", flic.tag);
             throw Error(ERR_SEC);
         }
     }
     else {
-        LOG(LOG_WARNING, "Failed to get expected license negotiation PDU, sec.flags=0x%x", sec.flags);
+        LOG(LOG_WARNING, "RdpNegociation: Failed to get expected license negotiation PDU. sec.flags=0x%X", sec.flags);
         hexdump(x224.payload.get_data(), x224.payload.get_capacity());
         //throw Error(ERR_SEC);
         r = true;
@@ -1492,7 +1536,7 @@ void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_
 void RdpNegociation::send_client_info_pdu()
 {
     LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
-        "mod_rdp::send_client_info_pdu");
+        "RdpNegociation: send_client_info_pdu");
 
     InfoPacket infoPacket( this->negociation_result.use_rdp5
                             , this->logon_info.domain().c_str()
@@ -1588,7 +1632,7 @@ void RdpNegociation::send_client_info_pdu()
     }
 
     LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
-        "mod_rdp::send_client_info_pdu done");
+        "RdpNegociation: send_client_info_pdu done");
 }
 
 RdpNegociationResult const& RdpNegociation::get_result() const noexcept

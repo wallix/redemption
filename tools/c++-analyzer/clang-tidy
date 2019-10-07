@@ -21,6 +21,7 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -cppcoreguidelines-avoid-magic-numbers,
 -cppcoreguidelines-avoid-c-arrays,
 -cppcoreguidelines-non-private-member-variables-in-classes,
+-cppcoreguidelines-macro-usage,
 -fuchsia-default-arguments,
 -fuchsia-overloaded-operator,
 -fuchsia-trailing-return,
@@ -48,6 +49,8 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -hicpp-use-override,
 -hicpp-vararg,
 -hicpp-uppercase-literal-suffix,
+-hicpp-avoid-c-arrays,
+-hicpp-multiway-paths-covered,
 -llvm-header-guard,
 -llvm-include-order,
 -misc-macro-parentheses,
@@ -64,7 +67,7 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 -readability-magic-numbers,
 ' \
 -config='{CheckOptions: [
-{key: llvm-namespace-comment.ShortNamespaceLines, value: 10}
+{key: llvm-namespace-comment.ShortNamespaceLines, value: 10},
 {key: readability-uppercase-literal-suffix.NewSuffixes, value: L;LL}
 ]}' \
 -header-filter='.*' \

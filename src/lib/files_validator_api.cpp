@@ -139,11 +139,12 @@ private:
 };
 
 
-#define CHECK_ERRNUM(validator)              \
+#define CHECK_ERRNUM(validator) do {         \
     if (validator->transport.errnum)         \
     {                                        \
         return -validator->transport.errnum; \
-    }
+    }                                        \
+} while(0)
 
 
 extern "C"

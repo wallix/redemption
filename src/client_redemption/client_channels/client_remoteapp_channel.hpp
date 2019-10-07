@@ -438,7 +438,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(18);
@@ -460,7 +460,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(9);
@@ -480,7 +480,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(9);
@@ -500,7 +500,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(16);
@@ -523,7 +523,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(9);
@@ -586,7 +586,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(12);
@@ -606,7 +606,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(12);
@@ -626,7 +626,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(28);
@@ -692,7 +692,7 @@ public:
                         "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                     }
 //                     {
-//                     StaticOutStream<32> out_stream;;
+//                     StaticOutStream<32> out_stream;
 //
 //                     out_stream.out_uint16_le(TS_RAIL_ORDER_LANGBARINFO);
 //                     out_stream.out_uint16_le(8);

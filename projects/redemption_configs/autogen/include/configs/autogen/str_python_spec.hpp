@@ -8,6 +8,8 @@ R"gen_config_ini(## Python spec file for RDP proxy.
 #_advanced
 glyph_cache = boolean(default=False)
 
+# Service must be restarted
+# Warning: the port set in this field must not be already used, otherwise the service will not run.
 #_iptables
 #_advanced
 port = integer(min=0, default=3389)
@@ -184,8 +186,11 @@ tls_fallback_legacy = boolean(default=False)
 
 tls_support = boolean(default=True)
 
-# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2
+# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_min_level = integer(min=0, default=2)
+
+# Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+tls_max_level = integer(min=0, default=0)
 
 # Needed to connect with jrdp, based on bogus X224 layer code.
 #_advanced
@@ -613,6 +618,10 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 # Enables Session Shadowing Support.
 #_advanced
 session_shadowing_support = boolean(default=True)
+
+# Stores CALs issued by the terminal servers.
+#_advanced
+use_license_store = boolean(default=True)
 
 [mod_vnc]
 

@@ -78,9 +78,9 @@ Transport::TlsResult RecorderTransport::enable_client_tls(ServerNotifier& server
     return r;
 }
 
-void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
+void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level)
 {
-    this->trans.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level);
+    this->trans.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level);
     this->out.write_packet(RecorderFile::PacketType::ServerCert, this->trans.get_public_key());
 }
 

@@ -10,13 +10,20 @@ fi
 
 set -ex
 
+typeset -i fast=0
+if [ "$1" = fast ]; then
+    fast=1
+fi
+
 # Cleaning
 #rm -fr cmake_temp
 
 git clean -fd
 git submodule update --init
 
-./tools/c++-analyzer/redemption-analyzer.sh
+if [ $fast -eq 0 ]; then
+    ./tools/c++-analyzer/redemption-analyzer.sh
+fi
 
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
@@ -39,7 +46,9 @@ export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 
 export BOOST_TEST_COLOR_OUTPUT=0
 
-rm -rf bin
+if [ $fast -eq 0 ]; then
+    rm -rf bin
+fi
 
 # export REDEMPTION_LOG_PRINT=1
 export REDEMPTION_LOG_PRINT=0
@@ -64,7 +73,7 @@ rootlist()
 }
 
 # implicitly created by bjam
-mkdir bin
+mkdir -p bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
@@ -88,47 +97,52 @@ dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
   exit 1
 }
 
-# debug with coverage
-build $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
-
 #bjam -a -q toolset=clang-8 -sNO_FFMPEG=1 san
-# multi-thread
 build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
 
-# cppcheck
-# ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
+
+if [ $fast -eq 0 ]; then
+    # debug with coverage
+    build $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
 
 
-# extract TODO, BUG, etc
-find \
-  src \
-  tests \
-  projects/ClientQtGraphicAPI/src/ \
-  projects/redemption_configs/ \
-  \( -name '*.h' -o -name '*.hpp' -o -name '*.cpp' \) \
-  -exec ./tools/c++-analyzer/todo_extractor '{}' +
+    # cppcheck
+    # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
 
 
-#set -o pipefail
+    # extract TODO, BUG, etc
+    find \
+      src \
+      tests \
+      projects/ClientQtGraphicAPI/src/ \
+      projects/redemption_configs/ \
+      \( -name '*.h' -o -name '*.hpp' -o -name '*.cpp' \) \
+      -exec ./tools/c++-analyzer/todo_extractor '{}' +
 
-# clang analyzer
-CLANG_TIDY=clang-tidy-8 ./tools/c++-analyzer/clang-tidy \
-  | sed -E '/^(.+\/|)modules\//,/\^/d'
+
+    #set -o pipefail
+
+    # clang analyzer
+    CLANG_TIDY=clang-tidy-8 ./tools/c++-analyzer/clang-tidy \
+      | sed -E '/^(.+\/|)modules\//,/\^/d'
 
 
-# valgrind
-#find ./bin/$gcc/release/tests/ -type d -exec \
-#  ./tools/c++-analyzer/valgrind -qd '{}' \;
-find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
-  parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
+    # valgrind
+    #find ./bin/$gcc/release/tests/ -type d -exec \
+    #  ./tools/c++-analyzer/valgrind -qd '{}' \;
+    find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
+      parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
+fi
 
 
 # jsclient (emscripten)
 cd projects/jsclient
 source ~/emsdk-master/emsdk_set_env.sh
-rm -rf bin
+if [ $fast -eq 0 ]; then
+    rm -rf bin
+fi
 version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
 echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 if [ ! -d system_include/boost ]; then

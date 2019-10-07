@@ -26,10 +26,6 @@
 template<class F>
 struct basic_finally {
     F f;
-    basic_finally(basic_finally const &) = default;
-    basic_finally(basic_finally && other) = default; /*NOLINT*/
-    basic_finally & operator=(basic_finally const &) = default;
-    basic_finally & operator=(basic_finally &&) = default; /*NOLINT*/
     ~basic_finally() { f(); }
 };
 

@@ -1982,6 +1982,7 @@ test-run tests/core/RDP/test_lic :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/lic.hpp
 ;

@@ -397,6 +397,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "tls_max_level")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::tls_max_level&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "bogus_neg_request")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1152,6 +1160,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_shadowing_support&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "use_license_store")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::use_license_store&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

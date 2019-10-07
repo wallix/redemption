@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
+ *""
  * Product name: redemption, a FLOSS RDP proxy
  * Copyright (C) Wallix 2015
  *
@@ -21,6 +21,7 @@
  */
 
 #include "acl/auth_api.hpp"
+#include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/set_server_redirection_target.hpp"
@@ -186,6 +187,7 @@ int main(int argc, char** argv)
     FixedRandom lcg_gen;
     LCGTime lcg_timeobj;
     NullAuthentifier authentifier;
+    NullLicenseStore licensestore;
     RedirectionInfo redir_info;
 
     if (is_vnc) {
@@ -256,7 +258,7 @@ int main(int argc, char** argv)
                 trans, session_reactor, gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, authentifier, report_message, ini, nullptr, nullptr);
+                channels_authorizations, mod_rdp_params, authentifier, report_message, licensestore, ini, nullptr, nullptr);
         });
     };
 

@@ -1178,7 +1178,7 @@ private:
         );
         if (this->mppc_enc) {
             this->max_data_block_size = std::min<size_t>(MAX_DATA_BLOCK_SIZE,
-                this->mppc_enc->get_max_data_block_size());
+                this->mppc_enc->get_max_data_block_size() - RDPSerializer::SERIALIZER_HEADER_SIZE);
         }
 
         if (this->orders.has_bmp_cache_persister()) {
@@ -1352,7 +1352,8 @@ public:
                     this->trans.enable_server_tls(
                         this->ini.get<cfg::globals::certificate_password>(),
                         this->ini.get<cfg::client::ssl_cipher_list>().c_str(),
-                        this->ini.get<cfg::client::tls_min_level>());
+                        this->ini.get<cfg::client::tls_min_level>(),
+                        this->ini.get<cfg::client::tls_max_level>());
                 }
 
                 this->state = BASIC_SETTINGS_EXCHANGE;

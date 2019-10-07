@@ -125,7 +125,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, NL, type_<std::string>(), "target_application_password");
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "glyph_cache", set(false));
-        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", set(3389));
+        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Service must be restarted\nWarning: the port set in this field must not be already used, otherwise the service will not run."}, set(3389));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
@@ -216,7 +216,8 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls_fallback_legacy", desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(false));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls_support", set(true));
-        W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2"}, set(2));
+        W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(2));
+        W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_user_id", desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."}, set(true));
@@ -433,6 +434,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "server_cert_response", desc{"empty string for wait, 'Ok' or error message"});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_shadowing_support", desc{"Enables Session Shadowing Support."}, set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "use_license_store", desc{"Stores CALs issued by the terminal servers."}, set(true));
     });
 
     W.section("metrics", [&]

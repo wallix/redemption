@@ -5191,7 +5191,7 @@ void streamLog(InStream & stream , RdpDrStatus & status)
                                     dcr.receive(s);
                                     dcr.log();
 
-                                    status.SetIOControlCode(dcr.IoControlCode());;
+                                    status.SetIOControlCode(dcr.IoControlCode());
 
                                     switch (dcr.IoControlCode()) {
                                         case fscc::FSCTL_DELETE_REPARSE_POINT :

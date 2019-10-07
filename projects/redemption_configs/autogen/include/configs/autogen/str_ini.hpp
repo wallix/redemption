@@ -9,6 +9,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #glyph_cache = 0
 
+# Service must be restarted
+# Warning: the port set in this field must not be already used, otherwise the service will not run.
 # min = 0
 #_iptables
 #_advanced
@@ -217,9 +219,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #tls_support = 1
 
-# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2
+# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 # min = 0
 #tls_min_level = 2
+
+# Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# min = 0
+#tls_max_level = 0
 
 # Needed to connect with jrdp, based on bogus X224 layer code.
 # value: 0 or 1
@@ -727,6 +733,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #session_shadowing_support = 1
+
+# Stores CALs issued by the terminal servers.
+# value: 0 or 1
+#_advanced
+#use_license_store = 1
 
 [mod_vnc]
 

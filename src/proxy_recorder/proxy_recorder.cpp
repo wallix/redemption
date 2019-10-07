@@ -56,7 +56,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
 
     if ((this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
     || (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
-        frontConn.enable_server_tls("inquisition", nullptr, 0);
+        frontConn.enable_server_tls("inquisition", nullptr, 0, 0);
     }
 
 

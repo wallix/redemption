@@ -64,7 +64,7 @@ class ProxyRecorder
 
     using PacketType = RecorderFile::PacketType;
 public:
-    ProxyRecorder(NlaTeeTransport & back_nla_tee_trans, 
+    ProxyRecorder(NlaTeeTransport & back_nla_tee_trans,
             RecorderFile & outFile,
             TimeObj & timeobj,
             const char * host,
@@ -82,7 +82,7 @@ public:
         , verbosity(verbosity)
     {
         this->frontBuffer.trace_pdu = (this->verbosity > 512);
-        this->backBuffer.trace_pdu = (this->verbosity > 512);;
+        this->backBuffer.trace_pdu = (this->verbosity > 512);
 
         if (!this->nla_password.empty()) {
             this->nla_password.push_back('\0');

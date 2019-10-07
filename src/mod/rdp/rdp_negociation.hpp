@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "acl/license_api.hpp"
+
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/nego.hpp"
@@ -166,9 +168,13 @@ private:
     size_t lic_layer_license_size = 0;
     uint8_t lic_layer_license_key[16] = {};
     uint8_t lic_layer_license_sign_key[16] = {};
-    std::unique_ptr<uint8_t[]> lic_layer_license_data;
+    uint8_t lic_layer_license_data[4096] = {};
 
     uint8_t client_random[SEC_RANDOM_SIZE] = { 0 };
+
+    std::string license_client_name;
+    LicenseApi& license_store;
+    const bool use_license_store;
 
 public:
     RdpNegociation(
@@ -188,6 +194,7 @@ public:
         TimeObj& timeobj,
         const ModRDPParams& mod_rdp_params,
         ReportMessageApi& report_message,
+        LicenseApi& license_store,
         bool has_managed_drive,
         bool convert_remoteapp_to_desktop
     );

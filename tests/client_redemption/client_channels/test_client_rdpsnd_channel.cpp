@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
-    InStream stream_formats(pdu_data->av());;
+    InStream stream_formats(pdu_data->av());
     rdpsnd::RDPSNDPDUHeader header_formats;
     header_formats.receive(stream_formats);
     RED_CHECK_EQUAL(header_formats.msgType, rdpsnd::SNDC_FORMATS);
@@ -87,7 +87,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
     pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
-    InStream stream_qualitymode(pdu_data->av());;
+    InStream stream_qualitymode(pdu_data->av());
     rdpsnd::RDPSNDPDUHeader header_qualitymode;
     header_qualitymode.receive(stream_qualitymode);
     RED_CHECK_EQUAL(header_qualitymode.msgType, rdpsnd::SNDC_QUALITYMODE);
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
     pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
-    InStream stream_clientTraining(pdu_data->av());;
+    InStream stream_clientTraining(pdu_data->av());
     rdpsnd::RDPSNDPDUHeader header_clientTraining;
     header_clientTraining.receive(stream_clientTraining);
     RED_CHECK_EQUAL(header_clientTraining.msgType, rdpsnd::SNDC_TRAINING);
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
-    InStream stream_waveconfirm(pdu_data->av());;
+    InStream stream_waveconfirm(pdu_data->av());
     rdpsnd::RDPSNDPDUHeader header_waveConfirm;
     header_waveConfirm.receive(stream_waveconfirm);
     RED_CHECK_EQUAL(header_waveConfirm.msgType, rdpsnd::SNDC_WAVECONFIRM);

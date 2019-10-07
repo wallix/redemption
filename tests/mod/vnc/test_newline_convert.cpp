@@ -30,7 +30,7 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
     char rawbuf[32];
     auto buf = make_array_view(rawbuf);
 
-#define TEST(s, r) {                                                                      \
+#define TEST(s, r) do {                                                                   \
     std::string in = s;                                                                   \
     std::string in2 = s;                                                                  \
     auto expected = r ""_av;                                                              \
@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
     RED_CHECK_MEM(windows_to_linux_newline_convert(in, in), expected);                    \
     RED_CHECK_MEM(windows_to_linux_newline_convert(in2, array_view(in2.data(), minilen)), \
         expected.first(minilen));                                                         \
-}
+} while(0)
 
     TEST("", "");
     TEST("\r\r", "\r\r");

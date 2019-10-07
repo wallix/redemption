@@ -35,6 +35,7 @@
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/utf.hpp"
 #include "core/error.hpp"
 #include "system/ssl_rc4.hpp"
 
@@ -108,7 +109,7 @@ namespace LIC
     };
 
     enum {
-        // sent by client
+        // Sent by client:
         ERR_INVALID_SERVER_CERTIFICATE   = 0x00000001,
         ERR_NO_LICENSE                   = 0x00000002,
 
@@ -120,7 +121,7 @@ namespace LIC
         ERR_INVALID_PRODUCTID            = 0x0000000B,
         ERR_INVALID_MESSAGE_LEN          = 0x0000000C,
 
-        //    Sent by client and server:
+        // Sent by client and server:
         ERR_INVALID_MAC                  = 0x00000003
     };
 
@@ -755,6 +756,333 @@ namespace LIC
             }
         }
     };
+
+    struct ProductInformation
+    {
+        uint32_t dwVersion;
+
+        bytes_view CompanyName;
+
+        bytes_view ProductId;
+
+        size_t str(char * buffer, size_t sz) const
+        {
+            uint8_t CompanyNameU8[4096] {};
+            ::UTF16toUTF8_buf(CompanyName, writable_bytes_view{CompanyNameU8, sizeof(CompanyNameU8)});
+
+            uint8_t ProductIdU8[4096] {};
+            ::UTF16toUTF8_buf(ProductId, writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
+
+            size_t const lg = snprintf(
+                buffer,
+                sz,
+                "ProdInfo(dwVersion=0x%X CompanyName=\"%s\" ProductId=\"%s\")",
+                this->dwVersion, CompanyNameU8, ProductIdU8);
+            if (lg >= sz){
+                return sz;
+            }
+            return lg;
+        }
+    };
+
+    inline ProductInformation ProductInformation_Receiver(InStream& stream) {
+        ProductInformation ProductInfo;
+
+        {
+            unsigned const expected = 8;    /* dwVersion(4) + cbCompanyName(4) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Product Information (1): need %u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+        }
+
+        ProductInfo.dwVersion = stream.in_uint32_le();
+
+        uint32_t const cbCompanyName = stream.in_uint32_le();
+
+        {
+            unsigned const expected = cbCompanyName + 4;    /* pbCompanyName(variable) + cbProductId(4) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Product Information (2): need %u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+        }
+
+        ProductInfo.CompanyName = bytes_view(stream.get_current(), cbCompanyName);
+        stream.in_skip_bytes(cbCompanyName);
+
+        uint32_t const cbProductId = stream.in_uint32_le();
+
+        {
+            unsigned const expected = cbProductId;  /* pbProductId(variable)*/
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Product Information (3): need %u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+        }
+
+        ProductInfo.ProductId = bytes_view(stream.get_current(), cbProductId);
+        stream.in_skip_bytes(cbProductId);
+
+        return ProductInfo;
+    }
+
+    struct LicensingBinaryBlob
+    {
+        uint16_t wBlobType;
+
+        bytes_view blobData;
+
+        char const* BlobTypeToString(uint16_t wType) const
+        {
+            switch (wType)
+            {
+                case BB_DATA_BLOB:                return "BB_DATA_BLOB";
+                case BB_RANDOM_BLOB:              return "BB_RANDOM_BLOB";
+                case BB_CERTIFICATE_BLOB:         return "BB_CERTIFICATE_BLOB";
+                case BB_ERROR_BLOB:               return "BB_ERROR_BLOB";
+                case BB_ENCRYPTED_DATA_BLOB:      return "BB_ENCRYPTED_DATA_BLOB";
+                case BB_KEY_EXCHG_ALG_BLOB:       return "BB_KEY_EXCHG_ALG_BLOB";
+                case BB_SCOPE_BLOB:               return "BB_SCOPE_BLOB";
+                case BB_CLIENT_USER_NAME_BLOB:    return "BB_CLIENT_USER_NAME_BLOB";
+                case BB_CLIENT_MACHINE_NAME_BLOB: return "BB_CLIENT_MACHINE_NAME_BLOB";
+            }
+
+            return "<Unknown>";
+        }
+
+        size_t str(char * buffer, size_t sz) const
+        {
+            size_t const lg = snprintf(
+                buffer,
+                sz,
+                "LicBinBlob(wBlobType=%s(0x%X) wBlobLen=%zu%s%s%s)",
+                BlobTypeToString(this->wBlobType), this->wBlobType, blobData.size(),
+                ((BB_SCOPE_BLOB == this->wBlobType) ? " BlobData=\"" : ""),
+                ((BB_SCOPE_BLOB == this->wBlobType) ? ::char_ptr_cast(blobData.data()) : ""),
+                ((BB_SCOPE_BLOB == this->wBlobType) ? "\"" : ""));
+            if (lg >= sz){
+                return sz;
+            }
+            return lg;
+        }
+    };
+
+    inline LicensingBinaryBlob LicensingBinaryBlob_Receiver(InStream& stream)
+    {
+        LicensingBinaryBlob LicBinBlob;
+
+        {
+            unsigned const expected = 4; /* wBlobType(2) + wBlobLen(2) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Licensing Binary Blob (1): need %u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+        }
+
+        LicBinBlob.wBlobType = stream.in_uint16_le();
+
+        uint16_t const wBlobLen  = stream.in_uint16_le();
+
+        {
+            if (!stream.in_check_rem(wBlobLen)){
+                LOG(LOG_ERR, "Truncated Licensing Binary Blob (2): need %u remains=%zu",
+                    wBlobLen, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+        }
+
+        LicBinBlob.blobData = bytes_view(stream.get_current(), wBlobLen);
+        stream.in_skip_bytes(wBlobLen);
+
+        return LicBinBlob;
+    }
+
+    struct ScopeList_
+    {
+        uint32_t ScopeCount;
+
+        std::vector<LicensingBinaryBlob> ScopeArray;
+
+        size_t str(char * buffer, size_t sz) const
+        {
+            size_t lg = snprintf(
+                buffer,
+                sz,
+                "ScopeList(ScopeCount=%u",
+                this->ScopeCount);
+            if (lg >= sz){
+                return sz;
+            }
+
+            for (uint32_t i = 0; i < this->ScopeCount; ++i)
+            {
+                lg += snprintf(
+                    buffer + lg,
+                    sz - lg,
+                    " ");
+                if (lg >= sz){
+                    return sz;
+                }
+
+                lg += this->ScopeArray[i].str(buffer + lg, sz - lg);
+                if (lg >= sz){
+                    return sz;
+                }
+            }
+
+            lg += snprintf(
+                buffer + lg,
+                sz - lg,
+                ")");
+            if (lg >= sz){
+                return sz;
+            }
+
+            return lg;
+        }
+    };
+
+    inline ScopeList_ ScopeList_Receiver(InStream& stream)
+    {
+        ScopeList_ ScopeList;
+
+        {
+            unsigned const expected = 4; /* ScopeCount(4) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Scope List: need %u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+        }
+
+        ScopeList.ScopeCount = stream.in_uint32_le();
+
+        for (uint32_t i = 0; i < ScopeList.ScopeCount; ++i)
+        {
+            ScopeList.ScopeArray.emplace_back(LicensingBinaryBlob_Receiver(stream));
+        }
+
+        return ScopeList;
+    }
+
+    struct ServerLicenseRequest
+    {
+        uint8_t  bMsgType;
+        uint8_t  flags;
+        uint16_t wMsgSize;
+
+        uint8_t ServerRandom[SEC_RANDOM_SIZE];
+
+        ProductInformation ProductInfo;
+
+        LicensingBinaryBlob KeyExchangeList;
+        LicensingBinaryBlob ServerCertificate;
+
+        ScopeList_ ScopeList;
+
+        size_t str(char * buffer, size_t sz) const
+        {
+            size_t lg = snprintf(
+                buffer,
+                sz,
+                "ServerLicenseRequest(");
+
+            lg += this->ProductInfo.str(buffer + lg, sz - lg);
+            if (lg >= sz){
+                return sz;
+            }
+
+            lg += snprintf(
+                buffer + lg,
+                sz - lg,
+                " ");
+            if (lg >= sz){
+                return sz;
+            }
+
+            lg += this->KeyExchangeList.str(buffer + lg, sz - lg);
+            if (lg >= sz){
+                return sz;
+            }
+
+            lg += snprintf(
+                buffer + lg,
+                sz - lg,
+                " ");
+            if (lg >= sz){
+                return sz;
+            }
+
+            lg += this->ServerCertificate.str(buffer + lg, sz - lg);
+            if (lg >= sz){
+                return sz;
+            }
+
+            lg += snprintf(
+                buffer + lg,
+                sz - lg,
+                " ");
+            if (lg >= sz){
+                return sz;
+            }
+
+            lg += this->ScopeList.str(buffer + lg, sz - lg);
+            if (lg >= sz){
+                return sz;
+            }
+
+            lg += snprintf(
+                buffer + lg,
+                sz - lg,
+                ")");
+            if (lg >= sz){
+                return sz;
+            }
+
+            return lg;
+        }
+
+        void log(int level) const
+        {
+            char buffer[8192];
+            this->str(buffer, 8192);
+            LOG(level, "%s", buffer);
+        }
+    };
+
+    inline ServerLicenseRequest ServerLicenseRequest_Receiver(InStream& stream)
+    {
+        ServerLicenseRequest SvrLicReq;
+
+        {
+            unsigned const expected = 36; /* bMsgType(1) + flags(1) + wMsgSize(2) + server_random(32) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Server License Request (1): need %u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+        }
+
+        SvrLicReq.bMsgType = stream.in_uint8();
+        SvrLicReq.flags    = stream.in_uint8();
+        SvrLicReq.wMsgSize = stream.in_uint16_le();
+
+        stream.in_copy_bytes(SvrLicReq.ServerRandom, sizeof(SvrLicReq.ServerRandom));
+
+        SvrLicReq.ProductInfo = ProductInformation_Receiver(stream);
+
+        SvrLicReq.KeyExchangeList   = LicensingBinaryBlob_Receiver(stream);
+        SvrLicReq.ServerCertificate = LicensingBinaryBlob_Receiver(stream);
+
+        SvrLicReq.ScopeList = ScopeList_Receiver(stream);
+
+        return SvrLicReq;
+    }
 
     //    2.2.2.2 Client New License Request (CLIENT_NEW_LICENSE_REQUEST)
     //    ---------------------------------------------------------------
@@ -1640,8 +1968,8 @@ namespace LIC
             uint8_t version, uint16_t license_size, uint8_t * license_data,
             uint8_t * hwid, uint8_t * signature)
         {
-            uint16_t length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
-                     license_size + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
+            uint16_t length = 12 + SEC_RANDOM_SIZE + 4 + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
+                     4 + license_size + 4 + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
 
             uint8_t null_data[SEC_MODULUS_SIZE];
             memset(null_data, 0, sizeof(null_data));
@@ -1740,18 +2068,19 @@ namespace LIC
             // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
             // is not include " in the Licensing Binary BLOB structure.
 
-            // stream.out_uint16_le(LIC::BB_RANDOM_BLOB);
-            stream.out_uint16_le(0);
+            stream.out_uint16_le(LIC::BB_RANDOM_BLOB);
             stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
             stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
             stream.out_clear_bytes(SEC_PADDING_SIZE);
 
-            stream.out_uint16_le(1);
+            stream.out_uint16_le(LIC::BB_DATA_BLOB);
             stream.out_uint16_le(license_size);
             stream.out_copy_bytes(license_data, license_size);
-            stream.out_uint16_le(1);
+
+            stream.out_uint16_le(LIC::BB_DATA_BLOB);
             stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
             stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
+
             stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
         }
     };
@@ -2540,7 +2869,7 @@ namespace LIC
     //    ed-e8 bf d6 13 a0 f5 80 -\|
     //    4a e5 ff 85 16 fa cb 1f -/ MACData
 
-    struct NewLicense_Recv
+    struct NewOrUpgradeLicense_Recv
     {
         uint8_t wMsgType;
         uint8_t bVersion;
@@ -2605,15 +2934,23 @@ namespace LIC
 
         uint8_t MACData[16];
 
-        NewLicense_Recv(InStream & stream, uint8_t (&license_key)[16]) {
+        enum class Type {
+            New,
+            Upgrade
+        } type_;
+
+        NewOrUpgradeLicense_Recv(InStream & stream, uint8_t (&license_key)[16], Type type) {
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + wBlobType(2) + wBlobLen(2)
              */
             unsigned expected = 8;
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated data, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated data, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     expected, stream.in_remain());
                 throw Error(ERR_LIC);
             }
+
+            this->type_ = type;
 
             this->wMsgType = stream.in_uint8();
             this->bVersion = stream.in_uint8();
@@ -2627,7 +2964,8 @@ namespace LIC
             rc4.set_key(make_array_view(license_key));
 
             if (!stream.in_check_rem(this->licenseInfo.wBlobLen)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license data, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license data, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     this->licenseInfo.wBlobLen, stream.in_remain());
                 throw Error(ERR_LIC);
             }
@@ -2638,7 +2976,8 @@ namespace LIC
 
             expected = 8; /* dwVersion(4) + cbScope(4) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated unencrypted license data, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated unencrypted license data, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     expected, stream.in_remain());
                 throw Error(ERR_LIC);
             }
@@ -2648,63 +2987,103 @@ namespace LIC
             this->licenseInfo.cbScope = stream.in_uint32_le();
 
             if (!stream.in_check_rem(this->licenseInfo.cbScope)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbScope, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info pbScope, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     this->licenseInfo.cbScope, stream.in_remain());
                 throw Error(ERR_LIC);
             }
             stream.in_copy_bytes(this->licenseInfo.pbScope, this->licenseInfo.cbScope);
 
             if (!stream.in_check_rem(4)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info cbCompanyName, need=4, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info cbCompanyName, need=4, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     stream.in_remain());
                 throw Error(ERR_LIC);
             }
             this->licenseInfo.cbCompanyName = stream.in_uint32_le();
             if (!stream.in_check_rem(this->licenseInfo.cbCompanyName)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbCompanyName, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info pbCompanyName, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     this->licenseInfo.cbCompanyName, stream.in_remain());
                 throw Error(ERR_LIC);
             }
             stream.in_copy_bytes(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName);
 
             if (!stream.in_check_rem(4)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info cbProductId, need=4, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info cbProductId, need=4, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     stream.in_remain());
                 throw Error(ERR_LIC);
             }
             this->licenseInfo.cbProductId = stream.in_uint32_le();
             if (!stream.in_check_rem(this->licenseInfo.cbProductId)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbProductId, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info pbProductId, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     this->licenseInfo.cbProductId, stream.in_remain());
                 throw Error(ERR_LIC);
             }
             stream.in_copy_bytes(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId);
 
             if (!stream.in_check_rem(4)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info cbLicenseInfo, need=4, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info cbLicenseInfo, need=4, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     stream.in_remain());
                 throw Error(ERR_LIC);
             }
             this->licenseInfo.cbLicenseInfo = stream.in_uint32_le();
             if (!stream.in_check_rem(this->licenseInfo.cbLicenseInfo)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbLicenseInfo, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info pbLicenseInfo, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     this->licenseInfo.cbLicenseInfo, stream.in_remain());
                 throw Error(ERR_LIC);
             }
             stream.in_copy_bytes(this->licenseInfo.pbLicenseInfo, this->licenseInfo.cbLicenseInfo);
 
             if (!stream.in_check_rem(LICENSE_SIGNATURE_SIZE)){
-                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info MACData, need=%u, remains=%zu",
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): Truncated license info MACData, need=%u, remains=%zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
                     LICENSE_SIGNATURE_SIZE, stream.in_remain());
                 throw Error(ERR_LIC);
             }
             stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
 
             if (stream.in_remain()){
-                LOG(LOG_ERR, "NewLicense_Recv : unparsed data %zu", stream.in_remain());
+                LOG(LOG_ERR, "Licence NewOrUpgradeLicense_Recv (%s): unparsed data %zu",
+                    ((Type::New == type) ? "new" : "upgrade"),
+                    stream.in_remain());
                 throw Error(ERR_LIC);
             }
+        }
 
+        size_t str(char * buffer, size_t sz) const
+        {
+            uint8_t CompanyNameU8[4096] {};
+            ::UTF16toUTF8_buf(bytes_view(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName), writable_bytes_view{CompanyNameU8, sizeof(CompanyNameU8)});
+
+            uint8_t ProductIdU8[4096] {};
+            ::UTF16toUTF8_buf(bytes_view(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId), writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
+
+            size_t lg = snprintf(
+                buffer,
+                sz,
+                "%s(dwVersion=0x%X pbScope=\"%s\" CompanyName=\"%s\" ProductId=\"%s\")",
+                ((Type::New == this->type_) ? "ServerNewLicense" : "ServerUpgradeLicense"),
+                this->licenseInfo.dwVersion,
+                this->licenseInfo.pbScope,
+                CompanyNameU8,
+                ProductIdU8);
+            if (lg >= sz){
+                return sz;
+            }
+
+            return lg;
+        }
+
+        void log(int level) const
+        {
+            char buffer[8192];
+            this->str(buffer, 8192);
+            LOG(level, "%s", buffer);
         }
     };
 
@@ -3045,6 +3424,41 @@ namespace LIC
         uint16_t wBlobType;
         uint16_t wBlobLen;
 
+        static char const* ErrorCodeToString(uint32_t dwErrorCode)
+        {
+            switch (dwErrorCode)
+            {
+                // Sent by client:
+                case ERR_INVALID_SERVER_CERTIFICATE: return "ERR_INVALID_SERVER_CERTIFICATE";
+                case ERR_NO_LICENSE:                 return "ERR_NO_LICENSE";
+
+                // Sent by server:
+                case ERR_INVALID_SCOPE:              return "ERR_INVALID_SCOPE";
+                case ERR_NO_LICENSE_SERVER:          return "ERR_NO_LICENSE_SERVER";
+                case STATUS_VALID_CLIENT:            return "STATUS_VALID_CLIENT";
+                case ERR_INVALID_CLIENT:             return "ERR_INVALID_CLIENT";
+                case ERR_INVALID_PRODUCTID:          return "ERR_INVALID_PRODUCTID";
+                case ERR_INVALID_MESSAGE_LEN:        return "ERR_INVALID_MESSAGE_LEN";
+
+                // Sent by client and server:
+                case ERR_INVALID_MAC:                return "ERR_INVALID_MAC";
+            }
+
+            return "<Unknown>";
+        }
+
+        static char const* StateTransitionToString(uint32_t dwStateTransition)
+        {
+            switch (dwStateTransition)
+            {
+                case ST_TOTAL_ABORT:          return "ST_TOTAL_ABORT";
+                case ST_NO_TRANSITION:        return "ST_NO_TRANSITION";
+                case ST_RESET_PHASE_TO_START: return "ST_RESET_PHASE_TO_START";
+                case ST_RESEND_LAST_MESSAGE:  return "ST_RESEND_LAST_MESSAGE";
+            }
+
+            return "<Unknown>";
+        }
     };
 
     struct ErrorAlert_Recv

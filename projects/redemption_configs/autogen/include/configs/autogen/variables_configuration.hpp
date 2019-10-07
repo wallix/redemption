@@ -195,6 +195,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Service must be restarted <br/>
+    /// Warning: the port set in this field must not be already used, otherwise the service will not run. <br/>
     /// type: unsigned int <br/>
     /// value{3389} <br/>
     struct globals::port {
@@ -826,7 +828,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2 <br/>
+    /// Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
     /// type: unsigned int <br/>
     /// value{2} <br/>
     struct client::tls_min_level {
@@ -838,6 +840,19 @@ namespace cfg {
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{2};
+    };
+    /// Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
+    /// type: unsigned int <br/>
+    /// value{0} <br/>
+    struct client::tls_max_level {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "tls_max_level";
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
     };
     /// Needed to connect with jrdp, based on bogus X224 layer code. <br/>
     /// type: bool <br/>
@@ -2343,6 +2358,19 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "mod_rdp";
         static constexpr char const * name = "session_shadowing_support";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
+    /// Stores CALs issued by the terminal servers. <br/>
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct mod_rdp::use_license_store {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "use_license_store";
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4967,6 +4995,7 @@ struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
 , cfg::client::tls_min_level
+, cfg::client::tls_max_level
 , cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
@@ -5076,6 +5105,7 @@ struct mod_rdp
 , cfg::mod_rdp::wabam_uses_translated_remoteapp
 , cfg::mod_rdp::enable_server_cert_external_validation
 , cfg::mod_rdp::session_shadowing_support
+, cfg::mod_rdp::use_license_store
 { static constexpr bool is_section = true; };
 
 struct mod_vnc

@@ -897,7 +897,7 @@ inline void remove_file(
         if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
             throw;
         }
-    };
+    }
 
     std::cout << std::endl;
     for (auto & s : iter(files.rbegin(), files.rend())) {
