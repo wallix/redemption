@@ -60,6 +60,7 @@ Author(s): Jonathan Poelen
 #define PROTO_IS_TYPE_VA(name) PROTO_IS_TYPE(name, (T...), (class...T))
 #define PROTO_IS_TYPE1(name) PROTO_IS_TYPE(name, (T), (class T))
 #define PROTO_IS_TYPE2(name) PROTO_IS_TYPE(name, (T, U), (class T, class U))
+#define PROTO_IS_TYPE_TPL(name) PROTO_IS_TYPE(name, (Tpl...), (template<class> class... Tpl))
 
 #define PROTO_HAS_TYPE(type_name)                                            \
     namespace detail {                                                       \
@@ -249,6 +250,8 @@ struct wrap_type
             struct name {                                              \
                 using proto_type = typename decltype(t)::type;         \
                 proto_type name;                                       \
+                proto_type const& proto_value() const { return name; } \
+                static char const* proto_name() { return #name; }      \
             };                                                         \
             return ::proto::wrap_type<name>();                         \
         }; }                                                           \
@@ -288,6 +291,8 @@ struct tpl_data
 template<template<class...> class Tpl>
 struct value_data
 {
+    template<class T> using bind = Tpl<T>;
+
     template<class Name>
     constexpr lazy_value<Tpl<as_param>, Name> operator[](Name const&) const
     {
@@ -302,6 +307,7 @@ struct value_data
 };
 
 PROTO_IS_TYPE1(data);
+PROTO_IS_TYPE_TPL(value_data);
 
 class dummy {};
 

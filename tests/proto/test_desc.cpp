@@ -98,6 +98,9 @@ namespace proto
         PROTO_ASSERT_TYPES(is_data, Data);
         return tuple<Data...>{data...};
     }
+
+    template<class T> struct type_only {};
+    template<class T> struct value_only {};
 }
 
 template<class...> struct names {};
@@ -395,25 +398,55 @@ namespace test
         template<class T> using is_discard = typename std::is_same<T, discard>::type;
         template<class T> inline constexpr bool is_discard_v = std::is_same<T, discard>::value;
 
-        template<class X>
-        auto extract_param(X const& x)
+
+        template<class X, class Name>
+        struct value_to_definition_param
         {
-            if constexpr (is_param_v<X>)
-            {
-                return x;
-            }
-            else if constexpr (is_param_and_lazy_value_v<X>)
-            {
-                return param<data_type_t<X>, name_t<X>>{};
-            }
-            else
-            {
-                return discard{};
-            }
-        }
+            using type = discard;
+        };
+
+        template<class T, class Name>
+        struct value_to_definition_param<data<T>, Name>
+        {
+            using type = param<T, Name>;
+        };
+
+        template<class T, class Name>
+        struct value_to_definition_param<type_only<T>, Name>
+        {
+            using type = param<T, Name>;
+        };
+
+
+        template<class X, class Name>
+        struct value_to_definition_value
+        {
+            using type = discard;
+        };
+
+        template<class T, class Name>
+        struct value_to_definition_value<data<T>, Name>
+        {
+            using type = lazy_value<as_param, Name>;
+        };
+
+        template<template<class...> class Tpl, class Name>
+        struct value_to_definition_value<value_data<Tpl>, Name>
+        {
+            using type = lazy_value<Tpl<as_param>, Name>;
+        };
+
+        template<class V>
+        using value_to_definition_value_t = typename detail::value_to_definition_value<
+            std::decay_t<value_type_t<V>>, name_t<V>>::type;
+
+        template<class V>
+        using value_to_definition_param_t = typename detail::value_to_definition_param<
+            std::decay_t<value_type_t<V>>, name_t<V>>::type;
+
 
         template<class X>
-        auto extract_lazy_value(X const& x)
+        auto extract_lazy_value2(X const& x)
         {
             if constexpr (is_lazy_value_v<X>)
             {
@@ -549,18 +582,23 @@ namespace test
     template<class... Xs>
     Definition(Xs const&...) -> Definition<Xs...>;
 
+    template<class T>
+    auto type(data<T> const&)
+    {
+        return type_only<T>{};
+    }
+
     template<class... Xs>
-    auto definition2(Xs const&... xs)
+    auto definition(Xs const&... /*xs*/)
     {
         using params = detail::mpc_remove_discard<
             mp::cfe<detail::param_list>,
-            decltype(detail::extract_param(xs))...>;
+            detail::value_to_definition_param_t<Xs>...>;
 
         using lazy_values = detail::mpc_remove_discard<
             mp::cfe<detail::lazy_value_list>,
-            decltype(detail::extract_lazy_value(xs))...>;
+            detail::value_to_definition_value_t<Xs>...>;
 
-        // TODO add automatically parameter ?
         detail::check_unused_params<params, lazy_values, errors::some_parameters_are_unused>();
         detail::check_unused_params<lazy_values, params, errors::some_values_are_unused>();
 
@@ -570,13 +608,6 @@ namespace test
         >{};
     }
 
-    template<class F>
-    auto unindex(F&& f)
-    {
-        return [f](auto... x){
-            return f(static_cast<mp::call<detail::mp_indexed_type_t<>, decltype(x)>&>(x)...);
-        };
-    }
 
     template<class Value, class Name>
     struct variable
@@ -1014,6 +1045,11 @@ namespace test
         struct stream_readable2::value_variable_builder_impl<
             Data, datas::types::String<StringSize, StringData, ZeroPolicy>>
         {
+            static auto make(native)
+            {
+                return val<Data, lazy<bytes_view>>{};
+            }
+
             static auto make(writable_bytes_view str)
             {
                 return val<Data, writable_bytes_view>{str};
@@ -1089,13 +1125,13 @@ namespace test
             }
         };
 
-        template<class Name, class Data>
+        template<class Name, class Data, class Bytes>
         struct stream_readable2::next_value<
             datas::values::types::SizeBytes<as_param>,
-            variable<stream_readable2::val<Data, writable_bytes_view>, Name>>
+            variable<stream_readable2::val<Data, Bytes>, Name>>
         {
             template<class Tuple, class R>
-            static auto make(State<Tuple, R>& state, stream_readable2::val<Data, writable_bytes_view>&)
+            static auto make(State<Tuple, R>& state, stream_readable2::val<Data, Bytes>&)
             {
                 auto n = read_data<data_to_value_size<Data>>::read(state.in);
                 return State{
@@ -1124,6 +1160,23 @@ namespace test
                     state.in,
                     state.params,
                     tuple_add(state.result, make_mem<Name>(writable_bytes_view(v.x)))
+                };
+            }
+        };
+
+        template<class Name, class Data>
+        struct stream_readable2::next_value<
+            datas::values::types::Data<as_param>,
+            variable<stream_readable2::val<Data, stream_readable2::lazy<bytes_view>>, Name>>
+        {
+            template<class St>
+            static auto make(St& state, stream_readable2::val<Data, lazy<bytes_view>>& v)
+            {
+                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
+                return State{
+                    state.in,
+                    state.params,
+                    tuple_add(state.result, make_mem<Name>(state.in.in_skip_bytes(n)))
                 };
             }
         };
@@ -1269,72 +1322,23 @@ namespace test
 
         auto tx = build_params<Traits, Params>(xs...);
 
-        tx.apply([&](auto... vars){
-            (println("  ", type_name(vars), " = ", vars.value.x), ...);
-        });
+        // tx.apply([&](auto... vars){
+        //     (println("  ", type_name(vars), " = ", vars.value.x), ...);
+        // });
 
         auto write = [&](auto v){
             auto x = make_value<Traits>(v, tx);
-            println("  ", type_name(x), " = ", x.x);
+            // println("  ", type_name(x), " = ", x.x);
             Traits::template writer<proto_basic_type_t<typename decltype(x)::data_type>>
                 ::write(out, x.x);
         };
 
-        println();
+        // println();
         apply(Values{}, [&](auto... v){
             (write(v), ...);
         });
 
         return out.get_bytes();
-    }
-
-    template<class Params, class Values, class... Xs>
-    auto inplace_recv(bytes_view buf, Definition<Params, Values> const&, Xs const&... xs)
-    {
-        using Traits = traits::stream_readable;
-
-        InStream in(buf);
-
-        auto tx = build_params<Traits, Params>(xs...);
-
-        tx.apply([&](auto... vars){
-            (println("  ", type_name(vars), " = ", vars.value.x), ...);
-        });
-
-        auto read = [&](auto v){
-            auto x = make_value<Traits>(v, tx);
-            Traits::template reader<proto_basic_type_t<typename decltype(x)::data_type>>
-                ::read(in, x.x);
-            println("  ", type_name(x), " = ", x.x);
-        };
-
-        println();
-        apply(Values{}, [&](auto... v){
-            (read(v), ...);
-        });
-
-        auto unref = [](auto x) -> decltype(auto) {
-            if constexpr (is_ref_v<decltype(x)>)
-            {
-                // lvalue
-                return (x.x);
-            }
-            else
-            {
-                return x;
-            }
-        };
-
-        auto f = [&](auto var){
-            using Var = decltype(var);
-            return typename decltype(
-                name_t<Var>::mem()(wrap_type<decltype(unref(var.value.x))>())
-            )::type{unref(var.value.x)};
-        };
-
-        return tx.apply([f](auto... vars){
-            return proto::tuple{f(vars)...};
-        });
     }
 
     namespace detail
@@ -1348,7 +1352,7 @@ namespace test
         template<class Traits, class State, class V, class... Vs>
         auto recursive_inplace_recv2(State&& state, V&& v, Vs&&... vs)
         {
-            println("  ", type_name<decltype(Traits::next_state(state, v))>());
+            // println("  ", type_name<decltype(Traits::next_state(state, v))>());
             return recursive_inplace_recv2<Traits>(Traits::next_state(state, v), vs...);
         }
     }
@@ -1360,13 +1364,19 @@ namespace test
 
         auto ctx = Traits::make_context<Params, Values>(buf, xs...);
 
-        ctx.params.apply([&](auto... vars){
-            (println("  ", type_name(vars), " = ", vars.value), ...);
-        });
+        // ctx.params.apply([&](auto... vars){
+        //     (println("  ", type_name(vars), " = ", vars.value), ...);
+        // });
 
         return apply(Values{}, [&](auto... v){
             return detail::recursive_inplace_recv2<Traits>(Traits::make_state(ctx), v...);
         });
+    }
+
+    template<class... Params, class Values, class... Xs>
+    auto inplace_struct(bytes_view buf, Definition<mp::list<Params...>, Values> const& def)
+    {
+        return inplace_recv2(buf, def, value<native, name_t<Params>>{}...);
     }
 }
 
@@ -1380,55 +1390,14 @@ int main()
 
     using namespace proto::datas;
 
-    auto def = test::definition2(
-        u8[s.a],
+    auto def = test::definition(
+        s.c = test::type(ascii_string(u16_be)),
 
-        ascii_string(u16_be)[s.c].type(),
-
-        values::size_bytes[s.c],
-        u16_le[s.b],
-        values::data[s.c]
+        s.a = u8,
+        s.c = values::size_bytes,
+        s.b = u16_le,
+        s.c = values::data
     );
-
-    // auto def = test::definition2(
-    //     s.a = as(u8),
-    //
-    //     s.c = type(ascii_string(u16_be)),
-    //
-    //     s.c = values::size_bytes(),
-    //     s.b = as(u16_le),
-    //     s.c = values::data(),
-    // );
-
-    // auto def = test::definition2(
-    //     s.a.as(u8),
-    //
-    //     s.c.type(ascii_string(u16_be)),
-    //
-    //     s.c.value(values::size_bytes()),
-    //     s.b.as(u16_le),
-    //     s.c.value(values::data()),
-    // );
-
-    // auto def = test::definition2(
-    //     bind(s.a, as(u8)),
-    //
-    //     bind(s.c, type(ascii_string(u16_be))),
-    //
-    //     bind(s.c, value(values::size_bytes())),
-    //     bind(s.b, as(u16_le)),
-    //     bind(s.c, value(values::data())),
-    // );
-
-    // auto def = test::definition2(
-    //     bind(s.a, u8),
-    //
-    //     type(s.c, ascii_string(u16_be)),
-    //
-    //     value(s.c, values::size_bytes()),
-    //     as(s.b, u16_le),
-    //     value(s.c, values::data()),
-    // );
 
     auto print_list = [](char const* s, auto t){
         println("  ", s, ":");
@@ -1455,19 +1424,7 @@ int main()
     dump(out);
 
     {
-        print("\n\ninplace_recv:\n\n");
-        char strbuf[10];
-        a = '0';
-        auto datas = test::inplace_recv(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
-        println("\n", type_name(datas));
-        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-        println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
-        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-        println("a = ", a);
-    }
-
-    {
-        print("\n\ninplace_recv2:\n\n");
+        print("\n\ninplace_recv2:\n");
         char strbuf[10];
         a = '0';
         auto datas = test::inplace_recv2(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
@@ -1476,5 +1433,18 @@ int main()
         println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
         println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
         println("a = ", a);
+    }
+
+    {
+        print("\n\ninplace_struct:\n");
+        auto datas = test::inplace_struct(out, def);
+        println("\n", type_name(datas));
+        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+        println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
+        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+
+        datas.apply([](auto const&... xs) {
+            (println(xs.proto_name(), ": ", xs.proto_value()), ...);
+        });
     }
 }
