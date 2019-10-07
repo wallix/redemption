@@ -936,27 +936,36 @@ namespace test
             }
         };
 
+        struct SharedCtx
+        {
+            InStream in;
+            std::size_t unchecked_size;
+        };
+
         template<class Tuple>
         struct Ctx
         {
-            InStream in;
+            SharedCtx shared_ctx;
             Tuple params;
         };
 
         template<class Tuple>
-        Ctx(InStream, Tuple&&) -> Ctx<Tuple>;
+        Ctx(SharedCtx, Tuple&&) -> Ctx<Tuple>;
 
 
         template<class Params, class R>
         struct State
         {
-            InStream& in;
+            SharedCtx& ctx;
             Params params;
             R result;
         };
 
         template<class Params, class R>
-        State(InStream&, Params&&, R&&) -> State<Params, R>;
+        State(SharedCtx&, Params&&, R&&) -> State<Params, R>;
+
+        template<class T>
+        using static_size_t = typename T::static_size;
 
         struct stream_readable2
         {
@@ -984,25 +993,75 @@ namespace test
             template<class> class lazy {};
             template<class Data, class T> struct val { T x; };
 
-            template<class Params, class Values, class... Xs>
-            static auto make_context(bytes_view buf, Xs const&... xs)
+            template<class Params>
+            static auto make_state(Ctx<Params>& ctx)
             {
-                return Ctx{InStream{buf}, detail::build_params2<stream_readable2, Params>(xs...)};
-            }
-
-            template<class... Ts>
-            static auto make_state(Ctx<tuple<Ts...>>& ctx)
-            {
-                return State{ctx.in, ctx.params, tuple<>{}};
+                return State{ctx.shared_ctx, ctx.params, tuple<>{}};
             }
 
             template<class State, class Data, class... Name>
             static auto next_state(State& state, lazy_value<Data, Name...>)
             {
-                using builder = next_value<
+                using Next = next_value<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(state.params))>...>;
-                return builder::make(state, get_var<Name>(state.params).value...);
+                return Next::make(state, get_var<Name>(state.params).value...);
+            }
+
+            template<class State, class Data, class... Name>
+            static auto static_size(State& state, lazy_value<Data, Name...>)
+            {
+                using Next = next_value<
+                    proto_basic_type_t<Data>,
+                    std::remove_reference_t<decltype(get_var<Name>(state.params))>...>;
+                return static_size_t<Next>{};
+            }
+
+            template<class State, class Value>
+            using compute_static_size = mp::list<
+                mp::int_<
+                    mp::eager::at<State, 0>::value
+                  + decltype(stream_readable2::static_size(
+                        std::declval<mp::eager::at<State, 1>>(),
+                        Value())
+                    )::value
+                >,
+                decltype(stream_readable2::next_state(
+                    std::declval<mp::eager::at<State, 1>>(),
+                    Value()
+                ))&
+            >;
+
+            template<class Params, class Values, class... Xs>
+            static auto make_context(bytes_view buf, Xs const&... xs)
+            {
+                using size = mp::call<
+                    mp::unpack<
+                        mp::push_front<
+                            mp::list<
+                                mp::int_<0>,
+                                State<
+                                    decltype(detail::build_params2<stream_readable2, Params>(xs...))&,
+                                    tuple<>
+                                >&
+                            >,
+                            mp::fold_left<
+                                mp::cfe<compute_static_size>,
+                                mp::unpack<mp::front<>>
+                            >
+                        >
+                    >,
+                    Values
+                >;
+
+                if (buf.size() < size::value) {
+                    throw std::runtime_error("buf is too short");
+                }
+
+                return Ctx{
+                    {InStream{buf}, buf.size() - size::value},
+                    detail::build_params2<stream_readable2, Params>(xs...)
+                };
             }
 
             template<class State>
@@ -1098,13 +1157,15 @@ namespace test
         struct stream_readable2::next_value<as_param,
             variable<stream_readable2::lazy<Data>, Name>>
         {
+            using static_size = static_size_t<read_data<Data>>;
+
             template<class St>
             static auto make(St& state, stream_readable2::lazy<Data>)
             {
                 return State{
-                    state.in,
+                    state.ctx,
                     state.params,
-                    tuple_add(state.result, make_mem<Name>(read_data<Data>::read(state.in)))
+                    tuple_add(state.result, make_mem<Name>(read_data<Data>::read(state.ctx.in)))
                 };
             }
         };
@@ -1113,12 +1174,14 @@ namespace test
         struct stream_readable2::next_value<as_param,
             variable<stream_readable2::val<Data, T&>, Name>>
         {
+            using static_size = static_size_t<read_data<Data>>;
+
             template<class St>
             static auto make(St& state, stream_readable2::val<Data, T&> v)
             {
-                v.x = read_data<Data>::read(state.in);
+                v.x = read_data<Data>::read(state.ctx.in);
                 return State{
-                    state.in,
+                    state.ctx,
                     state.params,
                     tuple_add(state.result, make_mem<Name>(v.x))
                 };
@@ -1130,12 +1193,14 @@ namespace test
             datas::values::types::SizeBytes<as_param>,
             variable<stream_readable2::val<Data, Bytes>, Name>>
         {
+            using static_size = static_size_t<read_data<data_to_value_size<Data>>>;
+
             template<class Tuple, class R>
             static auto make(State<Tuple, R>& state, stream_readable2::val<Data, Bytes>&)
             {
-                auto n = read_data<data_to_value_size<Data>>::read(state.in);
+                auto n = read_data<data_to_value_size<Data>>::read(state.ctx.in);
                 return State{
-                    state.in,
+                    state.ctx,
                     tuple_add(
                         state.params,
                         variable<decltype(n), datas::values::types::SizeBytes<Name>>{n}
@@ -1150,14 +1215,22 @@ namespace test
             datas::values::types::Data<as_param>,
             variable<stream_readable2::val<Data, writable_bytes_view>, Name>>
         {
+            using static_size = mp::int_<0>;
+
             template<class St>
             static auto make(St& state, stream_readable2::val<Data, writable_bytes_view>& v)
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
+
+                if (state.ctx.unchecked_size < n) {
+                    throw std::runtime_error("buf is too short (2)");
+                }
+                state.ctx.unchecked_size -= n;
+
                 v.x = {v.x.data(), std::size_t(n)};
-                state.in.in_copy_bytes(v.x);
+                state.ctx.in.in_copy_bytes(v.x);
                 return State{
-                    state.in,
+                    state.ctx,
                     state.params,
                     tuple_add(state.result, make_mem<Name>(writable_bytes_view(v.x)))
                 };
@@ -1169,14 +1242,22 @@ namespace test
             datas::values::types::Data<as_param>,
             variable<stream_readable2::val<Data, stream_readable2::lazy<bytes_view>>, Name>>
         {
+            using static_size = mp::int_<0>;
+
             template<class St>
-            static auto make(St& state, stream_readable2::val<Data, lazy<bytes_view>>& v)
+            static auto make(St& state, stream_readable2::val<Data, lazy<bytes_view>>&)
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
+
+                if (state.ctx.unchecked_size < n) {
+                    throw std::runtime_error("buf is too short (3)");
+                }
+                state.ctx.unchecked_size -= n;
+
                 return State{
-                    state.in,
+                    state.ctx,
                     state.params,
-                    tuple_add(state.result, make_mem<Name>(state.in.in_skip_bytes(n)))
+                    tuple_add(state.result, make_mem<Name>(state.ctx.in.in_skip_bytes(n)))
                 };
             }
         };
@@ -1184,6 +1265,8 @@ namespace test
         template<class Int, class Endianess>
         struct stream_readable2::read_data_impl<datas::types::Integer<Int, Endianess>>
         {
+            using static_size = mp::int_<sizeof(Int)>;
+
             static Int read(InStream& in)
             {
                 uint8_t const* p = in.in_skip_bytes(sizeof(Int)).data();
