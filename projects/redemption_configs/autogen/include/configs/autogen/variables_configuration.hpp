@@ -1086,11 +1086,11 @@ namespace cfg {
     /// Enable front remoteFx <br/>
     /// type: bool <br/>
     /// value{true} <br/>
-    struct client::front_remotefx {
+    struct client::enable_remotefx {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "client";
-        static constexpr char const * name = "front_remotefx";
+        static constexpr char const * name = "enable_remotefx";
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -5009,7 +5009,7 @@ struct client
 , cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::recv_timeout
 , cfg::client::enable_osd_4_eyes
-, cfg::client::front_remotefx
+, cfg::client::enable_remotefx
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

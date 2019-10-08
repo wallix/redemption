@@ -320,7 +320,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Enable front remoteFx
 # value: 0 or 1
 #_advanced
-#front_remotefx = 1
+#enable_remotefx = 1
 
 [mod_rdp]
 

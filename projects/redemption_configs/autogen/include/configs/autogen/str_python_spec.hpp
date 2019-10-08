@@ -268,7 +268,7 @@ enable_osd_4_eyes = boolean(default=False)
 
 # Enable front remoteFx
 #_advanced
-front_remotefx = boolean(default=True)
+enable_remotefx = boolean(default=True)
 
 [mod_rdp]
 
