@@ -86,6 +86,7 @@ constexpr array_view_const_char const authstr[] = {
     "enable_server_cert_external_validation"_av,
     "server_cert"_av,
     "server_cert_response"_av,
+    "enable_remotefx"_av,
     "clipboard_up"_av,
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,
@@ -187,5 +188,4 @@ constexpr array_view_const_char const authstr[] = {
     "rd_shadow_invitation_id"_av,
     "rd_shadow_invitation_addr"_av,
     "rd_shadow_invitation_port"_av,
-    "remotefx"_av,
 };

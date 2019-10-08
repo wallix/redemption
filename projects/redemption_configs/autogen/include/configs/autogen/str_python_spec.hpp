@@ -274,7 +274,7 @@ enable_osd_4_eyes = boolean(default=False)
 
 # Enable front remoteFx
 #_advanced
-front_remotefx = boolean(default=True)
+enable_remotefx = boolean(default=True)
 
 [mod_rdp]
 
@@ -625,6 +625,10 @@ session_shadowing_support = boolean(default=True)
 # Stores CALs issued by the terminal servers.
 #_advanced
 use_license_store = boolean(default=True)
+
+# Enables support of the remoteFX codec.
+#_hidden
+enable_remotefx = boolean(default=False)
 
 [mod_vnc]
 
@@ -996,11 +1000,5 @@ password_fr = string(default='')
 
 #_advanced
 load_theme = string(default='')
-
-[context]
-
-# Enables support of the remoteFX codec.
-#_advanced
-remotefx = boolean(default=False)
 
 )gen_config_ini"

@@ -70,6 +70,9 @@ use_native_remoteapp_capability = boolean(default=True)
 
 wabam_uses_translated_remoteapp = boolean(default=False)
 
+# Enables support of the remoteFX codec.
+enable_remotefx = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced

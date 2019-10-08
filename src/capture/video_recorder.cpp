@@ -59,6 +59,14 @@ namespace
             av_free(ptr);
         }
     };
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 65, 0)
+    // not sure which version of libavcodec
+    void avio_context_free(AVIOContext** ptr)
+    {
+        av_free(*ptr);
+        *ptr = nullptr;
+    }
+#endif
 }
 
 struct video_recorder::D

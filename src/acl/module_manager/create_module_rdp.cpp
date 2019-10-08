@@ -335,7 +335,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.validator_params.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
     mod_rdp_params.validator_params.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
 
-    mod_rdp_params.enable_remotefx = ini.get<cfg::context::remotefx>();
+    mod_rdp_params.enable_remotefx = ini.get<cfg::mod_rdp::enable_remotefx>();
 
     mod_rdp_params.use_license_store                   = ini.get<cfg::mod_rdp::use_license_store>();
 

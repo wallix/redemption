@@ -95,7 +95,7 @@ namespace cfg {
         struct bogus_number_of_fastpath_input_event;
         struct recv_timeout;
         struct enable_osd_4_eyes;
-        struct front_remotefx;
+        struct enable_remotefx;
     };
 
     struct mod_rdp {
@@ -182,6 +182,7 @@ namespace cfg {
         struct server_cert_response;
         struct session_shadowing_support;
         struct use_license_store;
+        struct enable_remotefx;
     };
 
     struct mod_vnc {
@@ -395,7 +396,6 @@ namespace cfg {
         struct rd_shadow_invitation_id;
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
-        struct remotefx;
     };
 
 } // namespace cfg

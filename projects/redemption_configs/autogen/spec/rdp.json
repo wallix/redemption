@@ -136,6 +136,12 @@
           "description": ""
         },
         {
+          "name": "enable_remotefx",
+          "type": "bool",
+          "default": false,
+          "description": "Enables support of the remoteFX codec."
+        },
+        {
           "name": "remote_programs_disconnect_message_delay",
           "type": "integer",
           "min": 3000,
