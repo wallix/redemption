@@ -936,33 +936,35 @@ namespace test
             }
         };
 
+        template<class ErrorFn>
         struct SharedCtx
         {
             InStream in;
             std::size_t unchecked_size;
+            ErrorFn err;
         };
 
-        template<class Tuple>
+        template<class Tuple, class ErrorFn>
         struct Ctx
         {
-            SharedCtx shared_ctx;
+            SharedCtx<ErrorFn> shared_ctx;
             Tuple params;
         };
 
-        template<class Tuple>
-        Ctx(SharedCtx, Tuple&&) -> Ctx<Tuple>;
+        template<class ErrorFn, class Tuple>
+        Ctx(SharedCtx<ErrorFn>, Tuple&&) -> Ctx<Tuple, ErrorFn>;
 
 
-        template<class Params, class R>
+        template<class ErrorFn, class Params, class R>
         struct State
         {
-            SharedCtx& ctx;
+            SharedCtx<ErrorFn>& ctx;
             Params params;
             R result;
         };
 
-        template<class Params, class R>
-        State(SharedCtx&, Params&&, R&&) -> State<Params, R>;
+        template<class ErrorFn, class Params, class R>
+        State(SharedCtx<ErrorFn>&, Params&&, R&&) -> State<ErrorFn, Params, R>;
 
         template<class T>
         using static_size_t = typename T::static_size;
@@ -993,8 +995,8 @@ namespace test
             template<class> class lazy {};
             template<class Data, class T> struct val { T x; };
 
-            template<class Params>
-            static auto make_state(Ctx<Params>& ctx)
+            template<class ErrorFn, class Params>
+            static auto make_state(Ctx<ErrorFn, Params>& ctx)
             {
                 return State{ctx.shared_ctx, ctx.params, tuple<>{}};
             }
@@ -1032,8 +1034,8 @@ namespace test
                 ))&
             >;
 
-            template<class Params, class Values, class... Xs>
-            static auto make_context(bytes_view buf, Xs const&... xs)
+            template<class Params, class Values, class ErrorFn, class... Xs>
+            static auto make_context(bytes_view buf, ErrorFn& error, Xs const&... xs)
             {
                 using size = mp::call<
                     mp::unpack<
@@ -1041,6 +1043,7 @@ namespace test
                             mp::list<
                                 mp::int_<0>,
                                 State<
+                                    ErrorFn,
                                     decltype(detail::build_params2<stream_readable2, Params>(xs...))&,
                                     tuple<>
                                 >&
@@ -1055,11 +1058,11 @@ namespace test
                 >;
 
                 if (buf.size() < size::value) {
-                    throw std::runtime_error("buf is too short");
+                    error();
                 }
 
                 return Ctx{
-                    {InStream{buf}, buf.size() - size::value},
+                    SharedCtx<ErrorFn>{InStream{buf}, buf.size() - size::value, error},
                     detail::build_params2<stream_readable2, Params>(xs...)
                 };
             }
@@ -1195,8 +1198,8 @@ namespace test
         {
             using static_size = static_size_t<read_data<data_to_value_size<Data>>>;
 
-            template<class Tuple, class R>
-            static auto make(State<Tuple, R>& state, stream_readable2::val<Data, Bytes>&)
+            template<class St>
+            static auto make(St& state, stream_readable2::val<Data, Bytes>&)
             {
                 auto n = read_data<data_to_value_size<Data>>::read(state.ctx.in);
                 return State{
@@ -1223,7 +1226,7 @@ namespace test
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
 
                 if (state.ctx.unchecked_size < n) {
-                    throw std::runtime_error("buf is too short (2)");
+                    state.ctx.err();
                 }
                 state.ctx.unchecked_size -= n;
 
@@ -1250,7 +1253,7 @@ namespace test
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
 
                 if (state.ctx.unchecked_size < n) {
-                    throw std::runtime_error("buf is too short (3)");
+                    state.ctx.err();
                 }
                 state.ctx.unchecked_size -= n;
 
@@ -1440,12 +1443,12 @@ namespace test
         }
     }
 
-    template<class Params, class Values, class... Xs>
-    auto inplace_recv2(bytes_view buf, Definition<Params, Values> const&, Xs const&... xs)
+    template<class ErrorFn, class Params, class Values, class... Xs>
+    auto inplace_recv2(bytes_view buf, ErrorFn&& error, Definition<Params, Values> const&, Xs const&... xs)
     {
         using Traits = traits::stream_readable2;
 
-        auto ctx = Traits::make_context<Params, Values>(buf, xs...);
+        auto ctx = Traits::make_context<Params, Values>(buf, error, xs...);
 
         // ctx.params.apply([&](auto... vars){
         //     (println("  ", type_name(vars), " = ", vars.value), ...);
@@ -1456,10 +1459,10 @@ namespace test
         });
     }
 
-    template<class... Params, class Values, class... Xs>
-    auto inplace_struct(bytes_view buf, Definition<mp::list<Params...>, Values> const& def)
+    template<class ErrorFn, class... Params, class Values, class... Xs>
+    auto inplace_struct(bytes_view buf, ErrorFn&& error, Definition<mp::list<Params...>, Values> const& def)
     {
-        return inplace_recv2(buf, def, value<native, name_t<Params>>{}...);
+        return inplace_recv2(buf, error, def, value<native, name_t<Params>>{}...);
     }
 }
 
@@ -1506,11 +1509,15 @@ int main()
     auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av);
     dump(out);
 
+    auto error_fn = [](){
+        throw std::runtime_error("buf is too short");
+    };
+
     {
         print("\n\ninplace_recv2:\n");
         char strbuf[10];
         a = '0';
-        auto datas = test::inplace_recv2(out, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
+        auto datas = test::inplace_recv2(out, error_fn, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf));
         println("\n", type_name(datas));
         println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
         println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
@@ -1520,7 +1527,7 @@ int main()
 
     {
         print("\n\ninplace_struct:\n");
-        auto datas = test::inplace_struct(out, def);
+        auto datas = test::inplace_struct(out, error_fn, def);
         println("\n", type_name(datas));
         println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
         println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
