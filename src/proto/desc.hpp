@@ -458,6 +458,15 @@ namespace datas
 #undef PROTO_ALIAS_string
     /** @} */
 
+    namespace types
+    {
+        template<class Size>
+        struct PktSize { using proto_basic_type = PktSize; };
+
+    }
+
+    inline constexpr tpl_data<types::PktSize> pkt_size {};
+
     namespace values
     {
         PROTO_ALIAS_TPL_VALUE_TYPE(size_bytes, SizeBytes);
