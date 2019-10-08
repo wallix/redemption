@@ -1,3 +1,9 @@
+redemption (7.3.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Do not disconnect the session due to screen layout change if recording is not started.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 08 Oct 2019 18:48:38 +0200
+
 redemption (7.3.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Support RDP upgrade license flow.
