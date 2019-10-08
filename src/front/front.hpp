@@ -893,6 +893,42 @@ public:
         return res;
     }
 
+    void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) override {
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+            "Front::server_relayout");
+
+        this->orders.graphics_update_pdu().sync();
+
+        monitor_layout_pdu_ref.log("Front::server_relayout: Send to client");
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+        // Payload
+        monitor_layout_pdu_ref.emit(stream.get_data_stream());
+
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_MONITOR_LAYOUT_PDU
+                            , false
+                            , this->mppc_enc.get()
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , underlying_cast(this->verbose)
+                            );
+
+        if (this->capture) {
+            this->must_be_stop_capture();
+            this->can_be_start_capture();
+        }
+
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+            "Front::server_relayout: done");
+    }
+
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
         this->graphics_update->set_pointer(cache_idx, cursor, mode);
     }
@@ -1119,6 +1155,11 @@ public:
             return true;
         }
         return false;
+    }
+
+    bool is_capture_in_progress() const override
+    {
+        return (this->capture && this->capture->has_private_drawable());
     }
 
     Capture::RTDisplayResult set_rt_display(bool enable_rt_display)

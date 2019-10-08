@@ -2461,6 +2461,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct mod_rdp::accept_monitor_layout_change_if_capture_is_not_started {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "accept_monitor_layout_change_if_capture_is_not_started";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
     /// type: bool <br/>
@@ -5179,6 +5191,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_shadowing_support
 , cfg::mod_rdp::use_license_store
 , cfg::mod_rdp::enable_remotefx
+, cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started
 { static constexpr bool is_section = true; };
 
 struct mod_vnc

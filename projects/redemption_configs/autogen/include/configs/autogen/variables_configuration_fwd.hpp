@@ -183,6 +183,7 @@ namespace cfg {
         struct session_shadowing_support;
         struct use_license_store;
         struct enable_remotefx;
+        struct accept_monitor_layout_change_if_capture_is_not_started;
     };
 
     struct mod_vnc {

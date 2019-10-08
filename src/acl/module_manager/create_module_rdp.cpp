@@ -339,6 +339,9 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.use_license_store                   = ini.get<cfg::mod_rdp::use_license_store>();
 
+    mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started
+                                                       = ini.get<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started>();
+
     try {
         using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
 
