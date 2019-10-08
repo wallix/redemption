@@ -984,10 +984,6 @@ public:
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
-            // TODO: add check and throw, this field should always be > 2, NULL mandatory terminator is included in size
-            if (this->extendedInfoPacket.cbClientAddress >= 2){
-                this->extendedInfoPacket.cbClientAddress -= 2;
-            }
 
             ::check_throw(stream, this->extendedInfoPacket.cbClientAddress, "client extendedInfoPacket clientAddress (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
@@ -998,23 +994,18 @@ public:
             ::check_throw(stream, 2, "client extendedInfoPacket clientDir", ERR_MCS_INFOPACKET_TRUNCATED);
 
             this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
-            // TODO: add check and throw, this field should always be > 2, NULL mandatory terminator is included in size
-            if (this->extendedInfoPacket.cbClientDir >= 2){
-                this->extendedInfoPacket.cbClientDir -= 2;
-            }
 
             ::check_throw(stream, this->extendedInfoPacket.cbClientDir, "client extendedInfoPacket clientDir (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
             in_uni_to_ascii_str(this->extendedInfoPacket.clientDir,
                                 this->extendedInfoPacket.cbClientDir);
 
-            // Client Time Zone data (skipped)
+            // Client Time Zone data
             if (stream.get_current() + 172 > stream.get_data_end()){
                 LOG(LOG_ERR, "Missing InfoPacket.clientTimeZone");
                 return;
             }
             this->extendedInfoPacket.clientTimeZone.recv(stream);
-//            stream.in_skip_bytes(172);
 
             // Client Session Id
             if (stream.get_current() + 4 > stream.get_data_end()){
@@ -1118,9 +1109,9 @@ public:
         // Extended
         const ExtendedInfoPacket &extInfo = this->extendedInfoPacket;
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddressFamily %u", extInfo.clientAddressFamily);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", extInfo.cbClientAddress+2u);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", extInfo.cbClientAddress+1u);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddress %s", extInfo.clientAddress);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", extInfo.cbClientDir+2u);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", extInfo.cbClientDir+1u);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientDir %s", extInfo.clientDir);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", extInfo.clientSessionId);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags 0x%x", extInfo.performanceFlags);
