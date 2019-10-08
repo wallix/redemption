@@ -34,17 +34,22 @@ class NegoClient
     std::string extra_message;
     Transport & trans;
     RdpNego nego;
+    uint32_t tls_min_level;
+    uint32_t tls_max_level;
 
 public:
     NegoClient(
         bool is_nla, bool is_admin_mode, Transport& trans, TimeObj & timeobj,
         char const* host, char const* target_user, char const* password,
-        bool enable_kerberos, uint64_t verbosity
+        bool enable_kerberos, uint32_t tls_min_level, uint32_t tls_max_level, uint64_t verbosity
     )
     : trans(trans)
     , nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
         this->random, timeobj, this->extra_message, Translation::EN,
+        tls_min_level, tls_max_level,
         to_verbose_flags(verbosity))
+    , tls_min_level(tls_min_level)
+    , tls_max_level(tls_max_level)
     {
         auto [username, domain] = extract_user_domain(target_user);
         nego.set_identity(username, domain, password, "ProxyRecorder");

@@ -192,6 +192,9 @@ tls_min_level = integer(min=0, default=2)
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_max_level = integer(min=0, default=0)
 
+# Show common cipher list supported by client and server
+show_common_cipher_list = boolean(default=False)
+
 # Needed to connect with jrdp, based on bogus X224 layer code.
 #_advanced
 bogus_neg_request = boolean(default=False)

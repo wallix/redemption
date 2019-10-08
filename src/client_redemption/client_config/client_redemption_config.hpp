@@ -127,6 +127,8 @@ struct ModRDPParamsData
     int rdp_height = 0;
     bool enable_tls   = false;
     bool enable_nla   = false;
+    uint32_t tls_min_level = 0;
+    uint32_t tls_max_level = 0;
     bool enable_sound = false;
 
     bool enable_shared_virtual_disk = true;

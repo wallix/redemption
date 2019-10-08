@@ -405,6 +405,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "show_common_cipher_list")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::show_common_cipher_list&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "bogus_neg_request")) {
             ::configs::parse_and_log(
                 context, key,

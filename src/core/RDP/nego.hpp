@@ -100,6 +100,9 @@ public:
         negotiation = 0x800,
     };
 
+    uint32_t tls_min_level;
+    uint32_t tls_max_level;
+
     bool enhanced_rdp_security_is_in_effect() const;
     void set_lb_info(uint8_t * lb_info, size_t lb_info_length);
 
@@ -107,6 +110,8 @@ public:
         const bool tls, const char * username, bool nla, bool admin_mode,
         const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
         std::string& extra_message, Translation::language_t lang,
+        uint32_t tls_min_level,
+        uint32_t tls_max_level,
         const Verbose verbose = {});
 
     ~RdpNego();
@@ -130,11 +135,11 @@ public:
 private:
     State fallback_to_tls(OutTransport trans);
 
-    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier);
+    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level);
 
-    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier);
+    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level);
 
-    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier);
+    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level);
 
     State recv_credssp(OutTransport trans, bytes_view in_data);
 };

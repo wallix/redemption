@@ -108,7 +108,9 @@ RED_AUTO_TEST_CASE(TestNego)
     NullServerNotifier null_server_notifier;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, timeobj, extra_message, lang);
+    uint32_t tls_min_level = 0;
+    uint32_t tls_max_level = 0;
+    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, timeobj, extra_message, lang, tls_min_level, tls_max_level);
     nego.set_identity(user, domain, pass, host);
 
     TpduBuffer buf;

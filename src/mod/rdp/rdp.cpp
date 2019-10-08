@@ -143,11 +143,13 @@ void mod_rdp::init_negociate_event_(
 #ifndef __EMSCRIPTEN__
         this->channels.drive.file_system_drive_manager.has_managed_drive()
         || this->channels.session_probe.enable_session_probe,
-        this->channels.remote_app.convert_remoteapp_to_desktop
+        this->channels.remote_app.convert_remoteapp_to_desktop,
 #else
         false,
-        false
+        false,
 #endif
+        mod_rdp_params.tls_min_level, // ini.get<cfg::mod_rdp::tls_min_level>();
+        mod_rdp_params.tls_max_level // ini.get<cfg::mod_rdp::tls_max_level>();
     ))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)

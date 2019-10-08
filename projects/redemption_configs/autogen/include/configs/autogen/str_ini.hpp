@@ -227,6 +227,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 0
 #tls_max_level = 0
 
+# Show common cipher list supported by client and server
+# value: 0 or 1
+#show_common_cipher_list = 0
+
 # Needed to connect with jrdp, based on bogus X224 layer code.
 # value: 0 or 1
 #_advanced

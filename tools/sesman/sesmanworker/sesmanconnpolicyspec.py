@@ -13,6 +13,9 @@ cp_spec = {
   'rdp': {
     u'enable_nla': ('enable_nla', True),
     u'enable_kerberos': ('enable_kerberos', False),
+    u'tls_min_level': ('tls_min_level', 0),
+    u'tls_max_level': ('tls_max_level', 0),
+    u'show_common_cipher_list': ('show_common_cipher_list', False),
     u'server_redirection': ('server_redirection', False),
     u'load_balance_info': ('load_balance_info', u''),
     u'use_client_provided_alternate_shell': ('use_client_provided_alternate_shell', False),

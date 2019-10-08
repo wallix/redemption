@@ -75,6 +75,7 @@ namespace cfg {
         struct tls_support;
         struct tls_min_level;
         struct tls_max_level;
+        struct show_common_cipher_list;
         struct bogus_neg_request;
         struct bogus_user_id;
         struct disable_tsk_switch_shortcuts;
@@ -104,6 +105,9 @@ namespace cfg {
         struct extra_orders;
         struct enable_nla;
         struct enable_kerberos;
+        struct tls_min_level;
+        struct tls_max_level;
+        struct show_common_cipher_list;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;
         struct persist_bitmap_cache_on_disk;

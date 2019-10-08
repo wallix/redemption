@@ -44,6 +44,12 @@ cfg::mod_rdp::enable_nla <- enable_nla   [bool]
 cfg::mod_rdp::enable_kerberos <- enable_kerberos   [bool]
     If enabled, NLA authentication will try Kerberos before NTLM.
     (if enable_nla is disabled, this value is ignored).
+cfg::mod_rdp::tls_min_level <- tls_min_level   [unsigned int]
+    Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+cfg::mod_rdp::tls_max_level <- tls_max_level   [unsigned int]
+    Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+cfg::mod_rdp::show_common_cipher_list <- show_common_cipher_list   [bool]
+    Show common cipher list supported by client and server
 cfg::mod_rdp::server_redirection_support <- server_redirection   [bool]
     Enables Server Redirection Support.
 cfg::mod_rdp::load_balance_info <- load_balance_info   [std::string]

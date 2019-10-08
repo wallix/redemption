@@ -69,9 +69,9 @@ public:
         return this->strans.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level);
     }
 
-    TlsResult enable_client_tls(ServerNotifier & server_notifier) override
+    TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level) override
     {
-        return this->strans.enable_client_tls(server_notifier);
+        return this->strans.enable_client_tls(server_notifier, tls_min_level, tls_max_level);
     }
 
     bool disconnect() override

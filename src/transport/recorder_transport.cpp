@@ -69,9 +69,9 @@ void RecorderTransport::add_info(writable_bytes_view info)
     this->out.write_packet(RecorderFile::PacketType::Info, info);
 }
 
-Transport::TlsResult RecorderTransport::enable_client_tls(ServerNotifier& server_notifier)
+Transport::TlsResult RecorderTransport::enable_client_tls(ServerNotifier& server_notifier, uint32_t tls_min_level, uint32_t tls_max_level)
 {
-    auto const r = this->trans.enable_client_tls(server_notifier);
+    auto const r = this->trans.enable_client_tls(server_notifier, tls_min_level, tls_max_level);
     if (r != RecorderTransport::TlsResult::Fail) {
         this->out.write_packet(RecorderFile::PacketType::ClientCert, this->trans.get_public_key());
     }
