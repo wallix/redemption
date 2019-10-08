@@ -385,6 +385,28 @@ void dump(Buf& buf)
 namespace mp = kvasir::mpl;
 namespace mpe = kvasir::mpl::eager;
 
+// template<class F, class... args>
+// struct bind_front
+// {
+//     template<class... xs>
+//     using f = typename F::template f<args..., xs...>;
+// };
+//
+// template<class F, class... args>
+// struct bind_back
+// {
+//     template<class... xs>
+//     using f = typename F::template f<xs..., args...>;
+// };
+
+template<class C = mp::identity>
+struct va_plus
+{
+    template<class... xs>
+    using f = typename C
+      ::template f<mp::integral_constant<decltype((xs::value + ...)), (xs::value + ...)>>;
+};
+
 namespace test
 {
     using namespace proto;
@@ -936,38 +958,29 @@ namespace test
             }
         };
 
-        template<class ErrorFn>
-        struct SharedCtx
+        template<class TParams, class TCtxValues, class ErrorFn>
+        struct Ctx
         {
             InStream in;
             std::size_t unchecked_size;
+            TParams params;
+            TCtxValues ctx_values;
             ErrorFn err;
         };
 
-        template<class Tuple, class ErrorFn>
-        struct Ctx
-        {
-            SharedCtx<ErrorFn> shared_ctx;
-            Tuple params;
-        };
 
-        template<class ErrorFn, class Tuple>
-        Ctx(SharedCtx<ErrorFn>, Tuple&&) -> Ctx<Tuple, ErrorFn>;
-
-
-        template<class ErrorFn, class Params, class R>
+        template<class Ctx, class R>
         struct State
         {
-            SharedCtx<ErrorFn>& ctx;
-            Params params;
+            Ctx& ctx;
             R result;
         };
 
-        template<class ErrorFn, class Params, class R>
-        State(SharedCtx<ErrorFn>&, Params&&, R&&) -> State<ErrorFn, Params, R>;
+        template<class Ctx, class R>
+        State(Ctx&, R&&) -> State<Ctx, R>;
 
-        template<class T>
-        using static_size_t = typename T::static_size;
+        template<class T> using static_size_t = typename T::static_size;
+        template<class T> using context_value_list_t = typename T::context_value_list;
 
         struct stream_readable2
         {
@@ -995,10 +1008,54 @@ namespace test
             template<class> class lazy {};
             template<class Data, class T> struct val { T x; };
 
-            template<class ErrorFn, class Params>
-            static auto make_state(Ctx<ErrorFn, Params>& ctx)
+            template<class TParams, class>
+            struct LazyValueToNextValue;
+
+            template<class TParams, class Data, class... Name>
+            struct LazyValueToNextValue<TParams, lazy_value<Data, Name...>>
             {
-                return State{ctx.shared_ctx, ctx.params, tuple<>{}};
+                using type = next_value<
+                    proto_basic_type_t<Data>,
+                    std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...>;
+            };
+
+            template<class Params, class Values, class ErrorFn, class... Xs>
+            static auto make_context(bytes_view buf, ErrorFn& error, Xs const&... xs)
+            {
+                using tparams = decltype(detail::build_params2<stream_readable2, Params>(xs...));
+                using states_list = mp::call<
+                    mp::unpack<
+                        mp::transform<
+                            mp::push_front<tparams&, mp::cfl<LazyValueToNextValue>>,
+                            mp::fork<
+                                mp::transform<mp::cfe<static_size_t>, va_plus<>>,
+                                mp::transform<mp::cfe<context_value_list_t>,
+                                    mp::join<mp::cfe<tuple>>>,
+                                mp::listify
+                            >
+                        >
+                    >,
+                    Values
+                >;
+
+                using size = mp::eager::at<states_list, 0>;
+                using ctx_values = mp::eager::at<states_list, 1>;
+
+                if (buf.size() < size::value) {
+                    error();
+                }
+
+                return Ctx<tparams, ctx_values, ErrorFn&>{
+                    InStream{buf}, buf.size() - size::value,
+                    detail::build_params2<stream_readable2, Params>(xs...),
+                    ctx_values{} /** TODO uninit<ctx_values> ? **/, error
+                };
+            }
+
+            template<class Ctx>
+            static auto make_state(Ctx& ctx)
+            {
+                return State{ctx, tuple<>{}};
             }
 
             template<class State, class Data, class... Name>
@@ -1006,65 +1063,8 @@ namespace test
             {
                 using Next = next_value<
                     proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(state.params))>...>;
-                return Next::make(state, get_var<Name>(state.params).value...);
-            }
-
-            template<class State, class Data, class... Name>
-            static auto static_size(State& state, lazy_value<Data, Name...>)
-            {
-                using Next = next_value<
-                    proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(state.params))>...>;
-                return static_size_t<Next>{};
-            }
-
-            template<class State, class Value>
-            using compute_static_size = mp::list<
-                mp::int_<
-                    mp::eager::at<State, 0>::value
-                  + decltype(stream_readable2::static_size(
-                        std::declval<mp::eager::at<State, 1>>(),
-                        Value())
-                    )::value
-                >,
-                decltype(stream_readable2::next_state(
-                    std::declval<mp::eager::at<State, 1>>(),
-                    Value()
-                ))&
-            >;
-
-            template<class Params, class Values, class ErrorFn, class... Xs>
-            static auto make_context(bytes_view buf, ErrorFn& error, Xs const&... xs)
-            {
-                using size = mp::call<
-                    mp::unpack<
-                        mp::push_front<
-                            mp::list<
-                                mp::int_<0>,
-                                State<
-                                    ErrorFn,
-                                    decltype(detail::build_params2<stream_readable2, Params>(xs...))&,
-                                    tuple<>
-                                >&
-                            >,
-                            mp::fold_left<
-                                mp::cfe<compute_static_size>,
-                                mp::unpack<mp::front<>>
-                            >
-                        >
-                    >,
-                    Values
-                >;
-
-                if (buf.size() < size::value) {
-                    error();
-                }
-
-                return Ctx{
-                    SharedCtx<ErrorFn>{InStream{buf}, buf.size() - size::value, error},
-                    detail::build_params2<stream_readable2, Params>(xs...)
-                };
+                    std::remove_reference_t<decltype(get_var<Name>(state.ctx.params))>...>;
+                return Next::make(state, get_var<Name>(state.ctx.params).value...);
             }
 
             template<class State>
@@ -1161,13 +1161,13 @@ namespace test
             variable<stream_readable2::lazy<Data>, Name>>
         {
             using static_size = static_size_t<read_data<Data>>;
+            using context_value_list = mp::list<>;
 
             template<class St>
             static auto make(St& state, stream_readable2::lazy<Data>)
             {
                 return State{
                     state.ctx,
-                    state.params,
                     tuple_add(state.result, make_mem<Name>(read_data<Data>::read(state.ctx.in)))
                 };
             }
@@ -1178,6 +1178,7 @@ namespace test
             variable<stream_readable2::val<Data, T&>, Name>>
         {
             using static_size = static_size_t<read_data<Data>>;
+            using context_value_list = mp::list<>;
 
             template<class St>
             static auto make(St& state, stream_readable2::val<Data, T&> v)
@@ -1185,7 +1186,6 @@ namespace test
                 v.x = read_data<Data>::read(state.ctx.in);
                 return State{
                     state.ctx,
-                    state.params,
                     tuple_add(state.result, make_mem<Name>(v.x))
                 };
             }
@@ -1196,20 +1196,20 @@ namespace test
             datas::values::types::SizeBytes<as_param>,
             variable<stream_readable2::val<Data, Bytes>, Name>>
         {
-            using static_size = static_size_t<read_data<data_to_value_size<Data>>>;
+            using DataSize = data_to_value_size<Data>;
+            using var_size = variable<
+                value_type_t<DataSize>,
+                datas::values::types::SizeBytes<Name>>;
+
+            using static_size = static_size_t<read_data<DataSize>>;
+            using context_value_list = mp::list<var_size>;
 
             template<class St>
-            static auto make(St& state, stream_readable2::val<Data, Bytes>&)
+            static auto& make(St& state, stream_readable2::val<Data, Bytes>&)
             {
-                auto n = read_data<data_to_value_size<Data>>::read(state.ctx.in);
-                return State{
-                    state.ctx,
-                    tuple_add(
-                        state.params,
-                        variable<decltype(n), datas::values::types::SizeBytes<Name>>{n}
-                    ),
-                    state.result
-                };
+                static_cast<var_size&>(state.ctx.ctx_values).value
+                    = read_data<DataSize>::read(state.ctx.in);
+                return state;
             }
         };
 
@@ -1219,11 +1219,12 @@ namespace test
             variable<stream_readable2::val<Data, writable_bytes_view>, Name>>
         {
             using static_size = mp::int_<0>;
+            using context_value_list = mp::list<>;
 
             template<class St>
             static auto make(St& state, stream_readable2::val<Data, writable_bytes_view>& v)
             {
-                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
+                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.ctx.ctx_values).value;
 
                 if (state.ctx.unchecked_size < n) {
                     state.ctx.err();
@@ -1234,7 +1235,6 @@ namespace test
                 state.ctx.in.in_copy_bytes(v.x);
                 return State{
                     state.ctx,
-                    state.params,
                     tuple_add(state.result, make_mem<Name>(writable_bytes_view(v.x)))
                 };
             }
@@ -1246,11 +1246,12 @@ namespace test
             variable<stream_readable2::val<Data, stream_readable2::lazy<bytes_view>>, Name>>
         {
             using static_size = mp::int_<0>;
+            using context_value_list = mp::list<>;
 
             template<class St>
             static auto make(St& state, stream_readable2::val<Data, lazy<bytes_view>>&)
             {
-                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.params).value;
+                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.ctx.ctx_values).value;
 
                 if (state.ctx.unchecked_size < n) {
                     state.ctx.err();
@@ -1259,7 +1260,6 @@ namespace test
 
                 return State{
                     state.ctx,
-                    state.params,
                     tuple_add(state.result, make_mem<Name>(state.ctx.in.in_skip_bytes(n)))
                 };
             }
