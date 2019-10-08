@@ -1353,7 +1353,8 @@ public:
                         this->ini.get<cfg::globals::certificate_password>(),
                         this->ini.get<cfg::client::ssl_cipher_list>().c_str(),
                         this->ini.get<cfg::client::tls_min_level>(),
-                        this->ini.get<cfg::client::tls_max_level>());
+                        this->ini.get<cfg::client::tls_max_level>(),
+                        this->ini.get<cfg::client::show_common_cipher_list>());
                 }
 
                 this->state = BASIC_SETTINGS_EXCHANGE;

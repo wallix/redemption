@@ -167,7 +167,8 @@ RdpNegociation::RdpNegociation(
     bool has_managed_drive,
     bool convert_remoteapp_to_desktop,
     uint32_t tls_min_level,
-    uint32_t tls_max_level
+    uint32_t tls_max_level,
+    bool show_common_cipher_list
 )
     : mod_channel_list(mod_channel_list)
     , channels_authorizations(channels_authorizations)
@@ -218,7 +219,7 @@ RdpNegociation::RdpNegociation(
         mod_rdp_params.enable_nla, info.console_session,
         mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, timeobj,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
-        tls_min_level, tls_max_level,
+        tls_min_level, tls_max_level, show_common_cipher_list,
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
         )
     , trans(trans)

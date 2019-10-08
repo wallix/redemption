@@ -108,7 +108,7 @@ public:
         return {this->public_key.get(), this->public_key_length};
     }
 
-    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level)
+    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
 
@@ -193,7 +193,6 @@ public:
             return tls_ctx_print_error("enable_client_tls", "SSL_set_fd failed", error_message);
         }
 
-        bool show_common_cipher_list = true;
         if (show_common_cipher_list){
             int priority = 0;
             while(1){
@@ -366,7 +365,7 @@ public:
         return Transport::TlsResult::Fail;
     }
 
-    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level)
+    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -722,7 +721,6 @@ public:
 
         LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(this->allocated_ssl));
 
-        bool show_common_cipher_list = true;
         if (show_common_cipher_list){
             int priority = 0;
             while(1){

@@ -110,7 +110,8 @@ RED_AUTO_TEST_CASE(TestNego)
     Translation::language_t lang = Translation::EN;
     uint32_t tls_min_level = 0;
     uint32_t tls_max_level = 0;
-    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, timeobj, extra_message, lang, tls_min_level, tls_max_level);
+    bool show_common_cipher_list = false;
+    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, timeobj, extra_message, lang, tls_min_level, tls_max_level, show_common_cipher_list);
     nego.set_identity(user, domain, pass, host);
 
     TpduBuffer buf;

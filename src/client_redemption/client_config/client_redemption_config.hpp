@@ -129,6 +129,7 @@ struct ModRDPParamsData
     bool enable_nla   = false;
     uint32_t tls_min_level = 0;
     uint32_t tls_max_level = 0;
+    bool show_common_cipher_list = false;
     bool enable_sound = false;
 
     bool enable_shared_virtual_disk = true;

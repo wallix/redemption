@@ -148,8 +148,9 @@ void mod_rdp::init_negociate_event_(
         false,
         false,
 #endif
-        mod_rdp_params.tls_min_level, // ini.get<cfg::mod_rdp::tls_min_level>();
-        mod_rdp_params.tls_max_level // ini.get<cfg::mod_rdp::tls_max_level>();
+        mod_rdp_params.tls_min_level,
+        mod_rdp_params.tls_max_level,
+        mod_rdp_params.show_common_cipher_list
     ))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
