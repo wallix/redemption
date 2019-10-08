@@ -735,6 +735,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #use_license_store = 1
 
+# Enables support of the remoteFX codec.
+# value: 0 or 1
+#_hidden
+#enable_remotefx = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -1170,12 +1175,5 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 #_advanced
 #load_theme = 
-
-[context]
-
-# Enables support of the remoteFX codec.
-# value: 0 or 1
-#_advanced
-#remotefx = 0
 
 )gen_config_ini"

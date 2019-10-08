@@ -435,6 +435,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_shadowing_support", desc{"Enables Session Shadowing Support."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "use_license_store", desc{"Stores CALs issued by the terminal servers."}, set(true));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
     });
 
     W.section("metrics", [&]
@@ -760,8 +762,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_id");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_addr");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_port");
-
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
     });
 }
 

@@ -620,6 +620,10 @@ session_shadowing_support = boolean(default=True)
 #_advanced
 use_license_store = boolean(default=True)
 
+# Enables support of the remoteFX codec.
+#_hidden
+enable_remotefx = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -990,11 +994,5 @@ password_fr = string(default='')
 
 #_advanced
 load_theme = string(default='')
-
-[context]
-
-# Enables support of the remoteFX codec.
-#_advanced
-remotefx = boolean(default=False)
 
 )gen_config_ini"

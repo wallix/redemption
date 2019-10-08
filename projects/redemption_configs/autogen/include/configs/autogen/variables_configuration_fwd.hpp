@@ -177,6 +177,7 @@ namespace cfg {
         struct server_cert_response;
         struct session_shadowing_support;
         struct use_license_store;
+        struct enable_remotefx;
     };
 
     struct mod_vnc {
@@ -390,7 +391,6 @@ namespace cfg {
         struct rd_shadow_invitation_id;
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
-        struct remotefx;
     };
 
 } // namespace cfg
