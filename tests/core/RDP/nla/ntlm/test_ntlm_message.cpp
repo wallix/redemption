@@ -146,7 +146,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
         0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet2));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet2), true);
 
     RED_CHECK(ts_req.version == 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x80);
@@ -165,7 +165,8 @@ RED_AUTO_TEST_CASE(TestChallenge)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized,
+                           true);
     to_send2.out_copy_bytes(v);
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
@@ -267,7 +268,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
         0x0f
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
 
@@ -287,7 +288,8 @@ RED_AUTO_TEST_CASE(TestNegotiate)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized,
+                           true);
     to_send.out_copy_bytes(v);
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
@@ -525,7 +527,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet3));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet3), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x102);
@@ -543,7 +545,8 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized, 
+                           true);
     to_send3.out_copy_bytes(v);
 
 

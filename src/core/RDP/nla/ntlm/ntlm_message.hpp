@@ -1268,8 +1268,9 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
     bytes_view tmpEncryptedRandomSessionKey = {EncryptedRandomSessionKey.data(),
                 (negoFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)?EncryptedRandomSessionKey.size():0};
     
+    bool negotiate_flag = negoFlags & NTLMSSP_NEGOTIATE_VERSION;
     uint32_t payloadOffset = 12+8+8+8+8+8+8+4
-                            +8*bool(negoFlags & NTLMSSP_NEGOTIATE_VERSION)
+                            +8*negotiate_flag
                             +16*has_mic;
 
     size_t message_size = payloadOffset 
@@ -1834,7 +1835,8 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(bytes_view target_name, byt
 {
     std::vector<uint8_t> result;
 
-    uint32_t payloadOffset = 12+8+4+8+8+8+8*bool(ntlm_version.size()==8);
+    bool ntlm_version_flag = ntlm_version.size()==8;
+    uint32_t payloadOffset = 12+8+4+8+8+8+8*ntlm_version_flag;
 
     LOG(LOG_INFO, "Target Name: size = %04x", unsigned(target_name.size()));
 

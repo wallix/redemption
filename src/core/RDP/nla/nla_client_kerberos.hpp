@@ -382,30 +382,10 @@ private:
     Random & rand;
     std::string& extra_message;
     Translation::language_t lang;
+    const bool credssp_verbose;
     const bool verbose;
 
     Transport & trans;
-
-    void credssp_send()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
-        StaticOutStream<65536> ts_request_emit;
-        auto v = emitTSRequest(this->ts_request.version,
-                               this->ts_request.negoTokens,
-                               this->ts_request.authInfo,
-                               this->ts_request.pubKeyAuth,
-                               this->ts_request.error_code,
-                               this->ts_request.clientNonce.clientNonce,
-                               this->ts_request.clientNonce.initialized);
-        this->error_code = this->ts_request.error_code;
-        ts_request_emit.out_copy_bytes(v);
-        this->trans.send(ts_request_emit.get_bytes());
-        this->ts_request.negoTokens.clear();
-        this->ts_request.pubKeyAuth.clear();
-        this->ts_request.authInfo.clear();
-        this->ts_request.clientNonce.reset();
-
-    }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
@@ -526,14 +506,6 @@ private:
         return SEC_E_OK;
     }
 
-    void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
-        this->ts_request.negoTokens.clear();
-        this->ts_request.pubKeyAuth.clear();
-        this->ts_request.authInfo.clear();
-        this->ts_request.clientNonce.reset();
-    }
-
     enum class Res : bool { Err, Ok };
 
     struct ClientAuthenticateData
@@ -638,7 +610,23 @@ private:
             this->client_auth_data.input_buffer.clear();
             if (this->ts_request.negoTokens.size() > 0) {
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-                this->credssp_send();
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
             }
         }
         else {
@@ -648,10 +636,42 @@ private:
 
             if (this->ts_request.negoTokens.size() > 0) {
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-                this->credssp_send();
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
             }
             else if (encrypted == SEC_E_OK) {
-                this->credssp_send();
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
             }
 
             LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
@@ -671,10 +691,10 @@ private:
         if (this->ts_credentials.credType == 1){
             if (this->restricted_admin_mode) {
                 LOG(LOG_INFO, "Restricted Admin Mode");
-                result = emitTSCredentialsPassword({},{}, {});
+                result = emitTSCredentialsPassword({},{}, {}, this->credssp_verbose);
             }
             else {
-                result = emitTSCredentialsPassword(this->identity.get_domain_utf16_av(),this->identity.get_user_utf16_av(),this->identity.get_password_utf16_av());
+                result = emitTSCredentialsPassword(this->identity.get_domain_utf16_av(),this->identity.get_user_utf16_av(),this->identity.get_password_utf16_av(), this->credssp_verbose);
             }
         }
         else {
@@ -687,7 +707,7 @@ private:
             bytes_view readerName;
             bytes_view containerName;
             bytes_view cspName;
-            result = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
+            result = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName, this->credssp_verbose);
         }
         ts_credentials_send.out_copy_bytes(result);
 
@@ -720,6 +740,7 @@ public:
                Random & rand,
                std::string& extra_message,
                Translation::language_t lang,
+               const bool credssp_verbose = false,
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
@@ -728,6 +749,7 @@ public:
         , rand(rand)
         , extra_message(extra_message)
         , lang(lang)
+        , credssp_verbose(credssp_verbose)
         , verbose(verbose)
         , trans(transport.get_transport())
     {
@@ -842,10 +864,42 @@ public:
         /* send authentication token to server */
         if (this->ts_request.negoTokens.size() > 0) {
             LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-            this->credssp_send();
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+            StaticOutStream<65536> ts_request_emit;
+            auto v = emitTSRequest(this->ts_request.version,
+                                   this->ts_request.negoTokens,
+                                   this->ts_request.authInfo,
+                                   this->ts_request.pubKeyAuth,
+                                   this->ts_request.error_code,
+                                   this->ts_request.clientNonce.clientNonce,
+                                   this->ts_request.clientNonce.initialized,
+                                   this->credssp_verbose);
+            this->error_code = this->ts_request.error_code;
+            ts_request_emit.out_copy_bytes(v);
+            this->trans.send(ts_request_emit.get_bytes());
+            this->ts_request.negoTokens.clear();
+            this->ts_request.pubKeyAuth.clear();
+            this->ts_request.authInfo.clear();
+            this->ts_request.clientNonce.reset();
         }
         else if (encrypted == SEC_E_OK) {
-            this->credssp_send();
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+            StaticOutStream<65536> ts_request_emit;
+            auto v = emitTSRequest(this->ts_request.version,
+                                   this->ts_request.negoTokens,
+                                   this->ts_request.authInfo,
+                                   this->ts_request.pubKeyAuth,
+                                   this->ts_request.error_code,
+                                   this->ts_request.clientNonce.clientNonce,
+                                   this->ts_request.clientNonce.initialized,
+                                   this->credssp_verbose);
+            this->error_code = this->ts_request.error_code;
+            ts_request_emit.out_copy_bytes(v);
+            this->trans.send(ts_request_emit.get_bytes());
+            this->ts_request.negoTokens.clear();
+            this->ts_request.pubKeyAuth.clear();
+            this->ts_request.authInfo.clear();
+            this->ts_request.clientNonce.reset();
         }
 
         if (status != SEC_I_CONTINUE_NEEDED) {
@@ -870,7 +924,7 @@ public:
                 return credssp::State::Err;
                 
             case ClientAuthenticateData::Loop:
-                this->ts_request = recvTSRequest(in_data);
+                this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
                 this->error_code = this->ts_request.error_code;
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
@@ -886,16 +940,24 @@ public:
                 /* Encrypted Public Key +1 */
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
-                this->ts_request = recvTSRequest(in_data);
+                this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
 
                 /* Verify Server Public Key Echo */
 
                 SEC_STATUS status = this->credssp_decrypt_public_key_echo();
-                this->credssp_buffer_free();
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
 
                 if (status != SEC_E_OK) {
                     LOG(LOG_ERR, "Could not verify public key echo!");
-                    this->credssp_buffer_free();
+                    LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
+                    this->ts_request.negoTokens.clear();
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
+                    this->ts_request.clientNonce.reset();
                     return credssp::State::Err;
                 }
 
@@ -910,7 +972,23 @@ public:
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
 
-                this->credssp_send();
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
 
                 this->client_auth_data.state = ClientAuthenticateData::Start;
                 return credssp::State::Finish;

@@ -97,6 +97,7 @@ private:
 
     private:
     std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)> get_password_hash_cb;
+    const bool credssp_verbose;
     const bool verbose;
 
     array_sha256 ClientServerHash;
@@ -184,6 +185,7 @@ public:
                std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)> get_password_hash_cb,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
                bool ignore_bogus_nego_flags,
+               const bool credssp_verbose = false,
                const bool verbose = false)
         : is_domain(is_domain)
         , is_server(is_server)  
@@ -201,6 +203,7 @@ public:
         , rand(rand)
         , public_key(key)
         , get_password_hash_cb(get_password_hash_cb)
+        , credssp_verbose(credssp_verbose)
         , verbose(verbose)
     {
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
@@ -237,7 +240,7 @@ public:
                 case NTLM_STATE_INITIAL:
                 {
                     LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL");
-                    TSRequest ts_request_in = recvTSRequest(in_data);
+                    TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_verbose);
                     auto raw_negotiate_message = ts_request_in.negoTokens;
                     this->SavedNegotiateMessage = raw_negotiate_message;
                                         
@@ -407,7 +410,8 @@ public:
                                            ts_request_in.pubKeyAuth,
                                            ts_request_in.error_code,
                                            ts_request_in.clientNonce.clientNonce,
-                                           ts_request_in.clientNonce.initialized);
+                                           ts_request_in.clientNonce.initialized,
+                                           this->credssp_verbose);
                     this->error_code = ts_request_in.error_code;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
@@ -421,7 +425,7 @@ public:
                 case NTLM_STATE_AUTHENTICATE:
                 {
                     /* receive authentication token */
-                    TSRequest ts_request_in = recvTSRequest(in_data);
+                    TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_verbose);
                                         
                     this->error_code = ts_request_in.error_code;
 
@@ -657,7 +661,8 @@ public:
                                            ts_request_in.pubKeyAuth,
                                            ts_request_in.error_code,
                                            {},
-                                           false);
+                                           false,
+                                           this->credssp_verbose);
                     this->error_code = 0;
 
                     this->server_auth_data.state = ServerAuthenticateData::Final;
@@ -680,7 +685,7 @@ public:
             case ServerAuthenticateData::Final:
             {
                 LOG_IF(this->verbose, LOG_INFO, "rdpNTLMServer::server_authenticate_final");
-                TSRequest ts_request_in_final = recvTSRequest(in_data);
+                TSRequest ts_request_in_final = recvTSRequest(in_data, this->credssp_verbose);
                 this->error_code = ts_request_in_final.error_code;
 
                 if (ts_request_in_final.authInfo.size() < 1) {
@@ -737,7 +742,7 @@ public:
                     return {};
                 }
 
-                this->ts_credentials = recvTSCredentials(decrypted_creds);
+                this->ts_credentials = recvTSCredentials(decrypted_creds, this->credssp_verbose);
                 this->server_auth_data.state = ServerAuthenticateData::Start;
                 this->state = credssp::State::Finish;
                 return {};

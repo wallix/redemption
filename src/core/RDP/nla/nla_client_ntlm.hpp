@@ -74,6 +74,7 @@ private:
     array_md5 sspi_context_ServerSigningKey;
     bool restricted_admin_mode;
 
+    const bool credssp_verbose;
     const bool verbose;
 
     enum class Res : bool { Err, Ok };
@@ -119,6 +120,7 @@ public:
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
+               const bool credssp_verbose = false,
                const bool verbose = false)
         : PublicKey(public_key.data(), public_key.data()+public_key.size())
         , utf16_user(::UTF8toUTF16(user))
@@ -128,6 +130,7 @@ public:
         , rand(rand)
         , Workstation(::UTF8toUTF16({hostname, strlen(char_ptr_cast(hostname))}))
         , restricted_admin_mode(restricted_admin_mode)
+        , credssp_verbose(credssp_verbose)
         , verbose(verbose)
     {
         if (this->verbose){
@@ -147,7 +150,7 @@ public:
         LOG(LOG_INFO, "NTLM Authentication : Negotiate - sending Authentication Token");
         this->savedNegotiateMessage = emitNTLMNegotiateMessage();
         this->client_auth_data_state = Loop;
-        return emitTSRequest(6, this->savedNegotiateMessage, {}, {}, 0, {}, false);
+        return emitTSRequest(6, this->savedNegotiateMessage, {}, {}, 0, {}, false, this->credssp_verbose);
     }
 
 
@@ -158,7 +161,7 @@ public:
             case Loop:
             {
                 LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Authentication Token - Challenge");
-                TSRequest ts_request = recvTSRequest(in_data);
+                TSRequest ts_request = recvTSRequest(in_data, this->credssp_verbose);
                 NTLMChallengeMessage server_challenge = recvNTLMChallengeMessage(ts_request.negoTokens);
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
@@ -299,12 +302,12 @@ public:
                                     this->PublicKey);
                     v = emitTSRequest(6, auth_message, {}, 
                                       CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, client_to_server_hash),
-                                      0, this->SavedClientNonce.clientNonce, true);
+                                      0, this->SavedClientNonce.clientNonce, true, this->credssp_verbose);
                 }
                 else {
                     v = emitTSRequest(6, auth_message, {},
                                       CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, this->PublicKey),
-                                      0, {}, false);
+                                      0, {}, false, this->credssp_verbose);
                 }
 
                 this->client_auth_data_state = Final;
@@ -315,7 +318,7 @@ public:
             {
                 LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Encrypted PubKey + 1");
 
-                TSRequest ts_request = recvTSRequest(in_data);
+                TSRequest ts_request = recvTSRequest(in_data, this->credssp_verbose);
                 uint32_t error_code = ts_request.error_code;
 
                 if (ts_request.pubKeyAuth.size() < cbMaxSignature) {
@@ -383,10 +386,10 @@ public:
                 if (this->ts_credentials.credType == 1){
                     if (this->restricted_admin_mode) {
                         LOG(LOG_INFO, "Restricted Admin Mode");
-                        ts_credentials = emitTSCredentialsPassword({},{},{});
+                        ts_credentials = emitTSCredentialsPassword({},{},{}, this->credssp_verbose);
                     }
                     else {
-                        ts_credentials = emitTSCredentialsPassword(this->utf16_domain,this->utf16_user,this->identity_Password);
+                        ts_credentials = emitTSCredentialsPassword(this->utf16_domain,this->utf16_user,this->identity_Password, this->credssp_verbose);
                         LOG(LOG_INFO, "TSCredentialsPassword: Domain User Password");
 //                            hexdump_d(ts_credentials);
                     }
@@ -396,7 +399,7 @@ public:
                     ts_credentials = emitTSCredentialsSmartCard(
                                     /*pin*/{},/*userHint*/{},/*domainHint*/{},
                                     /*keySpec*/0,/*cardName*/{},/*readerName*/{},
-                                    /*containerName*/{}, /*cspName*/{});
+                                    /*containerName*/{}, /*cspName*/{}, this->credssp_verbose);
                 }
                 
                 // authInfo [signature][data_buffer]
@@ -407,7 +410,7 @@ public:
                                        {}, // pubKeyAuth
                                        error_code,
                                        this->SavedClientNonce.clientNonce,
-                                       this->SavedClientNonce.initialized);
+                                       this->SavedClientNonce.initialized, this->credssp_verbose);
 
                 this->client_auth_data_state = Start;
                 this->state = credssp::State::Finish;

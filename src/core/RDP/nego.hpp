@@ -93,16 +93,16 @@ private:
     State state = State::Negociate;
 
 public:
+    uint32_t tls_min_level;
+    uint32_t tls_max_level;
+    bool show_common_cipher_list;
+
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
         credssp     = 0x400,
         negotiation = 0x800,
     };
-
-    uint32_t tls_min_level;
-    uint32_t tls_max_level;
-    bool show_common_cipher_list;
 
     bool enhanced_rdp_security_is_in_effect() const;
     void set_lb_info(uint8_t * lb_info, size_t lb_info_length);

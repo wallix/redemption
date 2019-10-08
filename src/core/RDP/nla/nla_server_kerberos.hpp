@@ -51,6 +51,7 @@ class rdpCredsspServerKerberos final
     std::string& extra_message;
     Translation::language_t lang;
     bool restricted_admin_mode;
+    const bool credssp_verbose;
     const bool verbose;
 
     std::vector<uint8_t> ClientServerHash;
@@ -654,6 +655,7 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
+               const bool credssp_verbose = false,
                const bool verbose = false)
         : public_key(key)
         , rand(rand)
@@ -661,6 +663,7 @@ public:
         , extra_message(extra_message)
         , lang(lang)
         , restricted_admin_mode(restricted_admin_mode)
+        , credssp_verbose(credssp_verbose)
         , verbose(verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
@@ -815,7 +818,7 @@ private:
             return status;
         }
 
-        this->ts_credentials = recvTSCredentials(decrypted_creds);
+        this->ts_credentials = recvTSCredentials(decrypted_creds, this->credssp_verbose);
 
         // hexdump(this->ts_credentials.passCreds.userName,
         //         this->ts_credentials.passCreds.userName_length);
@@ -833,7 +836,7 @@ private:
 
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
-            this->ts_request = recvTSRequest(in_data);
+            this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
             this->error_code = this->ts_request.error_code;
         }
 
@@ -890,7 +893,8 @@ private:
                                this->ts_request.pubKeyAuth,
                                this->ts_request.error_code,
                                this->ts_request.clientNonce.clientNonce,
-                               this->ts_request.clientNonce.initialized);
+                               this->ts_request.clientNonce.initialized,
+                               this->credssp_verbose);
         out_stream.out_copy_bytes(v);
 
         this->credssp_buffer_free();
@@ -910,7 +914,7 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */
-        this->ts_request = recvTSRequest(in_data);
+        this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
         this->error_code = this->ts_request.error_code;
 
         SEC_STATUS status = this->credssp_decrypt_ts_credentials();

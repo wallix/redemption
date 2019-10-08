@@ -117,7 +117,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
         0x0f
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
@@ -133,7 +133,8 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized,
+                           true);
     RED_CHECK_EQUAL(v.size(), 0x37 + 2);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -163,7 +164,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
         0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x80);
@@ -178,7 +179,8 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized,
+                           true);
     RED_CHECK_EQUAL(v.size(), 0x94 + 3);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -263,7 +265,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x102);
@@ -278,7 +280,8 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized,
+                           true);
     RED_CHECK_EQUAL(v.size(), 0x241 + 4);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -327,7 +330,7 @@ RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
         0xac, 0xc0, 0xfd, 0x1b, 0xb5, 0xa2, 0xd3
     };
 
-    TSRequest ts_req = recvTSRequest(make_array_view(packet));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0);
@@ -342,7 +345,8 @@ RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized,
+                           true);
     RED_CHECK_EQUAL(v.size(), 0x12b + 4);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -364,7 +368,7 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
         0x2a, 0x13, 0x52, 0xa6, 0x52, 0x75, 0x50, 0x8d,
         0x3e, 0xe9, 0x6b, 0x57
     };
-    TSRequest ts_req = recvTSRequest(make_array_view(packet));
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), true);
 
     RED_CHECK_EQUAL(ts_req.version, 6);
 
@@ -380,7 +384,8 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
                            ts_req.pubKeyAuth,
                            ts_req.error_code,
                            ts_req.clientNonce.clientNonce,
-                           ts_req.clientNonce.initialized);
+                           ts_req.clientNonce.initialized,
+                           true);
 
     RED_CHECK_EQUAL(v.size(), 0x5c);
     RED_CHECK_SIG_FROM(v, packet);
@@ -393,12 +398,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     std::vector<uint8_t> user = { 's', 'q', 'u', 'a', 'r', 'e', 0};
     std::vector<uint8_t> pass = {'h', 'y', 'p', 'e', 'r', 'c', 'u', 'b', 'e', 0};
 
-    auto r = emitTSCredentialsPassword(domain, user, pass);
+    auto r = emitTSCredentialsPassword(domain, user, pass, true);
     RED_CHECK_EQUAL(r.size(), r[1]+2);
 
     
 
-    TSCredentials ts_cred_received = recvTSCredentials(r);
+    TSCredentials ts_cred_received = recvTSCredentials(r, true);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 1);
     RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName, domain);
@@ -424,10 +429,10 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     std::vector<uint8_t> cspName = {'w', 'h', 'a', 't', 0};
     uint32_t keySpec = 32;
 
-    auto r = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName);
+    auto r = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName, true);
     RED_CHECK_EQUAL(r.size(), r[1]+2);
 
-    TSCredentials ts_cred = recvTSCredentials(r);
+    TSCredentials ts_cred = recvTSCredentials(r, true);
 
     RED_CHECK_EQUAL(ts_cred.credType, 2);
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.pin, pin);
@@ -621,7 +626,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         uint32_t error_code = 0;
         std::vector<uint8_t> clientNonce = {};
 
-        auto result = emitTSRequest(version, negoTokens, authInfo, pubKeyAuth, error_code, clientNonce, false);
+        auto result = emitTSRequest(version, negoTokens, authInfo, pubKeyAuth, error_code, clientNonce, false, true);
 
         std::vector<uint8_t> expectedResult = {
             // TSRequest ber sequence header
@@ -663,7 +668,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 
         //Client Authentication : Receiving Authentication Token
         // negoTokens contains Challenge Message
-        auto ts_req = recvTSRequest(answerTSRequest);
+        auto ts_req = recvTSRequest(answerTSRequest, true);
         std::vector<uint8_t> expected_negoTokens = {
              /* 0000 */ 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x02, 0x00, 0x00, 0x00, 0x10, 0x00, 0x10, 0x00,  // NTLMSSP.........
              /* 0010 */ 0x38, 0x00, 0x00, 0x00, 0x35, 0x82, 0x89, 0xe2, 0x01, 0x05, 0x03, 0x5c, 0x69, 0x17, 0x57, 0x89,  // 8...5.......i.W.
@@ -737,7 +742,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
             /* 0010 */ 0xd1, 0x94, 0x00, 0x96, 0x44, 0xd3, 0x2a, 0x59, 0xc2, 0x0d, 0x19, 0xf8, 0x7a, 0xbf, 0x36, 0xaf,  // ....D.*Y....z.6.
         };
 
-        auto result = emitTSRequest(version, negoTokens, authInfo, pubKeyAuth, error_code, clientNonce, true);
+        auto result = emitTSRequest(version, negoTokens, authInfo, pubKeyAuth, error_code, clientNonce, true, true);
 
         std::vector<uint8_t> expectedResult = {
         // ber TSRequest header
@@ -818,7 +823,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 
         //Client Authentication : Receiving Authentication Token
         // negoTokens contains Challenge Message
-        auto ts_req = recvTSRequest(answerTSRequest);
+        auto ts_req = recvTSRequest(answerTSRequest, true);
         std::vector<uint8_t> expected_negoTokens = {};
         std::vector<uint8_t> expected_authInfo = {};
         std::vector<uint8_t> expected_pubKeyAuth = {
@@ -860,7 +865,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
             /* 0010 */ 0xd1, 0x94, 0x00, 0x96, 0x44, 0xd3, 0x2a, 0x59, 0xc2, 0x0d, 0x19, 0xf8, 0x7a, 0xbf, 0x36, 0xaf,  // ....D.*Y....z.6.
         };
 
-        auto result = emitTSRequest(version, negoTokens, authInfo, pubKeyAuth, error_code, clientNonce, true);
+        auto result = emitTSRequest(version, negoTokens, authInfo, pubKeyAuth, error_code, clientNonce, true, true);
 
         std::vector<uint8_t> expectedResult = {
         // ber TSRequest header
