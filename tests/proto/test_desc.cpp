@@ -825,6 +825,32 @@ namespace test
             return out << v.x;
         }
 
+
+        template<class> class data_to_value_data_impl;
+
+        template<class T>
+        using data_to_value_data
+            = typename data_to_value_data_impl<proto_basic_type_t<T>>::type;
+
+        template<class StringSize, class StringData, class ZeroPolicy>
+        struct data_to_value_data_impl<datas::types::String<StringSize, StringData, ZeroPolicy>>
+        {
+            using type = StringData;
+        };
+
+        template<class> class data_to_value_size_impl;
+
+        template<class T>
+        using data_to_value_size
+            = typename data_to_value_size_impl<proto_basic_type_t<T>>::type;
+
+        template<class StringSize, class StringData, class ZeroPolicy>
+        struct data_to_value_size_impl<datas::types::String<StringSize, StringData, ZeroPolicy>>
+        {
+            using type = StringSize;
+        };
+
+
         template<class TParams, class TCtxValues>
         struct CtxW
         {
@@ -851,7 +877,7 @@ namespace test
             template<class ValueBasicType, class BasicType, class T>
             struct value_builder;
 
-            template<class... NamedValues>
+            template<class BasicType, class... NamedValues>
             struct next_value;
 
             template<class T>
@@ -867,6 +893,7 @@ namespace test
             struct LazyValueToNextValue<TParams, lazy_value<Data, Name...>>
             {
                 using type = next_value<
+                    proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...
                 >;
             };
@@ -908,9 +935,20 @@ namespace test
             static auto next_state(State& state, lazy_value<Data, Name...>)
             {
                 using Next = next_value<
+                    proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(state.ctx.params))>...
                 >;
                 return Next::make(state, get_var<Name>(state.ctx.params).value...);
+            }
+
+            template<class State>
+            static auto final(State&& state)
+            {
+                println("ctx: ");
+                state.ctx.ctx_values.apply([&](auto... xs){
+                    (println("  ", type_name(xs), " = ", state.ctx.out.get_current()-xs.value), ...);
+                });
+                return state.ctx.out.get_bytes();
             }
         };
 
@@ -981,42 +1019,60 @@ namespace test
         };
 
 
-        template<class Int, class Endianess, class Name>
-        struct stream_writable::next_value<variable<datas::types::Integer<Int, Endianess>, Name>>
+        template<class Data, class T, class Name>
+        struct stream_writable::next_value<as_param, variable<val<Data, T>, Name>>
         {
             using context_value_list = mp::list<>;
 
             template<class St>
-            static auto make(St& state, OutStream& out, Int x)
+            static auto make(St& state, val<Data, T> const& v)
             {
-                write_data_impl<datas::types::Integer<Int, Endianess>>::write(state.ctx.out);
+                write_data<Data>::write(state.ctx.out, v.x);
                 return state;
             }
         };
 
-        template<>
-        struct stream_writable::next_value<datas::types::BinaryData>
+        template<class Name, class Data, class Bytes>
+        struct stream_writable::next_value<
+            datas::values::types::SizeBytes<as_param>,
+            variable<val<Data, Bytes>, Name>>
         {
             using context_value_list = mp::list<>;
 
             template<class St>
-            static auto make(St& state, OutStream& out, bytes_view bytes)
+            static auto& make(St& state, val<Data, Bytes> const& v)
             {
-                out.out_copy_bytes(bytes);
+                write_data<data_to_value_size<Data>>::write(state.ctx.out, v.x.size());
+                return state;
+            }
+        };
+
+        template<class Name, class Data, class Bytes>
+        struct stream_writable::next_value<
+            datas::values::types::Data<as_param>,
+            variable<val<Data, Bytes>, Name>>
+        {
+            using context_value_list = mp::list<>;
+
+            template<class St>
+            static auto& make(St& state, val<Data, Bytes> const& v)
+            {
+                write_data<data_to_value_data<Data>>::write(state.ctx.out, v.x);
                 return state;
             }
         };
 
         template<class DataSize, class Name>
-        struct stream_writable::next_value<variable<datas::types::PktSize<DataSize>, Name>>
+        struct stream_writable::next_value<as_param, variable<datas::types::PktSize<DataSize>, Name>>
         {
             using var_size = variable<uint8_t*, Name>;
             using context_value_list = mp::list<var_size>;
 
             template<class St>
-            static auto make(St& state, OutStream& out, native)
+            static auto make(St& state, datas::types::PktSize<DataSize>)
             {
-                static_cast<var_size&>(state.ctx.ctx_values).value = out.get_current();
+                static_cast<var_size&>(state.ctx.ctx_values).value = state.ctx.out.get_current();
+                state.ctx.out.out_skip_bytes(sizeof(value_type_t<DataSize>));
                 return state;
             }
         };
@@ -1034,6 +1090,15 @@ namespace test
                         *p++ = x >> ((is_little_endian::value ? i.value : sizeof(Int)-1u-i.value) * 8u)
                     ), ...);
                 });
+            }
+        };
+
+        template<>
+        struct stream_writable::write_data_impl<datas::types::StringData<proto::datas::types::ascii_charset>>
+        {
+            static void write(OutStream& out, bytes_view x)
+            {
+                out.out_copy_bytes(x);
             }
         };
 
@@ -1186,31 +1251,6 @@ namespace test
         {
             return typename decltype(Name::mem()(wrap_type<T>()))::type{static_cast<T&&>(x)};
         }
-
-
-        template<class> class data_to_value_data_impl;
-
-        template<class T>
-        using data_to_value_data
-            = typename data_to_value_data_impl<proto_basic_type_t<T>>::type;
-
-        template<class StringSize, class StringData, class ZeroPolicy>
-        struct data_to_value_data_impl<datas::types::String<StringSize, StringData, ZeroPolicy>>
-        {
-            using type = StringData;
-        };
-
-        template<class> class data_to_value_size_impl;
-
-        template<class T>
-        using data_to_value_size
-            = typename data_to_value_size_impl<proto_basic_type_t<T>>::type;
-
-        template<class StringSize, class StringData, class ZeroPolicy>
-        struct data_to_value_size_impl<datas::types::String<StringSize, StringData, ZeroPolicy>>
-        {
-            using type = StringSize;
-        };
 
         template<class... Ts, class X>
         auto tuple_add(tuple<Ts...>& t, X&& x)
@@ -1423,20 +1463,6 @@ namespace test
         return apply(Values{}, [&](auto... v){
             return detail::recursive_inplace_recv2<Traits>(Traits::make_state(ctx), v...);
         });
-
-        // auto write = [&](auto v){
-        //     auto x = detail::make_value<Traits>(v, ctx.params);
-        //     // println("  ", type_name(x), " = ", x.x);
-        //     Traits::template writer<proto_basic_type_t<typename decltype(x)::data_type>>
-        //         ::write(ctx.out, x.x);
-        // };
-        //
-        // // println();
-        // apply(Values{}, [&](auto... v){
-        //     (write(v), ...);
-        // });
-        //
-        // return ctx.out.get_bytes();
     }
 
     template<class ErrorFn, class Params, class Values, class... Xs>
@@ -1508,10 +1534,10 @@ int main()
     auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av, s.size = native());
     dump(out);
 
-    auto error_fn = [](){
-        throw std::runtime_error("buf is too short");
-    };
-
+    // auto error_fn = [](){
+    //     throw std::runtime_error("buf is too short");
+    // };
+    //
     // {
     //     print("\n\ninplace_recv2:\n");
     //     char strbuf[10];
