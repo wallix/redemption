@@ -22,6 +22,7 @@
 
 #include "configs/attributes/spec.hpp"
 #include "configs/enumeration.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <stdexcept>
 #include <type_traits>
@@ -314,6 +315,11 @@ private:
         Names names;
         std::vector<std::string> members_ordered {};
         std::unordered_map<std::string, std::unique_ptr<InfosBase>> members {};
+
+        std::string const& name() const
+        {
+            return names.names[0];
+        }
     };
     std::unordered_map<std::string, Sections> sections;
     std::vector<std::string> sections_ordered;
@@ -362,13 +368,16 @@ public:
         static_assert((is_convertible_v<Ts, cfg_attributes::spec::internal::attr> || ...),
             "spec::attr is missing");
         constexpr bool has_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::connection_policy> || ...);
-        static_assert(
-            has_conn_policy || (is_convertible_v<Ts, cfg_attributes::sesman::internal::io> || ...),
+        constexpr bool has_sesman_io = (is_convertible_v<Ts, cfg_attributes::sesman::internal::io> || ...);
+        static_assert(has_conn_policy || has_sesman_io,
             "sesman::io or connection_policy are missing");
-        static_assert((
-            !((!is_convertible_v<Ts, cfg_attributes::sesman::internal::io>
-            && !is_convertible_v<Ts, cfg_attributes::sesman::connection_policy>) && ...)),
-            "has sesman::io and connection_policy");
+        static_assert(!(has_conn_policy && has_sesman_io),
+            "has sesman::io with connection_policy");
+        static_assert(
+            !(has_conn_policy && (
+             (is_convertible_v<Ts, cfg_attributes::sesman::name> || ...)
+            )),
+            "sesman::name with connection_policy");
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),
             "spec::log_policy is missing");
         static_assert(
@@ -389,8 +398,8 @@ public:
         std::string const& varname = get_elem<cfg_attributes::name_>(u->infos).name;
         auto it = this->section_->members.find(varname);
         if (it != this->section_->members.end()) {
-            throw std::runtime_error("duplicates member '" + varname +
-                "' in section '" + this->section_->names.names[0] + "'");
+            throw std::runtime_error(str_concat("duplicates member '", varname,
+                "' in section '", this->section_->name() + "'"));
         }
         this->section_->members_ordered.push_back(varname);
         this->section_->members.emplace(varname, std::move(u));

@@ -630,6 +630,9 @@ use_license_store = boolean(default=True)
 #_hidden
 enable_remotefx = boolean(default=False)
 
+#_advanced
+accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

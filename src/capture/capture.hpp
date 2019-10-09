@@ -161,6 +161,10 @@ public:
     void draw(RDPColCache   const & cmd) override;
     void draw(RDPBrushCache const & cmd) override;
 
+    bool has_private_drawable() const {
+        return static_cast<bool>(this->gd_drawable_);
+    }
+
     // public visibility for test...
     class SessionMeta;
     class SessionLogAgent;
@@ -248,7 +252,7 @@ private:
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
 
-    bool capture_drawable = false;
+    bool const capture_drawable;
 
     SmartVideoCropping smart_video_cropping;
 

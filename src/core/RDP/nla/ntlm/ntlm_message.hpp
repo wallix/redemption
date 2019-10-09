@@ -1838,16 +1838,12 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(bytes_view target_name, byt
     bool ntlm_version_flag = ntlm_version.size()==8;
     uint32_t payloadOffset = 12+8+4+8+8+8+8*ntlm_version_flag;
 
-    LOG(LOG_INFO, "Target Name: size = %04x", unsigned(target_name.size()));
-
     result << bytes_view{NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE)}
            << ::out_uint32_le(NtlmChallenge);
            
     result << ::out_uint16_le(target_name.size())
            << ::out_uint16_le(target_name.size())
            << ::out_uint32_le(payloadOffset);
-
-    payloadOffset += target_name.size();
 
     result << ::out_uint32_le(negoFlags);
 
@@ -1856,9 +1852,9 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(bytes_view target_name, byt
 
     result << ::out_uint16_le(target_info.size())
            << ::out_uint16_le(target_info.size())
-           << ::out_uint32_le(payloadOffset);
+           << ::out_uint32_le(payloadOffset+target_name.size());
 
-    if (ntlm_version.size()==8) {
+    if (ntlm_version_flag) {
         result << ntlm_version;
     }
     result << target_name << target_info;

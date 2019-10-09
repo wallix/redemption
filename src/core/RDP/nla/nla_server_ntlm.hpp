@@ -93,7 +93,7 @@ private:
 
     TimeObj & timeobj;
     Random & rand;
-    array_view_u8 public_key;
+    const std::vector<uint8_t> public_key;
 
     private:
     std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)> get_password_hash_cb;
@@ -115,8 +115,6 @@ public:
     enum class Res : bool { Err, Ok };
 
 protected:
-    SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
-
     const bool NTLMv2 = true;
     bool UseMIC = true; // NTLMv2
 public:
@@ -201,7 +199,7 @@ public:
         , ignore_bogus_nego_flags(ignore_bogus_nego_flags)
         , timeobj(timeobj)
         , rand(rand)
-        , public_key(key)
+        , public_key(key.data(),key.data()+key.size())
         , get_password_hash_cb(get_password_hash_cb)
         , credssp_verbose(credssp_verbose)
         , verbose(verbose)
@@ -239,187 +237,21 @@ public:
                 switch (this->ntlm_state) {
                 case NTLM_STATE_INITIAL:
                 {
-                    LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL");
-                    TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_verbose);
-                    auto raw_negotiate_message = ts_request_in.negoTokens;
-                    this->SavedNegotiateMessage = raw_negotiate_message;
-                                        
-                    this->error_code = ts_request_in.error_code;
-                    
-                    // TODO: to remove as soon as exceptions are managed for negotiate message
-//                    if (raw_negotiate_message.size() < 1) {
-//                        LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
-//                        LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-//                        this->state = credssp::State::Err;
-//                        return {};
-//                    }
-
-                    // Manage Exceptions in Negotiate Message here
-                    NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(raw_negotiate_message);
-                    
-                    // TODO: mandatory flags expected for negotiate message could be managed in recv
-                    uint32_t const mask = NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
-
-                    if ((negotiate_message.negoFlags.flags & mask) != mask) {
-                        LOG_IF(this->verbose, LOG_INFO, "NTLM Negotiate : unsupported negotiate flag %u", negotiate_message.negoFlags.flags);
-                        this->state = credssp::State::Err;
-                        return {};
-                    }
-
-                    rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
-
-
-                    auto target_name = ::UTF8toUTF16(this->TargetName);
-                    NTLMChallengeMessage challenge_message;
-                    challenge_message.TargetName.buffer = target_name;
-                    challenge_message.serverChallenge = this->ServerChallenge;
-
-                    uint8_t ZeroTimestamp[8] = {};
-
-                    if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-                        memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-                    }
-                    else {
-                        const timeval tv = timeobj.get_time();  
-                        OutStream out_stream(this->Timestamp);
-                        out_stream.out_uint32_le(tv.tv_usec);
-                        out_stream.out_uint32_le(tv.tv_sec);
-                    }
-
-                    uint32_t negoFlags = negotiate_message.negoFlags.flags;
-                    // flags from negotiate mandatory: NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
-                    if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
-                        challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
-                    }
-
-                    if (!ignore_bogus_nego_flags 
-                    && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
-                    && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
-                        negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
-                    }
-
-                    if (!ignore_bogus_nego_flags 
-                    && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
-                    && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
-                        negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
-                    }
-
-                    // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
-                    // and set the matching flag accordingly
-                    if (target_name.size() > 0){
-                        // forcing some flags
-                        negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
-                    }
-
-                    if (!ignore_bogus_nego_flags){
-                        // Means TargetInfo contains something. As we indeed do have something
-                        // this flag should always be set here (except in bogus configurations)
-                        negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
-                    }
-
-                    logNtlmFlags(negoFlags);
-
-                    // NTLM: construct challenge target info
-                    // WIN7
-                    if (this->avFieldsTags.size() == 0){
-                        this->avFieldsTags = {MsvAvNbComputerName, MsvAvNbDomainName, 
-                                              MsvAvDnsComputerName, MsvAvDnsDomainName, 
-                                              MsvAvDnsTreeName, MsvAvFlags, MsvAvTimestamp,
-                                              MsvAvSingleHost, MsvAvTargetName, MsvChannelBindings
-                                              };
-                    }
-                    for (auto tag: this->avFieldsTags){
-                        switch (tag){
-                        case MsvAvNbDomainName:
-                        {
-                            // NETBIOS Domain Name
-                            std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
-                            challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
-                        }
-                        break;
-                        case MsvAvNbComputerName:
-                        {
-                            // NETBIOS Computer Name
-                            std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
-                            challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
-                        }
-                        break;
-                        case MsvAvDnsDomainName:
-                        {
-                            // DNS Domain Name
-                            auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
-                            challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
-                        }
-                        break;
-                        case MsvAvDnsTreeName:
-                        {
-                            // DNS Domain Name
-                            auto dsn_tree_name_u16 = ::UTF8toUTF16(this->dnsTreeName);
-                            challenge_message.AvPairList.push_back(AvPair({MsvAvDnsTreeName, dsn_tree_name_u16}));
-                        }
-                        break;
-                        case MsvAvDnsComputerName:
-                        {
-                            // DNS Computer Name
-                            auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
-                            challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
-                        }
-                        break;
-                        case MsvAvTimestamp:
-                            challenge_message.AvPairList.push_back(AvPair({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))}));
-                        break;
-                        default:
-                        break;
-                        }
-                    }
-
-                    auto target_info = emitTargetInfo(challenge_message.AvPairList);
-                    auto raw_ntlm_version = emitNtlmVersion(
-                                                this->ntlm_version.ProductMajorVersion,
-                                                this->ntlm_version.ProductMinorVersion,
-                                                this->ntlm_version.ProductBuild,
-                                                this->ntlm_version.NtlmRevisionCurrent);
-                    if (this->is_server){
-                        negoFlags |= NTLMSSP_TARGET_TYPE_SERVER;
-                        negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
-                    }
-                    else {
-                        negoFlags &= ~NTLMSSP_TARGET_TYPE_SERVER;
-                    }
-                    if (this->is_domain){
-                        negoFlags |= NTLMSSP_TARGET_TYPE_DOMAIN;
-                        negoFlags &= ~NTLMSSP_TARGET_TYPE_SERVER;
-                    }
-                    else {
-                        negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
-                    }
-
-                    auto challenge = emitNTLMChallengeMessage(target_name, challenge_message.serverChallenge, negoFlags, raw_ntlm_version, target_info);
-                    auto negoTokens = std::vector<uint8_t>{} << challenge;
-
-                    this->SavedChallengeMessage = challenge;
+                    TSRequest ts_request = recvTSRequest(in_data, this->credssp_verbose);
+                    // Check error codes in recvTSRequest
+                    this->SavedNegotiateMessage = std::move(ts_request.negoTokens);
+                    this->SavedChallengeMessage = std::move(this->prepare_challenge(this->SavedNegotiateMessage));
 
                     this->ntlm_state = NTLM_STATE_AUTHENTICATE;
-
-                    LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_INITIAL::SEC_I_CONTINUE_NEEDED");
-                    this->state_accept_security_context = SEC_I_CONTINUE_NEEDED;
-
-                    result = emitTSRequest(std::min(ts_request_in.version,this->credssp_version),
-                                           negoTokens,
-                                           ts_request_in.authInfo,
-                                           ts_request_in.pubKeyAuth,
-                                           ts_request_in.error_code,
-                                           ts_request_in.clientNonce.clientNonce,
-                                           ts_request_in.clientNonce.initialized,
-                                           this->credssp_verbose);
-                    this->error_code = ts_request_in.error_code;
-
-                    LOG_IF(this->verbose, LOG_INFO, "NTLMServer::buffer_free");
                     this->error_code = 0;
-
                     this->state = credssp::State::Cont;
-                    return result;                    
-                    break;
+
+                    return emitTSRequest(
+                               std::min(ts_request.version,this->credssp_version),
+                               this->SavedChallengeMessage, {}, {}, 0,
+                               ts_request.clientNonce.clientNonce,
+                               ts_request.clientNonce.initialized,
+                               this->credssp_verbose);
                 }
 
                 case NTLM_STATE_AUTHENTICATE:
@@ -428,13 +260,6 @@ public:
                     TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_verbose);
                                         
                     this->error_code = ts_request_in.error_code;
-
-                    if (ts_request_in.negoTokens.size() < 1) {
-                        LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
-                        LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                        this->state = credssp::State::Err;
-                        return {};
-                    }
 
                     // unsigned long const fContextReq = 0
                     //     | ASC_REQ_MUTUAL_AUTH
@@ -445,8 +270,6 @@ public:
                     //     | ASC_REQ_SEQUENCE_DETECT
                     //     | ASC_REQ_EXTENDED_ERROR;
 
-                    LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE");
-                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
                     NTLMAuthenticateMessage authenticate = recvNTLMAuthenticateMessage(ts_request_in.negoTokens);
 
                     if (authenticate.has_mic) {
@@ -514,7 +337,6 @@ public:
                         }
                     }
                     this->ntlm_state = NTLM_STATE_FINAL;
-                    this->state_accept_security_context = SEC_I_COMPLETE_NEEDED;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::decrypt_public_key_echo");
 
@@ -611,6 +433,7 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::encrypt_public_key_echo");
                     uint32_t version = ts_request_in.use_version;
 
+                    std::vector<uint8_t> check_key;
                     if (version >= 5) {
                         if (ts_request_in.clientNonce.isset()){
                             this->SavedClientNonce = ts_request_in.clientNonce;
@@ -618,27 +441,28 @@ public:
                         array_sha256 ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
                                                     this->SavedClientNonce.clientNonce,
                                                     this->public_key);
-                        this->public_key = ServerClientHash;
+                        check_key.assign(ServerClientHash.data(),ServerClientHash.data()+ServerClientHash.size());
                     }
                     else {
                         // if we are server and protocol is 2,3,4
                         // then echos the public key +1
-                        ::ap_integer_increment_le(this->public_key);
+                        check_key.assign(public_key.data(),public_key.data()+public_key.size());
+                        ::ap_integer_increment_le(check_key);
                     }
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
 
                     // data_out [signature][data_buffer]
-                    std::vector<uint8_t> data_out(cbMaxSignature+this->public_key.size());
+                    std::vector<uint8_t> data_out(cbMaxSignature+check_key.size());
                     // data_buffer
                     {
-                        array_view_u8 data_buffer = {&data_out.data()[cbMaxSignature], this->public_key.size()};
-                        this->SendRc4Seal.crypt(this->public_key.size(), this->public_key.data(), data_buffer.data());
+                        array_view_u8 data_buffer = {&data_out.data()[cbMaxSignature], check_key.size()};
+                        this->SendRc4Seal.crypt(check_key.size(), check_key.data(), data_buffer.data());
                     }
                     // signature
                     {
                         unsigned long MessageSeqNo = this->send_seq_num++;
-                        array_md5 digest = HmacMd5(this->ServerSigningKey, out_uint32_le(MessageSeqNo), this->public_key);
+                        array_md5 digest = HmacMd5(this->ServerSigningKey, out_uint32_le(MessageSeqNo), check_key);
                         array_view_u8 signature{data_out.data(), cbMaxSignature};
                         uint8_t checksum[8];
                         /* RC4-encrypt first 8 bytes of digest */
@@ -672,7 +496,6 @@ public:
 
                 default:
                     LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext:: OTHER UNEXPECTED NTLM STATE");
-                    this->state_accept_security_context = SEC_E_OUT_OF_SEQUENCE;
                     LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", SEC_E_OUT_OF_SEQUENCE);
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     this->state = credssp::State::Err;
@@ -684,72 +507,199 @@ public:
 
             case ServerAuthenticateData::Final:
             {
-                LOG_IF(this->verbose, LOG_INFO, "rdpNTLMServer::server_authenticate_final");
-                TSRequest ts_request_in_final = recvTSRequest(in_data, this->credssp_verbose);
-                this->error_code = ts_request_in_final.error_code;
-
-                if (ts_request_in_final.authInfo.size() < 1) {
-                    LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
-                    LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
-                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    this->state = credssp::State::Err;
-                    return {};
-                }
-
-                unsigned long MessageSeqNo = this->recv_seq_num++;
-                LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-                if (ts_request_in_final.authInfo.size() < cbMaxSignature) {
-                    LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
-                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    this->state = credssp::State::Err;
-                    return {};
-                }
-                // ts_request_in_final.authInfo [signature][data_buffer]
-
-                array_view_const_u8 data_buffer = {ts_request_in_final.authInfo.data()+cbMaxSignature, ts_request_in_final.authInfo.size()-cbMaxSignature};
-                auto decrypted_creds = std::vector<uint8_t>(data_buffer.size());
-
-                /* Decrypt message using with RC4, result overwrites original buffer */
-                // context->confidentiality == true
-                this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), decrypted_creds.data());
-
-                array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), decrypted_creds);
-
-                uint8_t expected_signature[16] = {};
-                uint8_t * signature = expected_signature;
-                uint8_t checksum[8];
-
-                /* RC4-encrypt first 8 bytes of digest */
-                this->RecvRc4Seal.crypt(8, digest.data(), checksum);
-
-                uint32_t version = 1;
-                /* Concatenate version, ciphertext and sequence number to build signature */
-                memcpy(signature, &version, 4);
-                memcpy(&signature[4], checksum, 8);
-                memcpy(&signature[12], &MessageSeqNo, 4);
-
-                if (memcmp(ts_request_in_final.authInfo.data(), expected_signature, 16) != 0) {
-                    /* signature verification failed! */
-                    LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-                    LOG(LOG_ERR, "Expected Signature:");
-                    hexdump_c(expected_signature, 16);
-                    LOG(LOG_ERR, "Actual Signature:");
-                    hexdump_c(ts_request_in_final.authInfo.data(), 16);
-
-                    LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_MESSAGE_ALTERED);
-                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    this->state = credssp::State::Err;
-                    return {};
-                }
-
-                this->ts_credentials = recvTSCredentials(decrypted_creds, this->credssp_verbose);
-                this->server_auth_data.state = ServerAuthenticateData::Start;
-                this->state = credssp::State::Finish;
-                return {};
+                TSRequest tsrequest = recvTSRequest(in_data, this->credssp_verbose);
+                this->error_code = tsrequest.error_code;
+                return this->store_authinfo(tsrequest.authInfo);
             }
         }
         this->state = credssp::State::Err;
         return {};
+    }
+
+    std::vector<uint8_t> store_authinfo(bytes_view auth_info)
+    {
+        unsigned long MessageSeqNo = this->recv_seq_num++;
+        // auth_info [signature][data_buffer]
+
+        array_view_const_u8 data_buffer = {auth_info.data()+cbMaxSignature, auth_info.size()-cbMaxSignature};
+        auto decrypted_creds = std::vector<uint8_t>(data_buffer.size());
+
+        /* Decrypt message using with RC4, result overwrites original buffer */
+        // context->confidentiality == true
+        this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), decrypted_creds.data());
+
+        array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), decrypted_creds);
+
+        uint8_t expected_signature[16] = {};
+        uint8_t * signature = expected_signature;
+        uint8_t checksum[8];
+
+        /* RC4-encrypt first 8 bytes of digest */
+        this->RecvRc4Seal.crypt(8, digest.data(), checksum);
+
+        uint32_t version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, &version, 4);
+        memcpy(&signature[4], checksum, 8);
+        memcpy(&signature[12], &MessageSeqNo, 4);
+
+        if (memcmp(auth_info.data(), expected_signature, 16) != 0) {
+            /* signature verification failed! */
+            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+            LOG(LOG_ERR, "Expected Signature:");
+            hexdump_c(expected_signature, 16);
+            LOG(LOG_ERR, "Actual Signature:");
+            hexdump_c(auth_info.data(), 16);
+
+            LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_MESSAGE_ALTERED);
+            LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
+            this->state = credssp::State::Err;
+            return {};
+        }
+
+        this->ts_credentials = recvTSCredentials(decrypted_creds, this->credssp_verbose);
+        this->server_auth_data.state = ServerAuthenticateData::Start;
+        this->state = credssp::State::Finish;
+        return {};
+    }    
+
+    std::vector<uint8_t> prepare_challenge(bytes_view raw_negotiate_message)
+    {
+        NTLMNegotiateMessage negotiate_message = recvNTLMNegotiateMessage(raw_negotiate_message);
+
+        // Perform some sanity checks on negotiate_message
+        // TODO: mandatory flags expected for negotiate message
+        // NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
+        
+        rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
+
+
+        auto target_name = ::UTF8toUTF16(this->TargetName);
+        NTLMChallengeMessage challenge_message;
+        challenge_message.TargetName.buffer = target_name;
+        challenge_message.serverChallenge = this->ServerChallenge;
+
+        uint8_t ZeroTimestamp[8] = {};
+
+        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+            memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+        }
+        else {
+            const timeval tv = timeobj.get_time();  
+            OutStream out_stream(this->Timestamp);
+            out_stream.out_uint32_le(tv.tv_usec);
+            out_stream.out_uint32_le(tv.tv_sec);
+        }
+
+        uint32_t negoFlags = negotiate_message.negoFlags.flags;
+        // flags from negotiate mandatory: NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
+        if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
+            challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
+        }
+
+        if (!ignore_bogus_nego_flags 
+        && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
+        && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
+            negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
+        }
+
+        if (!ignore_bogus_nego_flags 
+        && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
+        && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
+            negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
+        }
+
+        // We should provide parameter to know if TARGET_TYPE is SERVER or DOMAIN
+        // and set the matching flag accordingly
+        if (target_name.size() > 0){
+            // forcing some flags
+            negoFlags |= (NTLMSSP_TARGET_TYPE_SERVER);
+        }
+
+        if (!ignore_bogus_nego_flags){
+            // Means TargetInfo contains something. As we indeed do have something
+            // this flag should always be set here (except in bogus configurations)
+            negoFlags ^= NTLMSSP_NEGOTIATE_TARGET_INFO;
+        }
+
+        logNtlmFlags(negoFlags);
+
+        // NTLM: construct challenge target info
+        // WIN7
+        if (this->avFieldsTags.size() == 0){
+            this->avFieldsTags = {MsvAvNbComputerName, MsvAvNbDomainName, 
+                                  MsvAvDnsComputerName, MsvAvDnsDomainName, 
+                                  MsvAvDnsTreeName, MsvAvFlags, MsvAvTimestamp,
+                                  MsvAvSingleHost, MsvAvTargetName, MsvChannelBindings
+                                  };
+        }
+        for (auto tag: this->avFieldsTags){
+            switch (tag){
+            case MsvAvNbDomainName:
+            {
+                // NETBIOS Domain Name
+                std::vector<uint8_t> nb_domain_name_u16 = ::UTF8toUTF16(this->netbiosDomainName);
+                challenge_message.AvPairList.push_back(AvPair({MsvAvNbDomainName, nb_domain_name_u16}));
+            }
+            break;
+            case MsvAvNbComputerName:
+            {
+                // NETBIOS Computer Name
+                std::vector<uint8_t> nb_computer_name_u16 = ::UTF8toUTF16(this->netbiosComputerName);
+                challenge_message.AvPairList.push_back(AvPair({MsvAvNbComputerName, nb_computer_name_u16}));
+            }
+            break;
+            case MsvAvDnsDomainName:
+            {
+                // DNS Domain Name
+                auto dsn_domain_name_u16 = ::UTF8toUTF16(this->dnsDomainName);
+                challenge_message.AvPairList.push_back(AvPair({MsvAvDnsDomainName, dsn_domain_name_u16}));
+            }
+            break;
+            case MsvAvDnsTreeName:
+            {
+                // DNS Domain Name
+                auto dsn_tree_name_u16 = ::UTF8toUTF16(this->dnsTreeName);
+                challenge_message.AvPairList.push_back(AvPair({MsvAvDnsTreeName, dsn_tree_name_u16}));
+            }
+            break;
+            case MsvAvDnsComputerName:
+            {
+                // DNS Computer Name
+                auto dns_computer_name_u16 = ::UTF8toUTF16(this->dnsComputerName);
+                challenge_message.AvPairList.push_back(AvPair({MsvAvDnsComputerName, dns_computer_name_u16}));
+            }
+            break;
+            case MsvAvTimestamp:
+                challenge_message.AvPairList.push_back(AvPair({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))}));
+            break;
+            default:
+            break;
+            }
+        }
+
+        auto target_info = emitTargetInfo(challenge_message.AvPairList);
+        auto raw_ntlm_version = emitNtlmVersion(
+                                    this->ntlm_version.ProductMajorVersion,
+                                    this->ntlm_version.ProductMinorVersion,
+                                    this->ntlm_version.ProductBuild,
+                                    this->ntlm_version.NtlmRevisionCurrent);
+        if (this->is_server){
+            negoFlags |= NTLMSSP_TARGET_TYPE_SERVER;
+            negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
+        }
+        else {
+            negoFlags &= ~NTLMSSP_TARGET_TYPE_SERVER;
+        }
+        if (this->is_domain){
+            negoFlags |= NTLMSSP_TARGET_TYPE_DOMAIN;
+            negoFlags &= ~NTLMSSP_TARGET_TYPE_SERVER;
+        }
+        else {
+            negoFlags &= ~NTLMSSP_TARGET_TYPE_DOMAIN;
+        }
+
+        return emitNTLMChallengeMessage(target_name, challenge_message.serverChallenge, negoFlags, raw_ntlm_version, target_info);
     }
 
 };

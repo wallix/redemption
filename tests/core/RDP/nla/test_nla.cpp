@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     ReplayTime timeobj(std::vector<timeval>{{3598079566, 1510905191}});
 //    LCGTime timeobj;
     std::string extra_message;
-    rdpClientNTLM ntlm_client(user, domain, pass, host, "107.0.0.1", public_key, false, rand, timeobj, true);
+    rdpClientNTLM ntlm_client(user, domain, pass, host, public_key, false, rand, timeobj, true);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -163,7 +163,7 @@ RED_AUTO_TEST_CASE(TestNlaclientv6)
     }));
     ReplayTime timeobj({{0x5d91e371,0xdaa63}});
     std::string extra_message;
-    rdpClientNTLM ntlm_client(user, domain, pass, host, "107.0.0.1", public_key, false, rand, timeobj, true);
+    rdpClientNTLM ntlm_client(user, domain, pass, host, public_key, false, rand, timeobj, true);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -423,8 +423,6 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
 
     std::string user("Christophe");
     std::string domain("");
-    uint8_t pass[] = "SecureLinux$42";
-    uint8_t host[] = "WIN10CGR";
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xad, 0x62, 0xb1, 0xe4, 0x68, 0x0d, 0x3c}));
     ReplayTime timeobj({{0x01d5754E,0x9df41160}});
 
@@ -557,7 +555,6 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
     std::string user("Administrator@proxykdc.lab");
     std::string domain("");
     uint8_t pass[] = "SecureLinux!3";
-    uint8_t host[] = "WIN10CGR";
 
 //Time Stamp (1569948384, 939173)
 //Client Random Challenge {0xaa, 0x52, 0xcc, 0x44, 0xe5, 0x73, 0x04, 0xb5}
@@ -720,7 +717,6 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
     std::string user("hercule");
     std::string domain("PROXYKDC");
     uint8_t pass[] = "SecureLinux$42";
-    uint8_t host[] = "WIN10CGR";
 
 //Time Stamp (1569948639, 973866)
 //Client Random Challenge {0x61, 0xdf, 0x4c, 0x0d, 0xb7, 0x66, 0xd8, 0xc0}

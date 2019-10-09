@@ -381,8 +381,6 @@ using namespace cfg_attributes;
 
 struct IniPythonSpecWriterBase
 {
-    using attribute_name_type = spec::name;
-
     std::string filename_;
     std::ofstream out_file_;
     std::ostringstream out_member_;

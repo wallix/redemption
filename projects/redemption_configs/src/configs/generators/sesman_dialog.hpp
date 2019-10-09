@@ -107,10 +107,15 @@ public:
 
             this->out
                 << "cfg::" << section_name << "::" << get_name<cpp::name>(infos)
-                << dialog
-                << get_name<sesman::name>(infos)
-                << "   ["
-            ;
+                << dialog;
+            if constexpr (is_convertible_v<Pack, connection_policy_t>) {
+                this->out << section_name << ':' << get_elem<cfg_attributes::name_>(infos).name;
+            }
+            else {
+                this->out << get_name<sesman::name>(infos);
+            }
+            this->out << "   [";
+
             cpp_config_writer::write_type(this->out, cpp_type);
 
             if constexpr (is_t_convertible_v<Pack, sesman::type_>) {

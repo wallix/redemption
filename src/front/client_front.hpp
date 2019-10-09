@@ -60,6 +60,11 @@ public:
         return false;
     }
 
+    bool is_capture_in_progress() const override
+    {
+        return false;
+    }
+
     ResizeResult server_resize(ScreenInfo screen_server) override
     {
         this->screen_info = screen_server;

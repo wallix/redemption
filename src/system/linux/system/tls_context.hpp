@@ -133,7 +133,9 @@ public:
 
         switch (tls_min_level){
         default:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
@@ -166,14 +168,20 @@ public:
         default:
             break;
         case 3:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             break;
         case 2:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             break;
         case 1:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             break;
@@ -559,7 +567,9 @@ public:
 
         switch (tls_min_level){
         default:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
@@ -592,14 +602,20 @@ public:
         default:
             break;
         case 3:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             break;
         case 2:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             break;
         case 1:
+            #ifdef SSL_OP_NO_TLSv1_3
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             break;

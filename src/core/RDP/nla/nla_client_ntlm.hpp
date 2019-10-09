@@ -115,7 +115,6 @@ public:
                bytes_view domain,
                uint8_t * pass,
                uint8_t * hostname,
-               const char * target_host,
                array_view_const_u8 public_key,
                const bool restricted_admin_mode,
                Random & rand,

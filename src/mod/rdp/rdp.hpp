@@ -1776,7 +1776,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
-    const uint32_t monitor_count;
+    uint32_t monitor_count = 0;
 
     Transport & trans;
     CryptContext encrypt {};
@@ -1902,6 +1902,8 @@ class mod_rdp : public mod_api, public rdp_api
     bool server_redirection_packet_received = false;
 
     ModRdpVariables vars;
+
+    bool const accept_monitor_layout_change_if_capture_is_not_started;
 
 #ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
@@ -2031,6 +2033,7 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
+        , accept_monitor_layout_change_if_capture_is_not_started(mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started)
         #ifndef __EMSCRIPTEN__
         , metrics(metrics)
         , file_validator_service(file_validator_service)
@@ -2804,12 +2807,22 @@ public:
                                     monitor_layout_pdu.log(
                                         "Rdp::receiving the server-to-client Monitor Layout PDU");
 
-                                    if (this->monitor_count &&
-                                        (monitor_layout_pdu.get_monitorCount() !=
-                                         this->monitor_count)) {
+                                    if ((monitor_layout_pdu.get_monitorCount() !=
+                                         (this->monitor_count ? this->monitor_count : 1)) &&
+                                        (!this->accept_monitor_layout_change_if_capture_is_not_started || this->front.is_capture_in_progress())) {
 
                                         LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
                                         throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
+                                    }
+
+                                    this->front.server_relayout(monitor_layout_pdu);
+
+                                    LOG(LOG_INFO, "Dimension=%s", monitor_layout_pdu.get_dimension());
+
+                                    this->monitor_count = ((monitor_layout_pdu.get_monitorCount() == 1) ? 0 : monitor_layout_pdu.get_monitorCount());
+
+                                    if (this->channels.session_probe_virtual_channel) {
+                                        this->channels.session_probe_virtual_channel->enable_bogus_refresh_rect_ex_support(this->bogus_refresh_rect && this->monitor_count);
                                     }
                                 }
                                 else {
