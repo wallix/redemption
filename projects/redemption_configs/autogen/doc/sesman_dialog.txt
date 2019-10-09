@@ -13,7 +13,7 @@ cfg::globals::target_user <-> target_login   [std::string]
 cfg::globals::target_application <- target_application   [std::string]
 cfg::globals::target_application_account <- target_application_account   [std::string]
 cfg::globals::target_application_password <- target_application_password   [std::string]
-cfg::globals::inactivity_timeout <- inactivity_timeout   [std::chrono::seconds]
+cfg::globals::inactivity_timeout <- globals:inactivity_timeout   [std::chrono::seconds]
     No traffic auto disconnection.
     If value is 0, global value (session_timeout) is used.
 cfg::globals::trace_type <- trace_type   [TraceType]
@@ -28,7 +28,7 @@ cfg::globals::unicode_keyboard_event_support <- unicode_keyboard_event_support  
 cfg::globals::mod_recv_timeout <- mod_recv_timeout   [std::chrono::milliseconds]
 
 cfg::session_log::log_path <- session_log_path   [std::string]
-cfg::session_log::keyboard_input_masking_level <- keyboard_input_masking_level   [KeyboardInputMaskingLevel]
+cfg::session_log::keyboard_input_masking_level <- session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
     (Please see also "Disable keyboard log" in "video" section of "Configuration Options".)
       0: keyboard input are not masked
       1: only passwords are masked
@@ -39,20 +39,20 @@ cfg::client::keyboard_layout -> keyboard_layout   [unsigned int]
 cfg::client::disable_tsk_switch_shortcuts <- disable_tsk_switch_shortcuts   [bool]
     If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
 
-cfg::mod_rdp::enable_nla <- enable_nla   [bool]
+cfg::mod_rdp::enable_nla <- mod_rdp:enable_nla   [bool]
     NLA authentication in secondary target.
-cfg::mod_rdp::enable_kerberos <- enable_kerberos   [bool]
+cfg::mod_rdp::enable_kerberos <- mod_rdp:enable_kerberos   [bool]
     If enabled, NLA authentication will try Kerberos before NTLM.
     (if enable_nla is disabled, this value is ignored).
-cfg::mod_rdp::tls_min_level <- tls_min_level   [unsigned int]
+cfg::mod_rdp::tls_min_level <- mod_rdp:tls_min_level   [unsigned int]
     Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
-cfg::mod_rdp::tls_max_level <- tls_max_level   [unsigned int]
+cfg::mod_rdp::tls_max_level <- mod_rdp:tls_max_level   [unsigned int]
     Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
-cfg::mod_rdp::show_common_cipher_list <- show_common_cipher_list   [bool]
+cfg::mod_rdp::show_common_cipher_list <- mod_rdp:show_common_cipher_list   [bool]
     Show common cipher list supported by client and server
-cfg::mod_rdp::server_redirection_support <- server_redirection   [bool]
+cfg::mod_rdp::server_redirection_support <- mod_rdp:server_redirection_support   [bool]
     Enables Server Redirection Support.
-cfg::mod_rdp::load_balance_info <- load_balance_info   [std::string]
+cfg::mod_rdp::load_balance_info <- mod_rdp:load_balance_info   [std::string]
     Load balancing information
 cfg::mod_rdp::bogus_sc_net_size <- rdp_bogus_sc_net_size   [bool]
     Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
@@ -61,60 +61,60 @@ cfg::mod_rdp::ignore_auth_channel <- ignore_auth_channel   [bool]
 cfg::mod_rdp::alternate_shell <- alternate_shell   [std::string]
 cfg::mod_rdp::shell_arguments <- shell_arguments   [std::string]
 cfg::mod_rdp::shell_working_directory <- shell_working_directory   [std::string]
-cfg::mod_rdp::use_client_provided_alternate_shell <- use_client_provided_alternate_shell   [bool]
+cfg::mod_rdp::use_client_provided_alternate_shell <- mod_rdp:use_client_provided_alternate_shell   [bool]
     As far as possible, use client-provided initial program (Alternate Shell)
-cfg::mod_rdp::use_client_provided_remoteapp <- use_client_provided_remoteapp   [bool]
+cfg::mod_rdp::use_client_provided_remoteapp <- mod_rdp:use_client_provided_remoteapp   [bool]
     As far as possible, use client-provided remote program (RemoteApp)
-cfg::mod_rdp::use_native_remoteapp_capability <- use_native_remoteapp_capability   [bool]
+cfg::mod_rdp::use_native_remoteapp_capability <- mod_rdp:use_native_remoteapp_capability   [bool]
     As far as possible, use native RemoteApp capability
-cfg::mod_rdp::enable_session_probe <- session_probe   [bool]
-cfg::mod_rdp::session_probe_use_clipboard_based_launcher <- session_probe_use_smart_launcher   [bool]
+cfg::mod_rdp::enable_session_probe <- mod_rdp:enable_session_probe   [bool]
+cfg::mod_rdp::session_probe_use_clipboard_based_launcher <- mod_rdp:session_probe_use_smart_launcher   [bool]
     Minimum supported server : Windows Server 2008.
     Clipboard redirection should be remain enabled on Terminal Server.
-cfg::mod_rdp::session_probe_enable_launch_mask <- session_probe_enable_launch_mask   [bool]
-cfg::mod_rdp::session_probe_on_launch_failure <- session_probe_on_launch_failure   [SessionProbeOnLaunchFailure]
+cfg::mod_rdp::session_probe_enable_launch_mask <- mod_rdp:session_probe_enable_launch_mask   [bool]
+cfg::mod_rdp::session_probe_on_launch_failure <- mod_rdp:session_probe_on_launch_failure   [SessionProbeOnLaunchFailure]
     Behavior on failure to launch Session Probe.
       0: ignore failure and continue.
       1: disconnect user.
       2: reconnect without Session Probe.
-cfg::mod_rdp::session_probe_launch_timeout <- session_probe_launch_timeout   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_launch_timeout <- mod_rdp:session_probe_launch_timeout   [std::chrono::milliseconds]
     This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
     0 to disable timeout.
-cfg::mod_rdp::session_probe_launch_fallback_timeout <- session_probe_launch_fallback_timeout   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_launch_fallback_timeout <- mod_rdp:session_probe_launch_fallback_timeout   [std::chrono::milliseconds]
     This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
     0 to disable timeout.
-cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon <- session_probe_start_launch_timeout_timer_only_after_logon   [bool]
+cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon <- mod_rdp:session_probe_start_launch_timeout_timer_only_after_logon   [bool]
     Minimum supported server : Windows Server 2008.
-cfg::mod_rdp::session_probe_keepalive_timeout <- session_probe_keepalive_timeout   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_on_keepalive_timeout <- session_probe_on_keepalive_timeout   [SessionProbeOnKeepaliveTimeout]
+cfg::mod_rdp::session_probe_keepalive_timeout <- mod_rdp:session_probe_keepalive_timeout   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_on_keepalive_timeout <- mod_rdp:session_probe_on_keepalive_timeout   [SessionProbeOnKeepaliveTimeout]
       0: ignore and continue
       1: disconnect user
       2: freeze connection and wait
-cfg::mod_rdp::session_probe_end_disconnected_session <- session_probe_end_disconnected_session   [bool]
+cfg::mod_rdp::session_probe_end_disconnected_session <- mod_rdp:session_probe_end_disconnected_session   [bool]
     End automatically a disconnected session.
     Session Probe must be enabled to use this feature.
-cfg::mod_rdp::session_probe_enable_log <- session_probe_enable_log   [bool]
-cfg::mod_rdp::session_probe_enable_log_rotation <- session_probe_enable_log_rotation   [bool]
-cfg::mod_rdp::session_probe_disconnected_application_limit <- session_probe_disconnected_application_limit   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_enable_log <- mod_rdp:session_probe_enable_log   [bool]
+cfg::mod_rdp::session_probe_enable_log_rotation <- mod_rdp:session_probe_enable_log_rotation   [bool]
+cfg::mod_rdp::session_probe_disconnected_application_limit <- mod_rdp:session_probe_disconnected_application_limit   [std::chrono::milliseconds]
     This policy setting allows you to configure a time limit for disconnected application sessions.
     0 to disable timeout.
-cfg::mod_rdp::session_probe_disconnected_session_limit <- session_probe_disconnected_session_limit   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_disconnected_session_limit <- mod_rdp:session_probe_disconnected_session_limit   [std::chrono::milliseconds]
     This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
     0 to disable timeout.
-cfg::mod_rdp::session_probe_idle_session_limit <- session_probe_idle_session_limit   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_idle_session_limit <- mod_rdp:session_probe_idle_session_limit   [std::chrono::milliseconds]
     This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
     0 to disable timeout.
-cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay <- session_probe_smart_launcher_clipboard_initialization_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay <- session_probe_smart_launcher_start_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay <- session_probe_smart_launcher_long_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay <- session_probe_smart_launcher_short_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_launcher_abort_delay <- session_probe_launcher_abort_delay   [std::chrono::milliseconds]
-cfg::mod_rdp::session_probe_enable_crash_dump <- session_probe_enable_crash_dump   [bool]
-cfg::mod_rdp::session_probe_handle_usage_limit <- session_probe_handle_usage_limit   [uint32_t]
-cfg::mod_rdp::session_probe_memory_usage_limit <- session_probe_memory_usage_limit   [uint32_t]
-cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check <- session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
-cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field <- session_probe_childless_window_as_unidentified_input_field   [bool]
-cfg::mod_rdp::session_probe_disabled_features <- session_probe_disabled_features   [SessionProbeDisabledFeature]
+cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay <- mod_rdp:session_probe_clipboard_based_launcher_clipboard_initialization_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay <- mod_rdp:session_probe_clipboard_based_launcher_start_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay <- mod_rdp:session_probe_clipboard_based_launcher_long_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay <- mod_rdp:session_probe_clipboard_based_launcher_short_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_launcher_abort_delay <- mod_rdp:session_probe_launcher_abort_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_enable_crash_dump <- mod_rdp:session_probe_enable_crash_dump   [bool]
+cfg::mod_rdp::session_probe_handle_usage_limit <- mod_rdp:session_probe_handle_usage_limit   [uint32_t]
+cfg::mod_rdp::session_probe_memory_usage_limit <- mod_rdp:session_probe_memory_usage_limit   [uint32_t]
+cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check <- mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
+cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field <- mod_rdp:session_probe_childless_window_as_unidentified_input_field   [bool]
+cfg::mod_rdp::session_probe_disabled_features <- mod_rdp:session_probe_disabled_features   [SessionProbeDisabledFeature]
       0x000: none
       0x001: Java Access Bridge
       0x002: MS Active Accessbility
@@ -125,39 +125,39 @@ cfg::mod_rdp::session_probe_disabled_features <- session_probe_disabled_features
       0x080: Monitor Internet Explorer event
       0x100: Inspect group membership of user
     (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
-cfg::mod_rdp::session_probe_public_session <- session_probe_public_session   [bool]
+cfg::mod_rdp::session_probe_public_session <- mod_rdp:session_probe_public_session   [bool]
     If enabled, disconnected session can be recovered by a different primary user.
-cfg::mod_rdp::server_cert_store <- server_cert_store   [bool]
+cfg::mod_rdp::server_cert_store <- mod_rdp:server_cert_store   [bool]
     Keep known server certificates on WAB
-cfg::mod_rdp::server_cert_check <- server_cert_check   [ServerCertCheck]
+cfg::mod_rdp::server_cert_check <- mod_rdp:server_cert_check   [ServerCertCheck]
     Behavior of certificates check.
       0: fails if certificates doesn't match or miss.
       1: fails if certificate doesn't match, succeed if no known certificate.
       2: succeed if certificates exists (not checked), fails if missing.
       3: always succeed.
     System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
-cfg::mod_rdp::server_access_allowed_message <- server_access_allowed_message   [ServerNotification]
+cfg::mod_rdp::server_access_allowed_message <- mod_rdp:server_access_allowed_message   [ServerNotification]
     Warn if check allow connexion to server.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
     (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
-cfg::mod_rdp::server_cert_create_message <- server_cert_create_message   [ServerNotification]
+cfg::mod_rdp::server_cert_create_message <- mod_rdp:server_cert_create_message   [ServerNotification]
     Warn that new server certificate file was created.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
     (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
-cfg::mod_rdp::server_cert_success_message <- server_cert_success_message   [ServerNotification]
+cfg::mod_rdp::server_cert_success_message <- mod_rdp:server_cert_success_message   [ServerNotification]
     Warn that server certificate file was successfully checked.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
     (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
-cfg::mod_rdp::server_cert_failure_message <- server_cert_failure_message   [ServerNotification]
+cfg::mod_rdp::server_cert_failure_message <- mod_rdp:server_cert_failure_message   [ServerNotification]
     Warn that server certificate file checking failed.
       0x0: nobody
       0x1: message sent to syslog
@@ -165,12 +165,12 @@ cfg::mod_rdp::server_cert_failure_message <- server_cert_failure_message   [Serv
       0x4: admin notified (wab notification)
     (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 cfg::mod_rdp::enable_rdpdr_data_analysis <- enable_rdpdr_data_analysis   [bool]
-cfg::mod_rdp::wabam_uses_translated_remoteapp <- wabam_uses_translated_remoteapp   [bool]
+cfg::mod_rdp::wabam_uses_translated_remoteapp <- mod_rdp:wabam_uses_translated_remoteapp   [bool]
 cfg::mod_rdp::enable_server_cert_external_validation <- enable_server_cert_external_validation   [bool]
 cfg::mod_rdp::server_cert -> server_cert   [std::string]
 cfg::mod_rdp::server_cert_response <- server_cert_response   [std::string]
     empty string for wait, 'Ok' or error message
-cfg::mod_rdp::enable_remotefx <- enable_remotefx   [bool]
+cfg::mod_rdp::enable_remotefx <- mod_rdp:enable_remotefx   [bool]
     Enables support of the remoteFX codec.
 
 cfg::mod_vnc::clipboard_up <- clipboard_up   [bool]
@@ -183,25 +183,25 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop <- vnc_bogus_clipboard_infinite_loop
       0: delayed
       1: duplicated
       2: continued
-cfg::mod_vnc::server_is_apple <- server_is_apple   [bool]
-cfg::mod_vnc::server_unix_alt <- server_unix_alt   [bool]
+cfg::mod_vnc::server_is_apple <- mod_vnc:server_is_apple   [bool]
+cfg::mod_vnc::server_unix_alt <- mod_vnc:server_unix_alt   [bool]
 
 
-cfg::file_verification::enable_up <- enable_up   [bool]
-cfg::file_verification::enable_down <- enable_down   [bool]
-cfg::file_verification::log_if_accepted <- log_if_accepted   [bool]
+cfg::file_verification::enable_up <- file_verification:enable_up   [bool]
+cfg::file_verification::enable_down <- file_verification:enable_down   [bool]
+cfg::file_verification::log_if_accepted <- file_verification:log_if_accepted   [bool]
 
-cfg::icap_server_down::clipboard_text_data <- clipboard_text_data   [bool]
+cfg::icap_server_down::clipboard_text_data <- icap_server_down:clipboard_text_data   [bool]
     Verify text data via clipboard
 
-cfg::icap_server_up::clipboard_text_data <- clipboard_text_data   [bool]
+cfg::icap_server_up::clipboard_text_data <- icap_server_up:clipboard_text_data   [bool]
     Verify text data via clipboard
 
 cfg::mod_replay::replay_on_loop <- replay_on_loop   [bool]
     0 - replay once, 1 - loop replay
 
 
-cfg::video::disable_keyboard_log <- disable_keyboard_log   [KeyboardLogFlags]
+cfg::video::disable_keyboard_log <- video:disable_keyboard_log   [KeyboardLogFlags]
     Disable keyboard log:
     (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
       0x0: none
@@ -275,17 +275,17 @@ cfg::context::pattern_kill <- pattern_kill   [std::string]
 cfg::context::pattern_notify <- pattern_notify   [std::string]
 cfg::context::opt_message <- opt_message   [std::string]
 cfg::context::login_message <- login_message   [std::string]
-cfg::context::session_probe_outbound_connection_monitoring_rules <- session_probe_outbound_connection_monitoring_rules   [std::string]
+cfg::context::session_probe_outbound_connection_monitoring_rules <- context:session_probe_outbound_connection_monitoring_rules   [std::string]
     Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)
     (Ex. for backwards compatibility only: 10.1.0.0/16:22)
     Session Probe must be enabled to use this feature.
-cfg::context::session_probe_process_monitoring_rules <- session_probe_process_monitoring_rules   [std::string]
+cfg::context::session_probe_process_monitoring_rules <- context:session_probe_process_monitoring_rules   [std::string]
     Comma-separated rules (Ex.: $deny:Taskmgr)
     @ = All child processes of Bastion Application (Ex.: $deny:@)
     Session Probe must be enabled to use this feature.
-cfg::context::session_probe_extra_system_processes <- session_probe_extra_system_processes   [std::string]
+cfg::context::session_probe_extra_system_processes <- context:session_probe_extra_system_processes   [std::string]
     Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)
-cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field <- session_probe_windows_of_these_applications_as_unidentified_input_field   [std::string]
+cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field <- context:session_probe_windows_of_these_applications_as_unidentified_input_field   [std::string]
     Comma-separated processes (Ex.: chrome.exe,ngf.exe)
 cfg::context::disconnect_reason <- disconnect_reason   [std::string]
 cfg::context::disconnect_reason_ack -> disconnect_reason_ack   [bool]
@@ -303,9 +303,9 @@ cfg::context::auth_command_rail_exec_working_dir <- auth_command_rail_exec_worki
 cfg::context::auth_command_rail_exec_arguments <- auth_command_rail_exec_arguments   [std::string]
 cfg::context::auth_command_rail_exec_account <- auth_command_rail_exec_account   [std::string]
 cfg::context::auth_command_rail_exec_password <- auth_command_rail_exec_password   [std::string]
-cfg::context::rail_disconnect_message_delay <- rail_disconnect_message_delay   [std::chrono::milliseconds]
+cfg::context::rail_disconnect_message_delay <- context:rail_disconnect_message_delay   [std::chrono::milliseconds]
     Delay before showing disconnect message after the last RemoteApp window is closed.
-cfg::context::use_session_probe_to_launch_remote_program <- use_session_probe_to_launch_remote_program   [bool]
+cfg::context::use_session_probe_to_launch_remote_program <- context:use_session_probe_to_launch_remote_program   [bool]
     Use Session Probe to launch Remote Program as much as possible.
 cfg::context::session_probe_launch_error_message -> session_probe_launch_error_message   [std::string]
 cfg::context::is_wabam <- is_wabam   [bool]

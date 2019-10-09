@@ -402,7 +402,8 @@ struct ConnectionPolicyWriterBase
 
             Section& sec = sections[section.name];
 
-            auto& sesman_name = get_name<sesman::name>(infos);
+            auto sesman_name = str_concat(
+                section_name, ':', get_elem<cfg_attributes::name_>(infos).name);
 
             sec.python_contains += this->python_spec.out.str();
             if (!sec.json_contains.empty()) {
