@@ -79,16 +79,16 @@ public:
         return errnum;
     }
 
-    void do_start_section(std::string const & /*section_name*/)
+    void do_start_section(Names const& /*names*/, std::string const & /*section_name*/)
     {}
 
-    void do_stop_section(std::string const & /*section_name*/)
+    void do_stop_section(Names const& /*names*/, std::string const & /*section_name*/)
     {
         this->out << "\n";
     }
 
     template<class Pack>
-    void evaluate_member(std::string const & section_name, Pack const & infos, type_enumerations& enums)
+    void evaluate_member(Names const& names, std::string const & section_name, Pack const & infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, sesman_io_t>) {
             using sesman_io = sesman::internal::io;
@@ -107,15 +107,10 @@ public:
 
             this->out
                 << "cfg::" << section_name << "::" << get_name<cpp::name>(infos)
-                << dialog;
-            if constexpr (is_convertible_v<Pack, connection_policy_t>) {
-                this->out << section_name << ':' << get_elem<cfg_attributes::name_>(infos).name;
-            }
-            else {
-                this->out << get_name<sesman::name>(infos);
-            }
-            this->out << "   [";
-
+                << dialog
+                << sesman_network_name(infos, names)
+                << "   ["
+            ;
             cpp_config_writer::write_type(this->out, cpp_type);
 
             if constexpr (is_t_convertible_v<Pack, sesman::type_>) {

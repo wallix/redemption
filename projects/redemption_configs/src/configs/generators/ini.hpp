@@ -230,7 +230,7 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
     }
 
     template<class Pack>
-    void evaluate_member(std::string const & /*section_name*/, Pack const & infos, type_enumerations& enums)
+    void evaluate_member(Names const& /*names*/, std::string const & /*section_name*/, Pack const & infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, spec_attr_t>) {
             auto type = get_type<spec::type_>(infos);

@@ -24,6 +24,7 @@
 #include "configs/generators/utils/multi_filename_writer.hpp"
 #include "configs/generators/utils/spec_writer.hpp"
 #include "configs/generators/utils/write_template.hpp"
+#include "configs/generators/utils/names.hpp"
 #include "configs/enumeration.hpp"
 #include "configs/type_name.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -291,14 +292,14 @@ struct CppConfigWriterBase
         return 0;
     }
 
-    void do_start_section(std::string const & section_name)
+    void do_start_section(Names const& /*names*/, std::string const & section_name)
     {
         if (!section_name.empty()) {
             ++this->depth;
         }
     }
 
-    void do_stop_section(std::string const & section_name)
+    void do_stop_section(Names const& /*names*/, std::string const & section_name)
     {
         if (!section_name.empty()) {
             --this->depth;
@@ -315,7 +316,7 @@ struct CppConfigWriterBase
     void tab() { this->out() << /*std::setw(this->depth*4+4) << */"    "; }
 
     template<class Pack>
-    void evaluate_member(std::string const & section_name, Pack const & infos, type_enumerations& /*enums*/)
+    void evaluate_member(Names const& names, std::string const & section_name, Pack const & infos, type_enumerations& /*enums*/)
     {
         std::string const& varname = get_name<cpp::name>(infos);
 
@@ -346,8 +347,11 @@ struct CppConfigWriterBase
             //this->tab();
             this->out() << cpp_doxygen_comment(get_elem<cfg_attributes::desc>(infos).value, 4);
         };
+        std::string sesman_name;
         if (bool(properties)) {
-            this->authstrs.emplace_back(get_name<sesman::name>(infos));
+            sesman_name = sesman_network_name(infos, names);
+            this->authstrs.emplace_back(sesman_name);
+            this->full_names.sesman.emplace_back(sesman_name);
         }
         this->tab(); this->out() << "/// type: "; write_type(this->out(), type); this->out() << " <br/>\n";
 
@@ -364,9 +368,7 @@ struct CppConfigWriterBase
         }
 
         if constexpr (is_convertible_v<Pack, sesman::name>) {
-            auto& sesman_name = get_elem<sesman::name>(infos).name;
             this->tab(); this->out() << "/// sesman::name: " << sesman_name << " <br/>\n";
-            full_names.sesman.emplace_back(sesman_name);
         }
         else if constexpr (is_convertible_v<Pack, connection_policy_t>) {
             this->tab(); this->out() << "/// connpolicy -> proxy";
@@ -381,10 +383,7 @@ struct CppConfigWriterBase
             }
             this->out() << " <br/>\n";
 
-            auto sesman_conn_name = str_concat(
-                section_name, ':', get_elem<cfg_attributes::name_>(infos).name);
-            this->tab(); this->out() << "/// sesman::name: " << sesman_conn_name << " <br/>\n";
-            full_names.sesman.emplace_back(sesman_conn_name);
+            this->tab(); this->out() << "/// sesman::name: " << sesman_name << " <br/>\n";
         }
 
         this->tab(); this->out() << "/// value"; write_assignable_default(this->out(), infos); this->out() << " <br/>\n";

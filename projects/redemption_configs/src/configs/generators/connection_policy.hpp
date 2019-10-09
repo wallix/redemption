@@ -23,6 +23,7 @@
 #include "configs/attributes/spec.hpp"
 #include "configs/generators/utils/spec_writer.hpp"
 #include "configs/generators/utils/write_template.hpp"
+#include "configs/generators/utils/names.hpp"
 #include "configs/generators/sesman_default_map.hpp"
 #include "configs/enumeration.hpp"
 
@@ -339,7 +340,7 @@ struct ConnectionPolicyWriterBase
     {}
 
     template<class Pack>
-    void evaluate_member(std::string const & section_name, Pack const& infos, type_enumerations& enums)
+    void evaluate_member(Names const& names, std::string const & section_name, Pack const& infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, connection_policy_t>) {
             auto type = get_type<connpolicy::type_>(infos);
@@ -402,8 +403,7 @@ struct ConnectionPolicyWriterBase
 
             Section& sec = sections[section.name];
 
-            auto sesman_name = str_concat(
-                section_name, ':', get_elem<cfg_attributes::name_>(infos).name);
+            auto sesman_name = sesman_network_name(infos, names);
 
             sec.python_contains += this->python_spec.out.str();
             if (!sec.json_contains.empty()) {
@@ -438,11 +438,11 @@ struct ConnectionPolicyWriterBase
         str_append(s, "    u'", sesman_name, "': ('", connpolicy_name, "', ", value, "),", extra, '\n');
     }
 
-    void do_start_section(std::string const & /*section_name*/)
+    void do_start_section(Names const& /*names*/, std::string const & /*section_name*/)
     {
     }
 
-    void do_stop_section(std::string const & /*section_name*/)
+    void do_stop_section(Names const& /*names*/, std::string const & /*section_name*/)
     {
     }
 

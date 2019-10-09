@@ -279,6 +279,8 @@ namespace detail_
     };
 }
 
+using Names = cfg_attributes::names::f<detail_::Names_>;
+
 
 template<class... Writers>
 struct ConfigSpecWrapper
@@ -288,7 +290,7 @@ struct ConfigSpecWrapper
 private:
     struct InfosBase
     {
-        virtual void apply(type_enumerations& enums, std::pair<Writers&, std::string>&... pws) = 0;
+        virtual void apply(type_enumerations& enums, Names const& names, std::pair<Writers&, std::string>&... pws) = 0;
         virtual ~InfosBase() = default;
     };
 
@@ -300,15 +302,13 @@ private:
         : infos{static_cast<Us&&>(args)...}
         {}
 
-        void apply(type_enumerations& enums, std::pair<Writers&, std::string>&... pws) override
+        void apply(type_enumerations& enums, Names const& names, std::pair<Writers&, std::string>&... pws) override
         {
-            (pws.first.evaluate_member(pws.second, this->infos, enums), ...);
+            (pws.first.evaluate_member(names, pws.second, this->infos, enums), ...);
         }
 
         pack_type<Ts...> infos;
     };
-
-    using Names = cfg_attributes::names::f<detail_::Names_>;
 
     struct Sections
     {
@@ -417,12 +417,12 @@ public:
                 }...
             };
 
-            (ws.do_start_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
+            (ws.do_start_section(section.names, static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
             for (std::string const & member_name : section.members_ordered) {
                 section.members.find(member_name)->second
-                    ->apply(this->enums, static_cast<std::pair<Writers&, std::string>&>(pws)...);
+                    ->apply(this->enums, section.names, static_cast<std::pair<Writers&, std::string>&>(pws)...);
             }
-            (ws.do_stop_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
+            (ws.do_stop_section(section.names, static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
         }
 
         auto error_code = 0;
