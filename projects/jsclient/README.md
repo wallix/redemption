@@ -59,7 +59,7 @@ node test.js
 
 ## Configure Emscripten
 
-    source $EMSDK_PATH/emsdk_set_env.sh
+    source $EMSDK_PATH/emsdk_env.sh
 
 
 ## Run bjam
@@ -73,6 +73,9 @@ Or with tests:
 Debug mode:
 
     bjam -j7 toolset=clang debug js_client
+
+If you get some undefined symbol error, solve it as a link error for the main
+project. Rerun `bjam targets.jam`
 
 
 ## Install
