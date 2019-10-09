@@ -50,6 +50,10 @@ cfg::mod_rdp::tls_max_level <- mod_rdp:tls_max_level   [unsigned int]
     Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 cfg::mod_rdp::show_common_cipher_list <- mod_rdp:show_common_cipher_list   [bool]
     Show common cipher list supported by client and server
+cfg::mod_rdp::allow_channels <- allow_channels   [std::string]
+    Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+cfg::mod_rdp::deny_channels <- deny_channels   [std::string]
+    Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 cfg::mod_rdp::server_redirection_support <- mod_rdp:server_redirection_support   [bool]
     Enables Server Redirection Support.
 cfg::mod_rdp::load_balance_info <- mod_rdp:load_balance_info   [std::string]
