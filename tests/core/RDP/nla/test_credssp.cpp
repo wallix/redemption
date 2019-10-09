@@ -28,6 +28,7 @@
 
 #include "test_only/check_sig.hpp"
 
+RED_TEST_DELEGATE_PRINT_ENUM(NTLM_AV_ID);
 
 RED_AUTO_TEST_CASE(TestBERIntegerCase1)
 {
@@ -170,7 +171,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x80);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
-    
+
     ts_req.version = 3;
 
     auto v = emitTSRequest(ts_req.version,
@@ -273,7 +274,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
 
     ts_req.version = 3;
-    
+
     auto v = emitTSRequest(ts_req.version,
                            ts_req.negoTokens,
                            ts_req.authInfo,
@@ -401,7 +402,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     auto r = emitTSCredentialsPassword(domain, user, pass, true);
     RED_CHECK_EQUAL(r.size(), r[1]+2);
 
-    
+
 
     TSCredentials ts_cred_received = recvTSCredentials(r, true);
 
@@ -439,7 +440,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.userHint, userHint);
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.domainHint, domainHint);
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.cspData.keySpec, keySpec);
-    
+
     RED_CHECK_SMEM(ts_cred.smartcardCreds.cspData.cardName, cardName);
     RED_CHECK_SMEM(ts_cred.smartcardCreds.cspData.readerName, readerName);
     RED_CHECK_SMEM(ts_cred.smartcardCreds.cspData.containerName, containerName);
@@ -483,7 +484,7 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesNegotiate)
         0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f,
     };
     auto negoTokens = emitNTLMNegotiateMessage();
-    
+
     RED_CHECK_EQUAL(expectedNegoTokens, negoTokens);
 }
 
@@ -511,7 +512,7 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
     RED_CHECK_EQUAL(challenge_message.raw_bytes, negoTokens);
 
     RED_CHECK_EQUAL(challenge_message.TargetName.bufferOffset, 56);
-    RED_CHECK_EQUAL(challenge_message.TargetName.buffer, 
+    RED_CHECK_EQUAL(challenge_message.TargetName.buffer,
         std::vector<uint8_t>({
         /* 0000 */ 0x50, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x58, 0x00, 0x59, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00,  // P.R.O.X.Y.K.D.C.
         })
@@ -523,7 +524,7 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
 
     logNtlmFlags(challenge_message.negoFlags.flags);
 
-    RED_CHECK(challenge_message.negoFlags.flags == 
+    RED_CHECK(challenge_message.negoFlags.flags ==
             (NTLMSSP_NEGOTIATE_56|
             NTLMSSP_NEGOTIATE_KEY_EXCH|
             NTLMSSP_NEGOTIATE_128|
@@ -600,13 +601,13 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
 //    hexdump_d(challenge_message.AvPairList[5].data);
     // MsvAvTimestamp       = 0x07,
     auto tt = challenge_message.AvPairList[5].data;
-    uint64_t tstamp = (uint64_t(tt[7]) << 56) + (uint64_t(tt[6]) << 48) + (uint64_t(tt[5]) << 40) 
+    uint64_t tstamp = (uint64_t(tt[7]) << 56) + (uint64_t(tt[6]) << 48) + (uint64_t(tt[5]) << 40)
                     + (uint64_t(tt[4]) << 32) + (uint64_t(tt[3]) << 24) + (uint64_t(tt[2]) << 16)
                     + (uint64_t(tt[1]) << 8) + (uint64_t(tt[0]));
     RED_CHECK_EQUAL(challenge_message.AvPairList[5].id, MsvAvTimestamp);
     RED_CHECK_EQUAL(tstamp, 132119911851285221);
     RED_CHECK_EQUAL(challenge_message.AvPairList[5].data, std::vector<uint8_t>({
-    /* 0000 */ 0xe5, 0xda, 0xa6, 0x1d, 0x5c, 0x62, 0xd5, 0x01,          
+    /* 0000 */ 0xe5, 0xda, 0xa6, 0x1d, 0x5c, 0x62, 0xd5, 0x01,
     }));
 }
 
@@ -630,20 +631,20 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 
         std::vector<uint8_t> expectedResult = {
             // TSRequest ber sequence header
-            0x30, 0x37, 
+            0x30, 0x37,
             // version field
-            0xa0, 0x03, 0x02, 0x01, 0x06, 
+            0xa0, 0x03, 0x02, 0x01, 0x06,
             // negoTokens ber header
             0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04, 0x28, // 07......00.0,.*.(
             // negoTokens
             0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x01, 0x00, 0x00, 0x00, 0xb7, 0x82, 0x08, 0xe2, // NTLMSSP........
             0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, // .....(.......(..
-            0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f,  
+            0x06, 0x01, 0xb1, 0x1d, 0x00, 0x00, 0x00, 0x0f,
         };
 
         RED_CHECK_EQUAL(expectedResult, result);
     }
-    
+
     {
         std::vector<uint8_t> answerTSRequest = {
               0x30, 0x82, 0x01, 0x02, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x81, 0xfa, 0x30, 0x81, 0xf7, 0x30 // 0...........0..0
@@ -738,7 +739,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         };
         uint32_t error_code = 0;
         std::vector<uint8_t> clientNonce = {
-            /* 0000 */ 0x08, 0x6f, 0xa9, 0xd9, 0xd9, 0xaf, 0x3f, 0xc0, 0x42, 0x41, 0x7e, 0x78, 0x70, 0x7e, 0x52, 0x20,  // .o....?.BA~xp~R 
+            /* 0000 */ 0x08, 0x6f, 0xa9, 0xd9, 0xd9, 0xaf, 0x3f, 0xc0, 0x42, 0x41, 0x7e, 0x78, 0x70, 0x7e, 0x52, 0x20,  // .o....?.BA~xp~R
             /* 0010 */ 0xd1, 0x94, 0x00, 0x96, 0x44, 0xd3, 0x2a, 0x59, 0xc2, 0x0d, 0x19, 0xf8, 0x7a, 0xbf, 0x36, 0xaf,  // ....D.*Y....z.6.
         };
 
@@ -746,7 +747,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 
         std::vector<uint8_t> expectedResult = {
         // ber TSRequest header
-        /* 0000 */ 0x30, 0x82, 0x02, 0x07, 
+        /* 0000 */ 0x30, 0x82, 0x02, 0x07,
         // ber version Field (version = 6)
                                            0xa0, 0x03, 0x02, 0x01, 0x06,
         // ber negoToken header
@@ -779,7 +780,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         /* 0180 */ 0x00, 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e,  // .r.o.x.y.k.d.c..
         /* 0190 */ 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00, 0x63, 0x00, 0x67, 0x00, 0x72, 0x00, 0x74, 0x00, 0x68,  // .l.a.b.c.g.r.t.h
         /* 01a0 */ 0x00, 0x63, 0x00, 0x30, 0xbc, 0x1c, 0xba, 0x74, 0x8d, 0x07, 0x2f, 0x38, 0x82, 0x34, 0x5c, 0xbb,  // .c.0...t../8.4..
-        /* 01b0 */ 0xf7, 0xa8, 0x39, 
+        /* 01b0 */ 0xf7, 0xa8, 0x39,
 
         // optional authInfo field empty
         // ber pubkeyAuth header
@@ -792,7 +793,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 
         // error_code field empty (value is 0)
         // ber Nonce header
-                                                             0xa5, 0x22, 0x04, 0x20, 
+                                                             0xa5, 0x22, 0x04, 0x20,
         // clientNonce data
                                                                                      0x08, 0x6f, 0xa9, 0xd9, 0xd9,  // .J...4..". .o...
         /* 01f0 */ 0xaf, 0x3f, 0xc0, 0x42, 0x41, 0x7e, 0x78, 0x70, 0x7e, 0x52, 0x20, 0xd1, 0x94, 0x00, 0x96, 0x44,  // .?.BA~xp~R ....D
@@ -800,17 +801,17 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         };
 
         //TSRequest nonce -----------------------------------
-        ///* 0000 */ 0xa5, 0x22, 0x04, 0x20,                                                                          // .". 
+        ///* 0000 */ 0xa5, 0x22, 0x04, 0x20,                                                                          // .".
 
         RED_CHECK_EQUAL(expectedResult, result);
     }
-    
-    
+
+
     {
         // Client Authentication : Receiving Encrypted PubKey + 1
         std::vector<uint8_t> answerTSRequest = {
         // ber TSRequest header
-        0x30, 0x39, 
+        0x30, 0x39,
         // ber Field version Integer 6
         0xa0, 0x03, 0x02, 0x01, 0x06,
         // ber pubKeyAuth header
@@ -861,7 +862,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         };
         uint32_t error_code = 0;
         std::vector<uint8_t> clientNonce = {
-            /* 0000 */ 0x08, 0x6f, 0xa9, 0xd9, 0xd9, 0xaf, 0x3f, 0xc0, 0x42, 0x41, 0x7e, 0x78, 0x70, 0x7e, 0x52, 0x20,  // .o....?.BA~xp~R 
+            /* 0000 */ 0x08, 0x6f, 0xa9, 0xd9, 0xd9, 0xaf, 0x3f, 0xc0, 0x42, 0x41, 0x7e, 0x78, 0x70, 0x7e, 0x52, 0x20,  // .o....?.BA~xp~R
             /* 0010 */ 0xd1, 0x94, 0x00, 0x96, 0x44, 0xd3, 0x2a, 0x59, 0xc2, 0x0d, 0x19, 0xf8, 0x7a, 0xbf, 0x36, 0xaf,  // ....D.*Y....z.6.
         };
 
@@ -869,12 +870,12 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 
         std::vector<uint8_t> expectedResult = {
         // ber TSRequest header
-        /* 0000 */ 0x30, 0x81, 0xa4, 
+        /* 0000 */ 0x30, 0x81, 0xa4,
         // ber version Field (version 6)
-                                     0xa0, 0x03, 0x02, 0x01, 0x06, 
-        
+                                     0xa0, 0x03, 0x02, 0x01, 0x06,
+
         // authInfo ber header
-                                                                   0xa2, 0x79, 0x04, 0x77, 
+                                                                   0xa2, 0x79, 0x04, 0x77,
         // authInfo data
                                                                                            0x01, 0x00, 0x00, 0x00,  // 0........y.w....
         /* 0010 */ 0xe2, 0x09, 0x80, 0x28, 0x76, 0x33, 0x2d, 0xcc, 0x01, 0x00, 0x00, 0x00, 0x14, 0x67, 0x1b, 0x2f,  // ...(v3-......g./
@@ -887,7 +888,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         /* 0080 */ 0x11, 0xa6, 0xe0,
         // Nonce ber header
                                      0xa5, 0x22, 0x04, 0x20,
-        // client Nonce Data 
+        // client Nonce Data
                                                              0x08, 0x6f, 0xa9, 0xd9, 0xd9, 0xaf, 0x3f, 0xc0, 0x42,  // ....". .o....?.B
         /* 0090 */ 0x41, 0x7e, 0x78, 0x70, 0x7e, 0x52, 0x20, 0xd1, 0x94, 0x00, 0x96, 0x44, 0xd3, 0x2a, 0x59, 0xc2,  // A~xp~R ....D.*Y.
         /* 00a0 */ 0x0d, 0x19, 0xf8, 0x7a, 0xbf, 0x36, 0xaf,                                                        // ...z.6.
@@ -1121,7 +1122,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 //rdpproxy: INFO (3129/3129) -- /* 0000 */ 0xa3, 0x32, 0x04, 0x30,                                                                          // .2.0
 //rdpproxy: INFO (3129/3129) -- TSRequest error_code field ------------------------
 //rdpproxy: INFO (3129/3129) -- TSRequest nonce -----------------------------------
-//rdpproxy: INFO (3129/3129) -- /* 0000 */ 0xa5, 0x22, 0x04, 0x20,                                                                          // .". 
+//rdpproxy: INFO (3129/3129) -- /* 0000 */ 0xa5, 0x22, 0x04, 0x20,                                                                          // .".
 //rdpproxy: INFO (3129/3129) -- emit TSRequest full dump--------------------------------
 //rdpproxy: INFO (3129/3129) -- /* 0000 */ 0x30, 0x82, 0x01, 0xe9, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x82, 0x01, 0x88, 0x30, 0x82, 0x01,  // 0............0..
 //rdpproxy: INFO (3129/3129) -- /* 0010 */ 0x84, 0x30, 0x82, 0x01, 0x80, 0xa0, 0x82, 0x01, 0x7c, 0x04, 0x82, 0x01, 0x78, 0x4e, 0x54, 0x4c,  // .0......|...xNTL
@@ -1198,7 +1199,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 //rdpproxy: INFO (3129/3129) -- TSRequest pub_key_auth_header ---------------------
 //rdpproxy: INFO (3129/3129) -- TSRequest error_code field ------------------------
 //rdpproxy: INFO (3129/3129) -- TSRequest nonce -----------------------------------
-//rdpproxy: INFO (3129/3129) -- /* 0000 */ 0xa5, 0x22, 0x04, 0x20,                                                                          // .". 
+//rdpproxy: INFO (3129/3129) -- /* 0000 */ 0xa5, 0x22, 0x04, 0x20,                                                                          // .".
 //rdpproxy: INFO (3129/3129) -- emit TSRequest full dump--------------------------------
 //rdpproxy: INFO (3129/3129) -- /* 0000 */ 0x30, 0x81, 0x90, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa2, 0x65, 0x04, 0x63, 0x01, 0x00, 0x00, 0x00,  // 0........e.c....
 //rdpproxy: INFO (3129/3129) -- /* 0010 */ 0xb2, 0x64, 0x06, 0x56, 0x16, 0xdc, 0x02, 0x18, 0x01, 0x00, 0x00, 0x00, 0x83, 0x8c, 0xb0, 0x36,  // .d.V...........6
