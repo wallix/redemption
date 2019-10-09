@@ -44,6 +44,7 @@ exe-js js_client :
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
+  src/mod/rdp/rdp_negociation_data.bc
   src/utils/bitmap.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
@@ -83,6 +84,7 @@ test-run-js tests/red_channels/test_clipboard :
   src/red_channels/clipboard.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
+  src/mod/rdp/rdp_negociation_data.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/stacktrace.bc
@@ -95,6 +97,7 @@ test-run-js tests/red_channels/test_js_channel :
   src/red_channels/js_channel.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
+  src/mod/rdp/rdp_negociation_data.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/stacktrace.bc
@@ -155,6 +158,7 @@ objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
+objjs src/mod/rdp/rdp_negociation_data.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
 objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
