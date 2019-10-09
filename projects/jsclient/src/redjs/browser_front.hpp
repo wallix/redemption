@@ -50,6 +50,8 @@ public:
 
     bool can_be_start_capture() override;
     bool must_be_stop_capture() override;
+    bool is_capture_in_progress() const override;
+
 
     ResizeResult server_resize(ScreenInfo screen_server) override;
 

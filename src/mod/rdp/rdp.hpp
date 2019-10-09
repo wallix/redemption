@@ -772,6 +772,7 @@ public:
         sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
         sp_vc_params.show_maximized = !this->remote_app.enable_remote_program;
 
+#ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->session_reactor,
             this->session_probe_to_server_sender.get(),
@@ -783,6 +784,8 @@ public:
             this->gen,
             base_params,
             sp_vc_params);
+#endif
+
     }
 
 private:
@@ -974,6 +977,7 @@ public:
         const Translation::language_t & lang
     ) {
         (void)session_probe_channel;
+#ifndef __EMSCRIPTEN__
         if (!this->session_probe_virtual_channel) {
             this->create_session_probe_virtual_channel(
                     front, stc,
@@ -984,10 +988,12 @@ public:
                     monitor_count,
                     client_general_caps,
                     client_name);
+#endif
         }
 
+#ifndef __EMSCRIPTEN__
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
-
+#endif
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
         channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
@@ -1647,7 +1653,6 @@ public:
                     client_general_caps,
                     client_name);
             }
-
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
             this->session_probe_virtual_channel->start_launch_timeout_timer();
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
@@ -2821,9 +2826,11 @@ public:
 
                                     this->monitor_count = ((monitor_layout_pdu.get_monitorCount() == 1) ? 0 : monitor_layout_pdu.get_monitorCount());
 
+#ifndef __EMSCRIPTEN__
                                     if (this->channels.session_probe_virtual_channel) {
                                         this->channels.session_probe_virtual_channel->enable_bogus_refresh_rect_ex_support(this->bogus_refresh_rect && this->monitor_count);
                                     }
+#endif
                                 }
                                 else {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
