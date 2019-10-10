@@ -27,8 +27,7 @@ fi
 
 
 # jsclient (emscripten)
-pushd
-cd projects/jsclient
+pushd projects/jsclient
 source ~/emsdk-master/emsdk_set_env.sh
 if [ $fast -eq 0 ]; then
     rm -rf bin
