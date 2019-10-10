@@ -374,7 +374,7 @@ template<class Buf>
 void dump(Buf& buf)
 {
     auto t = "0123456789abcdef";
-    print("dump: 0x");
+    print("dump(size=", buf.size(), "): 0x");
     for (auto c : buf) {
         print(t[c>>4], t[c&0xf]);
     }
@@ -859,12 +859,6 @@ namespace test
             TCtxValues ctx_values;
         };
 
-        template<class Ctx>
-        struct StateW
-        {
-            Ctx& ctx;
-        };
-
         struct stream_writable
         {
             template<class Data, class BasicType>
@@ -879,6 +873,9 @@ namespace test
 
             template<class BasicType, class... NamedValues>
             struct next_value;
+
+            template<class T>
+            struct final_value;
 
             template<class T>
             struct write_data_impl;
@@ -925,30 +922,24 @@ namespace test
                 };
             }
 
-            template<class Ctx>
-            static auto make_state(Ctx& ctx)
-            {
-                return StateW<Ctx>{ctx};
-            }
-
-            template<class State, class Data, class... Name>
-            static auto next_state(State& state, lazy_value<Data, Name...>)
+            template<class Ctx, class Data, class... Name>
+            static auto next_state(Ctx& ctx, lazy_value<Data, Name...>)
             {
                 using Next = next_value<
                     proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(state.ctx.params))>...
+                    std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...
                 >;
-                return Next::make(state, get_var<Name>(state.ctx.params).value...);
+                return Next::make(ctx, get_var<Name>(ctx.params).value...);
             }
 
-            template<class State>
-            static auto final(State&& state)
+            template<class Ctx>
+            static auto final(Ctx& ctx)
             {
                 println("ctx: ");
-                state.ctx.ctx_values.apply([&](auto... xs){
-                    (println("  ", type_name(xs), " = ", state.ctx.out.get_current()-xs.value), ...);
+                ctx.ctx_values.apply([&](auto... xs){
+                    (final_value<decltype(xs)>::make(ctx, xs), ...);
                 });
-                return state.ctx.out.get_bytes();
+                return ctx.out.get_bytes();
             }
         };
 
@@ -1024,11 +1015,11 @@ namespace test
         {
             using context_value_list = mp::list<>;
 
-            template<class St>
-            static auto make(St& state, val<Data, T> const& v)
+            template<class Ctx>
+            static bool make(Ctx& ctx, val<Data, T> const& v)
             {
-                write_data<Data>::write(state.ctx.out, v.x);
-                return state;
+                write_data<Data>::write(ctx.out, v.x);
+                return true;
             }
         };
 
@@ -1039,11 +1030,11 @@ namespace test
         {
             using context_value_list = mp::list<>;
 
-            template<class St>
-            static auto& make(St& state, val<Data, Bytes> const& v)
+            template<class Ctx>
+            static bool make(Ctx& ctx, val<Data, Bytes> const& v)
             {
-                write_data<data_to_value_size<Data>>::write(state.ctx.out, v.x.size());
-                return state;
+                write_data<data_to_value_size<Data>>::write(ctx.out, v.x.size());
+                return true;
             }
         };
 
@@ -1054,26 +1045,40 @@ namespace test
         {
             using context_value_list = mp::list<>;
 
-            template<class St>
-            static auto& make(St& state, val<Data, Bytes> const& v)
+            template<class Ctx>
+            static bool make(Ctx& ctx, val<Data, Bytes> const& v)
             {
-                write_data<data_to_value_data<Data>>::write(state.ctx.out, v.x);
-                return state;
+                write_data<data_to_value_data<Data>>::write(ctx.out, v.x);
+                return true;
             }
         };
 
         template<class DataSize, class Name>
         struct stream_writable::next_value<as_param, variable<datas::types::PktSize<DataSize>, Name>>
         {
-            using var_size = variable<uint8_t*, Name>;
+            // TODO automatically write size if packet is static
+            // TODO compute static distance with a static packet
+            using var_size = val<datas::types::PktSize<DataSize>, uint8_t*>;
             using context_value_list = mp::list<var_size>;
 
-            template<class St>
-            static auto make(St& state, datas::types::PktSize<DataSize>)
+            template<class Ctx>
+            static bool make(Ctx& ctx, datas::types::PktSize<DataSize>)
             {
-                static_cast<var_size&>(state.ctx.ctx_values).value = state.ctx.out.get_current();
-                state.ctx.out.out_skip_bytes(sizeof(value_type_t<DataSize>));
-                return state;
+                static_cast<var_size&>(ctx.ctx_values).x = ctx.out.get_current();
+                ctx.out.out_skip_bytes(sizeof(value_type_t<DataSize>));
+                return true;
+            }
+        };
+
+        template<class DataSize>
+        struct stream_writable::final_value<val<datas::types::PktSize<DataSize>, uint8_t*>>
+        {
+            template<class Ctx>
+            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, uint8_t*> const& v)
+            {
+                OutStream out({v.x, sizeof(value_type_t<DataSize>)});
+                write_data<DataSize>::write(out, ctx.out.get_current() - ctx.out.get_data());
+                return true;
             }
         };
 
@@ -1461,7 +1466,8 @@ namespace test
         auto ctx = Traits::make_context<Params, Values>(buf, xs...);
 
         return apply(Values{}, [&](auto... v){
-            return detail::recursive_inplace_recv2<Traits>(Traits::make_state(ctx), v...);
+            (Traits::next_state(ctx, v), ...);
+            return Traits::final(ctx);
         });
     }
 
