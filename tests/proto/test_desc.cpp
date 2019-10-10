@@ -645,19 +645,6 @@ namespace test
         return v;
     }
 
-    template<class Data, class X>
-    struct typed_value
-    {
-        using data_type = Data;
-        using type = X;
-
-        X x;
-    };
-
-
-    PROTO_IS_TYPE2(typed_value);
-
-
     template<class Int, class Endianess>
     void write_buf2(OutStream& out, proto::datas::types::Integer<Int, Endianess>, Int x)
     {
@@ -739,70 +726,6 @@ namespace test
                 return tuple{make_variable2<Traits, decltype(p)>(t)...};
             });
         }
-
-        template<class Traits, class Param, class X>
-        auto make_variable(proto::value<X, name_t<Param>> const& v)
-        {
-            using Data = data_type_t<Param>;
-            using BasicType = proto_basic_type_t<Data>;
-            using Name = name_t<Param>;
-            using Value = std::remove_reference_t<X>;
-            using builder = typename Traits::template value_variable_builder<BasicType, Value>;
-
-            // TODO v.value&&
-            using value_type = decltype(builder::make(v.value));
-            if constexpr (is_typed_value_v<value_type>)
-            {
-                return variable<value_type, Name>{builder::make(v.value)};
-            }
-            else
-            {
-                return variable<typed_value<Data, value_type>, Name>{
-                    typed_value<Data, value_type>{builder::make(v.value)}
-                };
-            }
-        }
-
-        template<class Traits, class Params, class... Xs>
-        auto build_params(Xs const&... xs)
-        {
-            PROTO_ASSERT_TYPES(proto::is_value, Xs);
-
-            using params = mp::call<mp::unpack<mp::cfe<detail::param_list>>, Params>;
-            using value_params = detail::param_list<Xs...>;
-
-            detail::check_unused_params<params, value_params, errors::missing_parameters>();
-            detail::check_unused_params<value_params, params, errors::unknown_parameters>();
-
-            // TODO value_type_t must be rvalue or lvalue
-            proto::tuple<Xs...> t{Xs{static_cast<value_type_t<Xs>>(xs.value)}...};
-
-            return apply(Params{}, [&](auto... p){
-                return tuple{make_variable<Traits, decltype(p)>(t)...};
-            });
-        }
-
-        template<class Traits, class Name, class Data, class Tuple>
-        auto make_value(lazy_value<Data, Name>, Tuple&& t)
-        {
-            auto&& v = get_var<Name>(t).value;
-            using Value = std::decay_t<decltype(v)>;
-            using builder = typename Traits::template value_builder<
-                proto_basic_type_t<Data>,
-                proto_basic_type_t<data_type_t<Value>>,
-                typename Value::type>;
-
-            // TODO v.value&&
-            using value_type = decltype(builder::make(v.x));
-            if constexpr (is_typed_value_v<value_type>)
-            {
-                return builder::make(v.x);
-            }
-            else
-            {
-                return typed_value<Data, value_type>{builder::make(v.x)};
-            }
-        }
     }
 
     namespace traits
@@ -867,9 +790,6 @@ namespace test
             template<class Data, class T>
             using value_variable_builder
                 = value_variable_builder_impl<Data, proto_basic_type_t<Data>>;
-
-            template<class ValueBasicType, class BasicType, class T>
-            struct value_builder;
 
             template<class BasicType, class... NamedValues>
             struct next_value;
@@ -971,41 +891,6 @@ namespace test
             static auto make(native)
             {
                 return Data{};
-            }
-        };
-
-
-        template<class BasicType, class T>
-        struct stream_writable::value_builder<as_param, BasicType, T>
-        {
-            static auto make(T x)
-            {
-                return typed_value<BasicType, T>{x};
-            }
-        };
-
-        template<class StringSize, class StringData, class T>
-        struct stream_writable::value_builder<
-            datas::values::types::SizeBytes<as_param>,
-            datas::types::String<StringSize, StringData, datas::types::no_zero>,
-            T>
-        {
-            static auto make(bytes_view v)
-            {
-                using int_type = value_type_t<StringSize>;
-                return typed_value<StringSize, int_type>{checked_cast<int_type>(v.size())};
-            }
-        };
-
-        template<class StringSize, class StringData, class T>
-        struct stream_writable::value_builder<
-            datas::values::types::Data<as_param>,
-            datas::types::String<StringSize, StringData, datas::types::no_zero>,
-            T>
-        {
-            static auto make(bytes_view v)
-            {
-                return typed_value<datas::types::BinaryData, bytes_view>{v};
             }
         };
 
