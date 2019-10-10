@@ -111,8 +111,7 @@
 #include "utils/strutils.hpp"
 #include "core/stream_throw_helpers.hpp"
 
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include "system/tls_context.hpp"
 
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
@@ -727,37 +726,7 @@ public:
             });
         }
 
-        // init TLS
-        // --------------------------------------------------------
-
-
-        // -------- Start of system wide SSL_Ctx option ------------------------------
-
-        // ERR_load_crypto_strings() registers the error strings for all libcrypto
-        // functions. SSL_load_error_strings() does the same, but also registers the
-        // libssl error strings.
-
-        // One of these functions should be called before generating textual error
-        // messages. However, this is not required when memory usage is an issue.
-
-        // ERR_free_strings() frees all previously loaded error strings.
-
-        SSL_load_error_strings();
-
-        // SSL_library_init() registers the available SSL/TLS ciphers and digests.
-        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
-        // for SSL_library_init().
-
-        // - SSL_library_init() must be called before any other action takes place.
-        // - SSL_library_init() is not reentrant.
-        // - SSL_library_init() always returns "1", so it is safe to discard the return
-        // value.
-
-        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
-        // SSL_library_init(). Applications which need to use SHA2 in earlier versions
-        // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
-
-        SSL_library_init();
+        init_TLS();
 
         // --------------------------------------------------------
 

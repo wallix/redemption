@@ -49,6 +49,39 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
 
+inline void init_TLS()
+{
+        // init TLS
+
+        // -------- Start of system wide SSL_Ctx option ------------------------------
+
+        // ERR_load_crypto_strings() registers the error strings for all libcrypto
+        // functions. SSL_load_error_strings() does the same, but also registers the
+        // libssl error strings.
+
+        // One of these functions should be called before generating textual error
+        // messages. However, this is not required when memory usage is an issue.
+
+        // ERR_free_strings() frees all previously loaded error strings.
+
+        SSL_load_error_strings();
+
+        // SSL_library_init() registers the available SSL/TLS ciphers and digests.
+        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
+        // for SSL_library_init().
+
+        // - SSL_library_init() must be called before any other action takes place.
+        // - SSL_library_init() is not reentrant.
+        // - SSL_library_init() always returns "1", so it is safe to discard the return
+        // value.
+
+        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
+        // SSL_library_init(). Applications which need to use SHA2 in earlier versions
+        // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
+
+        SSL_library_init();
+}
+
 inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std::string* error_message)
 {
     LOG(LOG_ERR, "TLSContext::%s: %s", funcname, error_msg);
@@ -110,11 +143,14 @@ public:
 
     bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
-        SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
+        SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
 
         if (ctx == nullptr) {
             return tls_ctx_print_error("enable_client_tls", "SSL_CTX_new returned NULL", error_message);
         }
+
+        // reference doc: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_config.html
+
 
         this->allocated_ctx = ctx;
         SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER/* | SSL_MODE_ENABLE_PARTIAL_WRITE*/);
@@ -130,64 +166,15 @@ public:
 
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-
-        switch (tls_min_level){
-        default:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 3:
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 2:
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 1:
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 0:
-            break;
+        if (tls_min_level){
+            SSL_CTX_set_min_proto_version(ctx, tls_min_level);
+        }
+        if (tls_max_level){
+            SSL_CTX_set_max_proto_version(ctx, tls_max_level);
         }
 
-        switch (tls_max_level){
-        default:
-            break;
-        case 3:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            break;
-        case 2:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            break;
-        case 1:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            break;
-        case 0:
-            break;
-        }
+        // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
+        SSL_CTX_set_cipher_list(ctx, "DEFAULT@SEC_LEVEL=1");
 
         SSL* ssl = SSL_new(ctx);
 
@@ -375,32 +362,9 @@ public:
 
     bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
-        // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
-        // ------------------------------------------------------------------------------------
-
-        // SSL_CTX_new() creates a new SSL_CTX object as framework to establish TLS/SSL enabled
-        // connections.
-
-        // The SSL_CTX data structure is the global context structure which is created by a server
-        // or client *once* per program life-time and which holds mainly default values for the SSL
-        // structures which are later created for the connections.
-
-        // Various options regarding certificates, algorithms, etc. can be set in this object.
-
-        // SSL_CTX_new() receive a data structure of type SSL_METHOD (SSL Method), which is
-        // a dispatch structure describing the internal ssl library methods/functions which
-        // implement the various protocol versions (SSLv1, SSLv2 and TLSv1). An SSL_METHOD
-        // is necessary to create an SSL_CTX.
-
-        // The SSL_CTX object uses method as connection method. The methods exist in a generic
-        // type (for client and server use), a server only type, and a client only type. method
-        // can be of several types (server, client, generic, support SSLv2, TLSv1, TLSv1.1, etc.)
-
-        // TLSv1_client_method(void): A TLS/SSL connection established with this methods will
-        // only understand the TLSv1 protocol. A client will send out TLSv1 client hello messages
-        // and will indicate that it only understands TLSv1.
-
-        SSL_CTX* ctx = SSL_CTX_new(SSLv23_server_method());
+        // reference doc: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_new.html
+        
+        SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
         this->allocated_ctx = ctx;
         SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER/* | SSL_MODE_ENABLE_PARTIAL_WRITE*/);
 
@@ -565,62 +529,11 @@ public:
         LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL options");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
-        switch (tls_min_level){
-        default:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 3:
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 2:
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 1:
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-            break;
-        case 0:
-            break;
+        if (tls_min_level){
+            SSL_CTX_set_min_proto_version(ctx, tls_min_level);
         }
-
-        switch (tls_max_level){
-        default:
-            break;
-        case 3:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            break;
-        case 2:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            break;
-        case 1:
-            #ifdef SSL_OP_NO_TLSv1_3
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-            #endif
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-            break;
-        case 0:
-            break;
+        if (tls_max_level){
+            SSL_CTX_set_max_proto_version(ctx, tls_max_level);
         }
 
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
