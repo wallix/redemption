@@ -209,6 +209,8 @@ private:
 
         struct stat stat;
         if (fstat.stat(filename, stat)){
+            LOG( LOG_ERR, "MetaSeqBuf::next_meta_file(): failed errno=%d : %s\n"
+               , errno, strerror(errno));
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
 

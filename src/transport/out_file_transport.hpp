@@ -202,6 +202,8 @@ private:
                 if (errno == EINTR) {
                     continue;
                 }
+                LOG( LOG_ERR, "OutFileTransport::do_send(): failed errno=%d : %s\n"
+                   , errno, strerror(errno));
                 throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
             }
             total_sent += ret;

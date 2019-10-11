@@ -234,6 +234,8 @@ public:
         const ssize_t res = this->buf.next();
         if (res) {
             this->status = false;
+            LOG( LOG_ERR, "OutFilenameSequenceTransport::next(): failed errno=%d : %s\n"
+               , errno, strerror(errno));
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
         ++this->seqno;
