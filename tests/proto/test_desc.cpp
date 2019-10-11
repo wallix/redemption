@@ -1216,6 +1216,12 @@ namespace test
             }
         };
 
+        template<class Data, class DataSize>
+        struct stream_readable2::value_variable_builder_impl<
+            Data, datas::types::PktSize<DataSize>>
+        : stream_readable2::value_variable_builder<DataSize, void>
+        {};
+
 
         template<class Name, class T>
         auto make_mem(T&& x)
@@ -1337,6 +1343,26 @@ namespace test
                 };
             }
         };
+
+        struct empty_next_value
+        {
+            using static_size = mp::int_<0>;
+            using context_value_list = mp::list<>;
+
+            template<class St, class X>
+            static St& make(St& state, X const&)
+            {
+                return state;
+            }
+        };
+
+        template<class V>
+        struct stream_readable2::next_value<start_range, V>
+        : empty_next_value {};
+
+        template<class V>
+        struct stream_readable2::next_value<stop_range, V>
+        : empty_next_value {};
 
         template<class Int, class Endianess>
         struct stream_readable2::read_data_impl<datas::types::Integer<Int, Endianess>>
@@ -1469,6 +1495,11 @@ namespace detail
 using detail::is_list;
 using detail::is_list_v;
 
+struct SS {
+    PROTO_LOCAL_NAME(d);
+    PROTO_LOCAL_NAME(e);
+} ss;
+
 int main()
 {
     struct S {
@@ -1479,17 +1510,12 @@ int main()
         PROTO_LOCAL_NAME(size2);
     } s;
 
-    struct SS {
-        PROTO_LOCAL_NAME(a);
-        PROTO_LOCAL_NAME(b);
-    } ss;
-
     using namespace proto::datas;
 
     auto def = test::definition(
-        ss.a = pkt_size(u16_be),
-        ss.b = u8,
-        ss.a = test::start(),
+        ss.d = pkt_size(u16_be),
+        ss.e = u16_le,
+        ss.d = test::start(),
 
         s.c = test::type(ascii_string(u16_be)),
 
@@ -1502,7 +1528,7 @@ int main()
         s.c = values::data,
 
         s.size = test::stop(),
-        ss.a = test::stop()
+        ss.d = test::stop()
     );
 
     auto print_list = [](char const* s, auto l){
@@ -1522,35 +1548,37 @@ int main()
 
     print("\n\ninplace_emit:\n\n");
     std::array<uint8_t, 30> buf {};
-    auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av, s.size = native(), ss.a = native(), ss.b = a);
+    auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av, s.size = native(), ss.d = native(), ss.e = a);
     dump(out);
 
-    // auto error_fn = [](){
-    //     throw std::runtime_error("buf is too short");
-    // };
-    //
-    // {
-    //     print("\n\ninplace_recv2:\n");
-    //     char strbuf[10];
-    //     a = '0';
-    //     auto datas = test::inplace_recv2(out, error_fn, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native());
-    //     println("\n", type_name(datas));
-    //     println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-    //     println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
-    //     println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-    //     println("a = ", a);
-    // }
-    //
-    // {
-    //     print("\n\ninplace_struct:\n");
-    //     auto datas = test::inplace_struct(out, error_fn, def);
-    //     println("\n", type_name(datas));
-    //     println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-    //     println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
-    //     println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-    //
-    //     datas.apply([](auto const&... xs) {
-    //         (println(xs.proto_name(), ": ", xs.proto_value()), ...);
-    //     });
-    // }
+    auto error_fn = [](){
+        throw std::runtime_error("buf is too short");
+    };
+
+    {
+        print("\n\ninplace_recv2:\n");
+        char strbuf[10];
+        a = '0';
+        auto datas = test::inplace_recv2(out, error_fn, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native(), ss.d = native(), ss.e = native());
+        println("\n", type_name(datas));
+        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+        println("datas.b = ", datas.b, " ", type_name<decltype(datas.b)>());
+        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+        println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
+        println("datas.e = ", std::hex, datas.e, " ", type_name<decltype(datas.e)>());
+        println("a = ", a);
+    }
+
+    {
+        print("\n\ninplace_struct:\n");
+        auto datas = test::inplace_struct(out, error_fn, def);
+        println("\n", type_name(datas));
+        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+        println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
+        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+
+        datas.apply([](auto const&... xs) {
+            (println(xs.proto_name(), ": ", xs.proto_value()), ...);
+        });
+    }
 }
