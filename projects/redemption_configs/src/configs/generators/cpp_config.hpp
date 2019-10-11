@@ -24,8 +24,10 @@
 #include "configs/generators/utils/multi_filename_writer.hpp"
 #include "configs/generators/utils/spec_writer.hpp"
 #include "configs/generators/utils/write_template.hpp"
+#include "configs/generators/utils/names.hpp"
 #include "configs/enumeration.hpp"
 #include "configs/type_name.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -159,6 +161,35 @@ void write_variables_configuration(std::ostream & out_varconf, CppConfigWriterBa
 void write_variables_configuration_fwd(std::ostream & out_varconf, CppConfigWriterBase& writer);
 void write_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& writer);
 
+struct FullNameMemberChecker
+{
+    void emplace_back(std::string const& name)
+    {
+        this->full_names.emplace_back(name);
+    }
+
+    std::string get_error()
+    {
+        std::string error;
+
+        if (!this->full_names.empty()) {
+            std::sort(this->full_names.begin(), this->full_names.end());
+
+            auto* previous_name = &this->full_names.front();
+            for (auto& name : array_view{this->full_names}.from_offset(1)) {
+                if (name == *previous_name) {
+                    str_append(error, (error.empty() ? "duplicates member: " : ", "), name);
+                }
+                previous_name = &name;
+            }
+        }
+
+        return error;
+    }
+
+    std::vector<std::string> full_names;
+};
+
 struct CppConfigWriterBase
 {
     using attribute_name_type = cfg_attributes::cpp::name;
@@ -203,6 +234,37 @@ struct CppConfigWriterBase
     };
     Filenames filenames;
 
+    struct FullNames
+    {
+        FullNameMemberChecker spec;
+        FullNameMemberChecker sesman;
+
+        void check()
+        {
+            std::string full_err;
+
+            struct P { char const* name; FullNameMemberChecker& checker; };
+            for (P const& p : {
+                P{"Ini", this->spec},
+                P{"Sesman", this->sesman},
+            }) {
+                auto err = p.checker.get_error();
+                if (not err.empty()) {
+                    if (not full_err.empty()) {
+                        full_err += " ; ";
+                    }
+                    str_append(full_err, p.name, ": ", err);
+                }
+            }
+
+            if (not full_err.empty()) {
+                std::runtime_error(std::move(full_err));
+            }
+        }
+    };
+
+    FullNames full_names;
+
     CppConfigWriterBase(Filenames filenames)
     : filenames(std::move(filenames))
     {}
@@ -214,6 +276,8 @@ struct CppConfigWriterBase
 
     int do_finish()
     {
+        this->full_names.check();
+
         MultiFilenameWriter<CppConfigWriterBase> sw(*this);
         sw.then(filenames.authid_hpp, &write_authid_hpp)
           .then(filenames.variable_configuration_fwd, &write_variables_configuration_fwd)
@@ -228,14 +292,14 @@ struct CppConfigWriterBase
         return 0;
     }
 
-    void do_start_section(std::string const & section_name)
+    void do_start_section(Names const& /*names*/, std::string const & section_name)
     {
         if (!section_name.empty()) {
             ++this->depth;
         }
     }
 
-    void do_stop_section(std::string const & section_name)
+    void do_stop_section(Names const& /*names*/, std::string const & section_name)
     {
         if (!section_name.empty()) {
             --this->depth;
@@ -252,14 +316,16 @@ struct CppConfigWriterBase
     void tab() { this->out() << /*std::setw(this->depth*4+4) << */"    "; }
 
     template<class Pack>
-    void evaluate_member(std::string const & section_name, Pack const & infos, type_enumerations& /*enums*/)
+    void evaluate_member(Names const& names, std::string const & section_name, Pack const & infos, type_enumerations& /*enums*/)
     {
         std::string const& varname = get_name<cpp::name>(infos);
 
         auto type = get_type<cpp::type_>(infos);
         this->members.push_back({varname, alignof(typename decltype(type)::type)});
 
-        std::string const & varname_with_section = section_name.empty() ? varname : section_name + "::" + varname;
+        std::string const & varname_with_section = section_name.empty()
+            ? varname
+            : str_concat(section_name, "::", varname);
 
         using sesman_io = sesman::internal::io;
 
@@ -281,12 +347,18 @@ struct CppConfigWriterBase
             //this->tab();
             this->out() << cpp_doxygen_comment(get_elem<cfg_attributes::desc>(infos).value, 4);
         };
+        std::string sesman_name;
         if (bool(properties)) {
-            this->authstrs.emplace_back(get_name<sesman::name>(infos));
+            sesman_name = sesman_network_name(infos, names);
+            this->authstrs.emplace_back(sesman_name);
+            this->full_names.sesman.emplace_back(sesman_name);
         }
         this->tab(); this->out() << "/// type: "; write_type(this->out(), type); this->out() << " <br/>\n";
+
         if ((properties & sesman_io::rw) == sesman_io::sesman_to_proxy) {
-            this->tab(); this->out() << "/// sesman -> proxy <br/>\n";
+            if constexpr (!is_convertible_v<Pack, connection_policy_t>) {
+                this->tab(); this->out() << "/// sesman -> proxy <br/>\n";
+            }
         }
         else if ((properties & sesman_io::rw) == sesman_io::proxy_to_sesman) {
             this->tab(); this->out() << "/// sesman <- proxy <br/>\n";
@@ -294,10 +366,11 @@ struct CppConfigWriterBase
         else if ((properties & sesman_io::rw) == sesman_io::rw) {
             this->tab(); this->out() << "/// sesman <-> proxy <br/>\n";
         }
+
         if constexpr (is_convertible_v<Pack, sesman::name>) {
-            this->tab(); this->out() << "/// sesman::name: " << get_elem<sesman::name>(infos).name << " <br/>\n";
+            this->tab(); this->out() << "/// sesman::name: " << sesman_name << " <br/>\n";
         }
-        if constexpr (is_convertible_v<Pack, connection_policy_t>) {
+        else if constexpr (is_convertible_v<Pack, connection_policy_t>) {
             this->tab(); this->out() << "/// connpolicy -> proxy";
             if constexpr (is_convertible_v<Pack, connpolicy::name>
                        || is_convertible_v<Pack, connpolicy::section>
@@ -309,7 +382,10 @@ struct CppConfigWriterBase
                 ;
             }
             this->out() << " <br/>\n";
+
+            this->tab(); this->out() << "/// sesman::name: " << sesman_name << " <br/>\n";
         }
+
         this->tab(); this->out() << "/// value"; write_assignable_default(this->out(), infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman_io::sesman_to_proxy) ? "true" : "false") << ";\n";
@@ -356,8 +432,10 @@ struct CppConfigWriterBase
         this->out_ = &this->out_body_parser_;
 
         if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+            auto spec_name = get_name<spec::name>(infos);
+            this->full_names.spec.emplace_back(str_concat(section_name, ':', spec_name));
             auto type_spec = get_type<spec::type_>(infos);
-            this->out() << "        else if (0 == strcmp(key, \"" << get_name<spec::name>(infos) << "\")) {\n"
+            this->out() << "        else if (0 == strcmp(key, \"" << spec_name << "\")) {\n"
             "            ::configs::parse_and_log(\n"
             "                context, key,\n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"

@@ -95,7 +95,7 @@ array_view_const_u8 SocketTransport::get_public_key() const
 }
 
 void SocketTransport::enable_server_tls(const char * certificate_password,
-                                        const char * ssl_cipher_list, uint32_t tls_min_level)
+                                        const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
 {
     if (this->tls != nullptr) {
         // TODO this should be an error, no need to commute two times to TLS
@@ -105,7 +105,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
-    if (!this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list, tls_min_level)) {
+    if (!this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list)) {
         this->tls.reset();
         throw Error(ERR_TRANSPORT_TLS_SERVER);
     }
@@ -113,13 +113,13 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
 }
 
-Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier)
+Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
 {
     switch (this->tls_state) {
         case TLSState::Uninit:
             LOG(LOG_INFO, "Client TLS start");
             this->tls = std::make_unique<TLSContext>();
-            if (!this->tls->enable_client_tls_start(this->sck, this->error_message)) {
+            if (!this->tls->enable_client_tls_start(this->sck, this->error_message, tls_min_level, tls_max_level, show_common_cipher_list)) {
                 return Transport::TlsResult::Fail;
             }
             this->tls_state = TLSState::Want;

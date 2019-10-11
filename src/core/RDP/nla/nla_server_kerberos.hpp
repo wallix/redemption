@@ -51,6 +51,7 @@ class rdpCredsspServerKerberos final
     std::string& extra_message;
     Translation::language_t lang;
     bool restricted_admin_mode;
+    const bool credssp_verbose;
     const bool verbose;
 
     std::vector<uint8_t> ClientServerHash;
@@ -588,7 +589,7 @@ class rdpCredsspServerKerberos final
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(this->SavedClientNonce.clientNonce);
         sha256.update(this->public_key);
         sha256.final(hash);
         SavedHash = std::vector<uint8_t>(sizeof(hash));
@@ -601,7 +602,7 @@ class rdpCredsspServerKerberos final
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(this->SavedClientNonce.clientNonce);
         sha256.update(this->public_key);
         sha256.final(hash);
         SavedHash = std::vector<uint8_t>(sizeof(hash));
@@ -654,6 +655,7 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
+               const bool credssp_verbose = false,
                const bool verbose = false)
         : public_key(key)
         , rand(rand)
@@ -661,6 +663,7 @@ public:
         , extra_message(extra_message)
         , lang(lang)
         , restricted_admin_mode(restricted_admin_mode)
+        , credssp_verbose(credssp_verbose)
         , verbose(verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
@@ -696,9 +699,9 @@ public:
     }
 
 public:
-    credssp::State credssp_server_authenticate_next(bytes_view in_data, OutStream & out_stream)
+    credssp::State authenticate_next(bytes_view in_data, OutStream & out_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::authenticate_next");
 
         switch (this->server_auth_data.state)
         {
@@ -707,14 +710,14 @@ public:
               return credssp::State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
-                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_data, out_stream)) {
+                if (Res::Err == this->authenticate_recv(in_data, out_stream)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     return credssp::State::Err;
                 }
                 return credssp::State::Cont;
             case ServerAuthenticateData::Final:
                LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
-               if (Res::Err == this->sm_credssp_server_authenticate_final(in_data)) {
+               if (Res::Err == this->authenticate_final(in_data)) {
                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
                     return credssp::State::Err;
                 }
@@ -807,16 +810,15 @@ private:
             return SEC_E_INVALID_TOKEN;
         }
 
-        std::vector<uint8_t> Buffer;
+        std::vector<uint8_t> decrypted_creds;
 
-        const SEC_STATUS status = this->table.DecryptMessage(this->ts_request.authInfo, Buffer, this->recv_seq_num++);
+        const SEC_STATUS status = this->table.DecryptMessage(this->ts_request.authInfo, decrypted_creds, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
         }
 
-        InStream decrypted_creds(Buffer);
-        this->ts_credentials = recvTSCredentials(decrypted_creds);
+        this->ts_credentials = recvTSCredentials(decrypted_creds, this->credssp_verbose);
 
         // hexdump(this->ts_credentials.passCreds.userName,
         //         this->ts_credentials.passCreds.userName_length);
@@ -828,13 +830,14 @@ private:
         return SEC_E_OK;
     }
 
-    Res sm_credssp_server_authenticate_recv(bytes_view in_data, OutStream & out_stream)
+    Res authenticate_recv(bytes_view in_data, OutStream & out_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
+        LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::authenticate_recv");
 
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
-            this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+            this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
+            this->error_code = this->ts_request.error_code;
         }
 
         if (this->ts_request.negoTokens.size() < 1) {
@@ -883,8 +886,15 @@ private:
             return Res::Err;
         }
 
-        uint32_t error_code = 0;
-        auto v = emitTSRequest(this->ts_request, error_code);
+        this->ts_request.error_code = 0;
+        auto v = emitTSRequest(this->ts_request.version,
+                               this->ts_request.negoTokens,
+                               this->ts_request.authInfo,
+                               this->ts_request.pubKeyAuth,
+                               this->ts_request.error_code,
+                               this->ts_request.clientNonce.clientNonce,
+                               this->ts_request.clientNonce.initialized,
+                               this->credssp_verbose);
         out_stream.out_copy_bytes(v);
 
         this->credssp_buffer_free();
@@ -900,11 +910,12 @@ private:
         return Res::Ok;
     }
 
-    Res sm_credssp_server_authenticate_final(bytes_view in_data)
+    Res authenticate_final(bytes_view in_data)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */
-        this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+        this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
+        this->error_code = this->ts_request.error_code;
 
         SEC_STATUS status = this->credssp_decrypt_ts_credentials();
 

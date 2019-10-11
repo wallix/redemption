@@ -28,6 +28,7 @@
 #include "utils/sugar/algostring.hpp"
 
 #include "acl/auth_api.hpp"
+#include "acl/license_api.hpp"
 
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
@@ -85,6 +86,7 @@ private:
     TimeSystem        timeSystem;
     NullAuthentifier  authentifier;
     NullReportMessage reportMessage;
+    NullLicenseStore  licensestore;
 
 public:
     ClientCallback _callback;
@@ -381,6 +383,9 @@ public:
                 mod_rdp_params.device_id                       = "device_id";
                 mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
                 mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
+                mod_rdp_params.tls_min_level                   = this->config.modRDPParamsData.tls_min_level;
+                mod_rdp_params.tls_max_level                   = this->config.modRDPParamsData.tls_max_level;
+                mod_rdp_params.show_common_cipher_list                   = this->config.modRDPParamsData.show_common_cipher_list;
                 mod_rdp_params.enable_fastpath                 = true;
                 mod_rdp_params.enable_new_pointer              = true;
                 mod_rdp_params.enable_glyph_cache              = true;
@@ -419,6 +424,7 @@ public:
                   , mod_rdp_params
                   , this->authentifier
                   , this->reportMessage
+                  , this->licensestore
                   , this->ini
                   , nullptr
                   , nullptr

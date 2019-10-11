@@ -20,38 +20,18 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include "transport/transport.hpp"
-#include "utils/sugar/bytes_view.hpp"
+#include "configs/generators/utils/spec_writer.hpp"
 
-#include <string>
-#include <vector>
-
-#include <cstdint>
-
-
-namespace redjs
+namespace cfg_generators
 {
-
-struct BrowserTransport : Transport
-{
-    TlsResult enable_client_tls(ServerNotifier& server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override;
-
-    size_t do_partial_read(uint8_t * data, size_t len) override;
-
-    void do_send(const uint8_t * buffer, size_t len) override;
-
-    int get_fd() const override;
-
-    void add_in_buffer(std::string data);
-
-    bytes_view get_out_buffer() const noexcept;
-
-    void clear_out_buffer() noexcept;
-
-private:
-    std::vector<std::string> in_buffers;
-    std::vector<uint8_t> out_buffers;
-    std::size_t current_pos = 0;
-};
-
+    template<class Pack>
+    std::string sesman_network_name(Pack const& infos, Names const& names)
+    {
+        if constexpr (is_convertible_v<Pack, connection_policy_t>) {
+            return str_concat(names.names[0], ':', get_elem<cfg_attributes::name_>(infos).name);
+        }
+        else {
+            return get_name<cfg_attributes::sesman::name>(infos);
+        }
+    }
 }

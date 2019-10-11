@@ -48,6 +48,15 @@ enable_nla = boolean(default=True)
 # (if enable_nla is disabled, this value is ignored).
 enable_kerberos = boolean(default=False)
 
+# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+tls_min_level = integer(min=0, default=0)
+
+# Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+tls_max_level = integer(min=0, default=0)
+
+# Show common cipher list supported by client and server
+show_common_cipher_list = boolean(default=False)
+
 # Enables Server Redirection Support.
 server_redirection = boolean(default=False)
 
@@ -64,6 +73,9 @@ use_client_provided_remoteapp = boolean(default=False)
 use_native_remoteapp_capability = boolean(default=True)
 
 wabam_uses_translated_remoteapp = boolean(default=False)
+
+# Enables support of the remoteFX codec.
+enable_remotefx = boolean(default=False)
 
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)

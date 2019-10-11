@@ -27,6 +27,11 @@ inline std::array<uint8_t, 2> out_uint16_le(unsigned int v)
     return {uint8_t(v), uint8_t(v >> 8)};
 }
 
+inline std::array<uint8_t, 1> out_uint8(unsigned int v)
+{
+    return {uint8_t(v)};
+}
+
 inline std::array<uint8_t, 4> out_uint32_le(unsigned int v)
 {
     return {uint8_t(v), uint8_t(v >> 8), uint8_t(v >> 16), uint8_t(v >> 24)};

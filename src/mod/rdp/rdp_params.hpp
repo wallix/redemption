@@ -57,6 +57,9 @@ struct ModRDPParams
 
     bool enable_tls = true;
     bool enable_nla = true;
+    uint32_t tls_min_level = 0;
+    uint32_t tls_max_level = 0;
+    bool show_common_cipher_list = false;
     bool enable_krb = false;
     bool enable_fastpath = true;           // If true, fast-path must be supported.
     bool enable_new_pointer = true;
@@ -205,6 +208,8 @@ struct ModRDPParams
     bool split_domain = false;
 
     bool use_license_store = true;
+
+    bool accept_monitor_layout_change_if_capture_is_not_started = true;
 
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
@@ -415,6 +420,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.log_only_relevant_activities);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_license_store);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             accept_monitor_layout_change_if_capture_is_not_started);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

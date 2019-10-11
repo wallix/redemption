@@ -56,11 +56,8 @@ void ProxyRecorder::front_step1(Transport & frontConn)
 
     if ((this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
     || (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
-        frontConn.enable_server_tls("inquisition", nullptr, 0);
+        frontConn.enable_server_tls("inquisition", nullptr, 0 /* tls_min_level */, 0  /* tls_max_level */, true);
     }
-
-
-
 }
 
 void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
@@ -77,13 +74,16 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
         this->pstate = PState::NEGOCIATING_BACK_NLA;
     }
 
+    uint32_t tls_min_level = 0;
+    uint32_t tls_max_level = 0;
+    bool show_common_cipher_list = false;
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
         this->back_nla_tee_trans, this->timeobj,
         this->host, nla_username.c_str(),
         nla_password.empty() ? "\0" : nla_password.c_str(),
-        enable_kerberos, this->verbosity > 8);
+        enable_kerberos, tls_min_level, tls_max_level, show_common_cipher_list, this->verbosity > 8);
 
     // equivalent to nego_client->send_negotiation_request()
     StaticOutStream<256> back_x224_stream;
@@ -101,9 +101,8 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
 void ProxyRecorder::front_nla(Transport & frontConn)
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
-    StaticOutStream<65535> frontResponse;
-    credssp::State st = this->nego_server->recv_data(this->frontBuffer, frontResponse);
-    frontConn.send(frontResponse.get_bytes());
+    auto [st, result] = this->nego_server->recv_data(this->frontBuffer);
+    frontConn.send(result);
 
     switch (st) {
     case credssp::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);

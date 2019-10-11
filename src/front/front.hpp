@@ -893,6 +893,42 @@ public:
         return res;
     }
 
+    void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) override {
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+            "Front::server_relayout");
+
+        this->orders.graphics_update_pdu().sync();
+
+        monitor_layout_pdu_ref.log("Front::server_relayout: Send to client");
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+        // Payload
+        monitor_layout_pdu_ref.emit(stream.get_data_stream());
+
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_MONITOR_LAYOUT_PDU
+                            , false
+                            , this->mppc_enc.get()
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , underlying_cast(this->verbose)
+                            );
+
+        if (this->capture) {
+            this->must_be_stop_capture();
+            this->can_be_start_capture();
+        }
+
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+            "Front::server_relayout: done");
+    }
+
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
         this->graphics_update->set_pointer(cache_idx, cursor, mode);
     }
@@ -1121,6 +1157,11 @@ public:
         return false;
     }
 
+    bool is_capture_in_progress() const override
+    {
+        return (this->capture && this->capture->has_private_drawable());
+    }
+
     Capture::RTDisplayResult set_rt_display(bool enable_rt_display)
     {
         return this->capture
@@ -1178,7 +1219,7 @@ private:
         );
         if (this->mppc_enc) {
             this->max_data_block_size = std::min<size_t>(MAX_DATA_BLOCK_SIZE,
-                this->mppc_enc->get_max_data_block_size());
+                this->mppc_enc->get_max_data_block_size() - RDPSerializer::SERIALIZER_HEADER_SIZE);
         }
 
         if (this->orders.has_bmp_cache_persister()) {
@@ -1352,7 +1393,9 @@ public:
                     this->trans.enable_server_tls(
                         this->ini.get<cfg::globals::certificate_password>(),
                         this->ini.get<cfg::client::ssl_cipher_list>().c_str(),
-                        this->ini.get<cfg::client::tls_min_level>());
+                        this->ini.get<cfg::client::tls_min_level>(),
+                        this->ini.get<cfg::client::tls_max_level>(),
+                        this->ini.get<cfg::client::show_common_cipher_list>());
                 }
 
                 this->state = BASIC_SETTINGS_EXCHANGE;
@@ -2879,7 +2922,7 @@ private:
                     send_multifrag_caps = true;
                 }
 
-                if (this->ini.get<cfg::client::front_remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
+                if (this->ini.get<cfg::client::enable_remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
                     BitmapCodecCaps bitmap_codec_caps(false);
 
                     bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);

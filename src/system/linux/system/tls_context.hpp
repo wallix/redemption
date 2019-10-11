@@ -108,7 +108,7 @@ public:
         return {this->public_key.get(), this->public_key_length};
     }
 
-    bool enable_client_tls_start(int sck, std::string* error_message)
+    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
 
@@ -131,6 +131,64 @@ public:
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
+        switch (tls_min_level){
+        default:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+            break;
+        case 3:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+            break;
+        case 2:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+            break;
+        case 1:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+            break;
+        case 0:
+            break;
+        }
+
+        switch (tls_max_level){
+        default:
+            break;
+        case 3:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
+            break;
+        case 2:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            break;
+        case 1:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            break;
+        case 0:
+            break;
+        }
+
         SSL* ssl = SSL_new(ctx);
 
         if (ssl == nullptr) {
@@ -141,6 +199,19 @@ public:
 
         if (0 == SSL_set_fd(ssl, sck)) {
             return tls_ctx_print_error("enable_client_tls", "SSL_set_fd failed", error_message);
+        }
+
+        if (show_common_cipher_list){
+            int priority = 0;
+            while(1){
+                 const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
+                 if (not cipher_name) { break; }
+                 priority++;
+                 LOG(LOG_INFO, "TLSContext::Client cipher %d: %s", priority, cipher_name);
+            }
+            if (priority == 0){
+                 LOG(LOG_INFO, "TLSContext::Client negotiated cipher list empty");
+            }
         }
 
         LOG(LOG_INFO, "SSL_connect()");
@@ -302,7 +373,7 @@ public:
         return Transport::TlsResult::Fail;
     }
 
-    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
+    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -493,21 +564,60 @@ public:
 
         LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL options");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
-        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
 
         switch (tls_min_level){
         default:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+            break;
+        case 3:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
             break;
         case 2:
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
             break;
         case 1:
             SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+            break;
+        case 0:
+            break;
+        }
+
+        switch (tls_max_level){
+        default:
+            break;
+        case 3:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
+            break;
+        case 2:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            break;
+        case 1:
+            #ifdef SSL_OP_NO_TLSv1_3
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            #endif
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
             break;
         case 0:
             break;
@@ -627,15 +737,18 @@ public:
 
         LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(this->allocated_ssl));
 
-        // TODO: the commented code belows shows the list of all enabled cipher suite on server,
-        // We could enable it but put that under some configuration variable.
-        // int priority = 0;
-        // while(1){
-        //     const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
-        //     if (not cipher_name) { break; }
-        //     priority++;
-        //     LOG(LOG_INFO, "TLSContext::Server cipher %d: %s", priority, cipher_name);
-        // }
+        if (show_common_cipher_list){
+            int priority = 0;
+            while(1){
+                 const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
+                 if (not cipher_name) { break; }
+                 priority++;
+                 LOG(LOG_INFO, "TLSContext::Server cipher %d: %s", priority, cipher_name);
+            }
+            if (priority == 0){
+                 LOG(LOG_INFO, "TLSContext::Server cipher list empty");
+            }
+        }
 
         LOG(LOG_INFO, "TLSContext::Negociated cipher used %s", SSL_CIPHER_get_name(SSL_get_current_cipher(this->allocated_ssl)));
 

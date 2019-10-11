@@ -29,7 +29,7 @@
 
 #include <memory>
 
-class rdpCredsspClientNTLM;
+class rdpClientNTLM;
 #ifndef __EMSCRIPTEN__
 class rdpCredsspClientKerberos;
 #endif
@@ -63,9 +63,9 @@ private:
     char username[128];
 
     uint8_t hostname[16];
-    uint8_t user[128];
+    std::vector<uint8_t> user;
     uint8_t password[2048];
-    uint8_t domain[256];
+    std::vector<uint8_t> domain;
     const char * target_host;
 
     uint8_t * current_password;
@@ -73,7 +73,7 @@ private:
     TimeObj & timeobj;
     char * lb_info;
 
-    std::unique_ptr<rdpCredsspClientNTLM> credsspNTLM;
+    std::unique_ptr<rdpClientNTLM> NTLM;
     #ifndef __EMSCRIPTEN__
     std::unique_ptr<rdpCredsspClientKerberos> credsspKerberos;
     #endif
@@ -93,6 +93,10 @@ private:
     State state = State::Negociate;
 
 public:
+    uint32_t tls_min_level;
+    uint32_t tls_max_level;
+    bool show_common_cipher_list;
+
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -107,11 +111,14 @@ public:
         const bool tls, const char * username, bool nla, bool admin_mode,
         const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
         std::string& extra_message, Translation::language_t lang,
+        uint32_t tls_min_level,
+        uint32_t tls_max_level,
+        bool show_common_cipher_list,
         const Verbose verbose = {});
 
     ~RdpNego();
 
-    void set_identity(char const * user, char const * domain, char const * pass, char const * hostname);
+    void set_identity(bytes_view user, bytes_view domain, char const * pass, char const * hostname);
 
     void send_negotiation_request(OutTransport trans);
 
@@ -130,11 +137,11 @@ public:
 private:
     State fallback_to_tls(OutTransport trans);
 
-    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier);
+    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list);
 
-    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier);
+    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list);
 
-    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier);
+    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list);
 
     State recv_credssp(OutTransport trans, bytes_view in_data);
 };

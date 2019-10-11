@@ -381,8 +381,6 @@ using namespace cfg_attributes;
 
 struct IniPythonSpecWriterBase
 {
-    using attribute_name_type = spec::name;
-
     std::string filename_;
     std::ofstream out_file_;
     std::ostringstream out_member_;
@@ -413,10 +411,10 @@ struct IniPythonSpecWriterBase
         return 0;
     }
 
-    void do_start_section(std::string const & /*section_name*/)
+    void do_start_section(Names const& /*names*/, std::string const & /*section_name*/)
     {}
 
-    void do_stop_section(std::string const & section_name)
+    void do_stop_section(Names const& /*names*/, std::string const & section_name)
     {
         auto str = this->out_member_.str();
         if (!str.empty()) {
@@ -434,7 +432,7 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
     using IniPythonSpecWriterBase::IniPythonSpecWriterBase;
 
     template<class Pack>
-    void evaluate_member(std::string const & /*section_name*/, Pack const & infos, type_enumerations& enums)
+    void evaluate_member(Names const& /*names*/, std::string const & /*section_name*/, Pack const & infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, spec_attr_t>) {
             auto type = get_type<spec::type_>(infos);

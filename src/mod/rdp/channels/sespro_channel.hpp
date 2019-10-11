@@ -81,7 +81,7 @@ private:
 
     Translator tr;
 
-    const bool param_bogus_refresh_rect_ex;
+    bool param_bogus_refresh_rect_ex = false;
 
     const bool param_show_maximized;
 
@@ -196,6 +196,10 @@ public:
         this->front.set_focus_on_password_textbox(false);
         this->front.set_focus_on_unidentified_input_field(false);
         this->front.set_consent_ui_visible(false);
+    }
+
+    void enable_bogus_refresh_rect_ex_support(bool enable) {
+        this->param_bogus_refresh_rect_ex = enable;
     }
 
     bool has_been_launched() const {

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
+#include "acl/license_api.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -771,6 +772,7 @@ public:
         sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
         sp_vc_params.show_maximized = !this->remote_app.enable_remote_program;
 
+#ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->session_reactor,
             this->session_probe_to_server_sender.get(),
@@ -782,6 +784,8 @@ public:
             this->gen,
             base_params,
             sp_vc_params);
+#endif
+
     }
 
 private:
@@ -973,6 +977,7 @@ public:
         const Translation::language_t & lang
     ) {
         (void)session_probe_channel;
+#ifndef __EMSCRIPTEN__
         if (!this->session_probe_virtual_channel) {
             this->create_session_probe_virtual_channel(
                     front, stc,
@@ -983,10 +988,12 @@ public:
                     monitor_count,
                     client_general_caps,
                     client_name);
+#endif
         }
 
+#ifndef __EMSCRIPTEN__
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
-
+#endif
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
         channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
@@ -1646,7 +1653,6 @@ public:
                     client_general_caps,
                     client_name);
             }
-
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
             this->session_probe_virtual_channel->start_launch_timeout_timer();
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
@@ -1775,7 +1781,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
-    const uint32_t monitor_count;
+    uint32_t monitor_count = 0;
 
     Transport & trans;
     CryptContext encrypt {};
@@ -1815,6 +1821,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     AuthApi & authentifier;
     ReportMessageApi & report_message;
+    LicenseApi& license_store;
 
     std::string& close_box_extra_message_ref;
 
@@ -1901,6 +1908,8 @@ class mod_rdp : public mod_api, public rdp_api
 
     ModRdpVariables vars;
 
+    bool const accept_monitor_layout_change_if_capture_is_not_started;
+
 #ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
     FileValidatorService * file_validator_service;
@@ -1960,6 +1969,7 @@ public:
       , const ModRDPParams & mod_rdp_params
       , AuthApi & authentifier
       , ReportMessageApi & report_message
+      , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
       , [[maybe_unused]] FileValidatorService * file_validator_service
@@ -1982,6 +1992,7 @@ public:
         , cache_verbose(mod_rdp_params.cache_verbose)
         , authentifier(authentifier)
         , report_message(report_message)
+        , license_store(license_store)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -2027,6 +2038,7 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
+        , accept_monitor_layout_change_if_capture_is_not_started(mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started)
         #ifndef __EMSCRIPTEN__
         , metrics(metrics)
         , file_validator_service(file_validator_service)
@@ -2800,13 +2812,25 @@ public:
                                     monitor_layout_pdu.log(
                                         "Rdp::receiving the server-to-client Monitor Layout PDU");
 
-                                    if (this->monitor_count &&
-                                        (monitor_layout_pdu.get_monitorCount() !=
-                                         this->monitor_count)) {
+                                    if ((monitor_layout_pdu.get_monitorCount() !=
+                                         (this->monitor_count ? this->monitor_count : 1)) &&
+                                        (!this->accept_monitor_layout_change_if_capture_is_not_started || this->front.is_capture_in_progress())) {
 
                                         LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
                                         throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
                                     }
+
+                                    this->front.server_relayout(monitor_layout_pdu);
+
+                                    LOG(LOG_INFO, "Dimension=%s", monitor_layout_pdu.get_dimension());
+
+                                    this->monitor_count = ((monitor_layout_pdu.get_monitorCount() == 1) ? 0 : monitor_layout_pdu.get_monitorCount());
+
+#ifndef __EMSCRIPTEN__
+                                    if (this->channels.session_probe_virtual_channel) {
+                                        this->channels.session_probe_virtual_channel->enable_bogus_refresh_rect_ex_support(this->bogus_refresh_rect && this->monitor_count);
+                                    }
+#endif
                                 }
                                 else {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
@@ -4719,13 +4743,13 @@ public:
         //    "Domain username format 0=(%s) Domain username format 1=(%s)",
         //    domain_username_format_0, domain_username_format_0);
 
-        if (this->disconnect_on_logon_user_change &&
-            ((0 != ::strcasecmp(domain, this->logon_info.domain())
-             || 0 != ::strcasecmp(username, this->logon_info.username())) &&
-             (this->logon_info.domain()[0] ||
-              (0 != ::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
-               0 != ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
-               0 != ::strcasecmp(username, this->logon_info.username()))))) {
+        if (this->disconnect_on_logon_user_change 
+            && ((0 != ::strcasecmp(domain, this->logon_info.domain().c_str())
+             || 0 != ::strcasecmp(username, this->logon_info.username().c_str())) &&
+             (this->logon_info.domain().c_str() ||
+              (0 != ::strcasecmp(domain_username_format_0, this->logon_info.username().c_str()) &&
+               0 != ::strcasecmp(domain_username_format_1, this->logon_info.username().c_str()) &&
+               0 != ::strcasecmp(username, this->logon_info.username().c_str()))))) {
             if (this->error_message) {
                 *this->error_message = "Unauthorized logon user change detected!";
             }
@@ -4737,9 +4761,9 @@ public:
             LOG(LOG_ERR,
                 "Unauthorized logon user change detected on %s (%s%s%s) -> (%s%s%s). "
                     "The session will be disconnected.",
-                this->logon_info.hostname(), this->logon_info.domain(),
-                (*this->logon_info.domain() ? "\\" : ""),
-                this->logon_info.username(), domain,
+                this->logon_info.hostname(), this->logon_info.domain().c_str(),
+                (*this->logon_info.domain().c_str() ? "\\" : ""),
+                this->logon_info.username().c_str(), domain,
                 ((domain && *domain) ? "\\" : ""),
                 username);
             throw Error(ERR_RDP_LOGON_USER_CHANGED);

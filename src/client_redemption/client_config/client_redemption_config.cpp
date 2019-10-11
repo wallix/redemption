@@ -248,6 +248,15 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         cli::option("enable-tls").help("Enable TLS protocol")
         .action(cli::on_off_location(config.modRDPParamsData.enable_tls)),
 
+        cli::option("tls-min-level").help("Minimal TLS protocol level")
+        .action(cli::arg_location(config.modRDPParamsData.tls_min_level)),
+
+        cli::option("tls-max-level").help("Maximal TLS protocol level allowed")
+        .action(cli::arg_location(config.modRDPParamsData.tls_max_level)),
+
+        cli::option("show_common_cipher_list").help("Show TLS Cipher List")
+        .action(cli::on_off_location(config.modRDPParamsData.show_common_cipher_list)),
+
         cli::option("enable-sound").help("Enable sound")
         .action(cli::on_off_location(config.modRDPParamsData.enable_sound)),
 
@@ -618,6 +627,9 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
             "record ", std::to_string(config.is_recording),"\n"
             "tls ", std::to_string(config.modRDPParamsData.enable_tls), "\n"
             "nla ", std::to_string(config.modRDPParamsData.enable_nla), "\n"
+            "tls-min-level ", std::to_string(config.modRDPParamsData.tls_min_level), "\n"
+            "tls-max-level ", std::to_string(config.modRDPParamsData.tls_max_level), "\n"
+            "show_common_cipher_list ", std::to_string(config.modRDPParamsData.show_common_cipher_list), "\n"
             "sound ", std::to_string(config.modRDPParamsData.enable_sound), "\n"
             "console_mode ", std::to_string(config.info.console_session), "\n"
             "remotefx ", std::to_string(config.enable_remotefx), "\n"
@@ -650,6 +662,9 @@ void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
     config.is_recording = false;
     config.modRDPParamsData.enable_tls = true;
     config.modRDPParamsData.enable_nla = true;
+    config.modRDPParamsData.tls_min_level = 0;
+    config.modRDPParamsData.tls_max_level = 0;
+    config.modRDPParamsData.show_common_cipher_list = false;
     config.enable_shared_clipboard = true;
     config.modRDPParamsData.enable_shared_virtual_disk = true;
     config.SHARE_DIR = "/home";
@@ -798,9 +813,19 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                 if (tag == "tls") {
                     config.modRDPParamsData.enable_tls = bool(std::stoi(info));
                 } else
+                if (tag == "tls-min-level") {
+                    config.modRDPParamsData.tls_min_level = std::stoi(info);
+                } else
+                if (tag == "tls-max-level") {
+                    config.modRDPParamsData.tls_max_level = std::stoi(info);
+                } else
                 if (tag == "nla") {
                     config.modRDPParamsData.enable_nla = bool(std::stoi(info));
                 } else
+                if (tag == "show_common_cipher_list") {
+                    config.modRDPParamsData.show_common_cipher_list = bool(std::stoi(info));
+                } else
+
                 if (tag == "sound") {
                     config.modRDPParamsData.enable_sound = bool(std::stoi(info));
                 } else

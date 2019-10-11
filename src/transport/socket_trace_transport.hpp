@@ -64,14 +64,14 @@ public:
         return this->strans.get_public_key();
     }
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level) override
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override
     {
-        return this->strans.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level);
+        return this->strans.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list);
     }
 
-    TlsResult enable_client_tls(ServerNotifier & server_notifier) override
+    TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override
     {
-        return this->strans.enable_client_tls(server_notifier);
+        return this->strans.enable_client_tls(server_notifier, tls_min_level, tls_max_level, show_common_cipher_list);
     }
 
     bool disconnect() override

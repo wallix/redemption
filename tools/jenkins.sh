@@ -25,6 +25,25 @@ if [ $fast -eq 0 ]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi
 
+
+# jsclient (emscripten)
+pushd projects/jsclient
+source ~/emsdk-master/emsdk_set_env.sh
+if [ $fast -eq 0 ]; then
+    rm -rf bin
+fi
+version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
+echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
+if [ ! -d system_include/boost ]; then
+    mkdir -p system_include
+    ln -s /usr/include/boost/ system_include
+fi
+set -o pipefail
+bjam -qj2 toolset=clang-$version debug |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
+set +o pipefail
+popd
+
+
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
@@ -135,19 +154,3 @@ if [ $fast -eq 0 ]; then
     find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
       parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
 fi
-
-
-# jsclient (emscripten)
-cd projects/jsclient
-source ~/emsdk-master/emsdk_set_env.sh
-if [ $fast -eq 0 ]; then
-    rm -rf bin
-fi
-version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
-echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-if [ ! -d system_include/boost ]; then
-    mkdir -p system_include
-    ln -s /usr/include/boost/ system_include
-fi
-set -o pipefail
-bjam -qj2 toolset=clang-$version debug |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'

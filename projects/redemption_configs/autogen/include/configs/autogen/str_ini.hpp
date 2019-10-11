@@ -9,6 +9,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #glyph_cache = 0
 
+# Service must be restarted
+# Warning: the port set in this field must not be already used, otherwise the service will not run.
 # min = 0
 #_iptables
 #_advanced
@@ -217,9 +219,17 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #tls_support = 1
 
-# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2
+# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 # min = 0
 #tls_min_level = 2
+
+# Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# min = 0
+#tls_max_level = 0
+
+# Show common cipher list supported by client and server
+# value: 0 or 1
+#show_common_cipher_list = 0
 
 # Needed to connect with jrdp, based on bogus X224 layer code.
 # value: 0 or 1
@@ -318,7 +328,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Enable front remoteFx
 # value: 0 or 1
 #_advanced
-#front_remotefx = 1
+#enable_remotefx = 1
 
 [mod_rdp]
 
@@ -732,6 +742,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #use_license_store = 1
+
+# Enables support of the remoteFX codec.
+# value: 0 or 1
+#_hidden
+#enable_remotefx = 0
+
+# value: 0 or 1
+#_advanced
+#accept_monitor_layout_change_if_capture_is_not_started = 0
 
 [mod_vnc]
 
@@ -1168,12 +1187,5 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 #_advanced
 #load_theme = 
-
-[context]
-
-# Enables support of the remoteFX codec.
-# value: 0 or 1
-#_advanced
-#remotefx = 0
 
 )gen_config_ini"

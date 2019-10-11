@@ -58,6 +58,12 @@ bool BrowserFront::must_be_stop_capture()
     return false;
 }
 
+bool BrowserFront::is_capture_in_progress() const
+{
+    return false;
+}
+
+
 BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
 {
     if (bool(this->verbose & RDPVerbose::graphics)) {

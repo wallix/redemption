@@ -29,6 +29,8 @@
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
+#include "core/RDP/MonitorLayoutPDU.hpp"
+
 namespace CHANNELS {
     class ChannelDefArray;
     class ChannelDef;
@@ -39,6 +41,7 @@ class FrontAPI : noncopyable
 public:
     virtual bool can_be_start_capture() = 0;
     virtual bool must_be_stop_capture() = 0;
+    virtual bool is_capture_in_progress() const = 0;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
@@ -52,6 +55,8 @@ public:
         remoteapp = 3
     };
     virtual ResizeResult server_resize(ScreenInfo screen_server) = 0;
+
+    virtual void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) { (void)monitor_layout_pdu_ref; }
 
     virtual void update_pointer_position(uint16_t x, uint16_t y) { (void)x; (void)y; }
 

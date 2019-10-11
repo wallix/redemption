@@ -8,13 +8,13 @@ http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
 wget 'https://github.com/juj/emsdk/archive/master.zip' -Oemsdk-master.zip
 unzip emsdk-master.zip
 cd emsdk-master/
-./emsdk install latest
+./emsdk install sdk-1.38.31-64bit
 ```
 
 ## Setting
 
 ```bash
-./emsdk activate latest
+./emsdk activate sdk-1.38.31-64bit
 source ./emsdk_env.sh
 ```
 
@@ -28,8 +28,8 @@ source ./emsdk_set_env.sh
 
 ```bash
 ./emsdk update
-./emsdk install latest
-./emsdk activate latest
+./emsdk install sdk-1.38.31-64bit
+./emsdk activate sdk-1.38.31-64bit
 source ./emsdk_env.sh
 ```
 
@@ -59,7 +59,7 @@ node test.js
 
 ## Configure Emscripten
 
-    source $EMSDK_PATH/emsdk_set_env.sh
+    source $EMSDK_PATH/emsdk_env.sh
 
 
 ## Run bjam
@@ -73,6 +73,9 @@ Or with tests:
 Debug mode:
 
     bjam -j7 toolset=clang debug js_client
+
+If you get some undefined symbol error, solve it as a link error for the main
+project. Rerun `bjam targets.jam`
 
 
 ## Install

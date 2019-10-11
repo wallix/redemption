@@ -74,6 +74,8 @@ namespace cfg {
         struct tls_fallback_legacy;
         struct tls_support;
         struct tls_min_level;
+        struct tls_max_level;
+        struct show_common_cipher_list;
         struct bogus_neg_request;
         struct bogus_user_id;
         struct disable_tsk_switch_shortcuts;
@@ -93,7 +95,7 @@ namespace cfg {
         struct bogus_number_of_fastpath_input_event;
         struct recv_timeout;
         struct enable_osd_4_eyes;
-        struct front_remotefx;
+        struct enable_remotefx;
     };
 
     struct mod_rdp {
@@ -103,6 +105,9 @@ namespace cfg {
         struct extra_orders;
         struct enable_nla;
         struct enable_kerberos;
+        struct tls_min_level;
+        struct tls_max_level;
+        struct show_common_cipher_list;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;
         struct persist_bitmap_cache_on_disk;
@@ -177,6 +182,8 @@ namespace cfg {
         struct server_cert_response;
         struct session_shadowing_support;
         struct use_license_store;
+        struct enable_remotefx;
+        struct accept_monitor_layout_change_if_capture_is_not_started;
     };
 
     struct mod_vnc {
@@ -390,7 +397,6 @@ namespace cfg {
         struct rd_shadow_invitation_id;
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
-        struct remotefx;
     };
 
 } // namespace cfg

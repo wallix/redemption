@@ -58,20 +58,25 @@ public:
     { return this->seqno; }
 
     enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
-    virtual TlsResult enable_client_tls(ServerNotifier & server_notifier)
+    virtual TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         // default enable_tls do nothing
         (void)server_notifier;
+        (void)tls_min_level;
+        (void)tls_max_level;
+        (void)show_common_cipher_list;
         return TlsResult::Fail;
     }
 
     virtual void enable_server_tls(const char * certificate_password,
-        const char * ssl_cipher_list, uint32_t tls_min_level)
+        const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         // default enable_tls do nothing
         (void)certificate_password;
         (void)ssl_cipher_list;
         (void)tls_min_level;
+        (void)tls_max_level;
+        (void)show_common_cipher_list;
     }
 
     virtual array_view_const_u8 get_public_key() const
@@ -231,13 +236,13 @@ struct InTransport
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
-    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier)
+    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
-        return this->t.enable_client_tls(server_notifier);
+        return this->t.enable_client_tls(server_notifier, tls_min_level, tls_max_level, show_common_cipher_list);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
-    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level); }
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
 
     array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
@@ -266,13 +271,13 @@ struct OutTransport
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
-    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier)
+    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
-        return this->t.enable_client_tls(server_notifier);
+        return this->t.enable_client_tls(server_notifier, tls_min_level, tls_max_level, show_common_cipher_list);
     }
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
-    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level); }
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
 
     array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 

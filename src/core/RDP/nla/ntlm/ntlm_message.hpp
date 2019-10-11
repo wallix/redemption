@@ -28,6 +28,7 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/serialize.hpp"
 
 #include "system/ssl_md5.hpp"
 #include "system/ssl_rc4.hpp"
@@ -414,6 +415,7 @@ enum ProductMinorVersion : uint8_t
     WINDOWS_MINOR_VERSION_0 = 0x00,
     WINDOWS_MINOR_VERSION_1 = 0x01,
     WINDOWS_MINOR_VERSION_2 = 0x02,
+    WINDOWS_MINOR_VERSION_3 = 0x03,
 };
 
 enum ProductMajorVersion : uint8_t
@@ -428,13 +430,11 @@ enum NTLMRevisionCurrent : uint8_t
 };
 
 struct NtlmVersion {
-    ::ProductMajorVersion ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-    ::ProductMinorVersion ProductMinorVersion = WINDOWS_MINOR_VERSION_2;
+    uint8_t ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+    uint8_t ProductMinorVersion = WINDOWS_MINOR_VERSION_2;
     uint16_t ProductBuild = 0;
     /* 3 Bytes Reserved */
-    ::NTLMRevisionCurrent NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
-//    bool ignore_version{true};
+    uint8_t NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 };
 
 inline void LogNtlmVersion(const NtlmVersion & self) {
@@ -616,7 +616,7 @@ enum {
 //  NTLM v2 authentication session key generation MUST be supported by both the client and the
 //  DC in order to be used, and extended session security signing and sealing requires support
 //  from the client and the server to be used. An alternate name for this field is
-//  NTLMSSP_NEGOTIATE_LM_KEY.
+//  NTLMSSP_NEGOTIATE_LM_KEY. = 0x00000080, /* G   (24) */
 
     NTLMSSP_NEGOTIATE_LM_KEY = 0x00000080, /* G   (24) */
 
@@ -1136,7 +1136,6 @@ struct NTLMAuthenticateMessage {
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16]{};                      /* 16 Bytes */
-    bool ignore_mic{false};
     bool has_mic{true};
     uint32_t PayloadOffset;
     std::vector<uint8_t> message_bytes_dump;
@@ -1198,7 +1197,7 @@ inline void logNtlmFlags(uint32_t flags)
     for (int i = 0; i < 32; i++) {
         if ((flags >> (31-i)) & 1) {
             const char* str = NTLM_NEGOTIATE_STRINGS[i];
-            LOG(LOG_INFO, "\t%s (%d),", str, (31-i));
+            LOG(LOG_INFO, "    |%s, // (%d)", str, (31-i));
         }
     }
     LOG(LOG_INFO, "}");
@@ -1216,32 +1215,101 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self)
     logNtlmFlags(self.negoFlags.flags);
     
     LogNtlmVersion(self.version);
-    LOG(LOG_DEBUG, "MIC");
+    LOG(LOG_INFO, "MIC");
     hexdump_d(self.MIC, 16);
 }
 
-inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self)
+
+inline void logNTLMAuthenticateMessage(uint32_t negoFlags, 
+                                const NtlmVersion & version,
+                                bytes_view LmChallengeResponse,
+                                bytes_view NtChallengeResponse,
+                                bytes_view DomainName,
+                                bytes_view UserName,
+                                bytes_view Workstation,
+                                bytes_view EncryptedRandomSessionKey,
+                                bytes_view mic,
+                                bytes_view full) 
 {
+    LOG(LOG_INFO, "Field LmChallengeResponse, len: %lu", LmChallengeResponse.size());
+    hexdump_d(LmChallengeResponse);
+    LOG(LOG_INFO, "Field NtChallengeResponse, len: %lu", NtChallengeResponse.size());
+    hexdump_d(NtChallengeResponse);
+    LOG(LOG_INFO, "Field DomainName, len: %lu", DomainName.size());
+    hexdump_d(DomainName);
+    LOG(LOG_INFO, "Field UserName, len: %lu", UserName.size());
+    hexdump_d(UserName);
+    LOG(LOG_INFO, "Field Workstation, len: %lu", Workstation.size());
+    hexdump_d(Workstation);
+    LOG(LOG_INFO, "Field EncryptedRandomSessionKey, len: %lu", EncryptedRandomSessionKey.size());
+    hexdump_d(EncryptedRandomSessionKey);
+    logNtlmFlags(negoFlags);
+    LogNtlmVersion(version);
+    LOG(LOG_INFO, "Field MIC, len: %lu", mic.size());
+    hexdump_d(mic);
+    LOG(LOG_INFO, "Full NTLMAuthenticate Dump, len: %lu", full.size());
+    hexdump_d(full);
+}
+
+
+inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
+                                        NtlmVersion ntlm_version, 
+                                        bytes_view LmChallengeResponse,
+                                        bytes_view NtChallengeResponse,
+                                        bytes_view DomainName,
+                                        bytes_view UserName,
+                                        bytes_view Workstation,
+                                        bytes_view EncryptedRandomSessionKey,
+                                        bool has_mic, size_t & mic_offset)
+{
+
+    bytes_view tmpWorkStation = {Workstation.data(), 
+                (negoFlags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?Workstation.size():0};
+    bytes_view tmpEncryptedRandomSessionKey = {EncryptedRandomSessionKey.data(),
+                (negoFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)?EncryptedRandomSessionKey.size():0};
+    
+    bool negotiate_flag = negoFlags & NTLMSSP_NEGOTIATE_VERSION;
     uint32_t payloadOffset = 12+8+8+8+8+8+8+4
-                            +8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION)
-                            +16*self.has_mic;
+                            +8*negotiate_flag
+                            +16*has_mic;
+
+    size_t message_size = payloadOffset 
+                        + LmChallengeResponse.size()
+                        + NtChallengeResponse.size()
+                        + DomainName.size()
+                        + UserName.size()
+                        + tmpWorkStation.size()
+                        + tmpEncryptedRandomSessionKey.size()
+                        ;
+    if (has_mic) {
+        mic_offset = payloadOffset-16;
+    }
+
+    std::vector<uint8_t> result(message_size);
+    OutStream stream(result);
 
     stream.out_copy_bytes("NTLMSSP\0"_av);
     stream.out_uint32_le(NtlmAuthenticate);
 
-    auto l = {
-         &self.LmChallengeResponse,
-         &self.NtChallengeResponse,
-         &self.DomainName,
-         &self.UserName,
-         &self.Workstation,
-         &self.EncryptedRandomSessionKey};
+    struct TmpNtlmField {
+        uint16_t offset;
+        bytes_view f;
+    };
 
-    for (auto * field: l){
-        stream.out_uint16_le(field->buffer.size());
-        stream.out_uint16_le(field->buffer.size());
+    std::array<TmpNtlmField, 6> l{{
+         {0, LmChallengeResponse},
+         {0, NtChallengeResponse},
+         {0, DomainName},
+         {0, UserName},
+         {0, tmpWorkStation},
+         {0, tmpEncryptedRandomSessionKey}}};
+
+    for (auto field: l){
+        stream.out_uint16_le(field.f.size());
+        stream.out_uint16_le(field.f.size());
         stream.out_uint32_le(payloadOffset);
-        payloadOffset += field->buffer.size();
+        payloadOffset += field.f.size();
+        field.offset = payloadOffset;
     }
 
 // Check that when reading buffer
@@ -1249,37 +1317,34 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 //        // This is some message format error
 //    }
 
-    stream.out_uint32_le(self.negoFlags.flags);
-    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        stream.out_uint8(WINDOWS_MAJOR_VERSION_6);
-        stream.out_uint8(WINDOWS_MINOR_VERSION_1);
-        stream.out_uint16_le(7601);
+    stream.out_uint32_le(negoFlags);
+    if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
+        stream.out_uint8(ntlm_version.ProductMajorVersion);
+        stream.out_uint8(ntlm_version.ProductMinorVersion);
+        stream.out_uint16_le(ntlm_version.ProductBuild);
         stream.out_clear_bytes(3);
-        stream.out_uint8(NTLMSSP_REVISION_W2K3);
+        stream.out_uint8(ntlm_version.NtlmRevisionCurrent);
     }
 
-    if (self.has_mic) {
-        if (self.ignore_mic) {
-            stream.out_clear_bytes(16);
-        }
-        else {
-            stream.out_copy_bytes(self.MIC, 16);
-        }
+
+    if (has_mic) {
+        stream.out_clear_bytes(16);
     }
 
     // PAYLOAD
-    for (auto * field: l){
-        stream.out_copy_bytes(field->buffer);
+    for (auto field: l){
+        stream.out_copy_bytes(field.f);
     }
 
-//    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Sent)");
-//    hexdump_d(stream.get_bytes());
+    return result;
 }
 
-inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
+inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_message) {
 //    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
 //    hexdump_d(stream.remaining_bytes());
 
+    InStream stream(raw_message);
+    NTLMAuthenticateMessage self;
     uint8_t const * pBegin = stream.get_current();
     
     // Read Message Header
@@ -1328,7 +1393,7 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
 
-    // Read Mic is there is a gap between headers and payload
+    // Read Mic if there is a gap between headers and payload
     // TODO: don't we have a flag to know if we should read MIC ?
     self.has_mic = pBegin + min_offset > stream.get_current();
     if (self.has_mic){
@@ -1361,6 +1426,7 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         push_back_array(v, {stream.get_data() + 12+8+8+8+8+8+8+4+8 + 16, stream.get_offset() - (12+8+8+8+8+8+8+4+8 + 16)});
         self.message_bytes_dump = v;
     }
+    return self;
 }
 
 // 2.2.2.3   LM_RESPONSE
@@ -1741,55 +1807,58 @@ public:
 };
 
 
-inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
+inline std::vector<uint8_t> emitTargetInfo(const NtlmAvPairList & avPairList)
 {
-        if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-            self.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            self.version.ProductBuild        = 7601;
-            self.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-        }
+    std::vector<uint8_t> target_info;
+    for (auto & avp: avPairList) {
+        target_info << ::out_uint16_le(avp.id) 
+                    << ::out_uint16_le(avp.data.size())
+                    << avp.data;
+    }
+    target_info << ::out_uint16_le(MsvAvEOL) << std::array<uint8_t,2>{0,0};
+    return target_info;
+}
 
-        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-        stream.out_uint32_le(NtlmChallenge);
 
-        uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
+inline std::vector<uint8_t> emitNtlmVersion(uint8_t major, uint8_t minor, uint16_t build, uint8_t revision)
+{
+    //WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_3, 9600, NTLMSSP_REVISION_W2K3
+    //WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3
+    return std::vector<uint8_t>{} << ::out_uint8(major)
+               << ::out_uint8(minor)
+               << ::out_uint16_le(build)
+               << std::array<uint8_t,3>{0,0,0}
+               << ::out_uint8(revision);
+}
 
-        stream.out_uint16_le(self.TargetName.buffer.size());
-        stream.out_uint16_le(self.TargetName.buffer.size());
-        stream.out_uint32_le(payloadOffset);
-        payloadOffset += self.TargetName.buffer.size();
-        
-        stream.out_uint32_le(self.negoFlags.flags);
-        stream.out_copy_bytes(self.serverChallenge);
-        stream.out_clear_bytes(8);
+inline std::vector<uint8_t> emitNTLMChallengeMessage(bytes_view target_name, bytes_view server_challenge, uint32_t negoFlags, bytes_view ntlm_version, bytes_view target_info)
+{
+    std::vector<uint8_t> result;
 
-        self.TargetInfo.buffer.clear();
-        for (auto & avp: self.AvPairList) {
-            push_back_array(self.TargetInfo.buffer, out_uint16_le(avp.id));
-            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
-            push_back_array(self.TargetInfo.buffer, avp.data);
-        }
-        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
-        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
+    bool ntlm_version_flag = ntlm_version.size()==8;
+    uint32_t payloadOffset = 12+8+4+8+8+8+8*ntlm_version_flag;
 
-        stream.out_uint16_le(self.TargetInfo.buffer.size());
-        stream.out_uint16_le(self.TargetInfo.buffer.size());
-        stream.out_uint32_le(payloadOffset);
+    result << bytes_view{NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE)}
+           << ::out_uint32_le(NtlmChallenge);
+           
+    result << ::out_uint16_le(target_name.size())
+           << ::out_uint16_le(target_name.size())
+           << ::out_uint32_le(payloadOffset);
 
-        if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            stream.out_uint8(self.version.ProductMajorVersion);
-            stream.out_uint8(self.version.ProductMinorVersion);
-            stream.out_uint16_le(self.version.ProductBuild);
-            stream.out_clear_bytes(3);
-            stream.out_uint8(self.version.NtlmRevisionCurrent);
-        }
-        // PAYLOAD
-        stream.out_copy_bytes(self.TargetName.buffer);
-        stream.out_copy_bytes(self.TargetInfo.buffer);
-        
-//        LOG(LOG_INFO, "NTLM Message Challenge Dump (Sent)");
-//        hexdump_d(stream.get_bytes());
+    result << ::out_uint32_le(negoFlags);
+
+    result << server_challenge
+           << std::array<uint8_t,8>{0,0,0,0,0,0,0,0};
+
+    result << ::out_uint16_le(target_info.size())
+           << ::out_uint16_le(target_info.size())
+           << ::out_uint32_le(payloadOffset+target_name.size());
+
+    if (ntlm_version_flag) {
+        result << ntlm_version;
+    }
+    result << target_name << target_info;
+    return result;
 }
 
 
@@ -1853,8 +1922,14 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     self.TargetName.buffer.assign(pBegin + self.TargetName.bufferOffset, 
                          pBegin + self.TargetName.bufferOffset + TargetName_len);
 
+    LOG(LOG_INFO, "Target Name (%u %u)", self.TargetName.bufferOffset, unsigned(self.TargetName.buffer.size()));
+    hexdump_d(self.TargetName.buffer);
+
     self.TargetInfo.buffer.assign(pBegin + self.TargetInfo.bufferOffset, 
                          pBegin + self.TargetInfo.bufferOffset + TargetInfo_len);
+
+    LOG(LOG_INFO, "Target Info (%u %u)", self.TargetInfo.bufferOffset, unsigned(self.TargetInfo.buffer.size()));
+    hexdump_d(self.TargetInfo.buffer);
     
     InStream in_stream(self.TargetInfo.buffer);
     
@@ -2006,7 +2081,7 @@ struct NTLMNegotiateMessage
     NtlmField Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
     
-    std::vector<uint8_t> raw_bytes;
+//    std::vector<uint8_t> raw_bytes;
 };
 
 
@@ -2082,9 +2157,13 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
 
 inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
 {
+    LOG(LOG_INFO, "recvNTLMNegotiateMessage full dump--------------------------------");
+    hexdump_c(av);
+    LOG(LOG_INFO, "recvNTLMNegotiateMessage hexdump end - START PARSING DATA-------------");
+
     InStream stream(av);
     NTLMNegotiateMessage self;
-    self.raw_bytes.assign(av.begin(),av.end());
+//    self.raw_bytes.assign(av.begin(),av.end());
 //    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Recv)");
 //    hexdump_c(stream.remaining_bytes());
     uint8_t const * pBegin = stream.get_current();

@@ -22,6 +22,7 @@
 
 #include "configs/attributes/spec.hpp"
 #include "configs/enumeration.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <stdexcept>
 #include <type_traits>
@@ -278,6 +279,8 @@ namespace detail_
     };
 }
 
+using Names = cfg_attributes::names::f<detail_::Names_>;
+
 
 template<class... Writers>
 struct ConfigSpecWrapper
@@ -287,7 +290,7 @@ struct ConfigSpecWrapper
 private:
     struct InfosBase
     {
-        virtual void apply(type_enumerations& enums, std::pair<Writers&, std::string>&... pws) = 0;
+        virtual void apply(type_enumerations& enums, Names const& names, std::pair<Writers&, std::string>&... pws) = 0;
         virtual ~InfosBase() = default;
     };
 
@@ -299,21 +302,24 @@ private:
         : infos{static_cast<Us&&>(args)...}
         {}
 
-        void apply(type_enumerations& enums, std::pair<Writers&, std::string>&... pws) override
+        void apply(type_enumerations& enums, Names const& names, std::pair<Writers&, std::string>&... pws) override
         {
-            (pws.first.evaluate_member(pws.second, this->infos, enums), ...);
+            (pws.first.evaluate_member(names, pws.second, this->infos, enums), ...);
         }
 
         pack_type<Ts...> infos;
     };
-
-    using Names = cfg_attributes::names::f<detail_::Names_>;
 
     struct Sections
     {
         Names names;
         std::vector<std::string> members_ordered {};
         std::unordered_map<std::string, std::unique_ptr<InfosBase>> members {};
+
+        std::string const& name() const
+        {
+            return names.names[0];
+        }
     };
     std::unordered_map<std::string, Sections> sections;
     std::vector<std::string> sections_ordered;
@@ -362,13 +368,16 @@ public:
         static_assert((is_convertible_v<Ts, cfg_attributes::spec::internal::attr> || ...),
             "spec::attr is missing");
         constexpr bool has_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::connection_policy> || ...);
-        static_assert(
-            has_conn_policy || (is_convertible_v<Ts, cfg_attributes::sesman::internal::io> || ...),
+        constexpr bool has_sesman_io = (is_convertible_v<Ts, cfg_attributes::sesman::internal::io> || ...);
+        static_assert(has_conn_policy || has_sesman_io,
             "sesman::io or connection_policy are missing");
-        static_assert((
-            !((!is_convertible_v<Ts, cfg_attributes::sesman::internal::io>
-            && !is_convertible_v<Ts, cfg_attributes::sesman::connection_policy>) && ...)),
-            "has sesman::io and connection_policy");
+        static_assert(!(has_conn_policy && has_sesman_io),
+            "has sesman::io with connection_policy");
+        static_assert(
+            !(has_conn_policy && (
+             (is_convertible_v<Ts, cfg_attributes::sesman::name> || ...)
+            )),
+            "sesman::name with connection_policy");
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),
             "spec::log_policy is missing");
         static_assert(
@@ -389,8 +398,8 @@ public:
         std::string const& varname = get_elem<cfg_attributes::name_>(u->infos).name;
         auto it = this->section_->members.find(varname);
         if (it != this->section_->members.end()) {
-            throw std::runtime_error("duplicates member '" + varname +
-                "' in section '" + this->section_->names.names[0] + "'");
+            throw std::runtime_error(str_concat("duplicates member '", varname,
+                "' in section '", this->section_->name() + "'"));
         }
         this->section_->members_ordered.push_back(varname);
         this->section_->members.emplace(varname, std::move(u));
@@ -408,12 +417,12 @@ public:
                 }...
             };
 
-            (ws.do_start_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
+            (ws.do_start_section(section.names, static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
             for (std::string const & member_name : section.members_ordered) {
                 section.members.find(member_name)->second
-                    ->apply(this->enums, static_cast<std::pair<Writers&, std::string>&>(pws)...);
+                    ->apply(this->enums, section.names, static_cast<std::pair<Writers&, std::string>&>(pws)...);
             }
-            (ws.do_stop_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
+            (ws.do_stop_section(section.names, static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
         }
 
         auto error_code = 0;

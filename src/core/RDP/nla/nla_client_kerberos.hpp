@@ -101,28 +101,14 @@ private:
             return this->Domain;
         }
 
-        void SetUserFromUtf8(const uint8_t * user)
+        void SetUserFromUtf8(bytes_view user)
         {
-            if (user) {
-                size_t user_len = UTF8Len(user);
-                this->User = std::vector<uint8_t>(user_len * 2);
-                UTF8toUTF16({user, strlen(char_ptr_cast(user))}, this->User.data(), user_len * 2);
-            }
-            else {
-                this->User.clear();
-            }
+            this->User = ::UTF8toUTF16(user);
         }
 
-        void SetDomainFromUtf8(const uint8_t * domain)
+        void SetDomainFromUtf8(bytes_view domain)
         {
-            if (domain) {
-                size_t domain_len = UTF8Len(domain);
-                this->Domain = std::vector<uint8_t>(domain_len * 2);
-                UTF8toUTF16({domain, strlen(char_ptr_cast(domain))}, this->Domain.data(), domain_len * 2);
-            }
-            else {
-                this->Domain.clear();
-            }
+            this->Domain = ::UTF8toUTF16(domain);
         }
 
         void SetPasswordFromUtf8(const uint8_t * password)
@@ -137,7 +123,7 @@ private:
             }
         }
 
-        void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
+        void SetKrbAuthIdentity(bytes_view user, const uint8_t * pass)
         {
             auto copy = [](char (&arr)[256], uint8_t const* data){
                 if (data) {
@@ -148,7 +134,9 @@ private:
                 }
             };
 
-            copy(this->princname, user);
+            
+            memcpy(this->princname, user.data(), (user.size()>=sizeof(this->princname))?user.size():sizeof(this->princname));
+            this->princname[sizeof(this->princname)-1] = 0;
             copy(this->princpass, pass);
         }
 
@@ -236,89 +224,6 @@ private:
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    SEC_STATUS sspi_InitializeSecurityContext(
-        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t> & output_buffer
-    )
-    {
-        OM_uint32 major_status, minor_status;
-
-        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        if (!this->sspi_krb_ctx) {
-            // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
-            this->sspi_krb_ctx = std::make_unique<KERBEROSContext>();
-
-            // Target name (server name, ip ...)
-            if (!this->sspi_get_service_name(pszTargetName, &this->sspi_krb_ctx->target_name)) {
-                return SEC_E_WRONG_PRINCIPAL;
-            }
-        }
-        // else {
-        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
-        // }
-
-        // Token Buffer
-        gss_buffer_desc input_tok, output_tok;
-        output_tok.length = 0;
-        // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
-        //     input_buffer->Buffer.size());
-        input_tok.length = input_buffer.size();
-        input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
-
-        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
-        if (!this->sspi_mech_available(&desired_mech)) {
-            LOG(LOG_ERR, "Desired Mech unavailable");
-            return SEC_E_CRYPTO_SYSTEM_INVALID;
-        }
-// OM_uint32 gss_init_sec_context
-//                  (OM_uint32 ,             /* minor_status */
-//                   const gss_cred_id_t,    /* initiator_cred_handle */
-//                   gss_ctx_id_t ,          /* context_handle */
-//                   const gss_name_t,       /* target_name */
-//                   const gss_OID,          /* mech_type */
-//                   OM_uint32,              /* req_flags */
-//                   OM_uint32,              /* time_req */
-//                   const gss_channel_bindings_t,
-//                                           /* input_chan_bindings */
-//                   const gss_buffer_t,     /* input_token */
-//                   gss_OID ,               /* actual_mech_type */
-//                   gss_buffer_t,           /* output_token */
-//                   OM_uint32 ,             /* ret_flags */
-//                   OM_uint32 *             /* time_rec */
-//                  );
-        major_status = gss_init_sec_context(&minor_status,
-                                            gss_no_cred,
-                                            &this->sspi_krb_ctx->gss_ctx,
-                                            this->sspi_krb_ctx->target_name,
-                                            &desired_mech,
-                                            GSS_C_MUTUAL_FLAG,
-                                            GSS_C_INDEFINITE,
-                                            GSS_C_NO_CHANNEL_BINDINGS,
-                                            &input_tok,
-                                            &this->sspi_krb_ctx->actual_mech,
-                                            &output_tok,
-                                            &this->sspi_krb_ctx->actual_services,
-                                            &this->sspi_krb_ctx->actual_time);
-
-        if (GSS_ERROR(major_status)) {
-            LOG(LOG_INFO, "MAJOR ERROR");
-            this->sspi_report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
-                               major_status, minor_status);
-            return SEC_E_OUT_OF_SEQUENCE;
-        }
-
-        // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
-
-        (void) gss_release_buffer(&minor_status, &output_tok);
-
-        if (major_status & GSS_S_CONTINUE_NEEDED) {
-            // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
-            (void) gss_release_buffer(&minor_status, &input_tok);
-            return SEC_I_CONTINUE_NEEDED;
-        }
-        // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
-        return SEC_I_COMPLETE_NEEDED;
-    }
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
@@ -477,18 +382,10 @@ private:
     Random & rand;
     std::string& extra_message;
     Translation::language_t lang;
+    const bool credssp_verbose;
     const bool verbose;
 
     Transport & trans;
-
-    void credssp_send()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
-        StaticOutStream<65536> ts_request_emit;
-        auto v = emitTSRequest(this->ts_request, this->error_code);
-        ts_request_emit.out_copy_bytes(v);
-        this->trans.send(ts_request_emit.get_bytes());
-    }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
@@ -498,7 +395,7 @@ private:
 
     void credssp_generate_client_nonce() {
         LOG(LOG_INFO, "rdpCredsspClientKerberos::credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH);
+        this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
         this->SavedClientNonce.initialized = true;
         this->credssp_set_client_nonce();
     }
@@ -521,7 +418,7 @@ private:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(this->SavedClientNonce.clientNonce);
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
 
@@ -533,7 +430,7 @@ private:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         this->ServerClientHash.assign(hash, hash + sizeof(hash));
@@ -609,14 +506,6 @@ private:
         return SEC_E_OK;
     }
 
-    void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
-        this->ts_request.negoTokens.clear();
-        this->ts_request.pubKeyAuth.clear();
-        this->ts_request.authInfo.clear();
-        this->ts_request.clientNonce.reset();
-    }
-
     enum class Res : bool { Err, Ok };
 
     struct ClientAuthenticateData
@@ -626,7 +515,7 @@ private:
     };
     ClientAuthenticateData client_auth_data;
 
-    Res sm_credssp_client_authenticate_send()
+    Res authenticate_send()
     {
         /*
          * from tspkg.dll: 0x00000132
@@ -638,98 +527,160 @@ private:
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        SEC_STATUS status = this->sspi_InitializeSecurityContext(
-            bytes_view(this->ServicePrincipalName).as_chars(),
-            this->client_auth_data.input_buffer, /*output*/this->ts_request.negoTokens);
-        if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
-            (status != SEC_I_COMPLETE_NEEDED) &&
-            (status != SEC_E_OK) &&
-            (status != SEC_I_CONTINUE_NEEDED)) {
+        array_view_const_char pszTargetName = bytes_view(this->ServicePrincipalName).as_chars();
+        array_view_const_u8 input_buffer = this->client_auth_data.input_buffer;
+        /*output*/std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
+
+        OM_uint32 major_status, minor_status;
+
+        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
+
+        // Target name (server name, ip ...)
+        if (!this->sspi_get_service_name(pszTargetName, &this->sspi_krb_ctx->target_name)) {
+            // SEC_E_WRONG_PRINCIPAL;
+            LOG(LOG_ERR, "Initialize Security Context Error !");
+            return Res::Err;
+        }
+        // else {
+        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
+        // }
+
+        // Token Buffer
+        gss_buffer_desc input_tok, output_tok;
+        output_tok.length = 0;
+        // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
+        //     input_buffer->Buffer.size());
+        input_tok.length = input_buffer.size();
+        input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
+
+        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
+        if (!this->sspi_mech_available(&desired_mech)) {
+            LOG(LOG_ERR, "Desired Mech unavailable");
+            // SEC_E_CRYPTO_SYSTEM_INVALID;
+            LOG(LOG_ERR, "Initialize Security Context Error !");
+            return Res::Err;
+        }
+// OM_uint32 gss_init_sec_context
+//                  (OM_uint32 ,             /* minor_status */
+//                   const gss_cred_id_t,    /* initiator_cred_handle */
+//                   gss_ctx_id_t ,          /* context_handle */
+//                   const gss_name_t,       /* target_name */
+//                   const gss_OID,          /* mech_type */
+//                   OM_uint32,              /* req_flags */
+//                   OM_uint32,              /* time_req */
+//                   const gss_channel_bindings_t,
+//                                           /* input_chan_bindings */
+//                   const gss_buffer_t,     /* input_token */
+//                   gss_OID ,               /* actual_mech_type */
+//                   gss_buffer_t,           /* output_token */
+//                   OM_uint32 ,             /* ret_flags */
+//                   OM_uint32 *             /* time_rec */
+//                  );
+        major_status = gss_init_sec_context(&minor_status,
+                                            gss_no_cred,
+                                            &this->sspi_krb_ctx->gss_ctx,
+                                            this->sspi_krb_ctx->target_name,
+                                            &desired_mech,
+                                            GSS_C_MUTUAL_FLAG,
+                                            GSS_C_INDEFINITE,
+                                            GSS_C_NO_CHANNEL_BINDINGS,
+                                            &input_tok,
+                                            &this->sspi_krb_ctx->actual_mech,
+                                            &output_tok,
+                                            &this->sspi_krb_ctx->actual_services,
+                                            &this->sspi_krb_ctx->actual_time);
+
+        if (GSS_ERROR(major_status)) {
+            LOG(LOG_INFO, "MAJOR ERROR");
+            this->sspi_report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
+                               major_status, minor_status);
+            // SEC_E_OUT_OF_SEQUENCE;
             LOG(LOG_ERR, "Initialize Security Context Error !");
             return Res::Err;
         }
 
-        this->client_auth_data.input_buffer.clear();
+        // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
+        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
 
-        SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
-        if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
-            (status == SEC_I_COMPLETE_NEEDED) ||
-            (status == SEC_E_OK)) {
-            // have_pub_key_auth = true;
-            encrypted = this->credssp_encrypt_public_key_echo();
-            if (status == SEC_I_COMPLETE_NEEDED) {
-                status = SEC_E_OK;
+        (void) gss_release_buffer(&minor_status, &output_tok);
+
+        if (major_status & GSS_S_CONTINUE_NEEDED) {
+            // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
+            (void) gss_release_buffer(&minor_status, &input_tok);
+            this->client_auth_data.input_buffer.clear();
+            if (this->ts_request.negoTokens.size() > 0) {
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
             }
-            else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
-                status = SEC_I_CONTINUE_NEEDED;
+        }
+        else {
+            // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
+            SEC_STATUS encrypted = this->credssp_encrypt_public_key_echo();
+            this->client_auth_data.input_buffer.clear();
+
+            if (this->ts_request.negoTokens.size() > 0) {
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
             }
-        }
+            else if (encrypted == SEC_E_OK) {
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
+            }
 
-        /* send authentication token to server */
-
-        if (this->ts_request.negoTokens.size() > 0) {
-            // #ifdef WITH_DEBUG_CREDSSP
-            //             LOG(LOG_ERR, "Sending Authentication Token");
-            //             hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
-            // #endif
-            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-
-            this->credssp_send();
-            this->credssp_buffer_free();
-        }
-        else if (encrypted == SEC_E_OK) {
-            this->credssp_send();
-            this->credssp_buffer_free();
-        }
-
-        if (status != SEC_I_CONTINUE_NEEDED) {
             LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
-
             this->client_auth_data.state = ClientAuthenticateData::Final;
-            return Res::Ok;
+            /* receive server response and place in input buffer */
         }
-        /* receive server response and place in input buffer */
-
         return Res::Ok;
     }
 
-    Res sm_credssp_client_authenticate_stop(bytes_view in_data)
-    {
-        /* Encrypted Public Key +1 */
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
-
-        this->ts_request = recvTSRequest(in_data, this->error_code, 6);
-
-        /* Verify Server Public Key Echo */
-
-        SEC_STATUS status = this->credssp_decrypt_public_key_echo();
-        this->credssp_buffer_free();
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "Could not verify public key echo!");
-            this->credssp_buffer_free();
-            return Res::Err;
-        }
-
-        /* Send encrypted credentials */
-
-        status = this->credssp_encrypt_ts_credentials();
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
-            return Res::Err;
-        }
-
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
-
-        this->credssp_send();
-
-        /* Free resources */
-        this->credssp_buffer_free();
-
-
-        return Res::Ok;
-    }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
 
@@ -740,10 +691,10 @@ private:
         if (this->ts_credentials.credType == 1){
             if (this->restricted_admin_mode) {
                 LOG(LOG_INFO, "Restricted Admin Mode");
-                result = emitTSCredentialsPassword({},{}, {});
+                result = emitTSCredentialsPassword({},{}, {}, this->credssp_verbose);
             }
             else {
-                result = emitTSCredentialsPassword(this->identity.get_domain_utf16_av(),this->identity.get_user_utf16_av(),this->identity.get_password_utf16_av());
+                result = emitTSCredentialsPassword(this->identity.get_domain_utf16_av(),this->identity.get_user_utf16_av(),this->identity.get_password_utf16_av(), this->credssp_verbose);
             }
         }
         else {
@@ -756,7 +707,7 @@ private:
             bytes_view readerName;
             bytes_view containerName;
             bytes_view cspName;
-            result = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
+            result = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName, this->credssp_verbose);
         }
         ts_credentials_send.out_copy_bytes(result);
 
@@ -765,15 +716,14 @@ private:
             this->ts_request.authInfo, this->send_seq_num++);
     }
 
-    void set_credentials(uint8_t const* user, uint8_t const* domain,
+private:
+    void set_credentials(bytes_view user, bytes_view domain,
                          uint8_t const* pass, uint8_t const* hostname) {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::set_credentials");
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
         this->SetHostnameFromUtf8(hostname);
-        // hexdump_c(user, strlen((char*)user));
-        // hexdump_c(domain, strlen((char*)domain));
         // hexdump_c(pass, strlen((char*)pass));
         // hexdump_c(hostname, strlen((char*)hostname));
         this->identity.SetKrbAuthIdentity(user, pass);
@@ -781,8 +731,8 @@ private:
 
 public:
     rdpCredsspClientKerberos(OutTransport transport,
-               uint8_t * user,
-               uint8_t * domain,
+               bytes_view user,
+               bytes_view domain,
                uint8_t * pass,
                uint8_t * hostname,
                const char * target_host,
@@ -790,6 +740,7 @@ public:
                Random & rand,
                std::string& extra_message,
                Translation::language_t lang,
+               const bool credssp_verbose = false,
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
@@ -798,6 +749,7 @@ public:
         , rand(rand)
         , extra_message(extra_message)
         , lang(lang)
+        , credssp_verbose(credssp_verbose)
         , verbose(verbose)
         , trans(transport.get_transport())
     {
@@ -828,8 +780,132 @@ public:
         this->client_auth_data.input_buffer.clear();
 
         this->client_auth_data.state = ClientAuthenticateData::Loop;
-        if (Res::Err == this->sm_credssp_client_authenticate_send()){
+        
+        /*
+         * from tspkg.dll: 0x00000132
+         * ISC_REQ_MUTUAL_AUTH
+         * ISC_REQ_CONFIDENTIALITY
+         * ISC_REQ_USE_SESSION_KEY
+         * ISC_REQ_ALLOCATE_MEMORY
+         */
+        //unsigned long const fContextReq
+        
+        //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
+
+        array_view_const_char pszTargetName = bytes_view(this->ServicePrincipalName).as_chars();
+        std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
+
+        OM_uint32 major_status, minor_status;
+
+        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
+        if (!this->sspi_krb_ctx) {
+            // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
+            this->sspi_krb_ctx = std::make_unique<KERBEROSContext>();
+
+            // Target name (server name, ip ...)
+            if (!this->sspi_get_service_name(pszTargetName, &this->sspi_krb_ctx->target_name)) {
+                // SEC_E_WRONG_PRINCIPAL;
+                throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
+            }
+        }
+
+        // Token Buffer
+        gss_buffer_desc input_tok, output_tok;
+        output_tok.length = 0;
+        input_tok.length = 0;
+        input_tok.value = nullptr;
+
+        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
+        if (!this->sspi_mech_available(&desired_mech)) {
+            LOG(LOG_ERR, "Desired Mech unavailable");
+            // SEC_E_CRYPTO_SYSTEM_INVALID;
             throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
+        }
+        major_status = gss_init_sec_context(&minor_status,
+                                            gss_no_cred,
+                                            &this->sspi_krb_ctx->gss_ctx,
+                                            this->sspi_krb_ctx->target_name,
+                                            &desired_mech,
+                                            GSS_C_MUTUAL_FLAG,
+                                            GSS_C_INDEFINITE,
+                                            GSS_C_NO_CHANNEL_BINDINGS,
+                                            &input_tok,
+                                            &this->sspi_krb_ctx->actual_mech,
+                                            &output_tok,
+                                            &this->sspi_krb_ctx->actual_services,
+                                            &this->sspi_krb_ctx->actual_time);
+
+        if (GSS_ERROR(major_status)) {
+            LOG(LOG_INFO, "MAJOR ERROR");
+            this->sspi_report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
+                               major_status, minor_status);
+            // SEC_E_OUT_OF_SEQUENCE;
+            throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
+        }
+
+        // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
+        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
+
+        (void) gss_release_buffer(&minor_status, &output_tok);
+
+        SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
+        status = SEC_E_OK;
+        if (major_status & GSS_S_CONTINUE_NEEDED) {
+            // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
+            (void) gss_release_buffer(&minor_status, &input_tok);
+            status = SEC_I_CONTINUE_NEEDED;
+        }
+        else {
+            // have_pub_key_auth = true;
+            encrypted = this->credssp_encrypt_public_key_echo();
+        }
+        this->client_auth_data.input_buffer.clear();
+
+        /* send authentication token to server */
+        if (this->ts_request.negoTokens.size() > 0) {
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+            StaticOutStream<65536> ts_request_emit;
+            auto v = emitTSRequest(this->ts_request.version,
+                                   this->ts_request.negoTokens,
+                                   this->ts_request.authInfo,
+                                   this->ts_request.pubKeyAuth,
+                                   this->ts_request.error_code,
+                                   this->ts_request.clientNonce.clientNonce,
+                                   this->ts_request.clientNonce.initialized,
+                                   this->credssp_verbose);
+            this->error_code = this->ts_request.error_code;
+            ts_request_emit.out_copy_bytes(v);
+            this->trans.send(ts_request_emit.get_bytes());
+            this->ts_request.negoTokens.clear();
+            this->ts_request.pubKeyAuth.clear();
+            this->ts_request.authInfo.clear();
+            this->ts_request.clientNonce.reset();
+        }
+        else if (encrypted == SEC_E_OK) {
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+            StaticOutStream<65536> ts_request_emit;
+            auto v = emitTSRequest(this->ts_request.version,
+                                   this->ts_request.negoTokens,
+                                   this->ts_request.authInfo,
+                                   this->ts_request.pubKeyAuth,
+                                   this->ts_request.error_code,
+                                   this->ts_request.clientNonce.clientNonce,
+                                   this->ts_request.clientNonce.initialized,
+                                   this->credssp_verbose);
+            this->error_code = this->ts_request.error_code;
+            ts_request_emit.out_copy_bytes(v);
+            this->trans.send(ts_request_emit.get_bytes());
+            this->ts_request.negoTokens.clear();
+            this->ts_request.pubKeyAuth.clear();
+            this->ts_request.authInfo.clear();
+            this->ts_request.clientNonce.reset();
+        }
+
+        if (status != SEC_I_CONTINUE_NEEDED) {
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
+
+            this->client_auth_data.state = ClientAuthenticateData::Final;
         }
     }
 
@@ -840,28 +916,83 @@ public:
         unsetenv("KRB5CCNAME");
     }
 
-    credssp::State credssp_client_authenticate_next(bytes_view in_data)
+    credssp::State authenticate_next(bytes_view in_data)
     {
         switch (this->client_auth_data.state)
         {
             case ClientAuthenticateData::Start:
                 return credssp::State::Err;
+                
             case ClientAuthenticateData::Loop:
+                this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
 
-                this->ts_request = recvTSRequest(in_data, this->error_code, 6);
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
-
-                if (Res::Err == this->sm_credssp_client_authenticate_send()) {
+            
+                if (Res::Err == this->authenticate_send()) {
                     return credssp::State::Err;
                 }
                 return credssp::State::Cont;
+                
             case ClientAuthenticateData::Final:
-                if (Res::Err == this->sm_credssp_client_authenticate_stop(in_data)) {
+            {
+                /* Encrypted Public Key +1 */
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
+
+                this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
+
+                /* Verify Server Public Key Echo */
+
+                SEC_STATUS status = this->credssp_decrypt_public_key_echo();
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
+
+                if (status != SEC_E_OK) {
+                    LOG(LOG_ERR, "Could not verify public key echo!");
+                    LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
+                    this->ts_request.negoTokens.clear();
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
+                    this->ts_request.clientNonce.reset();
                     return credssp::State::Err;
                 }
+
+                /* Send encrypted credentials */
+
+                status = this->credssp_encrypt_ts_credentials();
+
+                if (status != SEC_E_OK) {
+                    LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
+                    return credssp::State::Err;
+                }
+
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
+
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
+                StaticOutStream<65536> ts_request_emit;
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized,
+                                       this->credssp_verbose);
+                this->error_code = this->ts_request.error_code;
+                ts_request_emit.out_copy_bytes(v);
+                this->trans.send(ts_request_emit.get_bytes());
+                this->ts_request.negoTokens.clear();
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
+                this->ts_request.clientNonce.reset();
+
                 this->client_auth_data.state = ClientAuthenticateData::Start;
                 return credssp::State::Finish;
+            }
         }
 
         return credssp::State::Err;

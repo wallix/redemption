@@ -704,7 +704,7 @@ private:
             if (!target_name.empty()) {
                 switch (requested_format_id) {
                     case RDPECLIP::CF_TEXT:
-                    case RDPECLIP::CF_UNICODETEXT:
+                    case RDPECLIP::CF_UNICODETEXT: {
                         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                             if (bool(side_data.clip_text_id)) {
                                 this->file_validator->send_eof(side_data.clip_text_id);
@@ -715,13 +715,22 @@ private:
                                     ? 0u : side_data.clip_text_locale_identifier,
                                 target_name);
                         }
-                        this->file_validator->send_data(
-                            side_data.clip_text_id, original_chunk.remaining_bytes());
+                        uint8_t utf8_buf[32*1024];
+                        auto utf8_av = UTF16toUTF8_buf(
+                            original_chunk.remaining_bytes(),
+                            make_array_view(utf8_buf));
+                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            if (utf8_av.size() > 0 && utf8_av.back() == '\0') {
+                                utf8_av = utf8_av.drop_back(1);
+                            }
+                        }
+                        this->file_validator->send_data(side_data.clip_text_id, utf8_av);
                         if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                             this->file_validator->send_eof(side_data.clip_text_id);
                             side_data.push_clip_text_to_list();
                         }
                         break;
+                    }
                     case RDPECLIP::CF_LOCALE:
                         side_data.clip_text_locale_identifier = original_chunk.in_uint32_le();
                         break;
