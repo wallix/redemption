@@ -422,11 +422,11 @@ namespace X224
         uint16_t len = 0;
     };
 
-    inline Tpkt Tpkt_Recv(InStream & stream);
-    Tpkt Tpkt_Recv(InStream & stream) {
+    inline Tpkt Tpkt_Recv(InStream & stream) {
         uint16_t length = stream.get_capacity();
         if (length < 4){
             LOG(LOG_ERR, "Truncated TPKT: stream=%u", length);
+            throw Error(ERR_X224);
         }
 
         // TPKT
@@ -436,12 +436,13 @@ namespace X224
         if (length < tpkt_len){
             LOG(LOG_ERR, "Truncated TPKT: stream=%u tpkt=%u",
                 length, tpkt_len);
+            throw Error(ERR_X224);
         }
+
         return Tpkt{tpkt_version, tpkt_len};
     }
 
-    inline void Tpkt_Log(const Tpkt & tpkt);
-    void Tpkt_Log(const Tpkt & tpkt) {
+    inline void Tpkt_Log(const Tpkt & tpkt) {
         LOG(LOG_INFO, "Tpkt version=%u len=%u", tpkt.version, tpkt.len);
     }
 
@@ -624,14 +625,12 @@ namespace X224
         uint8_t class_option = 0;
     };
 
-    inline void CR_Header_Log(const CR_Header & header);
-    void CR_Header_Log(const CR_Header & header) {
+    inline void CR_Header_Log(const CR_Header & header) {
         LOG(LOG_INFO, "Connection Request Header: LI=%u code=%u dst_ref=%u src_ref=%u class_option=%u",
             header.LI, header.code, header.dst_ref, header.src_ref, header.class_option);
     }
 
-    inline CR_Header CR_Header_Recv(InStream & stream);
-    CR_Header CR_Header_Recv(InStream & stream)
+    inline CR_Header CR_Header_Recv(InStream & stream)
     {
         /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
         if (!stream.in_check_rem(7)){
@@ -659,13 +658,11 @@ namespace X224
         char data[1024];
     };
 
-    inline void CR_Cookie_Log(const CR_Cookie & cookie);
-    void CR_Cookie_Log(const CR_Cookie & cookie) {
+    inline void CR_Cookie_Log(const CR_Cookie & cookie) {
         LOG(LOG_INFO, "Connection Request cookie: (%zu) '%*s'", cookie.len, int(cookie.len), cookie.data);
     }
 
-    inline CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose);
-    CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose)
+    inline CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose)
     {
         // TODO CGR: we should fix the code here to support routingtoken (or we may have some troubles with load balancing RDP hardware
         CR_Cookie cookie;
@@ -695,8 +692,7 @@ namespace X224
         uint8_t reserved[16]{};
     };
 
-    inline void CR_Cinfo_Log(const CR_Cinfo & cinfo);
-    void CR_Cinfo_Log(const CR_Cinfo & cinfo) {
+    inline void CR_Cinfo_Log(const CR_Cinfo & cinfo) {
         auto & id = cinfo.correlationid;
         LOG(LOG_INFO, "Connection Request Correlation Info: type=%u flags=%.2X"
         " id=[%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X]",
@@ -708,8 +704,7 @@ namespace X224
     }
 
 
-    inline CR_Cinfo CR_Cinfo_Recv(InStream & stream, uint8_t rdp_neg_flags);
-    CR_Cinfo CR_Cinfo_Recv(InStream & stream, uint8_t rdp_neg_flags)
+    inline CR_Cinfo CR_Cinfo_Recv(InStream & stream, uint8_t rdp_neg_flags)
     {
         CR_Cinfo cinfo;
         // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
@@ -745,8 +740,7 @@ namespace X224
 
 
 
-    inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose);
-    CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)
+    inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)
     {
         CR_TPDU_Data x224;
         Tpkt tpkt = Tpkt_Recv(stream);

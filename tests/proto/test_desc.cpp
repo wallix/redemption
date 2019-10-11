@@ -1162,20 +1162,40 @@ namespace test
                 };
             }
 
-            template<class Ctx>
-            static auto make_state(Ctx& ctx)
-            {
-                return State{ctx, tuple<>{}};
-            }
-
-            template<class State, class Data, class... Name>
-            static auto next_state(State& state, lazy_value<Data, Name...>)
+            template<class Ctx, class Data, class... Name>
+            static auto next_state(Ctx& ctx, lazy_value<Data, Name...>)
             {
                 using Next = next_value<
                     proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(state.ctx.params))>...>;
-                return Next::make(state, get_var<Name>(state.ctx.params).value...);
+                    std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...>;
+                return Next::make(ctx, get_var<Name>(ctx.params).value...);
             }
+
+            template<class Ctx>
+            struct group_void_next_state_pred
+            {
+                template<class v>
+                using next_state_is_void = std::is_same<void,
+                    decltype(next_state(std::declval<Ctx&>(), v{}))>;
+
+                template<class v1, class v2>
+                using f = next_state_is_void<v1>;
+            };
+
+            template<class T, class P, class C>
+            using push_back_if = mp::if_<
+                mp::fork<
+                    mp::fork_front<
+                        mp::size<mp::decrement<mp::cfe<mp::at>>>,
+                        mp::cfe<mp::call>>
+                  , P>
+              , mp::push_back<T, C>
+              , C>;
+
+            template<class Values, class Ctx>
+            using group_by_new_mem = mp::call<
+                mp::unpack<mp::group<group_void_next_state_pred<Ctx>>>
+              , Values>;
 
             template<class T, class... Name>
             struct named : T
@@ -1209,11 +1229,11 @@ namespace test
                 }
             };
 
-            template<class State>
-            static auto final(State&& state)
+            template<class Ctx, class... Ts>
+            static auto final(Ctx& /*ctx*/, Ts&&... xs)
             {
                 // TODO sort by alignement ?
-                return tuple_mem<decltype(state.result)>{std::move(state.result)};
+                return tuple_mem<tuple<Ts...>>{{static_cast<Ts&&>(xs)...}};
             }
         };
 
@@ -1277,13 +1297,10 @@ namespace test
             using static_size = static_size_t<read_data<Data>>;
             using context_value_list = mp::list<>;
 
-            template<class St>
-            static auto make(St& state, lazy<Data>)
+            template<class Ctx>
+            static auto make(Ctx& ctx, lazy<Data>)
             {
-                return State{
-                    state.ctx,
-                    tuple_add(state.result, make_mem<Name>(read_data<Data>::read(state.ctx.in)))
-                };
+                return make_mem<Name>(read_data<Data>::read(ctx.in));
             }
         };
 
@@ -1294,14 +1311,11 @@ namespace test
             using static_size = static_size_t<read_data<Data>>;
             using context_value_list = mp::list<>;
 
-            template<class St>
-            static auto make(St& state, val<Data, T&> v)
+            template<class Ctx>
+            static auto make(Ctx& ctx, val<Data, T&> v)
             {
-                v.x = read_data<Data>::read(state.ctx.in);
-                return State{
-                    state.ctx,
-                    tuple_add(state.result, make_mem<Name>(v.x))
-                };
+                v.x = read_data<Data>::read(ctx.in);
+                return make_mem<Name>(v.x);
             }
         };
 
@@ -1318,64 +1332,47 @@ namespace test
             using static_size = static_size_t<read_data<DataSize>>;
             using context_value_list = mp::list<var_size>;
 
-            template<class St>
-            static auto& make(St& state, val<Data, Bytes>&)
+            template<class Ctx>
+            static void make(Ctx& ctx, val<Data, Bytes>&)
             {
-                static_cast<var_size&>(state.ctx.ctx_values).value
-                    = read_data<DataSize>::read(state.ctx.in);
-                return state;
+                static_cast<var_size&>(ctx.ctx_values).value
+                    = read_data<DataSize>::read(ctx.in);
             }
         };
 
-        template<class Name, class Data>
+        inline writable_bytes_view read_data_bytes(
+            InStream& in, writable_bytes_view& bytes, safe_int<std::size_t> n)
+        {
+            bytes = {bytes.data(), n};
+            in.in_copy_bytes(bytes);
+            return bytes;
+        }
+
+        inline bytes_view read_data_bytes(
+            InStream& in, lazy<bytes_view>, safe_int<std::size_t> n)
+        {
+            return in.in_skip_bytes(n.underlying());
+        }
+
+        template<class Name, class Data, class Bytes>
         struct stream_readable2::next_value<
             datas::values::types::Data<as_param>,
-            variable<val<Data, writable_bytes_view>, Name>>
+            variable<val<Data, Bytes>, Name>>
         {
             using static_size = mp::int_<0>;
             using context_value_list = mp::list<>;
 
-            template<class St>
-            static auto make(St& state, val<Data, writable_bytes_view>& v)
+            template<class Ctx>
+            static auto make(Ctx& ctx, val<Data, Bytes>& v)
             {
-                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.ctx.ctx_values).value;
+                auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
 
-                if (state.ctx.unchecked_size < n) {
-                    state.ctx.err();
+                if (ctx.unchecked_size < n) {
+                    ctx.err();
                 }
-                state.ctx.unchecked_size -= n;
+                ctx.unchecked_size -= n;
 
-                v.x = {v.x.data(), std::size_t(n)};
-                state.ctx.in.in_copy_bytes(v.x);
-                return State{
-                    state.ctx,
-                    tuple_add(state.result, make_mem<Name>(writable_bytes_view(v.x)))
-                };
-            }
-        };
-
-        template<class Name, class Data>
-        struct stream_readable2::next_value<
-            datas::values::types::Data<as_param>,
-            variable<val<Data, lazy<bytes_view>>, Name>>
-        {
-            using static_size = mp::int_<0>;
-            using context_value_list = mp::list<>;
-
-            template<class St>
-            static auto make(St& state, val<Data, lazy<bytes_view>>&)
-            {
-                auto n = get_var<datas::values::types::SizeBytes<Name>>(state.ctx.ctx_values).value;
-
-                if (state.ctx.unchecked_size < n) {
-                    state.ctx.err();
-                }
-                state.ctx.unchecked_size -= n;
-
-                return State{
-                    state.ctx,
-                    tuple_add(state.result, make_mem<Name>(state.ctx.in.in_skip_bytes(n)))
-                };
+                return make_mem<Name>(read_data_bytes(ctx.in, v.x, n));
             }
         };
 
@@ -1385,10 +1382,8 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class St, class X>
-            static St& make(St& state, X const&)
-            {
-                return state;
-            }
+            static void make(St&, X const&)
+            {}
         };
 
         template<class V>
@@ -1469,22 +1464,6 @@ namespace test
         }
     };
 
-    namespace detail
-    {
-        template<class Traits, class State>
-        auto recursive_inplace_recv2(State&& state)
-        {
-            return Traits::final(static_cast<State&&>(state));
-        }
-
-        template<class Traits, class State, class V, class... Vs>
-        auto recursive_inplace_recv2(State&& state, V&& v, Vs&&... vs)
-        {
-            // println("  ", type_name<decltype(Traits::next_state(state, v))>());
-            return recursive_inplace_recv2<Traits>(Traits::next_state(state, v), vs...);
-        }
-    }
-
     template<class Params, class Values, class... Xs>
     writable_bytes_view inplace_emit(writable_bytes_view buf, Definition<Params, Values> const&, Xs const&... xs)
     {
@@ -1509,8 +1488,18 @@ namespace test
         //     (println("  ", type_name(vars), " = ", vars.value), ...);
         // });
 
-        return apply(Values{}, [&](auto... v){
-            return detail::recursive_inplace_recv2<Traits>(Traits::make_state(ctx), v...);
+        return apply(Traits::group_by_new_mem<Values, decltype(ctx)>{}, [&](auto... l){
+            return Traits::final(ctx, apply(l, [&](auto... v) {
+                if constexpr (std::is_same_v<void, decltype((Traits::next_state(ctx, v), ...))>)
+                {
+                    (Traits::next_state(ctx, v), ...);
+                    return dummy();
+                }
+                else
+                {
+                    return (Traits::next_state(ctx, v), ...);
+                }
+            })...);
         });
     }
 
@@ -1558,6 +1547,37 @@ struct SSS {
     PROTO_USE_CLASS_NAME(n2::A) e;
 } sss;
 
+
+namespace X224
+{
+    using namespace proto::datas;
+
+    constexpr inline struct Tpkt
+    {
+        PROTO_LOCAL_NAME(version);
+        PROTO_LOCAL_NAME(len);
+    } tpkt;
+
+    inline auto tpdu_error_fn()
+    {
+        return []{
+            throw std::runtime_error("Truncated TPKT: stream=... tpkt=...");
+        };
+    }
+
+    auto tpdu_def = test::definition(
+        tpkt.version = u8,
+        tpkt.len = u16_be
+    );
+
+    inline constexpr auto tdpu_recv = [](InStream& stream, auto const&... xs){
+        return test::inplace_struct(
+            {stream.get_current(), stream.get_data_end()},
+            tpdu_error_fn(),
+            xs...);
+    };
+}
+
 int main()
 {
     struct S {
@@ -1586,9 +1606,9 @@ int main()
         s.c = values::data,
 
         s.size = test::stop(),
-        ss.d = test::stop(),
 
-        sss.e = u16_be
+        sss.e = u16_be,
+        ss.d = test::stop()
     );
 
     auto print_list = [](char const* s, auto l){
@@ -1647,8 +1667,18 @@ int main()
         println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
         println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
 
-        datas.apply([](auto const&... xs) {
-            (println(xs.proto_name(), ": ", xs.proto_value()), ...);
+        auto p = [](auto const& x){
+            if constexpr (std::is_same_v<proto::dummy const&, decltype(x)>)
+            {
+                println("dummy ====");
+            }
+            else
+            {
+                println(x.proto_name(), ": ", x.proto_value());
+            }
+        };
+        datas.apply([&](auto const&... xs) {
+            (p(xs), ...);
         });
     }
 }
