@@ -1,3 +1,9 @@
+redemption (1.1.147a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add extra logs.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 11 Oct 2019 16:51:34 +0200
+
 redemption (1.1.147%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Close encrypted recorded file before rename it.
