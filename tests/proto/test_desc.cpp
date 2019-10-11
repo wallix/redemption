@@ -1177,11 +1177,43 @@ namespace test
                 return Next::make(state, get_var<Name>(state.ctx.params).value...);
             }
 
+            template<class T, class... Name>
+            struct named : T
+            {};
+
+            template<class Name, class T>
+            static T& get_named(named<T, Name>& x)
+            {
+                return x;
+            }
+
+            template<class Name, class T>
+            static T const& get_named(named<T, Name> const& x)
+            {
+                return x;
+            }
+
+            template<class Tuple>
+            struct tuple_mem : Tuple
+            {
+                template<class T>
+                auto& operator[](T const&)
+                {
+                    return get_named<T>(*this);
+                }
+
+                template<class T>
+                auto const& operator[](T const&) const
+                {
+                    return get_named<T>(*this);
+                }
+            };
+
             template<class State>
             static auto final(State&& state)
             {
                 // TODO sort by alignement ?
-                return state.result;
+                return tuple_mem<decltype(state.result)>{std::move(state.result)};
             }
         };
 
@@ -1226,7 +1258,10 @@ namespace test
         template<class Name, class T>
         auto make_mem(T&& x)
         {
-            return typename decltype(Name::mem()(wrap_type<T>()))::type{static_cast<T&&>(x)};
+            return stream_readable2::named<
+                typename decltype(Name::mem()(wrap_type<T>()))::type,
+                Name
+            >{{static_cast<T&&>(x)}};
         }
 
         template<class... Ts, class X>
@@ -1495,10 +1530,33 @@ namespace detail
 using detail::is_list;
 using detail::is_list_v;
 
+namespace n1 {
+    PROTO_CLASS_NAME(A, e);
+
+    template<class T>
+    std::ostream& operator<<(std::ostream& out, A<T> const& x)
+    {
+        return out << x.proto_value();
+    }
+}
+namespace n2 {
+    PROTO_CLASS_NAME(A, e);
+
+    template<class T>
+    std::ostream& operator<<(std::ostream& out, A<T> const& x)
+    {
+        return out << x.proto_value();
+    }
+}
+
 struct SS {
     PROTO_LOCAL_NAME(d);
-    PROTO_LOCAL_NAME(e);
+    PROTO_USE_CLASS_NAME(n1::A) e;
 } ss;
+
+struct SSS {
+    PROTO_USE_CLASS_NAME(n2::A) e;
+} sss;
 
 int main()
 {
@@ -1528,7 +1586,9 @@ int main()
         s.c = values::data,
 
         s.size = test::stop(),
-        ss.d = test::stop()
+        ss.d = test::stop(),
+
+        sss.e = u16_be
     );
 
     auto print_list = [](char const* s, auto l){
@@ -1548,7 +1608,10 @@ int main()
 
     print("\n\ninplace_emit:\n\n");
     std::array<uint8_t, 30> buf {};
-    auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av, s.size = native(), ss.d = native(), ss.e = a);
+    auto out = test::inplace_emit(buf, def,
+        s.b = b, s.a = a, s.c = "plop"_av, s.size = native(),
+        ss.d = native(), ss.e = a,
+        sss.e = b);
     dump(out);
 
     auto error_fn = [](){
@@ -1559,13 +1622,17 @@ int main()
         print("\n\ninplace_recv2:\n");
         char strbuf[10];
         a = '0';
-        auto datas = test::inplace_recv2(out, error_fn, def, s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native(), ss.d = native(), ss.e = native());
+        auto datas = test::inplace_recv2(out, error_fn, def,
+            s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native(),
+            ss.d = native(), ss.e = native(),
+            sss.e = native());
         println("\n", type_name(datas));
         println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
         println("datas.b = ", datas.b, " ", type_name<decltype(datas.b)>());
         println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
         println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
-        println("datas.e = ", std::hex, datas.e, " ", type_name<decltype(datas.e)>());
+        println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
+        println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
         println("a = ", a);
     }
 
@@ -1576,6 +1643,9 @@ int main()
         println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
         println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
         println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+        println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
+        println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
+        println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
 
         datas.apply([](auto const&... xs) {
             (println(xs.proto_name(), ": ", xs.proto_value()), ...);
