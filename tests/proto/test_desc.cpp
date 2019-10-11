@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "mpl/kvasir/mpl/mpl.hpp"
 
+#include <iomanip>
 #include <iostream>
 #include <string_view>
 
@@ -101,6 +102,8 @@ namespace proto
 
     template<class T> struct type_only {};
     template<class T> struct value_only {};
+    struct start_range { using proto_basic_type = start_range; };
+    struct stop_range { using proto_basic_type = stop_range; };
 }
 
 template<class...> struct names {};
@@ -414,6 +417,9 @@ namespace test
     template<class C = mp::identity> using mp_tpl0 = mp::unpack<mp::front<C>>;
     template<class C = mp::identity> using mp_tpl1 = mp::unpack<mp::at1<C>>;
 
+    template<class Params, class Values>
+    struct Definition;
+
     namespace detail
     {
         class discard {};
@@ -422,10 +428,7 @@ namespace test
 
 
         template<class X, class Name>
-        struct value_to_definition_param
-        {
-            using type = discard;
-        };
+        struct value_to_definition_param;
 
         template<class T, class Name>
         struct value_to_definition_param<data<T>, Name>
@@ -439,9 +442,30 @@ namespace test
             using type = param<T, Name>;
         };
 
+        template<template<class...> class Tpl, class Name>
+        struct value_to_definition_param<value_data<Tpl>, Name>
+        {
+            using type = discard;
+        };
+
+        template<class Name>
+        struct value_to_definition_param<start_range, Name>
+        {
+            using type = discard;
+        };
+
+        template<class Name>
+        struct value_to_definition_param<stop_range, Name>
+        {
+            using type = discard;
+        };
+
 
         template<class X, class Name>
-        struct value_to_definition_value
+        struct value_to_definition_value;
+
+        template<class T, class Name>
+        struct value_to_definition_value<type_only<T>, Name>
         {
             using type = discard;
         };
@@ -457,6 +481,19 @@ namespace test
         {
             using type = lazy_value<Tpl<as_param>, Name>;
         };
+
+        template<class Name>
+        struct value_to_definition_value<start_range, Name>
+        {
+            using type = lazy_value<start_range, Name>;
+        };
+
+        template<class Name>
+        struct value_to_definition_value<stop_range, Name>
+        {
+            using type = lazy_value<stop_range, Name>;
+        };
+
 
         template<class V>
         using value_to_definition_value_t = typename detail::value_to_definition_value<
@@ -518,6 +555,25 @@ namespace test
             >...>;
         };
 
+        template<class T>
+        struct flat_sequence_impl
+        {
+            using type = mp::list<T>;
+        };
+
+        template<class... xs>
+        struct flat_sequence_impl<mp::list<xs...>>
+        {
+            using type = mp::call<mp::join<>, typename flat_sequence_impl<xs>::type...>;
+        };
+
+        template<class C>
+        struct flat_sequence
+        {
+            template<class... xs>
+            using f = mp::call<mp::join<C>, typename flat_sequence_impl<xs>::type...>;
+        };
+
         template<class... p>
         struct param_list
         {
@@ -528,13 +584,6 @@ namespace test
             {
                 using list = mp::list<p...>;
             };
-        };
-
-        template<class... ints>
-        struct indexed_tuple
-        {
-            template<class... xs>
-            using f = tuple<indexed<xs, ints>...>;
         };
 
         using mp_lazy_value_names = mp::unpack<mp::pop_front<>>;
@@ -585,6 +634,8 @@ namespace test
         }
     }
 
+    using detail::type_t;
+
 #define PROTO_ERROR_C(name) struct name { template<class... ctx> struct f{}; }
 
     namespace errors
@@ -608,6 +659,16 @@ namespace test
     auto type(data<T> const&)
     {
         return type_only<T>{};
+    }
+
+    inline auto start()
+    {
+        return start_range{};
+    }
+
+    inline auto stop()
+    {
+        return stop_range{};
     }
 
     template<class... Xs>
@@ -815,9 +876,12 @@ namespace test
                 >;
             };
 
-            template<class Params, class Values, class... Xs>
+            template<class Params_, class Values_, class... Xs>
             static auto make_context(writable_bytes_view buf, Xs const&... xs)
             {
+                using Params = mpe::flatten<Params_>;
+                using Values = mpe::flatten<Values_>;
+
                 using tparams = decltype(detail::build_params2<stream_writable, Params>(xs...));
                 using states_list = mp::call<
                     mp::unpack<
@@ -855,10 +919,6 @@ namespace test
             template<class Ctx>
             static auto final(Ctx& ctx)
             {
-                println("ctx: ");
-                ctx.ctx_values.apply([&](auto... xs){
-                    (final_value<decltype(xs)>::make(ctx, xs), ...);
-                });
                 return ctx.out.get_bytes();
             }
         };
@@ -939,30 +999,51 @@ namespace test
         };
 
         template<class DataSize, class Name>
+        using pkt_size_variable = variable<val<DataSize, std::array<uint8_t*, 2>>, Name>;
+
+        template<class DataSize, class Name>
         struct stream_writable::next_value<as_param, variable<datas::types::PktSize<DataSize>, Name>>
         {
-            // TODO automatically write size if packet is static
-            // TODO compute static distance with a static packet
-            using var_size = val<datas::types::PktSize<DataSize>, uint8_t*>;
+            using var_size = pkt_size_variable<DataSize, Name>;
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx>
             static bool make(Ctx& ctx, datas::types::PktSize<DataSize>)
             {
-                static_cast<var_size&>(ctx.ctx_values).x = ctx.out.get_current();
+                static_cast<var_size&>(ctx.ctx_values).value.x[0] = ctx.out.get_current();
                 ctx.out.out_skip_bytes(sizeof(value_type_t<DataSize>));
                 return true;
             }
         };
 
-        template<class DataSize>
-        struct stream_writable::final_value<val<datas::types::PktSize<DataSize>, uint8_t*>>
+        template<class DataSize, class Name>
+        struct stream_writable::next_value<start_range, variable<datas::types::PktSize<DataSize>, Name>>
         {
+            using context_value_list = mp::list<>;
+
             template<class Ctx>
-            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, uint8_t*> const& v)
+            static bool make(Ctx& ctx, datas::types::PktSize<DataSize>)
             {
-                OutStream out({v.x, sizeof(value_type_t<DataSize>)});
-                write_data<DataSize>::write(out, ctx.out.get_current() - ctx.out.get_data());
+                static_cast<pkt_size_variable<DataSize, Name>&>(ctx.ctx_values).value.x[1]
+                    = ctx.out.get_current();
+                return true;
+            }
+        };
+
+        template<class DataSize, class Name>
+        struct stream_writable::next_value<stop_range, variable<datas::types::PktSize<DataSize>, Name>>
+        {
+            // TODO automatically write size if packet is static
+            // TODO compute static distance with a static packet
+            using context_value_list = mp::list<>;
+
+            template<class Ctx>
+            static bool make(Ctx& ctx, datas::types::PktSize<DataSize>)
+            {
+                auto& ptrs = static_cast<pkt_size_variable<DataSize, Name>&>(ctx.ctx_values).value.x;
+                assert(ptrs[1] <= ctx.out.get_current());
+                OutStream out({ptrs[0], sizeof(value_type_t<DataSize>)});
+                write_data<DataSize>::write(out, ctx.out.get_current() - ptrs[1]);
                 return true;
             }
         };
@@ -1379,6 +1460,15 @@ namespace test
     }
 }
 
+namespace detail
+{
+    using mp::list;
+    PROTO_IS_TYPE_VA(list);
+}
+
+using detail::is_list;
+using detail::is_list_v;
+
 int main()
 {
     struct S {
@@ -1386,29 +1476,39 @@ int main()
         PROTO_LOCAL_NAME(b);
         PROTO_LOCAL_NAME(c);
         PROTO_LOCAL_NAME(size);
+        PROTO_LOCAL_NAME(size2);
     } s;
+
+    struct SS {
+        PROTO_LOCAL_NAME(a);
+        PROTO_LOCAL_NAME(b);
+    } ss;
 
     using namespace proto::datas;
 
     auto def = test::definition(
+        ss.a = pkt_size(u16_be),
+        ss.b = u8,
+        ss.a = test::start(),
+
         s.c = test::type(ascii_string(u16_be)),
 
+        s.size = test::start(),
         s.size = pkt_size(u16_be),
 
         s.a = u8,
         s.c = values::size_bytes,
         s.b = u16_le,
-        s.c = values::data
+        s.c = values::data,
+
+        s.size = test::stop(),
+        ss.a = test::stop()
     );
 
-    auto print_list = [](char const* s, auto t){
-        println("  ", s, ":");
-        test::apply(t, [](auto... xs){
-            (println("    ",
-                // mp::call<test::detail::mp_indexed_index_t<>, decltype(xs)>::value, "\t",
-                type_name(xs)
-                // type_name<mp::call<test::detail::mp_indexed_type_t<>, decltype(xs)>>()
-                ), ...);
+    auto print_list = [](char const* s, auto l){
+        print(s, ":\n");
+        test::apply(l, [&](auto... xs){
+            (println("  ", type_name(xs)), ...);
         });
     };
 
@@ -1422,7 +1522,7 @@ int main()
 
     print("\n\ninplace_emit:\n\n");
     std::array<uint8_t, 30> buf {};
-    auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av, s.size = native());
+    auto out = test::inplace_emit(buf, def, s.b = b, s.a = a, s.c = "plop"_av, s.size = native(), ss.a = native(), ss.b = a);
     dump(out);
 
     // auto error_fn = [](){
