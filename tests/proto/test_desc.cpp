@@ -1106,7 +1106,9 @@ namespace test
             using value_variable_builder
                 = value_variable_builder_impl<Data, proto_basic_type_t<Data>>;
 
-            template<class BasicType, class... NamedValues>
+            // TODO next_value<BasicType, variable<V, Names...>...>::type
+            // -> next_value_impl<BasicType, Names...>
+            template<class BasicType, class... Variable>
             struct next_value;
 
             struct reader_impl;
