@@ -1804,7 +1804,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         {'h', "help", "produce help message"},
         {'v', "version", "show software version"},
         {'o', "output-file", &recorder.output_filename, "output base filename"},
-        {'i', "input-file", &recorder.input_filename, "input base filename"},
+        {'i', "input-file", &recorder.input_filename, "mwrm input filename"},
 
         {'H', "hash-path",  &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
         {'M', "mwrm-path",  &recorder.mwrm_path, "mwrm file path"},
