@@ -29,6 +29,8 @@ Author(s): Jonathan Poelen
 #include <iostream>
 #include <string_view>
 
+#define FWD(x) static_cast<decltype(x)&&>(x)
+
 
 template<class T>
 std::string_view type_name()
@@ -1162,6 +1164,7 @@ namespace test
                 };
             }
 
+            // TODO rename to apply_state
             template<class Ctx, class Data, class... Name>
             static auto next_state(Ctx& ctx, lazy_value<Data, Name...>)
             {
@@ -1171,31 +1174,70 @@ namespace test
                 return Next::make(ctx, get_var<Name>(ctx.params).value...);
             }
 
+            template<class EV, class... V>
+            struct grouped_values
+            {
+                using strong_group_members = mp::list<V...>;
+                using volatile_final_members = EV;
+            };
+
+            struct with_empty_group
+            {
+                template<class g, class... gs>
+                using f = grouped_values<g, gs...>;
+            };
+
+            struct without_empty_group
+            {
+                template<class g, class... gs>
+                using f = grouped_values<mp::list<>, gs..., g>;
+            };
+
             template<class Ctx>
             struct group_void_next_state_pred
             {
                 template<class v>
-                using next_state_is_void = std::is_same<void,
+                using state_is_void = std::is_same<void,
                     decltype(next_state(std::declval<Ctx&>(), v{}))>;
 
                 template<class v1, class v2>
-                using f = next_state_is_void<v1>;
+                using f = state_is_void<v1>;
+
+                using split_volatile_final_members = mp::if_<
+                    // <list<v, ..., vn>, gs...> -> state_is_void<vn>
+                    mp::front<
+                        mp::unpack<
+                            mp::fork_front<
+                                mp::size<mp::decrement<mp::cfe<mp::at>>>,
+                                mp::cfe<mp::call, mp::cfe<state_is_void>>
+                            >
+                        >
+                    >,
+                    with_empty_group,
+                    without_empty_group
+                >;
+
+                using grouped = mp::group<
+                    group_void_next_state_pred,
+                    // <g0, g1..., gn> -> split_volatile_final_members::f<gn, g0, g1...>
+                    mp::fork_front<
+                        mp::size<mp::decrement<
+                            mp::fork<
+                                mp::identity,
+                                mp::always<split_volatile_final_members>,
+                                mp::cfe<mp::rotate>
+                            >
+                        >>,
+                        mp::cfe<mp::call>
+                    >
+                >;
             };
 
-            template<class T, class P, class C>
-            using push_back_if = mp::if_<
-                mp::fork<
-                    mp::fork_front<
-                        mp::size<mp::decrement<mp::cfe<mp::at>>>,
-                        mp::cfe<mp::call>>
-                  , P>
-              , mp::push_back<T, C>
-              , C>;
-
             template<class Values, class Ctx>
-            using group_by_new_mem = mp::call<
-                mp::unpack<mp::group<group_void_next_state_pred<Ctx>>>
+            using context_members = mp::call<
+                mp::unpack<typename group_void_next_state_pred<Ctx>::grouped>
               , Values>;
+
 
             template<class T, class... Name>
             struct named : T
@@ -1484,21 +1526,24 @@ namespace test
 
         auto ctx = Traits::make_context<Params, Values>(buf, error, xs...);
 
+        using ctx_mems = Traits::context_members<Values, decltype(ctx)>;
+        using strong_group_members = typename ctx_mems::strong_group_members;
+        using volatile_final_members = typename ctx_mems::volatile_final_members;
+
         // ctx.params.apply([&](auto... vars){
         //     (println("  ", type_name(vars), " = ", vars.value), ...);
         // });
 
-        return apply(Traits::group_by_new_mem<Values, decltype(ctx)>{}, [&](auto... l){
-            return Traits::final(ctx, apply(l, [&](auto... v) {
-                if constexpr (std::is_same_v<void, decltype((Traits::next_state(ctx, v), ...))>)
-                {
-                    (Traits::next_state(ctx, v), ...);
-                    return dummy();
-                }
-                else
-                {
-                    return (Traits::next_state(ctx, v), ...);
-                }
+        auto final = [&](auto&&... xs){
+            apply(volatile_final_members{}, [&](auto... v) {
+                return (Traits::next_state(ctx, v), ...);
+            });
+            return Traits::final(ctx, FWD(xs)...);
+        };
+
+        return apply(strong_group_members{}, [&](auto... l){
+            return final(apply(l, [&](auto... v) {
+                return (Traits::next_state(ctx, v), ...);
             })...);
         });
     }
@@ -1601,18 +1646,13 @@ namespace X224
         value(len, u16_be)
     );
 
-    inline auto tpdu_error_fn()
-    {
-        return []{
-            throw std::runtime_error("Truncated TPKT: stream=... tpkt=...");
-        };
-    }
-
-    inline constexpr auto tdpu_recv = [](InStream& stream){
+    inline constexpr auto tdpu_recv = [](InStream& stream, auto pkt){
         return test::inplace_struct(
             {stream.get_current(), stream.get_data_end()},
-            tpdu_error_fn(),
-            tpkt);
+            []{
+                throw std::runtime_error("Truncated TPKT: stream=... tpkt=...");
+            },
+            pkt);
     };
 }
 
@@ -1706,14 +1746,7 @@ int main()
         println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
 
         auto p = [](auto const& x){
-            if constexpr (std::is_same_v<proto::dummy const&, decltype(x)>)
-            {
-                println("dummy ====");
-            }
-            else
-            {
-                println(x.proto_name(), ": ", x.proto_value());
-            }
+            println(x.proto_name(), ": ", x.proto_value());
         };
         datas.apply([&](auto const&... xs) {
             (p(xs), ...);
