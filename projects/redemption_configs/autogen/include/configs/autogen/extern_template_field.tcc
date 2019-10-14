@@ -23,6 +23,7 @@ template class Inifile::Field<cfg::mod_rdp::enable_nla>;
 template class Inifile::Field<cfg::mod_rdp::enable_kerberos>;
 template class Inifile::Field<cfg::mod_rdp::tls_min_level>;
 template class Inifile::Field<cfg::mod_rdp::tls_max_level>;
+template class Inifile::Field<cfg::mod_rdp::cipher_string>;
 template class Inifile::Field<cfg::mod_rdp::show_common_cipher_list>;
 template class Inifile::Field<cfg::mod_rdp::server_redirection_support>;
 template class Inifile::Field<cfg::mod_rdp::load_balance_info>;

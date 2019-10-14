@@ -141,7 +141,7 @@ public:
         return {this->public_key.get(), this->public_key_length};
     }
 
-    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list)
     {
         SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
 
@@ -174,7 +174,10 @@ public:
         }
 
         // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
-        SSL_CTX_set_cipher_list(ctx, "DEFAULT@SEC_LEVEL=1");
+        // "DEFAULT@SEC_LEVEL=1"
+        if (cipher_string.size() > 0) { // if parameter is not defined, use system default
+            SSL_CTX_set_cipher_list(ctx, cipher_string.c_str());
+        }
 
         SSL* ssl = SSL_new(ctx);
 

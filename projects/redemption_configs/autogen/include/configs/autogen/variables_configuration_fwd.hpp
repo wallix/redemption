@@ -107,6 +107,7 @@ namespace cfg {
         struct enable_kerberos;
         struct tls_min_level;
         struct tls_max_level;
+        struct cipher_string;
         struct show_common_cipher_list;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;

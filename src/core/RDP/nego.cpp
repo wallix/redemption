@@ -50,7 +50,7 @@ RdpNego::RdpNego(
     const bool tls, const char * username, bool nla, bool admin_mode,
     const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
     std::string& extra_message, Translation::language_t lang,
-    uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list,
+    uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list,
     const Verbose verbose)
 : tls(nla || tls)
 , nla(nla)
@@ -69,6 +69,7 @@ RdpNego::RdpNego(
 , lang(lang)
 , tls_min_level(tls_min_level)
 , tls_max_level(tls_max_level)
+, cipher_string(cipher_string)
 , show_common_cipher_list(show_common_cipher_list)
 , verbose(verbose)
 {
@@ -233,18 +234,18 @@ bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifi
                                     (this->nla) ? "NLA" :
                                     (this->tls) ? "TLS" :
                                                   "RDP");
-                this->state = this->recv_connection_confirm(trans, InStream(tpdubuf.current_pdu_buffer()), notifier, tls_min_level, tls_max_level, show_common_cipher_list);
+                this->state = this->recv_connection_confirm(trans, InStream(tpdubuf.current_pdu_buffer()), notifier);
             } while (this->state == State::Negociate && tpdubuf.next(TpduBuffer::PDU));
             return (this->state != State::Final);
 
         case State::SslHybrid:
             LOG(LOG_INFO, "RdpNego::recv_next_data::SslHybrid");
-            this->state = this->activate_ssl_hybrid(trans, notifier, tls_min_level, tls_max_level, show_common_cipher_list);
+            this->state = this->activate_ssl_hybrid(trans, notifier);
             return (this->state != State::Final);
 
         case State::Tls:
             LOG(LOG_INFO, "RdpNego::recv_next_data::TLS");
-            this->state = this->activate_ssl_tls(trans, notifier, tls_min_level, tls_max_level, show_common_cipher_list);
+            this->state = this->activate_ssl_tls(trans, notifier);
             return (this->state != State::Final);
 
         case State::Credssp:
@@ -262,7 +263,7 @@ bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifi
             }
 
             while (this->state == State::Negociate && tpdubuf.next(TpduBuffer::PDU)) {
-                this->state = this->recv_connection_confirm(trans, InStream(tpdubuf.current_pdu_buffer()), notifier, tls_min_level, tls_max_level, show_common_cipher_list);
+                this->state = this->recv_connection_confirm(trans, InStream(tpdubuf.current_pdu_buffer()), notifier);
             }
             return (this->state != State::Final);
 
@@ -273,7 +274,7 @@ bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifi
     REDEMPTION_UNREACHABLE();
 }
 
-RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier)
 {
     LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_connection_confirm");
 
@@ -292,13 +293,13 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
         if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID)
         {
             LOG(LOG_INFO, "activating TLS (HYBRID)");
-            return this->activate_ssl_hybrid(trans, notifier, tls_min_level, tls_max_level, show_common_cipher_list);
+            return this->activate_ssl_hybrid(trans, notifier);
         }
 
         if (x224.rdp_neg_code == X224::PROTOCOL_TLS)
         {
             LOG(LOG_INFO, "activating TLS");
-            return this->activate_ssl_tls(trans, notifier, tls_min_level, tls_max_level, show_common_cipher_list);
+            return this->activate_ssl_tls(trans, notifier);
         }
 
         if (x224.rdp_neg_code == X224::PROTOCOL_RDP)
@@ -352,9 +353,9 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
     return State::Final;
 }
 
-inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list)
 {
-    switch (trans.enable_client_tls(notifier, tls_min_level, tls_max_level, show_common_cipher_list))
+    switch (trans.enable_client_tls(notifier, tls_min_level, tls_max_level, cipher_string, show_common_cipher_list))
     {
         case Transport::TlsResult::WaitExternalEvent: return false;
         case Transport::TlsResult::Want: return false;
@@ -366,15 +367,15 @@ inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, uint
     return true;
 }
 
-RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& notifier)
 {
-    if (!enable_client_tls(trans, notifier, tls_min_level, tls_max_level, show_common_cipher_list)) {
+    if (!enable_client_tls(trans, notifier, this->tls_min_level, this->tls_max_level, this->cipher_string, this->show_common_cipher_list)) {
         return State::Tls;
     }
     return State::Final;
 }
 
-RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
+RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier)
 {
     LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::activate_ssl_hybrid");
 
@@ -382,7 +383,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
     //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
     //     this->restricted_admin_mode = true;
     // }
-    if (!enable_client_tls(trans, notifier, tls_min_level, tls_max_level, show_common_cipher_list)) {
+    if (!enable_client_tls(trans, notifier, this->tls_min_level, this->tls_max_level,  this->cipher_string, this->show_common_cipher_list)) {
         return State::SslHybrid;
     }
 

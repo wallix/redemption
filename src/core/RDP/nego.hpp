@@ -95,6 +95,7 @@ private:
 public:
     uint32_t tls_min_level;
     uint32_t tls_max_level;
+    std::string cipher_string;
     bool show_common_cipher_list;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -113,6 +114,7 @@ public:
         std::string& extra_message, Translation::language_t lang,
         uint32_t tls_min_level,
         uint32_t tls_max_level,
+        std::string cipher_string,
         bool show_common_cipher_list,
         const Verbose verbose = {});
 
@@ -137,11 +139,11 @@ public:
 private:
     State fallback_to_tls(OutTransport trans);
 
-    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list);
+    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier);
 
-    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list);
+    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier);
 
-    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list);
+    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier);
 
     State recv_credssp(OutTransport trans, bytes_view in_data);
 };

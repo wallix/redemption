@@ -150,6 +150,7 @@ void mod_rdp::init_negociate_event_(
 #endif
         mod_rdp_params.tls_min_level,
         mod_rdp_params.tls_max_level,
+        mod_rdp_params.cipher_string,
         mod_rdp_params.show_common_cipher_list
     ))
     .set_timeout(std::chrono::milliseconds(0))

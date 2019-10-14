@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(177);
+constexpr authid_t MAX_AUTHID = authid_t(178);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -36,6 +36,7 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:enable_kerberos"_av,
     "mod_rdp:tls_min_level"_av,
     "mod_rdp:tls_max_level"_av,
+    "mod_rdp:cipher_string"_av,
     "mod_rdp:show_common_cipher_list"_av,
     "mod_rdp:server_redirection_support"_av,
     "mod_rdp:load_balance_info"_av,

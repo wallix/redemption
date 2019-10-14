@@ -1266,6 +1266,13 @@ test-run tests/core/FSCC/test_FileInformation :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/FSCC/FileInformation.hpp
 ;
+test-run tests/core/HTTP/test_http_parser :
+  $(REDEMPTION_TEST_PATH)/core/HTTP/test_http_parser.cpp
+:
+  <library>src/core/HTTP/http_parser.o
+  <covfile>src/core/HTTP/http_parser.cpp
+  <covfile>src/core/HTTP/http_parser.hpp
+;
 test-run tests/core/RDP/caches/test_bmpcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_bmpcache.cpp
 :
@@ -2253,6 +2260,10 @@ test-run tests/core/test_font :
 test-run tests/core/test_front_api :
   $(REDEMPTION_TEST_PATH)/core/test_front_api.cpp
 :
+  <library>crypto
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/front_api.hpp
 ;
 test-run tests/core/test_glyph_to_24_bitmap :
@@ -3600,6 +3611,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
 test-run tests/mod/internal/widget/test_language_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
+  <library>crypto
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -5361,6 +5373,7 @@ obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTIO
 obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpsnd_channel.cpp ;
 obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
+obj src/core/HTTP/http_parser.o : $(REDEMPTION_SRC_PATH)/core/HTTP/http_parser.cpp ;
 obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
@@ -5513,6 +5526,7 @@ alias test_client_rdpsnd_channel : tests/client_redemption/client_channels/test_
 alias test_client_remoteapp_channel : tests/client_redemption/client_channels/test_client_remoteapp_channel ;
 alias test_client_redemption_config : tests/client_redemption/client_config/test_client_redemption_config ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
+alias test_http_parser : tests/core/HTTP/test_http_parser ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
 alias test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister ;
 alias test_brushcache : tests/core/RDP/caches/test_brushcache ;
@@ -5847,6 +5861,7 @@ alias test_client_rdpsnd_channel.coverage : tests/client_redemption/client_chann
 alias test_client_remoteapp_channel.coverage : tests/client_redemption/client_channels/test_client_remoteapp_channel.coverage ;
 alias test_client_redemption_config.coverage : tests/client_redemption/client_config/test_client_redemption_config.coverage ;
 alias test_FileInformation.coverage : tests/core/FSCC/test_FileInformation.coverage ;
+alias test_http_parser.coverage : tests/core/HTTP/test_http_parser.coverage ;
 alias test_bmpcache.coverage : tests/core/RDP/caches/test_bmpcache.coverage ;
 alias test_bmpcachepersister.coverage : tests/core/RDP/caches/test_bmpcachepersister.coverage ;
 alias test_brushcache.coverage : tests/core/RDP/caches/test_brushcache.coverage ;
@@ -6190,6 +6205,9 @@ alias tests/client_redemption/client_config.norec :
 ;
 alias tests/core/FSCC.norec :
   tests/core/FSCC/test_FileInformation
+;
+alias tests/core/HTTP.norec :
+  tests/core/HTTP/test_http_parser
 ;
 alias tests/core/RDP/caches.norec :
   tests/core/RDP/caches/test_bmpcache
@@ -6633,11 +6651,15 @@ alias tests/core/FSCC :
 ;
 alias tests/core :
   tests/core/FSCC
+  tests/core/HTTP
   tests/core/RDP
   tests/core/RDPEA
   tests/core/SMB2
   tests/core/WMF
   tests/core.norec
+;
+alias tests/core/HTTP :
+  tests/core/HTTP.norec
 ;
 alias tests/core/RDP/caches :
   tests/core/RDP/caches.norec
@@ -6790,6 +6812,7 @@ explicit
   tests/client_redemption/client_channels.norec
   tests/client_redemption/client_config.norec
   tests/core/FSCC.norec
+  tests/core/HTTP.norec
   tests/core/RDP/caches.norec
   tests/core/RDP/capabilities.norec
   tests/core/RDP/channels.norec
@@ -6843,6 +6866,7 @@ explicit
   tests/client_redemption/client_config
   tests/core/FSCC
   tests/core
+  tests/core/HTTP
   tests/core/RDP/caches
   tests/core/RDP
   tests/core/RDP/capabilities

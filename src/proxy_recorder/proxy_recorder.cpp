@@ -77,13 +77,14 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
     uint32_t tls_min_level = 0;
     uint32_t tls_max_level = 0;
     bool show_common_cipher_list = false;
+    std::string cipher_string;
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
         this->back_nla_tee_trans, this->timeobj,
         this->host, nla_username.c_str(),
         nla_password.empty() ? "\0" : nla_password.c_str(),
-        enable_kerberos, tls_min_level, tls_max_level, show_common_cipher_list, this->verbosity > 8);
+        enable_kerberos, tls_min_level, tls_max_level, cipher_string, show_common_cipher_list, this->verbosity > 8);
 
     // equivalent to nego_client->send_negotiation_request()
     StaticOutStream<256> back_x224_stream;

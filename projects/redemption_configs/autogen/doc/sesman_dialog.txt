@@ -48,6 +48,8 @@ cfg::mod_rdp::tls_min_level <- mod_rdp:tls_min_level   [unsigned int]
     Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 cfg::mod_rdp::tls_max_level <- mod_rdp:tls_max_level   [unsigned int]
     Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+cfg::mod_rdp::cipher_string <- mod_rdp:cipher_string   [std::string]
+    Tlv1.2 additional ciphers supported by client
 cfg::mod_rdp::show_common_cipher_list <- mod_rdp:show_common_cipher_list   [bool]
     Show common cipher list supported by client and server
 cfg::mod_rdp::server_redirection_support <- mod_rdp:server_redirection_support   [bool]

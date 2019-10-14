@@ -199,6 +199,7 @@ public:
         bool convert_remoteapp_to_desktop,
         uint32_t tls_min_level,
         uint32_t tls_max_level,
+        std::string cipher_string,
         bool show_common_cipher_list
     );
 

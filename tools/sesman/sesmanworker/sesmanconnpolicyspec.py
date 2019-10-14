@@ -15,6 +15,7 @@ cp_spec = {
     u'mod_rdp:enable_kerberos': ('enable_kerberos', False),
     u'mod_rdp:tls_min_level': ('tls_min_level', 0),
     u'mod_rdp:tls_max_level': ('tls_max_level', 0),
+    u'mod_rdp:cipher_string': ('cipher_string', u''),
     u'mod_rdp:show_common_cipher_list': ('show_common_cipher_list', False),
     u'mod_rdp:server_redirection_support': ('server_redirection', False),
     u'mod_rdp:load_balance_info': ('load_balance_info', u''),

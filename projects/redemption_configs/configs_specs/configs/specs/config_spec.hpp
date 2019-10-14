@@ -218,8 +218,6 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls_support", set(true));
         W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(2));
         W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-//        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_accepted_cipher_list", desc{"Show cipher list supported by Bastion RDP server"}, set(false));
-//        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_proposed_cipher_list", desc{"Show cipher list supported by client connecting to Bastion"}, set(false));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
@@ -291,8 +289,7 @@ void config_spec_definition(Writer && W)
         }, set(false));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-//        W.member(advanced_in_gui, rdp_connpolicy, L, type_<bool>(), "show_client_cipher_list", desc{"Show Cipher list sent by bastion"}, set(false));
-//        W.member(advanced_in_gui, rdp_connpolicy, L, type_<bool>(), "show_target_cipher_list", desc{"Show Cipher list accepted by target server"}, set(false));
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "cipher_string", desc{"Tlv1.2 additional ciphers supported by client"});
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the mod side."}, set(true));

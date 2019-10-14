@@ -139,6 +139,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.tls_min_level                       = ini.get<cfg::mod_rdp::tls_min_level>();
     mod_rdp_params.tls_max_level                       = ini.get<cfg::mod_rdp::tls_max_level>();
     mod_rdp_params.show_common_cipher_list             = ini.get<cfg::mod_rdp::show_common_cipher_list>();
+    mod_rdp_params.cipher_string                       = ini.get<cfg::mod_rdp::cipher_string>();
     
     if (!mod_rdp_params.target_password[0]) {
         mod_rdp_params.enable_nla                      = false;
