@@ -176,7 +176,9 @@ public:
         // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
         // "DEFAULT@SEC_LEVEL=1"
         if (cipher_string.size() > 0) { // if parameter is not defined, use system default
+            LOG(LOG_INFO, "TLS Client cipher list: %s", cipher_string.c_str());
             SSL_CTX_set_cipher_list(ctx, cipher_string.c_str());
+            SSL_CTX_set_security_level(ctx, 1);
         }
 
         SSL* ssl = SSL_new(ctx);
