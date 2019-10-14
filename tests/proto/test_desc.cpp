@@ -1548,15 +1548,58 @@ struct SSS {
 } sss;
 
 
+namespace detail
+{
+    template<class T>
+    struct definition_guide
+    {
+        using type = T;
+
+        template<class... xs>
+        definition_guide(xs const&...);
+    };
+
+    template<class... xs>
+    definition_guide(xs const&... vs) -> definition_guide<decltype(test::definition(vs...))>;
+}
+
+#include <boost/preprocessor/list/for_each.hpp>
+#include <boost/preprocessor/variadic/to_list.hpp>
+
+#define PROTO_PACKET_TYPE_value(name, type) static constexpr PROTO_LOCAL_NAME(name);
+#define PROTO_PACKET_TYPE_type(name, type) static constexpr PROTO_LOCAL_NAME(name);
+#define PROTO_PACKET_TYPE_data(name, type)
+
+#define PROTO_PACKET_TYPE_DISPATCH(r, data, elem) PROTO_PACKET_TYPE_##elem
+
+#define PROTO_PACKET_VALUE_value(name_, type_) name_ = type_,
+#define PROTO_PACKET_VALUE_type(name_, type_) name_ = test::type(type_),
+#define PROTO_PACKET_VALUE_data(name_, type_) name_ = type_,
+
+#define PROTO_PACKET_VALUE_DISPATCH(r, name, elem) name().PROTO_PACKET_VALUE_##elem
+
+#define PROTO_PACKET_I(name, list)                                          \
+    struct name {                                                           \
+        BOOST_PP_LIST_FOR_EACH(PROTO_PACKET_TYPE_DISPATCH, _, list)         \
+    };                                                                      \
+    constexpr inline ::proto::tuple<                                        \
+        class name,                                                         \
+        decltype(detail::definition_guide{                                  \
+            BOOST_PP_LIST_FOR_EACH(PROTO_PACKET_VALUE_DISPATCH, name, list) \
+        })::type                                                            \
+    > name
+
+#define PROTO_PACKET(name, ...) PROTO_PACKET_I(name, BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__))
+
+
 namespace X224
 {
     using namespace proto::datas;
 
-    constexpr inline struct Tpkt
-    {
-        PROTO_LOCAL_NAME(version);
-        PROTO_LOCAL_NAME(len);
-    } tpkt;
+    PROTO_PACKET(tpkt,
+        value(version, u8),
+        value(len, u16_be)
+    );
 
     inline auto tpdu_error_fn()
     {
@@ -1565,16 +1608,11 @@ namespace X224
         };
     }
 
-    auto tpdu_def = test::definition(
-        tpkt.version = u8,
-        tpkt.len = u16_be
-    );
-
-    inline constexpr auto tdpu_recv = [](InStream& stream, auto const&... xs){
+    inline constexpr auto tdpu_recv = [](InStream& stream){
         return test::inplace_struct(
             {stream.get_current(), stream.get_data_end()},
             tpdu_error_fn(),
-            xs...);
+            tpkt);
     };
 }
 
