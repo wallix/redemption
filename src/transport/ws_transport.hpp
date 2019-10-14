@@ -45,7 +45,7 @@ protected:
 
     void do_send(const uint8_t * const buffer, size_t len) override;
 
-    TlsResult enable_client_tls(ServerNotifier& server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list) override;
+    TlsResult enable_client_tls(ServerNotifier& server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string const& cipher_string, bool show_common_cipher_list) override;
 
 private:
     class D;

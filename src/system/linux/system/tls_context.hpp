@@ -141,7 +141,7 @@ public:
         return {this->public_key.get(), this->public_key_length};
     }
 
-    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list)
+    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, std::string const& cipher_string, bool show_common_cipher_list)
     {
         SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
 
@@ -368,7 +368,7 @@ public:
     bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
         // reference doc: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_new.html
-        
+
         SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
         this->allocated_ctx = ctx;
         SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER/* | SSL_MODE_ENABLE_PARTIAL_WRITE*/);

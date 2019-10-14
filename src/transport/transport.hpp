@@ -58,7 +58,9 @@ public:
     { return this->seqno; }
 
     enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
-    virtual TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list)
+    virtual TlsResult enable_client_tls(
+        ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level,
+        std::string const& cipher_string, bool show_common_cipher_list)
     {
         // default enable_tls do nothing
         (void)server_notifier;
