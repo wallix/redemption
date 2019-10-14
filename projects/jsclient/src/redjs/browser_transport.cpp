@@ -31,7 +31,7 @@ namespace
 namespace redjs
 {
 
-BrowserTransport::TlsResult BrowserTransport::enable_client_tls(ServerNotifier& /*server_notifier*/, uint32_t /*tls_min_level*/, uint32_t /*tls_max_level*/, bool /*show_common_cipher_list*/)
+BrowserTransport::TlsResult BrowserTransport::enable_client_tls(ServerNotifier& /*server_notifier*/, uint32_t /*tls_min_level*/, uint32_t /*tls_max_level*/, std::string /*cipher_string*/, bool /*show_common_cipher_list*/)
 {
     LOG(LOG_ERR, "BrowserTransport: enable_client_tls is not implemented.");
     return TlsResult::Fail;
