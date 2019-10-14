@@ -69,7 +69,7 @@ public:
         return this->strans.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list);
     }
 
-    TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list) override
+    TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string const& cipher_string, bool show_common_cipher_list) override
     {
         return this->strans.enable_client_tls(server_notifier, tls_min_level, tls_max_level, cipher_string, show_common_cipher_list);
     }
