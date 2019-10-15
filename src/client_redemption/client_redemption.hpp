@@ -38,6 +38,7 @@
 
 #include "mod/internal/replay_mod.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/rdp/rdp_params.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 
 #include "transport/crypto_transport.hpp"

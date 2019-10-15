@@ -39,6 +39,7 @@
 
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/rdp/rdp_params.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channel_list.hpp"
 

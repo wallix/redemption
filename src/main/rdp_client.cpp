@@ -27,6 +27,7 @@
 #include "core/set_server_redirection_target.hpp"
 #include "front/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/rdp/rdp_params.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 #include "program_options/program_options.hpp"
 #include "transport/recorder_transport.hpp"
@@ -243,7 +244,7 @@ int main(int argc, char** argv)
     mod_rdp_params.server_cert_check          = static_cast<ServerCertCheck>(cert_check);
 
     TLSClientParams tls_client_params;
-    
+
     if (verbose > 128) {
         mod_rdp_params.log();
     }

@@ -30,6 +30,7 @@
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/rdp/rdp_params.hpp"
 #include "utils/theme.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"

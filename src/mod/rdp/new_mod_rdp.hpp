@@ -22,7 +22,6 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
-#include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
 
 #include <memory>
@@ -38,7 +37,10 @@ class Transport;
 class RedirectionInfo;
 class Random;
 class RDPMetrics;
+class ModRDPParams;
 class FileValidatorService;
+class TLSClientParams;
+
 namespace gdi { class GraphicApi; }
 
 std::unique_ptr<mod_api> new_mod_rdp(
@@ -52,7 +54,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     TimeObj& timeobj,
     ChannelsAuthorizations channels_authorizations,
     const ModRDPParams& mod_rdp_params,
-    const TLSClientParams& tls_client_params,   
+    const TLSClientParams& tls_client_params,
     AuthApi& authentifier,
     ReportMessageApi& report_message,
     LicenseApi& license_store,
