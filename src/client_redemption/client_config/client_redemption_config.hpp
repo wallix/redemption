@@ -121,16 +121,20 @@ struct ModVNCParamsData
     ModVNCParamsData() = default;
 };
 
+struct TLSClientParamsData
+{
+    uint32_t tls_min_level = 0;
+    uint32_t tls_max_level = 0;
+    bool show_common_cipher_list = false;
+    std::string cipher_string;
+};
+
 struct ModRDPParamsData
 {
     int rdp_width = 0;
     int rdp_height = 0;
     bool enable_tls   = false;
     bool enable_nla   = false;
-    uint32_t tls_min_level = 0;
-    uint32_t tls_max_level = 0;
-    bool show_common_cipher_list = false;
-    std::string cipher_string;
     bool enable_sound = false;
 
     bool enable_shared_virtual_disk = true;
@@ -231,6 +235,7 @@ public:
     std::vector<UserProfil> userProfils;
 
     ModRDPParamsData modRDPParamsData;
+    TLSClientParamsData tls_client_params_data;
     ModVNCParamsData modVNCParamsData;
 
 

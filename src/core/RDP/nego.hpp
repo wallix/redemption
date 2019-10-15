@@ -93,10 +93,7 @@ private:
     State state = State::Negociate;
 
 public:
-    uint32_t tls_min_level;
-    uint32_t tls_max_level;
-    std::string cipher_string;
-    bool show_common_cipher_list;
+    const TLSClientParams & tls_client_params;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -112,10 +109,7 @@ public:
         const bool tls, const char * username, bool nla, bool admin_mode,
         const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
         std::string& extra_message, Translation::language_t lang,
-        uint32_t tls_min_level,
-        uint32_t tls_max_level,
-        std::string cipher_string,
-        bool show_common_cipher_list,
+        const TLSClientParams & tls_client_params,
         const Verbose verbose = {});
 
     ~RdpNego();

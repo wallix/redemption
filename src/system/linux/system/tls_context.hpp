@@ -141,7 +141,7 @@ public:
         return {this->public_key.get(), this->public_key_length};
     }
 
-    bool enable_client_tls_start(int sck, std::string* error_message, uint32_t tls_min_level, uint32_t tls_max_level, std::string const& cipher_string, bool show_common_cipher_list)
+    bool enable_client_tls_start(int sck, std::string* error_message, const TLSClientParams & tls_client_params)
     {
         SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
 
@@ -166,18 +166,18 @@ public:
 
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-        if (tls_min_level){
-            SSL_CTX_set_min_proto_version(ctx, tls_min_level);
+        if (tls_client_params.tls_min_level){
+            SSL_CTX_set_min_proto_version(ctx, tls_client_params.tls_min_level);
         }
-        if (tls_max_level){
-            SSL_CTX_set_max_proto_version(ctx, tls_max_level);
+        if (tls_client_params.tls_max_level){
+            SSL_CTX_set_max_proto_version(ctx, tls_client_params.tls_max_level);
         }
 
         // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
         // "DEFAULT@SEC_LEVEL=1"
-        if (cipher_string.size() > 0) { // if parameter is not defined, use system default
-            LOG(LOG_INFO, "TLS Client cipher list: %s", cipher_string.c_str());
-            SSL_CTX_set_cipher_list(ctx, cipher_string.c_str());
+        if (tls_client_params.cipher_string.size() > 0) { // if parameter is not defined, use system default
+            LOG(LOG_INFO, "TLS Client cipher list: %s", tls_client_params.cipher_string.c_str());
+            SSL_CTX_set_cipher_list(ctx, tls_client_params.cipher_string.c_str());
             SSL_CTX_set_security_level(ctx, 1);
         }
 
@@ -193,7 +193,7 @@ public:
             return tls_ctx_print_error("enable_client_tls", "SSL_set_fd failed", error_message);
         }
 
-        if (show_common_cipher_list){
+        if (tls_client_params.show_common_cipher_list){
             int priority = 0;
             while(1){
                  const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);

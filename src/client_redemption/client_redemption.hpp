@@ -383,10 +383,6 @@ public:
                 mod_rdp_params.device_id                       = "device_id";
                 mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
                 mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
-                mod_rdp_params.tls_min_level                   = this->config.modRDPParamsData.tls_min_level;
-                mod_rdp_params.tls_max_level                   = this->config.modRDPParamsData.tls_max_level;
-                mod_rdp_params.cipher_string                   = this->config.modRDPParamsData.cipher_string;
-                mod_rdp_params.show_common_cipher_list         = this->config.modRDPParamsData.show_common_cipher_list;
                 mod_rdp_params.enable_fastpath                 = true;
                 mod_rdp_params.enable_new_pointer              = true;
                 mod_rdp_params.enable_glyph_cache              = true;
@@ -410,6 +406,12 @@ public:
                         this->config.rDPRemoteAppConfig);
                 }
 
+                TLSClientParams tls_client_params;
+                tls_client_params.tls_min_level                   = this->config.tls_client_params_data.tls_min_level;
+                tls_client_params.tls_max_level                   = this->config.tls_client_params_data.tls_max_level;
+                tls_client_params.cipher_string                   = this->config.tls_client_params_data.cipher_string;
+                tls_client_params.show_common_cipher_list         = this->config.tls_client_params_data.show_common_cipher_list;
+
                 const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
                 this->unique_mod = new_mod_rdp(
@@ -423,6 +425,7 @@ public:
                   , this->timeSystem
                   , channels_authorizations
                   , mod_rdp_params
+                  , tls_client_params
                   , this->authentifier
                   , this->reportMessage
                   , this->licensestore

@@ -52,6 +52,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     TimeObj& timeobj,
     ChannelsAuthorizations channels_authorizations,
     const ModRDPParams& mod_rdp_params,
+    const TLSClientParams& tls_client_params,   
     AuthApi& authentifier,
     ReportMessageApi& report_message,
     LicenseApi& license_store,

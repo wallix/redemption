@@ -242,6 +242,8 @@ int main(int argc, char** argv)
     mod_rdp_params.load_balance_info          = load_balance_info.c_str();
     mod_rdp_params.server_cert_check          = static_cast<ServerCertCheck>(cert_check);
 
+    TLSClientParams tls_client_params;
+    
     if (verbose > 128) {
         mod_rdp_params.log();
     }
@@ -258,7 +260,7 @@ int main(int argc, char** argv)
                 trans, session_reactor, gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, authentifier, report_message, licensestore, ini, nullptr, nullptr);
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, ini, nullptr, nullptr);
         });
     };
 

@@ -34,18 +34,17 @@ class NegoClient
     std::string extra_message;
     Transport & trans;
     RdpNego nego;
-    std::string cipher_string;
 
 public:
     NegoClient(
         bool is_nla, bool is_admin_mode, Transport& trans, TimeObj & timeobj,
         char const* host, char const* target_user, char const* password,
-        bool enable_kerberos, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list, uint64_t verbosity
+        bool enable_kerberos, const TLSClientParams & tls_client_params, uint64_t verbosity
     )
     : trans(trans)
     , nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
         this->random, timeobj, this->extra_message, Translation::EN,
-        tls_min_level, tls_max_level, cipher_string, show_common_cipher_list,
+        tls_client_params,
         to_verbose_flags(verbosity))
     {
         auto [username, domain] = extract_user_domain(target_user);

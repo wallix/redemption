@@ -197,10 +197,7 @@ public:
         LicenseApi& license_store,
         bool has_managed_drive,
         bool convert_remoteapp_to_desktop,
-        uint32_t tls_min_level,
-        uint32_t tls_max_level,
-        std::string cipher_string,
-        bool show_common_cipher_list
+        const TLSClientParams & tls_client_params
     );
 
     void set_program(char const* program, char const* directory) noexcept;

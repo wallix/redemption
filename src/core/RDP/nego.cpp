@@ -50,7 +50,7 @@ RdpNego::RdpNego(
     const bool tls, const char * username, bool nla, bool admin_mode,
     const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
     std::string& extra_message, Translation::language_t lang,
-    uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list,
+    const TLSClientParams & tls_client_params,
     const Verbose verbose)
 : tls(nla || tls)
 , nla(nla)
@@ -67,10 +67,7 @@ RdpNego::RdpNego(
 , lb_info(nullptr)
 , extra_message(extra_message)
 , lang(lang)
-, tls_min_level(tls_min_level)
-, tls_max_level(tls_max_level)
-, cipher_string(cipher_string)
-, show_common_cipher_list(show_common_cipher_list)
+, tls_client_params(tls_client_params)
 , verbose(verbose)
 {
     LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",
@@ -353,9 +350,9 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
     return State::Final;
 }
 
-inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string cipher_string, bool show_common_cipher_list)
+inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, const TLSClientParams & tls_client_params)
 {
-    switch (trans.enable_client_tls(notifier, tls_min_level, tls_max_level, cipher_string, show_common_cipher_list))
+    switch (trans.enable_client_tls(notifier, tls_client_params))
     {
         case Transport::TlsResult::WaitExternalEvent: return false;
         case Transport::TlsResult::Want: return false;
@@ -369,7 +366,7 @@ inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, uint
 
 RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& notifier)
 {
-    if (!enable_client_tls(trans, notifier, this->tls_min_level, this->tls_max_level, this->cipher_string, this->show_common_cipher_list)) {
+    if (!enable_client_tls(trans, notifier, this->tls_client_params)) {
         return State::Tls;
     }
     return State::Final;
@@ -383,7 +380,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
     //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
     //     this->restricted_admin_mode = true;
     // }
-    if (!enable_client_tls(trans, notifier, this->tls_min_level, this->tls_max_level,  this->cipher_string, this->show_common_cipher_list)) {
+    if (!enable_client_tls(trans, notifier, this->tls_client_params)) {
         return State::SslHybrid;
     }
 

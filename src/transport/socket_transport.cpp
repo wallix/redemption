@@ -113,13 +113,13 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
 }
 
-Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string const& cipher_string, bool show_common_cipher_list)
+Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
 {
     switch (this->tls_state) {
         case TLSState::Uninit:
             LOG(LOG_INFO, "Client TLS start");
             this->tls = std::make_unique<TLSContext>();
-            if (!this->tls->enable_client_tls_start(this->sck, this->error_message, tls_min_level, tls_max_level, cipher_string, show_common_cipher_list)) {
+            if (!this->tls->enable_client_tls_start(this->sck, this->error_message, tls_client_params)) {
                 return Transport::TlsResult::Fail;
             }
             this->tls_state = TLSState::Want;
