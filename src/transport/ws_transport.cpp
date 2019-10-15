@@ -48,10 +48,11 @@ enum class WsTransport::State : char
 
 WsTransport::WsTransport(
     const char * name, unique_fd sck, const char *ip_address, int port,
-    std::chrono::milliseconds recv_timeout, UseTls use_tls, Verbose verbose,
-    std::string * error_message)
+    std::chrono::milliseconds recv_timeout, UseTls use_tls, TlsOptions tls_options,
+    Verbose verbose, std::string * error_message)
 : SocketTransport(name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message)
 , state(use_tls == UseTls(false) ? State::HttpHeader : State::StartTls)
+, tls_options(std::move(tls_options))
 {}
 
 size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
@@ -61,7 +62,12 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
     case State::StartTls: {
         // if enable_server_tls fail, state = error
         this->state = State::Error;
-        SocketTransport::enable_server_tls("inquisition", "HIGH:!ADH:!3DES:!SHA", 2, 0, false);
+        SocketTransport::enable_server_tls(
+            this->tls_options.certificate_password.c_str(),
+            this->tls_options.ssl_cipher_list.c_str(),
+            this->tls_options.tls_min_level,
+            this->tls_options.tls_max_level,
+            this->tls_options.show_common_cipher_list);
         this->state = State::HttpHeader;
         [[fallthrough]];
     }
@@ -72,7 +78,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             != http_header.extract({char_ptr_cast(buffer), len})
         ) {
             this->state = State::Error;
-            LOG(LOG_ERR, "partial header");
+            LOG(LOG_ERR, "WebSocket: partial header");
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 

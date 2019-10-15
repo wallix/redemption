@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include <chrono>
-
 #include "transport/socket_transport.hpp"
 
 class WsTransport
@@ -32,10 +30,19 @@ class WsTransport
 public:
     enum UseTls : bool { No, Yes };
 
+    struct TlsOptions
+    {
+        std::string certificate_password {};
+        std::string ssl_cipher_list {};
+        uint32_t tls_min_level {};
+        uint32_t tls_max_level {};
+        bool show_common_cipher_list {};
+    };
+
     WsTransport(
         const char * name, unique_fd sck, const char *ip_address, int port,
-        std::chrono::milliseconds recv_timeout, UseTls use_tls, Verbose verbose,
-        std::string * error_message = nullptr);
+        std::chrono::milliseconds recv_timeout, UseTls use_tls, TlsOptions tls_options,
+        Verbose verbose, std::string * error_message = nullptr);
 
     bool disconnect() override;
 
@@ -55,4 +62,6 @@ private:
     enum class State : char;
 
     State state;
+
+    TlsOptions tls_options;
 };

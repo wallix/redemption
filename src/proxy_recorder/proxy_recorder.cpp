@@ -78,7 +78,7 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
     tls_client_params.tls_min_level = 0;
     tls_client_params.tls_max_level = 0;
     tls_client_params.show_common_cipher_list = false;
-    tls_client_params.cipher_string;
+    // tls_client_params.cipher_string;
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,

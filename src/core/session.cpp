@@ -745,11 +745,17 @@ void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random&
 void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
     session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat,
-        WsTransport::UseTls(false));
+        WsTransport::UseTls(false), WsTransport::TlsOptions());
 }
 
 void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
     session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
-        WsTransport::UseTls(true));
+        WsTransport::UseTls(true), WsTransport::TlsOptions{
+            ini.get<cfg::globals::certificate_password>(),
+            ini.get<cfg::client::ssl_cipher_list>().c_str(),
+            ini.get<cfg::client::tls_min_level>(),
+            ini.get<cfg::client::tls_max_level>(),
+            ini.get<cfg::client::show_common_cipher_list>(),
+        });
 }
