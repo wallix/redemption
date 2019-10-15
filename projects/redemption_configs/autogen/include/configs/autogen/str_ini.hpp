@@ -27,15 +27,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
-# Enable only ws protocol. Wss isn't supported
-# value: 0 or 1
-#_hidden
-#enable_websocket = 0
-
-# ${addr}:${port} or ${port} or ${unix_socket_path}
-#_hidden
-#websocket_addr = :3390
-
 # Time out during RDP handshake stage.
 # (is in second)
 #handshake_timeout = 10
@@ -1067,6 +1058,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 #_hidden
 #sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
+
+[websocket]
+
+# Enable websocket protocol (ws or wss with use_tls=1)
+# value: 0 or 1
+#_hidden
+#enable_websocket = 0
+
+# Use TLS with websocket (wss)
+# value: 0 or 1
+#_hidden
+#use_tls = 1
+
+# ${addr}:${port} or ${port} or ${unix_socket_path}
+#_hidden
+#listen_address = :3390
 
 [debug]
 

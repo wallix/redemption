@@ -85,6 +85,7 @@ void config_spec_definition(Writer && W)
             "ocr",
             "video",
             "crypto",
+            "websocket",
             "debug",
         };
         for (char const * section : sections_name) {
@@ -129,9 +130,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
-
-        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_websocket", set(false), desc{"Enable only ws protocol. Wss isn't supported"});
-        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "websocket_addr", desc{"${addr}:${port} or ${port} or ${unix_socket_path}"}, set(":3390"));
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));
@@ -550,6 +548,13 @@ void config_spec_definition(Writer && W)
             cpp::name{"key0"}, set(default_key));
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, NL, type_<types::fixed_binary<32>>(), "sign_key",
             cpp::name{"key1"}, set(default_key));
+    });
+
+    W.section("websocket", [&]
+    {
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_websocket", set(false), desc{"Enable websocket protocol (ws or wss with use_tls=1)"});
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "use_tls", set(true), desc{"Use TLS with websocket (wss)"});
+        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "listen_address", desc{"${addr}:${port} or ${port} or ${unix_socket_path}"}, set(":3390"));
     });
 
     W.section("remote_program", [&]

@@ -23,14 +23,6 @@ encryptionLevel = option('low', 'medium', 'high', default='low')
 #_advanced
 authfile = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(')
 
-# Enable only ws protocol. Wss isn't supported
-#_hidden
-enable_websocket = boolean(default=False)
-
-# ${addr}:${port} or ${port} or ${unix_socket_path}
-#_hidden
-websocket_addr = string(default=':3390')
-
 # Time out during RDP handshake stage.
 # (is in second)
 handshake_timeout = integer(min=0, default=10)
@@ -904,6 +896,20 @@ encryption_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0
 
 #_hidden
 sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
+
+[websocket]
+
+# Enable websocket protocol (ws or wss with use_tls=1)
+#_hidden
+enable_websocket = boolean(default=False)
+
+# Use TLS with websocket (wss)
+#_hidden
+use_tls = boolean(default=True)
+
+# ${addr}:${port} or ${port} or ${unix_socket_path}
+#_hidden
+listen_address = string(default=':3390')
 
 [debug]
 

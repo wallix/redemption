@@ -245,32 +245,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_AUTHFILE;
     };
-    /// Enable only ws protocol. Wss isn't supported <br/>
-    /// type: bool <br/>
-    /// value{false} <br/>
-    struct globals::enable_websocket {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "globals";
-        static constexpr char const * name = "enable_websocket";
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{false};
-    };
-    /// ${addr}:${port} or ${port} or ${unix_socket_path} <br/>
-    /// type: std::string <br/>
-    /// value = ":3390" <br/>
-    struct globals::websocket_addr {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "globals";
-        static constexpr char const * name = "websocket_addr";
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value = ":3390";
-    };
     /// Time out during RDP handshake stage. <br/>
     /// type: std::chrono::seconds <br/>
     /// value{10} <br/>
@@ -3349,6 +3323,46 @@ namespace cfg {
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
 
+    /// Enable websocket protocol (ws or wss with use_tls=1) <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct websocket::enable_websocket {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "websocket";
+        static constexpr char const * name = "enable_websocket";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// Use TLS with websocket (wss) <br/>
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct websocket::use_tls {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "websocket";
+        static constexpr char const * name = "use_tls";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
+    /// ${addr}:${port} or ${port} or ${unix_socket_path} <br/>
+    /// type: std::string <br/>
+    /// value = ":3390" <br/>
+    struct websocket::listen_address {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "websocket";
+        static constexpr char const * name = "listen_address";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = ":3390";
+    };
+
     /// type: std::string <br/>
     /// value{} <br/>
     struct debug::fake_target_ip {
@@ -5047,7 +5061,6 @@ struct globals
 , cfg::globals::target_application_account
 , cfg::globals::target_application_password
 , cfg::globals::authfile
-, cfg::globals::websocket_addr
 , cfg::globals::handshake_timeout
 , cfg::globals::session_timeout
 , cfg::globals::inactivity_timeout
@@ -5061,7 +5074,6 @@ struct globals
 , cfg::globals::glyph_cache
 , cfg::globals::nomouse
 , cfg::globals::encryptionLevel
-, cfg::globals::enable_websocket
 , cfg::globals::trace_type
 , cfg::globals::listen_address
 , cfg::globals::enable_transparent_mode
@@ -5303,6 +5315,12 @@ struct crypto
 , cfg::crypto::key1
 { static constexpr bool is_section = true; };
 
+struct websocket
+: cfg::websocket::listen_address
+, cfg::websocket::enable_websocket
+, cfg::websocket::use_tls
+{ static constexpr bool is_section = true; };
+
 struct debug
 : cfg::debug::fake_target_ip
 , cfg::debug::config
@@ -5445,6 +5463,7 @@ struct VariablesConfiguration
 , cfg_section::ocr
 , cfg_section::video
 , cfg_section::crypto
+, cfg_section::websocket
 , cfg_section::debug
 , cfg_section::remote_program
 , cfg_section::translation

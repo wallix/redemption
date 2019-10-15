@@ -47,22 +47,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_websocket")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::enable_websocket&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "websocket_addr")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::websocket_addr&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "handshake_timeout")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1744,6 +1728,37 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::crypto::key1&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::fixed_binary>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "websocket")) {
+        if (0) {}
+        else if (0 == strcmp(key, "enable_websocket")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::websocket::enable_websocket&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "use_tls")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::websocket::use_tls&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "listen_address")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::websocket::listen_address&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 av
             );
         }

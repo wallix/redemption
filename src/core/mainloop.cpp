@@ -442,15 +442,18 @@ void redemption_main_loop(
 
     unique_fd sck1 = create_server(s_addr, ini.get<cfg::globals::port>(), enable_transparent_mode);
 
-    if (ini.get<cfg::globals::enable_websocket>())
+    if (ini.get<cfg::websocket::enable_websocket>())
     {
         unique_fd sck2 = create_ws_server(
-            s_addr, ini.get<cfg::globals::websocket_addr>().c_str(), enable_transparent_mode);
+            s_addr, ini.get<cfg::websocket::listen_address>().c_str(), enable_transparent_mode);
         const auto ws_sck = sck2.fd();
+        const bool use_tls = ini.get<cfg::websocket::use_tls>();
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
         {
             auto const socket_type = (ws_sck == sck)
-                ? SocketType::Ws
+                ? use_tls
+                    ? SocketType::Wss
+                    : SocketType::Ws
                 : SocketType::Tls;
             session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, socket_type);
             return true;

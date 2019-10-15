@@ -745,7 +745,7 @@ void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random&
 void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
     session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat,
-        WsTransport::UseTls(true));
+        WsTransport::UseTls(false));
 }
 
 void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)

@@ -24,8 +24,6 @@ namespace cfg {
         struct nomouse;
         struct encryptionLevel;
         struct authfile;
-        struct enable_websocket;
-        struct websocket_addr;
         struct handshake_timeout;
         struct session_timeout;
         struct inactivity_timeout;
@@ -273,6 +271,12 @@ namespace cfg {
     struct crypto {
         struct key0;
         struct key1;
+    };
+
+    struct websocket {
+        struct enable_websocket;
+        struct use_tls;
+        struct listen_address;
     };
 
     struct debug {

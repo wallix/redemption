@@ -221,6 +221,7 @@ cfg::crypto::key0 <- encryption_key   [std::array<unsigned char, 32>]
 cfg::crypto::key1 <- sign_key   [std::array<unsigned char, 32>]
 
 
+
 cfg::remote_program::allow_resize_hosted_desktop <- allow_resize_hosted_desktop   [bool]
 
 cfg::translation::language <- language   [Language]
