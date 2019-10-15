@@ -51,7 +51,7 @@ WsTransport::WsTransport(
     std::chrono::milliseconds recv_timeout, UseTls use_tls, Verbose verbose,
     std::string * error_message)
 : SocketTransport(name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message)
-, state(use_tls ? State::StartTls : State::HttpHeader)
+, state(use_tls == UseTls(false) ? State::HttpHeader : State::StartTls)
 {}
 
 size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
@@ -61,7 +61,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
     case State::StartTls: {
         // if enable_server_tls fail, state = error
         this->state = State::Error;
-        SocketTransport::enable_server_tls("inquisition", "HIGH:!ADH:!3DES:!SHA", 2, 0, true);
+        SocketTransport::enable_server_tls("inquisition", "HIGH:!ADH:!3DES:!SHA", 2, 0, false);
         this->state = State::HttpHeader;
         [[fallthrough]];
     }

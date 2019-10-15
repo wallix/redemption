@@ -104,7 +104,7 @@ private:
 
 public:
 
-    credssp::State state = credssp::State::Cont; 
+    credssp::State state = credssp::State::Cont;
     struct ServerAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
@@ -166,13 +166,13 @@ public:
     array_md5 ServerSigningKey;
 private:
     array_md5 ServerSealingKey;
-    
+
     // uint8_t NtProofStr[16];
 
 public:
     NtlmServer(bool is_domain,
                bool is_server,
-               bytes_view TargetName, 
+               bytes_view TargetName,
                bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
                bytes_view DnsComputerName, bytes_view DnsDomainName,
                bytes_view DnsTreeName,
@@ -186,7 +186,7 @@ public:
                const bool credssp_verbose = false,
                const bool verbose = false)
         : is_domain(is_domain)
-        , is_server(is_server)  
+        , is_server(is_server)
         , avFieldsTags(avFieldsTags.data(),avFieldsTags.data()+avFieldsTags.size())
         , TargetName(TargetName.data(), TargetName.data()+TargetName.size())
         , netbiosComputerName(NetbiosComputerName.data(), NetbiosComputerName.data()+NetbiosComputerName.size())
@@ -240,7 +240,7 @@ public:
                     TSRequest ts_request = recvTSRequest(in_data, this->credssp_verbose);
                     // Check error codes in recvTSRequest
                     this->SavedNegotiateMessage = std::move(ts_request.negoTokens);
-                    this->SavedChallengeMessage = std::move(this->prepare_challenge(this->SavedNegotiateMessage));
+                    this->SavedChallengeMessage = this->prepare_challenge(this->SavedNegotiateMessage);
 
                     this->ntlm_state = NTLM_STATE_AUTHENTICATE;
                     this->error_code = 0;
@@ -258,7 +258,7 @@ public:
                 {
                     /* receive authentication token */
                     TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_verbose);
-                                        
+
                     this->error_code = ts_request_in.error_code;
 
                     // unsigned long const fContextReq = 0
@@ -322,8 +322,8 @@ public:
                     // =======================================================
 
                     if (authenticate.has_mic) {
-                        array_md5 MessageIntegrityCheck = HmacMd5(ExportedSessionKey, 
-                                                        this->SavedNegotiateMessage, 
+                        array_md5 MessageIntegrityCheck = HmacMd5(ExportedSessionKey,
+                                                        this->SavedNegotiateMessage,
                                                         this->SavedChallengeMessage,
                                                         authenticate.get_bytes());
 
@@ -491,7 +491,7 @@ public:
 
                     this->server_auth_data.state = ServerAuthenticateData::Final;
                     this->state = credssp::State::Cont;
-                    return result;                    
+                    return result;
                 }
 
                 default:
@@ -561,7 +561,7 @@ public:
         this->server_auth_data.state = ServerAuthenticateData::Start;
         this->state = credssp::State::Finish;
         return {};
-    }    
+    }
 
     std::vector<uint8_t> prepare_challenge(bytes_view raw_negotiate_message)
     {
@@ -570,7 +570,7 @@ public:
         // Perform some sanity checks on negotiate_message
         // TODO: mandatory flags expected for negotiate message
         // NTLMSSP_REQUEST_TARGET|NTLMSSP_NEGOTIATE_NTLM|NTLMSSP_NEGOTIATE_ALWAYS_SIGN|NTLMSSP_NEGOTIATE_UNICODE;
-        
+
         rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
 
 
@@ -585,7 +585,7 @@ public:
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
         }
         else {
-            const timeval tv = timeobj.get_time();  
+            const timeval tv = timeobj.get_time();
             OutStream out_stream(this->Timestamp);
             out_stream.out_uint32_le(tv.tv_usec);
             out_stream.out_uint32_le(tv.tv_sec);
@@ -597,13 +597,13 @@ public:
             challenge_message.version = NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3};
         }
 
-        if (!ignore_bogus_nego_flags 
+        if (!ignore_bogus_nego_flags
         && (negoFlags & NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY)
         && (negoFlags & NTLMSSP_NEGOTIATE_LM_KEY)) {
             negoFlags ^= NTLMSSP_NEGOTIATE_LM_KEY;
         }
 
-        if (!ignore_bogus_nego_flags 
+        if (!ignore_bogus_nego_flags
         && (negoFlags & NTLMSSP_NEGOTIATE_UNICODE)
         && (negoFlags & NTLMSSP_NEGOTIATE_OEM)) {
             negoFlags ^= NTLMSSP_NEGOTIATE_OEM;
@@ -627,8 +627,8 @@ public:
         // NTLM: construct challenge target info
         // WIN7
         if (this->avFieldsTags.size() == 0){
-            this->avFieldsTags = {MsvAvNbComputerName, MsvAvNbDomainName, 
-                                  MsvAvDnsComputerName, MsvAvDnsDomainName, 
+            this->avFieldsTags = {MsvAvNbComputerName, MsvAvNbDomainName,
+                                  MsvAvDnsComputerName, MsvAvDnsDomainName,
                                   MsvAvDnsTreeName, MsvAvFlags, MsvAvTimestamp,
                                   MsvAvSingleHost, MsvAvTargetName, MsvChannelBindings
                                   };

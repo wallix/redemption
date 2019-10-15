@@ -46,11 +46,8 @@ class rdpCredsspServerKerberos final
     ClientNonce SavedClientNonce;
 
     array_view_u8 public_key;
-    Random & rand;
-    TimeObj & timeobj;
     std::string& extra_message;
     Translation::language_t lang;
-    bool restricted_admin_mode;
     const bool credssp_verbose;
     const bool verbose;
 
@@ -207,7 +204,7 @@ class rdpCredsspServerKerberos final
         // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
         SEC_STATUS AcquireCredentialsHandle(
             const char * pszPrincipal, std::vector<uint8_t> * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
-        ) 
+        )
         {
             if (pszPrincipal && pvLogonID) {
                 size_t length = strlen(pszPrincipal);
@@ -428,7 +425,7 @@ class rdpCredsspServerKerberos final
 
         // GSS_Wrap
         // ENCRYPT_MESSAGE EncryptMessage;
-        SEC_STATUS EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) 
+        SEC_STATUS EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo)
         {
             (void)MessageSeqNo;
             // OM_uint32 KRB5_CALLCONV
@@ -469,7 +466,7 @@ class rdpCredsspServerKerberos final
 
         // GSS_Unwrap
         // DECRYPT_MESSAGE DecryptMessage;
-        SEC_STATUS DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) 
+        SEC_STATUS DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo)
         {
             (void)MessageSeqNo;
 
@@ -658,11 +655,8 @@ public:
                const bool credssp_verbose = false,
                const bool verbose = false)
         : public_key(key)
-        , rand(rand)
-        , timeobj(timeobj)
         , extra_message(extra_message)
         , lang(lang)
-        , restricted_admin_mode(restricted_admin_mode)
         , credssp_verbose(credssp_verbose)
         , verbose(verbose)
     {

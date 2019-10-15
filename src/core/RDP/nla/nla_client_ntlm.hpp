@@ -37,9 +37,8 @@
 class rdpClientNTLM
 {
     static constexpr uint32_t cbMaxSignature = 16;
-private:
-    int recv_seq_num = 0;
 
+private:
     TSCredentials ts_credentials;
 
     ClientNonce SavedClientNonce;
@@ -81,22 +80,22 @@ private:
 
     public:
     credssp::State state;
-    
+
     private:
     enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
 
     auto CryptAndSign(SslRC4 & rc4, uint32_t mseqno, bytes_view payload) -> std::vector<uint8_t>
     {
-    
+
         auto ClientSigningKey = ::Md5(this->ExportedSessionKey,
             "session key to client-to-server signing key magic constant\0"_av);
 
         std::array<uint8_t,4> seqno;
         OutStream stream_sq(seqno);
         stream_sq.out_uint32_le(mseqno);
-        
+
         auto encrypted_pubkey = Rc4CryptVector(rc4, payload);
-        
+
         /* Concatenate version, ciphertext and sequence number to build signature */
         std::array<uint8_t, 16> signature;
         OutStream stream(signature);
@@ -105,10 +104,9 @@ private:
         // We only keep half of MD5 for signature
         stream.out_copy_bytes(Rc4Crypt<8>(rc4, {digest.data(), 8}));
         stream.out_uint32_le(mseqno);
-        
-        return std::vector<uint8_t>{} << signature << encrypted_pubkey;
-    };
 
+        return std::vector<uint8_t>{} << signature << encrypted_pubkey;
+    }
 
 public:
     rdpClientNTLM(bytes_view user,
@@ -183,12 +181,12 @@ public:
                     LOG(LOG_INFO, "Client Random Challenge {0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x}",
                         ClientChallenge[0], ClientChallenge[1], ClientChallenge[2], ClientChallenge[3],
                         ClientChallenge[4], ClientChallenge[5], ClientChallenge[6], ClientChallenge[7]
-                    );                
+                    );
                 }
                 // NTLMv2_Client_Challenge = { 0x01, 0x01, Zero(6), Time, ClientChallenge, Zero(4), ServerName , Zero(4) }
                 // Zero(n) = { 0x00, ... , 0x00 } n times
                 // ServerName = AvPairs received in Challenge message
-                auto NTLMv2_Client_Challenge = std::vector<uint8_t>{} 
+                auto NTLMv2_Client_Challenge = std::vector<uint8_t>{}
                      << std::array<uint8_t,8>{1, 1, 0, 0, 0, 0, 0, 0}
                      << out_uint32_le(tv.tv_usec) << out_uint32_le(tv.tv_sec)
                      << bytes_view({ClientChallenge.data(), 8})
@@ -204,7 +202,7 @@ public:
                 // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain), Concat(ServerChallenge, ClientChallenge))
                 // LmChallengeResponse.ChallengeFromClient = ClientChallenge
                 auto LmChallengeResponse = std::vector<uint8_t>{}
-                    << compute_LMv2_Response(ResponseKeyLM, server_challenge.serverChallenge, ClientChallenge) 
+                    << compute_LMv2_Response(ResponseKeyLM, server_challenge.serverChallenge, ClientChallenge)
                     << ClientChallenge;
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
@@ -266,7 +264,7 @@ public:
                                                             this->savedNegotiateMessage,
                                                             server_challenge.raw_bytes,
                                                             auth_message);
-                    memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size()); 
+                    memcpy(auth_message.data()+mic_offset, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }
 
                 if (this->verbose) {
@@ -279,7 +277,7 @@ public:
                                 this->Workstation,
                                 AuthEncryptedRSK,
                                 {auth_message.data()+mic_offset,this->UseMIC?16U:0U},
-                                auth_message); 
+                                auth_message);
                 }
                 // have_pub_key_auth = true;
 
@@ -296,10 +294,10 @@ public:
                      }
 
                     this->SavedClientNonce.initialized = true;
-                    auto client_to_server_hash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av, 
+                    auto client_to_server_hash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
                                     this->SavedClientNonce.clientNonce,
                                     this->PublicKey);
-                    v = emitTSRequest(6, auth_message, {}, 
+                    v = emitTSRequest(6, auth_message, {},
                                       CryptAndSign(this->SendRc4Seal, 0 /* msg seqno */, client_to_server_hash),
                                       0, this->SavedClientNonce.clientNonce, true, this->credssp_verbose);
                 }
@@ -342,10 +340,10 @@ public:
                 array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, out_uint32_le(recv_seqno), pubkeyAuth_encrypted_payload);
 
                 // Concatenate version, ciphertext and sequence number to build signature
-                auto expected_signature = std::vector<uint8_t>{} 
+                auto expected_signature = std::vector<uint8_t>{}
                     << out_uint32_le(1)                 // version 1
                     << Rc4Crypt<8>(RecvRc4Seal, digest) // RC4-encrypt first 8 bytes of digest (digest is 16 bytes long)
-                    << out_uint32_le(recv_seqno);       // sequence number 
+                    << out_uint32_le(recv_seqno);       // sequence number
 
                 if (!are_buffer_equal(pubkeyAuth_signature, expected_signature)) {
                     LOG(LOG_ERR, "public key echo signature verification failed, something nasty is going on!");
@@ -400,7 +398,7 @@ public:
                                     /*keySpec*/0,/*cardName*/{},/*readerName*/{},
                                     /*containerName*/{}, /*cspName*/{}, this->credssp_verbose);
                 }
-                
+
                 // authInfo [signature][data_buffer]
                 std::vector<uint8_t> authInfo = CryptAndSign(this->SendRc4Seal, 1 /* seqno */, ts_credentials);
                 auto v = emitTSRequest(ts_request.version,
