@@ -1,3 +1,9 @@
+redemption (7.3.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * filename percent encoding option for icap servers
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 15 Oct 2019 17:33:20 +0200
+
 redemption (7.3.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Do not disconnect the session due to screen layout change if recording is not started.
