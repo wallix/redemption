@@ -33,6 +33,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     TimeObj& timeobj,
     ChannelsAuthorizations channels_authorizations,
     const ModRDPParams& mod_rdp_params,
+    const TLSClientParams & tls_client_params,
     AuthApi& authentifier,
     ReportMessageApi& report_message,
     LicenseApi& license_store,
@@ -43,6 +44,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
 {
     return std::make_unique<mod_rdp>(
         trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
-        std::move(channels_authorizations), mod_rdp_params, authentifier,
+        std::move(channels_authorizations), mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, vars, metrics, file_validator_service);
 }

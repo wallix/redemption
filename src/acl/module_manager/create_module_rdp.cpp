@@ -136,10 +136,11 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.application_params.target_application                  = ini.get<cfg::globals::target_application>().c_str();
 
     //mod_rdp_params.enable_tls                          = true;
-    mod_rdp_params.tls_min_level                       = ini.get<cfg::mod_rdp::tls_min_level>();
-    mod_rdp_params.tls_max_level                       = ini.get<cfg::mod_rdp::tls_max_level>();
-    mod_rdp_params.show_common_cipher_list             = ini.get<cfg::mod_rdp::show_common_cipher_list>();
-    mod_rdp_params.cipher_string                       = ini.get<cfg::mod_rdp::cipher_string>();
+    TLSClientParams tls_client_params;
+    tls_client_params.tls_min_level                       = ini.get<cfg::mod_rdp::tls_min_level>();
+    tls_client_params.tls_max_level                       = ini.get<cfg::mod_rdp::tls_max_level>();
+    tls_client_params.show_common_cipher_list             = ini.get<cfg::mod_rdp::show_common_cipher_list>();
+    tls_client_params.cipher_string                       = ini.get<cfg::mod_rdp::cipher_string>();
     
     if (!mod_rdp_params.target_password[0]) {
         mod_rdp_params.enable_nla                      = false;
@@ -458,6 +459,7 @@ void ModuleManager::create_mod_rdp(
                 TimeObj & timeobj,
                 ChannelsAuthorizations channels_authorizations,
                 const ModRDPParams & mod_rdp_params,
+                const TLSClientParams & tls_client_params,
                 AuthApi & authentifier,
                 ReportMessageApi & report_message,
                 LicenseApi & license_store,
@@ -468,7 +470,7 @@ void ModuleManager::create_mod_rdp(
             : DispatchReportMessage(report_message, front, dont_log_category)
             , mod_rdp(
                 trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
-                channels_authorizations, mod_rdp_params, authentifier,
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
                 static_cast<DispatchReportMessage&>(*this), license_store, vars,
                 metrics, file_validator_service)
             {}
@@ -556,6 +558,7 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::mod_rdp::allow_channels>(),
                 ini.get<cfg::mod_rdp::deny_channels>()),
             mod_rdp_params,
+            tls_client_params,
             authentifier,
             report_message,
             file_system_license_store,

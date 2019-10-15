@@ -1967,6 +1967,7 @@ public:
       , TimeObj & timeobj
       , ChannelsAuthorizations channels_authorizations
       , const ModRDPParams & mod_rdp_params
+      , const TLSClientParams & tls_client_params
       , AuthApi & authentifier
       , ReportMessageApi & report_message
       , LicenseApi & license_store
@@ -2068,7 +2069,7 @@ public:
         this->negociation_result.front_height = info.screen_info.height;
 
         this->init_negociate_event_(
-            info, gen, timeobj, mod_rdp_params, program, directory,
+            info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,
             mod_rdp_params.open_session_timeout);
     }   // mod_rdp
 
@@ -5951,7 +5952,7 @@ private:
 
     void init_negociate_event_(
         const ClientInfo & info, Random & gen, TimeObj & timeobj,
-        const ModRDPParams & mod_rdp_params, char const* program, char const* directory,
+        const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
         const std::chrono::seconds open_session_timeout);
 };
 

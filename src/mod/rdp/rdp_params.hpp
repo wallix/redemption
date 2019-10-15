@@ -43,6 +43,7 @@ class ClientExecute;
 class Transport;
 class Theme;
 class Font;
+class TLSClientParams;
 
 struct ModRDPParams
 {
@@ -57,10 +58,6 @@ struct ModRDPParams
 
     bool enable_tls = true;
     bool enable_nla = true;
-    uint32_t tls_min_level = 0;
-    uint32_t tls_max_level = 0;
-    std::string cipher_string;
-    bool show_common_cipher_list = false;
     bool enable_krb = false;
     bool enable_fastpath = true;           // If true, fast-path must be supported.
     bool enable_new_pointer = true;

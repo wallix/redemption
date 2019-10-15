@@ -39,9 +39,9 @@ struct NlaTeeTransport : Transport
     , is_server(type == Type::Server)
     {}
 
-    TlsResult enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string const& cipher_string, bool show_common_cipher_list) override
+    TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override
     {
-        return this->trans.enable_client_tls(server_notifier, tls_min_level, tls_max_level, cipher_string, show_common_cipher_list);
+        return this->trans.enable_client_tls(server_notifier, tls_client_params);
     }
 
     array_view_const_u8 get_public_key() const override

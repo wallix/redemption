@@ -207,7 +207,7 @@ array_view_const_u8 ReplayTransport::get_public_key() const
     return {this->public_key.data.get(), this->public_key.size};
 }
 
-Transport::TlsResult ReplayTransport::enable_client_tls(ServerNotifier & server_notifier, uint32_t tls_min_level, uint32_t tls_max_level, std::string const& cipher_string, bool show_common_cipher_list)
+Transport::TlsResult ReplayTransport::enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
 {
     (void)server_notifier;
 

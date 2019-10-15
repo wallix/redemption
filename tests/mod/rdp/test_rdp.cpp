@@ -188,6 +188,8 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     mod_rdp_params.large_pointer_support             = false;
     mod_rdp_params.experimental_fix_input_event_sync = false;
 
+    TLSClientParams tls_client_params;
+
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
@@ -199,7 +201,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, authentifier, report_message, license_store, ini,
+        channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
         nullptr, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 800);

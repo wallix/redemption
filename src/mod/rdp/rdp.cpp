@@ -84,7 +84,7 @@ namespace
 
 void mod_rdp::init_negociate_event_(
     const ClientInfo & info, Random & gen, TimeObj & timeobj,
-    const ModRDPParams & mod_rdp_params, char const* program, char const* directory,
+    const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
     const std::chrono::seconds open_session_timeout)
 {
     auto check_error = [this](
@@ -148,10 +148,7 @@ void mod_rdp::init_negociate_event_(
         false,
         false,
 #endif
-        mod_rdp_params.tls_min_level,
-        mod_rdp_params.tls_max_level,
-        mod_rdp_params.cipher_string,
-        mod_rdp_params.show_common_cipher_list
+        tls_client_params
     ))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
