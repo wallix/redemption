@@ -68,8 +68,9 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             this->tls_options.tls_min_level,
             this->tls_options.tls_max_level,
             this->tls_options.show_common_cipher_list);
+
         this->state = State::HttpHeader;
-        [[fallthrough]];
+        return 0;
     }
     case State::HttpHeader: {
         len = SocketTransport::do_partial_read(buffer, len);
@@ -78,7 +79,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             != http_header.extract({char_ptr_cast(buffer), len})
         ) {
             this->state = State::Error;
-            LOG(LOG_ERR, "WebSocket: partial header");
+            LOG(LOG_ERR, "WebSocket: partial http header");
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
 
