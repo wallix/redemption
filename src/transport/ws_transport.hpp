@@ -30,9 +30,11 @@ class WsTransport
 : public SocketTransport
 {
 public:
+    enum UseTls : bool { No, Yes };
+
     WsTransport(
         const char * name, unique_fd sck, const char *ip_address, int port,
-        std::chrono::milliseconds recv_timeout, Verbose verbose,
+        std::chrono::milliseconds recv_timeout, UseTls use_tls, Verbose verbose,
         std::string * error_message = nullptr);
 
     bool disconnect() override;
@@ -50,13 +52,7 @@ protected:
 private:
     class D;
 
-    enum class State
-    {
-        HttpHeader,
-        Ws,
-        Closed,
-        Error,
-    };
+    enum class State : char;
 
-    State state = State::HttpHeader;
+    State state;
 };

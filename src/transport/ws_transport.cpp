@@ -37,23 +37,39 @@ struct WsTransport::D
     }
 };
 
+enum class WsTransport::State : char
+{
+    StartTls,
+    HttpHeader,
+    Ws,
+    Closed,
+    Error,
+};
+
 WsTransport::WsTransport(
     const char * name, unique_fd sck, const char *ip_address, int port,
-    std::chrono::milliseconds recv_timeout, Verbose verbose,
+    std::chrono::milliseconds recv_timeout, UseTls use_tls, Verbose verbose,
     std::string * error_message)
 : SocketTransport(name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message)
+, state(use_tls ? State::StartTls : State::HttpHeader)
 {}
 
 size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
-    size_t res = SocketTransport::do_partial_read(buffer, len);
-
     switch (this->state)
     {
+    case State::StartTls: {
+        // if enable_server_tls fail, state = error
+        this->state = State::Error;
+        SocketTransport::enable_server_tls("inquisition", "HIGH:!ADH:!3DES:!SHA", 2, 0, true);
+        this->state = State::HttpHeader;
+        [[fallthrough]];
+    }
     case State::HttpHeader: {
+        len = SocketTransport::do_partial_read(buffer, len);
         WsHttpHeader http_header;
         if (WsHttpHeader::State::Completed
-            != http_header.extract({char_ptr_cast(buffer), res})
+            != http_header.extract({char_ptr_cast(buffer), len})
         ) {
             this->state = State::Error;
             LOG(LOG_ERR, "partial header");
@@ -67,8 +83,9 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
     }
 
     case State::Ws: {
-        array_view_u8 data{buffer, res};
-        res = 0;
+        len = SocketTransport::do_partial_read(buffer, len);
+        array_view_u8 data{buffer, len};
+        size_t res = 0;
 
         while (!data.empty()) {
             auto frame = ws_protocol_parse_client(data);
@@ -98,16 +115,18 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             }
         }
 
-        break;
+        return res;
     }
 
     case State::Closed:
+        this->state = State::Error;
         throw Error(ERR_TRANSPORT_CLOSED);
+
     case State::Error:
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
-    return res;
+    REDEMPTION_UNREACHABLE();
 }
 
 [[noreturn]]

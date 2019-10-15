@@ -59,7 +59,6 @@
 namespace
 {
 
-template<class FrontTransport>
 class Session
 {
     Inifile & ini;
@@ -71,17 +70,12 @@ class Session
     static const time_t select_timeout_tv_sec = 3;
 
 public:
-    Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
-        : ini(ini)
+    Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+    : ini(ini)
     {
         TRANSLATIONCONF.set_ini(&ini);
 
         SessionReactor session_reactor;
-
-        FrontTransport front_trans(
-            "RDP Client", std::move(sck), "", 0, std::chrono::milliseconds(ini.get<cfg::client::recv_timeout>()),
-            to_verbose_flags(ini.get<cfg::debug::front>())
-        );
 
         const bool mem3blt_support = true;
 
@@ -671,7 +665,7 @@ private:
     static SckNoRead set_fds(
         Select& ioswitch,
         SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
-        FrontTransport const& front_trans,
+        SocketTransport const& front_trans,
         ModuleManager const& mm,
         std::unique_ptr<Acl> const& acl)
     {
@@ -728,14 +722,34 @@ private:
     }
 };
 
+template<class SocketType, class... Args>
+void session_start_sck(
+    char const* name, unique_fd sck,
+    Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat,
+    Args&&... args)
+{
+    Session session(SocketType(
+        name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
+        static_cast<Args&&>(args)...,
+        to_verbose_flags(ini.get<cfg::debug::front>())
+    ), ini, cctx, rnd, fstat);
+}
+
 } // anonymous namespace
 
 void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
-    Session<SocketTransport> session(std::move(sck), ini, cctx, rnd, fstat);
+    session_start_sck<SocketTransport>("RDP Client", std::move(sck), ini, cctx, rnd, fstat);
 }
 
 void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
-    Session<WsTransport> session(std::move(sck), ini, cctx, rnd, fstat);
+    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat,
+        WsTransport::UseTls(true));
+}
+
+void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+{
+    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
+        WsTransport::UseTls(true));
 }

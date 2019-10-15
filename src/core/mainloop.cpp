@@ -177,9 +177,10 @@ REDEMPTION_DIAGNOSTIC_POP
 
 namespace
 {
-    enum SocketType : bool
+    enum SocketType : char
     {
         Ws,
+        Wss,
         Tls,
     };
 
@@ -315,9 +316,7 @@ namespace
             }
 
             int nodelay = 1;
-            if (socket_type == SocketType::Ws
-             || 0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))
-            ){
+            if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))) {
                 // Create session file
                 int child_pid = getpid();
                 char session_file[256];
@@ -352,9 +351,13 @@ namespace
                 switch (socket_type) {
                     case SocketType::Ws:
                         session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
-                        [[fallthrough]];
+                        break;
+                    case SocketType::Wss:
+                        session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        break;
                     case SocketType::Tls:
                         session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        break;
                 }
 
                 // Suppress session file
@@ -446,7 +449,9 @@ void redemption_main_loop(
         const auto ws_sck = sck2.fd();
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
         {
-            auto const socket_type = (ws_sck == sck) ? SocketType::Ws : SocketType::Tls;
+            auto const socket_type = (ws_sck == sck)
+                ? SocketType::Ws
+                : SocketType::Tls;
             session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, socket_type);
             return true;
         });

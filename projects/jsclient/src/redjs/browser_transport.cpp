@@ -74,7 +74,7 @@ void BrowserTransport::do_send(const uint8_t * buffer, size_t len)
 {
     // LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, out_buffers.size() + len);
     // hexdump(buffer, len);
-    out_buffers.insert(out_buffers.end(), buffer, buffer + len);
+    this->out_buffers.insert(this->out_buffers.end(), buffer, buffer + len);
 }
 
 int BrowserTransport::get_fd() const
