@@ -1305,14 +1305,16 @@ public:
         this->check_timeout();
     }
 
-    typedef enum {
+    // TODO enum class
+    enum VncAuthType : uint8_t
+    {
 		VNC_AUTH_INVALID 	= 0,
 		VNC_AUTH_NONE 		= 1,
 		VNC_AUTH_VNC 		= 2,
 		VNC_AUTH_TIGHT 		= 16,
 		VNC_AUTH_TLS 		= 18,
-		VNC_AUTH_MS_LOGON	= -6
-    } VncAuthType;
+		VNC_AUTH_MS_LOGON	= uint8_t(-6)
+    };
 
 private:
     const char *securityTypeString(uint8_t t) {
@@ -1409,7 +1411,7 @@ private:
                 this->spokenProtocol = std::min(static_cast<int>(maxSpokenVncProcotol), serverProtocol);
 
                 char handshakeAnswer[13];
-                snprintf(handshakeAnswer, sizeof(handshakeAnswer), "RFB %0.3d.%0.3d\n",
+                snprintf(handshakeAnswer, sizeof(handshakeAnswer), "RFB %.3d.%.3d\n",
                 		this->spokenProtocol / 1000, this->spokenProtocol % 1000);
                 this->t.send(handshakeAnswer, 12);
 
