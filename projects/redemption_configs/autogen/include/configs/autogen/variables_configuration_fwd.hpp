@@ -220,6 +220,7 @@ namespace cfg {
         struct service_name;
         struct tls;
         struct enable_x_context;
+        struct filename_percent_encoding;
     };
 
     struct icap_server_up {
@@ -229,6 +230,7 @@ namespace cfg {
         struct service_name;
         struct tls;
         struct enable_x_context;
+        struct filename_percent_encoding;
     };
 
     struct mod_replay {
