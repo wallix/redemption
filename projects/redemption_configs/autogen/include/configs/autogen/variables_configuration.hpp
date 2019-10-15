@@ -2811,6 +2811,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// Filename sent to ICAP as percent encoding <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct icap_server_down::filename_percent_encoding {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "icap_server_down";
+        static constexpr char const * name = "filename_percent_encoding";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// Verify text data via clipboard <br/>
     /// type: bool <br/>
@@ -2894,6 +2907,19 @@ namespace cfg {
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
+    };
+    /// Filename sent to ICAP as percent encoding <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct icap_server_up::filename_percent_encoding {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "icap_server_up";
+        static constexpr char const * name = "filename_percent_encoding";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
     };
 
     /// 0 - Wait for Escape, 1 - End session <br/>
@@ -5260,6 +5286,7 @@ struct icap_server_down
 , cfg::icap_server_down::clipboard_text_data
 , cfg::icap_server_down::tls
 , cfg::icap_server_down::enable_x_context
+, cfg::icap_server_down::filename_percent_encoding
 { static constexpr bool is_section = true; };
 
 struct icap_server_up
@@ -5269,6 +5296,7 @@ struct icap_server_up
 , cfg::icap_server_up::clipboard_text_data
 , cfg::icap_server_up::tls
 , cfg::icap_server_up::enable_x_context
+, cfg::icap_server_up::filename_percent_encoding
 { static constexpr bool is_section = true; };
 
 struct mod_replay

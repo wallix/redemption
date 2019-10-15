@@ -851,6 +851,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_x_context = 1
 
+# Filename sent to ICAP as percent encoding
+# value: 0 or 1
+#_advanced
+#filename_percent_encoding = 0
+
 [icap_server_up]
 
 # Verify text data via clipboard
@@ -876,6 +881,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #enable_x_context = 1
+
+# Filename sent to ICAP as percent encoding
+# value: 0 or 1
+#_advanced
+#filename_percent_encoding = 0
 
 [mod_replay]
 

@@ -717,6 +717,10 @@ tls = boolean(default=False)
 #_advanced
 enable_x_context = boolean(default=True)
 
+# Filename sent to ICAP as percent encoding
+#_advanced
+filename_percent_encoding = boolean(default=False)
+
 [icap_server_up]
 
 # Verify text data via clipboard
@@ -738,6 +742,10 @@ tls = boolean(default=False)
 # Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
 #_advanced
 enable_x_context = boolean(default=True)
+
+# Filename sent to ICAP as percent encoding
+#_advanced
+filename_percent_encoding = boolean(default=False)
 
 [mod_replay]
 

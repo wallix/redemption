@@ -632,6 +632,9 @@ void config_spec_definition(Writer && W)
             // for validator only
             W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
                     desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
+            // for validator only
+            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "filename_percent_encoding",
+                     desc{"Filename sent to ICAP as percent encoding"}, set(false));
         });
     }
 
