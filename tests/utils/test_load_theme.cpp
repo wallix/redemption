@@ -23,6 +23,7 @@
 #include "core/app_path.hpp"
 #include "utils/theme.hpp"
 #include "utils/load_theme.hpp"
+#include "utils/sugar/algostring.hpp"
 
 
 RED_AUTO_TEST_CASE(TestLoadTheme)
@@ -79,5 +80,5 @@ RED_AUTO_TEST_CASE(TestLoadTheme)
     RED_CHECK_EQUAL(MEDIUM_BLUE,        colors.selector_label.bgcolor);
     RED_CHECK_EQUAL(WHITE,              colors.selector_label.fgcolor);
     RED_CHECK(              colors.global.logo);
-    RED_CHECK_EQUAL(app_path_s(AppPath::Cfg) + "/themes/test_theme/logo.png", colors.global.logo_path);
+    RED_CHECK_EQUAL(str_concat(app_path(AppPath::Cfg), "/themes/test_theme/logo.png"), colors.global.logo_path);
 }

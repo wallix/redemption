@@ -79,8 +79,3 @@ char const * app_path(AppPath k) noexcept
     assert(false);
     return "";
 }
-
-std::string app_path_s(AppPath k)
-{
-    return app_path(k);
-}

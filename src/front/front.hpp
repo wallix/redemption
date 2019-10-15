@@ -1159,7 +1159,7 @@ public:
     {
         ::save_persistent_disk_bitmap_cache(
             this->orders.get_bmp_cache(),
-            (app_path_s(AppPath::Persistent) + "/client").c_str(),
+            str_concat(app_path(AppPath::Persistent), "/client").c_str(),
             this->ini.get<cfg::globals::host>().c_str(),
             this->orders.bpp(),
             report_error_from_reporter(this->report_message),
