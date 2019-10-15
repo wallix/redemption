@@ -103,7 +103,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
     }
     this->tls = std::make_unique<TLSContext>();
 
-    LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
+    LOG(LOG_INFO, "SocketTransport::enable_server_tls() start (%s)", this->name);
 
     if (!this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list)) {
         this->tls.reset();
