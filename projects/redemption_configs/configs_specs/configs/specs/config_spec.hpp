@@ -449,7 +449,7 @@ void config_spec_definition(Writer && W)
     {
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_rdp_metrics", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_vnc_metrics", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics))));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics).to_string())));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "log_interval", set(5));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::hours>(), "log_file_turnover_interval", set(24));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "sign_key", desc{"signature key to digest log metrics header info"}, set(default_key));
@@ -511,9 +511,9 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "replay_path", set("/tmp/"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash))));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash).to_string())));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp).to_string())));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record).to_string())));
 
         W.member(ini_and_gui, allow_connpolicy_and_gui, rdp_connpolicy, L, type_<KeyboardLogFlags>{}, connpolicy::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"

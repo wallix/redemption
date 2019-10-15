@@ -433,7 +433,7 @@ class ModuleManager : public MMIni
 
             char filename[4096] = {};
             ::snprintf(filename, sizeof(filename) - 1, "%s/%s/%s",
-                app_path(AppPath::License), client_name, license_index);
+                app_path(AppPath::License).c_str(), client_name, license_index);
             filename[sizeof(filename) - 1] = '\0';
 
             if (unique_fd ufd{::open(filename, O_RDONLY)}) {
@@ -474,7 +474,8 @@ class ModuleManager : public MMIni
             LOG_IF(enable_log, LOG_INFO, "FileSystemLicenseStore::put_license(): LicenseIndex=\"%s\"", license_index);
 
             char license_dir_path[4096] = {};
-            ::snprintf(license_dir_path, sizeof(license_dir_path), "%s/%s", app_path(AppPath::License), client_name);
+            ::snprintf(license_dir_path, sizeof(license_dir_path), "%s/%s",
+                app_path(AppPath::License).c_str(), client_name);
             license_dir_path[sizeof(license_dir_path) - 1] = '\0';
             if (::recursive_create_directory(license_dir_path, S_IRWXU | S_IRWXG, -1) != 0) {
                 LOG(LOG_ERR, "FileSystemLicenseStore::put_license(): Failed to create directory: \"%s\"", license_dir_path);

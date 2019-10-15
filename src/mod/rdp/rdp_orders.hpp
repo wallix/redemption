@@ -252,7 +252,7 @@ public:
             // Generates the name of file.
             char filename[2048];
             ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-                app_path(AppPath::PersistentRdp), this->target_host.c_str(),
+                app_path(AppPath::PersistentRdp).c_str(), this->target_host.c_str(),
                 underlying_cast(this->bmp_cache->bpp));
             filename[sizeof(filename) - 1] = '\0';
 

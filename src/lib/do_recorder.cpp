@@ -1726,7 +1726,7 @@ struct RecorderParams {
     std::string input_filename;
     std::string input_basename;
     std::string infile_extension;
-    std::string config_filename = app_path(AppPath::CfgIni);
+    std::string config_filename = app_path(AppPath::CfgIni).to_string();
     std::string mwrm_path;
     std::string hash_path;
     std::string full_path;

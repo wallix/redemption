@@ -45,37 +45,37 @@
 // # define CFG_THEMES_PATH "/etc/rdpproxy/themes"
 #endif
 
-char const * app_path(AppPath k) noexcept
+zstring_view app_path(AppPath k) noexcept
 {
     switch (k)
     {
-        case AppPath::Metrics: return METRICS_PATH;
-        case AppPath::Record: return RECORD_PATH;
-        case AppPath::RecordTmp: return RECORD_TMP_PATH;
-        case AppPath::Video: return VIDEO_PATH;
-        case AppPath::Ocr: return OCR_PATH;
-        case AppPath::Png: return PNG_PATH;
-        case AppPath::Wrm: return WRM_PATH;
-        case AppPath::Hash: return HASH_PATH;
-        case AppPath::License: return LICENSE_PATH;
-        case AppPath::Certif: return CERTIF_PATH;
-        case AppPath::Persistent: return PERSISTENT_PATH;
-        case AppPath::PersistentRdp: return PERSISTENT_PATH "/mod_rdp";
-        case AppPath::DriveRedirection: return DRIVE_REDIRECTION_PATH;
-        case AppPath::Share: return SHARE_PATH;
-        case AppPath::Cfg: return CFG_PATH;
-        case AppPath::LoginWabBlue: return SHARE_PATH "/" LOGIN_WAB_BLUE;
-        case AppPath::RedemptionLogo24: return SHARE_PATH "/" REDEMPTION_LOGO24;
-        case AppPath::WallixIconMin: return SHARE_PATH "/wallix-icon-min.png";
-        case AppPath::CfgIni: return CFG_PATH "/" RDPPROXY_INI;
-        case AppPath::CfgCrt: return CFG_PATH "/rdpproxy.crt";
-        case AppPath::CfgKey: return CFG_PATH "/rdpproxy.key";
-        case AppPath::CfgDhPem: return CFG_PATH "/dh3072.pem";
-        case AppPath::LockDir: return PID_PATH "/redemption";
-        case AppPath::LockFile: return PID_PATH "/redemption/" LOCKFILE;
-        case AppPath::DefaultFontFile: return SHARE_PATH "/" DEFAULT_FONT_NAME;
+        case AppPath::Metrics: return METRICS_PATH ""_zv;
+        case AppPath::Record: return RECORD_PATH ""_zv;
+        case AppPath::RecordTmp: return RECORD_TMP_PATH ""_zv;
+        case AppPath::Video: return VIDEO_PATH ""_zv;
+        case AppPath::Ocr: return OCR_PATH ""_zv;
+        case AppPath::Png: return PNG_PATH ""_zv;
+        case AppPath::Wrm: return WRM_PATH ""_zv;
+        case AppPath::Hash: return HASH_PATH ""_zv;
+        case AppPath::License: return LICENSE_PATH ""_zv;
+        case AppPath::Certif: return CERTIF_PATH ""_zv;
+        case AppPath::Persistent: return PERSISTENT_PATH ""_zv;
+        case AppPath::PersistentRdp: return PERSISTENT_PATH "/mod_rdp"_zv;
+        case AppPath::DriveRedirection: return DRIVE_REDIRECTION_PATH ""_zv;
+        case AppPath::Share: return SHARE_PATH ""_zv;
+        case AppPath::Cfg: return CFG_PATH ""_zv;
+        case AppPath::LoginWabBlue: return SHARE_PATH "/" LOGIN_WAB_BLUE ""_zv;
+        case AppPath::RedemptionLogo24: return SHARE_PATH "/" REDEMPTION_LOGO24 ""_zv;
+        case AppPath::WallixIconMin: return SHARE_PATH "/wallix-icon-min.png"_zv;
+        case AppPath::CfgIni: return CFG_PATH "/" RDPPROXY_INI ""_zv;
+        case AppPath::CfgCrt: return CFG_PATH "/rdpproxy.crt"_zv;
+        case AppPath::CfgKey: return CFG_PATH "/rdpproxy.key"_zv;
+        case AppPath::CfgDhPem: return CFG_PATH "/dh3072.pem"_zv;
+        case AppPath::LockDir: return PID_PATH "/redemption"_zv;
+        case AppPath::LockFile: return PID_PATH "/redemption/" LOCKFILE ""_zv;
+        case AppPath::DefaultFontFile: return SHARE_PATH "/" DEFAULT_FONT_NAME ""_zv;
     }
 
     assert(false);
-    return "";
+    return ""_zv;
 }

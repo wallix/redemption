@@ -20,6 +20,9 @@
 
 #pragma once
 
+#include "utils/sugar/zstring_view.hpp"
+
+
 enum class AppPath
 {
     Metrics,
@@ -48,7 +51,7 @@ enum class AppPath
     LockFile,
     DefaultFontFile,
 };
-char const * app_path(AppPath) noexcept;
+zstring_view app_path(AppPath) noexcept;
 
 // TODO move these into configuration
 // #define LOGIN_LOGO24 "ad24b.png"

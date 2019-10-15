@@ -106,7 +106,7 @@ public:
         if (is_ocr2) {
             new (&this->variant.v2) PpOcrDrawableTitleExtractor(
                 drawable, enable_title_log,
-                rdp_ppocr::get_ocr_constants(app_path(AppPath::Cfg), locale_id)
+                rdp_ppocr::get_ocr_constants(app_path(AppPath::Cfg).to_string(), locale_id)
                 , title_bar_only, max_unrecog_char_rate, locale_id
             );
         }

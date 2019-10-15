@@ -332,7 +332,7 @@ private:
                 // Generates the name of file.
                 char cache_filename[2048];
                 ::snprintf(cache_filename, sizeof(cache_filename) - 1, "%s/client/PDBC-%s-%d",
-                    app_path(AppPath::Persistent), ini.get<cfg::globals::host>().c_str(),
+                    app_path(AppPath::Persistent).c_str(), ini.get<cfg::globals::host>().c_str(),
                     underlying_cast(this->bmp_cache.bpp));
                 cache_filename[sizeof(cache_filename) - 1] = '\0';
 
@@ -996,7 +996,7 @@ public:
         char extension[128];
 
         // default value, actual one should come from movie_path
-        auto const wrm_path_len = utils::strlcpy(path, app_path(AppPath::Wrm));
+        auto const wrm_path_len = utils::strlcpy(path, app_path(AppPath::Wrm).to_sv());
         if (wrm_path_len + 2 < std::size(path)) {
             path[wrm_path_len] = '/';
             path[wrm_path_len+1] = 0;

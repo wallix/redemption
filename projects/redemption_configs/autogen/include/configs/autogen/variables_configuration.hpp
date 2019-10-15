@@ -2615,7 +2615,7 @@ namespace cfg {
         type value{false};
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// value = app_path(AppPath::Metrics) <br/>
+    /// value = app_path(AppPath::Metrics).to_string() <br/>
     struct metrics::log_dir_path {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2624,7 +2624,7 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = app_path(AppPath::Metrics);
+        type value = app_path(AppPath::Metrics).to_string();
     };
     /// type: std::chrono::seconds <br/>
     /// value{5} <br/>
@@ -3080,7 +3080,7 @@ namespace cfg {
         type value = "/tmp/";
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// value = app_path(AppPath::Hash) <br/>
+    /// value = app_path(AppPath::Hash).to_string() <br/>
     struct video::hash_path {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3089,10 +3089,10 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = app_path(AppPath::Hash);
+        type value = app_path(AppPath::Hash).to_string();
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// value = app_path(AppPath::RecordTmp) <br/>
+    /// value = app_path(AppPath::RecordTmp).to_string() <br/>
     struct video::record_tmp_path {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3101,10 +3101,10 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = app_path(AppPath::RecordTmp);
+        type value = app_path(AppPath::RecordTmp).to_string();
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// value = app_path(AppPath::Record) <br/>
+    /// value = app_path(AppPath::Record).to_string() <br/>
     struct video::record_path {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3113,7 +3113,7 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = app_path(AppPath::Record);
+        type value = app_path(AppPath::Record).to_string();
     };
     /// Disable keyboard log: <br/>
     /// (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".) <br/>

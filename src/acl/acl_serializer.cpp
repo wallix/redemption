@@ -971,15 +971,15 @@ void AclSerializer::incoming()
     this->in_items();
     if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
         char old_session_file[2048];
-        std::snprintf(old_session_file, sizeof(old_session_file),
-                        "%s/session_%s.pid", app_path(AppPath::LockDir), this->session_id);
+        std::snprintf(old_session_file, sizeof(old_session_file), "%s/session_%s.pid",
+                      app_path(AppPath::LockDir).c_str(), this->session_id);
         char new_session_file[2048];
-        std::snprintf(new_session_file, sizeof(new_session_file),
-                        "%s/session_%s.pid", app_path(AppPath::LockDir),
-                this->ini.get<cfg::context::session_id>().c_str());
+        std::snprintf(new_session_file, sizeof(new_session_file), "%s/session_%s.pid",
+                      app_path(AppPath::LockDir).c_str(),
+                      this->ini.get<cfg::context::session_id>().c_str());
         std::rename(old_session_file, new_session_file);
         std::snprintf(this->session_id, sizeof(this->session_id), "%s",
-                        this->ini.get<cfg::context::session_id>().c_str());
+                      this->ini.get<cfg::context::session_id>().c_str());
     }
     LOG_IF(bool(this->verbose & Verbose::buffer),
         LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>());

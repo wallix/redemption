@@ -190,7 +190,7 @@ private:
 void load_theme(Theme& theme, array_view_const_char theme_name)
 {
     // load theme
-    auto&& cfg_path = app_path(AppPath::Cfg);
+    char const* cfg_path = app_path(AppPath::Cfg).c_str();
 
     {
         char theme_path[1024] = {};

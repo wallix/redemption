@@ -176,7 +176,7 @@ struct ReplayMod::Reader
 
             char path[1024];
             char basename[1024];
-            utils::strlcpy(path, app_path(AppPath::Record)); // default value, actual one should come from movie_path
+            utils::strlcpy(path, app_path(AppPath::Record).to_sv()); // default value, actual one should come from movie_path
             utils::strlcpy(basename, "replay"); // default value actual one should come from movie_path
             utils::strlcpy(this->extension, ".mwrm"); // extension is currently ignored
 

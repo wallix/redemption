@@ -233,7 +233,7 @@ int main(int argc, char** argv)
     unsigned euid = uid;
     unsigned egid = gid;
 
-    std::string config_filename = app_path(AppPath::CfgIni);
+    std::string config_filename = app_path(AppPath::CfgIni).to_string();
 
     static constexpr char const * opt_print_ini_spec = "print-spec";
     static constexpr char const * opt_print_rdp_cp_spec = "print-rdp-cp-spec";
@@ -436,7 +436,7 @@ int main(int argc, char** argv)
     ) {
         // load global constant...
         rdp_ppocr::get_ocr_constants(
-            app_path(AppPath::Cfg),
+            app_path(AppPath::Cfg).to_string(),
             static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
         );
     }
