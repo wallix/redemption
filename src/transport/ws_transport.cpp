@@ -100,14 +100,17 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             switch (frame.state)
             {
             case Parse::UnsupportedPartialHeader:
+                this->state = State::Error;
                 LOG(LOG_ERR, "WebSocket: partial header isn't supported");
                 throw Error(ERR_TRANSPORT_READ_FAILED);
 
             case Parse::UnsupportedPartialData:
+                this->state = State::Error;
                 LOG(LOG_ERR, "WebSocket: partial data isn't supported");
                 throw Error(ERR_TRANSPORT_READ_FAILED);
 
             case Parse::Unsupported64BitsPayloadLen:
+                this->state = State::Error;
                 LOG(LOG_ERR, "WebSocket: payload_length too great");
                 throw Error(ERR_TRANSPORT_READ_FAILED);
 
