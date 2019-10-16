@@ -618,6 +618,7 @@ void config_spec_definition(Writer && W)
 
     for (char const* section_name : {"icap_server_up", "icap_server_down"}) {
         // TODO temporary
+        // please, update $REDEMPTION/tools/c++-analyzer/lua-checker/checkers/config.lua for each changement of value
         W.section(section_name, [&]
         {
             // for validator only
