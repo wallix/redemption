@@ -26,6 +26,7 @@
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/labelgrid.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "utils/png.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -68,10 +69,11 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
         { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }
     };
 
-    uint16_t row_height[line_number+4]   = { 0 };
-    uint16_t column_width[column_number] = { 0 };
+    uint16_t row_height[line_number+4]              = { 0 };
+    uint16_t column_width[column_number]            = { 0 };
+    bool     column_width_is_optimal[column_number] = { false };
 
-    compute_format(wgrid, column_width_strategies, row_height, column_width);
+    compute_format(wgrid, column_width_strategies, -1, row_height, column_width, column_width_is_optimal);
     apply_format(wgrid, row_height, column_width);
 
 
@@ -81,8 +83,10 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
+    dump_png24("labelgrid-0.png", drawable, true);
+
     RED_CHECK_SIG(drawable,
-        "\x26\xb1\xa5\x1d\x05\x05\x04\x85\xbb\xc3\xda\x5a\x09\xab\x8a\x1b\xf1\xeb\x7b\x8a");
+        "\x86\xc2\x96\xbc\x1e\x22\xf4\x9d\x6f\xa3\xf5\x76\x26\xd9\x00\x95\x0b\xa2\xee\x38");
 
     wgrid.has_focus = true;
     // ask to widget to redraw at it's current position
@@ -91,6 +95,8 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
+    dump_png24("labelgrid-1.png", drawable, true);
+
     RED_CHECK_SIG(drawable,
-        "\x05\xba\x77\x54\x62\xd7\x88\xbe\xf2\xdf\x09\x33\x74\x87\xb1\x67\x8f\x9d\xc7\xad");
+        "\x28\xaa\x98\xee\x94\x66\x3a\x37\xc1\xce\x2d\xe6\xeb\x80\x7f\x04\x17\xac\x95\xd6");
 }

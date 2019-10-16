@@ -87,13 +87,14 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     }
 
     ColumnWidthStrategy column_width_strategies[] = {
-        { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }
+        { 50, 20 }, { 150, 30 }, { 50, 20 }, { 50, 30 }
     };
 
-    uint16_t row_height[line_number]     = { 0 };
-    uint16_t column_width[column_number] = { 0 };
+    uint16_t row_height[line_number]                = { 0 };
+    uint16_t column_width[column_number]            = { 0 };
+    bool     column_width_is_optimal[column_number] = { 0 };
 
-    compute_format(wgrid, column_width_strategies, row_height, column_width);
+    compute_format(wgrid, column_width_strategies, -1, row_height, column_width, column_width_is_optimal);
     apply_format(wgrid, row_height, column_width);
 
     wgrid.set_selection(2);
@@ -104,9 +105,9 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
+    //drawable.save_to_png("grid.png");
 
-    RED_CHECK_SIG(drawable, "\x2f\xd2\x22\x8d\x37\x69\xb6\x1b\xc9\xf2\x64\x2a\xb1\xf6\xdf\x62\x46\x23\x7e\x8e");
+    RED_CHECK_SIG(drawable, "\x3f\x03\x2d\xa3\x1e\x7a\xfa\x65\x39\x6f\x02\x71\xaa\x00\x9b\xe7\x89\x9e\xe3\x74");
 
 
     wgrid.set_selection(4);
@@ -116,9 +117,10 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
-    // drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
 
-    RED_CHECK_SIG(drawable, "\x89\x88\xf6\xa2\x57\xe9\xba\x8e\x7e\x88\x66\xc9\x06\x7a\x6f\x73\xc4\x58\x6a\xb8");
+    //drawable.save_to_png("grid2.png");
+
+    RED_CHECK_SIG(drawable, "\xa7\x31\x0f\x89\x43\x79\x0f\x0e\xb2\xdd\x8c\x7d\x6e\x64\x12\xb1\x5e\x95\xcd\x47");
 
 
     uint16_t mouse_x = wgrid.x() + 50;
@@ -131,10 +133,10 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
-    //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
-    // drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
 
-    RED_CHECK_SIG(drawable, "\x1a\xcf\x2d\xaa\x80\x54\x1e\x16\xfe\xb2\x1d\x5b\xe0\xc6\xdc\xac\xbd\x33\x51\xa8");
+    //drawable.save_to_png("grid3.png");
+
+    RED_CHECK_SIG(drawable, "\x15\xe9\x1b\xb9\x25\xcc\xa7\x51\xe8\x86\x5e\x19\x48\x36\x89\xf3\xdc\x15\x31\x55");
 
 
     Keymap2 keymap;
@@ -154,9 +156,10 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
-    // drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
 
-    RED_CHECK_SIG(drawable, "\x78\x12\xfc\xd9\xc4\xdc\x38\x69\x02\x42\xd0\x3d\xb8\x39\xbf\x03\x0a\x27\x4d\x1e");
+    //drawable.save_to_png("grid4.png");
+
+    RED_CHECK_SIG(drawable, "\xa8\x5f\xbb\xa2\xe5\xc0\xea\x1b\xd1\x18\xd3\x05\x0c\x26\x64\xc0\xce\xfa\x85\x64");
 
     wgrid.clear();
 }

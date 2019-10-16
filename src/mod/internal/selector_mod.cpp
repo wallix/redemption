@@ -68,10 +68,9 @@ SelectorMod::SelectorMod(
         WidgetSelectorParams params;
 
         params.nb_columns = 3;
-
-        params.base_len[0] = 200;
-        params.base_len[1] = 64000;
-        params.base_len[2] = 80;
+        params.weight[0] = 20;
+        params.weight[1] = 70;
+        params.weight[2] = 10;
 
         Translator tr(language(vars.get<cfg::translation::language>()));
         params.label[0] = tr(trkeys::authorization);

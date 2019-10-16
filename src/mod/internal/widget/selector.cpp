@@ -66,6 +66,23 @@ WidgetSelector::WidgetSelector(
         theme.selector_label.bgcolor, font, 5
     }
 }
+, column_expansion_buttons{
+    WidgetFlatButton{
+        drawable, *this, this, "", -100,
+        theme.global.fgcolor, theme.global.bgcolor,
+        theme.global.focus_color, 1, font, 6, 2
+    },
+    WidgetFlatButton{
+        drawable, *this, this, "", -101,
+        theme.global.fgcolor, theme.global.bgcolor,
+        theme.global.focus_color, 1, font, 6, 2
+    },
+    WidgetFlatButton{
+        drawable, *this, this, "", -102,
+        theme.global.fgcolor, theme.global.bgcolor,
+        theme.global.focus_color, 1, font, 6, 2
+    }
+}
 , edit_filters{
     WidgetEdit{
         drawable, *this, this,
@@ -139,9 +156,12 @@ WidgetSelector::WidgetSelector(
     this->add_widget(&this->device_label);
 
     for (int i = 0; i < this->nb_columns; i++) {
-        this->base_len[i] = selector_params.base_len[i];
+        this->weight[i] = selector_params.weight[i];
+        this->label[i] = selector_params.label[i];
         this->add_widget(&this->header_labels[i]);
         this->add_widget(&this->edit_filters[i]);
+
+        this->column_expansion_buttons[i].set_wh(8, 8);
     }
 
     this->add_widget(&this->apply);
@@ -223,6 +243,7 @@ void WidgetSelector::move_size_widget(int16_t left, int16_t top, uint16_t width,
 
     this->selector_lines.set_wh(width - (this->less_than_800 ? 0 : 30),
         this->selector_lines.cy());
+    std::fill(this->current_columns_width, this->current_columns_width + this->selector_lines.get_nb_columns(), 0);
 
     if (this->extra_button) {
         this->extra_button->set_xy(left + 60, top + height - 60);
@@ -236,23 +257,26 @@ BGRColor WidgetSelector::get_bg_color() const
     return this->bg_color;
 }
 
+#define COLUMN_EXPANSION_BUTTON_PLACE_HOLDER 18
+
 void WidgetSelector::rearrange()
 {
     ColumnWidthStrategy column_width_strategies[WidgetSelectorParams::nb_max_columns];
+    bool column_width_is_optimal[WidgetSelectorParams::nb_max_columns];
 
     for (int i = 0; i < this->nb_columns; i++) {
         gdi::TextMetrics tm (this->font, this->header_labels[i].get_text());
-        column_width_strategies[i] = { static_cast<uint16_t>(tm.width + 5), this->base_len[i]};
+        column_width_strategies[i] = { static_cast<uint16_t>(tm.width + 5 + COLUMN_EXPANSION_BUTTON_PLACE_HOLDER), this->weight[i] };
+
+        column_width_is_optimal[i] = false;
     };
 
     BufMaker<128, uint16_t> rows_height_buffer;
     auto rows_height = rows_height_buffer.dyn_array(this->selector_lines.get_nb_rows());
-    uint16_t columns_width[WidgetSelectorParams::nb_max_columns] = { 0 };
 
-    compute_format(this->selector_lines, column_width_strategies,
-                   rows_height.data(), columns_width);
-    apply_format(this->selector_lines, rows_height.data(), columns_width);
-
+    compute_format(this->selector_lines, column_width_strategies, this->priority_column_index,
+                   rows_height.data(), this->current_columns_width, column_width_is_optimal);
+    apply_format(this->selector_lines, rows_height.data(), this->current_columns_width);
 
     {
         // filter button position
@@ -269,7 +293,7 @@ void WidgetSelector::rearrange()
 
         for (int i = 0; i < this->nb_columns; i++) {
             this->header_labels[i].set_wh(
-                columns_width[i] + this->selector_lines.border * 2,
+                this->current_columns_width[i] + this->selector_lines.border * 2,
                 this->header_labels[i].cy());
             this->header_labels[i].set_xy(this->left + offset, labels_y);
             this->edit_filters[i].set_xy(this->header_labels[i].x(), filters_y);
@@ -277,8 +301,22 @@ void WidgetSelector::rearrange()
                 this->header_labels[i].cx() - ((i == this->nb_columns-1) ? 0 : FILTER_SEPARATOR),
                 this->edit_filters[i].cy());
             offset += this->header_labels[i].cx();
+
+            if (column_width_is_optimal[i]) {
+                if (-1 != this->find_widget(&this->column_expansion_buttons[i])) {
+                    this->remove_widget(&this->column_expansion_buttons[i]);
+                }
+            }
+            else {
+                if (-1 == this->find_widget(&this->column_expansion_buttons[i])) {
+                    this->add_widget(&this->column_expansion_buttons[i]);
+                }
+
+                this->column_expansion_buttons[i].set_xy(this->left + offset - 15, labels_y + 5);
+            }
         }
     }
+
     {
         // selector list position
         this->selector_lines.set_xy(this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN),
@@ -356,6 +394,32 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
             }
         }
     }
+
+    else if (widget->group_id == this->column_expansion_buttons[0].group_id) {
+        if (NOTIFY_SUBMIT == event) {
+            this->priority_column_index = 0;
+
+            this->rearrange();
+            this->rdp_input_invalidate(this->get_rect());
+        }
+    }
+    else if (widget->group_id == this->column_expansion_buttons[1].group_id) {
+        if (NOTIFY_SUBMIT == event) {
+            this->priority_column_index = 1;
+
+            this->rearrange();
+            this->rdp_input_invalidate(this->get_rect());
+        }
+    }
+    else if (widget->group_id == this->column_expansion_buttons[2].group_id) {
+        if (NOTIFY_SUBMIT == event) {
+            this->priority_column_index = 2;
+
+            this->rearrange();
+            this->rdp_input_invalidate(this->get_rect());
+        }
+    }
+
     else {
         WidgetParent::notify(widget, event);
     }
