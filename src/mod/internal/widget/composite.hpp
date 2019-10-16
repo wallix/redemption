@@ -111,6 +111,7 @@ public:
 
     virtual void add_widget(Widget * w);
     virtual void remove_widget(Widget * w);
+    virtual int  find_widget(Widget * w);
     virtual void clear();
 
     virtual void invalidate_children(Rect clip);

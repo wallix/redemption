@@ -272,6 +272,11 @@ void WidgetParent::remove_widget(Widget * w)
     this->impl->remove(w);
 }
 
+int  WidgetParent::find_widget(Widget * w)
+{
+    return this->impl->find(w);
+}
+
 void WidgetParent::clear()
 {
     this->impl->clear();
