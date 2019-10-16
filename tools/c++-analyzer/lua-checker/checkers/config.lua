@@ -30,11 +30,13 @@ function init(args)
     values = match_and_setk(patternVar, utils.readall('projects/redemption_configs/autogen/include/configs/autogen/variables_configuration.hpp'), false)
     -- not used by rdpproxy...
     values['cfg::icap_server_down::enable_x_context'] = true
+    values['cfg::icap_server_down::filename_percent_encoding'] = true
     values['cfg::icap_server_down::host'] = true
     values['cfg::icap_server_down::port'] = true
     values['cfg::icap_server_down::service_name'] = true
     values['cfg::icap_server_down::tls'] = true
     values['cfg::icap_server_up::enable_x_context'] = true
+    values['cfg::icap_server_up::filename_percent_encoding'] = true
     values['cfg::icap_server_up::host'] = true
     values['cfg::icap_server_up::port'] = true
     values['cfg::icap_server_up::service_name'] = true
