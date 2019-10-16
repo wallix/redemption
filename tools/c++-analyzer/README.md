@@ -13,6 +13,7 @@ Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_
 - `cppcheck-full [cppcheck-args]`: run `cppcheck`.
 - `todo_extractor files...`: extract comment with BUG, ALERT, ATTENTION, DANGER, HACK, SECURITYFIXME, DEPRECATED, TASK, TODO, TBD, WARNING, CAUTION, NOTE, NOTICE, TEST, TESTING, PERFORMANCE, PERF
 - `scan-build`: wrap clang scan-build tool. Example: `SCAN_BUILD=scan-build-7 COMPILER=clang++-7 BJAM=mybjam ./tool/scan-build -qj4 --build-dir=bin rdpproxy`
+- `redemption-analyzer.sh`: fast checker for redemption source code
 
 # Source corrector
 
