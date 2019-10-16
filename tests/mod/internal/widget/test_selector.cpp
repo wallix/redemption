@@ -45,9 +45,6 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
-    params.base_len[0] = 200;
-    params.base_len[1] = 64000;
-    params.base_len[2] = 80;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
@@ -81,18 +78,19 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector1.png");
+    //drawable.save_to_png("selector1.png");
 
-    RED_CHECK_SIG(drawable, "\x50\x25\xe5\x03\x76\x81\x53\xfc\x6e\x22\xd4\xf8\xfb\xf1\x70\x57\x4d\xb5\x16\x45");
+    RED_CHECK_SIG(drawable, "\x87\x7a\x17\x85\x48\x78\x04\xd1\xb9\xf5\x1a\x50\x0d\xc0\x7c\xa5\x47\x56\x55\x74");
+
 
     selector.selector_lines.set_selection(1);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector2.png");
+    //drawable.save_to_png("selector2.png");
 
-    RED_CHECK_SIG(drawable, "\xa7\x47\xcc\x6f\x5c\x52\x40\x92\x70\x30\x6c\x75\xa0\xd7\xf8\x3b\x70\xe5\x45\x00");
+    RED_CHECK_SIG(drawable, "\xa9\xf3\x4a\x66\x45\xf8\xaf\x92\x0b\x75\xc9\x51\x8c\x39\x63\xb2\x20\x12\x3d\xe4");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
@@ -110,9 +108,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
-    params.base_len[0] = 200;
-    params.base_len[1] = 64000;
-    params.base_len[2] = 80;
+    params.weight[0] = 33;
+    params.weight[1] = 34;
+    params.weight[2] = 33;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
@@ -152,9 +150,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector-resize1.png");
+    //drawable.save_to_png("selector-resize1.png");
 
-    RED_CHECK_SIG(drawable, "\xbb\x51\x75\x39\x8a\x7f\xad\x40\xdf\xd0\xc5\xc7\xac\x20\x2b\xa0\x89\x66\xdc\x90");
+    RED_CHECK_SIG(drawable, "\x60\x3a\xbd\x08\x4f\x11\x2d\x54\x10\xd6\x77\xae\x36\x99\x25\x1a\x9a\xfc\xa7\x39");
 
 
     selector.selector_lines.set_selection(1);
@@ -162,9 +160,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector-resize2.png");
+    //drawable.save_to_png("selector-resize2.png");
 
-    RED_CHECK_SIG(drawable, "\x6c\x77\x75\x9f\x0a\xf0\x98\x35\xa7\xfd\xf2\xf7\x37\xc5\xe7\x56\xb7\xf5\x23\x30");
+    RED_CHECK_SIG(drawable, "\x3f\x01\x69\x46\xc9\xd0\x04\x8d\x28\x65\x76\x55\xc0\x8b\x66\xb7\xd6\x8f\x0b\x4a");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector2)
@@ -182,9 +180,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
-    params.base_len[0] = 200;
-    params.base_len[1] = 64000;
-    params.base_len[2] = 80;
+    params.weight[0] = 33;
+    params.weight[1] = 34;
+    params.weight[2] = 33;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
@@ -194,9 +192,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector3.png");
+    //drawable.save_to_png("selector3.png");
 
-    RED_CHECK_SIG(drawable, "\x84\x8f\x42\x84\x07\x86\x34\x90\x65\x3a\xd4\x5f\x72\xb9\xe9\xeb\x3b\x4a\xb5\x25");
+    RED_CHECK_SIG(drawable, "\x80\xd3\xcb\xcd\x40\x82\x6f\xb4\x3b\x7d\x6b\x2e\xae\x10\xef\x80\x69\x4f\x01\x6f");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
@@ -214,9 +212,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
-    params.base_len[0] = 200;
-    params.base_len[1] = 64000;
-    params.base_len[2] = 80;
+    params.weight[0] = 33;
+    params.weight[1] = 34;
+    params.weight[2] = 33;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
@@ -229,9 +227,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
                                       selector.cx(),
                                       selector.cy()));
 
-    // drawable.save_to_png("selector4.png");
+    //drawable.save_to_png("selector4.png");
 
-    RED_CHECK_SIG(drawable, "\x68\x1e\x1c\x20\xb1\x2a\x68\x59\x45\xc1\x41\x0c\x03\x0d\x3e\xc9\xf3\xce\x22\x40");
+    RED_CHECK_SIG(drawable, "\xc4\x1f\xe7\x63\xe0\x8f\xbd\x60\x6a\x85\x69\x45\x1a\x0f\x66\x82\xfd\xcf\x9b\x03");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
@@ -250,9 +248,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
-    params.base_len[0] = 200;
-    params.base_len[1] = 64000;
-    params.base_len[2] = 80;
+    params.weight[0] = 33;
+    params.weight[1] = 34;
+    params.weight[2] = 33;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
@@ -265,7 +263,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
                                       30,
                                       10));
 
-    // drawable.save_to_png("selector5.png");
+    //drawable.save_to_png("selector5.png");
 
     RED_CHECK_SIG(drawable, "\x9d\xbe\x64\x88\x34\x4b\x79\x83\x6a\xa1\x36\xad\xf4\x9e\xe6\x89\xb8\xf3\x86\x87");
 }
@@ -285,9 +283,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
-    params.base_len[0] = 200;
-    params.base_len[1] = 64000;
-    params.base_len[2] = 80;
+    params.weight[0] = 33;
+    params.weight[1] = 34;
+    params.weight[2] = 33;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
@@ -331,9 +329,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector6-1.png");
+    //drawable.save_to_png("selector6-1.png");
 
-    RED_CHECK_SIG(drawable, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
+    RED_CHECK_SIG(drawable, "\x59\x8d\x46\x0d\xe2\x74\x7e\x4a\x17\xbc\xfd\x12\x3c\xc2\xe2\x2a\xc6\x47\x8b\x81");
 
 
     Keymap2 keymap;
@@ -344,10 +342,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector6-2.png");
+    //drawable.save_to_png("selector6-2.png");
 
-
-//     RED_CHECK_SIG(drawable, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
+    RED_CHECK_SIG(drawable, "\x16\xdf\x52\xec\x39\xc3\x0f\xfe\x24\x9a\xa6\xfa\x47\x2f\x14\xe4\xf6\xb1\x75\xda");
 
 
     keymap.push_kevent(Keymap2::KEVENT_END);
@@ -355,21 +352,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector6-3.png");
+    //drawable.save_to_png("selector6-3.png");
 
-
-    RED_CHECK_SIG(drawable, "\x72\xf6\x86\x9a\xf8\x1c\x62\xae\xce\x8e\x40\x26\x9d\x4a\x65\xac\x7e\x13\x75\x52");
-
-
-    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
-
-    selector.rdp_input_invalidate(selector.get_rect());
-
-    // drawable.save_to_png("selector6-4.png");
-
-
-    RED_CHECK_SIG(drawable, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
+    RED_CHECK_SIG(drawable, "\xd0\xb0\xcc\x0d\x0c\x37\x79\xcc\xde\x7f\x4e\x5b\x98\x3e\x11\x5d\x73\x0e\x2f\x89");
 
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
@@ -377,10 +362,19 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector6-5.png");
+    //drawable.save_to_png("selector6-4.png");
+
+    RED_CHECK_SIG(drawable, "\x16\xdf\x52\xec\x39\xc3\x0f\xfe\x24\x9a\xa6\xfa\x47\x2f\x14\xe4\xf6\xb1\x75\xda");
 
 
-    RED_CHECK_SIG(drawable, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
+
+    selector.rdp_input_invalidate(selector.get_rect());
+
+    //drawable.save_to_png("selector6-5.png");
+
+    RED_CHECK_SIG(drawable, "\x59\x8d\x46\x0d\xe2\x74\x7e\x4a\x17\xbc\xfd\x12\x3c\xc2\xe2\x2a\xc6\x47\x8b\x81");
 
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
@@ -388,10 +382,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector6-6.png");
+    //drawable.save_to_png("selector6-6.png");
 
-
-    RED_CHECK_SIG(drawable, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
+    RED_CHECK_SIG(drawable, "\x16\xdf\x52\xec\x39\xc3\x0f\xfe\x24\x9a\xa6\xfa\x47\x2f\x14\xe4\xf6\xb1\x75\xda");
 
     // int x = selector.selector_lines.rect.x + 5;
     // int y = selector.selector_lines.rect.y + 3;
@@ -419,9 +412,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
-    params.base_len[0] = 200;
-    params.base_len[1] = 64000;
-    params.base_len[2] = 80;
+    params.weight[0] = 33;
+    params.weight[1] = 34;
+    params.weight[2] = 33;
     params.label[0] = "Authorization";
     params.label[1] = "Target";
     params.label[2] = "Protocol";
@@ -472,9 +465,10 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-1.png");
+    //drawable.save_to_png("selector7-1.png");
 
-    RED_CHECK_SIG(drawable, "\xcb\xa1\x9f\x4e\xb9\x42\x64\xa9\xa5\x9d\xcd\x06\xc2\x33\x56\xae\xab\xfa\x75\x65");
+    RED_CHECK_SIG(drawable, "\xe0\x47\xea\x42\xe6\x9c\x41\xf4\x1f\x96\xe3\x95\x3d\x7b\x31\x3a\xdb\x23\x8f\x03");
+
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -485,19 +479,21 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-2.png");
+    //drawable.save_to_png("selector7-2.png");
 
+    RED_CHECK_SIG(drawable, "\x45\xad\xdb\x14\xc4\x13\xdf\xf0\x73\x90\x48\x2c\xf9\x73\xb5\x5f\x16\x6a\x50\xa9");
 
-    RED_CHECK_SIG(drawable, "\x7d\x15\x56\x7d\xe4\x03\x75\xb5\xb7\x47\x7f\xb4\x24\x38\xed\xe6\x29\xe3\xd8\x81");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-3.png");
+    //drawable.save_to_png("selector7-3.png");
 
-    RED_CHECK_SIG(drawable, "\x77\x74\x1e\x4e\xfa\x9e\xc1\x65\x8b\x53\x40\x08\xce\x5c\x32\xe8\x44\x00\x3d\x6b");
+    RED_CHECK_SIG(drawable, "\x05\xf2\xa1\x89\xa4\x85\xd9\xd8\xa1\xee\x78\xed\x01\xe5\x8f\x9a\x71\x2b\x42\x9c");
+
+
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
@@ -506,9 +502,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-4.png");
+    //drawable.save_to_png("selector7-4.png");
 
-    RED_CHECK_SIG(drawable, "\xce\xfd\x05\x29\xf5\xbc\x75\xb2\x06\xba\x1b\xe1\xbe\x6a\x00\xd3\x14\x2a\x16\x65");
+    RED_CHECK_SIG(drawable, "\x73\xf9\x3f\x58\x4c\x22\xe5\x9f\x65\x66\x9c\xba\x79\xb4\x41\x7a\xa8\xf3\x0d\xbd");
 
 
     keymap.push_kevent(Keymap2::KEVENT_END);
@@ -516,9 +512,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-5.png");
+    //drawable.save_to_png("selector7-5.png");
 
-    RED_CHECK_SIG(drawable, "\x7b\x90\xfa\xfc\x76\xd6\x9c\x2a\xba\xd7\x98\xc2\xbf\x59\xa2\xf0\x8b\x47\xdd\xb2");
+    RED_CHECK_SIG(drawable, "\x77\xdf\xb0\x68\x9e\x14\xc2\xc9\x64\x2f\xf7\x6d\xc5\xf4\xe3\x69\x33\x6c\x58\x00");
 
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
@@ -526,9 +522,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-6.png");
+    //drawable.save_to_png("selector7-6.png");
 
-    RED_CHECK_SIG(drawable, "\x03\xb4\xed\xd3\xd3\x6d\x38\x33\x96\x04\x39\x7d\xdf\xd4\xa0\xcd\xee\xd5\xd2\x46");
+    RED_CHECK_SIG(drawable, "\x34\x69\xda\x57\x87\x9e\x41\x9e\x61\xe0\x1a\x29\x5b\xef\xa2\x93\x7e\xbe\x46\x97");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -536,9 +532,9 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-7.png");
+    //drawable.save_to_png("selector7-7.png");
 
-    RED_CHECK_SIG(drawable, "\xfe\x3b\x6e\x81\xba\x50\x46\xda\xe9\x67\x97\x6d\x59\x4d\x71\x54\x48\x01\xd5\xc5");
+    RED_CHECK_SIG(drawable, "\x7a\xe4\x21\xd6\xf7\xdb\xcb\x8a\x19\x40\x6d\xbe\xda\xd1\xf4\xae\xcc\xdb\xc5\xdb");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -548,9 +544,10 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-8.png");
+    //drawable.save_to_png("selector7-8.png");
 
-    RED_CHECK_SIG(drawable, "\xfc\xaf\x04\x5d\x54\x8a\xe4\x93\x99\x1c\xef\xc0\xe8\x98\x69\x4b\xb8\xf6\xa6\x4f");
+    RED_CHECK_SIG(drawable, "\x48\x5d\x5e\x29\x99\xa6\x3b\x29\x88\xd7\x84\xea\x21\x15\xf5\x5f\xc5\x63\xb8\xb6");
+
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -570,7 +567,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    // drawable.save_to_png("selector7-9.png");
+    //drawable.save_to_png("selector7-9.png");
 
-    RED_CHECK_SIG(drawable, "\x66\x8e\x41\x3b\xcd\xd7\xde\x26\x6e\x22\x93\xe2\x82\x42\x97\xf3\x22\xc4\xa9\x27");
+    RED_CHECK_SIG(drawable, "\x4b\xb1\x5d\xa1\xb1\xcd\x93\x05\x8a\x6e\x31\x66\x74\x04\x4f\xba\x45\xc4\xe4\x4e");
 }

@@ -29,6 +29,7 @@
 
 #include <vector>
 
+#define COLUMN_WIDTH_CORRECTOR 6
 
 struct WidgetGrid : public Widget
 {
@@ -204,7 +205,7 @@ public:
             Rect rectCell(x, y, *column_width_it, row_heights[row_index]);
             if (w) {
                 w->set_xy(rectCell.x, rectCell.y);
-                w->set_wh(rectCell.cx, rectCell.cy);
+                w->set_wh(rectCell.cx - COLUMN_WIDTH_CORRECTOR, rectCell.cy);
 
                 w->set_color(bg_color, fg_color);
 
@@ -432,17 +433,19 @@ public:
 
 struct ColumnWidthStrategy
 {
-    uint16_t min;
-    uint16_t max;
+    uint32_t min;
+    uint32_t weight;
 };
 
 inline
-void compute_format(WidgetGrid const& grid, ColumnWidthStrategy * column_width_strategies, uint16_t * row_height, uint16_t * column_width)
+void compute_format(WidgetGrid const& grid, ColumnWidthStrategy* column_width_strategies, int priority_column_index,
+    uint16_t* row_height, uint16_t* column_width, bool* width_is_optimal)
 {
     BufMaker<16, uint16_t> column_width_optimal_buffer;
     auto column_width_optimal = column_width_optimal_buffer.dyn_array(grid.get_nb_columns());
     std::fill(column_width_optimal.begin(), column_width_optimal.end(), 0);
     std::fill(row_height, row_height+grid.get_nb_rows(), 0);
+    std::fill(width_is_optimal, width_is_optimal+grid.get_nb_columns(), false);
 
     for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
         for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
@@ -452,8 +455,8 @@ void compute_format(WidgetGrid const& grid, ColumnWidthStrategy * column_width_s
             }
 
             Dimension dim = w->get_optimal_dim();
-            if (column_width_optimal[column_index] < dim.w) {
-                column_width_optimal[column_index] = dim.w + 2;
+            if (column_width_optimal[column_index] < dim.w + 2 + COLUMN_WIDTH_CORRECTOR) {
+                column_width_optimal[column_index] = dim.w + 2 + COLUMN_WIDTH_CORRECTOR;
             }
 
             if (row_height[row_index] < dim.h) {
@@ -462,61 +465,168 @@ void compute_format(WidgetGrid const& grid, ColumnWidthStrategy * column_width_s
         }
     }
 
-    // TODO Optimize this
-    uint16_t unsatisfied_column_count = 0;
-    // min
+    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+        if (column_width[column_index]) {
+            break;
+        }
+        if (column_index == grid.get_nb_columns() - 1) {
+            uint32_t const total_weight = [](WidgetGrid const& grid, ColumnWidthStrategy* column_width_strategies) -> uint32_t {
+                    uint32_t total_weight = 0;
+
+                    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                        total_weight += column_width_strategies[column_index].weight;
+                    }
+
+                    return (total_weight ? total_weight : 1);
+                }(grid, column_width_strategies);
+
+            uint16_t unused_width = static_cast<int16_t>(grid.cx() - grid.border * 2 * grid.get_nb_columns());
+
+            uint16_t const unused_width_saved = unused_width;
+
+            for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                uint16_t const extra_width = unused_width_saved * column_width_strategies[column_index].weight / total_weight;
+
+                column_width[column_index] += extra_width;
+
+                unused_width -= extra_width;
+            }
+            column_width[grid.get_nb_columns() - 1] += unused_width;
+        }
+    }
+
+    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+        if (column_width[column_index] < column_width_optimal[column_index]) {
+            break;
+        }
+        if (column_index == grid.get_nb_columns() - 1) {
+            std::fill(width_is_optimal, width_is_optimal+grid.get_nb_columns(), true);
+
+            return;
+        }
+    }
+
+    if (priority_column_index == -1) {
+        priority_column_index = [](WidgetGrid const& grid, array_view<uint16_t> column_width_optimal) {
+                int      widest_columns = -1;
+                uint16_t wider = 0;
+
+                for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                    if (wider < column_width_optimal[column_index]) {
+                        wider = column_width_optimal[column_index];
+                        widest_columns = column_index;
+                    }
+                }
+
+                return widest_columns;
+            }(grid, column_width_optimal);
+    }
+
+    uint16_t const total_width_optimal = [](WidgetGrid const& grid, array_view<uint16_t> column_width_optimal) -> uint16_t {
+            uint16_t total_width_optimal = 0;
+
+            for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                total_width_optimal += column_width_optimal[column_index];
+            }
+
+            return total_width_optimal;
+        }(grid, column_width_optimal);
+
     uint16_t unused_width = static_cast<int16_t>(grid.cx() - grid.border * 2 * grid.get_nb_columns());
-    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
-        column_width[column_index] = column_width_strategies[column_index].min;
-        unused_width -= static_cast<int16_t>(column_width_strategies[column_index].min);
 
-        if (column_width[column_index] < std::min(column_width_optimal[column_index], column_width_strategies[column_index].max)) {
-            unsatisfied_column_count++;
-        }
-    }
-    // optimal
-    while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
-        const uint16_t part = unused_width / unsatisfied_column_count;
-        if (!part) {
-            break;
-        }
-        unsatisfied_column_count = 0;
+    if (total_width_optimal <= unused_width)
+    {
         for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
-            uint16_t optimal_max = std::min(column_width_optimal[column_index], column_width_strategies[column_index].max);
-            if (column_width[column_index] < optimal_max) {
-                uint16_t ajusted_part = std::min<uint16_t>(part, optimal_max - column_width[column_index]);
-                column_width[column_index] += ajusted_part;
-                unused_width -= ajusted_part;
+            column_width[column_index] = column_width_optimal[column_index];
 
-                if (column_width[column_index] < optimal_max) {
-                    unsatisfied_column_count++;
+            unused_width -= column_width_optimal[column_index];
+        }
+
+        uint32_t const total_weight = [](WidgetGrid const& grid, array_view<uint16_t> column_width_optimal) -> uint32_t {
+                uint32_t total_weight = 0;
+
+                for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                    total_weight += column_width_optimal[column_index];
                 }
+
+                return (total_weight ? total_weight : 1);
+            }(grid, column_width_optimal);
+
+        uint16_t const unused_width_saved = unused_width;
+
+        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+            uint16_t const extra_width = unused_width_saved * column_width_optimal[column_index] / total_weight;
+
+            column_width[column_index] += extra_width;
+
+            unused_width -= extra_width;
+        }
+        column_width[grid.get_nb_columns() - 1] += unused_width;
+
+        std::fill(width_is_optimal, width_is_optimal+grid.get_nb_columns(), true);
+    }
+    else
+    {
+        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+            column_width[column_index] = column_width_strategies[column_index].min;
+
+            unused_width -= column_width_strategies[column_index].min;
+        }
+
+        if (column_width_optimal[priority_column_index] < column_width[priority_column_index] + unused_width) {
+            unused_width += column_width[priority_column_index];
+
+            column_width[priority_column_index] = column_width_optimal[priority_column_index];
+
+            unused_width -= column_width_optimal[priority_column_index];
+
+            if (unused_width) {
+                for (bool exit_processing = false; !exit_processing; ) {
+                    exit_processing = true;
+
+                    uint32_t const partial_weight = [](WidgetGrid const& grid, array_view<uint16_t> column_width_optimal, uint16_t* column_width) -> uint32_t {
+                            uint32_t partial_weight = 0;
+
+                            for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                                if (column_width[column_index] < column_width_optimal[column_index]) {
+                                    partial_weight += column_width_optimal[column_index];
+                                }
+                            }
+
+                            return (partial_weight ? partial_weight : 1);
+                        }(grid, column_width_optimal, column_width);
+
+                    uint16_t const unused_width_saved = unused_width;
+
+                    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                        if (column_width[column_index] < column_width_optimal[column_index]) {
+                            uint16_t extra_width = unused_width_saved * column_width_optimal[column_index] / partial_weight;
+
+                            column_width[column_index] += extra_width;
+
+                            unused_width -= extra_width;
+
+                            if (column_width[column_index] > column_width_optimal[column_index]) {
+                                unused_width += (column_width[column_index] - column_width_optimal[column_index]);
+
+                                column_width[column_index] = column_width_optimal[column_index];
+
+                                exit_processing = false;
+                            }
+                        }
+                    }
+                }
+
+                column_width[grid.get_nb_columns() - 1] += unused_width;
             }
         }
-    }
-    // max
-    unsatisfied_column_count = 0;
-    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
-        if (column_width[column_index] < column_width_strategies[column_index].max) {
-            unsatisfied_column_count++;
+        else {
+            column_width[priority_column_index] += unused_width;
         }
-    }
-    while ((unused_width > 0) && (unsatisfied_column_count > 0)) {
-        const uint16_t part = unused_width / unsatisfied_column_count;
-        if (!part) {
-            break;
-        }
-        unsatisfied_column_count = 0;
-        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
-            if (column_width[column_index] < column_width_strategies[column_index].max) {
-                uint16_t ajusted_part = std::min<uint16_t>(part, column_width_strategies[column_index].max - column_width[column_index]);
-                column_width[column_index] += ajusted_part;
-                unused_width -= ajusted_part;
 
-                if (column_width[column_index] < column_width_strategies[column_index].max) {
-                    unsatisfied_column_count++;
-                }
-            }
+        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+            width_is_optimal[column_index] = ((column_index == priority_column_index) ||
+                (column_width[column_index] >= column_width_optimal[column_index]));
         }
     }
 }

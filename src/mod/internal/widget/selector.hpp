@@ -34,11 +34,11 @@ class Theme;
 
 struct WidgetSelectorParams
 {
-    static constexpr uint16_t nb_max_columns = 4;
+    static constexpr uint16_t nb_max_columns = 3;
 
     uint16_t nb_columns = 0;
     const char * label[nb_max_columns] = {nullptr};
-    uint16_t base_len[nb_max_columns] = {0};
+    uint32_t weight[nb_max_columns] = {0};
 };
 
 
@@ -62,6 +62,13 @@ private:
     WidgetLabel device_label;
 
     std::array<WidgetLabel, WidgetSelectorParams::nb_max_columns> header_labels;
+
+    std::array<WidgetFlatButton, WidgetSelectorParams::nb_max_columns> column_expansion_buttons;
+
+    uint16_t current_columns_width[WidgetSelectorParams::nb_max_columns] = { 0 };
+
+    int priority_column_index = -1;
+
 public:
     std::array<WidgetEdit, WidgetSelectorParams::nb_max_columns>  edit_filters;
 
@@ -106,8 +113,9 @@ public:
 
     WidgetFlatButton * extra_button;
 
-    uint16_t base_len[WidgetSelectorParams::nb_max_columns] = {0};
+    uint32_t weight[WidgetSelectorParams::nb_max_columns] = {0};
 
+    const char * label[WidgetSelectorParams::nb_max_columns] = {nullptr};
 
 
     WidgetSelector(gdi::GraphicApi & drawable,
