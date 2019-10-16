@@ -412,6 +412,14 @@ struct va_plus
       ::template f<mp::integral_constant<decltype((xs::value + ...)), (xs::value + ...)>>;
 };
 
+struct no_name
+{
+    static constexpr char const* proto_name() noexcept
+    {
+        return "no name";
+    }
+};
+
 namespace test
 {
     using namespace proto;
@@ -793,7 +801,7 @@ namespace test
 
     namespace traits
     {
-        template<class T> using static_size_t = typename T::static_size;
+        template<class T> using static_min_size_t = typename T::static_min_size;
         template<class T> using context_value_list_t = typename T::context_value_list;
 
         template<class> class lazy {};
@@ -1083,7 +1091,7 @@ namespace test
             std::size_t unchecked_size;
             TParams params;
             TCtxValues ctx_values;
-            ErrorFn err;
+            ErrorFn error;
         };
 
 
@@ -1144,7 +1152,7 @@ namespace test
                             mp::fork<
                                 mp::transform<mp::cfe<context_value_list_t>,
                                     mp::join<mp::cfe<tuple>>>,
-                                mp::transform<mp::cfe<static_size_t>, va_plus<>>,
+                                mp::transform<mp::cfe<static_min_size_t>, va_plus<>>,
                                 mp::listify
                             >
                         >
@@ -1156,7 +1164,7 @@ namespace test
                 using size = mp::eager::at<states_list, 1>;
 
                 if (buf.size() < size::value) {
-                    error();
+                    error(no_name{}, size::value, buf.size());
                 }
 
                 return Ctx<tparams, ctx_values, ErrorFn&>{
@@ -1273,11 +1281,11 @@ namespace test
                 }
             };
 
-            template<class Ctx, class... Ts>
-            static auto final(Ctx& /*ctx*/, Ts&&... xs)
+            template<class Ctx, class Tuple>
+            static auto final(Ctx& /*ctx*/, Tuple&& t)
             {
                 // TODO sort by alignement ?
-                return tuple_mem<tuple<Ts...>>{{static_cast<Ts&&>(xs)...}};
+                return tuple_mem<Tuple>{static_cast<Tuple&&>(t)};
             }
         };
 
@@ -1338,7 +1346,7 @@ namespace test
         struct stream_readable2::next_value<as_param,
             variable<lazy<Data>, Name>>
         {
-            using static_size = static_size_t<read_data<Data>>;
+            using static_min_size = static_min_size_t<read_data<Data>>;
             using context_value_list = mp::list<>;
 
             template<class Ctx>
@@ -1352,7 +1360,7 @@ namespace test
         struct stream_readable2::next_value<as_param,
             variable<val<Data, T&>, Name>>
         {
-            using static_size = static_size_t<read_data<Data>>;
+            using static_min_size = static_min_size_t<read_data<Data>>;
             using context_value_list = mp::list<>;
 
             template<class Ctx>
@@ -1373,14 +1381,15 @@ namespace test
                 value_type_t<DataSize>,
                 datas::values::types::SizeBytes<Name>>;
 
-            using static_size = static_size_t<read_data<DataSize>>;
+            using static_min_size = static_min_size_t<read_data<DataSize>>;
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx>
             static void make(Ctx& ctx, val<Data, Bytes>&)
             {
-                static_cast<var_size&>(ctx.ctx_values).value
-                    = read_data<DataSize>::read(ctx.in);
+                auto& n = static_cast<var_size&>(ctx.ctx_values).value;
+                n = read_data<DataSize>::read(ctx.in);
+                println(std::dec, "size: ", type_name<Name>(), ' ', int(n), "  ", ctx.in.in_remain());
             }
         };
 
@@ -1403,16 +1412,17 @@ namespace test
             datas::values::types::Data<as_param>,
             variable<val<Data, Bytes>, Name>>
         {
-            using static_size = mp::int_<0>;
+            using static_min_size = mp::int_<0>;
             using context_value_list = mp::list<>;
 
             template<class Ctx>
             static auto make(Ctx& ctx, val<Data, Bytes>& v)
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
+                println(std::dec, "data: ", type_name<Name>(), ' ', int(n), "  ", ctx.in.in_remain());
 
                 if (ctx.unchecked_size < n) {
-                    ctx.err();
+                    ctx.error(Name{}, n, ctx.in.get_capacity());
                 }
                 ctx.unchecked_size -= n;
 
@@ -1422,7 +1432,7 @@ namespace test
 
         struct empty_next_value
         {
-            using static_size = mp::int_<0>;
+            using static_min_size = mp::int_<0>;
             using context_value_list = mp::list<>;
 
             template<class St, class X>
@@ -1441,7 +1451,7 @@ namespace test
         template<class Int, class Endianess>
         struct stream_readable2::read_data_impl<datas::types::Integer<Int, Endianess>>
         {
-            using static_size = mp::int_<sizeof(Int)>;
+            using static_min_size = mp::int_<sizeof(Int)>;
 
             static Int read(InStream& in)
             {
@@ -1532,10 +1542,6 @@ namespace test
         using strong_group_members = typename ctx_mems::strong_group_members;
         using volatile_final_members = typename ctx_mems::volatile_final_members;
 
-        // ctx.params.apply([&](auto... vars){
-        //     (println("  ", type_name(vars), " = ", vars.value), ...);
-        // });
-
         auto final = [&](auto&&... xs){
             apply(volatile_final_members{}, [&](auto... v) {
                 return (Traits::next_state(ctx, v), ...);
@@ -1544,9 +1550,9 @@ namespace test
         };
 
         return apply(strong_group_members{}, [&](auto... l){
-            return final(apply(l, [&](auto... v) {
+            return final(tuple{apply(l, [&](auto... v) {
                 return (Traits::next_state(ctx, v), ...);
-            })...);
+            })...});
         });
     }
 
@@ -1625,9 +1631,10 @@ namespace detail
 
 #define PROTO_PACKET_VALUE_DISPATCH(r, name, elem) name().PROTO_PACKET_VALUE_##elem
 
-#define PROTO_PACKET_I(name, list)                                          \
+#define PROTO_PACKET_I(name, cname, list)                                   \
     struct name {                                                           \
         BOOST_PP_LIST_FOR_EACH(PROTO_PACKET_TYPE_DISPATCH, _, list)         \
+        static char const* proto_name() { return cname; }                   \
     };                                                                      \
     constexpr inline ::proto::tuple<                                        \
         class name,                                                         \
@@ -1636,14 +1643,17 @@ namespace detail
         })::type                                                            \
     > name
 
-#define PROTO_PACKET(name, ...) PROTO_PACKET_I(name, BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__))
+#define PROTO_PACKET(name, cname, ...) \
+    PROTO_PACKET_I(name, cname, BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__))
+#define PROTO_PACKET2(name, ...) \
+    PROTO_PACKET_I(name, #name, BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__))
 
 
 namespace X224
 {
     using namespace proto::datas;
 
-    PROTO_PACKET(tpkt,
+    PROTO_PACKET(tpkt, "TPKT",
         value(version, u8),
         value(len, u16_be)
     );
@@ -1651,8 +1661,11 @@ namespace X224
     inline constexpr auto tdpu_recv = [](InStream& stream, auto pkt){
         return test::inplace_struct(
             {stream.get_current(), stream.get_data_end()},
-            []{
-                throw std::runtime_error("Truncated TPKT: stream=... tpkt=...");
+            [](auto field, std::size_t n, std::size_t capacity) {
+                char s[128];
+                snprintf(s, sizeof(s), "Truncated %s: field '%s': stream.size=%zu expected=%zu",
+                    decltype(pkt)::proto_name(), field.proto_name(), capacity, n);
+                throw std::runtime_error(s);
             },
             pkt);
     };
@@ -1714,8 +1727,11 @@ int main()
         sss.e = b);
     dump(out);
 
-    auto error_fn = [](){
-        throw std::runtime_error("buf is too short");
+    auto error_fn = [](auto field, std::size_t n, std::size_t capacity){
+        char s[128];
+        snprintf(s, sizeof(s), "buf is too short: field '%s': stream.size=%zu expected=%zu",
+            field.proto_name(), capacity, n);
+        throw std::runtime_error(s);
     };
 
     {
@@ -1754,4 +1770,9 @@ int main()
             (p(xs), ...);
         });
     }
+
+    // {
+    //     InStream in(out.subarray(0, 1));
+    //     X224::tdpu_recv(in, X224::tpkt);
+    // }
 }

@@ -239,12 +239,12 @@ struct wrap_type
     using type = T;
 };
 
-#define PROTO_DECL_CLASS_NAME(classname, memname, T)              \
-    struct classname {                                            \
-        using proto_type = T;                                     \
-        proto_type memname;                                       \
-        proto_type const& proto_value() const { return memname; } \
-        static char const* proto_name() { return #classname; }    \
+#define PROTO_DECL_CLASS_NAME(classname, memname, T)                       \
+    struct classname {                                                     \
+        using proto_type = T;                                              \
+        proto_type memname;                                                \
+        proto_type const& proto_value() const noexcept { return memname; } \
+        static char const* proto_name() noexcept { return #classname; }    \
     }
 
 #define PROTO_LOCAL_NAME(name)                                             \
@@ -254,27 +254,30 @@ struct wrap_type
         REDEMPTION_DIAGNOSTIC_PUSH                                         \
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")     \
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-local-typedef")       \
-        static auto mem() { return [](auto t){                             \
+        static auto mem() noexcept { return [](auto t) noexcept {          \
             PROTO_DECL_CLASS_NAME(name, name, typename decltype(t)::type); \
             return ::proto::wrap_type<name>();                             \
         }; }                                                               \
+        static char const* proto_name() noexcept { return #name; }         \
         REDEMPTION_DIAGNOSTIC_POP                                          \
     } name {}
 
-#define PROTO_CLASS_NAME(classname, name)                \
-    template<class T = void>                             \
-    PROTO_DECL_CLASS_NAME(classname, name, T);           \
-                                                         \
-    template<>                                           \
-    struct classname<void> : ::proto::label<classname<>> \
-    {                                                    \
-        using ::proto::label<classname<>>::operator=;    \
-                                                         \
-        static auto mem() { return [](auto t){           \
-            return ::proto::wrap_type<                   \
-                classname<typename decltype(t)::type>    \
-            >();                                         \
-        }; }                                             \
+#define PROTO_CLASS_NAME(classname, name)                 \
+    template<class T = void>                              \
+    PROTO_DECL_CLASS_NAME(classname, name, T);            \
+                                                          \
+    template<>                                            \
+    struct classname<void> : ::proto::label<classname<>>  \
+    {                                                     \
+        using ::proto::label<classname<>>::operator=;     \
+                                                          \
+        static auto mem() noexcept {                      \
+            return [](auto t) noexcept {                  \
+                return ::proto::wrap_type<                \
+                    classname<typename decltype(t)::type> \
+                >();                                      \
+            };                                            \
+        }                                                 \
     }
 
 #define PROTO_GLOBAL_NAME(classname, name) \
