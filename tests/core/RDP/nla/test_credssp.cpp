@@ -35,8 +35,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase1)
     auto r = BER::mkInteger(114178754);
     RED_CHECK_EQUAL(r.size(), 6);
 
-    InStream in_s(r);
-    uint32_t value = BER::read_integer(in_s, "Integer", ERR_CREDSSP_TS_REQUEST);
+    auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
     RED_CHECK_EQUAL(value, 114178754);
 }
 
@@ -45,8 +44,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase2)
     auto r = BER::mkInteger(1);
     RED_CHECK_EQUAL(r.size(), 3);
 
-    InStream in_s = InStream(r);
-    uint32_t value = BER::read_integer(in_s, "Integer", ERR_CREDSSP_TS_REQUEST);
+    auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
 
     RED_CHECK_EQUAL(value, 1);
 }
@@ -56,8 +54,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase3)
     auto r = BER::mkInteger(52165);
     RED_CHECK_EQUAL(r.size(), 5);
 
-    InStream in_s = InStream(r);
-    uint32_t value = BER::read_integer(in_s, "Integer", ERR_CREDSSP_TS_REQUEST);
+    auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
 
     RED_CHECK_EQUAL(value, 52165);
 }
@@ -67,8 +64,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase4)
     auto r = BER::mkInteger(0x0FFF);
     RED_CHECK_EQUAL(r.size(), 4);
 
-    InStream in_s = InStream(r);
-    uint32_t value = BER::read_integer(in_s, "Integer", ERR_CREDSSP_TS_REQUEST);
+    auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
 
     RED_CHECK_EQUAL(value, 0x0FFF);
 }

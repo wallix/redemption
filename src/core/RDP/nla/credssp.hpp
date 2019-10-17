@@ -343,32 +343,6 @@ namespace BER {
         return len;
     }
 
-    inline int read_integer(InStream & s, const char * message, error_type eid) 
-    {
-        auto [byte, queue] = pop_tag_length(s.remaining_bytes(), CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
-        s.in_skip_bytes(s.in_remain()-queue.size());
-
-        if ((byte < 1) || (byte > 4)){
-            LOG(LOG_ERR, "%s: Ber unexpected integer length %zu", message, byte);
-            throw Error(eid);
-        }
-        // Now bytes contains length of integer value
-        if (!s.in_check_rem(byte)) {
-            LOG(LOG_ERR, "%s: Ber integer data truncated %zu", message, byte);
-            throw Error(eid);
-        }
-        switch (byte) {
-        default:
-            return s.in_uint32_be();
-        case 3:
-            return s.in_uint24_be();
-        case 2:
-            return s.in_uint16_be();
-        case 1:
-            return s.in_uint8();
-        }
-    }
-
     inline std::pair<int, bytes_view> pop_integer(bytes_view s, const char * message, error_type eid) 
     {
         auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
@@ -396,16 +370,14 @@ namespace BER {
         return {in_s.in_uint32_be(), queue.drop_front(4)};
     }
 
-    inline int read_integer_field(InStream & s, uint8_t tag, const char * message, error_type eid) 
+    inline std::pair<int, bytes_view> pop_integer_field(bytes_view s, uint8_t tag, const char * message, error_type eid) 
     {
-        auto [length, queue] = pop_tag_length(s.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        s.in_skip_bytes(s.in_remain()-queue.size());
-        
-        if (!s.in_check_rem(length)) {
+        auto [length, queue] = pop_tag_length(s, CLASS_CTXT|PC_CONSTRUCT|tag, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        if (queue.size() < length) {
             LOG(LOG_ERR, "%s: Ber tagged integer field truncated", message);
             throw Error(eid);
         }
-        return read_integer(s, message, eid);
+        return pop_integer(queue, message, eid);
     }
 
     inline std::vector<uint8_t> read_mandatory_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
@@ -884,7 +856,9 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
 
     // version    [0] INTEGER,
-    self.use_version = BER::read_integer_field(stream, 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
+    auto [value, queue] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue.size());
+    self.use_version = value;
     if (verbose) {
         LOG(LOG_INFO, "Credssp recvTSRequest() Remote Version %u", self.use_version);
     }
@@ -915,7 +889,9 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     /* [4] errorCode (INTEGER) */
     if (self.use_version >= 3 && self.use_version != 5){
         if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), 4)){
-            self.error_code = BER::read_integer_field(stream, 4, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
+            auto [value, queue] = BER::pop_integer_field(stream.remaining_bytes(), 4, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
+            stream.in_skip_bytes(stream.in_remain()-queue.size());
+            self.error_code = value;
             LOG(LOG_INFO, "Credssp recvTSCredentials() "
                 "ErrorCode = %x, Facility = %x, Code = %x",
                 self.error_code,
@@ -1039,7 +1015,10 @@ inline TSCspDataDetail recvTSCspDataDetail(bytes_view data)
     // TSCspDataDetail ::= SEQUENCE
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
 
-    self.keySpec       = BER::read_integer_field(        stream, 0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
+    auto [value, queue] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue.size());
+    self.keySpec       = value;
+
     self.cardName      = BER::read_optional_octet_string(stream, 1, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
     self.readerName    = BER::read_optional_octet_string(stream, 2, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
     self.containerName = BER::read_optional_octet_string(stream, 3, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
@@ -1197,7 +1176,10 @@ inline TSCredentials recvTSCredentials(bytes_view data, bool verbose)
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
 
     // [0] credType (INTEGER)
-    self.credType = BER::read_integer_field(stream, 0, "TSCredentials [0] credType ", ERR_CREDSSP_TS_REQUEST);
+    auto [value, queue] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TSCredentials [0] credType ", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue.size());
+    self.credType = value;
+
 
     // [1] credentials (OCTET STRING)
     BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
