@@ -694,20 +694,28 @@ sign_key = string(default='')
 #_hidden
 socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
 
+# Enable use of ICAP service for file verification on upload
 #_hidden
 enable_up = boolean(default=False)
 
+# Enable use of ICAP service for file verification on download
 #_hidden
 enable_down = boolean(default=False)
+
+# Verify text data via clipboard from client to server
+# Uploaded files verification must be enabled  (Enable up)
+#_hidden
+clipboard_text_up = boolean(default=False)
+
+# Verify text data via clipboard from server to client
+# Downloaded files verification must be enabled (Enable down)
+#_hidden
+clipboard_text_down = boolean(default=False)
 
 #_hidden
 log_if_accepted = boolean(default=True)
 
 [icap_server_down]
-
-# Verify text data via clipboard
-#_hidden
-clipboard_text_data = boolean(default=False)
 
 # Ip or fqdn of ICAP server
 host = string(default='')
@@ -730,10 +738,6 @@ enable_x_context = boolean(default=True)
 filename_percent_encoding = boolean(default=False)
 
 [icap_server_up]
-
-# Verify text data via clipboard
-#_hidden
-clipboard_text_data = boolean(default=False)
 
 # Ip or fqdn of ICAP server
 host = string(default='')

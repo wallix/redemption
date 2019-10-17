@@ -1345,6 +1345,22 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "clipboard_text_up")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_verification::clipboard_text_up&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "clipboard_text_down")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_verification::clipboard_text_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "log_if_accepted")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1360,14 +1376,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     }
     else if (0 == strcmp(context, "icap_server_down")) {
         if (0) {}
-        else if (0 == strcmp(key, "clipboard_text_data")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_down::clipboard_text_data&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "host")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1423,14 +1431,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     }
     else if (0 == strcmp(context, "icap_server_up")) {
         if (0) {}
-        else if (0 == strcmp(key, "clipboard_text_data")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_up::clipboard_text_data&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "host")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1471,6 +1471,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "filename_percent_encoding")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::filename_percent_encoding&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1490,14 +1498,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_replay::replay_on_loop&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "filename_percent_encoding")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::icap_server_up::filename_percent_encoding&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

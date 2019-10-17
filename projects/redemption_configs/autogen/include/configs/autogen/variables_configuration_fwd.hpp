@@ -210,11 +210,12 @@ namespace cfg {
         struct socket_path;
         struct enable_up;
         struct enable_down;
+        struct clipboard_text_up;
+        struct clipboard_text_down;
         struct log_if_accepted;
     };
 
     struct icap_server_down {
-        struct clipboard_text_data;
         struct host;
         struct port;
         struct service_name;
@@ -224,7 +225,6 @@ namespace cfg {
     };
 
     struct icap_server_up {
-        struct clipboard_text_data;
         struct host;
         struct port;
         struct service_name;

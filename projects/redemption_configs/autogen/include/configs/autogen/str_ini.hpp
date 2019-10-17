@@ -822,24 +822,33 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
 
+# Enable use of ICAP service for file verification on upload
 # value: 0 or 1
 #_hidden
 #enable_up = 0
 
+# Enable use of ICAP service for file verification on download
 # value: 0 or 1
 #_hidden
 #enable_down = 0
+
+# Verify text data via clipboard from client to server
+# Uploaded files verification must be enabled  (Enable up)
+# value: 0 or 1
+#_hidden
+#clipboard_text_up = 0
+
+# Verify text data via clipboard from server to client
+# Downloaded files verification must be enabled (Enable down)
+# value: 0 or 1
+#_hidden
+#clipboard_text_down = 0
 
 # value: 0 or 1
 #_hidden
 #log_if_accepted = 1
 
 [icap_server_down]
-
-# Verify text data via clipboard
-# value: 0 or 1
-#_hidden
-#clipboard_text_data = 0
 
 # Ip or fqdn of ICAP server
 #host = 
@@ -866,11 +875,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #filename_percent_encoding = 0
 
 [icap_server_up]
-
-# Verify text data via clipboard
-# value: 0 or 1
-#_hidden
-#clipboard_text_data = 0
 
 # Ip or fqdn of ICAP server
 #host = 

@@ -280,22 +280,22 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 
 [file_verification]
 
+# Enable use of ICAP service for file verification on upload
 enable_up = boolean(default=False)
 
+# Enable use of ICAP service for file verification on download
 enable_down = boolean(default=False)
+
+# Verify text data via clipboard from client to server
+# Uploaded files verification must be enabled  (Enable up)
+clipboard_text_up = boolean(default=False)
+
+# Verify text data via clipboard from server to client
+# Downloaded files verification must be enabled (Enable down)
+clipboard_text_down = boolean(default=False)
 
 #_advanced
 log_if_accepted = boolean(default=True)
-
-[icap_server_down]
-
-# Verify text data via clipboard
-clipboard_text_data = boolean(default=False)
-
-[icap_server_up]
-
-# Verify text data via clipboard
-clipboard_text_data = boolean(default=False)
 
 [video]
 
