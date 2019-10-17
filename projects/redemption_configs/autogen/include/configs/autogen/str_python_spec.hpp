@@ -713,7 +713,7 @@ log_if_accepted = boolean(default=True)
 host = string(default='')
 
 # Port of ICAP server
-port = integer(min=0, default=0)
+port = integer(min=0, default=1344)
 
 # Service name on ICAP server
 service_name = string(default='avscan')
@@ -735,7 +735,7 @@ filename_percent_encoding = boolean(default=False)
 host = string(default='')
 
 # Port of ICAP server
-port = integer(min=0, default=0)
+port = integer(min=0, default=1344)
 
 # Service name on ICAP server
 service_name = string(default='avscan')
