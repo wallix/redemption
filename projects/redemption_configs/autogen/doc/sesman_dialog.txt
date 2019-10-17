@@ -194,14 +194,18 @@ cfg::mod_vnc::server_unix_alt <- mod_vnc:server_unix_alt   [bool]
 
 
 cfg::file_verification::enable_up <- file_verification:enable_up   [bool]
+    Enable use of ICAP service for file verification on upload
 cfg::file_verification::enable_down <- file_verification:enable_down   [bool]
+    Enable use of ICAP service for file verification on download
+cfg::file_verification::clipboard_text_up <- file_verification:clipboard_text_up   [bool]
+    Verify text data via clipboard from client to server
+    Uploaded files verification must be enabled  (Enable up)
+cfg::file_verification::clipboard_text_down <- file_verification:clipboard_text_down   [bool]
+    Verify text data via clipboard from server to client
+    Downloaded files verification must be enabled (Enable down)
 cfg::file_verification::log_if_accepted <- file_verification:log_if_accepted   [bool]
 
-cfg::icap_server_down::clipboard_text_data <- icap_server_down:clipboard_text_data   [bool]
-    Verify text data via clipboard
 
-cfg::icap_server_up::clipboard_text_data <- icap_server_up:clipboard_text_data   [bool]
-    Verify text data via clipboard
 
 cfg::mod_replay::replay_on_loop <- replay_on_loop   [bool]
     0 - replay once, 1 - loop replay

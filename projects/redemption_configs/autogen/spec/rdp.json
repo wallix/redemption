@@ -673,13 +673,25 @@
           "name": "enable_up",
           "type": "bool",
           "default": false,
-          "description": ""
+          "description": "Enable use of ICAP service for file verification on upload"
         },
         {
           "name": "enable_down",
           "type": "bool",
           "default": false,
-          "description": ""
+          "description": "Enable use of ICAP service for file verification on download"
+        },
+        {
+          "name": "clipboard_text_up",
+          "type": "bool",
+          "default": false,
+          "description": "Verify text data via clipboard from client to server\nUploaded files verification must be enabled  (Enable up)"
+        },
+        {
+          "name": "clipboard_text_down",
+          "type": "bool",
+          "default": false,
+          "description": "Verify text data via clipboard from server to client\nDownloaded files verification must be enabled (Enable down)"
         },
         {
           "name": "log_if_accepted",
@@ -687,28 +699,6 @@
           "default": true,
           "advanced": true,
           "description": ""
-        }
-      ]
-    },
-    {
-      "name": "icap_server_down",
-      "members": [
-        {
-          "name": "clipboard_text_data",
-          "type": "bool",
-          "default": false,
-          "description": "Verify text data via clipboard"
-        }
-      ]
-    },
-    {
-      "name": "icap_server_up",
-      "members": [
-        {
-          "name": "clipboard_text_data",
-          "type": "bool",
-          "default": false,
-          "description": "Verify text data via clipboard"
         }
       ]
     },

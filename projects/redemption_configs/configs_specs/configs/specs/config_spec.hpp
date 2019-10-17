@@ -608,8 +608,10 @@ void config_spec_definition(Writer && W)
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up");
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down");
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up", desc{"Enable use of ICAP service for file verification on upload"});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down", desc{"Enable use of ICAP service for file verification on download"});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server\nUploaded files verification must be enabled  (Enable up)"});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nDownloaded files verification must be enabled (Enable down)"});
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
     });
@@ -618,8 +620,6 @@ void config_spec_definition(Writer && W)
         // TODO temporary
         W.section(section_name, [&]
         {
-            W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_data", desc{"Verify text data via clipboard"});
-
             // for validator only
             W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
             // for validator only

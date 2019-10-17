@@ -2676,6 +2676,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_VALIDATOR_PATH;
     };
+    /// Enable use of ICAP service for file verification on upload <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:enable_up <br/>
@@ -2693,6 +2694,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Enable use of ICAP service for file verification on download <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:enable_down <br/>
@@ -2710,6 +2712,44 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Verify text data via clipboard from client to server <br/>
+    /// Uploaded files verification must be enabled  (Enable up) <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesman::name: file_verification:clipboard_text_up <br/>
+    /// value{} <br/>
+    struct file_verification::clipboard_text_up {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "file_verification";
+        static constexpr char const * name = "clipboard_text_up";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(87);
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// Verify text data via clipboard from server to client <br/>
+    /// Downloaded files verification must be enabled (Enable down) <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesman::name: file_verification:clipboard_text_down <br/>
+    /// value{} <br/>
+    struct file_verification::clipboard_text_down {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "file_verification";
+        static constexpr char const * name = "clipboard_text_down";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(88);
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:log_if_accepted <br/>
@@ -2721,31 +2761,13 @@ namespace cfg {
         static constexpr char const * name = "log_if_accepted";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(87);
+        static constexpr authid_t index = authid_t(89);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
 
-    /// Verify text data via clipboard <br/>
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesman::name: icap_server_down:clipboard_text_data <br/>
-    /// value{} <br/>
-    struct icap_server_down::clipboard_text_data {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "icap_server_down";
-        static constexpr char const * name = "clipboard_text_data";
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(88);
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
     /// Ip or fqdn of ICAP server <br/>
     /// type: std::string <br/>
     /// value{} <br/>
@@ -2825,24 +2847,6 @@ namespace cfg {
         type value{false};
     };
 
-    /// Verify text data via clipboard <br/>
-    /// type: bool <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesman::name: icap_server_up:clipboard_text_data <br/>
-    /// value{} <br/>
-    struct icap_server_up::clipboard_text_data {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "icap_server_up";
-        static constexpr char const * name = "clipboard_text_data";
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(89);
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
     /// Ip or fqdn of ICAP server <br/>
     /// type: std::string <br/>
     /// value{} <br/>
@@ -5276,6 +5280,8 @@ struct file_verification
 : cfg::file_verification::socket_path
 , cfg::file_verification::enable_up
 , cfg::file_verification::enable_down
+, cfg::file_verification::clipboard_text_up
+, cfg::file_verification::clipboard_text_down
 , cfg::file_verification::log_if_accepted
 { static constexpr bool is_section = true; };
 
@@ -5283,7 +5289,6 @@ struct icap_server_down
 : cfg::icap_server_down::host
 , cfg::icap_server_down::service_name
 , cfg::icap_server_down::port
-, cfg::icap_server_down::clipboard_text_data
 , cfg::icap_server_down::tls
 , cfg::icap_server_down::enable_x_context
 , cfg::icap_server_down::filename_percent_encoding
@@ -5293,7 +5298,6 @@ struct icap_server_up
 : cfg::icap_server_up::host
 , cfg::icap_server_up::service_name
 , cfg::icap_server_up::port
-, cfg::icap_server_up::clipboard_text_data
 , cfg::icap_server_up::tls
 , cfg::icap_server_up::enable_x_context
 , cfg::icap_server_up::filename_percent_encoding
@@ -5587,9 +5591,9 @@ using VariablesAclPack = Pack<
 , cfg::mod_vnc::server_unix_alt
 , cfg::file_verification::enable_up
 , cfg::file_verification::enable_down
+, cfg::file_verification::clipboard_text_up
+, cfg::file_verification::clipboard_text_down
 , cfg::file_verification::log_if_accepted
-, cfg::icap_server_down::clipboard_text_data
-, cfg::icap_server_up::clipboard_text_data
 , cfg::mod_replay::replay_on_loop
 , cfg::video::disable_keyboard_log
 , cfg::video::rt_display

@@ -72,13 +72,9 @@ cp_spec = {
   'file_verification': {
     u'file_verification:enable_up': ('enable_up', False),
     u'file_verification:enable_down': ('enable_down', False),
+    u'file_verification:clipboard_text_up': ('clipboard_text_up', False),
+    u'file_verification:clipboard_text_down': ('clipboard_text_down', False),
     u'file_verification:log_if_accepted': ('log_if_accepted', True),
-  },
-  'icap_server_down': {
-    u'icap_server_down:clipboard_text_data': ('clipboard_text_data', False),
-  },
-  'icap_server_up': {
-    u'icap_server_up:clipboard_text_data': ('clipboard_text_data', False),
   },
   'video': {
     u'video:disable_keyboard_log': ('disable_keyboard_log', 1),
