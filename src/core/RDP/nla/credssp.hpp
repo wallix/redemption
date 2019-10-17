@@ -62,21 +62,15 @@
 // LHLMLL = length of string 24 bits (unlikely, in credssp context it's probably an error)
 
 namespace BER {
-    enum CLASS {
-        CLASS_MASK = 0xC0,
-        CLASS_UNIV = 0x00,
-        CLASS_APPL = 0x40,
-        CLASS_CTXT = 0x80,
-        CLASS_PRIV = 0xC0
-    };
-
-    enum PC {
-        PC_MASK      = 0x20,
-        PC_PRIMITIVE = 0x00,
-        PC_CONSTRUCT = 0x20
-    };
-
-    enum TAG {
+    enum {
+        CLASS_UNIV            = 0x00,
+        CLASS_APPL            = 0x40,
+        CLASS_CTXT            = 0x80,
+        CLASS_PRIV            = 0xC0,
+        CLASS_MASK            = 0xC0,
+        PC_MASK               = 0x20,
+        PC_CONSTRUCT          = 0x20,
+        PC_PRIMITIVE          = 0x00,
         TAG_MASK              = 0x1F,
         TAG_BOOLEAN           = 0x01,
         TAG_INTEGER           = 0x02,
@@ -86,7 +80,7 @@ namespace BER {
         TAG_ENUMERATED        = 0x0A,
         TAG_SEQUENCE          = 0x10,
         TAG_SEQUENCE_OF       = 0x10,
-        TAG_GENERAL_STRING    = 0x1B
+        TAG_GENERAL_STRING    = 0x1B,
     };
 
 
@@ -279,7 +273,7 @@ namespace BER {
             throw Error(eid);
         }
         unsigned length = s.in_uint8();
-        if (length >= 0x80) {
+        if (length > 0x80) {
             switch (length){
             case 0x81:
                 length = s.in_uint8();
@@ -297,6 +291,69 @@ namespace BER {
             throw Error(eid);
         }
         return length;
+    }
+
+
+    inline std::pair<size_t, bytes_view> pop_length(bytes_view s, const char * message, error_type eid) {
+        // read length
+        if (s.size() < 1) {
+            LOG(LOG_ERR, "%s: Ber parse error", message);
+            throw Error(eid);
+        }
+        size_t length = s[0];
+        if (s[0] > 0x80) {
+            switch (length){
+            case 0x81:
+                if (s.size() < 2) {
+                    LOG(LOG_ERR, "%s: Ber parse error", message);
+                    throw Error(eid);
+                }
+                length = s[1];
+                if (s.size() < 2 + length){
+                    LOG(LOG_ERR, "%s: Ber Not enough data", message);
+                    throw Error(eid);
+                }
+                return {length, s.drop_front(2)};
+            case 0x82:
+                if (s.size() < 3) {
+                    LOG(LOG_ERR, "%s: Ber parse error", message);
+                    throw Error(eid);
+                }
+                length = (s[2] | (s[1] << 8)); // uint16_be()
+                if (s.size() < 3 + length){
+                    LOG(LOG_ERR, "%s: Ber Not enough data", message);
+                    throw Error(eid);
+                }
+                return {length, s.drop_front(3)};
+            default:
+                LOG(LOG_ERR, "%s: Ber parse error", message);
+                throw Error(eid);
+            }
+        }
+        if (s.size() < 1 + length){
+            LOG(LOG_ERR, "%s: Ber Not enough data", message);
+            throw Error(eid);
+        }
+        return {length, s.drop_front(1)};
+    }
+
+    inline bytes_view pop_check_tag(bytes_view s, uint8_t tag, const char * message, error_type eid)
+    {
+        if (s.size() < 1) {
+            LOG(LOG_ERR, "%s: Ber data truncated", message);
+            throw Error(eid);
+        }
+        uint8_t tag_byte = s[0];
+        if (tag_byte != tag) { /*NOLINT*/
+            LOG(LOG_ERR, "%s: Ber unexpected tag", message);
+            throw Error(eid);
+        }
+        return s.drop_front(1);
+    }
+
+    inline std::pair<size_t, bytes_view> pop_tag_length(bytes_view s, uint8_t tag, const char * message, error_type eid)
+    {
+        return pop_length(pop_check_tag(s, tag, message, eid), message, eid);
     }
 
     inline unsigned read_tag_length(InStream & s, uint8_t tag, const char * message, error_type eid)
@@ -897,25 +954,24 @@ inline TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
 
     InStream stream(data); // check all is consumed
     TSPasswordCreds self;
-    int length = 0;
     /* TSPasswordCreds (SEQUENCE) */
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
+    int length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
 
     /* [0] domainName (OCTET STRING) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
     self.domainName.resize(length);
     stream.in_copy_bytes(self.domainName.data(), self.domainName.size());
 
     /* [1] userName (OCTET STRING) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
     self.userName.resize(length);
     stream.in_copy_bytes(self.userName.data(), self.userName.size());
 
     /* [2] password (OCTET STRING) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|2, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|2, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
     self.password.resize(length);
     stream.in_copy_bytes(self.password.data(), self.password.size());
 
