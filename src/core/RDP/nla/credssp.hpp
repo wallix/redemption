@@ -345,14 +345,16 @@ namespace BER {
 
     inline int read_integer(InStream & s, const char * message, error_type eid) 
     {
-        uint8_t byte = read_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
-        if (not (byte >= 1) && (byte <= 4)){
-            LOG(LOG_ERR, "%s: Ber unexpected integer length %u", message, byte);
+        auto [byte, queue] = pop_tag_length(s.remaining_bytes(), CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
+        s.in_skip_bytes(s.in_remain()-queue.size());
+
+        if ((byte < 1) || (byte > 4)){
+            LOG(LOG_ERR, "%s: Ber unexpected integer length %zu", message, byte);
             throw Error(eid);
         }
         // Now bytes contains length of integer value
         if (!s.in_check_rem(byte)) {
-            LOG(LOG_ERR, "%s: Ber integer data truncated %u", message, byte);
+            LOG(LOG_ERR, "%s: Ber integer data truncated %zu", message, byte);
             throw Error(eid);
         }
         switch (byte) {
@@ -367,9 +369,38 @@ namespace BER {
         }
     }
 
+    inline std::pair<int, bytes_view> pop_integer(bytes_view s, const char * message, error_type eid) 
+    {
+        auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
+
+        if ((byte < 1) || (byte > 4)){
+            LOG(LOG_ERR, "%s: Ber unexpected integer length %zu", message, byte);
+            throw Error(eid);
+        }
+        // Now bytes contains length of integer value
+        if (queue.size() < byte) {
+            LOG(LOG_ERR, "%s: Ber integer data truncated %zu", message, byte);
+            throw Error(eid);
+        }
+        InStream in_s(queue);
+        switch (byte) {
+        default:
+            break;
+        case 3:
+            return {in_s.in_uint24_be(), queue.drop_front(3)};
+        case 2:
+            return {in_s.in_uint16_be(), queue.drop_front(2)};
+        case 1:
+            return {in_s.in_uint8(), queue.drop_front(1)};
+        }
+        return {in_s.in_uint32_be(), queue.drop_front(4)};
+    }
+
     inline int read_integer_field(InStream & s, uint8_t tag, const char * message, error_type eid) 
     {
-        size_t length = read_tag_length(s, CLASS_CTXT|PC_CONSTRUCT|tag, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        auto [length, queue] = pop_tag_length(s.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        s.in_skip_bytes(s.in_remain()-queue.size());
+        
         if (!s.in_check_rem(length)) {
             LOG(LOG_ERR, "%s: Ber tagged integer field truncated", message);
             throw Error(eid);
