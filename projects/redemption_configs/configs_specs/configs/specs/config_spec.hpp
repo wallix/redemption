@@ -618,7 +618,7 @@ void config_spec_definition(Writer && W)
             // for validator only
             W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
             // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"});
+            W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"}, set(1344));
             // for validator only
             W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
 

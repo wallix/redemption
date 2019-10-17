@@ -2801,7 +2801,7 @@ namespace cfg {
     };
     /// Port of ICAP server <br/>
     /// type: unsigned int <br/>
-    /// value{} <br/>
+    /// value{1344} <br/>
     struct icap_server_down::port {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2810,7 +2810,7 @@ namespace cfg {
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
-        type value{};
+        type value{1344};
     };
     /// Service name on ICAP server <br/>
     /// type: std::string <br/>
@@ -2880,7 +2880,7 @@ namespace cfg {
     };
     /// Port of ICAP server <br/>
     /// type: unsigned int <br/>
-    /// value{} <br/>
+    /// value{1344} <br/>
     struct icap_server_up::port {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2889,7 +2889,7 @@ namespace cfg {
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
-        type value{};
+        type value{1344};
     };
     /// Service name on ICAP server <br/>
     /// type: std::string <br/>

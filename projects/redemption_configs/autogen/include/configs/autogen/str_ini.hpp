@@ -855,7 +855,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Port of ICAP server
 # min = 0
-#port = 0
+#port = 1344
 
 # Service name on ICAP server
 #service_name = avscan
@@ -881,7 +881,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Port of ICAP server
 # min = 0
-#port = 0
+#port = 1344
 
 # Service name on ICAP server
 #service_name = avscan
