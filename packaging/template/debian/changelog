@@ -1,3 +1,9 @@
+redemption (1.3.197%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Selector's columns smart resizing.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Oct 2019 15:54:39 +0200
+
 redemption (1.3.193%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * config for disable clipboard and file system log in meta-data
