@@ -266,34 +266,6 @@ namespace BER {
         return tag_byte == (CLASS_CTXT|PC_CONSTRUCT|tag);
     }
 
-    inline unsigned read_length(InStream & s, const char * message, error_type eid) {
-        // read length
-        if (!s.in_check_rem(1)) {
-            LOG(LOG_ERR, "%s: Ber parse error", message);
-            throw Error(eid);
-        }
-        unsigned length = s.in_uint8();
-        if (length > 0x80) {
-            switch (length){
-            case 0x81:
-                length = s.in_uint8();
-                break;
-            case 0x82:
-                length = s.in_uint16_be();
-                break;
-            default:
-                LOG(LOG_ERR, "%s: Ber parse error", message);
-                throw Error(eid);
-            }
-        }
-        if (!s.in_check_rem(length)){
-            LOG(LOG_ERR, "%s: Ber Not enough data", message);
-            throw Error(eid);
-        }
-        return length;
-    }
-
-
     inline std::pair<size_t, bytes_view> pop_length(bytes_view s, const char * message, error_type eid) {
         // read length
         if (s.size() < 1) {
@@ -367,7 +339,9 @@ namespace BER {
             LOG(LOG_ERR, "%s: Ber unexpected tag", message);
             throw Error(eid);
         }
-        return read_length(s, message, eid);
+        auto [len, queue] = pop_length(s.remaining_bytes(), message, eid);
+        s.in_skip_bytes(s.in_remain()-queue.size());
+        return len;
     }
 
     inline int read_integer(InStream & s, const char * message, error_type eid) 
@@ -888,7 +862,8 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     // [1] negoTokens (NegoData) OPTIONAL
     if (BER::check_ber_ctxt_tag(stream, 1)) {
         stream.in_skip_bytes(1);
-        BER::read_length(stream, "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
+        auto [len, queue] = BER::pop_length(stream.remaining_bytes(), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
+        stream.in_skip_bytes(stream.in_remain()-queue.size());
 
         // * NegoData ::= SEQUENCE OF NegoDataItem
         // *

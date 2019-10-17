@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestBERContextual)
     InStream in_s(v);
     RED_CHECK_EQUAL(true, BER::check_ber_ctxt_tag(in_s, tag));
     in_s.in_skip_bytes(1);
-    int length = BER::read_length(in_s, "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
+    auto [length, queue] = BER::pop_length(bytes_view(v).drop_front(1), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
     RED_CHECK_EQUAL(length, sizeof(data));
 }
 
