@@ -97,9 +97,7 @@ RED_AUTO_TEST_CASE(TestBERContextual)
     auto v = BER::mkContextualFieldHeader(sizeof(data), tag);
     v.insert(v.end(), data, data+sizeof(data));
 
-    InStream in_s(v);
-    RED_CHECK_EQUAL(true, BER::check_ber_ctxt_tag(in_s, tag));
-    in_s.in_skip_bytes(1);
+    RED_CHECK_EQUAL(true, BER::check_ber_ctxt_tag(v, tag));
     auto [length, queue] = BER::pop_length(bytes_view(v).drop_front(1), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
     RED_CHECK_EQUAL(length, sizeof(data));
 }

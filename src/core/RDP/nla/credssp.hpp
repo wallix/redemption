@@ -257,13 +257,12 @@ namespace BER {
         return head;
     }
 
-    inline bool check_ber_ctxt_tag(InStream & s, uint8_t tag)
+    inline bool check_ber_ctxt_tag(bytes_view s, uint8_t tag)
     {
-        if (!s.in_check_rem(1)) {
+        if (s.size() < 1) {
             return false;
         }
-        uint8_t tag_byte = s.peek_uint8();
-        return tag_byte == (CLASS_CTXT|PC_CONSTRUCT|tag);
+        return s[0] == (CLASS_CTXT|PC_CONSTRUCT|tag);
     }
 
     inline std::pair<size_t, bytes_view> pop_length(bytes_view s, const char * message, error_type eid) {
@@ -388,7 +387,7 @@ namespace BER {
 
     inline std::vector<uint8_t> read_optional_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
     {
-        if (BER::check_ber_ctxt_tag(stream, tag)) {
+        if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), tag)) {
             return read_mandatory_octet_string(stream, tag, message, eid);
         }
         return {};
@@ -860,7 +859,7 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     }
 
     // [1] negoTokens (NegoData) OPTIONAL
-    if (BER::check_ber_ctxt_tag(stream, 1)) {
+    if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), 1)) {
         stream.in_skip_bytes(1);
         auto [len, queue] = BER::pop_length(stream.remaining_bytes(), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
         stream.in_skip_bytes(stream.in_remain()-queue.size());
@@ -884,7 +883,7 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
 
     /* [4] errorCode (INTEGER) */
     if (self.use_version >= 3 && self.use_version != 5){
-        if (BER::check_ber_ctxt_tag(stream, 4)){
+        if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), 4)){
             self.error_code = BER::read_integer_field(stream, 4, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
             LOG(LOG_INFO, "Credssp recvTSCredentials() "
                 "ErrorCode = %x, Facility = %x, Code = %x",
