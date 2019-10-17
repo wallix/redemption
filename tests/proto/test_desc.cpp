@@ -414,9 +414,9 @@ struct va_plus
 
 struct no_name
 {
-    static constexpr char const* proto_name() noexcept
+    static constexpr zstring_view proto_name() noexcept
     {
-        return "no name";
+        return "no name"_zv;
     }
 };
 
@@ -1634,7 +1634,7 @@ namespace detail
 #define PROTO_PACKET_I(name, cname, list)                                   \
     struct name {                                                           \
         BOOST_PP_LIST_FOR_EACH(PROTO_PACKET_TYPE_DISPATCH, _, list)         \
-        static char const* proto_name() { return cname; }                   \
+        static zstring_view proto_name() { return cname ""_zv; }            \
     };                                                                      \
     constexpr inline ::proto::tuple<                                        \
         class name,                                                         \
@@ -1664,7 +1664,7 @@ namespace X224
             [](auto field, std::size_t n, std::size_t capacity) {
                 char s[128];
                 snprintf(s, sizeof(s), "Truncated %s: field '%s': stream.size=%zu expected=%zu",
-                    decltype(pkt)::proto_name(), field.proto_name(), capacity, n);
+                    decltype(pkt)::proto_name().c_str(), field.proto_name().c_str(), capacity, n);
                 throw std::runtime_error(s);
             },
             pkt);
@@ -1730,7 +1730,7 @@ int main()
     auto error_fn = [](auto field, std::size_t n, std::size_t capacity){
         char s[128];
         snprintf(s, sizeof(s), "buf is too short: field '%s': stream.size=%zu expected=%zu",
-            field.proto_name(), capacity, n);
+            field.proto_name().c_str(), capacity, n);
         throw std::runtime_error(s);
     };
 

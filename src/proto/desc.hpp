@@ -21,12 +21,13 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "utils/string_c.hpp"
 #include "cxx/diagnostic.hpp"
 
-
 #include <functional>
 #include <type_traits>
+
 #include <cstdint>
 
 
@@ -239,12 +240,12 @@ struct wrap_type
     using type = T;
 };
 
-#define PROTO_DECL_CLASS_NAME(classname, memname, T)                       \
-    struct classname {                                                     \
-        using proto_type = T;                                              \
-        proto_type memname;                                                \
-        proto_type const& proto_value() const noexcept { return memname; } \
-        static char const* proto_name() noexcept { return #classname; }    \
+#define PROTO_DECL_CLASS_NAME(classname, memname, T)                           \
+    struct classname {                                                         \
+        using proto_type = T;                                                  \
+        proto_type memname;                                                    \
+        proto_type const& proto_value() const noexcept { return memname; }     \
+        static zstring_view proto_name() noexcept { return #classname ""_zv; } \
     }
 
 #define PROTO_LOCAL_NAME(name)                                             \
@@ -258,7 +259,7 @@ struct wrap_type
             PROTO_DECL_CLASS_NAME(name, name, typename decltype(t)::type); \
             return ::proto::wrap_type<name>();                             \
         }; }                                                               \
-        static char const* proto_name() noexcept { return #name; }         \
+        static zstring_view proto_name() noexcept { return #name ""_zv; }  \
         REDEMPTION_DIAGNOSTIC_POP                                          \
     } name {}
 
