@@ -41,7 +41,7 @@ class TestCardMod : public mod_api
     SessionReactor& session_reactor;
     SessionReactor::GraphicEventPtr gd_event;
 
-    Rect get_screen_rect() const;
+    [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     TestCardMod(
@@ -67,11 +67,11 @@ public:
     void refresh(Rect /*rect*/) override
     {}
 
-    Dimension get_dim() const override;
+    [[nodiscard]] Dimension get_dim() const override;
 
     void draw_event(gdi::GraphicApi & gd);
 
-    bool is_up_and_running() const override
+    [[nodiscard]] bool is_up_and_running() const override
     {
         return true;
     }

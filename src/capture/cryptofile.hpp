@@ -93,7 +93,7 @@ public:
     }
 
     // for test only
-    array_view<const uint8_t> get_master_key() const
+    [[nodiscard]] array_view<const uint8_t> get_master_key() const
     {
         assert(this->master_key_loaded);
         return make_array_view(this->master_key);
@@ -116,12 +116,12 @@ public:
         this->trace_type = trace_type;
     }
 
-    bool get_with_encryption() const
+    [[nodiscard]] bool get_with_encryption() const
     {
         return this->trace_type == TraceType::cryptofile;
     }
 
-    bool get_with_checksum() const
+    [[nodiscard]] bool get_with_checksum() const
     {
         return this->trace_type != TraceType::localfile;
     }
@@ -330,7 +330,7 @@ struct CipherContext : noncopyable
         return this->ectx;
     }
 
-    bool is_initialized() const noexcept
+    [[nodiscard]] bool is_initialized() const noexcept
     {
         return this->is_init;
     }

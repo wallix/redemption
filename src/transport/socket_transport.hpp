@@ -82,14 +82,14 @@ public:
 
     ~SocketTransport() override;
 
-    bool has_waiting_data() const;
+    [[nodiscard]] bool has_waiting_data() const;
     void send_waiting_data();
 
-    bool has_pending_data() const;
+    [[nodiscard]] bool has_pending_data() const;
 
-    int get_fd() const override { return this->sck; }
+    [[nodiscard]] int get_fd() const override { return this->sck; }
 
-    array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] array_view_const_u8 get_public_key() const override;
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override;
 

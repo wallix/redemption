@@ -5625,7 +5625,7 @@ private:
     }   // process_bitmap_updates
 
 public:
-    bool is_up_and_running() const override {
+    [[nodiscard]] bool is_up_and_running() const override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
@@ -5717,7 +5717,7 @@ public:
 #endif
     }
 
-    windowing_api* get_windowing_api() const {
+    [[nodiscard]] windowing_api* get_windowing_api() const {
 #ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager && !this->channels.remote_app.convert_remoteapp_to_desktop) {
             return this->channels.remote_programs_session_manager.get();
@@ -5727,7 +5727,7 @@ public:
         return nullptr;
     }
 
-    Dimension get_dim() const override
+    [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->negociation_result.front_width, this->negociation_result.front_height); }
 
     bool is_auto_reconnectable() override {

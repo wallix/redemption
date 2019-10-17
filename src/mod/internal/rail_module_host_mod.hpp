@@ -81,14 +81,14 @@ public:
 
     // mod_api
 
-    bool is_up_and_running() const override;
+    [[nodiscard]] bool is_up_and_running() const override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override;
 
-    Dimension get_dim() const override;
+    [[nodiscard]] Dimension get_dim() const override;
 
-    bool is_resizing_hosted_desktop_allowed() const override;
+    [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const override;
 
     gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
 

@@ -101,7 +101,7 @@ public:
      * @param nbits the number of bits to pick
      * @return nbits of the stream
      */
-    uint32_t peekBits(std::size_t nbits) const {
+    [[nodiscard]] uint32_t peekBits(std::size_t nbits) const {
         uint32_t ret = 0;
         const uint8_t *alias = p;
         std::size_t localBitsLeft = bitsLeft;
@@ -131,14 +131,14 @@ public:
     /**
      * @return the remaining bits in the stream
      */
-    std::size_t getRemainingLength() const {
+    [[nodiscard]] std::size_t getRemainingLength() const {
         return bitsLeft + ((end - p) - 1) * 8;
     }
 
     /**
      * @return if we're reached the end of stream
      */
-    bool isEos() const {
+    [[nodiscard]] bool isEos() const {
         return (p == end);
     }
 

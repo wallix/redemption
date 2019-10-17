@@ -945,15 +945,15 @@ public:
         // Reserved(4), MUST NOT be transmitted.
     }
 
-    uint32_t FileAttributes() const { return this->FileAttributes_; }
+    [[nodiscard]] uint32_t FileAttributes() const { return this->FileAttributes_; }
 
-    uint64_t LastAccessTime() const { return this->LastAccessTime_; }
+    [[nodiscard]] uint64_t LastAccessTime() const { return this->LastAccessTime_; }
 
-    uint64_t LastWriteTime() const { return this->LastWriteTime_; }
+    [[nodiscard]] uint64_t LastWriteTime() const { return this->LastWriteTime_; }
 
-    uint64_t ChangeTime() const { return this->ChangeTime_; }
+    [[nodiscard]] uint64_t ChangeTime() const { return this->ChangeTime_; }
 
-    uint64_t CreationTime() const { return this->CreationTime_; }
+    [[nodiscard]] uint64_t CreationTime() const { return this->CreationTime_; }
 
     static size_t size() {
         return 36;  /* CreationTime(8) + LastAccessTime(8) + LastWriteTime(8) + ChangeTime(8) + FileAttributes(4) */
@@ -1255,7 +1255,7 @@ public:
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         const size_t size = 93; // NextEntryOffset(4) + FileIndex(4) +
                                 //     CreationTime(8) + LastAccessTime(8) +
                                 //     LastWriteTime(8) + ChangeTime(8) +
@@ -1513,11 +1513,11 @@ public:
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
-    uint64_t FileAttributes() const { return this->FileAttributes_; }
+    [[nodiscard]] uint64_t FileAttributes() const { return this->FileAttributes_; }
 
-    uint64_t LastAccessTime() const { return this->LastAccessTime_; }
+    [[nodiscard]] uint64_t LastAccessTime() const { return this->LastAccessTime_; }
 
-    uint64_t LastWriteTime() const { return this->LastWriteTime_; }
+    [[nodiscard]] uint64_t LastWriteTime() const { return this->LastWriteTime_; }
 
     uint32_t size() {
         const uint32_t size = 64;   // NextEntryOffset(4) + FileIndex(4) +
@@ -1998,7 +1998,7 @@ public:
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         size_t size = 68;   // NextEntryOffset(4) + FileIndex(4) +
                             //     CreationTime(8) + LastAccessTime(8) +
                             //     LastWriteTime(8) + ChangeTime(8) +
@@ -2179,7 +2179,7 @@ public:
         stream.in_copy_bytes(this->file_name_UTF16, this->FileNameLength);
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         const size_t size = 12; // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
 
         return size + this->FileNameLength;
@@ -2765,14 +2765,14 @@ public:
         stream.in_copy_bytes(this->file_system_name_UTF16, this->FileSystemNameLength);
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         const size_t size = 12; // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                 //     FileSystemNameLength(4)
 
         return size + this->FileSystemNameLength;
     }
 
-    uint32_t FileSystemAttributes() const { return this->FileSystemAttributes_; }
+    [[nodiscard]] uint32_t FileSystemAttributes() const { return this->FileSystemAttributes_; }
 
     void set_FileSystemAttributes(uint32_t FileSystemAttributes) {
         this->FileSystemAttributes_ = FileSystemAttributes;
@@ -2968,7 +2968,7 @@ public:
         this->BytesPerSector                 = stream.in_uint32_le();
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return 32;  // TotalAllocationUnits(8) + CallerAvailableAllocationUnits(8) +
                     //     ActualAvailableAllocationUnits(8) + SectorsPerAllocationUnit(4) +
                     //     BytesPerSector(4)
@@ -3101,7 +3101,7 @@ public:
         this->BytesPerSector           = stream.in_uint32_le();
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return 24;  // TotalAllocationUnits(8) + AvailableAllocationUnits(8) +
                     //     SectorsPerAllocationUnit(4) + BytesPerSector(4)
     }
@@ -3269,7 +3269,7 @@ public:
         stream.in_copy_bytes(this->volume_label_UTF16, this->VolumeLabelLength);
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         const size_t size = 17; // VolumeCreationTime(8) + VolumeSerialNumber(4) +
                                 //     VolumeLabelLength(4) + SupportsObjects(1)
 

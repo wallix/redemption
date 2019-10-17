@@ -40,7 +40,7 @@ struct only_type
         return value_;
     }
 
-    T const& value() const& noexcept
+    [[nodiscard]] T const& value() const& noexcept
     {
         return value_;
     }

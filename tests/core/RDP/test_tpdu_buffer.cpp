@@ -43,7 +43,7 @@ struct BlockTransport : Transport
         return n;
     }
 
-    std::size_t remaining() const
+    [[nodiscard]] std::size_t remaining() const
     {
         return this->data.size();
     }

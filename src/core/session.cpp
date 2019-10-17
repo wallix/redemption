@@ -629,7 +629,7 @@ private:
         int sck_mod = INVALID_SOCKET;
         // int sck_acl = INVALID_SOCKET;
 
-        bool contains(int fd) const noexcept
+        [[nodiscard]] bool contains(int fd) const noexcept
         {
             return sck_front == fd
                 || sck_mod == fd

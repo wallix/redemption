@@ -121,7 +121,7 @@ public:
     /// \exception Error : ERR_TRANSPORT_READ_FAILED
     Transport::Read next_line();
 
-    array_view_char get_buf() const
+    [[nodiscard]] array_view_char get_buf() const
     { return {this->cur, this->eol}; }
 };
 
@@ -138,7 +138,7 @@ struct MwrmReader
 
     void read_meta_hash_line(MetaLine & meta_line);
 
-    MetaHeader const& get_header() const
+    [[nodiscard]] MetaHeader const& get_header() const
     {
         return this->header;
     }
@@ -176,9 +176,9 @@ struct MwrmWriterBuf
         time_t start_time, time_t stop_time,
         bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept;
 
-    array_view_const_char buffer() const noexcept;
-    char const * c_str() const noexcept;
-    bool is_full() const noexcept;
+    [[nodiscard]] array_view_const_char buffer() const noexcept;
+    [[nodiscard]] char const * c_str() const noexcept;
+    [[nodiscard]] bool is_full() const noexcept;
 
     void reset_buf() noexcept
     {

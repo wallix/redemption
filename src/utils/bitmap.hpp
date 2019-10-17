@@ -81,26 +81,26 @@ public:
 
     void swap(Bitmap & other) noexcept;
 
-    bool is_valid() const noexcept;
+    [[nodiscard]] bool is_valid() const noexcept;
 
     void reset() noexcept;
 
-    const uint8_t * data() const noexcept;
+    [[nodiscard]] const uint8_t * data() const noexcept;
 
-    const BGRPalette & palette() const noexcept;
+    [[nodiscard]] const BGRPalette & palette() const noexcept;
 
-    uint16_t cx() const noexcept;
-    uint16_t cy() const noexcept;
+    [[nodiscard]] uint16_t cx() const noexcept;
+    [[nodiscard]] uint16_t cy() const noexcept;
 
-    size_t line_size() const noexcept;
+    [[nodiscard]] size_t line_size() const noexcept;
 
-    size_t bmp_size() const noexcept;
+    [[nodiscard]] size_t bmp_size() const noexcept;
 
-    BitsPerPixel bpp() const noexcept;
+    [[nodiscard]] BitsPerPixel bpp() const noexcept;
 
-    bool has_data_compressed() const noexcept;
+    [[nodiscard]] bool has_data_compressed() const noexcept;
 
-    array_view<uint8_t const> data_compressed() const noexcept;
+    [[nodiscard]] array_view<uint8_t const> data_compressed() const noexcept;
 
     void compute_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const;
 

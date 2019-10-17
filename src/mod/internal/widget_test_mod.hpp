@@ -48,7 +48,7 @@ public:
 
     void refresh(Rect clip) override;
 
-    bool is_up_and_running() const override
+    [[nodiscard]] bool is_up_and_running() const override
     {
         return true;
     }

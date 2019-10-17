@@ -40,7 +40,7 @@ namespace detail_ {
     struct vlog_wrap
     {
         T x;
-        T const & value() const noexcept { return x; }
+        [[nodiscard]] T const & value() const noexcept { return x; }
     };
 } // namespace detail_
 

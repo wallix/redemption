@@ -47,7 +47,7 @@ public:
 
     virtual void set_text(const char * text/*, int position = 0*/);
 
-    const char * get_text() const;
+    [[nodiscard]] const char * get_text() const;
 
     void set_xy(int16_t x, int16_t y) override;
 
@@ -74,7 +74,7 @@ public:
 
     void notify(Widget* widget, NotifyApi::notify_event_t event) override;
 
-    unsigned get_border_height() const
+    [[nodiscard]] unsigned get_border_height() const
     {
         return 1;
     }

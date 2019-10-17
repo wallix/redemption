@@ -364,7 +364,7 @@ namespace
 
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
-        Rect current_tile() const
+        [[nodiscard]] Rect current_tile() const
         {
             return this->tile;
         }

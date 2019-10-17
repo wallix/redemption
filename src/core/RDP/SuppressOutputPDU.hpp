@@ -179,16 +179,16 @@ public:
         return "<unknown>";
     }   // const char * get_allowDisplayUpdates_name(int allowDisplayUpdates)
 
-    uint8_t  get_allowDisplayUpdates() const {
+    [[nodiscard]] uint8_t  get_allowDisplayUpdates() const {
         return this->allowDisplayUpdates_;
     }
 
-    uint16_t get_left() const { return this->left_; }
-    uint16_t get_top() const { return this->top_; }
-    uint16_t get_right() const { return this->right_; }
-    uint16_t get_bottom() const { return this->bottom_; }
+    [[nodiscard]] uint16_t get_left() const { return this->left_; }
+    [[nodiscard]] uint16_t get_top() const { return this->top_; }
+    [[nodiscard]] uint16_t get_right() const { return this->right_; }
+    [[nodiscard]] uint16_t get_bottom() const { return this->bottom_; }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return 4 +  // allowDisplayUpdates(1) + Padding(3)
             ((ALLOW_DISPLAY_UPDATES == this->allowDisplayUpdates_) ?
              8 :    // left(2) + top(2) + right(2) + bottom(2)

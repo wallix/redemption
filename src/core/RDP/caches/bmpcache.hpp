@@ -244,7 +244,7 @@ private:
             return this->first[i];
         }
 
-        size_t size() const {
+        [[nodiscard]] size_t size() const {
             return this->last - this->first;
         }
 
@@ -257,17 +257,17 @@ private:
 
         static const uint32_t invalid_cache_index = 0xFFFFFFFF;
 
-        uint16_t get_old_index() const {
+        [[nodiscard]] uint16_t get_old_index() const {
             return this->priv_get_old_index(this->size());
         }
 
-        uint16_t get_old_index(bool use_waiting_list) const {
+        [[nodiscard]] uint16_t get_old_index(bool use_waiting_list) const {
             const int_fast16_t entries_max = this->size();
             return this->priv_get_old_index(use_waiting_list ? entries_max - 1 : entries_max);
         }
 
     private:
-        inline uint16_t priv_get_old_index(int_fast16_t entries_max) const {
+        [[nodiscard]] inline uint16_t priv_get_old_index(int_fast16_t entries_max) const {
             T * first = this->first;
             T * last = first + entries_max;
             T * current = first;
@@ -280,7 +280,7 @@ private:
         }
 
     public:
-        uint32_t get_cache_index(const T & e) const {
+        [[nodiscard]] uint32_t get_cache_index(const T & e) const {
             typename set_type::const_iterator it = this->sorted_elements.find(e);
             if (it == this->sorted_elements.end()) {
                 return invalid_cache_index;
@@ -339,16 +339,16 @@ public:
         , is_persistent_(opt.is_persistent)
         {}
 
-        uint16_t bmp_size() const {
+        [[nodiscard]] uint16_t bmp_size() const {
             return this->bmp_size_;
         }
 
         // TODO renamed to is_persistent()
-        bool persistent() const {
+        [[nodiscard]] bool persistent() const {
             return this->is_persistent_;
         }
 
-        size_t entries() const {
+        [[nodiscard]] size_t entries() const {
             return this->size();
         }
     };
@@ -502,7 +502,7 @@ public:
         }
     }
 
-    uint16_t get_max_cell_size() const {
+    [[nodiscard]] uint16_t get_max_cell_size() const {
         return this->max_cell_size;
     }
 
@@ -542,7 +542,7 @@ public:
         r.add(e);
     }
 
-    const Bitmap & get(uint8_t id, uint16_t idx) const {
+    [[nodiscard]] const Bitmap & get(uint8_t id, uint16_t idx) const {
         if ((id & IN_WAIT_LIST) || (id == MAXIMUM_NUMBER_OF_CACHES)) {
             assert((this->owner != Mod_rdp) && this->waiting_list_bitmap.is_valid());
             return this->waiting_list_bitmap;
@@ -557,7 +557,7 @@ public:
         return r[idx].bmp;
     }
 
-    bool is_cached(uint8_t id, uint16_t idx) const {
+    [[nodiscard]] bool is_cached(uint8_t id, uint16_t idx) const {
         assert(this->owner == Recorder);
         assert(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
 
@@ -584,7 +584,7 @@ public:
         return false;
     }
 
-    bool has_cache_persistent() const {
+    [[nodiscard]] bool has_cache_persistent() const {
         for (unsigned i = 0; i < this->number_of_cache; ++i) {
             if (this->caches[i].persistent()) {
                 return true;
@@ -594,7 +594,7 @@ public:
     }
 
 private:
-    uint16_t get_cache_usage(uint8_t cache_id) const {
+    [[nodiscard]] uint16_t get_cache_usage(uint8_t cache_id) const {
         assert((cache_id & IN_WAIT_LIST) == 0);
         uint16_t cache_entries = 0;
         const cache_range<cache_element> & r = this->caches[cache_id];
@@ -777,7 +777,7 @@ public:
         return (ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
     }
 
-    const Cache<cache_element> & get_cache(uint8_t cache_id) const {
+    [[nodiscard]] const Cache<cache_element> & get_cache(uint8_t cache_id) const {
         assert(cache_id < MAXIMUM_NUMBER_OF_CACHES);
         return this->caches[cache_id];
     }

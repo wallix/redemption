@@ -74,7 +74,7 @@ struct checked_int
 
     operator T () const noexcept { return this->i; }
 
-    T underlying() const noexcept { return this->i; }
+    [[nodiscard]] T underlying() const noexcept { return this->i; }
 
 private:
     T i;
@@ -128,7 +128,7 @@ struct safe_int
 
     constexpr operator T () const noexcept { return this->i; }
 
-    constexpr T underlying() const noexcept { return this->i; }
+    [[nodiscard]] constexpr T underlying() const noexcept { return this->i; }
 
 private:
     T i;

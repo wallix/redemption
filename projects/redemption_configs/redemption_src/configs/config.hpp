@@ -169,7 +169,7 @@ private:
 
     struct FieldBase
     {
-        bool is_asked() const { return this->asked_; }
+        [[nodiscard]] bool is_asked() const { return this->asked_; }
         virtual bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) = 0;
         virtual array_view_const_char
         to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const = 0;
@@ -215,11 +215,11 @@ private:
     template<bool is_constant>
     struct FieldReferenceBase
     {
-        bool is_asked() const {
+        [[nodiscard]] bool is_asked() const {
             return this->field->asked_;
         }
 
-        array_view_const_char to_string_view() const {
+        [[nodiscard]] array_view_const_char to_string_view() const {
             return this->field->to_string_view(this->ini->variables, this->ini->buffers);
         }
 
@@ -227,11 +227,11 @@ private:
             return this->field;
         }
 
-        authid_t authid() const {
+        [[nodiscard]] authid_t authid() const {
             return this->id;
         }
 
-        bool is_loggable() const
+        [[nodiscard]] bool is_loggable() const
         {
             if (configs::is_loggable(unsigned(this->authid())))  {
                 return true;
@@ -348,8 +348,8 @@ public:
             {}
         };
 
-        iterator begin() const { return {this->ini->to_send_index.cbegin(), *this->ini}; }
-        iterator end() const { return {this->ini->to_send_index.cend(), *this->ini}; }
+        [[nodiscard]] iterator begin() const { return {this->ini->to_send_index.cbegin(), *this->ini}; }
+        [[nodiscard]] iterator end() const { return {this->ini->to_send_index.cend(), *this->ini}; }
 
     private:
         Inifile const * ini;
@@ -394,17 +394,17 @@ private:
             this->list_size = 0;
         }
 
-        std::size_t size() const noexcept
+        [[nodiscard]] std::size_t size() const noexcept
         {
             return this->list_size;
         }
 
-        authid_t const * cbegin() const noexcept
+        [[nodiscard]] authid_t const * cbegin() const noexcept
         {
             return this->list.cbegin();
         }
 
-        authid_t const * cend() const noexcept
+        [[nodiscard]] authid_t const * cend() const noexcept
         {
             return this->cbegin() + this->size();
         }

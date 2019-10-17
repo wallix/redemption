@@ -27,8 +27,8 @@ struct iter_type {
     Iterator first;
     Iterator last;
 
-    Iterator begin() const { return this->first; }
-    Iterator end() const { return this->last; }
+    [[nodiscard]] Iterator begin() const { return this->first; }
+    [[nodiscard]] Iterator end() const { return this->last; }
 };
 
 namespace aux_ {

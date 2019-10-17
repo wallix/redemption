@@ -212,7 +212,7 @@ public:
         }
     }
 
-    Dimension get_dimension() const {
+    [[nodiscard]] Dimension get_dimension() const {
         Rect rect;
 
         for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
@@ -255,7 +255,7 @@ public:
         }
     }
 
-    uint32_t get_monitorCount() const {
+    [[nodiscard]] uint32_t get_monitorCount() const {
         return this->monitorCount;
     }
 

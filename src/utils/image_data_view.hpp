@@ -75,27 +75,27 @@ public:
     , palette_(palette)
     {}
 
-    uint8_t const * data()          const noexcept { return this->data_; }
-    uint16_t width()                const noexcept { return this->width_; }
-    uint16_t height()               const noexcept { return this->height_; }
-    BytesPerPixel bytes_per_pixel() const noexcept { return this->bytes_per_pixel_; }
-    BitsPerPixel bits_per_pixel()   const noexcept { return this->bits_per_pixel_; }
-    size_t size()                   const noexcept { return this->width_ * this->height_; }
-    size_t line_size()              const noexcept { return this->rowsize_; }
-    size_t pix_len()                const noexcept { return this->rowsize_ * this->height_; }
-    Storage storage_type()          const noexcept { return this->storage_; }
-    BGRPalette const& palette()     const noexcept { return *this->palette_; }
+    [[nodiscard]] uint8_t const * data()          const noexcept { return this->data_; }
+    [[nodiscard]] uint16_t width()                const noexcept { return this->width_; }
+    [[nodiscard]] uint16_t height()               const noexcept { return this->height_; }
+    [[nodiscard]] BytesPerPixel bytes_per_pixel() const noexcept { return this->bytes_per_pixel_; }
+    [[nodiscard]] BitsPerPixel bits_per_pixel()   const noexcept { return this->bits_per_pixel_; }
+    [[nodiscard]] size_t size()                   const noexcept { return this->width_ * this->height_; }
+    [[nodiscard]] size_t line_size()              const noexcept { return this->rowsize_; }
+    [[nodiscard]] size_t pix_len()                const noexcept { return this->rowsize_ * this->height_; }
+    [[nodiscard]] Storage storage_type()          const noexcept { return this->storage_; }
+    [[nodiscard]] BGRPalette const& palette()     const noexcept { return *this->palette_; }
 
-    const uint8_t * end_data() const noexcept
+    [[nodiscard]] const uint8_t * end_data() const noexcept
     { return this->data_ + this->height_ * this->rowsize_; }
 
-    const uint8_t * data(uint16_t x, uint16_t y) const noexcept
+    [[nodiscard]] const uint8_t * data(uint16_t x, uint16_t y) const noexcept
     { return this->data_ + this->offset(x, y); }
 
-    size_t offset(uint16_t x, uint16_t y) const noexcept
+    [[nodiscard]] size_t offset(uint16_t x, uint16_t y) const noexcept
     { return y * this->rowsize_ + x * int(this->bytes_per_pixel_); }
 
-    ConstImageDataView sub_view(Rect rect) const noexcept
+    [[nodiscard]] ConstImageDataView sub_view(Rect rect) const noexcept
     {
         const unsigned physical_y = (this->storage_ == Storage::BottomToTop ? (this->height_ - rect.bottom()) : rect.y);
 

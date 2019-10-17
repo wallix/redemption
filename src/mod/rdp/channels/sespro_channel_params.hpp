@@ -46,7 +46,7 @@ public:
         std::string & out__name
     ) const;
 
-    std::string to_string() const;
+    [[nodiscard]] std::string to_string() const;
 };
 
 
@@ -84,7 +84,7 @@ public:
         std::string & out__description
     ) const;
 
-    std::string to_string() const;
+    [[nodiscard]] std::string to_string() const;
 };
 
 
@@ -117,7 +117,7 @@ public:
         std::string & out__description
     ) const;
 
-    std::string to_string() const;
+    [[nodiscard]] std::string to_string() const;
 };
 
 

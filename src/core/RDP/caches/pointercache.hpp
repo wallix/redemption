@@ -108,7 +108,7 @@ public:
         return POINTER_TO_SEND;
     }
 
-    bool is_cached(int index) const {
+    [[nodiscard]] bool is_cached(int index) const {
         return this->cached[index];
     }
 

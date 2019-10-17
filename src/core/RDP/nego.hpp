@@ -102,7 +102,7 @@ public:
         negotiation = 0x800,
     };
 
-    bool enhanced_rdp_security_is_in_effect() const;
+    [[nodiscard]] bool enhanced_rdp_security_is_in_effect() const;
     void set_lb_info(uint8_t * lb_info, size_t lb_info_length);
 
     RdpNego(
@@ -118,11 +118,11 @@ public:
 
     void send_negotiation_request(OutTransport trans);
 
-    const char * get_target_host() const {
+    [[nodiscard]] const char * get_target_host() const {
         return this->target_host;
     }
 
-    const char * get_user_name() const {
+    [[nodiscard]] const char * get_user_name() const {
         return this->username;
     }
 

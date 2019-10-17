@@ -63,7 +63,7 @@ public:
 
     virtual ~Transport() = default;
 
-    uint32_t get_seqno() const
+    [[nodiscard]] uint32_t get_seqno() const
     { return this->seqno; }
 
     enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
@@ -86,7 +86,7 @@ public:
         (void)show_common_cipher_list;
     }
 
-    virtual array_view_const_u8 get_public_key() const
+    [[nodiscard]] virtual array_view_const_u8 get_public_key() const
     {
         return {};
     }
@@ -217,7 +217,7 @@ public:
         return true;
     }
 
-    virtual int get_fd() const { return INVALID_SOCKET; }
+    [[nodiscard]] virtual int get_fd() const { return INVALID_SOCKET; }
 };
 
 
@@ -241,7 +241,7 @@ struct InTransport
     REDEMPTION_CXX_NODISCARD
     size_t partial_read(writable_byte_ptr buffer, size_t len) { return this->t.partial_read(buffer, len); }
 
-    uint32_t get_seqno() const { return this->t.get_seqno(); }
+    [[nodiscard]] uint32_t get_seqno() const { return this->t.get_seqno(); }
 
     Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
     {
@@ -251,17 +251,17 @@ struct InTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
 
-    array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
+    [[nodiscard]] array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
     void timestamp(timeval now) { this->t.timestamp(now); }
     bool next() { return this->t.next(); }
-    int get_fd() const { return this->t.get_fd(); }
+    [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
 
     REDEMPTION_ATTRIBUTE_DEPRECATED
-    Transport & get_transport() const { return this->t; }
+    [[nodiscard]] Transport & get_transport() const { return this->t; }
 
 private:
     Transport & t;
@@ -276,7 +276,7 @@ struct OutTransport
     void send(byte_ptr buffer, size_t len) { this->t.send(buffer, len); }
     void send(bytes_view buffer) { this->t.send(buffer); }
 
-    uint32_t get_seqno() const { return this->t.get_seqno(); }
+    [[nodiscard]] uint32_t get_seqno() const { return this->t.get_seqno(); }
 
     Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
     {
@@ -286,17 +286,17 @@ struct OutTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
 
-    array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
+    [[nodiscard]] array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
     void timestamp(timeval now) { this->t.timestamp(now); }
     bool next() { return this->t.next(); }
-    int get_fd() const { return this->t.get_fd(); }
+    [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
 
     // TODO REDEMPTION_ATTRIBUTE_DEPRECATED
-    Transport & get_transport() const { return this->t; }
+    [[nodiscard]] Transport & get_transport() const { return this->t; }
 
 private:
     Transport & t;

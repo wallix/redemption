@@ -133,7 +133,7 @@ namespace
             this->hashhex[sizeof(this->hashhex)-1] = 0;
         }
 
-        char const* c_str() const noexcept
+        [[nodiscard]] char const* c_str() const noexcept
         {
             return this->hashhex;
         }

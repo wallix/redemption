@@ -48,9 +48,9 @@ public:
 
     ~InCryptoTransport();
 
-    bool is_encrypted() const;
+    [[nodiscard]] bool is_encrypted() const;
 
-    bool is_open() const;
+    [[nodiscard]] bool is_open() const;
 
     struct HASH {
         uint8_t hash[MD_HASH::DIGEST_LENGTH];
@@ -161,7 +161,7 @@ public:
         ReportError report_error = ReportError()
     ) noexcept;
 
-    const char * get_tmp() const;
+    [[nodiscard]] const char * get_tmp() const;
 
     ReportError & get_report_error();
 
@@ -170,7 +170,7 @@ public:
     // TODO: CGR: I want to remove that from Transport API
     bool disconnect() override;
 
-    bool is_open() const;
+    [[nodiscard]] bool is_open() const;
 
     void open(const char * const finalname, const char * const hash_filename, int groupid, bytes_view derivator);
 

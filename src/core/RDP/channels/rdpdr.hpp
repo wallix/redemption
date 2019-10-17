@@ -618,11 +618,11 @@ public:
         stream.in_copy_bytes(this->device_data.p.get(), this->device_data.sz);
     }
 
-    RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
+    [[nodiscard]] RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
 
-    uint32_t DeviceId() const { return this->DeviceId_; }
+    [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
 
-    const char * PreferredDosName() const {
+    [[nodiscard]] const char * PreferredDosName() const {
         return ::char_ptr_cast(this->PreferredDosName_);
     }
 
@@ -630,12 +630,12 @@ public:
 //        return this->device_data.p.get();
 //    }
 
-    size_t DeviceDataLength() const {
+    [[nodiscard]] size_t DeviceDataLength() const {
         return this->device_data.sz /* DeviceData(variable) */
             ;
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
                     // DeviceDataLength(4)
             this->device_data.sz /* DeviceData(variable) */
@@ -696,24 +696,24 @@ public:
         }
     }
 
-    RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
+    [[nodiscard]] RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
 
-    uint32_t DeviceId() const { return this->DeviceId_; }
+    [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
 
-    const char * PreferredDosName() const {
+    [[nodiscard]] const char * PreferredDosName() const {
         return ::char_ptr_cast(this->PreferredDosName_);
     }
 
-    const char * DeviceData() const {
+    [[nodiscard]] const char * DeviceData() const {
         return ::char_ptr_cast(this->device_data.p);
     }
 
-    size_t DeviceDataLength() const {
+    [[nodiscard]] size_t DeviceDataLength() const {
         return this->device_data.sz /* DeviceData(variable) */
             ;
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
                     // DeviceDataLength(4)
             this->device_data.sz /* DeviceData(variable) */
@@ -1109,15 +1109,15 @@ public:
         this->MinorFunction_ = stream.in_uint32_le();
     }
 
-    uint32_t DeviceId() const { return this->DeviceId_; }
+    [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
 
-    uint32_t FileId() const { return this->FileId_; }
+    [[nodiscard]] uint32_t FileId() const { return this->FileId_; }
 
-    uint32_t CompletionId() const { return this->CompletionId_; }
+    [[nodiscard]] uint32_t CompletionId() const { return this->CompletionId_; }
 
-    uint32_t MajorFunction() const { return this->MajorFunction_; }
+    [[nodiscard]] uint32_t MajorFunction() const { return this->MajorFunction_; }
 
-    uint32_t MinorFunction() const { return this->MinorFunction_; }
+    [[nodiscard]] uint32_t MinorFunction() const { return this->MinorFunction_; }
 
     void log(int level) const {
         LOG(level,
@@ -1355,21 +1355,21 @@ public:
         }
     }
 
-    uint64_t AllocationSize() const { return this->AllocationSize_; }
+    [[nodiscard]] uint64_t AllocationSize() const { return this->AllocationSize_; }
 
-    uint32_t FileAttributes() const { return this->FileAttributes_; }
+    [[nodiscard]] uint32_t FileAttributes() const { return this->FileAttributes_; }
 
-    uint32_t SharedAccess() const { return this->SharedAccess_; }
+    [[nodiscard]] uint32_t SharedAccess() const { return this->SharedAccess_; }
 
-    uint32_t DesiredAccess() const { return this->DesiredAccess_; }
+    [[nodiscard]] uint32_t DesiredAccess() const { return this->DesiredAccess_; }
 
-    uint32_t CreateDisposition() const { return this->CreateDisposition_; }
+    [[nodiscard]] uint32_t CreateDisposition() const { return this->CreateDisposition_; }
 
-    uint32_t CreateOptions() const { return this->CreateOptions_; }
+    [[nodiscard]] uint32_t CreateOptions() const { return this->CreateOptions_; }
 
-    array_view_const_char Path() const { return {char_ptr_cast(this->Path_), this->PathLength_UTF8}; }
+    [[nodiscard]] array_view_const_char Path() const { return {char_ptr_cast(this->Path_), this->PathLength_UTF8}; }
 
-    size_t PathLength() const { return this->PathLength_UTF16; }
+    [[nodiscard]] size_t PathLength() const { return this->PathLength_UTF16; }
 
     void log(int level) const {
         LOG(level,
@@ -1549,9 +1549,9 @@ public:
         stream.in_skip_bytes(20);
     }
 
-    uint32_t Length() const { return this->Length_; }
+    [[nodiscard]] uint32_t Length() const { return this->Length_; }
 
-    uint64_t Offset() const { return this->Offset_; }
+    [[nodiscard]] uint64_t Offset() const { return this->Offset_; }
 
     void log(int level = LOG_INFO) const {
         LOG(level, "DeviceReadRequest: Length=%u(4 bytes) Offset=%" PRIu64 "(8 bytes) Padding(20 bytes) NOT USED",
@@ -1797,7 +1797,7 @@ public:
         stream.in_skip_bytes(InputBufferLength);
     }
 
-    uint32_t IoControlCode() const { return this->IoControlCode_; }
+    [[nodiscard]] uint32_t IoControlCode() const { return this->IoControlCode_; }
 
     void log(int level) const {
         LOG(level, "DeviceControlRequest: OutputBufferLength=%u InputBufferLength=%zu "
@@ -1944,11 +1944,11 @@ public:
         this->IoStatus_     = static_cast<erref::NTSTATUS>(stream.in_uint32_le());
     }
 
-    uint32_t DeviceId() const { return this->DeviceId_; }
+    [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
 
-    uint32_t CompletionId() const { return this->CompletionId_; }
+    [[nodiscard]] uint32_t CompletionId() const { return this->CompletionId_; }
 
-    erref::NTSTATUS IoStatus() const { return this->IoStatus_; }
+    [[nodiscard]] erref::NTSTATUS IoStatus() const { return this->IoStatus_; }
 
     void set_IoStatus(erref::NTSTATUS IoStatus) {
         this->IoStatus_ = IoStatus;
@@ -2105,8 +2105,8 @@ public:
         }
     }
 
-    uint32_t FileId() const { return this->FileId_; }
-    uint32_t Information() const { return this->Information_; }
+    [[nodiscard]] uint32_t FileId() const { return this->FileId_; }
+    [[nodiscard]] uint32_t Information() const { return this->Information_; }
 
 private:
     static const char * get_Information_name(uint8_t Information) {
@@ -2355,9 +2355,9 @@ public:
         this->ResultCode_ = erref::NTSTATUS(stream.in_uint32_le());
     }
 
-    uint32_t DeviceId() const { return this->DeviceId_; }
+    [[nodiscard]] uint32_t DeviceId() const { return this->DeviceId_; }
 
-    erref::NTSTATUS ResultCode() const { return this->ResultCode_; }
+    [[nodiscard]] erref::NTSTATUS ResultCode() const { return this->ResultCode_; }
 
     void log(int level) const {
         LOG(level, "ServerDeviceAnnounceResponse: DeviceId=%" PRIu32 " ResultCode=0x%08" PRIX32,
@@ -2433,11 +2433,11 @@ public:
         this->ClientId_     = stream.in_uint32_le();
     }
 
-    uint16_t VersionMajor() const { return this->VersionMajor_; }
+    [[nodiscard]] uint16_t VersionMajor() const { return this->VersionMajor_; }
 
-    uint16_t VersionMinor() const { return this->VersionMinor_; }
+    [[nodiscard]] uint16_t VersionMinor() const { return this->VersionMinor_; }
 
-    uint16_t ClientId() const { return this->ClientId_; }
+    [[nodiscard]] uint16_t ClientId() const { return this->ClientId_; }
 
     void log(int level) const {
         LOG(level, "ServerAnnounceRequest: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
@@ -2957,13 +2957,13 @@ public:
         }
     }
 
-    uint32_t extendedPDU() const { return this->extendedPDU_; }
+    [[nodiscard]] uint32_t extendedPDU() const { return this->extendedPDU_; }
 
     void set_extendedPDU(uint32_t extendedPDU) {
         this->extendedPDU_ = extendedPDU;
     }
 
-    uint32_t extraFlags1() const { return this->extraFlags1_; }
+    [[nodiscard]] uint32_t extraFlags1() const { return this->extraFlags1_; }
 
     void set_extraFlags1(uint32_t extraFlags1) {
         this->extraFlags1_ = extraFlags1;
@@ -3220,9 +3220,9 @@ public:
         stream.in_skip_bytes(Length);
     }
 
-    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    [[nodiscard]] uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    uint32_t Length() const { return this->query_buffer.sz; }
+    [[nodiscard]] uint32_t Length() const { return this->query_buffer.sz; }
 
     static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
@@ -3451,9 +3451,9 @@ public:
         stream.in_skip_bytes(Length);
     }
 
-    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    [[nodiscard]] uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    uint32_t Length() const { return this->query_volume_buffer.sz; }
+    [[nodiscard]] uint32_t Length() const { return this->query_volume_buffer.sz; }
 
     void log(int level) const {
         LOG(level,
@@ -3686,9 +3686,9 @@ public:
         stream.in_skip_bytes(24);                          // Padding(24)
     }
 
-    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    [[nodiscard]] uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    uint32_t Length() const { return this->Length_; }
+    [[nodiscard]] uint32_t Length() const { return this->Length_; }
 
     static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
@@ -3820,11 +3820,11 @@ public:
         }
     }
 
-    bool replace_if_exists() const { return this->replace_if_exists_; }
+    [[nodiscard]] bool replace_if_exists() const { return this->replace_if_exists_; }
 
-    uint8_t RootDirectory() const { return this->RootDirectory_; }
+    [[nodiscard]] uint8_t RootDirectory() const { return this->RootDirectory_; }
 
-    const char * FileName() const { return this->FileName_; }
+    [[nodiscard]] const char * FileName() const { return this->FileName_; }
 
     void log(int level) const {
         LOG(level,
@@ -4027,11 +4027,11 @@ public:
         }
     }
 
-    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    [[nodiscard]] uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    uint8_t  InitialQuery() const { return this->InitialQuery_; }
+    [[nodiscard]] uint8_t  InitialQuery() const { return this->InitialQuery_; }
 
-    const char * Path() const { return this->Path_; }
+    [[nodiscard]] const char * Path() const { return this->Path_; }
 
     static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {

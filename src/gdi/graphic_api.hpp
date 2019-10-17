@@ -127,26 +127,26 @@ private:
     }; };
 
 public:
-    constexpr BitsPerPixel to_bpp() const noexcept {
+    [[nodiscard]] constexpr BitsPerPixel to_bpp() const noexcept {
         return bpp_table{}.table[unsigned(this->depth_)];
     }
 
-    constexpr bool is_defined() const noexcept { return !this->is_unspecified(); }
-    constexpr bool is_unspecified() const noexcept { return this->depth_ == unspecified().depth_; }
-    constexpr bool is_depth8() const noexcept { return this->depth_ == depth8().depth_; }
-    constexpr bool is_depth15() const noexcept { return this->depth_ == depth15().depth_; }
-    constexpr bool is_depth16() const noexcept { return this->depth_ == depth16().depth_; }
-    constexpr bool is_depth24() const noexcept { return this->depth_ == depth24().depth_; }
+    [[nodiscard]] constexpr bool is_defined() const noexcept { return !this->is_unspecified(); }
+    [[nodiscard]] constexpr bool is_unspecified() const noexcept { return this->depth_ == unspecified().depth_; }
+    [[nodiscard]] constexpr bool is_depth8() const noexcept { return this->depth_ == depth8().depth_; }
+    [[nodiscard]] constexpr bool is_depth15() const noexcept { return this->depth_ == depth15().depth_; }
+    [[nodiscard]] constexpr bool is_depth16() const noexcept { return this->depth_ == depth16().depth_; }
+    [[nodiscard]] constexpr bool is_depth24() const noexcept { return this->depth_ == depth24().depth_; }
 
-    constexpr bool contains(Depth depth) const noexcept {
+    [[nodiscard]] constexpr bool contains(Depth depth) const noexcept {
         return this->is_unspecified() || depth.is_unspecified() || (this->depth_ == depth.depth_);
     }
 
-    constexpr Depth const & depth_or(Depth const & default_depth) const noexcept {
+    [[nodiscard]] constexpr Depth const & depth_or(Depth const & default_depth) const noexcept {
         return this->is_unspecified() ? default_depth : *this;
     }
 
-    constexpr unsigned id() const noexcept { return this->depth_; }
+    [[nodiscard]] constexpr unsigned id() const noexcept { return this->depth_; }
 
 private:
     enum class PrivateDepth { unspecified_, depth8_, depth15_, depth16_, depth24_, };
@@ -193,8 +193,8 @@ struct ColorCtx
         assert(depth == Depth::depth8() ? bool(palette) : true);
     }
 
-    Depth depth() const { return this->depth_; }
-    BGRPalette const * palette() const { return this->palette_; }
+    [[nodiscard]] Depth depth() const { return this->depth_; }
+    [[nodiscard]] BGRPalette const * palette() const { return this->palette_; }
 
 
     static ColorCtx depth8(BGRPalette && palette) = delete;

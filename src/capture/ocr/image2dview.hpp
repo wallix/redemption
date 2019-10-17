@@ -36,10 +36,10 @@ namespace ocr
         : input(input_)
         {}
 
-        unsigned width() const
+        [[nodiscard]] unsigned width() const
         { return input.ncols(); }
 
-        unsigned height() const
+        [[nodiscard]] unsigned height() const
         { return input.nrows(); }
 
         const ImageValue & operator()(unsigned row, unsigned col) const

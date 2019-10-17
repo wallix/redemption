@@ -100,11 +100,11 @@ struct BGRColor
     : color_((blue << 16) | (green << 8) | red)
     {}
 
-    constexpr uint32_t as_u32() const noexcept { return this->color_; }
+    [[nodiscard]] constexpr uint32_t as_u32() const noexcept { return this->color_; }
 
-    constexpr uint8_t red() const noexcept { return this->color_; }
-    constexpr uint8_t green() const noexcept { return this->color_ >> 8; }
-    constexpr uint8_t blue() const noexcept { return this->color_ >> 16; }
+    [[nodiscard]] constexpr uint8_t red() const noexcept { return this->color_; }
+    [[nodiscard]] constexpr uint8_t green() const noexcept { return this->color_ >> 8; }
+    [[nodiscard]] constexpr uint8_t blue() const noexcept { return this->color_ >> 16; }
 
 private:
     uint32_t color_;
@@ -120,9 +120,9 @@ struct BGRasRGBColor
     : color_(color)
     {}
 
-    constexpr uint8_t red() const noexcept { return this->color_.blue(); }
-    constexpr uint8_t green() const noexcept { return this->color_.green(); }
-    constexpr uint8_t blue() const noexcept { return this->color_.red(); }
+    [[nodiscard]] constexpr uint8_t red() const noexcept { return this->color_.blue(); }
+    [[nodiscard]] constexpr uint8_t green() const noexcept { return this->color_.green(); }
+    [[nodiscard]] constexpr uint8_t blue() const noexcept { return this->color_.red(); }
 
 private:
     BGRColor color_;
@@ -157,8 +157,8 @@ struct RDPColor
 {
     constexpr RDPColor() noexcept = default;
 
-    constexpr BGRColor as_bgr() const noexcept { return BGRColor(this->color_); }
-    constexpr BGRasRGBColor as_rgb() const noexcept { return BGRasRGBColor(this->as_bgr()); }
+    [[nodiscard]] constexpr BGRColor as_bgr() const noexcept { return BGRColor(this->color_); }
+    [[nodiscard]] constexpr BGRasRGBColor as_rgb() const noexcept { return BGRasRGBColor(this->as_bgr()); }
 
     constexpr static RDPColor from(uint32_t c) noexcept
     { return RDPColor(nullptr, c); }
@@ -208,13 +208,13 @@ struct BGRPalette
         return this->palette[i];
     }
 
-    BGRColor const * begin() const
+    [[nodiscard]] BGRColor const * begin() const
     {
         using std::begin;
         return begin(this->palette);
     }
 
-    BGRColor const * end() const
+    [[nodiscard]] BGRColor const * end() const
     {
         using std::end;
         return end(this->palette);
@@ -223,7 +223,7 @@ struct BGRPalette
     void set_color(std::size_t i, BGRColor c) noexcept
     { this->palette[i] = c; }
 
-    const char * data() const noexcept
+    [[nodiscard]] const char * data() const noexcept
     { return reinterpret_cast<char const*>(this->palette); } /*NOLINT*/
 
     static constexpr std::size_t data_size() noexcept

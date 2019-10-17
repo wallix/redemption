@@ -100,15 +100,15 @@ private:
         , flags(flags_)
         {}
 
-        const char* OriginalExeOrFile() const {
+        [[nodiscard]] const char* OriginalExeOrFile() const {
             return this->original_exe_or_file.c_str();
         }
 
-        const char* ExeOrFile() const {
+        [[nodiscard]] const char* ExeOrFile() const {
             return this->exe_or_file.c_str();
         }
 
-        uint16_t Flags() const {
+        [[nodiscard]] uint16_t Flags() const {
             return this->flags;
         }
     };

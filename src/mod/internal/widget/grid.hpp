@@ -57,7 +57,7 @@ private:
             return this->line(this->nb_rows-1);
         }
 
-        array_view<const std::unique_ptr<Widget>> line(uint16_t i) const
+        [[nodiscard]] array_view<const std::unique_ptr<Widget>> line(uint16_t i) const
         {
             auto* p = &this->widgets[i * this->nb_columns];
             return {p, p + this->nb_columns};
@@ -69,12 +69,12 @@ private:
             return {p, p + this->nb_columns};
         }
 
-        array_view<const uint16_t> row_heights() const
+        [[nodiscard]] array_view<const uint16_t> row_heights() const
         {
             return make_array_view(this->column_and_row_height).from_offset(nb_columns);
         }
 
-        array_view<const uint16_t> column_widths() const
+        [[nodiscard]] array_view<const uint16_t> column_widths() const
         {
             return make_array_view(this->column_and_row_height).subarray(0, nb_columns);
         }
@@ -219,7 +219,7 @@ public:
         }
     }
 
-    uint16_t get_column_width(uint16_t column_index) const
+    [[nodiscard]] uint16_t get_column_width(uint16_t column_index) const
     {
         assert(column_index < this->widgets.nb_columns);
 
@@ -233,12 +233,12 @@ public:
         this->widgets.column_widths()[column_index] = width;
     }
 
-    uint16_t get_nb_rows() const
+    [[nodiscard]] uint16_t get_nb_rows() const
     {
         return this->widgets.nb_rows;
     }
 
-    uint16_t get_nb_columns() const
+    [[nodiscard]] uint16_t get_nb_columns() const
     {
         return this->widgets.nb_columns;
     }
@@ -248,7 +248,7 @@ public:
         return this->widgets.add_line();
     }
 
-    uint16_t get_row_height(uint16_t row_index) const
+    [[nodiscard]] uint16_t get_row_height(uint16_t row_index) const
     {
         return this->widgets.row_heights()[row_index];
     }
@@ -258,7 +258,7 @@ public:
         this->widgets.row_heights()[row_index] = height;
     }
 
-    Widget* get_widget(uint16_t row_index, uint16_t column_index) const
+    [[nodiscard]] Widget* get_widget(uint16_t row_index, uint16_t column_index) const
     {
         return this->widgets.line(row_index)[column_index].get();
     }

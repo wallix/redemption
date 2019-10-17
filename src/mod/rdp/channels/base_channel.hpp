@@ -39,12 +39,12 @@ private:
     VirtualChannelDataSender* to_server_sender;
 
 protected:
-    VirtualChannelDataSender* to_client_sender_ptr() const noexcept
+    [[nodiscard]] VirtualChannelDataSender* to_client_sender_ptr() const noexcept
     {
         return this->to_client_sender;
     }
 
-    VirtualChannelDataSender* to_server_sender_ptr() const noexcept
+    [[nodiscard]] VirtualChannelDataSender* to_server_sender_ptr() const noexcept
     {
         return this->to_server_sender;
     }
@@ -84,7 +84,7 @@ public:
     }
 
 protected:
-    inline bool has_valid_to_client_sender() const
+    [[nodiscard]] inline bool has_valid_to_client_sender() const
     {
         return bool(this->to_client_sender);
     }

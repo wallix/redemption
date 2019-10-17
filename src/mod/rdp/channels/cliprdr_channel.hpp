@@ -116,7 +116,7 @@ public:
             out_s.get_bytes());
     }
 
-    bool use_long_format_names() const {
+    [[nodiscard]] bool use_long_format_names() const {
         return (this->clip_data.client_data.use_long_format_names &&
             this->clip_data.server_data.use_long_format_names);
     }

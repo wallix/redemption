@@ -315,7 +315,7 @@ struct NSCodecCaps
         this->colorLossLevel = stream.in_uint8();
     }
 
-    size_t computeSize() const
+    [[nodiscard]] size_t computeSize() const
     {
         return 3;
     }
@@ -343,7 +343,7 @@ struct RFXSrvrCaps
         this->len = len;
     }
 
-    size_t computeSize() const
+    [[nodiscard]] size_t computeSize() const
     {
         return this->len;
     }
@@ -412,7 +412,7 @@ struct RFXICap
         out.out_uint8(this->entropyBits);
     }
 
-    size_t computeSize() const {
+    [[nodiscard]] size_t computeSize() const {
         return 8;
     }
 };
@@ -556,7 +556,7 @@ struct RFXClntCaps
         }
     }
 
-    size_t computeSize() const {
+    [[nodiscard]] size_t computeSize() const {
         return this->length;
     }
 };
@@ -583,7 +583,7 @@ struct BitmapCodec
     {
         void emit(OutStream & /*out*/) const {}
         void recv(InStream & /*stream*/, uint16_t /*len*/) {}
-        size_t computeSize() const { return 0; }
+        [[nodiscard]] size_t computeSize() const { return 0; }
     };
 
     struct CodecProperties
@@ -600,7 +600,7 @@ struct BitmapCodec
             std::visit(f, this->interface);
         }
 
-        size_t computeSize() const
+        [[nodiscard]] size_t computeSize() const
         {
             auto f = [](auto& caps) -> size_t { return caps.computeSize(); };
             return std::visit(f, this->interface);
@@ -649,7 +649,7 @@ struct BitmapCodec
         this->codecPropertiesLength = this->codecProperties.computeSize();
     }
 
-    size_t computeSize() const {
+    [[nodiscard]] size_t computeSize() const {
         return 19u + this->codecProperties.computeSize();
     }
 

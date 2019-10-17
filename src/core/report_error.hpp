@@ -74,14 +74,14 @@ private:
     struct ImplBase
     {
         virtual Error get_error(Error err) = 0;
-        virtual ImplPtr clone() const = 0;
+        [[nodiscard]] virtual ImplPtr clone() const = 0;
         virtual ~ImplBase() = default;
     };
 
     struct NullImpl : ImplBase
     {
         Error get_error(Error err) override;
-        ImplPtr clone() const override { return ImplPtr(new NullImpl); }
+        [[nodiscard]] ImplPtr clone() const override { return ImplPtr(new NullImpl); }
     };
 
     template<class F>
@@ -91,7 +91,7 @@ private:
         template<class Fu>
         explicit FuncImpl(Fu && f) /*NOLINT*/ : fun(std::forward<Fu>(f)) {}
         Error get_error(Error err) override { return fun(err); }
-        ImplPtr clone() const override { return ImplPtr(new FuncImpl(fun)); }
+        [[nodiscard]] ImplPtr clone() const override { return ImplPtr(new FuncImpl(fun)); }
     };
 
     ImplPtr impl;

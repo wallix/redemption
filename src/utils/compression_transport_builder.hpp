@@ -61,7 +61,7 @@ struct CompressionTransportBuilder
         return *this->compressors.trans;
     }
 
-    WrmCompressionAlgorithm get_algorithm() const
+    [[nodiscard]] WrmCompressionAlgorithm get_algorithm() const
     {
         return this->compression_algorithm;
     }

@@ -2291,7 +2291,7 @@ private:
             }
         }
 
-        BGRPalette const & get_palette() const noexcept
+        [[nodiscard]] BGRPalette const & get_palette() const noexcept
         {
             return this->palette;
         }
@@ -2420,7 +2420,7 @@ private:
     } // lib_open_clip_channel
 
     //==============================================================================================================
-    const CHANNELS::ChannelDef * get_channel_by_name(CHANNELS::ChannelNameId channel_name) const {
+    [[nodiscard]] const CHANNELS::ChannelDef * get_channel_by_name(CHANNELS::ChannelNameId channel_name) const {
     //==============================================================================================================
         return this->front.get_channel_list().get_by_name(channel_name);
     } // get_channel_by_name
@@ -2472,12 +2472,12 @@ private:
             }
         }
 
-        bool clipboard_is_enabled() const noexcept
+        [[nodiscard]] bool clipboard_is_enabled() const noexcept
         {
             return this->clipboard_down_is_really_enabled;
         }
 
-        array_view_const_u8 clipboard_data() const noexcept
+        [[nodiscard]] array_view_const_u8 clipboard_data() const noexcept
         {
             return {
                 this->to_rdp_clipboard_data.get_data(),
@@ -2485,7 +2485,7 @@ private:
             };
         }
 
-        bool clipboard_data_is_utf8_encoded() const noexcept
+        [[nodiscard]] bool clipboard_data_is_utf8_encoded() const noexcept
         {
             return this->to_rdp_clipboard_data_is_utf8_encoded;
         }
@@ -3220,7 +3220,7 @@ public:
     }
 
 private:
-    bool is_up_and_running() const override {
+    [[nodiscard]] bool is_up_and_running() const override {
         return (UP_AND_RUNNING == this->state);
     }
 
@@ -3266,7 +3266,7 @@ public:
             "type=SESSION_DISCONNECTION duration=%s", duration_str);
     }
 
-    Dimension get_dim() const override
+    [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
 };
 

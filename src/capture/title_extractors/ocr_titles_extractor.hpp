@@ -60,11 +60,11 @@ struct OcrTitlesExtractor
         }
     }
 
-    unsigned selected_font_id() const {
+    [[nodiscard]] unsigned selected_font_id() const {
         return this->font_id;
     }
 
-    unsigned selected_titlebar_color_id() const {
+    [[nodiscard]] unsigned selected_titlebar_color_id() const {
         return this->title_color_id_selected;
     }
 
@@ -166,7 +166,7 @@ private:
         std::fill(this->letters_find + 0, this->letters_find + sizeof(this->letters_find), 0);
     }
 
-    bool is_title_bar(
+    [[nodiscard]] bool is_title_bar(
         const DrawableImageView & input, unsigned tid,
         mln::box2d const & box, unsigned button_col) const
     {
@@ -175,7 +175,7 @@ private:
             this->font_id == -1u ? ::ocr::bbox_max_height : this->font().max_height_char);
     }
 
-    ocr::fonts::Font const & font() const {
+    [[nodiscard]] ocr::fonts::Font const & font() const {
         return ::ocr::fonts::fonts[this->locale_id][this->font_id];
     }
 

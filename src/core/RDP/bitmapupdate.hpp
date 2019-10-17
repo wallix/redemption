@@ -290,7 +290,7 @@ struct RDPBitmapData {
         }
     }
 
-    uint16_t struct_size() const {
+    [[nodiscard]] uint16_t struct_size() const {
         if (    (this->flags & BITMAP_COMPRESSION)
             && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
             return 26;
@@ -299,7 +299,7 @@ struct RDPBitmapData {
         return 18;
     }
 
-    uint16_t bitmap_size() const {
+    [[nodiscard]] uint16_t bitmap_size() const {
         if (    (this->flags & BITMAP_COMPRESSION)
             && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
             return this->cb_comp_main_body_size;

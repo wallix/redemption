@@ -76,13 +76,13 @@ public:
     {}
 
     template<class T>
-    typename T::type const & get() const noexcept {
+    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] typename T::type const & get() const noexcept {
         static_assert(has_access<T>(accessmode::get), "T isn't gettable");
         return this->ini.template get<T>();
     }
 
     template<class T>
-    typename T::type& get_ref() const noexcept {
+    [[nodiscard]] typename T::type& get_ref() const noexcept {
         static_assert(has_access<T>(accessmode::get_ref), "get_ref isn't enabled");
         return this->ini.template get_ref<T>();
     }
@@ -106,7 +106,7 @@ public:
     }
 
     template<class T>
-    bool is_asked() const {
+    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] bool is_asked() const {
         static_assert(has_access<T>(accessmode::is_asked), "T isn't is_askable");
         return this->ini.template is_asked<T>();
     }

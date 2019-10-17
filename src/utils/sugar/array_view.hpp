@@ -105,20 +105,20 @@ struct array_view
     , sz(av.size())
     {}
 
-    constexpr bool empty() const noexcept { return !this->sz; }
+    [[nodiscard]] constexpr bool empty() const noexcept { return !this->sz; }
 
-    constexpr std::size_t size() const noexcept { return this->sz; }
+    [[nodiscard]] constexpr std::size_t size() const noexcept { return this->sz; }
 
-    constexpr type & front() const noexcept { /*assert(this->size());*/ return *this->p; }
-    constexpr type & back() const noexcept { /*assert(this->size());*/ return this->p[this->sz-1u]; }
+    [[nodiscard]] constexpr type & front() const noexcept { /*assert(this->size());*/ return *this->p; }
+    [[nodiscard]] constexpr type & back() const noexcept { /*assert(this->size());*/ return this->p[this->sz-1u]; }
     constexpr type & front() noexcept { assert(this->size()); return *this->p; }
     constexpr type & back() noexcept { assert(this->size()); return this->p[this->sz-1u]; }
 
-    constexpr type const * data() const noexcept { return this->p; }
+    [[nodiscard]] constexpr type const * data() const noexcept { return this->p; }
     constexpr type * data() noexcept { return this->p; }
 
-    constexpr type const * begin() const noexcept { return this->data(); }
-    constexpr type const * end() const noexcept { return this->data() + this->size(); }
+    [[nodiscard]] constexpr type const * begin() const noexcept { return this->data(); }
+    [[nodiscard]] constexpr type const * end() const noexcept { return this->data() + this->size(); }
     constexpr type * begin() noexcept { return this->data(); }
     constexpr type * end() noexcept { return this->data() + this->size(); }
 

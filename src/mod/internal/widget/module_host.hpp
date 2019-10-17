@@ -84,7 +84,7 @@ public:
         return this->module_holder;
     }
 
-    const mod_api& get_managed_mod() const
+    [[nodiscard]] const mod_api& get_managed_mod() const
     {
         return this->module_holder;
     }
@@ -95,7 +95,7 @@ public:
 
     using WidgetParent::set_wh;
 
-    const Pointer* get_pointer() const override
+    [[nodiscard]] const Pointer* get_pointer() const override
     {
         return &this->current_pointer;
     }
@@ -149,7 +149,7 @@ private:
 
         // mod_api
 
-        bool is_up_and_running() const override;
+        [[nodiscard]] bool is_up_and_running() const override;
 
         bool is_auto_reconnectable() override;
 
@@ -170,7 +170,7 @@ private:
 
         void refresh(Rect r) override;
 
-        Dimension get_dim() const override;
+        [[nodiscard]] Dimension get_dim() const override;
     } module_holder;
 
     CompositeArray composite_array;

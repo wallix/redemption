@@ -51,13 +51,13 @@ struct DrawableTraitColor24
         , r(r_)
         {}
 
-        constexpr uint8_t red() const noexcept
+        [[nodiscard]] constexpr uint8_t red() const noexcept
         { return r; }
 
-        constexpr uint8_t green() const noexcept
+        [[nodiscard]] constexpr uint8_t green() const noexcept
         { return g; }
 
-        constexpr uint8_t blue() const noexcept
+        [[nodiscard]] constexpr uint8_t blue() const noexcept
         { return b; }
 
         constexpr color_t operator~() const noexcept
@@ -189,31 +189,31 @@ struct DrawableImpl
     DrawableImpl(DrawableImpl const &) = delete;
     DrawableImpl& operator=(DrawableImpl const &) = delete;
 
-    const uint8_t * data() const noexcept {
+    [[nodiscard]] const uint8_t * data() const noexcept {
         return this->data_.get();
     }
 
-    const uint8_t * data(int x, int y) const noexcept {
+    [[nodiscard]] const uint8_t * data(int x, int y) const noexcept {
         return this->data() + (y * this->width_ + x) * Bpp;
     }
 
-    uint16_t width() const noexcept {
+    [[nodiscard]] uint16_t width() const noexcept {
         return this->width_;
     }
 
-    uint16_t height() const noexcept {
+    [[nodiscard]] uint16_t height() const noexcept {
         return this->height_;
     }
 
-    unsigned size() const noexcept {
+    [[nodiscard]] unsigned size() const noexcept {
         return this->width_ * this->height_;
     }
 
-    size_t rowsize() const noexcept {
+    [[nodiscard]] size_t rowsize() const noexcept {
         return this->rowsize_;
     }
 
-    size_t pix_len() const noexcept {
+    [[nodiscard]] size_t pix_len() const noexcept {
         return this->rowsize_ * this->height_;
     }
 
@@ -225,23 +225,23 @@ struct DrawableImpl
         return static_cast<uint8_t>(BppIn);
     }
 
-    uint8_t * first_pixel() const noexcept {
+    [[nodiscard]] uint8_t * first_pixel() const noexcept {
         return this->data_.get();
     }
 
-    uint8_t * first_pixel(int x, int y) const noexcept {
+    [[nodiscard]] uint8_t * first_pixel(int x, int y) const noexcept {
         return this->data_.get() + (y * this->width_ + x) * Bpp;
     }
 
-    uint8_t * first_pixel(Rect rect) const noexcept {
+    [[nodiscard]] uint8_t * first_pixel(Rect rect) const noexcept {
         return this->first_pixel(rect.x, rect.y);
     }
 
-    uint8_t * last_pixel() const noexcept {
+    [[nodiscard]] uint8_t * last_pixel() const noexcept {
         return this->data_.get() + this->pix_len();
     }
 
-    uint8_t * row_data(int y) const noexcept {
+    [[nodiscard]] uint8_t * row_data(int y) const noexcept {
         return this->first_pixel() + y * this->rowsize();
     }
 };
@@ -279,47 +279,47 @@ public:
         return this->impl_.first_pixel();
     }
 
-    const uint8_t * data() const noexcept
+    [[nodiscard]] const uint8_t * data() const noexcept
     {
         return this->impl_.data();
     }
 
-    Color u32_to_color(uint32_t color) const
+    [[nodiscard]] Color u32_to_color(uint32_t color) const
     {
         return DrawableImplPrivate::traits::u32_to_color(color);
     }
 
-    Color u32bgr_to_color(uint32_t color) const
+    [[nodiscard]] Color u32bgr_to_color(uint32_t color) const
     {
         return DrawableImplPrivate::traits::u32bgr_to_color(color);
     }
 
-    const uint8_t * data(int x, int y) const noexcept
+    [[nodiscard]] const uint8_t * data(int x, int y) const noexcept
     {
         return this->impl_.data(x, y);
     }
 
-    uint16_t width() const noexcept
+    [[nodiscard]] uint16_t width() const noexcept
     {
         return this->impl_.width();
     }
 
-    uint16_t height() const noexcept
+    [[nodiscard]] uint16_t height() const noexcept
     {
         return this->impl_.height();
     }
 
-    unsigned size() const noexcept
+    [[nodiscard]] unsigned size() const noexcept
     {
         return this->impl_.size();
     }
 
-    size_t rowsize() const noexcept
+    [[nodiscard]] size_t rowsize() const noexcept
     {
         return this->impl_.rowsize();
     }
 
-    size_t pix_len() const noexcept
+    [[nodiscard]] size_t pix_len() const noexcept
     {
         return this->impl_.pix_len();
     }

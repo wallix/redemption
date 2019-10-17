@@ -344,18 +344,18 @@ namespace MCS
             return this->stream.in_bytes_le(nb);
         }
 
-        bool in_check_rem(const unsigned n) const noexcept
+        [[nodiscard]] bool in_check_rem(const unsigned n) const noexcept
         {
             // returns true if there is enough data available to read n bytes
             return this->stream.in_check_rem(n);
         }
 
-        size_t in_remain() const noexcept
+        [[nodiscard]] size_t in_remain() const noexcept
         {
             return this->stream.in_remain();
         }
 
-        uint32_t get_offset() const noexcept
+        [[nodiscard]] uint32_t get_offset() const noexcept
         {
             return this->stream.get_offset();
         }
@@ -440,7 +440,7 @@ namespace MCS
             this->stream.out_uint16_be(v);
         }
 
-        uint32_t get_offset() const noexcept
+        [[nodiscard]] uint32_t get_offset() const noexcept
         {
             return this->stream.get_offset();
         }

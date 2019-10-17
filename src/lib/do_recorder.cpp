@@ -585,7 +585,7 @@ public:
         this->file.send(data);
     }
 
-    bool is_open() const noexcept
+    [[nodiscard]] bool is_open() const noexcept
     {
         return -1 != this->file.get_fd();
     }

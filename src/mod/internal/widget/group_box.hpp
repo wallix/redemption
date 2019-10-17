@@ -36,9 +36,9 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
-    BGRColor get_bg_color() const override;
+    [[nodiscard]] BGRColor get_bg_color() const override;
 
-    const char * get_text() const;
+    [[nodiscard]] const char * get_text() const;
     void set_text(const char * text);
 
 private:

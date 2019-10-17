@@ -46,7 +46,7 @@ struct VideoTransportBase : Transport
 protected:
     void force_open();
     void rename();
-    bool is_open() const;
+    [[nodiscard]] bool is_open() const;
     void do_send(const uint8_t * data, size_t len) override;
 
 private:
@@ -90,13 +90,13 @@ struct VideoCaptureCtx : noncopyable
         video_recorder & /*recorder*/, timeval const & now, bool ignore_frame_in_timeval);
     void next_video();
 
-    uint16_t width() const noexcept;
+    [[nodiscard]] uint16_t width() const noexcept;
 
-    uint16_t height() const noexcept;
+    [[nodiscard]] uint16_t height() const noexcept;
 
-    size_t pix_len() const noexcept;
+    [[nodiscard]] size_t pix_len() const noexcept;
 
-    const uint8_t * data() const noexcept;
+    [[nodiscard]] const uint8_t * data() const noexcept;
 
 private:
     void preparing_video_frame(video_recorder & /*recorder*/);
@@ -299,7 +299,7 @@ public:
         , impl(impl)
         {}
 
-        std::chrono::microseconds get_interval() const
+        [[nodiscard]] std::chrono::microseconds get_interval() const
         {
             return this->break_interval;
         }

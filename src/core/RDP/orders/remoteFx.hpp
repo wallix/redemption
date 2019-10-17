@@ -234,7 +234,7 @@ public:
     {
     }
 
-    DecoderState getState() const {    return decoderState; }
+    [[nodiscard]] DecoderState getState() const {    return decoderState; }
 
     void recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::GraphicApi & drawable);
 

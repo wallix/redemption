@@ -207,9 +207,9 @@ public:
     void start_negociation();
     bool recv_data(TpduBuffer& buf);
 
-    RdpNegociationResult const& get_result() const noexcept;
+    [[nodiscard]] RdpNegociationResult const& get_result() const noexcept;
 
-    State get_state() const noexcept
+    [[nodiscard]] State get_state() const noexcept
     {
         return this->state;
     }

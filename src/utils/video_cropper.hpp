@@ -112,7 +112,7 @@ public:
 
 private:
     template<class ImgView>
-    ImgView create_image_view() const
+    [[nodiscard]] ImgView create_image_view() const
     {
         uint8_t * data = this->out_bmpdata.get();
 
@@ -136,7 +136,7 @@ public:
         return this->create_image_view<ImageView>();
     }
 
-    ConstImageView get_image_view() const override
+    [[nodiscard]] ConstImageView get_image_view() const override
     {
         return this->create_image_view<ConstImageView>();
     }
@@ -165,7 +165,7 @@ public:
         }
     }
 
-    unsigned int get_last_update_index() const noexcept override {
+    [[nodiscard]] unsigned int get_last_update_index() const noexcept override {
         return this->last_update_index;
     }
 
@@ -208,7 +208,7 @@ public:
         return result;
     }
 
-    Rect get_rect() const override {
+    [[nodiscard]] Rect get_rect() const override {
         return Rect(this->x, this->y, this->out_width, this->out_height);
     }
 };

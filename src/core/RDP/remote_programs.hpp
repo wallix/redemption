@@ -257,7 +257,7 @@ public:
         this->buildNumber_ = stream.in_uint32_le();
     }
 
-    uint32_t buildNumber() const { return this->buildNumber_; }
+    [[nodiscard]] uint32_t buildNumber() const { return this->buildNumber_; }
 
     void buildNumber(uint32_t buildNumber_) {
         this->buildNumber_ = buildNumber_;
@@ -379,7 +379,7 @@ public:
         this->Flags_ = stream.in_uint32_le();
     }
 
-    uint32_t Flags() const { return this->Flags_; }
+    [[nodiscard]] uint32_t Flags() const { return this->Flags_; }
 
     void Flags(uint32_t Flags_) {
         this->Flags_ = Flags_;
@@ -477,13 +477,13 @@ public:
         this->railHandshakeFlags_ = stream.in_uint32_le();
     }
 
-    uint32_t buildNumber() const { return this->buildNumber_; }
+    [[nodiscard]] uint32_t buildNumber() const { return this->buildNumber_; }
 
     void buildNumber(uint32_t buildNumber_) {
         this->buildNumber_ = buildNumber_;
     }
 
-    uint32_t railHandshakeFlags() const { return this->railHandshakeFlags_; }
+    [[nodiscard]] uint32_t railHandshakeFlags() const { return this->railHandshakeFlags_; }
 
     void railHandshakeFlags(uint32_t railHandshakeFlags_) {
         this->railHandshakeFlags_ = railHandshakeFlags_;
@@ -717,7 +717,7 @@ public:
             this->client_execute.arguments, stream, ArgumentsLen, "Client Execute PDU");
     }
 
-    const WindowsExecuteShellParams& get_client_execute() const
+    [[nodiscard]] const WindowsExecuteShellParams& get_client_execute() const
     {
         return this->client_execute;
     }
@@ -730,7 +730,7 @@ public:
 
     void Arguments(const char * Arguments_) { this->client_execute.arguments = Arguments_; }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
 
         {
@@ -960,23 +960,23 @@ public:
             this->exe_or_file, stream, this->ExeOrFileLength, "Server Execute Result PDU");
     }
 
-    uint16_t Flags() const { return this->Flags_; }
+    [[nodiscard]] uint16_t Flags() const { return this->Flags_; }
 
     void Flags(uint16_t Flags_) { this->Flags_ = Flags_; }
 
-    uint16_t ExecResult() const { return this->ExecResult_; }
+    [[nodiscard]] uint16_t ExecResult() const { return this->ExecResult_; }
 
     void ExecResult(uint16_t ExecResult_) { this->ExecResult_ = ExecResult_; }
 
-    uint32_t RawResult() const { return this->RawResult_; }
+    [[nodiscard]] uint32_t RawResult() const { return this->RawResult_; }
 
     void RawResult(uint32_t RawResult_) { this->RawResult_ = RawResult_; }
 
-    std::string const& ExeOrFile() const { return this->exe_or_file; }
+    [[nodiscard]] std::string const& ExeOrFile() const { return this->exe_or_file; }
 
     void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         size_t count = 12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
 
         StaticOutStream<65536> out_stream;
@@ -1112,13 +1112,13 @@ public:
             "High Contrast System Information Structure");
     }
 
-    uint32_t Flags() const { return this->Flags_; }
+    [[nodiscard]] uint32_t Flags() const { return this->Flags_; }
 
     void Flags(uint32_t Flags_) { this->Flags_ = Flags_; }
 
-    const char * ColorScheme() const { return this->color_scheme.c_str(); }
+    [[nodiscard]] const char * ColorScheme() const { return this->color_scheme.c_str(); }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         size_t count = 8;   // // Flags(4) + ColorSchemeLength(4)
 
         StaticOutStream<65536> out_stream;
@@ -1403,15 +1403,15 @@ public:
         }
     }
 
-    uint32_t SystemParam() const { return this->SystemParam_; }
+    [[nodiscard]] uint32_t SystemParam() const { return this->SystemParam_; }
 
     void SystemParam(uint32_t SystemParam_) { this->SystemParam_ = SystemParam_; }
 
-    uint8_t body_b() const { return this->body_b_; }
+    [[nodiscard]] uint8_t body_b() const { return this->body_b_; }
 
     void body_b(uint8_t body_b_) { this->body_b_ = body_b_; }
 
-    RDP::RAIL::Rectangle const & body_r() const {
+    [[nodiscard]] RDP::RAIL::Rectangle const & body_r() const {
         return this->body_r_;
     }
 
@@ -1423,7 +1423,7 @@ public:
         this->body_hcsis_ = std::move(body_hcsis_);
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         size_t count = 4;   // SystemParam(4)
 
         switch (this->SystemParam_) {
@@ -1587,11 +1587,11 @@ public:
         this->Body_        = stream.in_uint8();
     }
 
-    uint32_t SystemParam() const { return this->SystemParam_; }
+    [[nodiscard]] uint32_t SystemParam() const { return this->SystemParam_; }
 
     void SystemParam(uint32_t SystemParam_) { this->SystemParam_ = SystemParam_; }
 
-    uint8_t Body() const { return this->Body_; }
+    [[nodiscard]] uint8_t Body() const { return this->Body_; }
 
     void Body(uint8_t Body_) { this->Body_ = Body_; }
 
@@ -3204,7 +3204,7 @@ public:
         this->LanguageBarStatus_ = stream.in_uint32_le();
     }
 
-    uint32_t LanguageBarStatus() const { return this->LanguageBarStatus_; }
+    [[nodiscard]] uint32_t LanguageBarStatus() const { return this->LanguageBarStatus_; }
 
     void LanguageBarStatus(uint32_t LanguageBarStatus_) { this->LanguageBarStatus_ = LanguageBarStatus_; }
 

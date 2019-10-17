@@ -29,12 +29,12 @@ struct AgentDataExtractor
 {
     bool extract_list(array_view_const_char data);
 
-    KVList kvlist() const noexcept
+    [[nodiscard]] KVList kvlist() const noexcept
     {
         return KVList{{this->kvlogs.data(), this->kvlogs_end}};
     }
 
-    LogId log_id() const noexcept
+    [[nodiscard]] LogId log_id() const noexcept
     {
         return this->id;
     }

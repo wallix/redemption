@@ -58,12 +58,12 @@ struct File
         return f;
     }
 
-    bool is_eof() const noexcept
+    [[nodiscard]] bool is_eof() const noexcept
     {
         return std::feof(f);
     }
 
-    bool has_error() const noexcept
+    [[nodiscard]] bool has_error() const noexcept
     {
         return std::ferror(f);
     }

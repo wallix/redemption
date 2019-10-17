@@ -218,7 +218,7 @@ public:
     Error() = delete;
     explicit Error(error_type id, int errnum = 0) noexcept;
 
-    zstring_view errmsg(bool with_id = true) const noexcept;
+    [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept;
 };
 
 zstring_view local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) noexcept;

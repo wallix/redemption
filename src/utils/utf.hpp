@@ -80,10 +80,10 @@ public:
     uint32_t operator*() const noexcept
     { return this->ucode; }
 
-    uint32_t code() const noexcept
+    [[nodiscard]] uint32_t code() const noexcept
     { return this->ucode; }
 
-    uint8_t const * pos() const noexcept
+    [[nodiscard]] uint8_t const * pos() const noexcept
     { return this->source; }
 
 private:

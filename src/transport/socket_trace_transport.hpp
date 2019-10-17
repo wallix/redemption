@@ -54,12 +54,12 @@ public:
         this->strans.send(buffer, len);
     }
 
-    int get_fd() const override
+    [[nodiscard]] int get_fd() const override
     {
         return this->strans.sck;
     }
 
-    array_view_const_u8 get_public_key() const override
+    [[nodiscard]] array_view_const_u8 get_public_key() const override
     {
         return this->strans.get_public_key();
     }

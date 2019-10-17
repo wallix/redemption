@@ -55,7 +55,7 @@ public:
     void update_draw_cursor(Rect old_cursor) override;
 
 
-    Rect get_cursor_rect() const override;
+    [[nodiscard]] Rect get_cursor_rect() const override;
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;
 

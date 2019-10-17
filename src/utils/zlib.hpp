@@ -70,7 +70,7 @@ class Zcompressor
     }
 
     // return the amount of compressed data available for emission
-    size_t available() const {
+    [[nodiscard]] size_t available() const {
         return sizeof(this->out) - this->offset - this->z.avail_out;
     }
 
@@ -140,7 +140,7 @@ class Zdecompressor
     }
 
     // return the amount of compressed data available for emission
-    size_t available() const {
+    [[nodiscard]] size_t available() const {
         return sizeof(this->out) - this->offset - this->z.avail_out;
     }
 

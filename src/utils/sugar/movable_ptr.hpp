@@ -60,7 +60,7 @@ struct movable_ptr
         return *p;
     }
 
-    T* get() const noexcept
+    [[nodiscard]] T* get() const noexcept
     {
         return p;
     }

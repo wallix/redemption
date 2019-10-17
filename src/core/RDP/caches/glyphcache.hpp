@@ -142,7 +142,7 @@ public:
         this->glyphs[cacheid][cacheidx].stamp     = this->glyph_stamp;
     }
 
-    bool is_cached(uint8_t cacheId, uint8_t cacheIndex) const {
+    [[nodiscard]] bool is_cached(uint8_t cacheId, uint8_t cacheIndex) const {
         return this->glyphs[cacheId][cacheIndex].cached;
     }
 

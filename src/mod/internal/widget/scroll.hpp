@@ -71,7 +71,7 @@ public:
                     int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focuscolor,
                     Font const & font, bool rail_style, int maxvalue = 100);
 
-    unsigned int get_current_value() const;
+    [[nodiscard]] unsigned int get_current_value() const;
 
     void set_current_value(unsigned int cv);
 

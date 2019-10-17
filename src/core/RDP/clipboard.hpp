@@ -78,12 +78,12 @@ namespace Cliprdr
             operator AsciiName () const noexcept { return AsciiName(this->ascii_name); }
             operator UnicodeName () const noexcept { return UnicodeName(this->unicode_name); }
 
-            bool same_as(UnicodeName const& unicode_name) const noexcept
+            [[nodiscard]] bool same_as(UnicodeName const& unicode_name) const noexcept
             {
                 return ranges_equal(this->unicode_name, unicode_name.bytes);
             }
 
-            bool same_as(AsciiName const& ascii_name) const noexcept
+            [[nodiscard]] bool same_as(AsciiName const& ascii_name) const noexcept
             {
                 return ranges_equal(this->ascii_name, ascii_name.bytes);
             }
@@ -271,12 +271,12 @@ namespace Cliprdr
             return *this;
         }
 
-        bytes_view utf8_name() const noexcept
+        [[nodiscard]] bytes_view utf8_name() const noexcept
         {
             return {this->utf8_buffer_, this->len_};
         }
 
-        FormatId format_id() const noexcept
+        [[nodiscard]] FormatId format_id() const noexcept
         {
             return this->format_id_;
         }
@@ -304,7 +304,7 @@ namespace Cliprdr
             return this->emplace_back(format_id, ascii_name);
         }
 
-        FormatName const* find(FormatId format_id) const noexcept
+        [[nodiscard]] FormatName const* find(FormatId format_id) const noexcept
         {
             for (auto const& format : *this) {
                 if (format.format_id() == format_id) {
@@ -590,7 +590,7 @@ public:
         this->msgType_ = s.in_uint16_le();
     }   // RecvFactory(InStream & stream)
 
-    uint16_t msgType() const { return this->msgType_; }
+    [[nodiscard]] uint16_t msgType() const { return this->msgType_; }
 };
 
 class CliprdrHeader {
@@ -599,11 +599,11 @@ class CliprdrHeader {
     uint32_t dataLen_{0};
 
 public:
-    uint16_t msgType()  const { return this->msgType_; }
+    [[nodiscard]] uint16_t msgType()  const { return this->msgType_; }
 
-    uint16_t msgFlags() const { return this->msgFlags_; }
+    [[nodiscard]] uint16_t msgFlags() const { return this->msgFlags_; }
 
-    uint32_t dataLen()  const { return this->dataLen_; }
+    [[nodiscard]] uint32_t dataLen()  const { return this->dataLen_; }
 
     void dataLen(uint32_t dataLen) {
         this->dataLen_ = dataLen;
@@ -716,7 +716,7 @@ public:
         stream.in_skip_bytes(2);    // pad1(2)
     }
 
-    uint16_t cCapabilitiesSets() const { return this->cCapabilitiesSets_; }
+    [[nodiscard]] uint16_t cCapabilitiesSets() const { return this->cCapabilitiesSets_; }
 
     static constexpr size_t size() {
         return 4;   // cCapabilitiesSets(2) + pad1(2)
@@ -782,7 +782,7 @@ public:
         this->capabilitySetType_ = stream.in_uint16_le();
     }   // CapabilitySetRecvFactory(InStream & stream)
 
-    uint16_t capabilitySetType() const { return this->capabilitySetType_; }
+    [[nodiscard]] uint16_t capabilitySetType() const { return this->capabilitySetType_; }
 
     static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
         switch (capabilitySetType) {
@@ -982,11 +982,11 @@ public:
         this->generalFlags_ = stream.in_uint32_le();
     }
 
-    uint32_t version() const { return this->version_; }
+    [[nodiscard]] uint32_t version() const { return this->version_; }
 
-    uint32_t generalFlags() const { return this->generalFlags_; }
+    [[nodiscard]] uint32_t generalFlags() const { return this->generalFlags_; }
 
-    uint32_t capabilitySetType() const { return this->capabilitySetType_;}
+    [[nodiscard]] uint32_t capabilitySetType() const { return this->capabilitySetType_;}
 
     static constexpr size_t size() {
         return 12;  // capabilitySetType(2) + lengthCapability(2) + version(4) +
@@ -1140,7 +1140,7 @@ public:
         stream.in_skip_bytes(520);  // wszTempDir(520)
     }
 
-    const char * wszTempDir() const { return this->temp_dir.c_str(); }
+    [[nodiscard]] const char * wszTempDir() const { return this->temp_dir.c_str(); }
 
     static constexpr size_t size() {
         return 520;  // wszTempDir(520)
@@ -1397,20 +1397,20 @@ public:
         }
     }
 
-    uint32_t streamId() const { return this->streamId_; }
-    uint32_t lindex() const { return this->lindex_; }
-    uint32_t dwFlags() const { return this->dwFlags_; }
+    [[nodiscard]] uint32_t streamId() const { return this->streamId_; }
+    [[nodiscard]] uint32_t lindex() const { return this->lindex_; }
+    [[nodiscard]] uint32_t dwFlags() const { return this->dwFlags_; }
 
-    uint64_t position() const {
+    [[nodiscard]] uint64_t position() const {
             return (this->nPositionLow_ | (static_cast<uint64_t>(this->nPositionHigh_) << 32));
         }
 
-    uint32_t cbRequested() const { return this->cbRequested_; }
-    uint32_t clipDataId() const { return this->clipDataId_; }
+    [[nodiscard]] uint32_t cbRequested() const { return this->cbRequested_; }
+    [[nodiscard]] uint32_t clipDataId() const { return this->clipDataId_; }
 
-    bool has_optional_clipDataId() const { return this->has_optional_clipDataId_; }
+    [[nodiscard]] bool has_optional_clipDataId() const { return this->has_optional_clipDataId_; }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return this->minimum_size()
              + (  this->has_optional_clipDataId_
                 ? 4     /* clipDataId(4) */
@@ -1768,9 +1768,9 @@ public:
         stream.in_skip_bytes(520);       // fileName(520)
     }
 
-    const char * fileName() const { return this->file_name.c_str(); }
+    [[nodiscard]] const char * fileName() const { return this->file_name.c_str(); }
 
-    uint64_t file_size() const {
+    [[nodiscard]] uint64_t file_size() const {
         return (static_cast<uint64_t>(this->fileSizeLow)) |
             (static_cast<uint64_t>(this->fileSizeHigh) << 32);
     }
@@ -2557,8 +2557,8 @@ namespace Cliprdr
         uint32_t _format_id;
         bytes_view _utf8_bytes;
 
-        uint32_t format_id() const noexcept { return this->_format_id; }
-        bytes_view utf8_name() const noexcept { return this->_utf8_bytes; }
+        [[nodiscard]] uint32_t format_id() const noexcept { return this->_format_id; }
+        [[nodiscard]] bytes_view utf8_name() const noexcept { return this->_utf8_bytes; }
     };
 
 

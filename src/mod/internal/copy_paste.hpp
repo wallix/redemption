@@ -65,7 +65,7 @@ class CopyPaste
 
         const char * c_str() /*const*/;
 
-        std::size_t size() const
+        [[nodiscard]] std::size_t size() const
         {
             return this->size_;
         }

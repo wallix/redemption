@@ -55,10 +55,10 @@ struct MatchFinder
         void shrink(size_t newlen) noexcept;
         NamedRegex const & operator[](std::size_t i) const noexcept;
         NamedRegex & operator[](std::size_t i) noexcept;
-        NamedRegex * begin() const noexcept;
-        NamedRegex * end() const noexcept;
-        size_t size() const noexcept;
-        bool empty() const noexcept;
+        [[nodiscard]] NamedRegex * begin() const noexcept;
+        [[nodiscard]] NamedRegex * end() const noexcept;
+        [[nodiscard]] size_t size() const noexcept;
+        [[nodiscard]] bool empty() const noexcept;
     };
 
     enum ConfigureRegexes

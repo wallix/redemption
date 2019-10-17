@@ -29,7 +29,7 @@ class GlyphTo24Bitmap
     uint8_t raw_data[16384/*RDPSerializer::MAX_ORDERS_SIZE*/];
 
 public:
-    uint8_t const * data() const noexcept { return this->raw_data; }
+    [[nodiscard]] uint8_t const * data() const noexcept { return this->raw_data; }
 
     GlyphTo24Bitmap(
         FontChar const & fc,

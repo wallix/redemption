@@ -568,12 +568,12 @@ namespace re {
             ::operator delete(this->st_list);
         }
 
-        unsigned mark_count() const
+        [[nodiscard]] unsigned mark_count() const
         {
             return this->nb_capture;
         }
 
-        unsigned node_count() const
+        [[nodiscard]] unsigned node_count() const
         {
             return this->nodes;
         }
@@ -793,7 +793,7 @@ namespace re {
             : sm(sm)
             {}
 
-            unsigned new_id(unsigned old_id) const
+            [[nodiscard]] unsigned new_id(unsigned old_id) const
             { return this->sm.pop_idx_trace(old_id); }
 
             bool open(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/) const
@@ -810,7 +810,7 @@ namespace re {
 
             using range_idx_trace = std::pair<const unsigned *, const unsigned *>;
 
-            range_idx_trace range_idx_trace_reserved() const
+            [[nodiscard]] range_idx_trace range_idx_trace_reserved() const
             { return range_idx_trace(this->sm.idx_trace_free, this->sm.pidx_trace_free); }
         };
 
@@ -981,7 +981,7 @@ namespace re {
         }
 
 
-        range_matches match_result(bool all = true) const
+        [[nodiscard]] range_matches match_result(bool all = true) const
         {
             range_matches ret;
             this->append_match_result(ret, all);
@@ -1162,7 +1162,7 @@ namespace re {
             iterator end()
             { return this->last; }
 
-            bool empty() const
+            [[nodiscard]] bool empty() const
             { return this->list == this->last; }
 
             void clear()

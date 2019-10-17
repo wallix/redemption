@@ -52,41 +52,41 @@ public:
     : Ellipse(r.x, r.y, r.right(), r.bottom())
     {}
 
-    int16_t left() const {
+    [[nodiscard]] int16_t left() const {
         return this->leftRect;
     }
-    int16_t top() const {
+    [[nodiscard]] int16_t top() const {
         return this->topRect;
     }
-    int16_t right() const {
+    [[nodiscard]] int16_t right() const {
         return this->rightRect;
     }
-    int16_t bottom() const {
+    [[nodiscard]] int16_t bottom() const {
         return this->bottomRect;
     }
 
-    uint16_t width() const {
+    [[nodiscard]] uint16_t width() const {
         return static_cast<uint16_t>(this->right() - this->left());
     }
-    uint16_t height() const {
+    [[nodiscard]] uint16_t height() const {
         return static_cast<uint16_t>(this->bottom() - this->top());
     }
 
-    uint16_t radius_x() const {
+    [[nodiscard]] uint16_t radius_x() const {
         return this->width() / 2;
     }
-    uint16_t radius_y() const {
+    [[nodiscard]] uint16_t radius_y() const {
         return this->height() / 2;
     }
 
-    int16_t center_x() const {
+    [[nodiscard]] int16_t center_x() const {
         return this->left() + (this->right() - this->left()) / 2;
     }
-    int16_t center_y() const {
+    [[nodiscard]] int16_t center_y() const {
         return this->top() + (this->bottom() - this->top()) / 2;
     }
 
-    Rect get_rect() const {
+    [[nodiscard]] Rect get_rect() const {
         return Rect(this->left(), this->top(), this->width(), this->height());
     }
 

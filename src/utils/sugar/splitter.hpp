@@ -58,7 +58,7 @@ public:
         return res;
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const {
         return this->first_ == this->last_;
     }
 

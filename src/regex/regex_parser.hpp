@@ -1079,22 +1079,22 @@ namespace re {
             this->m_accu.clear();
         }
 
-        const State * root() const
+        [[nodiscard]] const State * root() const
         {
             return this->m_root;
         }
 
-        const state_list_t & states() const
+        [[nodiscard]] const state_list_t & states() const
         {
             return this->m_accu.sts;
         }
 
-        unsigned nb_capture() const
+        [[nodiscard]] unsigned nb_capture() const
         {
             return this->m_accu.num_cap;
         }
 
-        bool empty() const
+        [[nodiscard]] bool empty() const
         {
             return this->m_accu.sts.empty();
         }

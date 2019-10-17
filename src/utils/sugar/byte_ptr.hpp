@@ -37,8 +37,8 @@ struct writable_byte_ptr
     : data_(data)
     {}
 
-    char * as_charp() const noexcept { return char_ptr_cast(this->data_); }
-    constexpr uint8_t * as_u8p() const noexcept { return this->data_; }
+    [[nodiscard]] char * as_charp() const noexcept { return char_ptr_cast(this->data_); }
+    [[nodiscard]] constexpr uint8_t * as_u8p() const noexcept { return this->data_; }
 
     operator char * () const noexcept { return as_charp(); }
     constexpr operator uint8_t * () const noexcept { return this->data_; }
@@ -68,8 +68,8 @@ struct byte_ptr
     : data_(bytes)
     {}
 
-    char const * as_charp() const noexcept { return char_ptr_cast(this->data_); }
-    constexpr uint8_t const * as_u8p() const noexcept { return this->data_; }
+    [[nodiscard]] char const * as_charp() const noexcept { return char_ptr_cast(this->data_); }
+    [[nodiscard]] constexpr uint8_t const * as_u8p() const noexcept { return this->data_; }
 
     operator char const * () const noexcept { return as_charp(); }
     constexpr operator uint8_t const * () const noexcept { return this->data_; }

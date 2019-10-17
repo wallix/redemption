@@ -38,17 +38,17 @@ public:
 
     ~LocallyIntegrableMod() override;
 
-    Font const & font() const
+    [[nodiscard]] Font const & font() const
     {
         return this->screen.font;
     }
 
-    Theme const & theme() const
+    [[nodiscard]] Theme const & theme() const
     {
         return this->screen.theme;
     }
 
-    Rect get_screen_rect() const
+    [[nodiscard]] Rect get_screen_rect() const
     {
         return this->screen.get_rect();
     }
@@ -77,7 +77,7 @@ public:
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
-    Dimension get_dim() const override
+    [[nodiscard]] Dimension get_dim() const override
     {
         return Dimension(this->front_width, this->front_height);
     }
@@ -95,7 +95,7 @@ public:
 private:
     void cancel_double_click_detection();
 
-    virtual bool is_resizing_hosted_desktop_allowed() const;
+    [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
 
 protected:
     uint16_t front_width;

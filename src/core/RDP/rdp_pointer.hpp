@@ -147,12 +147,12 @@ public:
     {
     }
 
-    const CursorSize get_dimensions() const
+    [[nodiscard]] const CursorSize get_dimensions() const
     {
         return this->dimensions;
     }
 
-    const Hotspot get_hotspot() const
+    [[nodiscard]] const Hotspot get_hotspot() const
     {
         return this->hotspot;
     }
@@ -161,26 +161,26 @@ public:
         ::memset(this->mask, 0xFF, sizeof(this->mask));
     }
 
-    const array_view_const_u8 get_monochrome_and_mask() const
+    [[nodiscard]] const array_view_const_u8 get_monochrome_and_mask() const
     {
         return {this->mask, this->bit_mask_size()};
     }
 
-    const array_view_const_u8 get_24bits_xor_mask() const
+    [[nodiscard]] const array_view_const_u8 get_24bits_xor_mask() const
     {
         return {this->data, this->xor_data_size()};
     }
 
 
-    unsigned bit_mask_size() const {
+    [[nodiscard]] unsigned bit_mask_size() const {
         return ::nbbytes(this->dimensions.width) * this->dimensions.height;
     }
 
-    unsigned xor_data_size() const {
+    [[nodiscard]] unsigned xor_data_size() const {
         return this->dimensions.height * ::even_pad_length(this->dimensions.width * 3);
     }
 
-    bool is_valid() const {
+    [[nodiscard]] bool is_valid() const {
         return (this->dimensions.width != 0 && this->dimensions.height != 0/* && this->bpp*/);
     }
 
@@ -595,17 +595,17 @@ struct ARGB32Pointer {
         }
     }
 
-    CursorSize get_dimensions() const
+    [[nodiscard]] CursorSize get_dimensions() const
     {
         return this->dimensions;
     }
 
-    Hotspot get_hotspot() const
+    [[nodiscard]] Hotspot get_hotspot() const
     {
         return this->hotspot;
     }
 
-    const array_view_const_u8 get_alpha_q() const
+    [[nodiscard]] const array_view_const_u8 get_alpha_q() const
     {
         return {this->data, this->dimensions.width * this->dimensions.height * 4};
     }

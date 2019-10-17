@@ -65,7 +65,7 @@ namespace CHANNELS
             return uint64_t(this->id);
         }
 
-        auto c_str() const noexcept
+        [[nodiscard]] auto c_str() const noexcept
           -> char const (&)[8]
         {
             return reinterpret_cast<char const (&)[8]>( /*NOLINT*/

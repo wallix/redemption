@@ -265,7 +265,7 @@ struct ReceiveOrder
         }
     };
 
-    ColorCtxFromBppConverter color_ctx(BGRPalette const & palette) const
+    [[nodiscard]] ColorCtxFromBppConverter color_ctx(BGRPalette const & palette) const
     {
         return ColorCtxFromBppConverter{ftg.info.bpp, palette};
     }

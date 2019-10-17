@@ -131,12 +131,12 @@ public:
         }
     }
 
-    int pending_data() const
+    [[nodiscard]] int pending_data() const
     {
         return SSL_pending(this->allocated_ssl);
     }
 
-    array_view_const_u8 get_public_key() const noexcept
+    [[nodiscard]] array_view_const_u8 get_public_key() const noexcept
     {
         return {this->public_key.get(), this->public_key_length};
     }

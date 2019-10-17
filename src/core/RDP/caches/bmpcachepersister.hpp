@@ -72,7 +72,7 @@ private:
             );
         }
 
-        const char * c_str() const noexcept
+        [[nodiscard]] const char * c_str() const noexcept
         { return this->s; }
 
     private:

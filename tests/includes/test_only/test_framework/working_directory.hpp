@@ -57,12 +57,12 @@ struct [[nodiscard]] WorkingFileBase
     WorkingFileBase(WorkingFileBase const&) = default;
     WorkingFileBase&operator=(WorkingFileBase&&) = default;
     WorkingFileBase&operator=(WorkingFileBase const&) = default;
-    char const* c_str() const noexcept { return this->filename_.c_str(); }
-    std::string const& string() const noexcept { return this->filename_; }
+    [[nodiscard]] char const* c_str() const noexcept { return this->filename_.c_str(); }
+    [[nodiscard]] std::string const& string() const noexcept { return this->filename_; }
     operator std::string const& () const noexcept { return this->filename_; }
     operator char const* () const noexcept { return this->c_str(); }
-    std::size_t size() const noexcept { return this->filename_.size(); }
-    ssize_t ssize() const noexcept { return ssize_t(this->filename_.size()); }
+    [[nodiscard]] std::size_t size() const noexcept { return this->filename_.size(); }
+    [[nodiscard]] ssize_t ssize() const noexcept { return ssize_t(this->filename_.size()); }
 
 protected:
     std::string filename_;
@@ -89,11 +89,11 @@ struct [[nodiscard]] WorkingDirectory
         SubDirectory& add_files(std::initializer_list<std::string_view> files);
         SubDirectory& remove_files(std::initializer_list<std::string_view> files);
 
-        std::string path_of(std::string_view path) const;
-        WorkingFileBase const& dirname() const noexcept { return this->fullpath; }
-        std::string_view subdirname() const noexcept;
+        [[nodiscard]] std::string path_of(std::string_view path) const;
+        [[nodiscard]] WorkingFileBase const& dirname() const noexcept { return this->fullpath; }
+        [[nodiscard]] std::string_view subdirname() const noexcept;
 
-        WorkingDirectory& wd() const noexcept
+        [[nodiscard]] WorkingDirectory& wd() const noexcept
         {
             return this->wd_;
         }

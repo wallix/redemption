@@ -110,7 +110,7 @@ public:
 
     void set_sync();
 
-    WrmVersion get_wrm_version() const;
+    [[nodiscard]] WrmVersion get_wrm_version() const;
 
     bool get_break_privplay_client();
 
@@ -134,14 +134,14 @@ public:
 
     time_t get_real_time_movie_begin();
 
-    std::string get_mwrm_path() const;
+    [[nodiscard]] std::string get_mwrm_path() const;
 
-    Dimension get_dim() const override;
+    [[nodiscard]] Dimension get_dim() const override;
 
     void refresh(Rect /*rect*/) override {}
 
     void draw_event(gdi::GraphicApi & gd);
 
-    bool is_up_and_running() const override
+    [[nodiscard]] bool is_up_and_running() const override
     { return true; }
 };

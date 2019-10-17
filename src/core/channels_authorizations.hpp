@@ -38,16 +38,16 @@ public:
 
     ChannelsAuthorizations(std::string const & allow, std::string const & deny);
 
-    bool is_authorized(CHANNELS::ChannelNameId id) const noexcept;
+    [[nodiscard]] bool is_authorized(CHANNELS::ChannelNameId id) const noexcept;
 
-    bool rdpdr_type_all_is_authorized() const noexcept;
+    [[nodiscard]] bool rdpdr_type_all_is_authorized() const noexcept;
 
-    bool rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept;
+    [[nodiscard]] bool rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept;
 
-    bool rdpdr_drive_read_is_authorized() const noexcept;
-    bool rdpdr_drive_write_is_authorized() const noexcept;
+    [[nodiscard]] bool rdpdr_drive_read_is_authorized() const noexcept;
+    [[nodiscard]] bool rdpdr_drive_write_is_authorized() const noexcept;
 
-    bool rdpsnd_audio_output_is_authorized() const noexcept;
+    [[nodiscard]] bool rdpsnd_audio_output_is_authorized() const noexcept;
 
     REDEMPTION_FRIEND_OSTREAM(out, ChannelsAuthorizations const & auth);
 
@@ -55,9 +55,9 @@ public:
         std::string & allow, std::string & deny, const std::string & proxy_opt
     );
 
-    bool cliprdr_up_is_authorized() const noexcept;
-    bool cliprdr_down_is_authorized() const noexcept;
-    bool cliprdr_file_is_authorized() const noexcept;
+    [[nodiscard]] bool cliprdr_up_is_authorized() const noexcept;
+    [[nodiscard]] bool cliprdr_down_is_authorized() const noexcept;
+    [[nodiscard]] bool cliprdr_file_is_authorized() const noexcept;
 
 private:
     static constexpr const std::array<array_view_const_char, 3> cliprde_list()
@@ -85,8 +85,8 @@ private:
         }};
     }
 
-    array_view<CHANNELS::ChannelNameId const> rng_allow() const;
-    array_view<CHANNELS::ChannelNameId const> rng_deny() const;
+    [[nodiscard]] array_view<CHANNELS::ChannelNameId const> rng_allow() const;
+    [[nodiscard]] array_view<CHANNELS::ChannelNameId const> rng_deny() const;
 
     // Boolean structures moved around in other parts of the code
     // could merely be restricted to what we have below

@@ -48,7 +48,7 @@ public:
 
     ~ReplayTransport();
 
-    array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] array_view_const_u8 get_public_key() const override;
 
     TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override;
 
@@ -58,9 +58,9 @@ public:
     bool disconnect() override;
     bool connect() override;
 
-    int get_fd() const override { return this->fd.fd(); }
+    [[nodiscard]] int get_fd() const override { return this->fd.fd(); }
 
-    std::vector<std::string> const& get_infos() const noexcept { return this->infos; }
+    [[nodiscard]] std::vector<std::string> const& get_infos() const noexcept { return this->infos; }
 
 private:
     using PacketType = RecorderFile::PacketType;
@@ -87,7 +87,7 @@ private:
         PacketType type;
         std::chrono::milliseconds time;
 
-        array_view_const_u8 av() const noexcept;
+        [[nodiscard]] array_view_const_u8 av() const noexcept;
     };
 
     Data *read_single_chunk();

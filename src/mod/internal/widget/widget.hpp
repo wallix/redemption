@@ -260,46 +260,46 @@ public:
     }
 
     ///Return x position in it's screen
-    int16_t x() const
+    [[nodiscard]] int16_t x() const
     {
         return this->rect.x;
     }
 
     ///Return y position in it's screen
-    int16_t y() const
+    [[nodiscard]] int16_t y() const
     {
         return this->rect.y;
     }
 
     ///Return width
-    uint16_t cx() const
+    [[nodiscard]] uint16_t cx() const
     {
         return this->rect.cx;
     }
 
     ///Return height
-    uint16_t cy() const
+    [[nodiscard]] uint16_t cy() const
     {
         return this->rect.cy;
     }
 
     ///Return x()+cx()
-    int16_t right() const
+    [[nodiscard]] int16_t right() const
     {
         return this->rect.right();
     }
 
     ///Return y()+cy()
-    int16_t bottom() const
+    [[nodiscard]] int16_t bottom() const
     {
         return this->rect.bottom();
     }
 
-    Rect get_rect() const {
+    [[nodiscard]] Rect get_rect() const {
         return this->rect;
     }
 
-    virtual const Pointer* get_pointer() const
+    [[nodiscard]] virtual const Pointer* get_pointer() const
     {
         return nullptr;
     }

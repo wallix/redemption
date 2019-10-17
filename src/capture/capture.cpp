@@ -109,11 +109,11 @@ struct ZStrUtf8Char
         buf_char[char_len] = 0;
     }
 
-    uint8_t const* data() const noexcept { return buf_char; }
-    uint8_t size() const noexcept { return char_len; }
+    [[nodiscard]] uint8_t const* data() const noexcept { return buf_char; }
+    [[nodiscard]] uint8_t size() const noexcept { return char_len; }
 
-    uint8_t const* begin() const noexcept { return data(); }
-    uint8_t const* end() const noexcept { return data() + size(); }
+    [[nodiscard]] uint8_t const* begin() const noexcept { return data(); }
+    [[nodiscard]] uint8_t const* end() const noexcept { return data() + size(); }
 };
 
 class PatternSearcher
@@ -155,7 +155,7 @@ class PatternSearcher
         }
 
     public:
-        uint8_t const * get_data() const {
+        [[nodiscard]] uint8_t const * get_data() const {
             return this->beg;
         }
 
@@ -199,7 +199,7 @@ class PatternSearcher
             }
         }
 
-        bool is_linearized() const {
+        [[nodiscard]] bool is_linearized() const {
             return this->beg <= this->p;
         }
     };
@@ -266,7 +266,7 @@ public:
         return has_notify;
     }
 
-    bool is_empty() const {
+    [[nodiscard]] bool is_empty() const {
         return this->regexes_filter.empty();
     }
 };
@@ -345,7 +345,7 @@ public:
                      str_pattern_notify && report_message ? str_pattern_notify : nullptr, verbose)
     {}
 
-    bool contains_pattern() const {
+    [[nodiscard]] bool contains_pattern() const {
         return !this->pattern_kill.is_empty() || !this->pattern_notify.is_empty();
     }
 
@@ -621,7 +621,7 @@ public:
             params.pattern_notify, this->regexes_filter_notify, params.verbose);
     }
 
-    bool contains_pattern() const {
+    [[nodiscard]] bool contains_pattern() const {
         return !this->regexes_filter_kill.empty() || !this->regexes_filter_notify.empty();
     }
 

@@ -768,31 +768,31 @@ private:
 public:
     ExtendedInfoPacket extendedInfoPacket {}; // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
 
-    zstring_view zDomain() const noexcept
+    [[nodiscard]] zstring_view zDomain() const noexcept
     {
         return zstring_view{zstring_view::is_zero_terminated{},
             char_ptr_cast(this->Domain), this->cbDomain};
     }
 
-    zstring_view zUserName() const noexcept
+    [[nodiscard]] zstring_view zUserName() const noexcept
     {
         return zstring_view{zstring_view::is_zero_terminated{},
             char_ptr_cast(this->UserName), this->cbUserName};
     }
 
-    zstring_view zPassword() const noexcept
+    [[nodiscard]] zstring_view zPassword() const noexcept
     {
         return zstring_view{zstring_view::is_zero_terminated{},
             char_ptr_cast(this->Password), this->cbPassword};
     }
 
-    zstring_view zWorkingDirectory() const noexcept
+    [[nodiscard]] zstring_view zWorkingDirectory() const noexcept
     {
         return zstring_view{zstring_view::is_zero_terminated{},
             char_ptr_cast(this->WorkingDir), this->cbWorkingDir};
     }
 
-    zstring_view zAlternateShell() const noexcept
+    [[nodiscard]] zstring_view zAlternateShell() const noexcept
     {
         return zstring_view{zstring_view::is_zero_terminated{},
             char_ptr_cast(this->AlternateShell), this->cbAlternateShell};

@@ -836,7 +836,7 @@ namespace LIC
 
         bytes_view blobData;
 
-        char const* BlobTypeToString(uint16_t wType) const
+        [[nodiscard]] char const* BlobTypeToString(uint16_t wType) const
         {
             switch (wType)
             {

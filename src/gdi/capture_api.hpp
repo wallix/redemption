@@ -60,9 +60,9 @@ struct CaptureApi : private noncopyable
           : Microseconds(std::chrono::microseconds{duration})
         {}
 
-        std::chrono::microseconds::rep count() const noexcept { return this->ms_.count(); }
+        [[nodiscard]] std::chrono::microseconds::rep count() const noexcept { return this->ms_.count(); }
 
-        std::chrono::microseconds const & ms() const noexcept { return this->ms_; }
+        [[nodiscard]] std::chrono::microseconds const & ms() const noexcept { return this->ms_; }
         operator std::chrono::microseconds const & () const noexcept { return this->ms_; }
 
     private:

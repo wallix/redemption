@@ -49,7 +49,7 @@ struct WsHttpHeader
 {
     std::array<char, 28> base64_key_rep {};
 
-    bool has_key() const noexcept
+    [[nodiscard]] bool has_key() const noexcept
     {
         return this->base64_key_rep[0];
     }

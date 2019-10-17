@@ -219,7 +219,7 @@ struct CSMonitor {
         LOG(LOG_INFO, "%s", buffer);
     }
 
-    Rect get_rect() const {
+    [[nodiscard]] Rect get_rect() const {
         int32_t left   = 0;
         int32_t top    = 0;
         int32_t right  = 0;
@@ -242,7 +242,7 @@ struct CSMonitor {
         return Rect(left, top, right - left, bottom - top);
     }
 
-    Rect get_primary_monitor_rect() const {
+    [[nodiscard]] Rect get_primary_monitor_rect() const {
         for (uint32_t i = 0; i < this->monitorCount; i++) {
             if (this->monitorDefArray[i].flags & TS_MONITOR_PRIMARY) {
                 return Rect(this->monitorDefArray[i].left,

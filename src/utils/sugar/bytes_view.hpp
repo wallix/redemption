@@ -74,12 +74,12 @@ struct writable_bytes_view : array_view<uint8_t>
 
 
     char       * as_charp() noexcept { return char_ptr_cast(this->data()); }
-    char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
+    [[nodiscard]] char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
     constexpr uint8_t       * as_u8p() noexcept { return this->data(); }
-    constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
+    [[nodiscard]] constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
 
     array_view_char       as_chars() noexcept { return {this->as_charp(), this->size()}; }
-    array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
+    [[nodiscard]] array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
 };
 
 /**
@@ -132,8 +132,8 @@ struct bytes_view : array_view<const uint8_t>
     {}
 
 
-    char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
-    constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
+    [[nodiscard]] char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
+    [[nodiscard]] constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
 
-    array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
+    [[nodiscard]] array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
 };

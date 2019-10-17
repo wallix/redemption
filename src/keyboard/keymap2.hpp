@@ -182,28 +182,28 @@ public:
     uint32_t get_kevent();
 
     // head of keyboard buffer (or keyboard buffer of size 1)
-    uint32_t top_char() const;
+    [[nodiscard]] uint32_t top_char() const;
 
-    uint32_t nb_char_available() const;
+    [[nodiscard]] uint32_t nb_char_available() const;
 
     // head of keyboard buffer (or keyboard buffer of size 1)
-    uint32_t top_kevent() const;
+    [[nodiscard]] uint32_t top_kevent() const;
 
-    uint32_t nb_kevent_available() const;
+    [[nodiscard]] uint32_t nb_kevent_available() const;
 
-    bool is_alt_pressed() const;
-    bool is_caps_locked() const;
-    bool is_ctrl_alt_pressed() const;
-    bool is_ctrl_pressed() const;
-    bool is_left_alt_pressed() const;
-    bool is_left_ctrl_pressed() const;
-    bool is_left_shift_pressed() const;
-    bool is_num_locked() const;
-    bool is_right_alt_pressed() const; // altGr
-    bool is_right_ctrl_pressed() const;
-    bool is_right_shift_pressed() const;
-    bool is_scroll_locked() const;
-    bool is_shift_pressed() const;
+    [[nodiscard]] bool is_alt_pressed() const;
+    [[nodiscard]] bool is_caps_locked() const;
+    [[nodiscard]] bool is_ctrl_alt_pressed() const;
+    [[nodiscard]] bool is_ctrl_pressed() const;
+    [[nodiscard]] bool is_left_alt_pressed() const;
+    [[nodiscard]] bool is_left_ctrl_pressed() const;
+    [[nodiscard]] bool is_left_shift_pressed() const;
+    [[nodiscard]] bool is_num_locked() const;
+    [[nodiscard]] bool is_right_alt_pressed() const; // altGr
+    [[nodiscard]] bool is_right_ctrl_pressed() const;
+    [[nodiscard]] bool is_right_shift_pressed() const;
+    [[nodiscard]] bool is_scroll_locked() const;
+    [[nodiscard]] bool is_shift_pressed() const;
 
     void toggle_caps_lock(bool on);
     void toggle_num_lock(bool on);
@@ -214,5 +214,5 @@ public:
     static array_view<Keylayout const *> keylayouts() noexcept;
     static Keylayout const & default_layout() noexcept;
 
-    unsigned layout_id() const;
+    [[nodiscard]] unsigned layout_id() const;
 }; // END STRUCT - Keymap2

@@ -39,7 +39,7 @@ public:
         return this->mod;
     }
 
-    mod_api const* get_mod() const
+    [[nodiscard]] mod_api const* get_mod() const
     {
         return this->mod;
     }
@@ -67,5 +67,5 @@ public:
     }
     virtual void check_module() {}
 
-    virtual rdp_api* get_rdp_api() const { return nullptr; }
+    [[nodiscard]] virtual rdp_api* get_rdp_api() const { return nullptr; }
 };

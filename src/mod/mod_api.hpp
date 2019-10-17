@@ -40,7 +40,7 @@ public:
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
 
-    virtual bool is_up_and_running() const { return false; }
+    [[nodiscard]] virtual bool is_up_and_running() const { return false; }
 
     // support auto-reconnection
     virtual bool is_auto_reconnectable() { return false; }
@@ -60,7 +60,7 @@ public:
 
     virtual void send_input(int/* time*/, int/* message_type*/, int/* device_flags*/, int/* param1*/, int/* param2*/) {}
 
-    virtual Dimension get_dim() const { return Dimension(); }
+    [[nodiscard]] virtual Dimension get_dim() const { return Dimension(); }
 
     virtual void log_metrics() {}
 

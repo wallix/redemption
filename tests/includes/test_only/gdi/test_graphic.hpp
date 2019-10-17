@@ -36,8 +36,8 @@ struct TestGraphic
     TestGraphic(uint16_t w, uint16_t h);
     ~TestGraphic();
 
-    uint16_t width() const;
-    uint16_t height() const;
+    [[nodiscard]] uint16_t width() const;
+    [[nodiscard]] uint16_t height() const;
 
     operator ConstImageDataView () const;
     operator gdi::GraphicApi& ();

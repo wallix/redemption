@@ -51,7 +51,7 @@ struct not_null_ptr
     not_null_ptr& operator = (not_null_ptr const &) noexcept = default;
 
 
-    T * get() const noexcept { return this->ptr_; }
+    [[nodiscard]] T * get() const noexcept { return this->ptr_; }
     T & operator*() const noexcept { return *this->ptr_; }
     T * operator->() const noexcept { return this->ptr_; }
     operator T * () const noexcept { return this->ptr_; }

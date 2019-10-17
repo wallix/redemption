@@ -35,7 +35,7 @@ struct ImageFrameApi : private noncopyable
     virtual ~ImageFrameApi() = default;
 
     virtual ImageView get_mutable_image_view() = 0;
-    virtual ConstImageView get_image_view() const = 0;
+    [[nodiscard]] virtual ConstImageView get_image_view() const = 0;
 
     operator ConstImageView () const
     {
@@ -44,7 +44,7 @@ struct ImageFrameApi : private noncopyable
 
     virtual void prepare_image_frame() = 0;
 
-    virtual unsigned int get_last_update_index() const = 0;
+    [[nodiscard]] virtual unsigned int get_last_update_index() const = 0;
 
     // returns true if size of image frame has changed
     bool reset(Rect const & out_rect) {
@@ -55,7 +55,7 @@ struct ImageFrameApi : private noncopyable
     virtual bool reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) = 0;
 
-    virtual Rect get_rect() const = 0;
+    [[nodiscard]] virtual Rect get_rect() const = 0;
 };
 
 inline ImageFrameApi::ConstImageView get_image_view(ImageFrameApi const & image_frame)

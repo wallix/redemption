@@ -116,7 +116,7 @@ namespace re {
             return c;
         }
 
-        size_t length() const
+        [[nodiscard]] size_t length() const
         {
             size_t len = 0;
             const unsigned char * p = this->s;
@@ -129,17 +129,17 @@ namespace re {
             return len;
         }
 
-        char_int getc() const
+        [[nodiscard]] char_int getc() const
         {
             return utf8_consumer(this->str()).bumpc();
         }
 
-        bool valid() const
+        [[nodiscard]] bool valid() const
         {
             return *this->s;
         }
 
-        const char * str() const
+        [[nodiscard]] const char * str() const
         {
             return reinterpret_cast<const char *>(s); /*NOLINT*/
         }

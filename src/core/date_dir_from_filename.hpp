@@ -27,17 +27,17 @@ struct DateDirFromFilename
 {
     explicit DateDirFromFilename(array_view_const_char path) noexcept;
 
-    bool has_date() const noexcept
+    [[nodiscard]] bool has_date() const noexcept
     {
         return this->start_date_it != this->start_filename_it;
     }
 
-    array_view_const_char full_path() const noexcept { return {this->start_path, this->end_path}; }
+    [[nodiscard]] array_view_const_char full_path() const noexcept { return {this->start_path, this->end_path}; }
     /// \return \a base_path() + \a dir_date_path()
-    array_view_const_char directory() const noexcept { return {this->start_path, this->start_filename_it}; }
-    array_view_const_char base_path() const noexcept { return {this->start_path, this->start_date_it}; }
-    array_view_const_char date_path() const noexcept { return {this->start_date_it, this->start_filename_it}; }
-    array_view_const_char filename() const noexcept { return {this->start_filename_it, this->end_path}; }
+    [[nodiscard]] array_view_const_char directory() const noexcept { return {this->start_path, this->start_filename_it}; }
+    [[nodiscard]] array_view_const_char base_path() const noexcept { return {this->start_path, this->start_date_it}; }
+    [[nodiscard]] array_view_const_char date_path() const noexcept { return {this->start_date_it, this->start_filename_it}; }
+    [[nodiscard]] array_view_const_char filename() const noexcept { return {this->start_filename_it, this->end_path}; }
 
 private:
     char const* start_path;

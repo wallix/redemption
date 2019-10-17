@@ -39,7 +39,7 @@ struct TpduBuffer
         this->buf.read_from(trans);
     }
 
-    uint16_t remaining() const noexcept
+    [[nodiscard]] uint16_t remaining() const noexcept
     {
         return this->buf.remaining();
     }
@@ -105,13 +105,13 @@ struct TpduBuffer
         return av;
     }
 
-    bool current_pdu_is_fast_path() const noexcept
+    [[nodiscard]] bool current_pdu_is_fast_path() const noexcept
     {
         assert(this->pdu_len);
         return this->extractors.x224.is_fast_path();
     }
 
-    uint8_t current_pdu_get_type() const noexcept
+    [[nodiscard]] uint8_t current_pdu_get_type() const noexcept
     {
         assert(this->pdu_len);
         return this->extractors.x224.get_type();

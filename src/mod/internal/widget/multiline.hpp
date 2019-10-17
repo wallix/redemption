@@ -36,13 +36,13 @@ public:
 
     void set_text(const char * text);
 
-    const char * get_line(size_t num) const;
+    [[nodiscard]] const char * get_line(size_t num) const;
 
     void rdp_input_invalidate(Rect clip) override;
 
     Dimension get_optimal_dim() override;
 
-    BGRColor get_bg_color() const noexcept
+    [[nodiscard]] BGRColor get_bg_color() const noexcept
     {
         return this->bg_color;
     }

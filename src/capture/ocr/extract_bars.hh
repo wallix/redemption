@@ -19,15 +19,15 @@ namespace ocr
         unsigned adjust_height;
 
         template<class Color>
-        bool threshold_bars(const Color & c) const
+        [[nodiscard]] bool threshold_bars(const Color & c) const
         { return this->bg == c; }
 
         template<class Color>
-        bool threshold_chars(const Color & c) const
+        [[nodiscard]] bool threshold_chars(const Color & c) const
         { return this->fg == c; }
 
         template<class Color>
-        bool is_color_bar(const Color & c) const
+        [[nodiscard]] bool is_color_bar(const Color & c) const
         { return this->bg == c || this->fg == c; }
     };
 
@@ -78,7 +78,7 @@ namespace ocr
 
     struct titlebar_color_windows2012_standard {
         template<class Color>
-        bool threshold_bars(const Color & c) const
+        [[nodiscard]] bool threshold_bars(const Color & c) const
         {
             return
                 rgb8(99, 203, 239) == c
@@ -89,7 +89,7 @@ namespace ocr
         }
 
         template<class Color>
-        bool threshold_chars(const Color & c) const
+        [[nodiscard]] bool threshold_chars(const Color & c) const
         {
             return
                 rgb8(57, 113, 132) == c
@@ -99,13 +99,13 @@ namespace ocr
         }
 
         template<class Color>
-        bool is_color_bar(const Color & c) const
+        [[nodiscard]] bool is_color_bar(const Color & c) const
         { return this->threshold_bars(c) || this->threshold_chars(c); }
     };
 
     struct titlebar_color_windows2012_vnc_standard {
         template<class Color>
-        bool threshold_bars(const Color & c) const
+        [[nodiscard]] bool threshold_bars(const Color & c) const
         {
             return
                 rgb8(99, 203, 231) == c
@@ -120,7 +120,7 @@ namespace ocr
         }
 
         template<class Color>
-        bool threshold_chars(const Color & c) const
+        [[nodiscard]] bool threshold_chars(const Color & c) const
         {
             return
                 rgb8(66, 138, 156) == c
@@ -139,13 +139,13 @@ namespace ocr
         }
 
         template<class Color>
-        bool is_color_bar(const Color & c) const
+        [[nodiscard]] bool is_color_bar(const Color & c) const
         { return this->threshold_bars(c) || this->threshold_chars(c); }
     };
 
     struct titlebar_color_windows2012_vnc_2_standard {
         template<class Color>
-        bool threshold_bars(const Color & c) const
+        [[nodiscard]] bool threshold_bars(const Color & c) const
         {
             return
                 rgb8( 0, 147, 226) == c
@@ -162,7 +162,7 @@ namespace ocr
         }
 
         template<class Color>
-        bool threshold_chars(const Color & c) const
+        [[nodiscard]] bool threshold_chars(const Color & c) const
         {
             return
                 rgb8( 0,   0,   0) == c
@@ -189,7 +189,7 @@ namespace ocr
         }
 
         template<class Color>
-        bool is_color_bar(const Color & c) const
+        [[nodiscard]] bool is_color_bar(const Color & c) const
         { return this->threshold_bars(c) || this->threshold_chars(c); }
     };
 
@@ -245,7 +245,7 @@ namespace ocr
             unsigned bbox_min_height;
             unsigned bbox_max_height;
 
-            ::mln::box2d box() const
+            [[nodiscard]] ::mln::box2d box() const
             {
                 return ::mln::box2d(
                     ::mln::point2d(this->row_first_text, this->col_first_text),

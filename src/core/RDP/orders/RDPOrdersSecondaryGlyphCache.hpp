@@ -174,11 +174,11 @@ public:
     , aj(std::move(aj)) {
     }
 
-    inline uint16_t datasize() const {
+    [[nodiscard]] inline uint16_t datasize() const {
         return align4(nbbytes(this->cx) * this->cy);
     }
 
-    uint16_t total_order_size() const {
+    [[nodiscard]] uint16_t total_order_size() const {
         return 18 + /* controlFlags(1) + orderLength(2) + extraFlags(2) + orderType(1) +
                      *     cacheId(1) + cGlyphs(1) + cacheIndex(2) + x(2) + y(2) + cx(2) +
                      *     cy(2)

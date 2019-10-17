@@ -110,7 +110,7 @@ public:
     , drawable(drawable)
     {}
 
-    Rect get_protected_rect() const
+    [[nodiscard]] Rect get_protected_rect() const
     { return this->protected_rect; }
 
     void set_protected_rect(Rect const rect)
@@ -120,7 +120,7 @@ protected:
     virtual void refresh_rects(array_view<Rect const>) = 0;
 
 private:
-    gdi::GraphicApi & get_graphic_proxy() const
+    [[nodiscard]] gdi::GraphicApi & get_graphic_proxy() const
     { return this->drawable; }
 
     template<class Command>

@@ -115,11 +115,11 @@ private:
 
         void clear() { this->last = this->arr; }
 
-        std::size_t size() const noexcept {
+        [[nodiscard]] std::size_t size() const noexcept {
             return static_cast<std::size_t>(this->last - this->arr);
         }
 
-        bool empty() const noexcept { return this->last == this->arr; }
+        [[nodiscard]] bool empty() const noexcept { return this->last == this->arr; }
 
     private:
         T * arr[N];

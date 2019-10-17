@@ -177,11 +177,11 @@ public:
         }
     }
 
-    bool is_keyboard_sequences_started() const override {
+    [[nodiscard]] bool is_keyboard_sequences_started() const override {
         return false;
     }
 
-    bool is_stopped() const override {
+    [[nodiscard]] bool is_stopped() const override {
         return this->stopped;
     }
 };

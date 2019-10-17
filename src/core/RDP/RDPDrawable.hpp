@@ -66,7 +66,7 @@ public:
 
     void resize(uint16_t width, uint16_t height) override;
 
-    ConstImageView get_image_view() const override
+    [[nodiscard]] ConstImageView get_image_view() const override
     {
         return gdi::get_image_view(this->drawable);
     }
@@ -81,17 +81,17 @@ public:
         return this->drawable.first_pixel();
     }
 
-    const uint8_t * data() const noexcept
+    [[nodiscard]] const uint8_t * data() const noexcept
     {
         return this->drawable.data();
     }
 
-    uint16_t width() const noexcept
+    [[nodiscard]] uint16_t width() const noexcept
     {
         return this->drawable.width();
     }
 
-    uint16_t height() const noexcept
+    [[nodiscard]] uint16_t height() const noexcept
     {
         return this->drawable.height();
     }
@@ -101,17 +101,17 @@ public:
         return Drawable::bpp();
     }
 
-    unsigned size() const noexcept
+    [[nodiscard]] unsigned size() const noexcept
     {
         return this->drawable.size();
     }
 
-    size_t rowsize() const noexcept
+    [[nodiscard]] size_t rowsize() const noexcept
     {
         return this->drawable.rowsize();
     }
 
-    size_t pix_len() const noexcept
+    [[nodiscard]] size_t pix_len() const noexcept
     {
         return this->drawable.pix_len();
     }
@@ -131,7 +131,7 @@ public:
         return this->drawable;
     }
 
-    const Drawable & impl() const noexcept
+    [[nodiscard]] const Drawable & impl() const noexcept
     {
         return this->drawable;
     }
@@ -215,7 +215,7 @@ public:
         this->mod_palette_rgb = palette;
     }
 
-    unsigned int get_last_update_index() const noexcept override
+    [[nodiscard]] unsigned int get_last_update_index() const noexcept override
     {
         return this->last_update_index;
     }
@@ -224,7 +224,7 @@ public:
         unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept override
     { return false; }
 
-    Rect get_rect() const override
+    [[nodiscard]] Rect get_rect() const override
     {
         return Rect(0, 0, this->drawable.width(), this->drawable.height());
     }

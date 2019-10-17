@@ -434,27 +434,27 @@ private:
             this->get_graphics().bmp_cache_persister.reset();
         }
 
-        bool has_bmp_cache_persister() const
+        [[nodiscard]] bool has_bmp_cache_persister() const
         {
             return this->is_initialized && this->get_graphics().bmp_cache_persister;
         }
 
-        BmpCachePersister * bmp_cache_persister() const
+        [[nodiscard]] BmpCachePersister * bmp_cache_persister() const
         {
             return this->get_graphics().bmp_cache_persister.get();
         }
 
-        BitsPerPixel bpp() const
+        [[nodiscard]] BitsPerPixel bpp() const
         {
             return this->get_bmp_cache().bpp;
         }
 
-        BmpCache const & get_bmp_cache() const
+        [[nodiscard]] BmpCache const & get_bmp_cache() const
         {
             return this->get_graphics().bmp_cache;
         }
 
-        uint16_t get_bmp_cache_max_cell_size() const
+        [[nodiscard]] uint16_t get_bmp_cache_max_cell_size() const
         {
             return this->get_graphics().bmp_cache.get_max_cell_size();
         }
@@ -464,7 +464,7 @@ private:
             return this->get_graphics().brush_cache.add_brush(brush_item_data, cache_idx);
         }
 
-        brush_item const & brush_at(int cache_idx) const
+        [[nodiscard]] brush_item const & brush_at(int cache_idx) const
         {
             return this->get_graphics().brush_cache.brush_items[cache_idx];
         }
@@ -488,7 +488,7 @@ private:
             return this->u.graphics;
         }
 
-        Graphics const & get_graphics() const
+        [[nodiscard]] Graphics const & get_graphics() const
         {
             assert(this->is_initialized);
             return this->u.graphics;
@@ -678,7 +678,7 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
-    BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
+    [[nodiscard]] BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
     const std::chrono::milliseconds rdp_keepalive_connection_interval;
 
@@ -1126,7 +1126,7 @@ public:
         return false;
     }
 
-    bool is_capture_in_progress() const override
+    [[nodiscard]] bool is_capture_in_progress() const override
     {
         return (this->capture && this->capture->has_private_drawable());
     }
@@ -1247,7 +1247,7 @@ public:
         }
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list() const override {
+    [[nodiscard]] const CHANNELS::ChannelDefArray & get_channel_list() const override {
         return this->channel_list;
     }
 
@@ -2654,7 +2654,7 @@ public:
         this->keymap.init_layout(LCID);
     }
 
-    int get_keylayout() const override {
+    [[nodiscard]] int get_keylayout() const override {
         return this->keymap.layout_id();
     }
 
@@ -4576,7 +4576,7 @@ private:
         }
     }
 
-    bool updatable_cache_brush(RDPBrush const & brush) const {
+    [[nodiscard]] bool updatable_cache_brush(RDPBrush const & brush) const {
         return brush.style == 3 && this->client_info.brush_cache_code == 1;
     }
 

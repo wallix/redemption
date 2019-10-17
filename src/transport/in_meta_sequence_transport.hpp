@@ -38,7 +38,7 @@ public:
 
     ~InMetaSequenceTransport();
 
-    MetaLine const & get_meta_line() const noexcept
+    [[nodiscard]] MetaLine const & get_meta_line() const noexcept
     {
         return this->meta_line;
     }
@@ -55,17 +55,17 @@ public:
 
     bool disconnect() override;
 
-    time_t begin_chunk_time() const noexcept
+    [[nodiscard]] time_t begin_chunk_time() const noexcept
     {
         return this->meta_line.start_time;
     }
 
-    time_t end_chunk_time() const noexcept
+    [[nodiscard]] time_t end_chunk_time() const noexcept
     {
         return this->meta_line.stop_time;
     }
 
-    const char * path() const noexcept
+    [[nodiscard]] const char * path() const noexcept
     {
         return this->meta_line.filename;
     }

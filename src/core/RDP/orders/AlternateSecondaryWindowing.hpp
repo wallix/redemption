@@ -108,13 +108,13 @@ public:
         return 8;   /* Left(2) + Top(2) + Right(2) + Bottom(2) */
     }
 
-    uint16_t Left() const { return this->Left_; }
+    [[nodiscard]] uint16_t Left() const { return this->Left_; }
 
-    uint16_t Top() const { return this->Top_; }
+    [[nodiscard]] uint16_t Top() const { return this->Top_; }
 
-    uint16_t Right() const { return this->Right_; }
+    [[nodiscard]] uint16_t Right() const { return this->Right_; }
 
-    uint16_t Bottom() const { return this->Bottom_; }
+    [[nodiscard]] uint16_t Bottom() const { return this->Bottom_; }
 
     size_t str(char * buffer, size_t size) const {
         const size_t length =
@@ -125,9 +125,9 @@ public:
         return ((length < size) ? length : size - 1);
     }
 
-    uint16_t Width() const { return (this->Right_ - this->Left_ + 1); }
+    [[nodiscard]] uint16_t Width() const { return (this->Right_ - this->Left_ + 1); }
 
-    uint16_t Height() const { return (this->Bottom_ - this->Top_ + 1); }
+    [[nodiscard]] uint16_t Height() const { return (this->Bottom_ - this->Top_ + 1); }
 };
 
 // [MS-RDPEGDI] - 2.2.1.2.3 Icon Info (TS_ICON_INFO)
@@ -281,23 +281,23 @@ public:
         stream.in_skip_bytes(CbBitsColor);
     }
 
-    uint16_t CacheEntry() const { return this->CacheEntry_; }
+    [[nodiscard]] uint16_t CacheEntry() const { return this->CacheEntry_; }
 
     void CacheEntry(uint16_t CacheEntry_) { this->CacheEntry_ = CacheEntry_; }
 
-    uint8_t CacheId() const { return this->CacheId_; }
+    [[nodiscard]] uint8_t CacheId() const { return this->CacheId_; }
 
     void CacheId(uint8_t CacheId_) { this->CacheId_ = CacheId_; }
 
-    uint8_t  Bpp() const { return this->Bpp_; }
+    [[nodiscard]] uint8_t  Bpp() const { return this->Bpp_; }
 
     void Bpp(uint8_t Bpp_) { this->Bpp_ = Bpp_; }
 
-    uint16_t Width() const { return this->Width_; }
+    [[nodiscard]] uint16_t Width() const { return this->Width_; }
 
     void Width(uint16_t Width_) { this->Width_ = Width_; }
 
-    uint16_t Height() const { return this->Height_; }
+    [[nodiscard]] uint16_t Height() const { return this->Height_; }
 
     void Height(uint16_t Height_) { this->Height_ = Height_; }
 
@@ -309,7 +309,7 @@ public:
         this->bits_color = {data, data_length};
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         return 9 +  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
             (((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8)) ? 2 /* CbColorTable(2) */ : 0) +
             4 + // CbBitsMask(2) + CbBitsColor(2)
@@ -2445,7 +2445,7 @@ public:
         }
     }   // receive
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         size_t count = 0;
 
         count += 8; // Timeout(4) + InfoFlags(4)

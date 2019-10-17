@@ -67,7 +67,7 @@ public:
     void set_text(char const* text);
     void set_text(array_view_const_char text);
 
-    const char * get_text() const;
+    [[nodiscard]] const char * get_text() const;
 
     void rdp_input_invalidate(Rect clip) override;
 

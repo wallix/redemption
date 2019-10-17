@@ -372,7 +372,7 @@ struct PersistentKeyListPDUData {
     }
 
 private:
-    uint32_t maximum_entries() const
+    [[nodiscard]] uint32_t maximum_entries() const
     {
         return std::min<uint32_t>(
             this->numEntriesCache[0] +

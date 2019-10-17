@@ -426,17 +426,17 @@ struct FileValidatorService
         send_header(this->trans, FileValidatorId(), MsgType::CloseSession);
     }
 
-    std::string const& get_content() const noexcept
+    [[nodiscard]] std::string const& get_content() const noexcept
     {
         return this->content;
     }
 
-    FileValidatorId last_file_id() const noexcept
+    [[nodiscard]] FileValidatorId last_file_id() const noexcept
     {
         return this->result_header.file_id;
     }
 
-    LocalFileValidatorProtocol::ValidationResult last_result_flag() const noexcept
+    [[nodiscard]] LocalFileValidatorProtocol::ValidationResult last_result_flag() const noexcept
     {
         return this->result_header.result;
     }

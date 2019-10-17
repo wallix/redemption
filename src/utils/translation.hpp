@@ -392,9 +392,9 @@ public:
     }
 
     // implementation in config.cpp
-    zstring_view translate(trkeys::TrKey_password k) const;
+    [[nodiscard]] zstring_view translate(trkeys::TrKey_password k) const;
 
-    zstring_view translate(trkeys::TrKey k) const
+    [[nodiscard]] zstring_view translate(trkeys::TrKey k) const
     {
         return k.translations[this->lang];
     }

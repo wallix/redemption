@@ -44,7 +44,7 @@ struct NlaTeeTransport : Transport
         return this->trans.enable_client_tls(server_notifier, tls_client_params);
     }
 
-    array_view_const_u8 get_public_key() const override
+    [[nodiscard]] array_view_const_u8 get_public_key() const override
     {
         return this->trans.get_public_key();
     }

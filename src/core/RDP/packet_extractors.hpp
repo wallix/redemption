@@ -42,7 +42,7 @@ namespace Extractors
             return this->is_extracted;
         }
 
-        uint16_t data_size() const noexcept
+        [[nodiscard]] uint16_t data_size() const noexcept
         {
             return this->len;
         }
@@ -129,12 +129,12 @@ namespace Extractors
             }
         }
 
-        bool is_fast_path() const noexcept
+        [[nodiscard]] bool is_fast_path() const noexcept
         {
             return this->has_fast_path;
         }
 
-        uint8_t get_type() const noexcept
+        [[nodiscard]] uint8_t get_type() const noexcept
         {
             assert(!this->is_fast_path());
             return this->type;

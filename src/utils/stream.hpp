@@ -69,50 +69,50 @@ private:
     InStream(InStream const &) = default;
 
 public:
-    InStream clone() const noexcept {
+    [[nodiscard]] InStream clone() const noexcept {
         return InStream(*this);
     }
 
-    bytes_view get_consumed_bytes() const noexcept {
+    [[nodiscard]] bytes_view get_consumed_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 
-    bytes_view remaining_bytes() const noexcept {
+    [[nodiscard]] bytes_view remaining_bytes() const noexcept {
         return {this->get_current(), this->in_remain()};
     }
 
-    uint8_t const * get_data() const noexcept {
+    [[nodiscard]] uint8_t const * get_data() const noexcept {
         return this->begin;
     }
 
-    uint8_t const * get_data_end() const noexcept {
+    [[nodiscard]] uint8_t const * get_data_end() const noexcept {
         return this->end;
     }
 
-    uint8_t const * get_current() const noexcept {
+    [[nodiscard]] uint8_t const * get_current() const noexcept {
         return this->p.p;
     }
 
-    size_t get_offset() const noexcept {
+    [[nodiscard]] size_t get_offset() const noexcept {
         return static_cast<size_t>(this->p.p - this->begin);
     }
 
     // returns true if there is enough data available to read n bytes
-    bool in_check_rem(const unsigned n) const noexcept {
+    [[nodiscard]] bool in_check_rem(const unsigned n) const noexcept {
         return (n <= this->in_remain());
     }
 
-    size_t in_remain() const noexcept {
+    [[nodiscard]] size_t in_remain() const noexcept {
         assert(this->p.p <= this->end);
         return this->end - this->p.p;
     }
 
 
-    bool check_end() const noexcept {
+    [[nodiscard]] bool check_end() const noexcept {
         return this->p.p == this->end;
     }
 
-    size_t get_capacity() const noexcept {
+    [[nodiscard]] size_t get_capacity() const noexcept {
         return this->end - this->begin;
     }
 
@@ -409,40 +409,40 @@ public:
     OutStream & operator=(OutStream &&) = default;
     OutStream & operator=(OutStream const &) = delete;
 
-    size_t tailroom() const noexcept {
+    [[nodiscard]] size_t tailroom() const noexcept {
         return  this->end - this->p;
     }
 
-    writable_bytes_view get_tail() const noexcept {
+    [[nodiscard]] writable_bytes_view get_tail() const noexcept {
         return {this->get_current(), this->tailroom()};
     }
 
-    bool has_room(size_t n) const noexcept {
+    [[nodiscard]] bool has_room(size_t n) const noexcept {
         return  n <= this->tailroom();
     }
 
-    writable_bytes_view get_bytes() const noexcept {
+    [[nodiscard]] writable_bytes_view get_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 
-    OutStream stream_at(std::size_t i) const noexcept {
+    [[nodiscard]] OutStream stream_at(std::size_t i) const noexcept {
         assert(i < this->get_capacity());
         return OutStream({this->get_data() + i, this->end});
     }
 
-    uint8_t * get_data() const noexcept {
+    [[nodiscard]] uint8_t * get_data() const noexcept {
         return this->begin;
     }
 
-    uint8_t * get_data_end() const noexcept {
+    [[nodiscard]] uint8_t * get_data_end() const noexcept {
         return this->end;
     }
 
-    uint8_t * get_current() const noexcept {
+    [[nodiscard]] uint8_t * get_current() const noexcept {
         return this->p;
     }
 
-    size_t get_offset() const noexcept {
+    [[nodiscard]] size_t get_offset() const noexcept {
         return static_cast<size_t>(this->p - this->begin);
     }
 
@@ -725,7 +725,7 @@ public:
         }
     }
 
-    size_t get_capacity() const noexcept {
+    [[nodiscard]] size_t get_capacity() const noexcept {
         return this->end - this->begin;
     }
 
@@ -839,11 +839,11 @@ struct OutReservedStreamHelper
     , stream({this->buf, buf_len - reserved_leading_space})
     {}
 
-    writable_bytes_view get_packet() const noexcept {
+    [[nodiscard]] writable_bytes_view get_packet() const noexcept {
         return writable_bytes_view{this->buf, std::size_t(this->stream.get_current() - this->buf)};
     }
 
-    std::size_t get_reserved_leading_space() const noexcept {
+    [[nodiscard]] std::size_t get_reserved_leading_space() const noexcept {
         return this->reserved_leading_space;
     }
 
@@ -922,7 +922,7 @@ private:
 template<class Writer>
 struct DynamicStreamWriter
 {
-    std::size_t packet_size() const noexcept {
+    [[nodiscard]] std::size_t packet_size() const noexcept {
         return this->stream_size_;
     }
 

@@ -462,7 +462,7 @@ public:
 
     virtual void get_compressed_data(OutStream & stream) const = 0;
 
-    uint32_t get_max_data_block_size() const;
+    [[nodiscard]] uint32_t get_max_data_block_size() const;
 
 private:
     virtual void do_compress(

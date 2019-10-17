@@ -43,9 +43,9 @@ struct RdpLogonInfo
     RdpLogonInfo(char const* hostname, bool hide_client_name,
                  char const* target_user, bool split_domain) noexcept;
 
-    const std::string & username()  const noexcept { return this->_username; }
-    const std::string & domain() const noexcept { return this->_domain; }
-    char const* hostname()  const noexcept { return this->_hostname; }
+    [[nodiscard]] const std::string & username()  const noexcept { return this->_username; }
+    [[nodiscard]] const std::string & domain() const noexcept { return this->_domain; }
+    [[nodiscard]] char const* hostname()  const noexcept { return this->_hostname; }
 
 private:
     std::string _username = {};

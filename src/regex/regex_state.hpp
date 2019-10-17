@@ -46,7 +46,7 @@ namespace re {
         char_int l;
         char_int r;
 
-        bool contains(char_int c) const {
+        [[nodiscard]] bool contains(char_int c) const {
             return this->l <= c && c <= this->r;
         }
     };
@@ -67,7 +67,7 @@ namespace re {
         const char_int * s;
         size_t len;
 
-        unsigned contains(char_int c, utf8_consumer consumer) const {
+        [[nodiscard]] unsigned contains(char_int c, utf8_consumer consumer) const {
             if (c == this->s[0]) {
                 const char_int * s = this->s + 1;
                 while (*s && *s == consumer.bumpc()) {
@@ -109,7 +109,7 @@ namespace re {
             }
         }
 
-        unsigned check(char_int c, utf8_consumer consumer) const {
+        [[nodiscard]] unsigned check(char_int c, utf8_consumer consumer) const {
             if (this->type == SEQUENCE) {
                 return this->data.sequence.contains(c, consumer);
             }
@@ -151,40 +151,40 @@ namespace re {
             }
         }
 
-        bool is_border() const
+        [[nodiscard]] bool is_border() const
         { return this->type & (FIRST|LAST); }
 
-        bool is_cap() const
+        [[nodiscard]] bool is_cap() const
         { return this->type & (CAPTURE_OPEN|CAPTURE_CLOSE); }
 
-        bool is_cap_open() const
+        [[nodiscard]] bool is_cap_open() const
         { return this->type == CAPTURE_OPEN; }
 
-        bool is_cap_close() const
+        [[nodiscard]] bool is_cap_close() const
         { return this->type == CAPTURE_CLOSE; }
 
-        bool is_split() const
+        [[nodiscard]] bool is_split() const
         { return this->type == SPLIT; }
 
-        bool is_epsilone() const
+        [[nodiscard]] bool is_epsilone() const
         { return this->type == EPSILONE || (this->type == FINISH && this->out1); }
 
-        bool is_finish() const
+        [[nodiscard]] bool is_finish() const
         { return this->type == FINISH; }
 
-        bool is_terminate() const
+        [[nodiscard]] bool is_terminate() const
         { return this->type & (LAST|FINISH); }
 
-        bool is_range() const
+        [[nodiscard]] bool is_range() const
         { return this->type == RANGE; }
 
-        bool is_simple_char() const
+        [[nodiscard]] bool is_simple_char() const
         { return this->is_range() && this->data.range.l == this->data.range.r; }
 
-        bool is_sequence() const
+        [[nodiscard]] bool is_sequence() const
         { return this->type == SEQUENCE; }
 
-        bool is_uninitialized() const
+        [[nodiscard]] bool is_uninitialized() const
         { return this->type == 0; }
 
         unsigned type;

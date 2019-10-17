@@ -61,7 +61,7 @@ public:
         return this->av();
     }
 
-    array_view_const_char av() const noexcept
+    [[nodiscard]] array_view_const_char av() const noexcept
     {
         return {dest.data(), dest.size()-1u};
     }

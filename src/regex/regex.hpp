@@ -96,23 +96,23 @@ namespace re
         ~Regex()
         = default;
 
-        unsigned mark_count() const
+        [[nodiscard]] unsigned mark_count() const
         {
             return this->sm.mark_count();
         }
 
         //The index at which to start the next match.
-        size_t last_index() const
+        [[nodiscard]] size_t last_index() const
         {
             return this->pos;
         }
 
-        const char * message_error() const
+        [[nodiscard]] const char * message_error() const
         {
             return this->parser.err;
         }
 
-        size_t position_error() const
+        [[nodiscard]] size_t position_error() const
         {
             return this->parser.pos_err;
         }
@@ -210,11 +210,11 @@ namespace re
             , res(re.sm.part_of_text_start(s, &re.pos))
             {}
 
-            bool valid() const {
+            [[nodiscard]] bool valid() const {
                 return this->re;
             }
 
-            unsigned state() const
+            [[nodiscard]] unsigned state() const
             {
                 return this->res;
             }
@@ -259,7 +259,7 @@ namespace re
             , res(re.sm.part_of_text_start_with_trace(s, this->tracer, &re.pos))
             {}
 
-            unsigned state() const
+            [[nodiscard]] unsigned state() const
             {
                 return this->res;
             }
@@ -401,7 +401,7 @@ namespace re
 //             return PartOfTextWithCapture<Tracer>(*this, str_is_empty ? "" : " ", tracer);
 //         }
 
-        range_matches match_result(bool all = true) const
+        [[nodiscard]] range_matches match_result(bool all = true) const
         {
             return this->sm.match_result(all);
         }

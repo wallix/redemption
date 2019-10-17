@@ -50,7 +50,7 @@ public:
     : font_id(font)
     {}
 
-    unsigned unrecognized_rate() const
+    [[nodiscard]] unsigned unrecognized_rate() const
     {
         if (this->character_count) {
             return this->unrecognized_count * 100 / this->character_count;
@@ -128,7 +128,7 @@ public:
         }
     }
 
-    inline bool is_recognize() const
+    [[nodiscard]] inline bool is_recognize() const
     {
         return 0 == this->unrecognized_count && this->first_unrecognized_index < 7 && this->character_count > 5;
     }

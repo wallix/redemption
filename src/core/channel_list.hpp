@@ -108,7 +108,7 @@ namespace CHANNELS {
             this->items[index].chanid = chanid;
         }
 
-        size_t size() const {
+        [[nodiscard]] size_t size() const {
             return this->channelCount;
         }
 
@@ -118,7 +118,7 @@ namespace CHANNELS {
             this->channelCount++;
         }
 
-        const ChannelDef * get_by_name(ChannelNameId name) const {
+        [[nodiscard]] const ChannelDef * get_by_name(ChannelNameId name) const {
             const ChannelDef * channel = nullptr;
             for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
@@ -130,7 +130,7 @@ namespace CHANNELS {
             return channel;
         }
 
-        const ChannelDef * get_by_id(int chanid) const {
+        [[nodiscard]] const ChannelDef * get_by_id(int chanid) const {
            const ChannelDef * channel = nullptr;
            for (size_t index = 0; index < this->size(); index++) {
                const ChannelDef & item = this->items[index];
@@ -142,7 +142,7 @@ namespace CHANNELS {
            return channel;
         }
 
-        int get_index_by_id(int chanid) const {
+        [[nodiscard]] int get_index_by_id(int chanid) const {
             int res = -1;
             for (size_t index = 0; index < this->size(); index++) {
                 if (this->items[index].chanid == chanid) {

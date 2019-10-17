@@ -39,7 +39,7 @@ struct FileTransport : Transport
 
     void seek(int64_t offset, int whence) override;
 
-    int get_fd() const override
+    [[nodiscard]] int get_fd() const override
     {
         return this->file.fd();
     }
@@ -54,7 +54,7 @@ struct FileTransport : Transport
         this->file = std::move(fd);
     }
 
-    bool is_open() const
+    [[nodiscard]] bool is_open() const
     {
         return this->file.is_open();
     }

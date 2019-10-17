@@ -69,8 +69,8 @@ public:
     width_in_bytes(width_in_bytes), height(height), data(data)
     {}
 
-    Iterator begin () const { return Iterator(this->data, this->width_in_bytes); }
-    Iterator end () const { return Iterator(&this->data[this->width_in_bytes * this->height], this->width_in_bytes); }
+    [[nodiscard]] Iterator begin () const { return Iterator(this->data, this->width_in_bytes); }
+    [[nodiscard]] Iterator end () const { return Iterator(&this->data[this->width_in_bytes * this->height], this->width_in_bytes); }
 };
 
 class PixelArray
@@ -92,8 +92,8 @@ public:
 
     explicit PixelArray(size_t width_in_pixels, uint8_t * data) : data(data), width_in_bytes(width_in_pixels*3)  {}
 
-    Iterator begin () const { return Iterator(this->data); }
-    Iterator end () const { return Iterator(this->data + this->width_in_bytes); }
+    [[nodiscard]] Iterator begin () const { return Iterator(this->data); }
+    [[nodiscard]] Iterator end () const { return Iterator(this->data + this->width_in_bytes); }
 };
 
 
@@ -147,8 +147,8 @@ public:
 //        printf("bitzone %.2x %.2x %.2x %.2x\n", data[0], data[1], data[2], data[3]);
     }
 
-    Iterator begin () const { return Iterator(this->data, this->width_in_bits, 0); }
-    Iterator end () const { return Iterator(this->data, this->width_in_bits, this->width_in_bits); }
+    [[nodiscard]] Iterator begin () const { return Iterator(this->data, this->width_in_bits, 0); }
+    [[nodiscard]] Iterator end () const { return Iterator(this->data, this->width_in_bits, this->width_in_bits); }
 };
 
 
@@ -171,8 +171,8 @@ public:
 
     explicit BitArray(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
 
-    Iterator begin () const { return Iterator(this->data, 0); }
-    Iterator end () const { return Iterator(this->data, this->width_in_bits); }
+    [[nodiscard]] Iterator begin () const { return Iterator(this->data, 0); }
+    [[nodiscard]] Iterator end () const { return Iterator(this->data, this->width_in_bits); }
 };
 
 

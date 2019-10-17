@@ -205,7 +205,7 @@ public:
 
     ~RDPSerializer() override = default;
 
-    size_t get_max_data_block_size() const {
+    [[nodiscard]] size_t get_max_data_block_size() const {
         return (this->max_data_block_size - SERIALIZER_HEADER_SIZE);
     }
 

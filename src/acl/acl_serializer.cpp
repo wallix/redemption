@@ -297,7 +297,7 @@ namespace
     template<std::size_t N>
     struct StringBuf
     {
-        std::string_view sv() const noexcept
+        [[nodiscard]] std::string_view sv() const noexcept
         {
             return {buf, len};
         }

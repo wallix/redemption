@@ -34,7 +34,7 @@ struct BasicStaticBuffer
 
     BasicStaticBuffer() = default;
 
-    size_type remaining() const noexcept
+    [[nodiscard]] size_type remaining() const noexcept
     {
         return size_type(this->len - this->idx);
     }
@@ -50,7 +50,7 @@ struct BasicStaticBuffer
         return {this->buf + this->idx, n};
     }
 
-    array_view_const_u8 av(std::size_t n) const noexcept
+    [[nodiscard]] array_view_const_u8 av(std::size_t n) const noexcept
     {
         assert(n <= this->remaining());
         return {this->buf + this->idx, n};
@@ -62,7 +62,7 @@ struct BasicStaticBuffer
         return {this->buf + this->idx + i, n};
     }
 
-    array_view_const_u8 sub(std::size_t i, std::size_t n) const noexcept
+    [[nodiscard]] array_view_const_u8 sub(std::size_t i, std::size_t n) const noexcept
     {
         assert(n <= this->remaining());
         return {this->buf + this->idx + i, n};

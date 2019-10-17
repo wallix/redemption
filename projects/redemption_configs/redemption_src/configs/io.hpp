@@ -160,9 +160,9 @@ namespace spec_types
         directory_path & operator = (directory_path &&) = default;
         directory_path & operator = (directory_path const &) = default;
 
-        char const * c_str() const noexcept { return this->path.c_str(); }
+        [[nodiscard]] char const * c_str() const noexcept { return this->path.c_str(); }
 
-        std::string const & to_string() const noexcept { return this->path; }
+        [[nodiscard]] std::string const & to_string() const noexcept { return this->path; }
 
     private:
         void normalize()
@@ -308,7 +308,7 @@ struct parse_error
     constexpr explicit parse_error(char const * err) noexcept : s_err(err) {}
 
     explicit operator bool () const noexcept { return this->s_err; }
-    char const * c_str() const noexcept { return this->s_err; }
+    [[nodiscard]] char const * c_str() const noexcept { return this->s_err; }
 
 private:
     char const * s_err;

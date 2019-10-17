@@ -49,7 +49,7 @@ public:
 
     mod_api& get_managed_mod();
 
-    const mod_api& get_managed_mod() const;
+    [[nodiscard]] const mod_api& get_managed_mod() const;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 

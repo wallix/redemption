@@ -76,13 +76,13 @@ public:
     : value(bit(i))
     {}
 
-    bool test(E idx) const noexcept { return this->value & bit(idx); }
+    [[nodiscard]] bool test(E idx) const noexcept { return this->value & bit(idx); }
     void set(E idx) noexcept { this->value |= bit(idx); }
     void clear(E idx) noexcept { this->value &= ~bit(idx); }
 
     void normalize() noexcept { this->value &= mask; }
 
-    bitfield as_uint() const noexcept { return this->value & mask; }
+    [[nodiscard]] bitfield as_uint() const noexcept { return this->value & mask; }
 
     static constexpr std::size_t max_value() noexcept { return max; }
 

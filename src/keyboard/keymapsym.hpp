@@ -1143,37 +1143,37 @@ struct KeymapSym
 
     uint32_t get_sym(uint8_t & downflag);
 
-    uint32_t nb_sym_available() const;
+    [[nodiscard]] uint32_t nb_sym_available() const;
 
-    bool is_caps_locked() const;
+    [[nodiscard]] bool is_caps_locked() const;
 
-    bool is_scroll_locked() const;
+    [[nodiscard]] bool is_scroll_locked() const;
 
-    bool is_num_locked() const;
+    [[nodiscard]] bool is_num_locked() const;
 
     void toggle_num_lock(bool on);
 
-    bool is_left_shift_pressed() const;
+    [[nodiscard]] bool is_left_shift_pressed() const;
 
-    bool is_right_shift_pressed() const;
+    [[nodiscard]] bool is_right_shift_pressed() const;
 
-    bool is_shift_pressed() const;
+    [[nodiscard]] bool is_shift_pressed() const;
 
-    bool is_left_ctrl_pressed() const;
+    [[nodiscard]] bool is_left_ctrl_pressed() const;
 
-    bool is_right_ctrl_pressed() const;
+    [[nodiscard]] bool is_right_ctrl_pressed() const;
 
-    bool is_ctrl_pressed() const;
+    [[nodiscard]] bool is_ctrl_pressed() const;
 
-    bool is_left_alt_pressed() const;
+    [[nodiscard]] bool is_left_alt_pressed() const;
 
     // altgr key or ctrl+alt
-    bool is_altgr_pressed() const;
+    [[nodiscard]] bool is_altgr_pressed() const;
 
     // altgr key
-    bool is_right_alt_pressed() const;
+    [[nodiscard]] bool is_right_alt_pressed() const;
 
-    bool is_alt_pressed() const;
+    [[nodiscard]] bool is_alt_pressed() const;
 
     void init_layout_sym(int keyb);
 

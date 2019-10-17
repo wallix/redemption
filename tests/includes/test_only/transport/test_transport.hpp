@@ -60,7 +60,7 @@ struct BufTransport : Transport
 {
     std::string buf;
 
-    std::size_t size() const noexcept { return buf.size(); }
+    [[nodiscard]] std::size_t size() const noexcept { return buf.size(); }
     void clear() noexcept { buf.clear(); }
     std::string& data() noexcept { return buf; }
 
@@ -77,8 +77,8 @@ struct BufSequenceTransport : Transport
     BufSequenceTransport();
 
     std::string& operator[](std::size_t i) noexcept { return this->datas[i]; }
-    std::size_t size() const noexcept { return this->datas.size(); }
-    bool empty() const noexcept;
+    [[nodiscard]] std::size_t size() const noexcept { return this->datas.size(); }
+    [[nodiscard]] bool empty() const noexcept;
 
 private:
     void do_send(const uint8_t * const data, size_t len) override;
@@ -134,7 +134,7 @@ struct TestTransport : public Transport
 
     void set_public_key(bytes_view key);
 
-    array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] array_view_const_u8 get_public_key() const override;
 
 protected:
     size_t do_partial_read(uint8_t* buffer, size_t len) override;

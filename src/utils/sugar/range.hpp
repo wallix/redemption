@@ -42,14 +42,14 @@ struct range
     using iterator = It;
     using const_iterator = It;
 
-    std::size_t size() const { return this->last_ - this->first_; }
+    [[nodiscard]] std::size_t size() const { return this->last_ - this->first_; }
 
-    bool empty() const { return this->last_ == this->first_; }
+    [[nodiscard]] bool empty() const { return this->last_ == this->first_; }
 
-    const_reference front() const { return *(this->first_); }
+    [[nodiscard]] const_reference front() const { return *(this->first_); }
     reference       front()       { return *(this->first_); }
 
-    const_reference back() const  { return *(this->last_-1); }
+    [[nodiscard]] const_reference back() const  { return *(this->last_-1); }
     reference       back()        { return *(this->last_-1); }
 
     const_reference operator[](std::size_t i) const { return this->first_[i]; }
@@ -63,8 +63,8 @@ struct range
         return !(a == b);
     }
 
-    It begin() const { return this->first_; }
-    It end()   const { return this->last_; }
+    [[nodiscard]] It begin() const { return this->first_; }
+    [[nodiscard]] It end()   const { return this->last_; }
 };
 
 template<class Cont>

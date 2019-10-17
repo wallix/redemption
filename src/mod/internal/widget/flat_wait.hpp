@@ -61,7 +61,7 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    BGRColor get_bg_color() const override
+    [[nodiscard]] BGRColor get_bg_color() const override
     {
         return this->bg_color;
     }

@@ -41,9 +41,9 @@ class FrontAPI : noncopyable
 public:
     virtual bool can_be_start_capture() = 0;
     virtual bool must_be_stop_capture() = 0;
-    virtual bool is_capture_in_progress() const = 0;
+    [[nodiscard]] virtual bool is_capture_in_progress() const = 0;
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
+    [[nodiscard]] virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                                 , std::size_t total_length, int flags) = 0;
 
@@ -77,7 +77,7 @@ public:
     virtual void send_savesessioninfo() {}
 
     /// \return  -1 is an error
-    virtual int get_keylayout() const { return -1; }
+    [[nodiscard]] virtual int get_keylayout() const { return -1; }
 
     virtual ~FrontAPI() = default;
 };

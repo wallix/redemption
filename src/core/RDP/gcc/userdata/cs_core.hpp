@@ -645,7 +645,7 @@ private:
         if (this->length == 234) { return; }
     }
 
-    const char *connectionTypeString(uint8_t type) const {
+    [[nodiscard]] const char *connectionTypeString(uint8_t type) const {
         static const char *types[] = {
             "<unknown>", "MODEM", "BROADBAND_LOW",
             "SATELLITE", "BROADBAND_HIGH", "WAN", "LAN"

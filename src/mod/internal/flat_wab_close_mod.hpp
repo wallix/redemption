@@ -61,7 +61,7 @@ public:
 
     void notify(Widget* sender, notify_event_t event) override;
 
-    bool is_up_and_running() const override
+    [[nodiscard]] bool is_up_and_running() const override
     {
         return true;
     }

@@ -49,19 +49,19 @@ struct Classification
             unsigned w;
             unsigned h;
 
-            unsigned width() const
+            [[nodiscard]] unsigned width() const
             { return this->w; }
 
-            unsigned height() const
+            [[nodiscard]] unsigned height() const
             { return this->h; }
 
             struct Color
             {
                 const uint8_t * c;
 
-                uint8_t blue()  const { return c[0]; }
-                uint8_t green() const { return c[1]; }
-                uint8_t red()   const { return c[2]; }
+                [[nodiscard]] uint8_t blue()  const { return c[0]; }
+                [[nodiscard]] uint8_t green() const { return c[1]; }
+                [[nodiscard]] uint8_t red()   const { return c[2]; }
             };
 
             Color operator()(unsigned row, unsigned col) const

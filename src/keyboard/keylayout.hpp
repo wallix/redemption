@@ -131,7 +131,7 @@ struct Keylayout
 
 
     //==============================================================================
-    bool isDeadkey(uint32_t uchar, uint8_t extendedKeyCode) const
+    [[nodiscard]] bool isDeadkey(uint32_t uchar, uint8_t extendedKeyCode) const
     //==============================================================================
     {
         bool resu = false;

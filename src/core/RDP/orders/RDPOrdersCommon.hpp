@@ -1239,7 +1239,7 @@ class RDPSecondaryOrderHeader {
         order_length(order_length), flags(flags), type(type) {
     }
 
-    uint16_t order_data_length() const {
+    [[nodiscard]] uint16_t order_data_length() const {
         return   this->order_length
                + 13                     /* Protocol defined adjustment. */
                - 6;                     /* Size of header.              */

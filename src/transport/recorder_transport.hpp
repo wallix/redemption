@@ -79,7 +79,7 @@ public:
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override;
 
-    array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] array_view_const_u8 get_public_key() const override;
 
     void flush() override;
 
@@ -91,7 +91,7 @@ public:
 
     bool next() override;
 
-    int get_fd() const override;
+    [[nodiscard]] int get_fd() const override;
 
 private:
     Read do_atomic_read(uint8_t * buffer, size_t len) override;

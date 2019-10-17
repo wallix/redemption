@@ -115,7 +115,7 @@ public:
         this->undo_index = 0;
     }
 
-    inline T get_offset(hash_type hash) const
+    [[nodiscard]] inline T get_offset(hash_type hash) const
     {
         return this->hash_table[hash];
     }

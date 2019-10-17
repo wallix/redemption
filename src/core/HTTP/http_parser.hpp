@@ -31,82 +31,82 @@ typedef struct HttpParserImpl HttpParserImpl;
 /** @brief a generic HTTP parser (for request or response) */
 class HttpParser {
 public:
-	/** default ctor */
-	HttpParser();
+    /** default ctor */
+    HttpParser();
 
-	virtual ~HttpParser();
+    virtual ~HttpParser();
 
-	/** callbacks that should be implemented by inherited classes to implement the
-	 * expected behavior
-	 * @{ */
+    /** callbacks that should be implemented by inherited classes to implement the
+     * expected behavior
+     * @{ */
 
-	/** called when the first line is read
-	 * @param line the content of the line
-	 * @return if the parsing completed successfully
-	 */
-	virtual bool onFirstLine(const std::string &line) = 0;
+    /** called when the first line is read
+     * @param line the content of the line
+     * @return if the parsing completed successfully
+     */
+    virtual bool onFirstLine(const std::string &line) = 0;
 
-	/** called when the headers have been treated and we're treating the body
-	 * @return if the operation was successful
-	 */
-	virtual bool onHeadersTreated();
+    /** called when the headers have been treated and we're treating the body
+     * @return if the operation was successful
+     */
+    virtual bool onHeadersTreated();
 
-	/** called when we have some body content
-	 * @return if the processing was successful
-	 */
-	virtual bool onBodyContent(array_view_const_char content);
+    /** called when we have some body content
+     * @return if the processing was successful
+     */
+    virtual bool onBodyContent(array_view_const_char content);
 
-	/** called when the parsing is finished
-	 * @return if the processing was successful
-	 */
-	virtual bool onParsingCompleted();
+    /** called when the parsing is finished
+     * @return if the processing was successful
+     */
+    virtual bool onParsingCompleted();
 
-	/** @} */
+    /** @} */
 
-	/** inject the buffer in the automata doing all appropriate treatments
-	 * @param content input data for the parser
-	 * @return if the processing was successful
-	 */
-	bool parse(array_view_const_char content);
+    /** inject the buffer in the automata doing all appropriate treatments
+     * @param content input data for the parser
+     * @return if the processing was successful
+     */
+    bool parse(array_view_const_char content);
 
-	/** returns if the corresponding header was parsed in the headers
-	 * @param header the name of the header
-	 * @return if the corresponding header was parsed in the headers
-	 */
-	bool haveHeader(const std::string &header) const;
+    /** returns if the corresponding header was parsed in the headers
+     * @param header the name of the header
+     * @return if the corresponding header was parsed in the headers
+     */
+    [[nodiscard]] bool haveHeader(const std::string &header) const;
 
-	/** returns the value of the given HTTP header
-	 * @param header the name of the header
-	 * @return the value of the given HTTP header
-	 */
-	std::string getHeader(const std::string &header) const;
-
-protected:
-	bool treatHeaderLine(const std::string &line);
+    /** returns the value of the given HTTP header
+     * @param header the name of the header
+     * @return the value of the given HTTP header
+     */
+    [[nodiscard]] std::string getHeader(const std::string &header) const;
 
 protected:
-	HttpParserImpl *impl;
+    bool treatHeaderLine(const std::string &line);
+
+protected:
+    HttpParserImpl *impl;
 };
 
 /** @brief a parser for HTTP requests */
 class HttpRequestParser : public HttpParser {
 public:
-	bool onFirstLine(const std::string &line) override;
+    bool onFirstLine(const std::string &line) override;
 public:
-	std::string method;
-	std::string uri;
-	std::string httpVersion;
+    std::string method;
+    std::string uri;
+    std::string httpVersion;
 };
 
 
 /** @brief a parser for HTTP responses */
 class HttpResponseParser : public HttpParser {
 public:
-	bool onFirstLine(const std::string &line) override;
+    bool onFirstLine(const std::string &line) override;
 public:
-	std::string responseVersion;
-	int responseCode;
-	std::string responseString;
+    std::string responseVersion;
+    int responseCode;
+    std::string responseString;
 };
 
 } // namespace http

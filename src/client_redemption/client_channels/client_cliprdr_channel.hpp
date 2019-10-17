@@ -105,7 +105,7 @@ public:
         int    pic_height = 0;
         int    pic_bpp = 0;
 
-        array_view_const_u8 av() const noexcept
+        [[nodiscard]] array_view_const_u8 av() const noexcept
         {
             return {this->data.get(), size_t(this->size)};
         }

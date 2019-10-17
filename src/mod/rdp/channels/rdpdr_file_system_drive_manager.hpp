@@ -85,15 +85,15 @@ public:
         return "<unknown>";
     }
 
-    inline int file_descriptor() const {
+    [[nodiscard]] inline int file_descriptor() const {
         assert(this->fd > -1);
 
         return this->fd;
     }
 
-    virtual bool is_directory() const = 0;
+    [[nodiscard]] virtual bool is_directory() const = 0;
 
-    virtual bool is_session_probe_image() const { return false; }
+    [[nodiscard]] virtual bool is_session_probe_image() const { return false; }
 
     virtual void process_server_create_drive_request(
         rdpdr::DeviceIORequest const & device_io_request,
@@ -834,7 +834,7 @@ public:
         }
     }
 
-    bool is_directory() const override { return true; }
+    [[nodiscard]] bool is_directory() const override { return true; }
 
     void process_server_create_drive_request(
             rdpdr::DeviceIORequest const & device_io_request,
@@ -1218,9 +1218,9 @@ public:
         }
     }
 
-    bool is_directory() const override { return false; }
+    [[nodiscard]] bool is_directory() const override { return false; }
 
-    bool is_session_probe_image() const override { return this->is_session_probe_image_flag; }
+    [[nodiscard]] bool is_session_probe_image() const override { return this->is_session_probe_image_flag; }
 
     void process_server_create_drive_request(
             rdpdr::DeviceIORequest const & device_io_request,
@@ -1713,22 +1713,22 @@ public:
         : DriveName(array_view_const_char{name}, reserved)
         {}
 
-        char const* upper_name() const noexcept
+        [[nodiscard]] char const* upper_name() const noexcept
         {
             return this->upper_name_;
         }
 
-        char const* name() const noexcept
+        [[nodiscard]] char const* name() const noexcept
         {
             return this->name_;
         }
 
-        bool is_valid() const noexcept
+        [[nodiscard]] bool is_valid() const noexcept
         {
             return bool(this->name_[0]);
         }
 
-        bool is_read_only() const noexcept
+        [[nodiscard]] bool is_read_only() const noexcept
         {
             return this->read_only_;
         }
@@ -1807,14 +1807,14 @@ public:
     }
 
 public:
-    uint32_t get_session_probe_drive_id() const { return this->session_probe_drive_id; }
+    [[nodiscard]] uint32_t get_session_probe_drive_id() const { return this->session_probe_drive_id; }
 
-    bool has_managed_drive() const {
+    [[nodiscard]] bool has_managed_drive() const {
         return !this->managed_drives.empty();
     }
 
 private:
-    managed_drive_collection_type::const_iterator
+    [[nodiscard]] managed_drive_collection_type::const_iterator
     find_drive_by_id(uint32_t DeviceId) const {
         return std::find_if(
             this->managed_drives.cbegin(),
@@ -1826,7 +1826,7 @@ private:
     }
 
 public:
-    bool is_managed_drive(uint32_t DeviceId) const {
+    [[nodiscard]] bool is_managed_drive(uint32_t DeviceId) const {
         return DeviceId >= FIRST_MANAGED_DRIVE_ID
             && this->find_drive_by_id(DeviceId) != this->managed_drives.cend();
     }

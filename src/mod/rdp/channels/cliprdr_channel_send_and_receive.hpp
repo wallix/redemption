@@ -85,12 +85,12 @@ struct ClipboardSideData
 
         FileData file_data;
 
-        bool is_file_range() const
+        [[nodiscard]] bool is_file_range() const
         {
             return !is_file_size();
         }
 
-        bool is_file_size() const
+        [[nodiscard]] bool is_file_size() const
         {
             return this->status == Status::IsSize;
         }
@@ -100,7 +100,7 @@ struct ClipboardSideData
             this->status = Status::WaitValidator;
         }
 
-        bool is_wait_validator() const
+        [[nodiscard]] bool is_wait_validator() const
         {
             return this->status == Status::WaitValidator;
         }
@@ -159,7 +159,7 @@ struct ClipboardSideData
     std::vector<uint32_t> lock_id_list;
 
 private:
-    auto _find_lock_id_it(uint32_t id) const
+    [[nodiscard]] auto _find_lock_id_it(uint32_t id) const
     {
         return std::find(this->lock_id_list.begin(), this->lock_id_list.end(), id);
     }
@@ -183,7 +183,7 @@ public:
         this->clip_text_id = FileValidatorId();
     }
 
-    bool has_lock_id(uint32_t id) const
+    [[nodiscard]] bool has_lock_id(uint32_t id) const
     {
         return this->_find_lock_id_it(id) != this->lock_id_list.end();
     }

@@ -79,12 +79,12 @@ struct unique_fd
         return !this->is_open();
     }
 
-    bool is_open() const noexcept
+    [[nodiscard]] bool is_open() const noexcept
     {
         return this->fd_ >= 0;
     }
 
-    int fd() const noexcept
+    [[nodiscard]] int fd() const noexcept
     {
         return this->fd_;
     }

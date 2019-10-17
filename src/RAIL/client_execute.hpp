@@ -172,13 +172,13 @@ public:
 
     Rect adjust_rect(Rect rect);
 
-    Rect get_current_work_area_rect() const;
+    [[nodiscard]] Rect get_current_work_area_rect() const;
 
-    Rect get_window_rect() const;
+    [[nodiscard]] Rect get_window_rect() const;
 
-    Point get_window_offset() const;
+    [[nodiscard]] Point get_window_offset() const;
 
-    Rect get_auxiliary_window_rect() const;
+    [[nodiscard]] Rect get_auxiliary_window_rect() const;
 
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font, bool allow_resize_hosted_desktop);
 
@@ -195,15 +195,15 @@ public:
 
     const WindowsExecuteShellParams & get_client_execute();
 
-    uint16_t Flags() const;
+    [[nodiscard]] uint16_t Flags() const;
 
-    const char * ExeOrFile() const;
+    [[nodiscard]] const char * ExeOrFile() const;
 
-    const char * WorkingDir() const;
+    [[nodiscard]] const char * WorkingDir() const;
 
-    const char * Arguments() const;
+    [[nodiscard]] const char * Arguments() const;
 
-    bool should_ignore_first_client_execute() const;
+    [[nodiscard]] bool should_ignore_first_client_execute() const;
 
     void create_auxiliary_window(Rect const window_rect) override;
 
@@ -211,9 +211,9 @@ public:
 
     void set_target_info(array_view_const_char ti);
 
-    bool is_rail_enabled() const;
+    [[nodiscard]] bool is_rail_enabled() const;
 
-    bool is_resizing_hosted_desktop_enabled() const;
+    [[nodiscard]] bool is_resizing_hosted_desktop_enabled() const;
 
     void enable_resizing_hosted_desktop(bool enable);
 

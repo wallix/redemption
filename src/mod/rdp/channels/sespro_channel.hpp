@@ -202,7 +202,7 @@ public:
         this->param_bogus_refresh_rect_ex = enable;
     }
 
-    bool has_been_launched() const {
+    [[nodiscard]] bool has_been_launched() const {
         return this->session_probe_ready;
     }
 

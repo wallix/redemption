@@ -82,7 +82,7 @@ struct BufArrayMaker
         return StaticLen;
     }
 
-    std::size_t capacity() const noexcept
+    [[nodiscard]] std::size_t capacity() const noexcept
     {
         return this->dyn_buf_ ? this->dyn_buf_len_ : StaticLen;
     }

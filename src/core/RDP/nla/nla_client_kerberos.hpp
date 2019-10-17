@@ -86,17 +86,17 @@ private:
             return (this->User.size() == 0) && (this->Domain.size() == 0);
         }
 
-        bytes_view get_password_utf16_av() const
+        [[nodiscard]] bytes_view get_password_utf16_av() const
         {
             return this->Password;
         }
 
-        bytes_view get_user_utf16_av() const
+        [[nodiscard]] bytes_view get_user_utf16_av() const
         {
             return this->User;
         }
 
-        bytes_view get_domain_utf16_av() const
+        [[nodiscard]] bytes_view get_domain_utf16_av() const
         {
             return this->Domain;
         }

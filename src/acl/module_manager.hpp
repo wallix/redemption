@@ -166,7 +166,7 @@ class ModuleManager : public MMIni
         , bogus_refresh_rect_ex(false)
         {}
 
-        bool is_input_owner() const { return this->is_disable_by_input; }
+        [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
 
         void disable_osd()
         {
@@ -188,7 +188,7 @@ class ModuleManager : public MMIni
             this->mm.mod->rdp_input_invalidate(protected_rect);
         }
 
-        const char* get_message() const {
+        [[nodiscard]] const char* get_message() const {
             return this->osd_message.c_str();
         }
 
@@ -403,7 +403,7 @@ class ModuleManager : public MMIni
         void send_checkout_channel_data(const char * data) override
         { this->mm.mod->send_checkout_channel_data(data); }
 
-        bool is_up_and_running() const override
+        [[nodiscard]] bool is_up_and_running() const override
         { return this->mm.mod->is_up_and_running(); }
 
         void disconnect() override
@@ -412,7 +412,7 @@ class ModuleManager : public MMIni
         void display_osd_message(std::string const & message) override
         { this->mm.mod->display_osd_message(message); }
 
-        Dimension get_dim() const override
+        [[nodiscard]] Dimension get_dim() const override
         {
             return this->mm.mod->get_dim();
         }
@@ -729,12 +729,12 @@ public:
         this->mod = &this->no_mod;
     }
 
-    bool has_pending_data() const
+    [[nodiscard]] bool has_pending_data() const
     {
         return this->socket_transport && this->socket_transport->has_pending_data();
     }
 
-    SocketTransport* get_socket() const noexcept
+    [[nodiscard]] SocketTransport* get_socket() const noexcept
     {
         return this->socket_transport;
     }
@@ -1198,7 +1198,7 @@ public:
         }
     }
 
-    rdp_api* get_rdp_api() const override {
+    [[nodiscard]] rdp_api* get_rdp_api() const override {
         return this->rdpapi;
     }
 

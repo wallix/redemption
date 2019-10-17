@@ -61,12 +61,12 @@ struct FontCharView
         return bool(this->data);
     }
 
-    uint16_t datasize() const noexcept
+    [[nodiscard]] uint16_t datasize() const noexcept
     {
         return align4(nbbytes(this->width) * this->height);
     }
 
-    uint8_t const* data_ptr() const noexcept
+    [[nodiscard]] uint8_t const* data_ptr() const noexcept
     {
         return this->data;
     }
@@ -158,7 +158,7 @@ struct FontChar
 
     void * operator new (size_t) = delete;
 
-    FontChar clone() const {
+    [[nodiscard]] FontChar clone() const {
         auto ptr = std::make_unique<uint8_t[]>(this->datasize());
         memcpy(ptr.get(), this->data.get(), this->datasize());
         return FontChar(std::move(ptr), this->offsetx, this->offsety, this->width, this->height, this->incby);
@@ -168,12 +168,12 @@ struct FontChar
         return bool(this->data);
     }
 
-    uint16_t datasize() const noexcept
+    [[nodiscard]] uint16_t datasize() const noexcept
     {
         return align4(nbbytes(this->width) * this->height);
     }
 
-    uint8_t const* data_ptr() const noexcept
+    [[nodiscard]] uint8_t const* data_ptr() const noexcept
     {
         return this->data.get();
     }
@@ -244,52 +244,52 @@ struct Font
     : Font(file_path.c_str(), spark_view_specific_glyph_width)
     {}
 
-    bool is_loaded() const
+    [[nodiscard]] bool is_loaded() const
     {
         return !this->font_items.empty();
     }
 
-    uint16_t size() const noexcept {
+    [[nodiscard]] uint16_t size() const noexcept {
         return this->size_;
     }
 
-    uint16_t max_height() const noexcept {
+    [[nodiscard]] uint16_t max_height() const noexcept {
         return this->max_height_;
     }
 
-    uint16_t style() const noexcept {
+    [[nodiscard]] uint16_t style() const noexcept {
         return this->style_;
     }
 
-    char const * name() const noexcept {
+    [[nodiscard]] char const * name() const noexcept {
         return this->name_;
     }
 
-    bool spark_view_specific_glyph_width() const noexcept {
+    [[nodiscard]] bool spark_view_specific_glyph_width() const noexcept {
         return this->spark_view_specific_glyph_width_;
     }
 
-    bool glyph_defined(uint32_t charnum) const
+    [[nodiscard]] bool glyph_defined(uint32_t charnum) const
     {
         return (size_t(charnum - 32u) < this->font_items.size())
             && bool(this->font_items[charnum - 32u]);
     }
 
-    FontCharView const & glyph_or_unknown(uint32_t charnum) const
+    [[nodiscard]] FontCharView const & glyph_or_unknown(uint32_t charnum) const
     {
         return this->glyph_defined(charnum)
              ? this->font_items[charnum - 32u]
              : this->unknown_glyph();
     }
 
-    FontCharView const * glyph_at(uint32_t charnum) const
+    [[nodiscard]] FontCharView const * glyph_at(uint32_t charnum) const
     {
         return this->glyph_defined(charnum)
              ? &this->font_items[charnum - 32u]
              : nullptr;
     }
 
-    FontCharView const & unknown_glyph() const noexcept
+    [[nodiscard]] FontCharView const & unknown_glyph() const noexcept
     {
         return this->unknown_item;
     }

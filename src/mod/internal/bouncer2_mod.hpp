@@ -46,7 +46,7 @@ class Bouncer2Mod : public mod_api
     SessionReactor& session_reactor;
     SessionReactor::GraphicTimerPtr timer;
 
-    Rect get_screen_rect() const;
+    [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     Bouncer2Mod(
@@ -76,13 +76,13 @@ public:
 
     void refresh(Rect clip) override;
 
-    Dimension get_dim() const override;
+    [[nodiscard]] Dimension get_dim() const override;
 
 public:
     // This should come from BACK!
     void draw_event(gdi::GraphicApi & gd);
 
-    bool is_up_and_running() const override
+    [[nodiscard]] bool is_up_and_running() const override
     {
         return true;
     }

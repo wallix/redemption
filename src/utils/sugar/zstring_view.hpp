@@ -59,13 +59,13 @@ struct zstring_view
     : zstring_view(is_zero_terminated{}, str.data(), str.size())
     {}
 
-    constexpr char const* c_str() const noexcept { return data(); }
+    [[nodiscard]] constexpr char const* c_str() const noexcept { return data(); }
 
     // TODO temporary ?
     constexpr operator char const* () const noexcept { return c_str(); }
 
-    constexpr char const * data() const noexcept { return this->s; }
-    constexpr std::size_t size() const noexcept { return this->len; }
+    [[nodiscard]] constexpr char const * data() const noexcept { return this->s; }
+    [[nodiscard]] constexpr std::size_t size() const noexcept { return this->len; }
 
     constexpr char operator[](std::size_t i) const noexcept
     {
@@ -73,17 +73,17 @@ struct zstring_view
         return s[i];
     }
 
-    constexpr bool empty() const noexcept { return !this->len; }
+    [[nodiscard]] constexpr bool empty() const noexcept { return !this->len; }
 
-    constexpr char const * begin() const noexcept { return this->data(); }
-    constexpr char const * end() const noexcept { return this->data() + this->size(); }
+    [[nodiscard]] constexpr char const * begin() const noexcept { return this->data(); }
+    [[nodiscard]] constexpr char const * end() const noexcept { return this->data() + this->size(); }
 
-    constexpr std::string_view to_sv() const noexcept
+    [[nodiscard]] constexpr std::string_view to_sv() const noexcept
     {
         return std::string_view(c_str(), size());
     }
 
-    std::string to_string() const
+    [[nodiscard]] std::string to_string() const
     {
         return std::string(c_str(), size());
     }

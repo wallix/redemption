@@ -38,7 +38,7 @@ public:
     virtual int add(Widget * w) = 0;
     virtual void remove(const Widget * w) = 0;
 
-    virtual Widget * get(int index) const = 0;
+    [[nodiscard]] virtual Widget * get(int index) const = 0;
 
     virtual int get_first() = 0;
     virtual int get_last() = 0;
@@ -67,7 +67,7 @@ public:
     int add(Widget * w) override;
     void remove(const Widget * w) override;
 
-    Widget * get(int index) const override;
+    [[nodiscard]] Widget * get(int index) const override;
 
     int get_first() override;
     int get_last() override;
@@ -119,7 +119,7 @@ public:
 
     virtual void draw_inner_free(Rect clip, BGRColor bg_color);
 
-    virtual BGRColor get_bg_color() const
+    [[nodiscard]] virtual BGRColor get_bg_color() const
     {
         return this->bg_color;
     }

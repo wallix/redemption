@@ -36,9 +36,9 @@ namespace ocr
         : components{c1, c2, c3}
         {}
 
-        constexpr value_type red()   const noexcept { return this->components[0]; }
-        constexpr value_type green() const noexcept { return this->components[1]; }
-        constexpr value_type blue()  const noexcept { return this->components[2]; }
+        [[nodiscard]] constexpr value_type red()   const noexcept { return this->components[0]; }
+        [[nodiscard]] constexpr value_type green() const noexcept { return this->components[1]; }
+        [[nodiscard]] constexpr value_type blue()  const noexcept { return this->components[2]; }
 
         void red(value_type x)   noexcept { this->components[0] = x; }
         void green(value_type x) noexcept { this->components[1] = x; }

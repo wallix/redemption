@@ -51,6 +51,6 @@ struct null_mod : public mod_api
 
     void refresh(const Rect /*clip*/) override {}
 
-    bool is_up_and_running() const override { return true; }
+    [[nodiscard]] bool is_up_and_running() const override { return true; }
 };
 

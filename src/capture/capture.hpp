@@ -100,7 +100,7 @@ public:
 
     void enable_kbd_input_mask(bool enable) override;
 
-    bool has_graphic_api() const;
+    [[nodiscard]] bool has_graphic_api() const;
 
     void add_graphic(gdi::GraphicApi & gd);
 
@@ -161,7 +161,7 @@ public:
     void draw(RDPColCache   const & cmd) override;
     void draw(RDPBrushCache const & cmd) override;
 
-    bool has_private_drawable() const {
+    [[nodiscard]] bool has_private_drawable() const {
         return static_cast<bool>(this->gd_drawable_);
     }
 
@@ -181,7 +181,7 @@ private:
     template<class... Ts>
     void draw_impl(const Ts & ... args);
 
-    Rect get_join_visibility_rect() const;
+    [[nodiscard]] Rect get_join_visibility_rect() const;
 
     const bool is_replay_mod;
 

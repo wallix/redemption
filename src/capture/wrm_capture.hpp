@@ -348,7 +348,7 @@ public:
     }
 
 private:
-    std::chrono::microseconds elapsed_time() const
+    [[nodiscard]] std::chrono::microseconds elapsed_time() const
     {
         return ustime(this->timer) - ustime(this->last_sent_timer);
     }

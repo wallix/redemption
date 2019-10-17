@@ -62,11 +62,11 @@ namespace aux_ {
                 return this->mem_first <= p && p < this->mem_last;
             }
 
-            bool empty() const noexcept {
+            [[nodiscard]] bool empty() const noexcept {
                 return this->pos == this->first;
             }
 
-            size_t size_element() const noexcept {
+            [[nodiscard]] size_t size_element() const noexcept {
                 return this->size;
             }
 

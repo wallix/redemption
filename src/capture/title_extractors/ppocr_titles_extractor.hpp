@@ -76,7 +76,7 @@ struct PpOcrTitlesExtractor
         this->title_color_id_selected = bg;
     }
 
-    unsigned selected_titlebar_color_id() const {
+    [[nodiscard]] unsigned selected_titlebar_color_id() const {
         return this->title_color_id_selected;
     }
 
@@ -148,7 +148,7 @@ struct PpOcrTitlesExtractor
     }
 
 private:
-    bool is_title_bar(
+    [[nodiscard]] bool is_title_bar(
         const DrawableImageView & input, unsigned tid,
         mln::box2d const & box, unsigned button_col) const
     {

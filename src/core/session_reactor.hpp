@@ -85,7 +85,7 @@ namespace jln
             Terminate = char(R::Terminate),
         };
 
-        R to_result() const noexcept
+        [[nodiscard]] R to_result() const noexcept
         {
             return static_cast<R>(this->status);
         }
@@ -457,12 +457,12 @@ namespace jln
             return *this;
         }
 
-        int get_fd() const noexcept;
+        [[nodiscard]] int get_fd() const noexcept;
         void set_fd(int fd) noexcept;
 
-        Reactor& get_reactor() const noexcept;
+        [[nodiscard]] Reactor& get_reactor() const noexcept;
 
-        timeval get_current_time() const noexcept;
+        [[nodiscard]] timeval get_current_time() const noexcept;
 
         // void set_timeout(std::chrono::milliseconds ms) noexcept
         // {
@@ -526,9 +526,9 @@ namespace jln
             return R::Ready;
         }
 
-        Reactor& get_reactor() const noexcept;
+        [[nodiscard]] Reactor& get_reactor() const noexcept;
 
-        timeval get_current_time() const noexcept;
+        [[nodiscard]] timeval get_current_time() const noexcept;
 
         TimerContext(TimerExecutor<Ts...>& timer) noexcept
         : timer(timer)
@@ -584,7 +584,7 @@ namespace jln
 
         GroupTimerContext& disable_timeout() noexcept;
 
-        int get_fd() const noexcept;
+        [[nodiscard]] int get_fd() const noexcept;
         void set_fd(int fd) noexcept;
 
         TopExecutor<Ts...>& top;
@@ -754,7 +754,7 @@ namespace jln
         : reactor(reactor)
         {}
 
-        Reactor& get_reactor() const noexcept
+        [[nodiscard]] Reactor& get_reactor() const noexcept
         {
             return this->reactor;
         }
@@ -1111,22 +1111,22 @@ namespace jln
             return this->ctx;
         }
 
-        R terminate() const noexcept
+        [[nodiscard]] R terminate() const noexcept
         {
             return R::Terminate;
         }
 
-        bool is_final_sequence() const noexcept
+        [[nodiscard]] bool is_final_sequence() const noexcept
         {
             return this->i == int{NamedIndexPack::count} - 1;
         }
 
-        IndexSequence index() const noexcept
+        [[nodiscard]] IndexSequence index() const noexcept
         {
             return IndexSequence(this->i);
         }
 
-        char const* sequence_name() const noexcept
+        [[nodiscard]] char const* sequence_name() const noexcept
         {
             return NamedIndexPack::strings[this->i];
         }
@@ -1398,12 +1398,12 @@ namespace jln
             this->fd = fd;
         }
 
-        int get_fd() const noexcept
+        [[nodiscard]] int get_fd() const noexcept
         {
             return this->fd;
         }
 
-        Reactor& get_reactor() const noexcept
+        [[nodiscard]] Reactor& get_reactor() const noexcept
         {
             return this->reactor;
         }
@@ -1731,7 +1731,7 @@ namespace jln
             this->deleter(this, FreeCat::Self);
         }
 
-        bool has_value() const noexcept
+        [[nodiscard]] bool has_value() const noexcept
         {
             return bool(this->shared_ptr);
         }
@@ -2139,7 +2139,7 @@ namespace jln
             }
         }
 
-        bool is_empty() const noexcept
+        [[nodiscard]] bool is_empty() const noexcept
         {
             return !bool(this->node_executors.next);
         }
@@ -2303,7 +2303,7 @@ namespace jln
             }
         }
 
-        bool is_empty() const noexcept
+        [[nodiscard]] bool is_empty() const noexcept
         {
             return !bool(this->node_executors.next);
         }
@@ -2423,7 +2423,7 @@ namespace jln
             }
         }
 
-        bool is_empty() const noexcept
+        [[nodiscard]] bool is_empty() const noexcept
         {
             return !bool(this->node_executors.next);
         }
@@ -2924,7 +2924,7 @@ struct SessionReactor
         this->current_time = now;
     }
 
-    timeval get_current_time() const noexcept
+    [[nodiscard]] timeval get_current_time() const noexcept
     {
         //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
         return this->current_time;
@@ -3028,7 +3028,7 @@ struct SessionReactor
         this->sesman_events_.exec_action(ini);
     }
 
-    bool has_front_event() const noexcept
+    [[nodiscard]] bool has_front_event() const noexcept
     {
         return !this->front_events_.is_empty();
     }
@@ -3049,7 +3049,7 @@ struct SessionReactor
         graphic_fd_events_.clear();
     }
 
-    bool has_graphics_event() const noexcept
+    [[nodiscard]] bool has_graphics_event() const noexcept
     {
         return !this->graphic_events_.is_empty() || !this->graphic_fd_events_.is_empty();
     }

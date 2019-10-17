@@ -56,7 +56,7 @@ public:
 
     virtual void insert_text(const char * text/*, int position = 0*/);
 
-    const char * get_text() const;
+    [[nodiscard]] const char * get_text() const;
 
     void set_xy(int16_t x, int16_t y) override;
 
@@ -68,7 +68,7 @@ public:
 
     void draw_border(Rect clip, BGRColor color);
 
-    virtual Rect get_cursor_rect() const;
+    [[nodiscard]] virtual Rect get_cursor_rect() const;
 
     void draw_current_cursor();
     void draw_cursor(const Rect clip);
