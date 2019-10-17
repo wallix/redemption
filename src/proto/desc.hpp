@@ -240,12 +240,12 @@ struct wrap_type
     using type = T;
 };
 
-#define PROTO_DECL_CLASS_NAME(classname, memname, T)                           \
-    struct classname {                                                         \
-        using proto_type = T;                                                  \
-        proto_type memname;                                                    \
-        proto_type const& proto_value() const noexcept { return memname; }     \
-        static zstring_view proto_name() noexcept { return #classname ""_zv; } \
+#define PROTO_DECL_CLASS_NAME(classname, memname, T)                            \
+    struct classname {                                                          \
+        using proto_type = T;                                                   \
+        proto_type memname;                                                     \
+        proto_type const& _proto_value() const noexcept { return memname; }     \
+        static zstring_view _proto_name() noexcept { return #classname ""_zv; } \
     }
 
 #define PROTO_LOCAL_NAME(name)                                             \
@@ -259,7 +259,7 @@ struct wrap_type
             PROTO_DECL_CLASS_NAME(name, name, typename decltype(t)::type); \
             return ::proto::wrap_type<name>();                             \
         }; }                                                               \
-        static zstring_view proto_name() noexcept { return #name ""_zv; }  \
+        static zstring_view _proto_name() noexcept { return #name ""_zv; } \
         REDEMPTION_DIAGNOSTIC_POP                                          \
     } name {}
 

@@ -404,17 +404,19 @@ namespace mpe = kvasir::mpl::eager;
 //     using f = typename F::template f<xs..., args...>;
 // };
 
+template<auto i>
+using tnumber = mp::integral_constant<decltype(i), i>;
+
 template<class C = mp::identity>
 struct va_plus
 {
     template<class... xs>
-    using f = typename C
-      ::template f<mp::integral_constant<decltype((xs::value + ...)), (xs::value + ...)>>;
+    using f = typename C::template f<tnumber<(xs::value + ...)>>;
 };
 
 struct no_name
 {
-    static constexpr zstring_view proto_name() noexcept
+    static constexpr zstring_view _proto_name() noexcept
     {
         return "no name"_zv;
     }
@@ -1105,6 +1107,32 @@ namespace test
         template<class Ctx, class R>
         State(Ctx&, R&&) -> State<Ctx, R>;
 
+        // negative number -> name index
+        // positive number -> static_min_size
+        template<class Data>
+        struct StateToMinSizeSelector
+        {
+            template<class State, class...>
+            using f = static_min_size_t<State>;
+        };
+
+        template<>
+        struct StateToMinSizeSelector<start_range>
+        {
+            template<class State, class... Names>
+            using f = mp::call<mp::find_if<
+                // TODO State::name
+                // list<Name...> of next_state<Data, variable<T, Name...>>
+                mp::same_as<mp::call<mp::unpack<mp::at1<mp::unpack<mp::pop_front<>>>>, State>>,
+                mp::size<mp::negate<>>,
+                mp::size<>
+            >, Names...>;
+        };
+
+        template<>
+        struct StateToMinSizeSelector<stop_range> : StateToMinSizeSelector<start_range>
+        {};
+
         struct stream_readable2
         {
             template<class Data, class BasicType>
@@ -1141,6 +1169,35 @@ namespace test
                     std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...>;
             };
 
+            template<class>
+            struct StartRangeNameFilter
+            {
+                using type = mp::list<>;
+            };
+
+            template<class... Name>
+            struct StartRangeNameFilter<lazy_value<start_range, Name...>>
+            {
+                using type = mp::list<mp::list<Name...>>;
+            };
+
+            template<class... Names>
+            struct StartRangeNames
+            {
+                template<class... NextStates>
+                using next_state_to_static_min_size = mp::list<
+                    mp::call<
+                        StateToMinSizeSelector<mp::eager::at<NextStates, 0>>,
+                        NextStates, Names...
+                    >...
+                >;
+            };
+
+            using filter_start_range_name = mp::transform<
+                mp::cfl<StartRangeNameFilter>,
+                mp::join<mp::cfe<StartRangeNames>>
+            >;
+
             template<class Params, class Values, class ErrorFn, class... Xs>
             static auto make_context(bytes_view buf, ErrorFn& error, Xs const&... xs)
             {
@@ -1159,6 +1216,19 @@ namespace test
                     >,
                     Values
                 >;
+
+                using start_range_names = mp::call<mp::unpack<filter_start_range_name>, Values>;
+                println("--", type_name<start_range_names>());
+                println("--", type_name<mp::call<
+                    mp::unpack<
+                        mp::transform<
+                            mp::push_front<tparams&, mp::cfl<LazyValueToNextValue>>,
+                            mp::cfe<start_range_names::template next_state_to_static_min_size>
+                        >
+                    >,
+                    Values
+                >>());
+
 
                 using ctx_values = mp::eager::at<states_list, 0>;
                 using size = mp::eager::at<states_list, 1>;
@@ -1389,7 +1459,6 @@ namespace test
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = read_data<DataSize>::read(ctx.in);
-                println(std::dec, "size: ", type_name<Name>(), ' ', int(n), "  ", ctx.in.in_remain());
             }
         };
 
@@ -1419,7 +1488,6 @@ namespace test
             static auto make(Ctx& ctx, val<Data, Bytes>& v)
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
-                println(std::dec, "data: ", type_name<Name>(), ' ', int(n), "  ", ctx.in.in_remain());
 
                 if (ctx.unchecked_size < n) {
                     ctx.error(Name{}, n, ctx.in.get_capacity());
@@ -1578,7 +1646,7 @@ namespace n1 {
     template<class T>
     std::ostream& operator<<(std::ostream& out, A<T> const& x)
     {
-        return out << x.proto_value();
+        return out << x._proto_value();
     }
 }
 namespace n2 {
@@ -1587,7 +1655,7 @@ namespace n2 {
     template<class T>
     std::ostream& operator<<(std::ostream& out, A<T> const& x)
     {
-        return out << x.proto_value();
+        return out << x._proto_value();
     }
 }
 
@@ -1634,7 +1702,7 @@ namespace detail
 #define PROTO_PACKET_I(name, cname, list)                                   \
     struct name {                                                           \
         BOOST_PP_LIST_FOR_EACH(PROTO_PACKET_TYPE_DISPATCH, _, list)         \
-        static zstring_view proto_name() { return cname ""_zv; }            \
+        static zstring_view _proto_name() { return cname ""_zv; }           \
     };                                                                      \
     constexpr inline ::proto::tuple<                                        \
         class name,                                                         \
@@ -1664,12 +1732,13 @@ namespace X224
             [](auto field, std::size_t n, std::size_t capacity) {
                 char s[128];
                 snprintf(s, sizeof(s), "Truncated %s: field '%s': stream.size=%zu expected=%zu",
-                    decltype(pkt)::proto_name().c_str(), field.proto_name().c_str(), capacity, n);
+                    decltype(pkt)::_proto_name().c_str(), field._proto_name().c_str(), capacity, n);
                 throw std::runtime_error(s);
             },
             pkt);
     };
 }
+
 
 int main()
 {
@@ -1730,7 +1799,7 @@ int main()
     auto error_fn = [](auto field, std::size_t n, std::size_t capacity){
         char s[128];
         snprintf(s, sizeof(s), "buf is too short: field '%s': stream.size=%zu expected=%zu",
-            field.proto_name().c_str(), capacity, n);
+            field._proto_name().c_str(), capacity, n);
         throw std::runtime_error(s);
     };
 
@@ -1764,7 +1833,7 @@ int main()
         println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
 
         auto p = [](auto const& x){
-            println(x.proto_name(), ": ", x.proto_value());
+            println(x._proto_name(), ": ", x._proto_value());
         };
         datas.apply([&](auto const&... xs) {
             (p(xs), ...);
