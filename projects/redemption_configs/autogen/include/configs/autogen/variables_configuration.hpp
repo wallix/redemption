@@ -2731,7 +2731,7 @@ namespace cfg {
         type value{};
     };
     /// Verify text data via clipboard from client to server <br/>
-    /// Uploaded files verification must be enabled  (Enable up) <br/>
+    /// File verification on upload must be enabled via option Enable up <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:clipboard_text_up <br/>
@@ -2750,7 +2750,7 @@ namespace cfg {
         type value{};
     };
     /// Verify text data via clipboard from server to client <br/>
-    /// Downloaded files verification must be enabled (Enable down) <br/>
+    /// File verification on download must be enabled via option Enable down <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:clipboard_text_down <br/>

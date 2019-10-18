@@ -283,11 +283,11 @@ enable_up = boolean(default=False)
 enable_down = boolean(default=False)
 
 # Verify text data via clipboard from client to server
-# Uploaded files verification must be enabled  (Enable up)
+# File verification on upload must be enabled via option Enable up
 clipboard_text_up = boolean(default=False)
 
 # Verify text data via clipboard from server to client
-# Downloaded files verification must be enabled (Enable down)
+# File verification on download must be enabled via option Enable down
 clipboard_text_down = boolean(default=False)
 
 #_advanced
