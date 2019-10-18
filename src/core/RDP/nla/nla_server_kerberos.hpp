@@ -233,7 +233,8 @@ class rdpCredsspServerKerberos final
 
         bool get_service_name(array_view_const_char server, gss_name_t * name) {
             gss_buffer_desc output;
-            OM_uint32 major_status, minor_status;
+            OM_uint32 major_status;
+            OM_uint32 minor_status;
             const char service_name[] = "TERMSRV";
             gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
             auto size = (strlen(service_name) + 1 + server.size() + 1);
@@ -485,7 +486,8 @@ class rdpCredsspServerKerberos final
             if (!this->krb_ctx) {
                 return SEC_E_NO_CONTEXT;
             }
-            gss_buffer_desc inbuf, outbuf;
+            gss_buffer_desc inbuf;
+            gss_buffer_desc outbuf;
             inbuf.value = const_cast<uint8_t*>(data_in.data()); /*NOLINT*/
             inbuf.length = data_in.size();
             // LOG(LOG_INFO, "GSS_UNWRAP inbuf length : %d", inbuf.length);
@@ -506,7 +508,8 @@ class rdpCredsspServerKerberos final
         void report_error(OM_uint32 code, const char *str,
                           OM_uint32 major_status, OM_uint32 minor_status)
         {
-            OM_uint32 msgctx = 0, ms;
+            OM_uint32 msgctx = 0;
+            OM_uint32 ms;
             gss_buffer_desc status_string;
 
             LOG(LOG_ERR, "GSS error [%u:%u:%u]: %s",
@@ -539,7 +542,8 @@ class rdpCredsspServerKerberos final
         bool mech_available(gss_OID mech)
         {
             int mech_found;
-            OM_uint32 major_status, minor_status;
+            OM_uint32 major_status;
+            OM_uint32 minor_status;
             gss_OID_set mech_set;
 
             mech_found = 0;
