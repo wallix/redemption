@@ -82,14 +82,14 @@ namespace redemption_unit_test__
     template<class T>
     void compute_obj_sig(SigArray& sig, T const& obj)
     {
-        if constexpr (std::is_convertible<T const&, ConstImageDataView>::value)
+        if constexpr (std::is_convertible<T const&, ConstImageDataView>::value) /* NOLINT */
         {
             ConstImageDataView image = obj;
             ::redemption_unit_test__::compute_av_sig2(
                 sig, image.data(), image.height(), image.line_size());
         }
         else if constexpr (std::is_convertible<T const&, InStream const&>::value
-                        || std::is_convertible<T const&, OutStream const&>::value)
+                        || std::is_convertible<T const&, OutStream const&>::value) /* NOLINT */
         {
           ::redemption_unit_test__::compute_stream_sig(sig, obj);
         }

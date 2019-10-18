@@ -26,7 +26,6 @@
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
-#include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include "utils/genrandom.hpp"

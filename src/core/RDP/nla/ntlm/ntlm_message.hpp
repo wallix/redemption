@@ -2180,27 +2180,29 @@ inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
 
     self.negoFlags.flags = stream.in_uint32_le();
     
-    uint16_t DomainName_len = stream.in_uint16_le();
-    uint16_t DomainName_maxlen = stream.in_uint16_le();
-    (void)DomainName_maxlen; // ensure it's identical to len
-    // to check: DomainName_len == DomainName_maxlen
-    if (not (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED)) {
-        DomainName_maxlen = DomainName_len = 0;
+    uint16_t DomainName_len = 0;
+    uint16_t DomainName_maxlen = 0;
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED) {
+        DomainName_len = stream.in_uint16_le();
+        DomainName_maxlen = stream.in_uint16_le();
+    }
+    if (DomainName_maxlen != DomainName_len){
+        LOG(LOG_ERR, "Wrong Domain Field Size in NTLM Negotiate: %u != %u", DomainName_maxlen, DomainName_len);
     }
     self.DomainName.bufferOffset = stream.in_uint32_le();
     // to check: bufferOffset is inside stream, bufferOffset+len is inside stream
 
-
-    uint16_t Workstation_len = stream.in_uint16_le();
-    uint16_t Workstation_maxlen = stream.in_uint16_le();
-    (void)Workstation_maxlen; // ensure it's identical to len
-    // to check: DomainName_len == DomainName_maxlen
-    if (not (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)) {
-        Workstation_maxlen = Workstation_len = 0;
+    uint16_t Workstation_len = 0;
+    uint16_t Workstation_maxlen = 0;
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
+        Workstation_len = stream.in_uint16_le();
+        Workstation_maxlen = stream.in_uint16_le();
+    }
+    if (Workstation_maxlen != Workstation_len){
+        LOG(LOG_ERR, "Wrong Worksation Field Size in NTLM Negotiate: %u != %u", Workstation_maxlen, Workstation_len);
     }
     self.Workstation.bufferOffset = stream.in_uint32_le();
     // to check: bufferOffset is inside stream, bufferOffset+len is inside stream
-    
 
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());

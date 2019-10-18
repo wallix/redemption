@@ -48,14 +48,14 @@ struct zstring_view
 
     class is_zero_terminated {};
 
-    constexpr zstring_view(is_zero_terminated const&, char const* s, std::size_t n) noexcept
+    constexpr zstring_view(is_zero_terminated const& /*tag*/, char const* s, std::size_t n) noexcept
     : s(s)
     , len(n)
     {
         assert(s[len] == 0);
     }
 
-    constexpr zstring_view(is_zero_terminated const&, array_view_const_char str) noexcept
+    constexpr zstring_view(is_zero_terminated const& /*tag*/, array_view_const_char str) noexcept
     : zstring_view(is_zero_terminated{}, str.data(), str.size())
     {}
 

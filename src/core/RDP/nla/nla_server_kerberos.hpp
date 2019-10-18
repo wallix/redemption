@@ -24,7 +24,6 @@
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
-#include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
 
 #ifndef __EMSCRIPTEN__
@@ -237,7 +236,7 @@ class rdpCredsspServerKerberos final
             OM_uint32 major_status, minor_status;
             const char service_name[] = "TERMSRV";
             gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
-            int size = (strlen(service_name) + 1 + server.size() + 1);
+            auto size = (strlen(service_name) + 1 + server.size() + 1);
 
             auto output_value = std::make_unique<char[]>(size);
             output.value = output_value.get();

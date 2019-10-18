@@ -190,7 +190,7 @@ namespace redemption_unit_test__
         stmt, Error,                                   \
         [&](Error const & e__) {                       \
             RED_CHECK_EQUAL(e__.id, ErrId);            \
-            return (e__.id == ErrId);                  \
+            return (e__.id == (ErrId));                \
         }                                              \
     )
 
@@ -264,7 +264,7 @@ std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& 
   {                                                         \
     void operator()(std::ostream& out,type const & x) const \
     {                                                       \
-      out << stream_expr;                                   \
+      out << stream_expr; /* NOLINT */                      \
     }                                                       \
   }
 

@@ -259,7 +259,7 @@ namespace BER {
 
     inline bool check_ber_ctxt_tag(bytes_view s, uint8_t tag)
     {
-        if (s.size() < 1) {
+        if (s.empty()) {
             return false;
         }
         return s[0] == (CLASS_CTXT|PC_CONSTRUCT|tag);
@@ -267,7 +267,7 @@ namespace BER {
 
     inline std::pair<size_t, bytes_view> pop_length(bytes_view s, const char * message, error_type eid) {
         // read length
-        if (s.size() < 1) {
+        if (s.empty()) {
             LOG(LOG_ERR, "%s: Ber parse error", message);
             throw Error(eid);
         }
@@ -310,7 +310,7 @@ namespace BER {
 
     inline bytes_view pop_check_tag(bytes_view s, uint8_t tag, const char * message, error_type eid)
     {
-        if (s.size() < 1) {
+        if (s.empty()) {
             LOG(LOG_ERR, "%s: Ber data truncated", message);
             throw Error(eid);
         }
@@ -898,7 +898,7 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     /* [5] clientNonce (OCTET STRING) */
     if (self.use_version >= 5){
         self.clientNonce.clientNonce = BER::read_optional_octet_string(stream, 5, "TSRequest [5] clientNonce", ERR_CREDSSP_TS_REQUEST);
-        if (self.clientNonce.clientNonce.size() > 0){
+        if (not self.clientNonce.clientNonce.empty()){
             self.clientNonce.initialized = true;
         }
     }
@@ -1049,7 +1049,7 @@ inline std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
     auto ber_containerName_Header = BER::mkOptionalOctetStringFieldHeader(containerName.size(), 3);
     auto ber_cspName_Header       = BER::mkOptionalOctetStringFieldHeader(cspName.size(), 4);
 
-    int innerSize = ber_keySpec_Field.size()
+    auto innerSize = ber_keySpec_Field.size()
                   + ber_cardName_Header.size() + cardName.size()
                   + ber_readerName_Header.size() + readerName.size()
                   + ber_containerName_Header.size() + containerName.size()
