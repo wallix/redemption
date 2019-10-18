@@ -71,14 +71,12 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase4)
 
 RED_AUTO_TEST_CASE(TestBEROctetString)
 {
-    StaticOutStream<2048> s;
     const uint8_t oct_str[] = {1, 2, 3, 4, 5, 6, 7};
 
     auto r = BER::mkOctetStringHeader(sizeof(oct_str));
     r.insert(r.end(), oct_str, oct_str+sizeof(oct_str));
 
-    InStream in_s(r);
-    int length = BER::read_tag_length(in_s, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TestOctetString", ERR_CREDSSP_TS_REQUEST);
+    auto [length, queue] = BER::pop_tag_length(r, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TestOctetString", ERR_CREDSSP_TS_REQUEST);
     RED_CHECK_EQUAL(length, 7);
 }
 

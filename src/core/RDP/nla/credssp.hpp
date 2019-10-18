@@ -327,22 +327,6 @@ namespace BER {
         return pop_length(pop_check_tag(s, tag, message, eid), message, eid);
     }
 
-    inline unsigned read_tag_length(InStream & s, uint8_t tag, const char * message, error_type eid)
-    {
-        if (!s.in_check_rem(1)) {
-            LOG(LOG_ERR, "%s: Ber data truncated", message);
-            throw Error(eid);
-        }
-        uint8_t tag_byte = s.in_uint8();
-        if (tag_byte != tag) { /*NOLINT*/
-            LOG(LOG_ERR, "%s: Ber unexpected tag", message);
-            throw Error(eid);
-        }
-        auto [len, queue] = pop_length(s.remaining_bytes(), message, eid);
-        s.in_skip_bytes(s.in_remain()-queue.size());
-        return len;
-    }
-
     inline std::pair<int, bytes_view> pop_integer(bytes_view s, const char * message, error_type eid) 
     {
         auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
