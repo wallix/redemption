@@ -1,3 +1,9 @@
+redemption (7.3.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * update icap descriptions
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 18 Oct 2019 16:34:20 +0200
+
 redemption (7.3.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Selector's columns smart resizing.
