@@ -85,7 +85,6 @@ big_mem='exe libs
   tests/lib
   tests/server
   tests/client_mods
-  tests/client_redemption/client_channels
   tests/mod/rdp.norec
   tests/mod/vnc.norec'
 build $toolset_gcc cxxflags=-g -j2 ocr_tools
