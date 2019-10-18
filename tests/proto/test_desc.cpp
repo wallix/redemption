@@ -752,7 +752,7 @@ namespace test
     }
 
     template<class... Ts, class F>
-    auto apply(mp::list<Ts...>, F&& f)
+    constexpr auto apply(mp::list<Ts...>, F&& f)
     {
         return f(Ts{}...);
     }
@@ -1085,12 +1085,51 @@ namespace test
             }
         };
 
+        template<class CheckedSizes>
+        struct CheckedRanges
+        {
+            using size_type = std::size_t;
 
-        template<class TParams, class TCtxValues, class ErrorFn>
+            CheckedRanges(size_type size)
+            {
+                this->unchecked_sizes[0] = size;
+            }
+
+            void push(size_type size)
+            {
+                ++this->unchecked_pos;
+                this->unchecked_sizes[this->unchecked_pos] = size;
+            }
+
+            void pop()
+            {
+                --this->unchecked_pos;
+            }
+
+            size_type& unchecked_size()
+            {
+                return this->unchecked_sizes[this->unchecked_pos];
+            }
+
+            template<class Name>
+            auto& get(Name)
+            {
+                return get_var<Name>(this->states).value;
+            }
+
+        private:
+            // TODO optimal size:
+            // start1 stop1 start2 stop2 -> size = 1
+            std::array<size_type, mp::eager::size<CheckedSizes>::value> unchecked_sizes;
+            size_type unchecked_pos = 0;
+            mp::call<mp::unpack<mp::cfe<tuple>>, CheckedSizes> states;
+        };
+
+        template<class TParams, class TCtxValues, class ErrorFn, class CheckedSizes>
         struct Ctx
         {
             InStream in;
-            std::size_t unchecked_size;
+            CheckedRanges<CheckedSizes> ranges;
             TParams params;
             TCtxValues ctx_values;
             ErrorFn error;
@@ -1128,6 +1167,7 @@ namespace test
                 mp::size<>
             >, Names...>;
         };
+
 
         template<>
         struct StateToMinSizeSelector<stop_range> : StateToMinSizeSelector<start_range>
@@ -1169,33 +1209,68 @@ namespace test
                     std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...>;
             };
 
-            template<class>
-            struct StartRangeNameFilter
+            template<class State, class x>
+            struct MinSizeByRange;
+
+            template<std::size_t MinRemain, bool IsInclusive>
+            struct size_info
             {
-                using type = mp::list<>;
+                static constexpr std::size_t static_min_remain = MinRemain;
+                static constexpr std::false_type is_inclusive {};
             };
 
-            template<class... Name>
-            struct StartRangeNameFilter<lazy_value<start_range, Name...>>
+            template<std::size_t MinRemain>
+            struct size_info<MinRemain, true>
             {
-                using type = mp::list<mp::list<Name...>>;
+                static constexpr std::size_t static_min_remain = MinRemain;
+                static constexpr std::true_type is_inclusive {};
+
+                uint8_t const* ptr;
             };
 
-            template<class... Names>
-            struct StartRangeNames
+            template<class n, class... xs, class NextState>
+            struct MinSizeByRange<mp::list<n, xs...>, NextState>
             {
-                template<class... NextStates>
-                using next_state_to_static_min_size = mp::list<
-                    mp::call<
-                        StateToMinSizeSelector<mp::eager::at<NextStates, 0>>,
-                        NextStates, Names...
-                    >...
+                using type = mp::list<
+                    mp::int_<n::value + static_min_size_t<NextState>::value>,
+                    xs...>;
+            };
+
+            using exclusive_range = mp::bool_<0>;
+            using inclusive_range = mp::bool_<1>;
+
+            template<class n, class T, class... xs, class Name>
+            struct MinSizeByRange<mp::list<n, xs...>, next_value<start_range, variable<T, Name>>>
+            {
+                using type = mp::list<mp::int_<0>, Name, n, exclusive_range, xs...>;
+            };
+
+            template<class D, class n, class T, class... xs, class Name, class previous_n, class RngTag>
+            struct MinSizeByRange<mp::list<n, Name, previous_n, RngTag, xs...>, next_value<D, variable<T, Name>>>
+            {
+                using type = mp::list<mp::int_<0>, Name, n, inclusive_range, xs...>;
+            };
+
+            template<class n, class T, class... xs, class Name, class previous_n, class RngTag>
+            struct MinSizeByRange<mp::list<n, Name, previous_n, RngTag, xs...>, next_value<stop_range, variable<T, Name>>>
+            {
+                using type = mp::list<
+                    mp::int_<previous_n::value + n::value>,
+                    xs...,
+                    variable<size_info<n::value, RngTag::value>, Name>
                 >;
             };
 
-            using filter_start_range_name = mp::transform<
-                mp::cfl<StartRangeNameFilter>,
-                mp::join<mp::cfe<StartRangeNames>>
+            template<class x, class... xs>
+            using _final_context_sizes_t = mp::list<
+                variable<size_info<x::value, exclusive_range::value>, void>,
+                xs...>;
+
+            using compute_sizes_t = mp::push_front<
+                mp::list<mp::int_<0>>,
+                mp::fold_left<
+                    mp::cfl<MinSizeByRange>,
+                    mp::unpack<mp::cfe<_final_context_sizes_t>>>
             >;
 
             template<class Params, class Values, class ErrorFn, class... Xs>
@@ -1209,7 +1284,7 @@ namespace test
                             mp::fork<
                                 mp::transform<mp::cfe<context_value_list_t>,
                                     mp::join<mp::cfe<tuple>>>,
-                                mp::transform<mp::cfe<static_min_size_t>, va_plus<>>,
+                                compute_sizes_t,
                                 mp::listify
                             >
                         >
@@ -1217,28 +1292,16 @@ namespace test
                     Values
                 >;
 
-                using start_range_names = mp::call<mp::unpack<filter_start_range_name>, Values>;
-                println("--", type_name<start_range_names>());
-                println("--", type_name<mp::call<
-                    mp::unpack<
-                        mp::transform<
-                            mp::push_front<tparams&, mp::cfl<LazyValueToNextValue>>,
-                            mp::cfe<start_range_names::template next_state_to_static_min_size>
-                        >
-                    >,
-                    Values
-                >>());
-
-
                 using ctx_values = mp::eager::at<states_list, 0>;
-                using size = mp::eager::at<states_list, 1>;
+                using sizes = mp::eager::at<states_list, 1>;
+                using info_type = mp::call<mp::unpack<mp::front<mp::unpack<mp::front<>>>>, sizes>;
 
-                if (buf.size() < size::value) {
-                    error(no_name{}, size::value, buf.size());
+                if (buf.size() < info_type::static_min_remain) {
+                    error(no_name{}, info_type::static_min_remain, buf.size());
                 }
 
-                return Ctx<tparams, ctx_values, ErrorFn&>{
-                    InStream{buf}, buf.size() - size::value,
+                return Ctx<tparams, ctx_values, ErrorFn&, sizes>{
+                    InStream{buf}, buf.size() - info_type::static_min_remain,
                     detail::build_params2<stream_readable2, Params>(xs...),
                     ctx_values{} /** TODO uninit<ctx_values> ? **/, error
                 };
@@ -1393,8 +1456,20 @@ namespace test
         template<class Data, class DataSize>
         struct stream_readable2::value_variable_builder_impl<
             Data, datas::types::PktSize<DataSize>>
-        : stream_readable2::value_variable_builder<DataSize, void>
-        {};
+        {
+            static auto make(native)
+            {
+                return lazy<datas::types::PktSize<DataSize>>{};
+            }
+
+            static auto make(ref<value_type_t<proto_basic_type_t<DataSize>>> r)
+            {
+                return val<
+                    datas::types::PktSize<DataSize>,
+                    value_type_t<proto_basic_type_t<DataSize>>&
+                >{r.x};
+            }
+        };
 
 
         template<class Name, class T>
@@ -1423,6 +1498,37 @@ namespace test
             static auto make(Ctx& ctx, lazy<Data>)
             {
                 return make_mem<Name>(read_data<Data>::read(ctx.in));
+            }
+        };
+
+        template<class Name, class Data>
+        struct stream_readable2::next_value<as_param,
+            variable<lazy<datas::types::PktSize<Data>>, Name>>
+        {
+            using static_min_size = static_min_size_t<read_data<Data>>;
+
+            using var_size = variable<value_type_t<Data>, datas::types::PktSize<Name>>;
+            using context_value_list = mp::list<var_size>;
+
+            template<class Ctx>
+            static auto make(Ctx& ctx, lazy<datas::types::PktSize<Data>>)
+            {
+                auto& n = static_cast<var_size&>(ctx.ctx_values).value;
+                n = read_data<Data>::read(ctx.in);
+
+                auto& info = ctx.ranges.get(Name{});
+
+                println(type_name(info));
+                if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
+                {
+                    auto remain = ctx.in.in_remain() - (ctx.in.get_current() - info.ptr);
+                    if (REDEMPTION_UNLIKELY(remain < info.static_min_size)) {
+                        ctx.error(Name{}, info.static_min_size, remain);
+                    }
+                    ctx.ranges.push(remain - info.static_min_size);
+                }
+
+                return make_mem<Name>(value_type_t<Data>(n));
             }
         };
 
@@ -1489,32 +1595,74 @@ namespace test
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
 
-                if (ctx.unchecked_size < n) {
-                    ctx.error(Name{}, n, ctx.in.get_capacity());
+                println("bytes: ", ctx.ranges.unchecked_size(), "/", n);
+                std::flush(std::cout);
+                if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size() < n))
+                {
+                    ctx.error(Name{}, n, ctx.in.in_remain());
                 }
-                ctx.unchecked_size -= n;
+                ctx.ranges.unchecked_size() -= n;
 
                 return make_mem<Name>(read_data_bytes(ctx.in, v.x, n));
             }
         };
 
-        struct empty_next_value
+        template<class T, class Name>
+        struct stream_readable2::next_value<start_range, variable<T, Name>>
         {
             using static_min_size = mp::int_<0>;
             using context_value_list = mp::list<>;
 
-            template<class St, class X>
-            static void make(St&, X const&)
-            {}
+            template<class Ctx, class X>
+            static void make(Ctx& ctx, X const&)
+            {
+                auto& info = ctx.ranges.get(Name{});
+
+                println("start: ", type_name(info), "  min: ", info.static_min_remain);
+                if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
+                {
+                    info.ptr = ctx.in.get_current();
+                }
+                else
+                {
+                    auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
+                    if (REDEMPTION_UNLIKELY(rng_size <= info.static_min_remain)) {
+                        ctx.error(Name{}, info.static_min_remain, rng_size);
+                    }
+
+                    if (REDEMPTION_UNLIKELY(ctx.in.in_remain() < rng_size)) {
+                        ctx.error(Name{}, rng_size, ctx.in.in_remain());
+                    }
+
+                    ctx.ranges.push(rng_size - info.static_min_remain);
+                    println("unchecked_size: ", ctx.ranges.unchecked_size());
+                }
+            }
         };
 
-        template<class V>
-        struct stream_readable2::next_value<start_range, V>
-        : empty_next_value {};
+        template<class T, class Name>
+        struct stream_readable2::next_value<stop_range, variable<T, Name>>
+        {
+            using static_min_size = mp::int_<0>;
+            using context_value_list = mp::list<>;
 
-        template<class V>
-        struct stream_readable2::next_value<stop_range, V>
-        : empty_next_value {};
+            template<class Ctx, class X>
+            static void make(Ctx& ctx, X const&)
+            {
+                println("stop: ", type_name<Name>(), ' ', ctx.ranges.unchecked_size());
+                std::flush(std::cout);
+                if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size())) {
+                    ctx.error(Name{}, ctx.ranges.unchecked_size(), 0);
+                }
+                ctx.ranges.pop();
+
+                auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
+                ctx.ranges.unchecked_size() -= rng_size;
+                // if (REDEMPTION_UNLIKELY(rng_size <= info.static_min_remain)) {
+                //     ctx.error(Name{}, info.static_min_remain, rng_size);
+                // }
+            }
+        };
 
         template<class Int, class Endianess>
         struct stream_readable2::read_data_impl<datas::types::Integer<Int, Endianess>>
@@ -1773,71 +1921,101 @@ int main()
         ss.d = test::stop()
     );
 
-    auto print_list = [](char const* s, auto l){
-        print(s, ":\n");
-        test::apply(l, [&](auto... xs){
-            (println("  ", type_name(xs)), ...);
-        });
-    };
-
-    uint8_t a = 0x78;
-    uint16_t b = 0x1f23;
-
-    // println('\n', type_name(test::definition2(u8[s.a])));
-    println("definition:\n  ", type_name(def));
-    print_list("params", def.params());
-    print_list("values", def.values());
-
-    print("\n\ninplace_emit:\n\n");
-    std::array<uint8_t, 30> buf {};
-    auto out = test::inplace_emit(buf, def,
-        s.b = b, s.a = a, s.c = "plop"_av, s.size = native(),
-        ss.d = native(), ss.e = a,
-        sss.e = b);
-    dump(out);
-
     auto error_fn = [](auto field, std::size_t n, std::size_t capacity){
+        std::flush(std::cout);
         char s[128];
-        snprintf(s, sizeof(s), "buf is too short: field '%s': stream.size=%zu expected=%zu",
+        snprintf(s, sizeof(s), "buf is too short: field '%s': stream.in_remain=%zu expected=%zu",
             field._proto_name().c_str(), capacity, n);
         throw std::runtime_error(s);
     };
 
-    {
-        print("\n\ninplace_recv2:\n");
-        char strbuf[10];
-        a = '0';
-        auto datas = test::inplace_recv2(out, error_fn, def,
-            s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native(),
-            ss.d = native(), ss.e = native(),
-            sss.e = native());
-        println("\n", type_name(datas));
-        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-        println("datas.b = ", datas.b, " ", type_name<decltype(datas.b)>());
-        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-        println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
-        println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
-        println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
-        println("a = ", a);
-    }
+    uint8_t a = 0x78;
+    // uint16_t b = 0x1f23;
+
+    // auto print_list = [](char const* s, auto l){
+    //     print(s, ":\n");
+    //     test::apply(l, [&](auto... xs){
+    //         (println("  ", type_name(xs)), ...);
+    //     });
+    // };
+    //
+    // // println('\n', type_name(test::definition2(u8[s.a])));
+    // println("definition:\n  ", type_name(def));
+    // print_list("params", def.params());
+    // print_list("values", def.values());
+    //
+    // print("\n\ninplace_emit:\n\n");
+    // std::array<uint8_t, 30> buf {};
+    // auto out = test::inplace_emit(buf, def,
+    //     s.b = b, s.a = a, s.c = "plop"_av, s.size = native(),
+    //     ss.d = native(), ss.e = a,
+    //     sss.e = b);
+    // dump(out);
+    //
+    // {
+    //     print("\n\ninplace_recv2:\n");
+    //     char strbuf[10];
+    //     a = '0';
+    //     auto datas = test::inplace_recv2(out, error_fn, def,
+    //         s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native(),
+    //         ss.d = native(), ss.e = native(),
+    //         sss.e = native());
+    //     println("\n", type_name(datas));
+    //     println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+    //     println("datas.b = ", datas.b, " ", type_name<decltype(datas.b)>());
+    //     println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+    //     println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
+    //     println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
+    //     println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
+    //     println("a = ", a);
+    // }
+    //
+    // {
+    //     print("\n\ninplace_struct:\n");
+    //     auto datas = test::inplace_struct(out, error_fn, def);
+    //     println("\n", type_name(datas));
+    //     println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+    //     println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
+    //     println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+    //     println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
+    //     println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
+    //     println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
+    //
+    //     auto p = [](auto const& x){
+    //         println(x._proto_name(), ": ", x._proto_value());
+    //     };
+    //     datas.apply([&](auto const&... xs) {
+    //         (p(xs), ...);
+    //     });
+    // }
 
     {
-        print("\n\ninplace_struct:\n");
-        auto datas = test::inplace_struct(out, error_fn, def);
-        println("\n", type_name(datas));
-        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-        println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
-        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-        println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
-        println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
-        println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
+        auto def = test::definition(
+            ss.d = pkt_size(u16_be),
+            ss.d = test::start(),
 
-        auto p = [](auto const& x){
-            println(x._proto_name(), ": ", x._proto_value());
-        };
-        datas.apply([&](auto const&... xs) {
-            (p(xs), ...);
-        });
+            s.c = test::type(ascii_string(u16_be)),
+            s.c = values::size_bytes,
+            s.c = values::data,
+
+            ss.d = test::stop(),
+
+            s.a = u8
+        );
+
+        std::array<uint8_t, 30> buf {};
+        auto out = test::inplace_emit(buf, def, s.a = a, s.c = "plop"_av, ss.d = native());
+        dump(out);
+
+        std::dec(std::cout);
+
+        print("\n\nbounds error:\n\n");
+        // "\x00\x06\x00\x04\x70\x6c\x6f\x70\x78"
+        auto datas = test::inplace_struct("\x00\x07\x00\x05\x70\x6c\x6f\x70\x78"_av, error_fn, def);
+        println();
+        println("datas.d = ", datas.d);
+        println("datas.c = ", datas.c);
+        println("datas.a = ", int(datas.a));
     }
 
     // {
