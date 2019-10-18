@@ -42,6 +42,9 @@ echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARN
 valgrind_compiler=gcc-9
 toolset_gcc=toolset=gcc-9
 toolset_clang=toolset=clang-8.0
+export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
+export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
+export FFMPEG_LINK_MODE=static
 
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 
