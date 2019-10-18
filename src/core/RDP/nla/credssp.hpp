@@ -382,9 +382,13 @@ namespace BER {
 
     inline std::vector<uint8_t> read_mandatory_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
     {
-        BER::read_tag_length(stream, CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
-        uint32_t length = BER::read_tag_length(stream, CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message, eid);
-        auto av = stream.in_skip_bytes(length);
+        auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
+        stream.in_skip_bytes(stream.in_remain()-queue1.size());
+
+        auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message, eid);
+        stream.in_skip_bytes(stream.in_remain()-queue2.size());
+
+        auto av = stream.in_skip_bytes(length2);
         return {av.data(), av.data()+av.size()};
     }
 
@@ -853,12 +857,14 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     TSRequest self(6);
 
     /* TSRequest */
-    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    auto [length, queue] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request",    ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue.size());
+
 
     // version    [0] INTEGER,
-    auto [value, queue] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
-    stream.in_skip_bytes(stream.in_remain()-queue.size());
-    self.use_version = value;
+    auto [value8, queue8] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue8.size());
+    self.use_version = value8;
     if (verbose) {
         LOG(LOG_INFO, "Credssp recvTSRequest() Remote Version %u", self.use_version);
     }
@@ -866,8 +872,8 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
     // [1] negoTokens (NegoData) OPTIONAL
     if (BER::check_ber_ctxt_tag(stream.remaining_bytes(), 1)) {
         stream.in_skip_bytes(1);
-        auto [len, queue] = BER::pop_length(stream.remaining_bytes(), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
-        stream.in_skip_bytes(stream.in_remain()-queue.size());
+        auto [len0, queue0] = BER::pop_length(stream.remaining_bytes(), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
+        stream.in_skip_bytes(stream.in_remain()-queue0.size());
 
         // * NegoData ::= SEQUENCE OF NegoDataItem
         // *
@@ -876,10 +882,14 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
         // * }
 
         // NegoData ::= SEQUENCE OF NegoDataItem
-        BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData", ERR_CREDSSP_TS_REQUEST);
+        auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData", ERR_CREDSSP_TS_REQUEST);
+        stream.in_skip_bytes(stream.in_remain()-queue1.size());
+
 
         // NegoDataItem ::= SEQUENCE {
-        BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData NegoDataItem", ERR_CREDSSP_TS_REQUEST);
+        auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData NegoDataItem", ERR_CREDSSP_TS_REQUEST);
+        stream.in_skip_bytes(stream.in_remain()-queue2.size());
+
         self.negoTokens = BER::read_mandatory_octet_string(stream, 0, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
     }
 
@@ -936,24 +946,39 @@ inline TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
     InStream stream(data); // check all is consumed
     TSPasswordCreds self;
     /* TSPasswordCreds (SEQUENCE) */
-    int length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue1.size());
+
 
     /* [0] domainName (OCTET STRING) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
-    self.domainName.resize(length);
+    auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue2.size());
+
+    auto [length3, queue3] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue3.size());
+
+    self.domainName.resize(length3);
     stream.in_copy_bytes(self.domainName.data(), self.domainName.size());
 
     /* [1] userName (OCTET STRING) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
-    self.userName.resize(length);
+    auto [length4, queue4] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue4.size());
+
+    auto [length5, queue5] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue5.size());
+
+    self.userName.resize(length5);
     stream.in_copy_bytes(self.userName.data(), self.userName.size());
 
     /* [2] password (OCTET STRING) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|2, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
-    self.password.resize(length);
+    auto [length6, queue6] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|2, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue6.size());
+
+    auto [length7, queue7] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
+    
+    stream.in_skip_bytes(stream.in_remain()-queue7.size());
+
+    self.password.resize(length7);
     stream.in_copy_bytes(self.password.data(), self.password.size());
 
     return self;
@@ -973,7 +998,7 @@ inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view us
                              + ber_user_name_header.size()+user.size()
                              + ber_password_header.size()+password.size();
 
-    auto ber_ts_password_creds_header = BER::mkSequenceHeader(ts_password_creds_length);
+    auto ber_ts_password_creds_header = BER::mkSequenceHeader(uint32_t(ts_password_creds_length));
 
     std::vector<uint8_t> result = std::move(ber_ts_password_creds_header);
     result << ber_domain_name_header << domain 
@@ -1013,11 +1038,12 @@ inline TSCspDataDetail recvTSCspDataDetail(bytes_view data)
     InStream stream(data);
     TSCspDataDetail self;
     // TSCspDataDetail ::= SEQUENCE
-    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue1.size());
 
-    auto [value, queue] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
-    stream.in_skip_bytes(stream.in_remain()-queue.size());
-    self.keySpec       = value;
+    auto [value2, queue2] = BER::pop_integer_field(queue1, 0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue2.size());
+    self.keySpec       = value2;
 
     self.cardName      = BER::read_optional_octet_string(stream, 1, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
     self.readerName    = BER::read_optional_octet_string(stream, 2, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
@@ -1085,19 +1111,26 @@ inline TSSmartCardCreds recvTSSmartCardCreds(bytes_view data, bool verbose)
     
     InStream stream(data);
     TSSmartCardCreds self;
-    int length = 0;
     /* TSSmartCardCreds (SEQUENCE) */
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSSmartCardCreds", ERR_CREDSSP_TS_REQUEST);
+    auto [length0, queue0] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSSmartCardCreds", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue0.size());
+
 
     /* [0] pin (OCTET STRING) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSSmartCardCreds [0] pin", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [0] pin", ERR_CREDSSP_TS_REQUEST);
-    self.pin.resize(length);
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSSmartCardCreds [0] pin", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue1.size());
+
+    auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [0] pin", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue2.size());
+
+    self.pin.resize(length2);
     stream.in_copy_bytes(self.pin);
 
     /* [1] cspData (TSCspDataDetail) */
     {
-        size_t tSCspDataDetailLength = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSSmartCardCreds [1] cspData", ERR_CREDSSP_TS_REQUEST);
+        auto [tSCspDataDetailLength, queue3] =  BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSSmartCardCreds [1] cspData", ERR_CREDSSP_TS_REQUEST);
+        stream.in_skip_bytes(stream.in_remain()-queue3.size());
+
         bytes_view data = stream.in_skip_bytes(tSCspDataDetailLength);
         self.cspData = recvTSCspDataDetail(data);
     }
@@ -1129,7 +1162,7 @@ inline std::vector<uint8_t> emitTSSmartCardCreds(
     auto ber_domainHint_header = BER::mkOptionalOctetStringFieldHeader(domainHint.size(), 3);
 
     /* TSCredentials (SEQUENCE) */
-    int ts_smartcards_creds_length = ber_pin_header.size() + pin.size()
+    size_t ts_smartcards_creds_length = ber_pin_header.size() + pin.size()
                   + ber_CspDataDetail_header.size() + ber_TSCspDataDetail.size()
                   + ber_userHint_header.size() + userHint.size()
                   + ber_domainHint_header.size() + domainHint.size()
@@ -1173,17 +1206,23 @@ inline TSCredentials recvTSCredentials(bytes_view data, bool verbose)
     // stream is decrypted and should be decrypted before calling recv
 
     // TSCredentials (SEQUENCE)
-    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
+    auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue1.size());
+
 
     // [0] credType (INTEGER)
-    auto [value, queue] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TSCredentials [0] credType ", ERR_CREDSSP_TS_REQUEST);
-    stream.in_skip_bytes(stream.in_remain()-queue.size());
-    self.credType = value;
+    auto [value2, queue2] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TSCredentials [0] credType ", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue2.size());
+    self.credType = value2;
 
 
     // [1] credentials (OCTET STRING)
-    BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
-    size_t creds_length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
+    auto [length3, queue3] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue3.size());
+
+    auto [creds_length, queue4] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
+    stream.in_skip_bytes(stream.in_remain()-queue4.size());
+
 
     if (self.credType == 2) {
         bytes_view data = stream.in_skip_bytes(creds_length);
