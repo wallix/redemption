@@ -199,10 +199,10 @@ cfg::file_verification::enable_down <- file_verification:enable_down   [bool]
     Enable use of ICAP service for file verification on download
 cfg::file_verification::clipboard_text_up <- file_verification:clipboard_text_up   [bool]
     Verify text data via clipboard from client to server
-    Uploaded files verification must be enabled  (Enable up)
+    File verification on upload must be enabled via option Enable up
 cfg::file_verification::clipboard_text_down <- file_verification:clipboard_text_down   [bool]
     Verify text data via clipboard from server to client
-    Downloaded files verification must be enabled (Enable down)
+    File verification on download must be enabled via option Enable down
 cfg::file_verification::log_if_accepted <- file_verification:log_if_accepted   [bool]
 
 

@@ -824,13 +824,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_down = 0
 
 # Verify text data via clipboard from client to server
-# Uploaded files verification must be enabled  (Enable up)
+# File verification on upload must be enabled via option Enable up
 # value: 0 or 1
 #_hidden
 #clipboard_text_up = 0
 
 # Verify text data via clipboard from server to client
-# Downloaded files verification must be enabled (Enable down)
+# File verification on download must be enabled via option Enable down
 # value: 0 or 1
 #_hidden
 #clipboard_text_down = 0
