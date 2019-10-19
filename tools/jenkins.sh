@@ -115,7 +115,7 @@ dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
   echo "$dirdiff"
   # Making the whold build fail when cleanup fails is too violent
   # That should be a mere warning
-  exit 0
+  # exit 1
 }
 
 #bjam -a -q toolset=clang-8 -sNO_FFMPEG=1 san
