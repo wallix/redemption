@@ -113,7 +113,9 @@ build $toolset_gcc cxxflags=-g -j2
 dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
   echo 'New file(s):'
   echo "$dirdiff"
-  exit 1
+  # Making the whold build fail when cleanup fails is too violent
+  # That should be a mere warning
+  exit 0
 }
 
 #bjam -a -q toolset=clang-8 -sNO_FFMPEG=1 san
