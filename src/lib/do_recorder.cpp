@@ -871,7 +871,7 @@ inline unsigned get_file_count(
         if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
             throw;
         }
-    };
+    }
     return result;
 }
 
@@ -1358,7 +1358,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
         const bool msg_with_error_id = false;
         raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
         return -1;
-    };
+    }
 
     InMetaSequenceTransport in_wrm_trans(
         cctx, infile_prefix,

@@ -173,7 +173,7 @@ struct SCCore {
         && this->length != 16) {
             LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
             throw Error(ERR_GCC);
-        };
+        }
 
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
