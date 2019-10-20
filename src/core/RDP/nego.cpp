@@ -401,7 +401,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         catch (const Error &) {
             LOG(LOG_INFO, "CREDSSP Kerberos Authentication Failed, fallback to NTLM");
             this->krb = false;
-        };
+        }
         #else
         this->krb = false;
         LOG(LOG_ERR, "Unsupported kerberos: fallback to NTLM");
@@ -426,7 +426,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
             LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");
             this->fallback_to_tls(trans);
             return State::Negociate;
-        };
+        }
     }
     // TODO: success should not be default result
     return State::Credssp;
