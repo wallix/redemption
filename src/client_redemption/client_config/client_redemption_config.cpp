@@ -670,7 +670,7 @@ void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
     config.modRDPParamsData.enable_nla = true;
     config.tls_client_params_data.tls_min_level = 0;
     config.tls_client_params_data.tls_max_level = 0;
-    config.tls_client_params_data.cipher_string;
+    // config.tls_client_params_data.cipher_string;
     config.tls_client_params_data.show_common_cipher_list = false;
     config.enable_shared_clipboard = true;
     config.modRDPParamsData.enable_shared_virtual_disk = true;
