@@ -194,7 +194,7 @@ class CheckoutEngine(object):
                 )
                 Logger().debug("** END request_approval")
             except Exception as e:
-                Logger().debug("Engine request_approval failed: %s" % e)
+                Logger().info("Engine request_approval failed: %s" % e)
         try:
             Logger().debug("** CALL checkout_account")
             status, infos = self.engine.checkout_account(
@@ -203,9 +203,11 @@ class CheckoutEngine(object):
             )
             Logger().debug("** END checkout_account")
         except Exception as e:
-            Logger().debug("Engine checkout_account failed: %s" % e)
+            Logger().info("Engine checkout_account failed: %s" % e)
             status = S_ERROR
-            infos = {'message': u'An internal error has occured.'}
+            infos = {'message':
+                     u'An internal error has occured on account retrieval. '
+                     u'Please contact your administrator.'}
         return_status = APPROVAL_REJECTED
         if status in STATUS_SUCCESS:
             target_uid = right['target_uid']
@@ -345,7 +347,7 @@ class CheckoutEngine(object):
                 elif account_type == 'pm':
                     self.pm_rights = rights
             except Exception as e:
-                Logger().debug("Engine get_user_rights_by_type failed: %s" % e)
+                Logger().info("Engine get_user_rights_by_type failed: %s" % e)
         return table_rights
 
     def _checkout_account_by_type(self, account_name, domain_name, device_name,
