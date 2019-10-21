@@ -803,6 +803,7 @@ namespace test
 
     namespace traits
     {
+        template<class T> using is_static_size_t = typename T::is_static_size;
         template<class T> using static_min_size_t = typename T::static_min_size;
         template<class T> using context_value_list_t = typename T::context_value_list;
 
@@ -1273,6 +1274,186 @@ namespace test
                     mp::unpack<mp::cfe<_final_context_sizes_t>>>
             >;
 
+
+            template<class>
+            struct next_value_is_start_range
+            : std::false_type
+            {};
+
+            template<class... Ts>
+            struct next_value_is_start_range<next_value<start_range, Ts...>>
+            : std::true_type
+            {};
+
+            template<class>
+            struct next_value_is_range
+            : std::false_type
+            {};
+
+            template<class... Ts>
+            struct next_value_is_range<next_value<start_range, Ts...>>
+            : std::true_type
+            {};
+
+            template<class... Ts>
+            struct next_value_is_range<next_value<stop_range, Ts...>>
+            : std::true_type
+            {};
+
+            template<class>
+            struct next_value_to_names;
+
+            template<class Data, class T, class... Names>
+            struct next_value_to_names<next_value<Data, variable<T, Names...>>>
+            {
+                using type = mp::list<Names...>;
+            };
+
+            using lazy_value_to_name_list_if_start_range = mp::if_<
+                mp::cfe<next_value_is_start_range>,
+                mp::cfl<next_value_to_names, mp::listify>,
+                mp::always<mp::list<>>
+            >;
+
+            template<int SizeOrRange, bool IsSize, bool IsStaticSize>
+            struct size_info_t
+            {
+                static constexpr bool is_size = IsSize;
+                // if false, size_or_range is static_min_size
+                static constexpr bool is_static_size = IsStaticSize;
+                static constexpr int size_or_range = SizeOrRange;
+            };
+
+            template<class NextValue>
+            using next_value_to_size_info = size_info_t<
+                static_min_size_t<NextValue>::value,
+                true,
+                is_static_size_t<NextValue>::value
+            >;
+
+            template<class... Names>
+            struct indexed_start_range
+            {
+                template<class x>
+                using f = size_info_t<
+                    sizeof...(Names) - int(
+                        mp::find_if<mp::same_as<x>, mp::size<>>
+                        ::template f<Names...>
+                        ::value
+                    ),
+                    false, true
+                >;
+
+                // to_size_or_negatif_index_range
+                using type = mp::if_<
+                    mp::cfe<next_value_is_range>,
+                    // negative index
+                    mp::cfl<
+                        next_value_to_names,
+                        indexed_start_range
+                    >,
+                    mp::cfe<next_value_to_size_info>
+                >;
+            };
+
+            struct RangeInfo
+            {
+                int idx_start = -1;
+                int idx_stop;
+                int min_size;
+                int start_accu;
+                bool is_static_size;
+            };
+
+            struct SizeInfo
+            {
+                int size;
+                int accu_size;
+                bool is_static_size;
+                bool is_size;
+                RangeInfo* rng;
+            };
+
+            template<class... SizeOrRange>
+            struct compute_sizes
+            {
+                static constexpr std::size_t range_count
+                    = (sizeof...(SizeOrRange) - (SizeOrRange::is_size + ...)) / 2;
+
+                constexpr static auto make()
+                {
+                    println(type_name<compute_sizes>());
+
+                    RangeInfo root{
+                        0,
+                        sizeof...(SizeOrRange)-1,
+                        ((SizeOrRange::is_size ? SizeOrRange::size_or_range : 0) + ...),
+                        0,
+                        (SizeOrRange::is_static_size && ...)
+                    };
+
+                    SizeInfo sizes[]{(SizeOrRange::is_size
+                        ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, true, &root}
+                        : SizeInfo{0, 0, 0, 0, &root}
+                    )...};
+
+                    {
+                        int accu = 0;
+                        for (auto& sz : sizes)
+                        {
+                            accu += sz.size;
+                            sz.accu_size = accu;
+                        }
+                    }
+
+                    /**/for (auto const& p : sizes) println("sizes: ", p.size, "  accu_size: ", p.accu_size, "  is_static: ", p.is_static_size);
+
+                    RangeInfo rng_infos[range_count] {};
+
+                    int i = 0;
+                    (((not SizeOrRange::is_size ? void(
+                        rng_infos[SizeOrRange::size_or_range].idx_start == -1
+                            ? void((
+                                rng_infos[SizeOrRange::size_or_range].idx_start = i,
+                                rng_infos[SizeOrRange::size_or_range].start_accu = sizes[i].accu_size
+                            ))
+                            : void(rng_infos[SizeOrRange::size_or_range].idx_stop = i)
+                    ) : void()), ++i), ...);
+
+                    for (auto& rng_info : rng_infos)
+                    {
+                        for (auto first = sizes + rng_info.idx_start; first != sizes + rng_info.idx_stop; ++first)
+                        {
+                            rng_info.min_size += first->size;
+                            rng_info.is_static_size &= first->is_static_size;
+                            first->rng = &rng_info;
+                        }
+                    }
+
+                    /**/for (auto const& p : rng_infos) println("rng_infos: start: ", p.idx_start,
+                        "  stop: ", p.idx_stop, "  min_size: ", p.min_size, "  is_static: ", p.is_static_size, "  start_accu: ", p.start_accu);
+
+                    /**/for (auto const& p : sizes) println("sizes: ", p.size, "  accu_size: ", p.accu_size, "  is_static: ", p.is_static_size, "  size_after(in rng): ", sizes[p.rng->idx_stop].accu_size - p.accu_size);
+                }
+            };
+
+            using new_compute_sizes_t = mp::fork_front<
+                mp::transform<
+                    lazy_value_to_name_list_if_start_range,
+                    mp::join<
+                        mp::cfl<
+                            indexed_start_range,
+                            mp::fork<
+                                mp::identity,
+                                mp::always<mp::cfe<compute_sizes>>,
+                                mp::cfe<mp::transform>
+                            >
+                        >
+                    >
+                >,
+                mp::cfe<mp::call>
+            >;
+
             template<class Params, class Values, class ErrorFn, class... Xs>
             static auto make_context(bytes_view buf, ErrorFn& error, Xs const&... xs)
             {
@@ -1285,12 +1466,15 @@ namespace test
                                 mp::transform<mp::cfe<context_value_list_t>,
                                     mp::join<mp::cfe<tuple>>>,
                                 compute_sizes_t,
+                                new_compute_sizes_t,
                                 mp::listify
                             >
                         >
                     >,
                     Values
                 >;
+
+                mp::eager::at<states_list, 2>::make();
 
                 using ctx_values = mp::eager::at<states_list, 0>;
                 using sizes = mp::eager::at<states_list, 1>;
@@ -1491,13 +1675,15 @@ namespace test
         struct stream_readable2::next_value<as_param,
             variable<lazy<Data>, Name>>
         {
-            using static_min_size = static_min_size_t<read_data<Data>>;
+            using reader = read_data<Data>;
+            using static_min_size = static_min_size_t<reader>;
+            using is_static_size = is_static_size_t<reader>;
             using context_value_list = mp::list<>;
 
             template<class Ctx>
             static auto make(Ctx& ctx, lazy<Data>)
             {
-                return make_mem<Name>(read_data<Data>::read(ctx.in));
+                return make_mem<Name>(reader::read(ctx.in));
             }
         };
 
@@ -1505,7 +1691,9 @@ namespace test
         struct stream_readable2::next_value<as_param,
             variable<lazy<datas::types::PktSize<Data>>, Name>>
         {
-            using static_min_size = static_min_size_t<read_data<Data>>;
+            using reader = read_data<Data>;
+            using static_min_size = static_min_size_t<reader>;
+            using is_static_size = is_static_size_t<reader>;
 
             using var_size = variable<value_type_t<Data>, datas::types::PktSize<Name>>;
             using context_value_list = mp::list<var_size>;
@@ -1514,7 +1702,7 @@ namespace test
             static auto make(Ctx& ctx, lazy<datas::types::PktSize<Data>>)
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
-                n = read_data<Data>::read(ctx.in);
+                n = reader::read(ctx.in);
 
                 auto& info = ctx.ranges.get(Name{});
 
@@ -1536,13 +1724,15 @@ namespace test
         struct stream_readable2::next_value<as_param,
             variable<val<Data, T&>, Name>>
         {
-            using static_min_size = static_min_size_t<read_data<Data>>;
+            using reader = read_data<Data>;
+            using static_min_size = static_min_size_t<reader>;
+            using is_static_size = is_static_size_t<reader>;
             using context_value_list = mp::list<>;
 
             template<class Ctx>
             static auto make(Ctx& ctx, val<Data, T&> v)
             {
-                v.x = read_data<Data>::read(ctx.in);
+                v.x = reader::read(ctx.in);
                 return make_mem<Name>(v.x);
             }
         };
@@ -1557,14 +1747,16 @@ namespace test
                 value_type_t<DataSize>,
                 datas::values::types::SizeBytes<Name>>;
 
-            using static_min_size = static_min_size_t<read_data<DataSize>>;
+            using reader = read_data<DataSize>;
+            using static_min_size = static_min_size_t<reader>;
+            using is_static_size = is_static_size_t<reader>;
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx>
             static void make(Ctx& ctx, val<Data, Bytes>&)
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
-                n = read_data<DataSize>::read(ctx.in);
+                n = reader::read(ctx.in);
             }
         };
 
@@ -1588,6 +1780,7 @@ namespace test
             variable<val<Data, Bytes>, Name>>
         {
             using static_min_size = mp::int_<0>;
+            using is_static_size = std::false_type;
             using context_value_list = mp::list<>;
 
             template<class Ctx>
@@ -1611,6 +1804,7 @@ namespace test
         struct stream_readable2::next_value<start_range, variable<T, Name>>
         {
             using static_min_size = mp::int_<0>;
+            using is_static_size = std::false_type;
             using context_value_list = mp::list<>;
 
             template<class Ctx, class X>
@@ -1644,6 +1838,7 @@ namespace test
         struct stream_readable2::next_value<stop_range, variable<T, Name>>
         {
             using static_min_size = mp::int_<0>;
+            using is_static_size = std::false_type;
             using context_value_list = mp::list<>;
 
             template<class Ctx, class X>
@@ -1668,6 +1863,7 @@ namespace test
         struct stream_readable2::read_data_impl<datas::types::Integer<Int, Endianess>>
         {
             using static_min_size = mp::int_<sizeof(Int)>;
+            using is_static_size = std::true_type;
 
             static Int read(InStream& in)
             {
