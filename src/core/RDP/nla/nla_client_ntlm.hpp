@@ -25,7 +25,9 @@
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
 #include "system/ssl_md4.hpp"
+#include "utils/genrandom.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/utf.hpp"
 
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
 

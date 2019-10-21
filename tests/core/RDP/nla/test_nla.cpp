@@ -20,8 +20,8 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/nla/nla_client_ntlm.hpp"
+#include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include <iostream>
 
