@@ -1360,9 +1360,14 @@ namespace test
             {
                 int idx_start = -1;
                 int idx_stop;
-                int min_size;
-                int start_accu;
-                bool is_static_size;
+
+                friend std::ostream& operator<<(std::ostream& out, RangeInfo const& info)
+                {
+                    return out << "RangeInfo:"
+                        << "  idx_start: " << std::setw(2) << info.idx_start
+                        << "  idx_stop: " << std::setw(2) << info.idx_stop
+                    ;
+                }
             };
 
             struct SizeInfo
@@ -1370,33 +1375,59 @@ namespace test
                 int size;
                 int accu_size;
                 bool is_static_size;
-                bool is_size;
-                RangeInfo* rng;
+                bool is_rng_rstatic_size;
+                int idx_range;
+                int rng_raccu = -1;
+                int rng_raccu_next = -1;
+
+                friend std::ostream& operator<<(std::ostream& out, SizeInfo const& info)
+                {
+                    return out << "SizeInfo:"
+                        << "  size: " << std::setw(2) << info.size
+                        << "  accu_size: " << std::setw(2) << info.accu_size
+                        << "  is_static_size: " << std::setw(2) << info.is_static_size
+                        << "  is_rng_rstatic_size: " << std::setw(2) << info.is_rng_rstatic_size
+                        << "  idx_range: " << std::setw(2) << info.idx_range
+                        << "  rng_raccu: " << std::setw(2) << info.rng_raccu
+                        << "  rng_raccu_next: " << std::setw(2) << info.rng_raccu_next
+                    ;
+                }
             };
 
             template<class... SizeOrRange>
             struct compute_sizes
             {
-                static constexpr std::size_t range_count
-                    = (sizeof...(SizeOrRange) - (SizeOrRange::is_size + ...)) / 2;
 
-                constexpr static auto make()
+                constexpr static auto make_size_infos()
                 {
-                    println(type_name<compute_sizes>());
+                    // println(type_name<compute_sizes>());
 
-                    RangeInfo root{
-                        0,
-                        sizeof...(SizeOrRange)-1,
-                        ((SizeOrRange::is_size ? SizeOrRange::size_or_range : 0) + ...),
-                        0,
-                        (SizeOrRange::is_static_size && ...)
+                    const std::size_t range_count
+                        = (sizeof...(SizeOrRange) - (SizeOrRange::is_size + ...)) / 2;
+
+                    RangeInfo ranges[range_count+1] {
+                        {0, sizeof...(SizeOrRange)-1},
                     };
 
-                    SizeInfo sizes[]{(SizeOrRange::is_size
-                        ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, true, &root}
-                        : SizeInfo{0, 0, 0, 0, &root}
+                    // init ranges
+                    {
+                        int i = 0;
+                        (((not SizeOrRange::is_size ? void(
+                            ranges[SizeOrRange::size_or_range+1].idx_start == -1
+                                ? void(ranges[SizeOrRange::size_or_range+1].idx_start = i)
+                                : void(ranges[SizeOrRange::size_or_range+1].idx_stop = i)
+                        ) : void()), ++i), ...);
+                    }
+
+                    // /**/for (auto const& p : ranges) println(p);
+
+
+                    std::array sizes{(SizeOrRange::is_size
+                        ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0}
+                        : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1}
                     )...};
 
+                    // init accu_size
                     {
                         int accu = 0;
                         for (auto& sz : sizes)
@@ -1406,35 +1437,71 @@ namespace test
                         }
                     }
 
-                    /**/for (auto const& p : sizes) println("sizes: ", p.size, "  accu_size: ", p.accu_size, "  is_static: ", p.is_static_size);
-
-                    RangeInfo rng_infos[range_count] {};
-
-                    int i = 0;
-                    (((not SizeOrRange::is_size ? void(
-                        rng_infos[SizeOrRange::size_or_range].idx_start == -1
-                            ? void((
-                                rng_infos[SizeOrRange::size_or_range].idx_start = i,
-                                rng_infos[SizeOrRange::size_or_range].start_accu = sizes[i].accu_size
-                            ))
-                            : void(rng_infos[SizeOrRange::size_or_range].idx_stop = i)
-                    ) : void()), ++i), ...);
-
-                    for (auto& rng_info : rng_infos)
+                    // init is_rng_rstatic_size
                     {
-                        for (auto first = sizes + rng_info.idx_start; first != sizes + rng_info.idx_stop; ++first)
+                        int i = std::size(sizes)-1;
+                        bool last_rng_rstatic_size = sizes[i].is_rng_rstatic_size;
+                        for (; i > 0; --i)
                         {
-                            rng_info.min_size += first->size;
-                            rng_info.is_static_size &= first->is_static_size;
-                            first->rng = &rng_info;
+                            if (sizes[i].idx_range)
+                            {
+                                last_rng_rstatic_size = true;
+                            }
+                            else
+                            {
+                                sizes[i-1].is_rng_rstatic_size = last_rng_rstatic_size;
+                                last_rng_rstatic_size &= sizes[i-1].is_rng_rstatic_size;
+                            }
                         }
                     }
 
-                    /**/for (auto const& p : rng_infos) println("rng_infos: start: ", p.idx_start,
-                        "  stop: ", p.idx_stop, "  min_size: ", p.min_size, "  is_static: ", p.is_static_size, "  start_accu: ", p.start_accu);
+                    // init idx_range
+                    {
+                        int idx_rng = 0;
+                        for (auto& sz : sizes)
+                        {
+                            if (sz.idx_range)
+                            {
+                                if (idx_rng == sz.idx_range)
+                                {
+                                    --idx_rng;
+                                }
+                                else
+                                {
+                                    ++idx_rng;
+                                }
+                            }
+                            else
+                            {
+                                sz.idx_range = idx_rng;
+                            }
+                        }
+                    }
 
-                    /**/for (auto const& p : sizes) println("sizes: ", p.size, "  accu_size: ", p.accu_size, "  is_static: ", p.is_static_size, "  size_after(in rng): ", sizes[p.rng->idx_stop].accu_size - p.accu_size);
+                    // init rng_raccu and rng_raccu_next
+                    {
+                        auto compute_rng_raccu = [&](SizeInfo const& sz){
+                            auto& rng = ranges[sz.idx_range];
+                            return sizes[rng.idx_stop].accu_size - sz.accu_size + sz.size;
+                        };
+
+                        for (auto& sz : sizes) {
+                            auto& rng = ranges[sz.idx_range];
+                            sz.rng_raccu = compute_rng_raccu(sz);
+                            sz.rng_raccu_next
+                                = (&sizes[rng.idx_stop] != &sz || &sz == &sizes.back())
+                                ? -1
+                                : compute_rng_raccu(*(&sz + 1));
+                        }
+                    }
+
+                    // /**/ for (auto const& sz : sizes) println(sz);
+
+                    return sizes;
                 }
+
+                constexpr static std::array<SizeInfo, sizeof...(SizeOrRange)> size_infos
+                    = make_size_infos();
             };
 
             using new_compute_sizes_t = mp::fork_front<
@@ -1474,18 +1541,26 @@ namespace test
                     Values
                 >;
 
-                mp::eager::at<states_list, 2>::make();
+                constexpr auto& size_infos = mp::eager::at<states_list, 2>::size_infos;
+
+                println(type_name(size_infos));
+                for (auto& sz_infos : size_infos) {
+                    println(sz_infos);
+                }
 
                 using ctx_values = mp::eager::at<states_list, 0>;
                 using sizes = mp::eager::at<states_list, 1>;
-                using info_type = mp::call<mp::unpack<mp::front<mp::unpack<mp::front<>>>>, sizes>;
 
-                if (buf.size() < info_type::static_min_remain) {
-                    error(no_name{}, info_type::static_min_remain, buf.size());
+                constexpr auto min_size = size_infos.back().accu_size;
+
+                println("min_size: ", min_size);
+
+                if (buf.size() < min_size) {
+                    error(no_name{}, min_size, buf.size());
                 }
 
                 return Ctx<tparams, ctx_values, ErrorFn&, sizes>{
-                    InStream{buf}, buf.size() - info_type::static_min_remain,
+                    InStream{buf}, buf.size() - min_size,
                     detail::build_params2<stream_readable2, Params>(xs...),
                     ctx_values{} /** TODO uninit<ctx_values> ? **/, error
                 };
