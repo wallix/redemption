@@ -157,7 +157,7 @@
         {
           "name": "on_launch_failure",
           "type": "option",
-          "default": 2,
+          "default": 1,
           "values": [
             {
                "value": 0,

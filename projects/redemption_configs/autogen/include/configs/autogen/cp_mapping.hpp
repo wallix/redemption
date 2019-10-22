@@ -31,7 +31,7 @@ cp_spec = {
     u'session_probe_use_smart_launcher': ('use_smart_launcher', True),
     u'session_probe_enable_launch_mask': ('enable_launch_mask', True),
     u'enable_session_probe_launch_mask': ('enable_launch_mask', None), # Deprecated, for compatibility only.
-    u'session_probe_on_launch_failure': ('on_launch_failure', 2),
+    u'session_probe_on_launch_failure': ('on_launch_failure', 1),
     u'session_probe_launch_timeout': ('launch_timeout', 40000),
     u'session_probe_launch_fallback_timeout': ('launch_fallback_timeout', 10000),
     u'session_probe_start_launch_timeout_timer_only_after_logon': ('start_launch_timeout_timer_only_after_logon', True),
