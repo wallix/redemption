@@ -1646,7 +1646,7 @@ namespace cfg {
     /// type: SessionProbeOnLaunchFailure <br/>
     /// connpolicy -> proxy    [name: session_probe::on_launch_failure] <br/>
     /// sesman::name: mod_rdp:session_probe_on_launch_failure <br/>
-    /// value = static_cast<type>(2) <br/>
+    /// value = static_cast<type>(1) <br/>
     struct mod_rdp::session_probe_on_launch_failure {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1658,7 +1658,7 @@ namespace cfg {
         using type = SessionProbeOnLaunchFailure;
         using sesman_and_spec_type = SessionProbeOnLaunchFailure;
         using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(2);
+        type value = static_cast<type>(1);
     };
     /// This parameter is used if session_probe_on_launch_failure is 1 (disconnect user). <br/>
     /// 0 to disable timeout. <br/>

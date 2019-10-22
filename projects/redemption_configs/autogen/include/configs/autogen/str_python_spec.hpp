@@ -394,7 +394,7 @@ session_probe_enable_launch_mask = boolean(default=True)
 #   1: disconnect user.
 #   2: reconnect without Session Probe.
 #_hidden
-session_probe_on_launch_failure = option(0, 1, 2, default=2)
+session_probe_on_launch_failure = option(0, 1, 2, default=1)
 
 # This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
 # 0 to disable timeout.
