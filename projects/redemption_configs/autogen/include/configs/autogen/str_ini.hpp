@@ -390,7 +390,7 @@
 "#   1: disconnect user.\n"
 "#   2: reconnect without Session Probe.\n"
 "#_hidden\n"
-"#session_probe_on_launch_failure = 2\n\n"
+"#session_probe_on_launch_failure = 1\n\n"
 
 "# This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
 "# 0 to disable timeout.\n"

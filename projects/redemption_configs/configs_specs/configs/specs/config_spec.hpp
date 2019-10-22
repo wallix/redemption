@@ -339,7 +339,7 @@ void config_spec_definition(Writer && W)
             "Clipboard redirection should be remain enabled on Terminal Server."
         }, set(true));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_enable_launch_mask", connpolicy::name{"enable_launch_mask"}, sesman::deprecated_names{"enable_session_probe_launch_mask"}, set(true));
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", connpolicy::name{"on_launch_failure"}, set(SessionProbeOnLaunchFailure::retry_without_session_probe));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", connpolicy::name{"on_launch_failure"}, set(SessionProbeOnLaunchFailure::disconnect_user));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), "session_probe_launch_timeout", connpolicy::name{"launch_timeout"}, desc{
             "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
             "0 to disable timeout."
