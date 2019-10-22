@@ -1394,10 +1394,16 @@ namespace test
                 }
             };
 
+            template<std::size_t N>
+            struct SizeCtx
+            {
+                std::array<SizeInfo, N> size_infos;
+                int rng_stack_size;
+            };
+
             template<class... SizeOrRange>
             struct compute_sizes
             {
-
                 constexpr static auto make_size_infos()
                 {
                     // println(type_name<compute_sizes>());
@@ -1422,10 +1428,14 @@ namespace test
                     // /**/for (auto const& p : ranges) println(p);
 
 
-                    std::array sizes{(SizeOrRange::is_size
-                        ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0}
-                        : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1}
-                    )...};
+                    SizeCtx<sizeof...(SizeOrRange)> result{
+                        {(SizeOrRange::is_size
+                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0}
+                            : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1}
+                        )...},
+                        0
+                    };
+                    auto& sizes = result.size_infos;
 
                     // init accu_size
                     {
@@ -1469,6 +1479,7 @@ namespace test
                                 else
                                 {
                                     ++idx_rng;
+                                    result.rng_stack_size = std::max(result.rng_stack_size, idx_rng);
                                 }
                             }
                             else
@@ -1497,10 +1508,10 @@ namespace test
 
                     // /**/ for (auto const& sz : sizes) println(sz);
 
-                    return sizes;
+                    return result;
                 }
 
-                constexpr static std::array<SizeInfo, sizeof...(SizeOrRange)> size_infos
+                constexpr static SizeCtx<sizeof...(SizeOrRange)> size_ctx
                     = make_size_infos();
             };
 
@@ -1541,8 +1552,12 @@ namespace test
                     Values
                 >;
 
-                constexpr auto& size_infos = mp::eager::at<states_list, 2>::size_infos;
+                using SizeCtx = mp::eager::at<states_list, 2>;
 
+                constexpr auto& size_ctx = SizeCtx::size_ctx;
+                constexpr auto& size_infos = size_ctx.size_infos;
+
+                println("rng_stack_size: ", size_ctx.rng_stack_size);
                 println(type_name(size_infos));
                 for (auto& sz_infos : size_infos) {
                     println(sz_infos);
