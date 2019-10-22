@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
@@ -480,7 +480,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
@@ -683,7 +683,7 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     RED_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     RED_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
@@ -1030,7 +1030,7 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     RED_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     RED_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
@@ -1181,7 +1181,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
@@ -1471,7 +1471,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
@@ -1611,7 +1611,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>());
     RED_CHECK_EQUAL(40000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
-    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
+    RED_CHECK_EQUAL(SessionProbeOnLaunchFailure::disconnect_user,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
