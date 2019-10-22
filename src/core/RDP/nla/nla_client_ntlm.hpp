@@ -146,15 +146,17 @@ public:
 
     std::vector<uint8_t> authenticate_start()
     {
-        LOG(LOG_INFO, "NTLM Authentication : Negotiate - sending Authentication Token");
+        LOG_IF(this->verbose, LOG_INFO, "NTLM Authentication : Negotiate - sending Authentication Token");
         this->savedNegotiateMessage = emitNTLMNegotiateMessage();
         this->client_auth_data_state = Loop;
         return emitTSRequest(6, this->savedNegotiateMessage, {}, {}, 0, {}, false, this->credssp_verbose);
+        LOG_IF(this->verbose, LOG_INFO, "NTLM Authentication : Negotiate - sending Authentication Token done");
     }
 
 
     std::vector<uint8_t> authenticate_next(bytes_view in_data)
     {
+        LOG_IF(this->verbose, LOG_INFO, "authenticate_next");
         switch (this->client_auth_data_state)
         {
             case Loop:

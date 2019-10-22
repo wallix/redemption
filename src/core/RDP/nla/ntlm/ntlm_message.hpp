@@ -2146,8 +2146,12 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
     stream.out_uint8(NTLMSSP_REVISION_W2K3);
 
     // PAYLOAD
-    stream.out_copy_bytes(DomainName);
-    stream.out_copy_bytes(Workstation);
+    if (DomainName.size()){
+        stream.out_copy_bytes(DomainName);
+    }
+    if (Workstation.size()){
+        stream.out_copy_bytes(Workstation);
+    }
     
 //    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Sent)");
 //    hexdump_d(stream.get_bytes());
