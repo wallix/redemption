@@ -974,7 +974,7 @@ public:
         }
     }
 
-    const  RDPPrimaryOrderHeader receive(InStream & stream, uint8_t control)
+    RDPPrimaryOrderHeader receive(InStream & stream, uint8_t control)
     {
         using namespace RDP;
 

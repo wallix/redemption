@@ -60,7 +60,7 @@ public:
     [[nodiscard]] bool cliprdr_file_is_authorized() const noexcept;
 
 private:
-    static constexpr const std::array<array_view_const_char, 3> cliprde_list()
+    static constexpr std::array<array_view_const_char, 3> cliprde_list()
     {
         return {{
             cstr_array_view("cliprdr_up,"),
@@ -68,7 +68,7 @@ private:
             cstr_array_view("cliprdr_file,"),
         }};
     }
-    static constexpr const std::array<array_view_const_char, 5> rdpdr_list()
+    static constexpr std::array<array_view_const_char, 5> rdpdr_list()
     {
         return {{
             cstr_array_view("rdpdr_printer,"),
@@ -78,7 +78,7 @@ private:
             cstr_array_view("rdpdr_smartcard,"),
         }};
     }
-    static constexpr const std::array<array_view_const_char, 1> rdpsnd_list()
+    static constexpr std::array<array_view_const_char, 1> rdpsnd_list()
     {
         return {{
             cstr_array_view("rdpsnd_audio_output,"),

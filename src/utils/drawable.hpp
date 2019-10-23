@@ -442,7 +442,7 @@ private:
 
 namespace gdi
 {
-    inline const MutableImageDataView get_mutable_image_view(Drawable & drawable)
+    inline MutableImageDataView get_mutable_image_view(Drawable & drawable)
     {
         return MutableImageDataView{
             drawable.first_pixel(),

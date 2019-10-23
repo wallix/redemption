@@ -4933,7 +4933,7 @@ public:
     }
 
     // Note: this template is used for Caps we are merely using but doing nothing with
-    template<typename CAPS> const CAPS receive_caps(InStream & stream, uint16_t capset_length)
+    template<typename CAPS> CAPS receive_caps(InStream & stream, uint16_t capset_length)
     {
         CAPS caps;
         caps.recv(stream, capset_length);

@@ -491,7 +491,7 @@ writable_bytes_view UTF16toUTF8_buf(bytes_view utf16_source, writable_bytes_view
     return utf8_target.first(i_t);
 }
 
-const std::string UTF16toUTF8(bytes_view utf16_source) noexcept
+std::string UTF16toUTF8(bytes_view utf16_source) noexcept
 {
     std::string utf8_target;
     size_t i_t = 0;

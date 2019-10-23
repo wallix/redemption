@@ -536,7 +536,7 @@ inline static const char * get_msgFlag_name(uint16_t msgFlag) {
     return "<unknown>";
 }
 
-static inline const std::string msgFlags_to_string(uint16_t msgFlags) {
+static inline std::string msgFlags_to_string(uint16_t msgFlags) {
     std::ostringstream stream;
 
     if (!msgFlags) {
@@ -902,7 +902,7 @@ inline static const char * get_generalFlag_name(uint16_t msgFlag) {
     return "<unknown>";
 }
 
-static inline const std::string generalFlags_to_string(uint32_t generalFlags) {
+static inline std::string generalFlags_to_string(uint32_t generalFlags) {
     std::ostringstream stream;
 
     if (!generalFlags) {

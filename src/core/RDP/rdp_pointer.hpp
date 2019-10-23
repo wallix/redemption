@@ -147,12 +147,12 @@ public:
     {
     }
 
-    [[nodiscard]] const CursorSize get_dimensions() const
+    [[nodiscard]] CursorSize get_dimensions() const
     {
         return this->dimensions;
     }
 
-    [[nodiscard]] const Hotspot get_hotspot() const
+    [[nodiscard]] Hotspot get_hotspot() const
     {
         return this->hotspot;
     }
@@ -166,7 +166,7 @@ public:
         return {this->mask, this->bit_mask_size()};
     }
 
-    [[nodiscard]] const array_view_const_u8 get_24bits_xor_mask() const
+    [[nodiscard]] array_view_const_u8 get_24bits_xor_mask() const
     {
         return {this->data, this->xor_data_size()};
     }
@@ -605,7 +605,7 @@ struct ARGB32Pointer {
         return this->hotspot;
     }
 
-    [[nodiscard]] const array_view_const_u8 get_alpha_q() const
+    [[nodiscard]] array_view_const_u8 get_alpha_q() const
     {
         return {this->data, this->dimensions.width * this->dimensions.height * 4};
     }

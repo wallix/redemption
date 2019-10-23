@@ -48,7 +48,7 @@ REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
 template<class C, C... cs>
-constexpr array_view<C const> const operator "" _utf16_le() noexcept
+constexpr array_view<C const> operator "" _utf16_le() noexcept
 {
     static_assert(((cs >= 0 && cs <= 127) && ...), "only ascii char are supported");
     return detail::utf16_le_impl<C, cs...>(std::make_index_sequence<sizeof...(cs) * 2>{});
