@@ -499,7 +499,7 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
 session_probe_disabled_features = integer(min=0, max=511, default=352)
@@ -526,7 +526,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
@@ -536,7 +536,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
@@ -546,7 +546,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
@@ -556,7 +556,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
@@ -566,7 +566,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 server_cert_error_message = integer(min=0, max=7, default=1)
@@ -793,7 +793,7 @@ capture_groupid = integer(min=0, default=33)
 #   0x02: wrm
 #   0x04: video
 #   0x08: ocr
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x01 + 0x02 + 0x04 + 0x08 = 0x0f)
 #_advanced
 #_hex
 capture_flags = integer(min=0, max=15, default=11)
@@ -835,7 +835,7 @@ record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::R
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions
 #   0x4: disable keyboard log in recorded meta
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hex
 disable_keyboard_log = integer(min=0, max=7, default=1)
 
@@ -844,7 +844,7 @@ disable_keyboard_log = integer(min=0, max=7, default=1)
 #   0x1: disable clipboard log in syslog
 #   0x2: disable clipboard log in recorded sessions
 #   0x4: disable clipboard log in recorded meta
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hex
 disable_clipboard_log = integer(min=0, max=7, default=1)
 
@@ -853,7 +853,7 @@ disable_clipboard_log = integer(min=0, max=7, default=1)
 #   0x1: disable (redirected) file system log in syslog
 #   0x2: disable (redirected) file system log in recorded sessions
 #   0x4: disable (redirected) file system log in recorded meta
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hex
 disable_file_system_log = integer(min=0, max=7, default=1)
 
