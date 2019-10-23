@@ -26,7 +26,7 @@
 #include "utils/sugar/unique_fd.hpp"
 
 #include <cstdint>
-
+#include <stdio.h>
 
 class in_addr;
 
@@ -41,3 +41,6 @@ unique_fd local_connect(const char* sck_name, int nbretry = 3, int retry_delai_m
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
                        char * transparent_dest, size_t sz_transparent_dest, uint32_t verbose = 0);
+
+FILE* popen_conntrack(const char* source_ip, int source_port,
+                      int target_port);

@@ -134,14 +134,26 @@ public:
                 }
 
                 char real_target_ip[256];
-                if (ini.get<cfg::globals::enable_transparent_mode>() 
+                if (ini.get<cfg::globals::enable_transparent_mode>()
                 && (0 != strcmp(source_ip, "127.0.0.1"))) {
+                    int use_conntrack = 0;
+                    FILE* fs = nullptr;
                     int fd = open("/proc/net/nf_conntrack", O_RDONLY);
                     if (fd < 0) {
                         int errno_nf = errno;
                         fd = open("/proc/net/ip_conntrack", O_RDONLY);
                         if (fd < 0) {
-                            LOG(LOG_WARNING, "Failed to read conntrack file, no /proc/net/ip_conntrack or /proc/net/nf_conntrack: %d,%d", errno_nf, errno);
+                            int errno_ip = errno;
+                            fs = popen_conntrack(source_ip, source_port, target_port);
+                            if (fs == nullptr) {
+                                LOG(LOG_WARNING, "Failed to read conntrack file /proc/net/nf_conntrack: %d", errno_nf);
+                                LOG(LOG_WARNING, "Failed to read conntrack file /proc/net/ip_conntrack: %d", errno_ip);
+                                LOG(LOG_WARNING, "Failed to run conntrack: %d", errno);
+                            }
+                            else {
+                                use_conntrack = 1;
+                                fd = fileno(fs);
+                            }
                         }
                         else {
                             LOG(LOG_WARNING, "Reading /proc/net/ip_conntrack");
@@ -157,7 +169,12 @@ public:
                     if (res){
                         LOG(LOG_WARNING, "Failed to get transparent proxy target from conntrack");
                     }
-                    close(fd);
+                    if (use_conntrack) {
+                        pclose(fs);
+                    }
+                    else {
+                        close(fd);
+                    }
 
                     if (setgid(this->gid) != 0){
                         LOG(LOG_ERR, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
@@ -234,4 +251,3 @@ public:
         return START_FAILED;
     }
 };
-

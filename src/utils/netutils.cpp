@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <sys/un.h>
+#include <stdio.h>
 
 
 bool try_again(int errnum)
@@ -368,4 +369,14 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
     }
     // transparent ip route not found in ip_conntrack
     return -1;
+}
+
+FILE* popen_conntrack(const char* source_ip, int source_port,
+                      int target_port) {
+    char cmd[256];
+    FILE* fs;
+    sprintf(cmd, "/usr/sbin/conntrack -L -p tcp --src %s --sport %d --dport %d",
+            source_ip, source_port, target_port);
+    fs = popen(cmd, "r");
+    return fs;
 }
