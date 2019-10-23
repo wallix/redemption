@@ -845,6 +845,7 @@ protected:
             NewPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
 
             if (bool(this->verbose & Verbose::pointer)) {
+                LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer: New Pointer Update");
                 hexdump_c(start_ptr, stream.get_data_stream().get_current() - start_ptr);
             }
 
@@ -862,6 +863,7 @@ protected:
             ColorPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
 
             if (bool(this->verbose & Verbose::pointer)) {
+                LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer: Color Pointer Update");
                 hexdump_c(start_ptr, stream.get_data_stream().get_current() - start_ptr);
             }
 
