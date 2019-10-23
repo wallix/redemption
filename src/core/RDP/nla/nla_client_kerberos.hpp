@@ -82,7 +82,7 @@ private:
         }
 
         bool is_empty_user_domain(){
-            return (this->User.size() == 0) && (this->Domain.size() == 0);
+            return (this->User.empty() && this->Domain.empty());
         }
 
         [[nodiscard]] bytes_view get_password_utf16_av() const
@@ -201,10 +201,9 @@ private:
 
     bool sspi_get_service_name(array_view_const_char server, gss_name_t * name) {
         gss_buffer_desc output;
-        OM_uint32 major_status, minor_status;
         const char service_name[] = "TERMSRV";
         gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
-        int size = (strlen(service_name) + 1 + server.size() + 1);
+        auto size = (strlen(service_name) + 1 + server.size() + 1);
 
         auto output_value = std::make_unique<char[]>(size);
         output.value = output_value.get();
@@ -212,7 +211,8 @@ private:
             service_name, int(server.size()), server.data());
         output.length = strlen(static_cast<char*>(output.value)) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", static_cast<char*>(output.value));
-        major_status = gss_import_name(&minor_status, &output, type, name);
+        OM_uint32 minor_status  = 0;
+        OM_uint32 major_status = gss_import_name(&minor_status, &output, type, name);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_ERR, "Failed to create service principal name");
             return false;
@@ -282,8 +282,6 @@ private:
         //      gss_qop_t *             /* qop_state */
         //      );
 
-        OM_uint32 major_status;
-        OM_uint32 minor_status;
         int conf_state;
         gss_qop_t qop_state;
         if (!this->sspi_krb_ctx) {
@@ -293,7 +291,8 @@ private:
         inbuf.value = const_cast<uint8_t*>(data_in.data()); /*NOLINT*/
         inbuf.length = data_in.size();
         // LOG(LOG_INFO, "GSS_UNWRAP inbuf length : %d", inbuf.length);
-        major_status = gss_unwrap(&minor_status, this->sspi_krb_ctx->gss_ctx, &inbuf, &outbuf,
+        OM_uint32 minor_status = 0;
+        OM_uint32 major_status = gss_unwrap(&minor_status, this->sspi_krb_ctx->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -310,7 +309,8 @@ private:
     void sspi_report_error(OM_uint32 code, const char *str,
                       OM_uint32 major_status, OM_uint32 minor_status)
     {
-        OM_uint32 msgctx = 0, ms;
+        OM_uint32 msgctx = 0;
+        OM_uint32 ms;
         gss_buffer_desc status_string;
 
         LOG(LOG_ERR, "GSS error [%u:%u:%u]: %s",
@@ -343,7 +343,6 @@ private:
     bool sspi_mech_available(gss_OID mech)
     {
         int mech_found;
-        OM_uint32 major_status, minor_status;
         gss_OID_set mech_set;
 
         mech_found = 0;
@@ -352,7 +351,8 @@ private:
             return true;
         }
 
-        major_status = gss_indicate_mechs(&minor_status, &mech_set);
+        OM_uint32 minor_status = 0;
+        OM_uint32 major_status = gss_indicate_mechs(&minor_status, &mech_set);
         if (!mech_set) {
             return false;
         }
@@ -458,7 +458,7 @@ private:
             this->ts_request.pubKeyAuth, Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
-            if (this->ts_request.pubKeyAuth.size() == 0) {
+            if (this->ts_request.pubKeyAuth.empty()) {
                 // report_error
                 this->extra_message = " ";
                 this->extra_message.append(TR(trkeys::err_login_password, this->lang));
@@ -530,8 +530,6 @@ private:
         array_view_const_u8 input_buffer = this->client_auth_data.input_buffer;
         /*output*/std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
 
-        OM_uint32 major_status, minor_status;
-
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
 
         // Target name (server name, ip ...)
@@ -545,7 +543,8 @@ private:
         // }
 
         // Token Buffer
-        gss_buffer_desc input_tok, output_tok;
+        gss_buffer_desc input_tok;
+        gss_buffer_desc output_tok;
         output_tok.length = 0;
         // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
         //     input_buffer->Buffer.size());
@@ -575,7 +574,8 @@ private:
 //                   OM_uint32 ,             /* ret_flags */
 //                   OM_uint32 *             /* time_rec */
 //                  );
-        major_status = gss_init_sec_context(&minor_status,
+        OM_uint32 minor_status = 0;
+        OM_uint32 major_status = gss_init_sec_context(&minor_status,
                                             gss_no_cred,
                                             &this->sspi_krb_ctx->gss_ctx,
                                             this->sspi_krb_ctx->target_name,
@@ -633,7 +633,7 @@ private:
             SEC_STATUS encrypted = this->credssp_encrypt_public_key_echo();
             this->client_auth_data.input_buffer.clear();
 
-            if (this->ts_request.negoTokens.size() > 0) {
+            if (not this->ts_request.negoTokens.empty()) {
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
                 StaticOutStream<65536> ts_request_emit;
@@ -742,7 +742,6 @@ public:
                const bool credssp_verbose = false,
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
-        , SavedClientNonce()
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , rand(rand)
@@ -794,8 +793,6 @@ public:
         array_view_const_char pszTargetName = bytes_view(this->ServicePrincipalName).as_chars();
         std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
 
-        OM_uint32 major_status, minor_status;
-
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         if (!this->sspi_krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
@@ -809,7 +806,8 @@ public:
         }
 
         // Token Buffer
-        gss_buffer_desc input_tok, output_tok;
+        gss_buffer_desc input_tok;
+        gss_buffer_desc output_tok;
         output_tok.length = 0;
         input_tok.length = 0;
         input_tok.value = nullptr;
@@ -820,7 +818,8 @@ public:
             // SEC_E_CRYPTO_SYSTEM_INVALID;
             throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
         }
-        major_status = gss_init_sec_context(&minor_status,
+        OM_uint32 minor_status = 0;
+        OM_uint32 major_status = gss_init_sec_context(&minor_status,
                                             gss_no_cred,
                                             &this->sspi_krb_ctx->gss_ctx,
                                             this->sspi_krb_ctx->target_name,
@@ -861,7 +860,7 @@ public:
         this->client_auth_data.input_buffer.clear();
 
         /* send authentication token to server */
-        if (this->ts_request.negoTokens.size() > 0) {
+        if (not this->ts_request.negoTokens.empty()) {
             LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
             LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
             StaticOutStream<65536> ts_request_emit;
