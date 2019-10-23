@@ -283,6 +283,8 @@ namespace impl
 
         unsigned d = 0;
         bool const is_autoinc = e.flag == type_enumeration::autoincrement;
+        unsigned long long total = 0;
+        std::ostringstream oss;
         for (type_enumeration::Value const & v : e.values) {
             if (e.is_string_parser) {
                 write_value_(out, (v.alias ? v.alias : v.name), v, prefix);
@@ -294,13 +296,21 @@ namespace impl
                 auto f = (1ull << d >> 1);
                 if (!(f & e.exclude_flag)) {
                     write_value_(out, HexFlag{f, e.values.size()}, v, prefix);
+                    if (f) {
+                        total |= f;
+                        oss << HexFlag{f, e.values.size()} << " + ";
+                    }
                 }
             }
             ++d;
         }
 
         if (type_enumeration::flags == e.flag) {
-            out << "(note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))";
+            auto s = oss.str();
+            s[s.size() - 2] = '=';
+            out << "Note: values can be added ("
+                << (prefix ? prefix : "enable")
+                << " all: " << s << HexFlag{total, e.values.size()} << ")";
         }
     }
 

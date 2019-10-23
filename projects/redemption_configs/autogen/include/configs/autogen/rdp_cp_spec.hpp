@@ -186,7 +186,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_advanced
 #_hex
 disabled_features = integer(min=0, max=511, default=352)
@@ -228,7 +228,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
@@ -238,7 +238,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
@@ -248,7 +248,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
@@ -258,7 +258,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 #_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
@@ -270,7 +270,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 #   0x0: none
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
 #_hex
 disable_keyboard_log = integer(min=0, max=3, default=1)
 
