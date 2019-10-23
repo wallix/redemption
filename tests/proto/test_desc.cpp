@@ -1136,7 +1136,6 @@ namespace test
             TParams params;
             TCtxValues ctx_values;
             ErrorFn error;
-            int idx_value = -1;
 
             void push_range(std::size_t new_size)
             {
@@ -1154,11 +1153,6 @@ namespace test
 
             static constexpr decltype(size_ctx.size_infos) const&
             size_infos = size_ctx.size_infos;
-
-            auto const& size_info() const noexcept
-            {
-                return size_infos[idx_value];
-            }
         };
 
 
@@ -1652,16 +1646,14 @@ namespace test
             }
 
             // TODO rename to apply_state
-            template<class Ctx, class Data, class... Name>
-            static auto next_state(Ctx& ctx, lazy_value<Data, Name...>)
+            template<class Ctx, class I, class Data, class... Name>
+            static auto next_state(Ctx& ctx, mp::list<I, lazy_value<Data, Name...>>)
             {
                 using Next = next_value<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...>;
-                // TODO should be a integral_constant
                 println(type_name<Next>());
-                ++ctx.idx_value;
-                return Next::make(ctx, get_var<Name>(ctx.params).value...);
+                return Next::make(ctx, I{}, get_var<Name>(ctx.params).value...);
             }
 
             template<class EV, class... V>
@@ -1671,61 +1663,61 @@ namespace test
                 using volatile_final_members = EV;
             };
 
-            struct with_empty_group
+            template<class state, class v>
+            struct split_after_push;
+
+            template<class... Ts, class... Us, class... v>
+            struct split_after_push<
+                mp::list<mp::list<Ts...>, Us...>,
+                mp::list<mp::false_, v...>>
             {
-                template<class g, class... gs>
-                using f = grouped_values<g, gs...>;
+                using type = mp::list<
+                    mp::list<>,
+                    Us..., mp::list<Ts..., mp::list<v...>>
+                >;
             };
 
-            struct without_empty_group
+            template<class... Ts, class... Us, class... v>
+            struct split_after_push<
+                mp::list<mp::list<Ts...>, Us...>,
+                mp::list<mp::true_, v...>>
             {
-                template<class g, class... gs>
-                using f = grouped_values<mp::list<>, gs..., g>;
+                using type = mp::list<mp::list<Ts..., mp::list<v...>>, Us...>;
             };
 
             template<class Ctx>
-            struct group_void_next_state_pred
+            struct group_by_return_not_void
             {
-                template<class v>
-                using state_is_void = std::is_same<void,
-                    decltype(next_state(std::declval<Ctx&>(), v{}))>;
-
-                template<class v1, class v2>
-                using f = state_is_void<v1>;
-
-                using split_volatile_final_members = mp::if_<
-                    // <list<v, ..., vn>, gs...> -> state_is_void<vn>
-                    mp::front<
-                        mp::unpack<
-                            mp::fork_front<
-                                mp::size<mp::decrement<mp::cfe<mp::at>>>,
-                                mp::cfe<mp::call, mp::cfe<state_is_void>>
-                            >
-                        >
-                    >,
-                    with_empty_group,
-                    without_empty_group
-                >;
-
-                using grouped = mp::group<
-                    group_void_next_state_pred,
-                    // <g0, g1..., gn> -> split_volatile_final_members::f<gn, g0, g1...>
-                    mp::fork_front<
-                        mp::size<mp::decrement<
-                            mp::fork<
-                                mp::identity,
-                                mp::always<split_volatile_final_members>,
-                                mp::cfe<mp::rotate>
-                            >
-                        >>,
-                        mp::cfe<mp::call>
-                    >
-                >;
+                template<class... ints>
+                struct indexed_group
+                {
+                    template<class... values>
+                    using f = typename mp::fold_left<
+                        mp::cfl<split_after_push>,
+                        mp::unpack<mp::cfe<grouped_values>>
+                    >::template f<
+                        mp::list<mp::list<>>,
+                        mp::list<
+                            mp::bool_<std::is_same_v<void, decltype(next_state(
+                                std::declval<Ctx&>(), mp::list<ints, values>{}
+                            ))>>,
+                            ints,
+                            values
+                        >...
+                    >;
+                };
             };
 
             template<class Values, class Ctx>
             using context_members = mp::call<
-                mp::unpack<typename group_void_next_state_pred<Ctx>::grouped>
+                mp::unpack<
+                    mp::fork_front<
+                        mp::size<mp::make_int_sequence<
+                            mp::cfe<group_by_return_not_void<Ctx>::template indexed_group>
+                        >>,
+                        mp::cfe<mp::call>
+                    >
+                >
               , Values>;
 
 
@@ -1843,8 +1835,8 @@ namespace test
             using is_static_size = is_static_size_t<reader>;
             using context_value_list = mp::list<>;
 
-            template<class Ctx>
-            static auto make(Ctx& ctx, lazy<Data>)
+            template<class Ctx, class I>
+            static auto make(Ctx& ctx, I, lazy<Data>)
             {
                 return make_mem<Name>(reader::read(ctx.in));
             }
@@ -1861,13 +1853,13 @@ namespace test
             using var_size = variable<value_type_t<Data>, datas::types::PktSize<Name>>;
             using context_value_list = mp::list<var_size>;
 
-            template<class Ctx>
-            static auto make(Ctx& ctx, lazy<datas::types::PktSize<Data>>)
+            template<class Ctx, class I>
+            static auto make(Ctx& ctx, I i, lazy<datas::types::PktSize<Data>>)
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = reader::read(ctx.in);
 
-                auto& info = ctx.size_info();
+                auto& info = ctx.size_infos[i.value];
                 println("pktsz: ", info);
                 std::flush(std::cout);
 
@@ -1894,8 +1886,8 @@ namespace test
             using is_static_size = is_static_size_t<reader>;
             using context_value_list = mp::list<>;
 
-            template<class Ctx>
-            static auto make(Ctx& ctx, val<Data, T&> v)
+            template<class Ctx, class I>
+            static auto make(Ctx& ctx, I, val<Data, T&> v)
             {
                 v.x = reader::read(ctx.in);
                 return make_mem<Name>(v.x);
@@ -1917,8 +1909,8 @@ namespace test
             using is_static_size = is_static_size_t<reader>;
             using context_value_list = mp::list<var_size>;
 
-            template<class Ctx>
-            static void make(Ctx& ctx, val<Data, Bytes>&)
+            template<class Ctx, class I>
+            static void make(Ctx& ctx, I, val<Data, Bytes>&)
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = reader::read(ctx.in);
@@ -1948,12 +1940,12 @@ namespace test
             using is_static_size = std::false_type;
             using context_value_list = mp::list<>;
 
-            template<class Ctx>
-            static auto make(Ctx& ctx, val<Data, Bytes>& v)
+            template<class Ctx, class I>
+            static auto make(Ctx& ctx, I i, val<Data, Bytes>& v)
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
 
-                auto& info = ctx.size_info();
+                auto& info = ctx.size_infos[i.value];
                 println("data:  ", info);
                 std::flush(std::cout);
 
@@ -1976,10 +1968,10 @@ namespace test
             using is_static_size = std::false_type;
             using context_value_list = mp::list<>;
 
-            template<class Ctx, class X>
-            static void make(Ctx& ctx, X const&)
+            template<class Ctx, class I, class X>
+            static void make(Ctx& ctx, I i, X const&)
             {
-                auto& info = ctx.size_info();
+                auto& info = ctx.size_infos[i.value];
                 println("start: ", info);
                 std::flush(std::cout);
 
@@ -2012,10 +2004,10 @@ namespace test
             using is_static_size = std::false_type;
             using context_value_list = mp::list<>;
 
-            template<class Ctx, class X>
-            static void make(Ctx& ctx, X const&)
+            template<class Ctx, class I, class X>
+            static void make(Ctx& ctx, I i, X const&)
             {
-                println("stop:  ", ctx.size_info());
+                println("stop:  ", ctx.size_infos[i.value]);
                 std::flush(std::cout);
                 // println("stop: ", type_name<Name>(), ' ', ctx.ranges.unchecked_size());
                 // std::flush(std::cout);
@@ -2126,6 +2118,9 @@ namespace test
         using ctx_mems = Traits::context_members<Values, decltype(ctx)>;
         using strong_group_members = typename ctx_mems::strong_group_members;
         using volatile_final_members = typename ctx_mems::volatile_final_members;
+
+        println(type_name<strong_group_members>());
+        println(type_name<volatile_final_members>());
 
         auto final = [&](auto&&... xs){
             apply(volatile_final_members{}, [&](auto... v) {
