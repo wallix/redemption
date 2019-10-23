@@ -503,7 +503,7 @@
 "#   0x020: Inspect Chrome Address/Search bar\n"
 "#   0x040: Inspect Firefox Address/Search bar\n"
 "#   0x080: Monitor Internet Explorer event\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x008 + 0x010 + 0x020 + 0x040 + 0x080 = 0x0ff)\n"
 "#_hidden\n"
 "#session_probe_disabled_features = 96\n\n"
 
@@ -529,7 +529,7 @@
 "#   0x1: message sent to syslog\n"
 "#   0x2: User notified (through proxy interface)\n"
 "#   0x4: admin notified (wab notification)\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#_hidden\n"
 "#server_access_allowed_message = 1\n\n"
 
@@ -538,7 +538,7 @@
 "#   0x1: message sent to syslog\n"
 "#   0x2: User notified (through proxy interface)\n"
 "#   0x4: admin notified (wab notification)\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#_hidden\n"
 "#server_cert_create_message = 1\n\n"
 
@@ -547,7 +547,7 @@
 "#   0x1: message sent to syslog\n"
 "#   0x2: User notified (through proxy interface)\n"
 "#   0x4: admin notified (wab notification)\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#_hidden\n"
 "#server_cert_success_message = 1\n\n"
 
@@ -556,7 +556,7 @@
 "#   0x1: message sent to syslog\n"
 "#   0x2: User notified (through proxy interface)\n"
 "#   0x4: admin notified (wab notification)\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#_hidden\n"
 "#server_cert_failure_message = 1\n\n"
 
@@ -565,7 +565,7 @@
 "#   0x1: message sent to syslog\n"
 "#   0x2: User notified (through proxy interface)\n"
 "#   0x4: admin notified (wab notification)\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#_hidden\n"
 "#server_cert_error_message = 1\n\n"
 
@@ -706,7 +706,7 @@
 "#   0x02: wrm\n"
 "#   0x04: video\n"
 "#   0x08: ocr\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (enable all: 0x01 + 0x02 + 0x04 + 0x08 = 0x0f)\n"
 "#_advanced\n"
 "#capture_flags = 11\n\n"
 
@@ -747,7 +747,7 @@
 "#   0x1: disable keyboard log in syslog\n"
 "#   0x2: disable keyboard log in recorded sessions\n"
 "#   0x4: disable keyboard log in recorded meta\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#disable_keyboard_log = 1\n\n"
 
 "# Disable clipboard log:\n"
@@ -755,7 +755,7 @@
 "#   0x1: disable clipboard log in syslog\n"
 "#   0x2: disable clipboard log in recorded sessions\n"
 "#   0x4: disable clipboard log in recorded meta\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#disable_clipboard_log = 1\n\n"
 
 "# Disable (redirected) file system log:\n"
@@ -763,7 +763,7 @@
 "#   0x1: disable (redirected) file system log in syslog\n"
 "#   0x2: disable (redirected) file system log in recorded sessions\n"
 "#   0x4: disable (redirected) file system log in recorded meta\n"
-"# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
+"# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
 "#disable_file_system_log = 1\n\n"
 
 "#_hidden\n"

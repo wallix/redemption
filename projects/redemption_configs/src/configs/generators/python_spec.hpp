@@ -245,6 +245,8 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
 
         unsigned d = 0;
         bool const is_autoinc = e.flag == type_enumeration::autoincrement;
+        unsigned long long total = 0;
+        std::ostringstream oss;
         for (type_enumeration::Value const & v : e.values) {
             if (e.is_string_parser) {
                 this->write_value_((v.alias ? v.alias : v.name), v, prefix);
@@ -253,13 +255,25 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
                 write_value_(d, v, prefix);
             }
             else {
-                write_value_(HexFlag{(1ull << d >> 1), e.values.size()}, v, prefix);
+                auto f = (1ull << d >> 1);
+                write_value_(HexFlag{f, e.values.size()}, v, prefix);
+                if (f) {
+                    total |= f;
+                    oss << HexFlag{f, e.values.size()} << " + ";
+                }
             }
             ++d;
         }
 
         if (type_enumeration::flags == e.flag) {
-            this->out() << this->inherit().comment("(note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))");
+            auto s = oss.str();
+            s[s.size() - 2] = '=';
+
+            oss.str("");
+            oss << "Note: values can be added ("
+                << (prefix ? prefix : "enable")
+                << " all: " << s << HexFlag{total, e.values.size()} << ")";
+            this->out() << this->inherit().comment(oss.str().c_str());
         }
     }
 
