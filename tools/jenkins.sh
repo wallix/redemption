@@ -116,10 +116,9 @@ set -o pipefail
 diff <(echo "$beforerun") <(rootlist) | while read l ; do
     echo "Jenkins:${diffline:-0}:0: warnings: $l [directory integrity]"
     ((++diffline))
-done
-# error with fast compilation
-if [ $? -ne 0 ] && [ $fast -eq 1 ]; then
-    echo "Directory integrity error: ^^^^^^^^^^^"
+done || if [ $fast -eq 1 ]; then
+    # error with fast compilation
+    echo "Directory integrity error: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
     exit 1
 fi
 set +o pipefail
