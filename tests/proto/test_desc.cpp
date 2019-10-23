@@ -1126,14 +1126,39 @@ namespace test
             mp::call<mp::unpack<mp::cfe<tuple>>, CheckedSizes> states;
         };
 
-        template<class TParams, class TCtxValues, class ErrorFn, class CheckedSizes>
+        // TODO C++20: class SizeCtx, SizeCtx const& size_ctx -> auto size_ctx
+        template<class TParams, class TCtxValues, class ErrorFn, class SizeCtx, SizeCtx const& size_ctx>
         struct Ctx
         {
             InStream in;
-            CheckedRanges<CheckedSizes> ranges;
+            std::array<bytes_view, size_ctx.rng_stack_size> old_ranges;
+            int idx_old_ranges;
             TParams params;
             TCtxValues ctx_values;
             ErrorFn error;
+            int idx_value = -1;
+
+            void push_range(std::size_t new_size)
+            {
+                auto remain = this->in.remaining_bytes();
+                this->old_ranges[this->idx_old_ranges] = remain;
+                ++this->idx_old_ranges;
+                this->in = remain.first(new_size);
+            }
+
+            void pop_range()
+            {
+                this->in = InStream(this->old_ranges[this->idx_old_ranges]);
+                --this->idx_old_ranges;
+            }
+
+            static constexpr decltype(size_ctx.size_infos) const&
+            size_infos = size_ctx.size_infos;
+
+            auto const& size_info() const noexcept
+            {
+                return size_infos[idx_value];
+            }
         };
 
 
@@ -1301,6 +1326,18 @@ namespace test
             {};
 
             template<class>
+            struct next_value_is_pkt_size
+            : std::false_type
+            {};
+
+            template<class DataSize, class... Ts>
+            struct next_value_is_pkt_size<
+                next_value<as_param,
+                    variable<lazy<datas::types::PktSize<DataSize>>, Ts...>>>
+            : std::true_type
+            {};
+
+            template<class>
             struct next_value_to_names;
 
             template<class Data, class T, class... Names>
@@ -1309,50 +1346,78 @@ namespace test
                 using type = mp::list<Names...>;
             };
 
+            template<class x>
+            using next_value_to_names_t = typename next_value_to_names<x>::type;
+
             using lazy_value_to_name_list_if_start_range = mp::if_<
                 mp::cfe<next_value_is_start_range>,
                 mp::cfl<next_value_to_names, mp::listify>,
                 mp::always<mp::list<>>
             >;
 
-            template<int SizeOrRange, bool IsSize, bool IsStaticSize>
+            template<int SizeOrRange, bool IsSize, bool IsStaticSize, int RangeBinding>
             struct size_info_t
             {
                 static constexpr bool is_size = IsSize;
                 // if false, size_or_range is static_min_size
                 static constexpr bool is_static_size = IsStaticSize;
                 static constexpr int size_or_range = SizeOrRange;
+                static constexpr int range_binding = RangeBinding;
             };
-
-            template<class NextValue>
-            using next_value_to_size_info = size_info_t<
-                static_min_size_t<NextValue>::value,
-                true,
-                is_static_size_t<NextValue>::value
-            >;
 
             template<class... Names>
             struct indexed_start_range
             {
-                template<class x>
-                using f = size_info_t<
-                    sizeof...(Names) - int(
-                        mp::find_if<mp::same_as<x>, mp::size<>>
-                        ::template f<Names...>
-                        ::value
-                    ),
-                    false, true
-                >;
+                template<class SearchNames>
+                static constexpr int idx_names = sizeof...(Names) - int(
+                    mp::find_if<mp::same_as<SearchNames>, mp::size<>>
+                    ::template f<Names...>
+                    ::value
+                );
+
+                struct range_to_size_info
+                {
+                    template<class NextValue>
+                    using f = size_info_t<
+                        idx_names<next_value_to_names_t<NextValue>>,
+                        false,
+                        true,
+                        -1
+                    >;
+                };
+
+                struct pkt_size_to_size_info
+                {
+                    template<class NextValue>
+                    using f = size_info_t<
+                        static_min_size_t<NextValue>::value,
+                        true,
+                        is_static_size_t<NextValue>::value,
+                        idx_names<next_value_to_names_t<NextValue>>
+                    >;
+                };
+
+                struct regular_to_size_info
+                {
+                    template<class NextValue>
+                    using f = size_info_t<
+                        static_min_size_t<NextValue>::value,
+                        true,
+                        is_static_size_t<NextValue>::value,
+                        -1
+                    >;
+                };
 
                 // to_size_or_negatif_index_range
                 using type = mp::if_<
                     mp::cfe<next_value_is_range>,
                     // negative index
-                    mp::cfl<
-                        next_value_to_names,
-                        indexed_start_range
-                    >,
-                    mp::cfe<next_value_to_size_info>
+                    range_to_size_info,
+                    mp::if_<
+                        mp::cfe<next_value_is_pkt_size>,
+                        pkt_size_to_size_info,
+                        regular_to_size_info
+                    >
                 >;
             };
 
@@ -1377,6 +1442,7 @@ namespace test
                 bool is_static_size;
                 bool is_rng_rstatic_size;
                 int idx_range;
+                int start_range_idx;
                 int rng_raccu = -1;
                 int rng_raccu_next = -1;
 
@@ -1388,6 +1454,7 @@ namespace test
                         << "  is_static_size: " << std::setw(2) << info.is_static_size
                         << "  is_rng_rstatic_size: " << std::setw(2) << info.is_rng_rstatic_size
                         << "  idx_range: " << std::setw(2) << info.idx_range
+                        << "  start_range_idx: " << std::setw(2) << info.start_range_idx
                         << "  rng_raccu: " << std::setw(2) << info.rng_raccu
                         << "  rng_raccu_next: " << std::setw(2) << info.rng_raccu_next
                     ;
@@ -1430,8 +1497,8 @@ namespace test
 
                     SizeCtx<sizeof...(SizeOrRange)> result{
                         {(SizeOrRange::is_size
-                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0}
-                            : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1}
+                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0, SizeOrRange::range_binding}
+                            : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1, SizeOrRange::range_binding}
                         )...},
                         0
                     };
@@ -1489,14 +1556,19 @@ namespace test
                         }
                     }
 
-                    // init rng_raccu and rng_raccu_next
+                    // init start_range_idx, rng_raccu and rng_raccu_next
                     {
                         auto compute_rng_raccu = [&](SizeInfo const& sz){
                             auto& rng = ranges[sz.idx_range];
                             return sizes[rng.idx_stop].accu_size - sz.accu_size + sz.size;
                         };
 
-                        for (auto& sz : sizes) {
+                        for (auto& sz : sizes)
+                        {
+                            if (sz.start_range_idx != -1)
+                            {
+                                sz.start_range_idx = ranges[sz.start_range_idx+1].idx_start;
+                            }
                             auto& rng = ranges[sz.idx_range];
                             sz.rng_raccu = compute_rng_raccu(sz);
                             sz.rng_raccu_next
@@ -1543,7 +1615,6 @@ namespace test
                             mp::fork<
                                 mp::transform<mp::cfe<context_value_list_t>,
                                     mp::join<mp::cfe<tuple>>>,
-                                compute_sizes_t,
                                 new_compute_sizes_t,
                                 mp::listify
                             >
@@ -1552,7 +1623,7 @@ namespace test
                     Values
                 >;
 
-                using SizeCtx = mp::eager::at<states_list, 2>;
+                using SizeCtx = mp::eager::at<states_list, 1>;
 
                 constexpr auto& size_ctx = SizeCtx::size_ctx;
                 constexpr auto& size_infos = size_ctx.size_infos;
@@ -1564,18 +1635,17 @@ namespace test
                 }
 
                 using ctx_values = mp::eager::at<states_list, 0>;
-                using sizes = mp::eager::at<states_list, 1>;
 
                 constexpr auto min_size = size_infos.back().accu_size;
 
-                println("min_size: ", min_size);
+                print("min_size: ", min_size, "\n\n");
 
                 if (buf.size() < min_size) {
                     error(no_name{}, min_size, buf.size());
                 }
 
-                return Ctx<tparams, ctx_values, ErrorFn&, sizes>{
-                    InStream{buf}, buf.size() - min_size,
+                return Ctx<tparams, ctx_values, ErrorFn&, decltype(SizeCtx::size_ctx), SizeCtx::size_ctx>{
+                    InStream{buf}, {}, 0, /*buf.size() - min_size,*/
                     detail::build_params2<stream_readable2, Params>(xs...),
                     ctx_values{} /** TODO uninit<ctx_values> ? **/, error
                 };
@@ -1588,6 +1658,9 @@ namespace test
                 using Next = next_value<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...>;
+                // TODO should be a integral_constant
+                println(type_name<Next>());
+                ++ctx.idx_value;
                 return Next::make(ctx, get_var<Name>(ctx.params).value...);
             }
 
@@ -1794,17 +1867,19 @@ namespace test
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = reader::read(ctx.in);
 
-                auto& info = ctx.ranges.get(Name{});
+                auto& info = ctx.size_info();
+                println("pktsz: ", info);
+                std::flush(std::cout);
 
-                println(type_name(info));
-                if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
-                {
-                    auto remain = ctx.in.in_remain() - (ctx.in.get_current() - info.ptr);
-                    if (REDEMPTION_UNLIKELY(remain < info.static_min_size)) {
-                        ctx.error(Name{}, info.static_min_size, remain);
-                    }
-                    ctx.ranges.push(remain - info.static_min_size);
-                }
+                // TODO
+                // if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
+                // {
+                //     auto remain = ctx.in.in_remain() - (ctx.in.get_current() - info.ptr);
+                //     if (REDEMPTION_UNLIKELY(remain < info.static_min_size)) {
+                //         ctx.error(Name{}, info.static_min_size, remain);
+                //     }
+                //     ctx.ranges.push(remain - info.static_min_size);
+                // }
 
                 return make_mem<Name>(value_type_t<Data>(n));
             }
@@ -1878,13 +1953,17 @@ namespace test
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
 
-                println("bytes: ", ctx.ranges.unchecked_size(), "/", n);
+                auto& info = ctx.size_info();
+                println("data:  ", info);
                 std::flush(std::cout);
-                if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size() < n))
-                {
-                    ctx.error(Name{}, n, ctx.in.in_remain());
-                }
-                ctx.ranges.unchecked_size() -= n;
+
+                // println("bytes: ", ctx.ranges.unchecked_size(), "/", n);
+                // std::flush(std::cout);
+                // if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size() < n))
+                // {
+                //     ctx.error(Name{}, n, ctx.in.in_remain());
+                // }
+                // ctx.ranges.unchecked_size() -= n;
 
                 return make_mem<Name>(read_data_bytes(ctx.in, v.x, n));
             }
@@ -1900,27 +1979,29 @@ namespace test
             template<class Ctx, class X>
             static void make(Ctx& ctx, X const&)
             {
-                auto& info = ctx.ranges.get(Name{});
+                auto& info = ctx.size_info();
+                println("start: ", info);
+                std::flush(std::cout);
 
-                println("start: ", type_name(info), "  min: ", info.static_min_remain);
-                if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
-                {
-                    info.ptr = ctx.in.get_current();
-                }
-                else
-                {
-                    auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
-                    if (REDEMPTION_UNLIKELY(rng_size <= info.static_min_remain)) {
-                        ctx.error(Name{}, info.static_min_remain, rng_size);
-                    }
-
-                    if (REDEMPTION_UNLIKELY(ctx.in.in_remain() < rng_size)) {
-                        ctx.error(Name{}, rng_size, ctx.in.in_remain());
-                    }
-
-                    ctx.ranges.push(rng_size - info.static_min_remain);
-                    println("unchecked_size: ", ctx.ranges.unchecked_size());
-                }
+                // println("start: ", type_name(info), "  min: ", info.static_min_remain);
+                // if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
+                // {
+                //     info.ptr = ctx.in.get_current();
+                // }
+                // else
+                // {
+                //     auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
+                //     if (REDEMPTION_UNLIKELY(rng_size <= info.static_min_remain)) {
+                //         ctx.error(Name{}, info.static_min_remain, rng_size);
+                //     }
+                //
+                //     if (REDEMPTION_UNLIKELY(ctx.in.in_remain() < rng_size)) {
+                //         ctx.error(Name{}, rng_size, ctx.in.in_remain());
+                //     }
+                //
+                //     ctx.ranges.push(rng_size - info.static_min_remain);
+                //     println("unchecked_size: ", ctx.ranges.unchecked_size());
+                // }
             }
         };
 
@@ -1934,15 +2015,17 @@ namespace test
             template<class Ctx, class X>
             static void make(Ctx& ctx, X const&)
             {
-                println("stop: ", type_name<Name>(), ' ', ctx.ranges.unchecked_size());
+                println("stop:  ", ctx.size_info());
                 std::flush(std::cout);
-                if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size())) {
-                    ctx.error(Name{}, ctx.ranges.unchecked_size(), 0);
-                }
-                ctx.ranges.pop();
+                // println("stop: ", type_name<Name>(), ' ', ctx.ranges.unchecked_size());
+                // std::flush(std::cout);
+                // if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size())) {
+                //     ctx.error(Name{}, ctx.ranges.unchecked_size(), 0);
+                // }
+                // ctx.ranges.pop();
 
-                auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
-                ctx.ranges.unchecked_size() -= rng_size;
+                // auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
+                // ctx.ranges.unchecked_size() -= rng_size;
                 // if (REDEMPTION_UNLIKELY(rng_size <= info.static_min_remain)) {
                 //     ctx.error(Name{}, info.static_min_remain, rng_size);
                 // }
