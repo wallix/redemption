@@ -110,13 +110,20 @@ build $toolset_gcc cxxflags=-g -j2 ocr_tools
 build $toolset_gcc cxxflags=-g $big_mem
 build $toolset_gcc cxxflags=-g -j2
 
-dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
-  echo 'New file(s):'
-  echo "$dirdiff"
-  # Making the whold build fail when cleanup fails is too violent
-  # That should be a mere warning
-  # exit 1
-}
+
+# Warn new files created by tests.
+set -o pipefail
+diff <(echo "$beforerun") <(rootlist) | while read l ; do
+    echo "Jenkins:${diffline:-0}:0: warnings: $l [directory integrity]"
+    ((++diffline))
+done
+# error with fast compilation
+if [ $? -ne 0 ] && [ $fast -eq 1 ]; then
+    echo "Directory integrity error: ^^^^^^^^^^^"
+    exit 1
+fi
+set +o pipefail
+
 
 #bjam -a -q toolset=clang-8 -sNO_FFMPEG=1 san
 build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
