@@ -166,9 +166,7 @@ public:
 
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-        if (tls_client_params.tls_min_level){
-            SSL_CTX_set_min_proto_version(ctx, tls_client_params.tls_min_level);
-        }
+        SSL_CTX_set_min_proto_version(ctx, tls_client_params.tls_min_level);
         if (tls_client_params.tls_max_level){
             SSL_CTX_set_max_proto_version(ctx, tls_client_params.tls_max_level);
         }
@@ -534,9 +532,8 @@ public:
         LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL options");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
-        if (tls_min_level){
-            SSL_CTX_set_min_proto_version(ctx, tls_min_level);
-        }
+        SSL_CTX_set_min_proto_version(ctx, tls_min_level);
+
         if (tls_max_level){
             SSL_CTX_set_max_proto_version(ctx, tls_max_level);
         }

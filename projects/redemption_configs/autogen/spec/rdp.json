@@ -84,7 +84,7 @@
           "type": "integer",
           "min": 0,
           "default": 0,
-          "description": "Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"
+          "description": "Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"
         },
         {
           "name": "tls_max_level",

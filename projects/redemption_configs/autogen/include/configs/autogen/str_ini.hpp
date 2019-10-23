@@ -210,7 +210,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #tls_support = 1
 
-# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 # min = 0
 #tls_min_level = 2
 
