@@ -507,7 +507,8 @@ public:
 
     void out_uint8(uint8_t v) noexcept {
         assert(this->has_room(1));
-        *(this->p++) = v;
+        if (this->p)
+            *(this->p++) = v;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
@@ -691,9 +692,25 @@ public:
         this->p+=2;
     }
 
+    void out_uint16_be_bis(unsigned int v) noexcept {
+        assert(this->has_room(2));
+        this->p[1] = v & 0xFF;
+        this->p[0] = (v >> 8) & 0xFF;
+        this->p+=2;
+    }
+
+    void out_uint32_le_bis(unsigned int v) noexcept {
+        assert(this->has_room(4));
+        this->p[0] = (v & 0xFF);
+        this->p[1] = (v >> 8) & 0xFF;
+        this->p[2] = (v >> 16) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
+        this->p+=4;
+    }
+
     void out_uint32_le(unsigned int v) noexcept {
         assert(this->has_room(4));
-        this->p[0] = v & 0xFF;
+        this->p[0] = (v & 0xFF);
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
         this->p[3] = (v >> 24) & 0xFF;
@@ -737,8 +754,10 @@ public:
 
     void out_copy_bytes(bytes_view data) noexcept {
         assert(this->has_room(data.size()));
-        memcpy(this->p, data.data(), data.size());
-        this->p += data.size();
+        if (not data.empty()){
+            memcpy(this->p, data.data(), data.size());
+            this->p += data.size();
+        }
     }
 
     void out_copy_bytes(byte_ptr v, size_t n) noexcept {

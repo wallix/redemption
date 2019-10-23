@@ -334,6 +334,7 @@ namespace detail
 
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
     template<class T, T... c>
     string_literal<c...> operator "" _mp_str()
     { return {}; }

@@ -1092,6 +1092,7 @@ namespace jln
     {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
         template<class C, C... cs>
         detail::named_type<string_c<cs...>> operator ""_f () noexcept
         { return {}; }
@@ -1118,7 +1119,7 @@ namespace jln
 
         [[nodiscard]] bool is_final_sequence() const noexcept
         {
-            return this->i == int{NamedIndexPack::count} - 1;
+            return this->i == NamedIndexPack::count - 1u;
         }
 
         [[nodiscard]] IndexSequence index() const noexcept

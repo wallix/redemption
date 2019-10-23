@@ -88,26 +88,18 @@ private:
 
     auto CryptAndSign(SslRC4 & rc4, uint32_t mseqno, bytes_view payload) -> std::vector<uint8_t>
     {
-
         auto ClientSigningKey = ::Md5(this->ExportedSessionKey,
             "session key to client-to-server signing key magic constant\0"_av);
 
-        std::array<uint8_t,4> seqno;
-        OutStream stream_sq(seqno);
-        stream_sq.out_uint32_le(mseqno);
-
+        auto seqno = std::vector<uint8_t>{} << out_uint32_le(mseqno);
         auto encrypted_pubkey = Rc4CryptVector(rc4, payload);
-
-        /* Concatenate version, ciphertext and sequence number to build signature */
-        std::array<uint8_t, 16> signature;
-        OutStream stream(signature);
-        stream.out_uint32_le(1); // version
         array_md5 digest = ::HmacMd5(ClientSigningKey, seqno, payload);
-        // We only keep half of MD5 for signature
-        stream.out_copy_bytes(Rc4Crypt<8>(rc4, {digest.data(), 8}));
-        stream.out_uint32_le(mseqno);
-
-        return std::vector<uint8_t>{} << signature << encrypted_pubkey;
+        auto ciphertext = Rc4Crypt<8>(rc4, {digest.data(), 8});
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        return std::vector<uint8_t>{} << out_uint32_le(1) 
+                                      << ciphertext
+                                      << out_uint32_le(mseqno)
+                                      << encrypted_pubkey;
     }
 
 public:

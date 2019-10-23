@@ -1262,7 +1262,6 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
                                         bytes_view EncryptedRandomSessionKey,
                                         bool has_mic, size_t & mic_offset)
 {
-
     bytes_view tmpWorkStation = {Workstation.data(), 
                 (negoFlags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?Workstation.size():0};
     bytes_view tmpEncryptedRandomSessionKey = {EncryptedRandomSessionKey.data(),
@@ -1273,23 +1272,13 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
                             +8*negotiate_flag
                             +16*has_mic;
 
-    size_t message_size = payloadOffset 
-                        + LmChallengeResponse.size()
-                        + NtChallengeResponse.size()
-                        + DomainName.size()
-                        + UserName.size()
-                        + tmpWorkStation.size()
-                        + tmpEncryptedRandomSessionKey.size()
-                        ;
     if (has_mic) {
         mic_offset = payloadOffset-16;
     }
 
-    std::vector<uint8_t> result(message_size);
-    OutStream stream(result);
-
-    stream.out_copy_bytes("NTLMSSP\0"_av);
-    stream.out_uint32_le(NtlmAuthenticate);
+    auto result = std::vector<uint8_t>{}
+                    << bytes_view("NTLMSSP\0"_av)
+                    << out_uint32_le(NtlmAuthenticate);
 
     struct TmpNtlmField {
         uint16_t offset;
@@ -1305,9 +1294,9 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
          {0, tmpEncryptedRandomSessionKey}}};
 
     for (auto field: l){
-        stream.out_uint16_le(field.f.size());
-        stream.out_uint16_le(field.f.size());
-        stream.out_uint32_le(payloadOffset);
+        result << ::out_uint16_le(0+field.f.size())
+               << ::out_uint16_le(0+field.f.size())
+               << ::out_uint32_le(0+payloadOffset);
         payloadOffset += field.f.size();
         field.offset = payloadOffset;
     }
@@ -1317,23 +1306,23 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
 //        // This is some message format error
 //    }
 
-    stream.out_uint32_le(negoFlags);
+    result << ::out_uint32_le(negoFlags);
     if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        stream.out_uint8(ntlm_version.ProductMajorVersion);
-        stream.out_uint8(ntlm_version.ProductMinorVersion);
-        stream.out_uint16_le(ntlm_version.ProductBuild);
-        stream.out_clear_bytes(3);
-        stream.out_uint8(ntlm_version.NtlmRevisionCurrent);
+        result << out_uint8(ntlm_version.ProductMajorVersion)
+               << out_uint8(ntlm_version.ProductMinorVersion)
+               << out_uint16_le(ntlm_version.ProductBuild)
+               << std::array<uint8_t,3>{0, 0, 0}
+               << out_uint8(ntlm_version.NtlmRevisionCurrent);
     }
 
 
     if (has_mic) {
-        stream.out_clear_bytes(16);
+        result << std::array<uint8_t,16>{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     }
 
     // PAYLOAD
     for (auto field: l){
-        stream.out_copy_bytes(field.f);
+        result << field.f;
     }
 
     return result;
