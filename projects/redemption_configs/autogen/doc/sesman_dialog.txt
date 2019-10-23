@@ -126,7 +126,7 @@ cfg::mod_rdp::session_probe_disabled_features <- mod_rdp:session_probe_disabled_
       0x040: Inspect Firefox Address/Search bar
       0x080: Monitor Internet Explorer event
       0x100: Inspect group membership of user
-    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+    Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 cfg::mod_rdp::session_probe_public_session <- mod_rdp:session_probe_public_session   [bool]
     If enabled, disconnected session can be recovered by a different primary user.
 cfg::mod_rdp::server_cert_store <- mod_rdp:server_cert_store   [bool]
@@ -144,28 +144,28 @@ cfg::mod_rdp::server_access_allowed_message <- mod_rdp:server_access_allowed_mes
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::mod_rdp::server_cert_create_message <- mod_rdp:server_cert_create_message   [ServerNotification]
     Warn that new server certificate file was created.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::mod_rdp::server_cert_success_message <- mod_rdp:server_cert_success_message   [ServerNotification]
     Warn that server certificate file was successfully checked.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::mod_rdp::server_cert_failure_message <- mod_rdp:server_cert_failure_message   [ServerNotification]
     Warn that server certificate file checking failed.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+    Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::mod_rdp::enable_rdpdr_data_analysis <- enable_rdpdr_data_analysis   [bool]
 cfg::mod_rdp::wabam_uses_translated_remoteapp <- mod_rdp:wabam_uses_translated_remoteapp   [bool]
 cfg::mod_rdp::enable_server_cert_external_validation <- enable_server_cert_external_validation   [bool]
@@ -214,7 +214,7 @@ cfg::video::disable_keyboard_log <- video:disable_keyboard_log   [KeyboardLogFla
       0x1: disable keyboard log in syslog
       0x2: disable keyboard log in recorded sessions
       0x4: disable keyboard log in recorded meta
-    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+    Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::video::rt_display <- rt_display   [bool]
 
 cfg::crypto::key0 <- encryption_key   [std::array<unsigned char, 32>]

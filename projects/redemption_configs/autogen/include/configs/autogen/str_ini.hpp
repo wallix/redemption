@@ -605,7 +605,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
 #session_probe_disabled_features = 352
@@ -636,7 +636,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 #server_access_allowed_message = 1
@@ -647,7 +647,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 #server_cert_create_message = 1
@@ -658,7 +658,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 #server_cert_success_message = 1
@@ -669,7 +669,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 #server_cert_failure_message = 1
@@ -680,7 +680,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
 #   0x4: admin notified (wab notification)
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hidden
 #_hex
 #server_cert_error_message = 1
@@ -950,7 +950,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x02: wrm
 #   0x04: video
 #   0x08: ocr
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (enable all: 0x01 + 0x02 + 0x04 + 0x08 = 0x0f)
 #_advanced
 #_hex
 #capture_flags = 11
@@ -998,7 +998,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions
 #   0x4: disable keyboard log in recorded meta
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hex
 #disable_keyboard_log = 1
 
@@ -1008,7 +1008,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: disable clipboard log in syslog
 #   0x2: disable clipboard log in recorded sessions
 #   0x4: disable clipboard log in recorded meta
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hex
 #disable_clipboard_log = 1
 
@@ -1018,7 +1018,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x1: disable (redirected) file system log in syslog
 #   0x2: disable (redirected) file system log in recorded sessions
 #   0x4: disable (redirected) file system log in recorded meta
-# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_hex
 #disable_file_system_log = 1
 
