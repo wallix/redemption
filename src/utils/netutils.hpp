@@ -27,7 +27,7 @@
 #include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
-
+#include <cstdio>
 
 class in_addr;
 
@@ -45,3 +45,6 @@ unique_fd addr_connect(const char* addr);
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
                        writable_bytes_view transparent_dest, uint32_t verbose = 0);
+
+FILE* popen_conntrack(const char* source_ip, int source_port,
+                      int target_port);
