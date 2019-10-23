@@ -44,7 +44,7 @@ enable_nla = boolean(default=True)
 # (if enable_nla is disabled, this value is ignored).
 enable_kerberos = boolean(default=False)
 
-# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
+# Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_min_level = integer(min=0, default=0)
 
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3

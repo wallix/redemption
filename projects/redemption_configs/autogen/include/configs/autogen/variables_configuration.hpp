@@ -828,7 +828,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
+    /// Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
     /// type: unsigned int <br/>
     /// value{2} <br/>
     struct client::tls_min_level {
@@ -1214,7 +1214,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
+    /// Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
     /// type: unsigned int <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:tls_min_level <br/>
