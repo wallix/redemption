@@ -839,7 +839,15 @@ protected:
 
         if (this->send_new_pointer) {
             StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+            const uint8_t* start_ptr = stream.get_data_stream().get_current();
+
             NewPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
+
+            if (bool(this->verbose & Verbose::pointer)) {
+                hexdump_c(start_ptr, stream.get_data_stream().get_current() - start_ptr);
+            }
+
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid
@@ -848,7 +856,15 @@ protected:
         }
         else {
             StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+            const uint8_t* start_ptr = stream.get_data_stream().get_current();
+
             ColorPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
+
+            if (bool(this->verbose & Verbose::pointer)) {
+                hexdump_c(start_ptr, stream.get_data_stream().get_current() - start_ptr);
+            }
+
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid

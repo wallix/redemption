@@ -990,7 +990,7 @@ Mask For Cursor
     };
 
     InStream in_stream_cursor(buffer, sizeof(buffer));
-    Pointer cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor, BGRPalette::classic_332(), true);
+    Pointer cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor, BGRPalette::classic_332(), true, false);
 
     RED_CHECK_EQ(cursor.get_hotspot().x, 8);
     RED_CHECK_EQ(cursor.get_hotspot().y, 9);

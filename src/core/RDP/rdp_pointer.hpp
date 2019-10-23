@@ -720,8 +720,14 @@ inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
     return cursor;
 }
 
-inline Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor)
+inline Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor, bool debug)
 {
+    if (debug) {
+        LOG(LOG_INFO, "pointer_loader_new: data_bpp=%u clean_up_32_bpp_cursor=%s", data_bpp, (clean_up_32_bpp_cursor ? "Yes" : "No"));
+    }
+
+    const uint8_t* start_ptr = stream.get_current();
+
     auto hsx      = stream.in_uint16_le();
     auto hsy      = stream.in_uint16_le();
     auto width    = stream.in_uint16_le();
@@ -741,6 +747,20 @@ inline Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, cons
 
     const uint8_t * data = stream.in_uint8p(dlen);
     const uint8_t * mask = stream.in_uint8p(mlen);
+
+    if (debug) {
+        LOG(LOG_INFO, "pointer_loader_new: length=%ld", stream.get_current() - start_ptr);
+        hexdump_c(start_ptr, stream.get_current() - start_ptr);
+        LOG(LOG_INFO, "pointer_loader_new: hsx=%u hsy=%u width=%u height=%u", hsx, hsy, width, height);
+        LOG(LOG_INFO, "pointer_loader_new: dlen=%u", dlen);
+        hexdump_c(data, dlen);
+        LOG(LOG_INFO, "pointer_loader_new: mlen=%u", mlen);
+        hexdump_c(mask, mlen);
+    }
+else
+{
+    LOG(LOG_INFO, "> > > > > debug = False");
+}
 
     return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor);
 }

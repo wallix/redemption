@@ -5139,7 +5139,7 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor);
+        Pointer cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, bool(this->verbose & RDPVerbose::graphics_pointer));
 
         this->cursors[pointer_idx] = cursor;
         drawable.set_pointer(cursor);
