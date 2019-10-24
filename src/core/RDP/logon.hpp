@@ -610,12 +610,6 @@ struct SystemTime {
     uint16_t wSecond{0};
     uint16_t wMilliseconds{0};
 
-    SystemTime()
-
-    {
-        ;
-    } // END CONSTRUCTOR
-
     void emit(OutStream & stream) const {
         stream.out_uint16_le(wYear);
         stream.out_uint16_le(wMonth);

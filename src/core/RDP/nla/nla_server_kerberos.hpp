@@ -89,7 +89,7 @@ class rdpCredsspServerKerberos final
         }
 
         bool is_empty_user_domain(){
-            return (this->User.size() == 0) && (this->Domain.size() == 0);
+            return (this->User.empty() && this->Domain.empty());
         }
 
         [[nodiscard]] bytes_view get_password_utf16_av() const
@@ -233,19 +233,17 @@ class rdpCredsspServerKerberos final
 
         bool get_service_name(array_view_const_char server, gss_name_t * name) {
             gss_buffer_desc output;
-            OM_uint32 major_status;
-            OM_uint32 minor_status;
             const char service_name[] = "TERMSRV";
             gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
             auto size = (strlen(service_name) + 1 + server.size() + 1);
-
             auto output_value = std::make_unique<char[]>(size);
             output.value = output_value.get();
             snprintf(static_cast<char*>(output.value), size, "%s@%.*s",
                 service_name, int(server.size()), server.data());
             output.length = strlen(static_cast<char*>(output.value)) + 1;
             LOG(LOG_INFO, "GSS IMPORT NAME : %s", static_cast<char*>(output.value));
-            major_status = gss_import_name(&minor_status, &output, type, name);
+            OM_uint32 minor_status = 0;
+            OM_uint32 major_status = gss_import_name(&minor_status, &output, type, name);
             if (GSS_ERROR(major_status)) {
                 LOG(LOG_ERR, "Failed to create service principal name");
                 return false;
@@ -260,8 +258,6 @@ class rdpCredsspServerKerberos final
             array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
         )
         {
-            OM_uint32 major_status, minor_status;
-
             gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
             if (!this->krb_ctx) {
                 // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
@@ -276,8 +272,10 @@ class rdpCredsspServerKerberos final
             //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
             // }
 
+
             // Token Buffer
-            gss_buffer_desc input_tok, output_tok;
+            gss_buffer_desc input_tok;
+            gss_buffer_desc output_tok;
             output_tok.length = 0;
             // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
             //     input_buffer->Buffer.size());
@@ -305,7 +303,9 @@ class rdpCredsspServerKerberos final
     //                   OM_uint32 ,             /* ret_flags */
     //                   OM_uint32 *             /* time_rec */
     //                  );
-            major_status = gss_init_sec_context(&minor_status,
+            OM_uint32 minor_status = 0;
+
+            OM_uint32 major_status = gss_init_sec_context(&minor_status,
                                                 gss_no_cred,
                                                 &this->krb_ctx->gss_ctx,
                                                 this->krb_ctx->target_name,
@@ -346,8 +346,6 @@ class rdpCredsspServerKerberos final
             array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
         )
         {
-            OM_uint32 major_status, minor_status;
-
             gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
             if (!this->krb_ctx) {
                 // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
@@ -359,7 +357,8 @@ class rdpCredsspServerKerberos final
 
 
             // Token Buffer
-            gss_buffer_desc input_tok, output_tok;
+            gss_buffer_desc input_tok;
+            gss_buffer_desc output_tok;
             output_tok.length = 0;
 
             // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
@@ -390,8 +389,8 @@ class rdpCredsspServerKerberos final
             //                OM_uint32 ,             /* time_rec */
             //                gss_cred_id_t *         /* delegated_cred_handle */
             //               );
-
-            major_status = gss_accept_sec_context(&minor_status,
+            OM_uint32 minor_status = 0;
+            OM_uint32 major_status = gss_accept_sec_context(&minor_status,
                                                   &this->krb_ctx->gss_ctx,
                                                   gss_no_cred,
                                                   &input_tok,
@@ -438,18 +437,18 @@ class rdpCredsspServerKerberos final
             //     int *,              /* conf_state */
             //     gss_buffer_t);      /* output_message_buffer */
 
-            OM_uint32 major_status;
-            OM_uint32 minor_status;
             int conf_state;
             if (!this->krb_ctx) {
                 return SEC_E_NO_CONTEXT;
             }
-            gss_buffer_desc inbuf, outbuf;
+            gss_buffer_desc inbuf;
+            gss_buffer_desc outbuf;
 
             inbuf.value = const_cast<uint8_t*>(data_in.data()); /*NOLINT*/
             inbuf.length = data_in.size();
             // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
-            major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
+            OM_uint32 minor_status = 0;
+            OM_uint32 major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
                     GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
             if (GSS_ERROR(major_status)) {
                 LOG(LOG_INFO, "MAJOR ERROR");
@@ -650,9 +649,6 @@ public:
 
 public:
     rdpCredsspServerKerberos(array_view_u8 key,
-               const bool restricted_admin_mode,
-               Random & rand,
-               TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
                const bool credssp_verbose = false,
@@ -757,7 +753,7 @@ private:
             this->ts_request.pubKeyAuth, Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
-            if (this->ts_request.pubKeyAuth.size() == 0) {
+            if (this->ts_request.pubKeyAuth.empty()) {
                 // report_error
                 this->extra_message = " ";
                 this->extra_message.append(TR(trkeys::err_login_password, this->lang));
@@ -802,7 +798,7 @@ private:
     SEC_STATUS credssp_decrypt_ts_credentials() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
 
-        if (this->ts_request.authInfo.size() < 1) {
+        if (this->ts_request.authInfo.empty()) {
             LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
             return SEC_E_INVALID_TOKEN;
         }
@@ -837,7 +833,7 @@ private:
             this->error_code = this->ts_request.error_code;
         }
 
-        if (this->ts_request.negoTokens.size() < 1) {
+        if (this->ts_request.negoTokens.empty()) {
             LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
             return Res::Err;
         }

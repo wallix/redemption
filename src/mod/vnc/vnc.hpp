@@ -1801,13 +1801,14 @@ private:
 
         case WAIT_SECURITY_RESULT: {
         	uint32_t status;
-        	bool haveReason;
+        	bool haveReason = 0;
         	std::string reason;
         	size_t skipLen;
         	InStream s(this->server_data_buf.av());
 
-        	if (!this->readSecurityResult(s, status, haveReason, reason, skipLen))
+        	if (!this->readSecurityResult(s, status, haveReason, reason, skipLen)){
         		return false;
+            }
 
         	switch(status) {
         	case 0:
@@ -1815,8 +1816,9 @@ private:
         	case 1:
         	case 2: {
         		const char *authErrorStr = (status == 1) ? "failed" : "failed (too many attempts)";
-        		if (!haveReason)
+        		if (!haveReason){
         			reason = "<no reason>";
+                }
 
         		LOG(LOG_ERR, "vnc auth %s, reason=%s", authErrorStr, reason.c_str());
         		throw Error(ERR_VNC_CONNECTION_ERROR);
