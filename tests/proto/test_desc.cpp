@@ -1126,29 +1126,72 @@ namespace test
             mp::call<mp::unpack<mp::cfe<tuple>>, CheckedSizes> states;
         };
 
+        template<std::size_t Max>
+        struct StackPtrArray
+        {
+            std::array<byte_ptr, Max> array;
+            int i = 0;
+
+            StackPtrArray() noexcept
+            {}
+
+            void push(byte_ptr p)
+            {
+                array[i++] = p;
+            }
+
+            byte_ptr pop()
+            {
+                return array[--i];
+            }
+        };
+
+        template<>
+        struct StackPtrArray<0>
+        {
+            void push(byte_ptr)
+            {
+                assert(false);
+            }
+
+            byte_ptr pop()
+            {
+                assert(false);
+                return {};
+            }
+        };
+
         // TODO C++20: class SizeCtx, SizeCtx const& size_ctx -> auto size_ctx
         template<class TParams, class TCtxValues, class ErrorFn, class SizeCtx, SizeCtx const& size_ctx>
         struct Ctx
         {
             InStream in;
-            std::array<byte_ptr, size_ctx.rng_stack_size> old_ranges;
-            int idx_old_ranges;
+            StackPtrArray<size_ctx.rng_stack_size> end_stream_stack;
+            StackPtrArray<size_ctx.ptr_stack_size> pkt_pos_stack;
             TParams params;
             TCtxValues ctx_values;
             ErrorFn error;
 
             void push_range(std::size_t new_size)
             {
-                auto remain = this->in.remaining_bytes();
-                this->old_ranges[this->idx_old_ranges] = remain.end();
-                ++this->idx_old_ranges;
-                this->in = InStream(remain.first(new_size));
+                auto remain = in.remaining_bytes();
+                end_stream_stack.push(remain.end());
+                in = InStream(remain.first(new_size));
             }
 
             void pop_range()
             {
-                --this->idx_old_ranges;
-                this->in = InStream({this->in.get_current(), this->old_ranges[this->idx_old_ranges]});
+                in = InStream({in.get_current(), end_stream_stack.pop()});
+            }
+
+            void push_ptr_pos()
+            {
+                pkt_pos_stack.push(in.get_current());
+            }
+
+            std::ptrdiff_t pop_ptr_pos()
+            {
+                return in.get_current() - pkt_pos_stack.pop();
             }
 
             static constexpr decltype(size_ctx.size_infos) const&
@@ -1462,6 +1505,7 @@ namespace test
             {
                 std::array<SizeInfo, N> size_infos;
                 int rng_stack_size;
+                int ptr_stack_size;
             };
 
             template<class... SizeOrRange>
@@ -1504,7 +1548,7 @@ namespace test
                             ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0, /*SizeOrRange::range_binding*/}
                             : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1, /*SizeOrRange::range_binding*/}
                         )...},
-                        0
+                        0, 0
                     };
                     auto& sizes = result.size_infos;
 
@@ -1536,9 +1580,10 @@ namespace test
                         }
                     }
 
-                    // init idx_range
+                    // init idx_range, rng_stack_size, ptr_stack_size
                     {
                         int idx_rng = 0;
+                        int ptr_stack_size = 0;
                         for (auto& sz : sizes)
                         {
                             if (sz.idx_range)
@@ -1546,11 +1591,24 @@ namespace test
                                 if (idx_rng == sz.idx_range)
                                 {
                                     --idx_rng;
+
+                                    auto& rng = ranges[idx_rng];
+                                    if (rng.idx_value > rng.idx_start)
+                                    {
+                                        ++ptr_stack_size;
+                                    }
                                 }
                                 else
                                 {
                                     ++idx_rng;
                                     result.rng_stack_size = std::max(result.rng_stack_size, idx_rng);
+
+                                    auto& rng = ranges[idx_rng];
+                                    if (rng.idx_value > rng.idx_start)
+                                    {
+                                        ++ptr_stack_size;
+                                    }
+                                    result.ptr_stack_size = std::max(result.ptr_stack_size, ptr_stack_size);
                                 }
                             }
                             else
@@ -1639,6 +1697,7 @@ namespace test
                 constexpr auto& size_infos = size_ctx.size_infos;
 
                 println("rng_stack_size: ", size_ctx.rng_stack_size);
+                println("ptr_stack_size: ", size_ctx.ptr_stack_size);
                 println(type_name(size_infos));
                 for (auto& sz_infos : size_infos) {
                     println(sz_infos);
@@ -1655,7 +1714,7 @@ namespace test
                 }
 
                 return Ctx<tparams, ctx_values, ErrorFn&, decltype(SizeCtx::size_ctx), SizeCtx::size_ctx>{
-                    InStream{buf}, {}, 0, /*buf.size() - min_size,*/
+                    InStream{buf}, {}, {},
                     detail::build_params2<stream_readable2, Params>(xs...),
                     ctx_values{} /** TODO uninit<ctx_values> ? **/, error
                 };
@@ -1883,21 +1942,29 @@ namespace test
                 if constexpr (info.is_inclusive_range)
                 {
                     println(" inclusive");
+
+                    auto diff = ctx.pop_ptr_pos();
+
+                    println("diff: ", diff);
+
+                    // TODO == if is_rng_rstatic_size
+                    // TODO info.rng_raccu == 0
+                    if (REDEMPTION_UNLIKELY(
+                        n <= diff ||
+                        // TODO rng_raccu_next if != -1 ?
+                        n - diff < info.rng_raccu ||
+                        not ctx.in.in_check_rem(n - diff)
+                    ))
+                    {
+                        ctx.error(Name{}, info.rng_raccu, n);
+                    }
+
+                    ctx.push_range(n - diff);
                 }
                 else
                 {
                     println(" exclusive");
                 }
-
-                // TODO
-                // if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
-                // {
-                //     auto remain = ctx.in.in_remain() - (ctx.in.get_current() - info.ptr);
-                //     if (REDEMPTION_UNLIKELY(remain < info.static_min_size)) {
-                //         ctx.error(Name{}, info.static_min_size, remain);
-                //     }
-                //     ctx.ranges.push(remain - info.static_min_size);
-                // }
 
                 return make_mem<Name>(value_type_t<Data>(n));
             }
@@ -2021,6 +2088,8 @@ namespace test
                 else
                 {
                     println(" inclusive");
+
+                    ctx.push_ptr_pos();
                 }
 
 
@@ -2066,36 +2135,14 @@ namespace test
 
                 ctx.pop_range();
 
-                if constexpr (info.is_inclusive_range)
-                {
-                    println(" inclusive");
-                }
-                else
-                {
-                    println(" exclusive  ", info.rng_raccu_next, "/", ctx.in.in_remain());
-                    if constexpr (info.rng_raccu_next > 0) {
-                        if (REDEMPTION_UNLIKELY(not ctx.in.in_check_rem(info.rng_raccu_next))) {
-                            ctx.error(Name{}, ctx.in.in_remain(), info.rng_raccu_next);
-                        }
+                println(" inclusive or exclusive  ", info.rng_raccu_next, "/", ctx.in.in_remain());
+                if constexpr (info.rng_raccu_next > 0) {
+                    if (REDEMPTION_UNLIKELY(not ctx.in.in_check_rem(info.rng_raccu_next))) {
+                        ctx.error(Name{}, ctx.in.in_remain(), info.rng_raccu_next);
                     }
                 }
 
                 std::flush(std::cout);
-
-
-
-                // println("stop: ", type_name<Name>(), ' ', ctx.ranges.unchecked_size());
-                // std::flush(std::cout);
-                // if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size())) {
-                //     ctx.error(Name{}, ctx.ranges.unchecked_size(), 0);
-                // }
-                // ctx.ranges.pop();
-
-                // auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
-                // ctx.ranges.unchecked_size() -= rng_size;
-                // if (REDEMPTION_UNLIKELY(rng_size <= info.static_min_remain)) {
-                //     ctx.error(Name{}, info.static_min_remain, rng_size);
-                // }
             }
         };
 
@@ -2430,8 +2477,8 @@ int main()
 
     {
         auto def = test::definition(
-            ss.d = pkt_size(u16_be),
             ss.d = test::start(),
+            ss.d = pkt_size(u16_be),
 
             s.c = test::type(ascii_string(u16_be)),
             s.c = values::size_bytes,
@@ -2450,7 +2497,7 @@ int main()
 
         print("\n\nbounds error:\n\n");
         // "\x00\x06\x00\x04\x70\x6c\x6f\x70\x78"
-        auto datas = test::inplace_struct("\x00\x06\x00\x05\x70\x6c\x6f\x70\x78"_av, error_fn, def);
+        auto datas = test::inplace_struct("\x00\x08\x00\x04\x70\x6c\x6f\x70\x78"_av, error_fn, def);
         println();
         println("datas.d = ", datas.d);
         println("datas.c = ", datas.c);
