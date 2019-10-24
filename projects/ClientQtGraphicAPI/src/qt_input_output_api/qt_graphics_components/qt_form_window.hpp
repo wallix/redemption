@@ -416,8 +416,6 @@ public:
         this->line_edit_layout.addRow(&(this->_portLabel)    , &(this->_portField));
 
         if (this->protocol_type == ClientRedemptionConfig::MOD_VNC) {
-            this->_userNameField.hide();
-            this->_userNameLabel.hide();
             this->_portField.setText("5900");
         } else  {
             this->_portField.setText("3389");

@@ -30,6 +30,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
+#include "core/server_notifier_api.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -187,9 +188,17 @@ private:
         WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE,
         WAIT_SECURITY_TYPES_INVALID_AUTH,
 		WAIT_SECURITY_RESULT,
+		DO_VENCRYPT_HANDSHAKE,
         SERVER_INIT,
         SERVER_INIT_RESPONSE,
         WAIT_CLIENT_UP_AND_RUNNING
+    };
+
+    enum VeNCryptState {
+		WAIT_VENCRYPT_VERSION,
+		WAIT_VENCRYPT_VERSION_RESPONSE,
+		WAIT_VENCRYPT_SUBTYPES,
+		WAIT_VENCRYPT_AUTH_ANSWER
     };
 
 public:
@@ -202,6 +211,7 @@ private:
     std::string encodings;
 
     VncState state = WAIT_SECURITY_TYPES;
+    VeNCryptState vencryptState = WAIT_VENCRYPT_VERSION;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
@@ -222,6 +232,25 @@ private:
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
 #endif
+    /** @brief type of VNC authentication */
+    enum VncAuthType : uint16_t {
+		VNC_AUTH_INVALID 	= 0,
+		VNC_AUTH_NONE 		= 1,
+		VNC_AUTH_VNC 		= 2,
+		VNC_AUTH_TIGHT 		= 16,
+		VNC_AUTH_TLS 		= 18,
+		VNC_AUTH_VENCRYPT	= 19,
+		VNC_AUTH_MS_LOGON	= 0x100-6,
+    	VeNCRYPT_TLSNone 	= 257,
+		VeNCRYPT_TLSVnc 	= 258,
+		VeNCRYPT_TLSPlain 	= 259,
+		VeNCRYPT_X509None	= 260,
+		VeNCRYPT_X509Vnc	= 261,
+		VeNCRYPT_X509Plain	= 262,
+    };
+
+    VncAuthType choosenAuth;
+
 
 public:
     mod_vnc( Transport & t
@@ -250,7 +279,7 @@ public:
     , t(t)
     , width(front_width)
     , height(front_height)
-    , verbose(verbose)
+    , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
     , keymapSym(keylayout, key_flags, server_is_unix, server_is_apple, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
@@ -263,6 +292,8 @@ public:
     #ifndef __EMSCRIPTEN__
     , metrics(metrics)
     #endif
+	, choosenAuth(VNC_AUTH_INVALID)
+	, tlsSwitch(false)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
@@ -1279,22 +1310,75 @@ protected:
         VNC_server_to_client_messages message_type;
     };
 
+    bool doTlsSwitch() {
+    	TLSClientParams tlsParams = {0, 3, true, "DH:DHE"};
+    	NullServerNotifier notifier;
+
+    	switch (this->t.enable_client_tls(notifier, tlsParams)) {
+    	        case Transport::TlsResult::WaitExternalEvent:
+    	        case Transport::TlsResult::Want:
+    	        	return false;
+    	        case Transport::TlsResult::Fail:
+    	            LOG(LOG_ERR, "mod_vnc::enable_client_tls fail");
+    	            throw Error(ERR_VNC_CONNECTION_ERROR);
+    	        case Transport::TlsResult::Ok:
+    	        	return true;
+    	        default:
+    	            LOG(LOG_ERR, "unexpected result");
+    	            throw Error(ERR_VNC_CONNECTION_ERROR);
+    	    }
+    }
+
     UpAndRunningCtx up_and_running_ctx;
 
     Buf64k server_data_buf;
     int spokenProtocol;
+    bool tlsSwitch;
 
 public:
     void draw_event(gdi::GraphicApi & gd)
     {
         LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
+        if (this->tlsSwitch) {
+        	if (this->doTlsSwitch()) {
+        		this->tlsSwitch = false;
+
+        		switch(this->choosenAuth) {
+        		case VeNCRYPT_TLSNone:
+        		case VeNCRYPT_X509None:
+        			this->state = WAIT_SECURITY_RESULT;
+        			break;
+        		case VeNCRYPT_TLSPlain:
+        		case VeNCRYPT_X509Plain: {
+        			StaticOutStream<4 + 4 + 256 + 256> ostream;
+
+        			ostream.out_uint32_be(strlen(this->username));
+        			ostream.out_uint32_be(strlen(this->password));
+        			ostream.out_copy_bytes(byte_ptr_cast(this->username), strlen(this->username));
+        			ostream.out_copy_bytes(byte_ptr_cast(this->password), strlen(this->password));
+
+        			this->t.send(ostream.get_data(), ostream.get_offset());
+        			this->state = WAIT_SECURITY_RESULT;
+        			break;
+        		}
+        		case VeNCRYPT_TLSVnc:
+        		case VeNCRYPT_X509Vnc:
+        			this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
+					break;
+        		default:
+        			LOG(LOG_ERR, "auth %d not handled yet", this->choosenAuth);
+        			break;
+        		}
+        	}
+
+        }
         this->server_data_buf.read_from(this->t);
 
         [[maybe_unused]]
         uint64_t const data_server_before = this->server_data_buf.remaining();
 
-        while (this->draw_event_impl(gd)) {
+        while (this->draw_event_impl(gd) && !this->tlsSwitch) {
         }
 
         uint64_t const data_server_after = this->server_data_buf.remaining();
@@ -1305,20 +1389,9 @@ public:
         this->check_timeout();
     }
 
-    // TODO enum class
-    enum VncAuthType : uint8_t
-    {
-		VNC_AUTH_INVALID 	= 0,
-		VNC_AUTH_NONE 		= 1,
-		VNC_AUTH_VNC 		= 2,
-		VNC_AUTH_TIGHT 		= 16,
-		VNC_AUTH_TLS 		= 18,
-		VNC_AUTH_MS_LOGON	= uint8_t(-6)
-    };
-
 private:
-    const char *securityTypeString(uint8_t t) {
-    	static char format[] = "<unknown 0xXX>";
+    static const char *securityTypeString(uint32_t t) {
+    	static char format[] = "<unknown 0xXXXXXXXX>";
 
     	switch(t) {
     	case VNC_AUTH_INVALID: return "invalid";
@@ -1327,10 +1400,198 @@ private:
     	case VNC_AUTH_TIGHT: return "TightVNC";
     	case VNC_AUTH_TLS: return "TLS";
     	case VNC_AUTH_MS_LOGON: return "MS logon";
+    	case VNC_AUTH_VENCRYPT: return "VeNCrypt";
+    	case VeNCRYPT_TLSNone: return "TLS none";
+    	case VeNCRYPT_TLSVnc: return "TLS VNC";
+    	case VeNCRYPT_TLSPlain: return "TLS plain";
+    	case VeNCRYPT_X509None: return "X509 none";
+    	case VeNCRYPT_X509Vnc: return "X509 VNC";
+    	case VeNCRYPT_X509Plain: return "X509 plain";
     	default:
-    		snprintf(format, sizeof(format), "<unknown %d>", t);
+    		snprintf(format, sizeof(format), "<unknown 0x%x>", t);
     		return format;
     	}
+    }
+
+    void updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
+        static VncAuthType preferedAuthTypes[] = {
+        	VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
+        	//VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,     TLS not handled for now
+			VNC_AUTH_VENCRYPT, VNC_AUTH_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
+        };
+
+    	const size_t nauths = sizeof(preferedAuthTypes) / sizeof(preferedAuthTypes[0]);
+    	for (size_t i = 0; i < std::min(nauths, preferedAuthIndex); i++) {
+    		if (preferedAuthTypes[i] == authId) {
+    			preferedAuth = static_cast<VncAuthType>(authId);
+    			preferedAuthIndex = i;
+    			return;
+    		}
+    	}
+    }
+
+
+    bool readSecurityResult(InStream &s, uint32_t &status, bool &haveReason, std::string &reason, size_t &skipLen) const {
+    	if (s.in_remain() < 4)
+    		return false;
+
+    	skipLen = 4;
+    	status = s.in_uint32_be();
+    	switch(status) {
+    	case 0: // SUCCESS
+    		return true;
+    	case 1:		// Failed
+    	case 2: {	// too many attempts
+    		/*   Version 3.8 onwards
+    		 * If unsuccessful, the server sends a string describing the reason for the failure, and then closes the connection:
+    		 * No. of bytes 	Type 	Description
+    		 *				4 	U32 	reason-length
+    		 *	reason-length 	U8 array 	reason-string
+    		 *
+    		 */
+    		if (this->spokenProtocol >= 3008) {
+    			haveReason = true;
+				if (s.in_remain() < 4)
+					return false;
+
+				uint32_t reasonLen = s.in_uint32_be();
+				if (s.in_remain() < reasonLen)
+					return false;
+
+				reason = "";
+				reason.append(char_ptr_cast(s.get_current()), reasonLen);
+				skipLen = 4 + 4 + reasonLen;
+    		} else {
+    			haveReason = false;
+    		}
+    		return true;
+    	}
+
+    	default:
+    		LOG(LOG_ERR, "unknown auth failed reason 0x%x", status);
+    		return true;
+    	}
+    }
+
+    bool treatVeNCrypt() {
+    	InStream s(this->server_data_buf.av());
+
+    	switch(this->vencryptState) {
+        case WAIT_VENCRYPT_VERSION: {
+        	if (s.in_remain() < 2)
+        		return false;
+
+        	uint8_t major, minor;
+        	major = s.in_uint8();
+        	minor = s.in_uint8();
+
+        	if (major != 0 && minor != 2) {
+        		LOG(LOG_ERR, "unsupported VeNCrypt version %d.%d", major, minor);
+				throw Error(ERR_VNC_CONNECTION_ERROR);
+        	}
+
+        	uint8_t clientVersion[2] = {0, 2};
+        	this->t.send(clientVersion, 2);
+
+        	this->server_data_buf.advance(2);
+        	this->vencryptState = WAIT_VENCRYPT_VERSION_RESPONSE;
+        	break;
+        }
+
+        case WAIT_VENCRYPT_VERSION_RESPONSE: {
+        	if (s.in_remain() < 1)
+        		return false;
+
+        	uint8_t ack = s.in_uint8();
+        	if (ack != 0) {
+        		LOG(LOG_ERR, "server discarded our version");
+        		throw Error(ERR_VNC_CONNECTION_ERROR);
+        	}
+        	this->vencryptState = WAIT_VENCRYPT_SUBTYPES;
+        	this->server_data_buf.advance(1);
+        	REDEMPTION_CXX_FALLTHROUGH;
+        }
+
+        case WAIT_VENCRYPT_SUBTYPES: {
+        	if (s.in_remain() < 1)
+        		return false;
+
+        	uint8_t nSubTypes = s.in_uint8();
+        	if (nSubTypes == 0) {
+        		LOG(LOG_ERR, "no VeNCrypt subtypes");
+        		throw Error(ERR_VNC_CONNECTION_ERROR);
+        	}
+
+        	if (s.in_remain() / 4 < nSubTypes)
+        		return false;
+
+        	LOG(LOG_DEBUG, "VeNCrypt subtypes:");
+
+        	VncAuthType preferedAuth = VNC_AUTH_INVALID;
+        	size_t preferedAuthIndex = 255;
+
+        	for (uint8_t i = 0; i < nSubTypes; i++) {
+        		uint32_t subtype = s.in_uint32_be();
+        		LOG(LOG_DEBUG, " * %s", securityTypeString(subtype));
+
+        		if (subtype == VNC_AUTH_VENCRYPT) {
+            		LOG(LOG_ERR, "VeNCrypt auth type not allowed in VeNCrypt subtypes");
+            		throw Error(ERR_VNC_CONNECTION_ERROR);
+        		}
+
+        		this->updatePreferedAuth(subtype, preferedAuth, preferedAuthIndex);
+        	}
+        	this->server_data_buf.advance(1 + nSubTypes * 4);
+
+        	LOG(LOG_DEBUG, "selected VeNCrypt security is %s", securityTypeString(preferedAuth));
+        	if (preferedAuth == VNC_AUTH_INVALID) {
+        		throw Error(ERR_VNC_CONNECTION_ERROR);
+        	}
+
+        	uint32_t clientAnswer;
+        	OutStream outStream(writable_buffer_view(reinterpret_cast<uint8_t *>(&clientAnswer), sizeof(clientAnswer)));
+        	outStream.out_uint32_be( static_cast<uint32_t>(preferedAuth) );
+        	this->t.send(outStream.get_data(), 4);
+
+        	this->choosenAuth = preferedAuth;
+        	this->vencryptState = WAIT_VENCRYPT_AUTH_ANSWER;
+        	break;
+        }
+        case WAIT_VENCRYPT_AUTH_ANSWER: {
+        	if (s.in_remain() < 1)
+        		return false;
+        	uint8_t ack = s.in_uint8();
+        	if (ack != 1) {
+        		LOG(LOG_ERR, "server not ok with our authType");
+        		throw Error(ERR_VNC_CONNECTION_ERROR);
+        	}
+        	this->server_data_buf.advance(1);
+
+        	switch(this->choosenAuth ) {
+        	case VNC_AUTH_NONE:
+        		this->state = WAIT_SECURITY_RESULT;
+        		break;
+        	case VNC_AUTH_VNC:
+        		break;
+        	case VeNCRYPT_TLSNone:
+        	case VeNCRYPT_TLSPlain:
+        	case VeNCRYPT_TLSVnc:
+
+        	case VeNCRYPT_X509None:
+        	case VeNCRYPT_X509Plain:
+        	case VeNCRYPT_X509Vnc:
+        		this->tlsSwitch = !this->doTlsSwitch();
+        		return true;
+        	default:
+        		LOG(LOG_ERR, "unknown state");
+        		throw Error(ERR_VNC_CONNECTION_ERROR);
+        	}
+        	break;
+        }
+        default:
+        	break;
+    	}
+    	return true;
     }
 
     bool draw_event_impl(gdi::GraphicApi & gd)
@@ -1461,20 +1722,7 @@ private:
 
                     VncAuthType preferedAuth = VNC_AUTH_INVALID;
                     size_t preferedAuthIndex = 255;
-                    auto updatePreferedAuth = [&preferedAuth, &preferedAuthIndex](uint8_t authId) {
-                        VncAuthType preferedAuthTypes[] = {
-                        	VNC_AUTH_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
-                        };
 
-                    	const size_t nauths = sizeof(preferedAuthTypes) / sizeof(preferedAuthTypes[0]);
-                    	for (size_t i = 0; i < std::min(nauths, preferedAuthIndex); i++) {
-                    		if (preferedAuthTypes[i] == authId) {
-                    			preferedAuth = static_cast<VncAuthType>(authId);
-                    			preferedAuthIndex = i;
-                    			return;
-                    		}
-                    	}
-                    };
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
                         "got %d security types:", nAuthTypes);
 
@@ -1482,13 +1730,14 @@ private:
                     	VncAuthType authType = static_cast<VncAuthType>(s.in_uint8());
                     	LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
                     	           "* %s", securityTypeString(authType));
-                    	updatePreferedAuth(authType);
+                    	this->updatePreferedAuth(authType, preferedAuth, preferedAuthIndex);
                     }
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
                            "%s security choosen", securityTypeString(preferedAuth));
 
                     this->server_data_buf.advance(1 + nAuthTypes);
 
+                    this->choosenAuth = preferedAuth;
                     uint8_t authAnswer = static_cast<uint8_t>(preferedAuth);
                     this->t.send(bytes_view{&authAnswer, 1});
 
@@ -1505,6 +1754,9 @@ private:
                         case VNC_AUTH_MS_LOGON:
                             this->state = WAIT_SECURITY_TYPES_MS_LOGON;
                             break;
+                        case VNC_AUTH_VENCRYPT:
+                        	this->state = DO_VENCRYPT_HANDSHAKE;
+                        	break;
                         default:
                             LOG(LOG_ERR, "internal bug when computing prefered VNC auth");
                             throw Error(ERR_VNC_CONNECTION_ERROR);
@@ -1523,18 +1775,21 @@ private:
                         security_type);
 
                     switch (security_type) {
-    					case VNC_AUTH_INVALID:// invalid
+    					case VNC_AUTH_INVALID:
     						this->state = WAIT_SECURITY_TYPES_INVALID_AUTH;
     						break;
-                        case VNC_AUTH_NONE: // none
+                        case VNC_AUTH_NONE:
                             this->state = SERVER_INIT;
                             break;
-                        case VNC_AUTH_VNC: // the password and the server random
+                        case VNC_AUTH_VNC:
                             this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
                             break;
-                        case VNC_AUTH_MS_LOGON: // MS-LOGON
+                        case VNC_AUTH_MS_LOGON:
                             this->state = WAIT_SECURITY_TYPES_MS_LOGON;
                             break;
+                        case VNC_AUTH_VENCRYPT:
+                        	this->state = DO_VENCRYPT_HANDSHAKE;
+                        	break;
                         default:
                             LOG(LOG_ERR, "vnc unexpected security level");
                             throw Error(ERR_VNC_CONNECTION_ERROR);
@@ -1545,46 +1800,40 @@ private:
             return true;
 
         case WAIT_SECURITY_RESULT: {
+        	uint32_t status;
+        	bool haveReason;
+        	std::string reason;
+        	size_t skipLen;
         	InStream s(this->server_data_buf.av());
-        	if (s.in_remain() < 4)
+
+        	if (!this->readSecurityResult(s, status, haveReason, reason, skipLen))
         		return false;
 
-        	size_t skipLen = 4;
-        	uint32_t securityResult = s.in_uint32_be();
-        	switch(securityResult) {
+        	switch(status) {
         	case 0:
         		break;
         	case 1:
         	case 2: {
-        		std::string reasonString;
-        		const char *authErrorStr = (securityResult == 1) ? "failed" : "failed (too many attempts)";
-        		if (this->spokenProtocol >= 3008) {
-					if (s.in_remain() < 4)
-						return false;
+        		const char *authErrorStr = (status == 1) ? "failed" : "failed (too many attempts)";
+        		if (!haveReason)
+        			reason = "<no reason>";
 
-					uint32_t reasonLen = s.in_uint32_be();
-					if (s.in_remain() < reasonLen)
-						return false;
-
-					reasonString.append(reinterpret_cast<const char *>(s.get_current()), reasonLen);
-					skipLen += 4 + reasonLen;
-        		} else {
-        			reasonString = "<no reason>";
-        		}
-
-        		LOG(LOG_ERR, "vnc auth %s, reason=%s", authErrorStr, reasonString.c_str());
+        		LOG(LOG_ERR, "vnc auth %s, reason=%s", authErrorStr, reason.c_str());
         		throw Error(ERR_VNC_CONNECTION_ERROR);
         	}
 
         	default:
-        		LOG(LOG_ERR, "unknown auth failed reason 0x%x", securityResult);
+        		LOG(LOG_ERR, "unknown auth failed reason 0x%x", status);
         		throw Error(ERR_VNC_CONNECTION_ERROR);
-        		break;
         	}
+
         	this->state = SERVER_INIT;
         	this->server_data_buf.advance(skipLen);
         	return true;
         }
+
+        case DO_VENCRYPT_HANDSHAKE:
+        	return this->treatVeNCrypt();
 
         case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Receiving VNC Server Random");
