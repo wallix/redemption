@@ -4722,7 +4722,7 @@ namespace cfg {
         type value{};
     };
     /// AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY <br/>
-    /// type: unsigned int <br/>
+    /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{3000} <br/>
     struct context::rail_disconnect_message_delay {
@@ -4733,8 +4733,8 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index() { return authid_t(153); }
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 3000, 120000>;
         using mapped_type = sesman_and_spec_type;
         type value{3000};
     };

@@ -86,7 +86,7 @@ class RemoteProgramsSessionManager final
 
     bool currently_without_window = false;
 
-    unsigned rail_disconnect_message_delay = 0;
+    std::chrono::milliseconds rail_disconnect_message_delay {};
 
     wait_obj event;
 
@@ -126,7 +126,7 @@ public:
                                  Font const & font, Theme const & theme, AuthApi & authentifier,
                                  char const * session_probe_window_title,
                                  not_null_ptr<ClientExecute> client_execute,
-                                 unsigned rail_disconnect_message_delay,
+                                 std::chrono::milliseconds rail_disconnect_message_delay,
                                  RDPVerbose verbose)
     : front(front)
     , mod(mod)
@@ -472,7 +472,7 @@ public:
 
             this->currently_without_window = true;
 
-            this->event.set_trigger_time(this->rail_disconnect_message_delay * 1000);
+            this->event.set_trigger_time(this->rail_disconnect_message_delay);
         }
 
         if (has_window) {
