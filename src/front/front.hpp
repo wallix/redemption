@@ -1463,6 +1463,8 @@ public:
                             default:
                             break;
                             }
+                            LOG(LOG_INFO, "Client Color Depth is %d", int(this->client_info.screen_info.bpp));
+                            
                             if (bool(this->ini.get<cfg::client::max_color_depth>())) {
                                 this->client_info.screen_info.bpp = std::min(
                                     this->client_info.screen_info.bpp,

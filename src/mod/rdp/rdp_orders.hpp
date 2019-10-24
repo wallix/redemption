@@ -93,8 +93,10 @@ class rdp_orders
     RDPEllipseSC       ellipseSC;
     RDPNineGrid        ninegrid;
 
-public:
+private:
     BitsPerPixel bpp {};
+
+public:
     BGRPalette global_palette;
 
 #ifndef __EMSCRIPTEN__
@@ -160,6 +162,16 @@ public:
         assert(!persist_bitmap_cache_on_disk);
     }
 #endif
+
+    void set_bpp(const BitsPerPixel & bpp)
+    {
+        this->bpp = bpp;
+    }
+
+    const BitsPerPixel & get_bpp()
+    {
+        return this->bpp;
+    }
 
     void reset()
     {

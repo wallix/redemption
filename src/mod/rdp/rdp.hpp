@@ -2045,6 +2045,10 @@ public:
         , file_validator_service(file_validator_service)
         #endif
     {
+        if (this->enable_remotefx){
+            LOG(LOG_INFO, "RemoteFX enabled on proxy");
+        }
+    
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
             mod_rdp_params.log();
@@ -2513,7 +2517,8 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-
+        LOG(LOG_INFO, "==========================================================");
+        LOG(LOG_INFO, "============ SURFACE COMMAND ==========================");
 
         while (stream.in_check_rem(2)) {
             ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
@@ -2834,9 +2839,9 @@ public:
 #endif
                                 }
                                 else {
-                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
+                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
 
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp})){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()})){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
@@ -3370,8 +3375,8 @@ public:
 
                 BitmapCaps bitmap_caps;
                 // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
-                bitmap_caps.preferredBitsPerPixel = safe_int(this->orders.bpp);
-                //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
+                bitmap_caps.preferredBitsPerPixel = safe_int(this->orders.get_bpp());
+                // bitmap_caps.preferredBitsPerPixel = this->front_bpp
                 bitmap_caps.desktopWidth          = this->negociation_result.front_width;
                 bitmap_caps.desktopHeight         = this->negociation_result.front_height;
                 bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
@@ -3418,11 +3423,11 @@ public:
 
                 BmpCacheCaps bmpcache_caps;
                 bmpcache_caps.cache0Entries         = 0x258;
-                bmpcache_caps.cache0MaximumCellSize = nb_bytes_per_pixel(this->orders.bpp) * 0x100;
+                bmpcache_caps.cache0MaximumCellSize = nb_bytes_per_pixel(this->orders.get_bpp()) * 0x100;
                 bmpcache_caps.cache1Entries         = 0x12c;
-                bmpcache_caps.cache1MaximumCellSize = nb_bytes_per_pixel(this->orders.bpp) * 0x400;
+                bmpcache_caps.cache1MaximumCellSize = nb_bytes_per_pixel(this->orders.get_bpp()) * 0x400;
                 bmpcache_caps.cache2Entries         = 0x106;
-                bmpcache_caps.cache2MaximumCellSize = nb_bytes_per_pixel(this->orders.bpp) * 0x1000;
+                bmpcache_caps.cache2MaximumCellSize = nb_bytes_per_pixel(this->orders.get_bpp()) * 0x1000;
 
                 BmpCache2Caps bmpcache2_caps;
                 bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG;
@@ -3447,9 +3452,9 @@ public:
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
                             drawable,
-                            this->BmpCacheRev2_Cache_NumEntries()[0], nb_bytes_per_pixel(this->orders.bpp) * 16 * 16, false,
-                            this->BmpCacheRev2_Cache_NumEntries()[1], nb_bytes_per_pixel(this->orders.bpp) * 32 * 32, false,
-                            this->BmpCacheRev2_Cache_NumEntries()[2], nb_bytes_per_pixel(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->BmpCacheRev2_Cache_NumEntries()[0], nb_bytes_per_pixel(this->orders.get_bpp()) * 16 * 16, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[1], nb_bytes_per_pixel(this->orders.get_bpp()) * 32 * 32, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[2], nb_bytes_per_pixel(this->orders.get_bpp()) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
                             this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
@@ -3463,9 +3468,9 @@ public:
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
                             drawable,
-                            0x258, nb_bytes_per_pixel(this->orders.bpp) * 0x100,  false,
-                            0x12c, nb_bytes_per_pixel(this->orders.bpp) * 0x400,  false,
-                            0x106, nb_bytes_per_pixel(this->orders.bpp) * 0x1000, false,
+                            0x258, nb_bytes_per_pixel(this->orders.get_bpp()) * 0x100,  false,
+                            0x12c, nb_bytes_per_pixel(this->orders.get_bpp()) * 0x400,  false,
+                            0x106, nb_bytes_per_pixel(this->orders.get_bpp()) * 0x1000, false,
                             false,
                             this->cache_verbose);
                     }
@@ -4944,7 +4949,6 @@ public:
     }
 
 
-    // TODO CGR: this can probably be unified with process_confirm_active in front
     void process_server_caps(InStream & stream, uint16_t len) {
         // TODO check stream consumed and len
         (void)len;
@@ -4971,9 +4975,13 @@ public:
             case CAPSTYPE_BITMAP:
             {
                 auto bitmap_caps = this->receive_caps<BitmapCaps>(stream, capset_length);
-                this->orders.bpp = checked_int(bitmap_caps.preferredBitsPerPixel);
+                this->orders.set_bpp(checked_int(bitmap_caps.preferredBitsPerPixel));
                 this->negociation_result.front_width = bitmap_caps.desktopWidth;
                 this->negociation_result.front_height = bitmap_caps.desktopHeight;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "###############################################################");
+                    LOG(LOG_INFO, "Bitmap Depth from Server: %d", bitmap_caps.preferredBitsPerPixel);
+                }
             }
             break;
             case CAPSTYPE_ORDER:
@@ -5042,6 +5050,11 @@ public:
                     caps.log("Receiving from server");
                 }
                 this->haveRemoteFx = caps.haveRemoteFxCodec;
+                if (this->haveRemoteFx){
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        LOG(LOG_INFO, "RemoteFx Enabled on server ++++++++++++++++");
+                    }
+                }
             }
             break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE:
@@ -5584,7 +5597,7 @@ private:
             //                    bufsize, bitmap.bmp_size, width, height, bpp);
             //            }
             const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
-            Bitmap bitmap( this->orders.bpp
+            Bitmap bitmap( this->orders.get_bpp()
                          , checked_int(bmpdata.bits_per_pixel)
                          , &this->orders.global_palette
                          , bmpdata.width

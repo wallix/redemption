@@ -796,6 +796,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
         [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
             // ------------------------------------------------------------
             GCC::UserData::CSCore cs_core(216); // 216: optional parameters up to serverSelectedProtocol
+            LOG(LOG_INFO, "Sending CS_CORE to server: color_depth %d", int(this->front_bpp));
 
             if (this->enable_remotefx) {
                 cs_core.connectionType = GCC::UserData::CONNECTION_TYPE_LAN;
@@ -819,6 +820,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 : safe_cast<uint16_t>(this->front_bpp));
             cs_core.keyboardLayout = this->keylayout;
             if (this->front_bpp == BitsPerPixel{32}) {
+                LOG(LOG_INFO, "Asking for 32 bits to server");
                 cs_core.supportedColorDepths = GCC::UserData::RNS_UD_24BPP_SUPPORT
                         | GCC::UserData::RNS_UD_16BPP_SUPPORT
                         | GCC::UserData::RNS_UD_15BPP_SUPPORT
