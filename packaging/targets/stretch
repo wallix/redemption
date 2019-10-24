@@ -12,6 +12,7 @@ LIB_PREFIX=/usr/local/lib
 ARCHI=any
 BUILD_DEPENDS=debhelper (>=7), git, dpkg-dev, build-essential, g++, libboost-tools-dev, libssl-dev, libkrb5-dev, libsnappy-dev, libpng12-dev, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libx264-dev, libbz2-dev
 DEPENDS=libsnappy1, libkrb5-3, libgssglue1, libavcodec57, libavcodec-extra57, libavformat57, libavutil55, libswscale4, libx264-148, libbz2-1.0
+RECOMMENDS=Recommends: conntrack
 
 #REDEMPTION_USER=
 

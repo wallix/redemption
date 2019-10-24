@@ -10,6 +10,7 @@ Package: redemption
 Architecture: %ARCHI%
 Homepage: https://github.com/wallix/redemption
 Depends: %DEPENDS%
+%RECOMMENDS%
 Description: A new generation RDP proxy for WAB
     A new generation RDP proxy for WAB
     wwww: https://github.com/wallix/redemption
