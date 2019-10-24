@@ -1199,43 +1199,6 @@ namespace test
         };
 
 
-        template<class Ctx, class R>
-        struct State
-        {
-            Ctx& ctx;
-            R result;
-        };
-
-        template<class Ctx, class R>
-        State(Ctx&, R&&) -> State<Ctx, R>;
-
-        // negative number -> name index
-        // positive number -> static_min_size
-        template<class Data>
-        struct StateToMinSizeSelector
-        {
-            template<class State, class...>
-            using f = static_min_size_t<State>;
-        };
-
-        template<>
-        struct StateToMinSizeSelector<start_range>
-        {
-            template<class State, class... Names>
-            using f = mp::call<mp::find_if<
-                // TODO State::name
-                // list<Name...> of next_state<Data, variable<T, Name...>>
-                mp::same_as<mp::call<mp::unpack<mp::at1<mp::unpack<mp::pop_front<>>>>, State>>,
-                mp::size<mp::negate<>>,
-                mp::size<>
-            >, Names...>;
-        };
-
-
-        template<>
-        struct StateToMinSizeSelector<stop_range> : StateToMinSizeSelector<start_range>
-        {};
-
         struct stream_readable2
         {
             template<class Data, class BasicType>
@@ -1271,71 +1234,6 @@ namespace test
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...>;
             };
-
-            template<class State, class x>
-            struct MinSizeByRange;
-
-            template<std::size_t MinRemain, bool IsInclusive>
-            struct size_info
-            {
-                static constexpr std::size_t static_min_remain = MinRemain;
-                static constexpr std::false_type is_inclusive {};
-            };
-
-            template<std::size_t MinRemain>
-            struct size_info<MinRemain, true>
-            {
-                static constexpr std::size_t static_min_remain = MinRemain;
-                static constexpr std::true_type is_inclusive {};
-
-                uint8_t const* ptr;
-            };
-
-            template<class n, class... xs, class NextState>
-            struct MinSizeByRange<mp::list<n, xs...>, NextState>
-            {
-                using type = mp::list<
-                    mp::int_<n::value + static_min_size_t<NextState>::value>,
-                    xs...>;
-            };
-
-            using exclusive_range = mp::bool_<0>;
-            using inclusive_range = mp::bool_<1>;
-
-            template<class n, class T, class... xs, class Name>
-            struct MinSizeByRange<mp::list<n, xs...>, next_value<start_range, variable<T, Name>>>
-            {
-                using type = mp::list<mp::int_<0>, Name, n, exclusive_range, xs...>;
-            };
-
-            template<class D, class n, class T, class... xs, class Name, class previous_n, class RngTag>
-            struct MinSizeByRange<mp::list<n, Name, previous_n, RngTag, xs...>, next_value<D, variable<T, Name>>>
-            {
-                using type = mp::list<mp::int_<0>, Name, n, inclusive_range, xs...>;
-            };
-
-            template<class n, class T, class... xs, class Name, class previous_n, class RngTag>
-            struct MinSizeByRange<mp::list<n, Name, previous_n, RngTag, xs...>, next_value<stop_range, variable<T, Name>>>
-            {
-                using type = mp::list<
-                    mp::int_<previous_n::value + n::value>,
-                    xs...,
-                    variable<size_info<n::value, RngTag::value>, Name>
-                >;
-            };
-
-            template<class x, class... xs>
-            using _final_context_sizes_t = mp::list<
-                variable<size_info<x::value, exclusive_range::value>, void>,
-                xs...>;
-
-            using compute_sizes_t = mp::push_front<
-                mp::list<mp::int_<0>>,
-                mp::fold_left<
-                    mp::cfl<MinSizeByRange>,
-                    mp::unpack<mp::cfe<_final_context_sizes_t>>>
-            >;
-
 
             template<class>
             struct next_value_is_start_range
@@ -1509,7 +1407,7 @@ namespace test
             };
 
             template<class... SizeOrRange>
-            struct compute_sizes
+            struct size_ctx_creator
             {
                 constexpr static auto make_size_infos()
                 {
@@ -1651,11 +1549,10 @@ namespace test
                     return result;
                 }
 
-                constexpr static SizeCtx<sizeof...(SizeOrRange)> size_ctx
-                    = make_size_infos();
+                constexpr static SizeCtx<sizeof...(SizeOrRange)> size_ctx = make_size_infos();
             };
 
-            using new_compute_sizes_t = mp::fork_front<
+            using make_compute_sizes = mp::fork_front<
                 mp::transform<
                     lazy_value_to_name_list_if_start_range,
                     mp::join<
@@ -1663,7 +1560,7 @@ namespace test
                             indexed_start_range,
                             mp::fork<
                                 mp::identity,
-                                mp::always<mp::cfe<compute_sizes>>,
+                                mp::always<mp::cfe<size_ctx_creator>>,
                                 mp::cfe<mp::transform>
                             >
                         >
@@ -1683,7 +1580,7 @@ namespace test
                             mp::fork<
                                 mp::transform<mp::cfe<context_value_list_t>,
                                     mp::join<mp::cfe<tuple>>>,
-                                new_compute_sizes_t,
+                                make_compute_sizes,
                                 mp::listify
                             >
                         >
@@ -2416,64 +2313,64 @@ int main()
     };
 
     uint8_t a = 0x78;
-    // uint16_t b = 0x1f23;
+    uint16_t b = 0x1f23;
 
-    // auto print_list = [](char const* s, auto l){
-    //     print(s, ":\n");
-    //     test::apply(l, [&](auto... xs){
-    //         (println("  ", type_name(xs)), ...);
-    //     });
-    // };
-    //
-    // // println('\n', type_name(test::definition2(u8[s.a])));
-    // println("definition:\n  ", type_name(def));
-    // print_list("params", def.params());
-    // print_list("values", def.values());
-    //
-    // print("\n\ninplace_emit:\n\n");
-    // std::array<uint8_t, 30> buf {};
-    // auto out = test::inplace_emit(buf, def,
-    //     s.b = b, s.a = a, s.c = "plop"_av, s.size = native(),
-    //     ss.d = native(), ss.e = a,
-    //     sss.e = b);
-    // dump(out);
-    //
-    // {
-    //     print("\n\ninplace_recv2:\n");
-    //     char strbuf[10];
-    //     a = '0';
-    //     auto datas = test::inplace_recv2(out, error_fn, def,
-    //         s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native(),
-    //         ss.d = native(), ss.e = native(),
-    //         sss.e = native());
-    //     println("\n", type_name(datas));
-    //     println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-    //     println("datas.b = ", datas.b, " ", type_name<decltype(datas.b)>());
-    //     println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-    //     println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
-    //     println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
-    //     println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
-    //     println("a = ", a);
-    // }
-    //
-    // {
-    //     print("\n\ninplace_struct:\n");
-    //     auto datas = test::inplace_struct(out, error_fn, def);
-    //     println("\n", type_name(datas));
-    //     println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
-    //     println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
-    //     println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
-    //     println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
-    //     println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
-    //     println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
-    //
-    //     auto p = [](auto const& x){
-    //         println(x._proto_name(), ": ", x._proto_value());
-    //     };
-    //     datas.apply([&](auto const&... xs) {
-    //         (p(xs), ...);
-    //     });
-    // }
+    auto print_list = [](char const* s, auto l){
+        print(s, ":\n");
+        test::apply(l, [&](auto... xs){
+            (println("  ", type_name(xs)), ...);
+        });
+    };
+
+    // println('\n', type_name(test::definition2(u8[s.a])));
+    println("definition:\n  ", type_name(def));
+    print_list("params", def.params());
+    print_list("values", def.values());
+
+    print("\n\ninplace_emit:\n\n");
+    std::array<uint8_t, 30> buf {};
+    auto out = test::inplace_emit(buf, def,
+        s.b = b, s.a = a, s.c = "plop"_av, s.size = native(),
+        ss.d = native(), ss.e = a,
+        sss.e = b);
+    dump(out);
+
+    {
+        print("\n\ninplace_recv2:\n");
+        char strbuf[10];
+        a = '0';
+        auto datas = test::inplace_recv2(out, error_fn, def,
+            s.b = native(), s.a = ref{a}, s.c = make_array_view(strbuf), s.size = native(),
+            ss.d = native(), ss.e = native(),
+            sss.e = native());
+        println("\n", type_name(datas));
+        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+        println("datas.b = ", datas.b, " ", type_name<decltype(datas.b)>());
+        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+        println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
+        println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
+        println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
+        println("a = ", a);
+    }
+
+    {
+        print("\n\ninplace_struct:\n");
+        auto datas = test::inplace_struct(out, error_fn, def);
+        println("\n", type_name(datas));
+        println("datas.a = ", std::hex, datas.a, " ", type_name<decltype(datas.a)>());
+        println("datas.b = ", std::hex, datas.b, " ", type_name<decltype(datas.b)>());
+        println("datas.c = ", datas.c, " ", type_name<decltype(datas.c)>());
+        println("datas.d = ", std::dec, datas.d, " ", type_name<decltype(datas.d)>());
+        println("datas[sss.e] = ", std::hex, datas[sss.e], " ", type_name<decltype(datas[sss.e])>());
+        println("datas[ss.e] = ", std::hex, datas[ss.e], " ", type_name<decltype(datas[ss.e])>());
+
+        auto p = [](auto const& x){
+            println(x._proto_name(), ": ", x._proto_value());
+        };
+        datas.apply([&](auto const&... xs) {
+            (p(xs), ...);
+        });
+    }
 
     {
         auto def = test::definition(
