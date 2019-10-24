@@ -1131,7 +1131,7 @@ namespace test
         struct Ctx
         {
             InStream in;
-            std::array<bytes_view, size_ctx.rng_stack_size> old_ranges;
+            std::array<byte_ptr, size_ctx.rng_stack_size> old_ranges;
             int idx_old_ranges;
             TParams params;
             TCtxValues ctx_values;
@@ -1140,15 +1140,15 @@ namespace test
             void push_range(std::size_t new_size)
             {
                 auto remain = this->in.remaining_bytes();
-                this->old_ranges[this->idx_old_ranges] = remain;
+                this->old_ranges[this->idx_old_ranges] = remain.end();
                 ++this->idx_old_ranges;
-                this->in = remain.first(new_size);
+                this->in = InStream(remain.first(new_size));
             }
 
             void pop_range()
             {
-                this->in = InStream(this->old_ranges[this->idx_old_ranges]);
                 --this->idx_old_ranges;
+                this->in = InStream({this->in.get_current(), this->old_ranges[this->idx_old_ranges]});
             }
 
             static constexpr decltype(size_ctx.size_infos) const&
@@ -1417,12 +1417,14 @@ namespace test
 
             struct RangeInfo
             {
+                int idx_value = -1;
                 int idx_start = -1;
-                int idx_stop;
+                int idx_stop = -1;
 
                 friend std::ostream& operator<<(std::ostream& out, RangeInfo const& info)
                 {
                     return out << "RangeInfo:"
+                        << "  idx_value: " << std::setw(2) << info.idx_value
                         << "  idx_start: " << std::setw(2) << info.idx_start
                         << "  idx_stop: " << std::setw(2) << info.idx_stop
                     ;
@@ -1436,7 +1438,7 @@ namespace test
                 bool is_static_size;
                 bool is_rng_rstatic_size;
                 int idx_range;
-                int start_range_idx;
+                bool is_inclusive_range = true;
                 int rng_raccu = -1;
                 int rng_raccu_next = -1;
 
@@ -1448,7 +1450,7 @@ namespace test
                         << "  is_static_size: " << std::setw(2) << info.is_static_size
                         << "  is_rng_rstatic_size: " << std::setw(2) << info.is_rng_rstatic_size
                         << "  idx_range: " << std::setw(2) << info.idx_range
-                        << "  start_range_idx: " << std::setw(2) << info.start_range_idx
+                        << "  is_inclusive_range: " << std::setw(2) << info.is_inclusive_range
                         << "  rng_raccu: " << std::setw(2) << info.rng_raccu
                         << "  rng_raccu_next: " << std::setw(2) << info.rng_raccu_next
                     ;
@@ -1473,17 +1475,25 @@ namespace test
                         = (sizeof...(SizeOrRange) - (SizeOrRange::is_size + ...)) / 2;
 
                     RangeInfo ranges[range_count+1] {
-                        {0, sizeof...(SizeOrRange)-1},
+                        {-1, 0, sizeof...(SizeOrRange)-1},
                     };
 
                     // init ranges
                     {
                         int i = 0;
-                        (((not SizeOrRange::is_size ? void(
-                            ranges[SizeOrRange::size_or_range+1].idx_start == -1
-                                ? void(ranges[SizeOrRange::size_or_range+1].idx_start = i)
-                                : void(ranges[SizeOrRange::size_or_range+1].idx_stop = i)
-                        ) : void()), ++i), ...);
+                        ((
+                            (not SizeOrRange::is_size ? void(
+                                ranges[SizeOrRange::size_or_range+1].idx_start == -1
+                                    ? void(ranges[SizeOrRange::size_or_range+1].idx_start = i)
+                                    : void(ranges[SizeOrRange::size_or_range+1].idx_stop = i)
+                            ) : void()),
+                            void(
+                                SizeOrRange::range_binding != -1 ? void(
+                                    ranges[SizeOrRange::range_binding+1].idx_value = i
+                                ) : void()
+                            ),
+                            ++i
+                        ), ...);
                     }
 
                     // /**/for (auto const& p : ranges) println(p);
@@ -1491,8 +1501,8 @@ namespace test
 
                     SizeCtx<sizeof...(SizeOrRange)> result{
                         {(SizeOrRange::is_size
-                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0, SizeOrRange::range_binding}
-                            : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1, SizeOrRange::range_binding}
+                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0, /*SizeOrRange::range_binding*/}
+                            : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1, /*SizeOrRange::range_binding*/}
                         )...},
                         0
                     };
@@ -1550,7 +1560,7 @@ namespace test
                         }
                     }
 
-                    // init start_range_idx, rng_raccu and rng_raccu_next
+                    // init start_range_idx, is_inclusive_range, rng_raccu and rng_raccu_next
                     {
                         auto compute_rng_raccu = [&](SizeInfo const& sz){
                             auto& rng = ranges[sz.idx_range];
@@ -1559,11 +1569,17 @@ namespace test
 
                         for (auto& sz : sizes)
                         {
-                            if (sz.start_range_idx != -1)
-                            {
-                                sz.start_range_idx = ranges[sz.start_range_idx+1].idx_start;
-                            }
+                            // if (sz.start_range_idx != -1)
+                            // {
+                            //     sz.start_range_idx = ranges[sz.start_range_idx+1].idx_start;
+                            // }
                             auto& rng = ranges[sz.idx_range];
+                            if (rng.idx_value < rng.idx_start and rng.idx_value != -1)
+                            {
+                                sizes[rng.idx_value].is_inclusive_range = false;
+                                sizes[rng.idx_start].is_inclusive_range = false;
+                                sizes[rng.idx_stop].is_inclusive_range = false;
+                            }
                             sz.rng_raccu = compute_rng_raccu(sz);
                             sz.rng_raccu_next
                                 = (&sizes[rng.idx_stop] != &sz || &sz == &sizes.back())
@@ -1685,6 +1701,7 @@ namespace test
                 using type = mp::list<mp::list<Ts..., mp::list<v...>>, Us...>;
             };
 
+            // [void, void, int, int, void, int] -> [[void, void, int], [int], [void, int]]
             template<class Ctx>
             struct group_by_return_not_void
             {
@@ -1854,14 +1871,23 @@ namespace test
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx, class I>
-            static auto make(Ctx& ctx, I i, lazy<datas::types::PktSize<Data>>)
+            static auto make(Ctx& ctx, I, lazy<datas::types::PktSize<Data>>)
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = reader::read(ctx.in);
 
-                auto& info = ctx.size_infos[i.value];
+                auto& info = Ctx::size_infos[I::value];
                 println("pktsz: ", info);
                 std::flush(std::cout);
+
+                if constexpr (info.is_inclusive_range)
+                {
+                    println(" inclusive");
+                }
+                else
+                {
+                    println(" exclusive");
+                }
 
                 // TODO
                 // if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
@@ -1941,21 +1967,22 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx, class I>
-            static auto make(Ctx& ctx, I i, val<Data, Bytes>& v)
+            static auto make(Ctx& ctx, I, val<Data, Bytes>& v)
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
 
-                auto& info = ctx.size_infos[i.value];
+                auto& info = Ctx::size_infos[I::value];
                 println("data:  ", info);
                 std::flush(std::cout);
 
-                // println("bytes: ", ctx.ranges.unchecked_size(), "/", n);
-                // std::flush(std::cout);
-                // if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size() < n))
-                // {
-                //     ctx.error(Name{}, n, ctx.in.in_remain());
-                // }
-                // ctx.ranges.unchecked_size() -= n;
+                // TODO == if is_rng_rstatic_size
+                // TODO /!\ overflow on n
+                if (REDEMPTION_UNLIKELY(
+                    not ctx.in.in_check_rem(n + info.rng_raccu)
+                ))
+                {
+                    ctx.error(Name{}, n + info.rng_raccu, ctx.in.in_remain());
+                }
 
                 return make_mem<Name>(read_data_bytes(ctx.in, v.x, n));
             }
@@ -1969,11 +1996,33 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx, class I, class X>
-            static void make(Ctx& ctx, I i, X const&)
+            static void make(Ctx& ctx, I, X const&)
             {
-                auto& info = ctx.size_infos[i.value];
+                auto& info = Ctx::size_infos[I::value];
                 println("start: ", info);
                 std::flush(std::cout);
+
+                if constexpr (not info.is_inclusive_range)
+                {
+                    println(" exclusive");
+                    auto rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
+
+                    // TODO == if is_rng_rstatic_size
+                    // TODO info.rng_raccu == 0
+                    if (REDEMPTION_UNLIKELY(
+                        rng_size < info.rng_raccu || not ctx.in.in_check_rem(rng_size)
+                    ))
+                    {
+                        ctx.error(Name{}, info.rng_raccu, rng_size);
+                    }
+
+                    ctx.push_range(rng_size);
+                }
+                else
+                {
+                    println(" inclusive");
+                }
+
 
                 // println("start: ", type_name(info), "  min: ", info.static_min_remain);
                 // if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
@@ -2005,10 +2054,36 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx, class I, class X>
-            static void make(Ctx& ctx, I i, X const&)
+            static void make(Ctx& ctx, I, X const&)
             {
-                println("stop:  ", ctx.size_infos[i.value]);
+                auto& info = Ctx::size_infos[I::value];
+                println("stop: ", info);
                 std::flush(std::cout);
+
+                if (REDEMPTION_UNLIKELY(ctx.in.in_remain())) {
+                    ctx.error(Name{}, ctx.in.in_remain(), 0);
+                }
+
+                ctx.pop_range();
+
+                if constexpr (info.is_inclusive_range)
+                {
+                    println(" inclusive");
+                }
+                else
+                {
+                    println(" exclusive  ", info.rng_raccu_next, "/", ctx.in.in_remain());
+                    if constexpr (info.rng_raccu_next > 0) {
+                        if (REDEMPTION_UNLIKELY(not ctx.in.in_check_rem(info.rng_raccu_next))) {
+                            ctx.error(Name{}, ctx.in.in_remain(), info.rng_raccu_next);
+                        }
+                    }
+                }
+
+                std::flush(std::cout);
+
+
+
                 // println("stop: ", type_name<Name>(), ' ', ctx.ranges.unchecked_size());
                 // std::flush(std::cout);
                 // if (REDEMPTION_UNLIKELY(ctx.ranges.unchecked_size())) {
@@ -2375,7 +2450,7 @@ int main()
 
         print("\n\nbounds error:\n\n");
         // "\x00\x06\x00\x04\x70\x6c\x6f\x70\x78"
-        auto datas = test::inplace_struct("\x00\x07\x00\x05\x70\x6c\x6f\x70\x78"_av, error_fn, def);
+        auto datas = test::inplace_struct("\x00\x06\x00\x05\x70\x6c\x6f\x70\x78"_av, error_fn, def);
         println();
         println("datas.d = ", datas.d);
         println("datas.c = ", datas.c);
