@@ -1,3 +1,13 @@
+redemption (1.1.175%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Increase the maximum delay before showing Remote Program disconnection message.
+  * Fix 'Input stream too large' issue with 'RDP 4.0 Bulk Compressor'.
+  * Support RDP upgrade license flow.
+  * Support connection redirection during recording.
+  * Send uncompressed bitmap is the compression is less efficient.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 24 Oct 2019 15:38:30 +0200
+
 redemption (1.1.173%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * (RemoteApp) Fix 'Unknown client window' issue.
