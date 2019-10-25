@@ -1377,6 +1377,7 @@ namespace test
                 int size;
                 int accu_size;
                 bool is_static_size;
+                bool accu_is_static_size;
                 bool is_rng_rstatic_size;
                 int idx_range;
                 bool is_inclusive_range = true;
@@ -1389,6 +1390,7 @@ namespace test
                         << "  size: " << std::setw(2) << info.size
                         << "  accu_size: " << std::setw(2) << info.accu_size
                         << "  is_static_size: " << std::setw(2) << info.is_static_size
+                        << "  accu_is_static_size: " << std::setw(2) << info.accu_is_static_size
                         << "  is_rng_rstatic_size: " << std::setw(2) << info.is_rng_rstatic_size
                         << "  idx_range: " << std::setw(2) << info.idx_range
                         << "  is_inclusive_range: " << std::setw(2) << info.is_inclusive_range
@@ -1443,8 +1445,8 @@ namespace test
 
                     SizeCtx<sizeof...(SizeOrRange)> result{
                         {(SizeOrRange::is_size
-                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0, /*SizeOrRange::range_binding*/}
-                            : SizeInfo{0, 0, 1, 1, SizeOrRange::size_or_range+1, /*SizeOrRange::range_binding*/}
+                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0, /*SizeOrRange::range_binding*/}
+                            : SizeInfo{0, 0, 1, 1, 1, SizeOrRange::size_or_range+1, /*SizeOrRange::range_binding*/}
                         )...},
                         0, 0
                     };
@@ -1460,13 +1462,15 @@ namespace test
                         }
                     }
 
-                    // init is_rng_rstatic_size
+                    // init is_rng_rstatic_size, accu_is_static_size
                     {
                         int i = std::size(sizes)-1;
                         bool last_rng_rstatic_size = sizes[i].is_rng_rstatic_size;
+                        bool last_idx_range = sizes[i].idx_range;
+                        bool accu_is_static_size = sizes[i].accu_is_static_size;
                         for (; i > 0; --i)
                         {
-                            if (sizes[i].idx_range)
+                            if (sizes[i-1].idx_range != last_idx_range)
                             {
                                 last_rng_rstatic_size = true;
                             }
@@ -1475,6 +1479,9 @@ namespace test
                                 sizes[i-1].is_rng_rstatic_size = last_rng_rstatic_size;
                                 last_rng_rstatic_size &= sizes[i-1].is_rng_rstatic_size;
                             }
+
+                            accu_is_static_size &= sizes[i-1].accu_is_static_size;
+                            sizes[i-1].accu_is_static_size = accu_is_static_size;
                         }
                     }
 
@@ -1488,13 +1495,13 @@ namespace test
                             {
                                 if (idx_rng == sz.idx_range)
                                 {
-                                    --idx_rng;
-
                                     auto& rng = ranges[idx_rng];
                                     if (rng.idx_value > rng.idx_start)
                                     {
-                                        ++ptr_stack_size;
+                                        --ptr_stack_size;
                                     }
+
+                                    --idx_rng;
                                 }
                                 else
                                 {
@@ -1848,7 +1855,6 @@ namespace test
                     // TODO info.rng_raccu == 0
                     if (REDEMPTION_UNLIKELY(
                         n <= diff ||
-                        // TODO rng_raccu_next if != -1 ?
                         n - diff < info.rng_raccu ||
                         not ctx.in.in_check_rem(n - diff)
                     ))
@@ -1971,6 +1977,8 @@ namespace test
                     println(" exclusive");
                     auto rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
 
+                    println(rng_size, " / ", info.rng_raccu, " | ", ctx.in.in_remain());
+
                     // TODO == if is_rng_rstatic_size
                     // TODO info.rng_raccu == 0
                     if (REDEMPTION_UNLIKELY(
@@ -1988,27 +1996,6 @@ namespace test
 
                     ctx.push_ptr_pos();
                 }
-
-
-                // println("start: ", type_name(info), "  min: ", info.static_min_remain);
-                // if constexpr (auto is_inclusive = info.is_inclusive; is_inclusive)
-                // {
-                //     info.ptr = ctx.in.get_current();
-                // }
-                // else
-                // {
-                //     auto& rng_size = get_var<datas::types::PktSize<Name>>(ctx.ctx_values).value;
-                //     if (REDEMPTION_UNLIKELY(rng_size <= info.static_min_remain)) {
-                //         ctx.error(Name{}, info.static_min_remain, rng_size);
-                //     }
-                //
-                //     if (REDEMPTION_UNLIKELY(ctx.in.in_remain() < rng_size)) {
-                //         ctx.error(Name{}, rng_size, ctx.in.in_remain());
-                //     }
-                //
-                //     ctx.ranges.push(rng_size - info.static_min_remain);
-                //     println("unchecked_size: ", ctx.ranges.unchecked_size());
-                // }
             }
         };
 
@@ -2160,6 +2147,22 @@ namespace test
     {
         return inplace_recv2(buf, error, def, value<native, name_t<Params>>{}...);
     }
+
+    template<class Params, class Values, class... Xs>
+    auto print_size_infos(Definition<Params, Values> const&, Xs const&... xs)
+    {
+        using Traits = traits::stream_readable2;
+
+        bytes_view buf{"", 99999};
+        auto error_fn = [](auto...){};
+        /*auto ctx =*/ Traits::make_context<Params, Values>(buf, error_fn, xs...);
+    }
+
+    template<class... Params, class Values, class... Xs>
+    auto print_size_infos(Definition<mp::list<Params...>, Values> const& def)
+    {
+        return print_size_infos(def, value<native, name_t<Params>>{}...);
+    }
 }
 
 namespace detail
@@ -2252,7 +2255,7 @@ namespace X224
 {
     using namespace proto::datas;
 
-    PROTO_PACKET(tpkt, "TPKT",
+    PROTO_PACKET2(tpkt,
         value(version, u8),
         value(len, u16_be)
     );
@@ -2261,6 +2264,7 @@ namespace X224
         return test::inplace_struct(
             {stream.get_current(), stream.get_data_end()},
             [](auto field, std::size_t n, std::size_t capacity) {
+                std::flush(std::cout);
                 char s[128];
                 snprintf(s, sizeof(s), "Truncated %s: field '%s': stream.size=%zu expected=%zu",
                     decltype(pkt)::_proto_name().c_str(), field._proto_name().c_str(), capacity, n);
@@ -2377,9 +2381,14 @@ int main()
             ss.d = test::start(),
             ss.d = pkt_size(u16_be),
 
+            s.size = pkt_size(u16_be),
+            s.size = test::start(),
+
             s.c = test::type(ascii_string(u16_be)),
             s.c = values::size_bytes,
             s.c = values::data,
+
+            s.size = test::stop(),
 
             ss.d = test::stop(),
 
@@ -2387,22 +2396,51 @@ int main()
         );
 
         std::array<uint8_t, 30> buf {};
-        auto out = test::inplace_emit(buf, def, s.a = a, s.c = "plop"_av, ss.d = native());
+        auto out = test::inplace_emit(buf, def, s.a = a, s.c = "plop"_av, ss.d = native(), s.size = native());
         dump(out);
 
         std::dec(std::cout);
 
         print("\n\nbounds error:\n\n");
         // "\x00\x06\x00\x04\x70\x6c\x6f\x70\x78"
-        auto datas = test::inplace_struct("\x00\x08\x00\x04\x70\x6c\x6f\x70\x78"_av, error_fn, def);
+        auto datas = test::inplace_struct("\x00\x0a\x00\x06\x00\x04\x70\x6c\x6f\x70\x78"_av, error_fn, def);
         println();
         println("datas.d = ", datas.d);
         println("datas.c = ", datas.c);
         println("datas.a = ", int(datas.a));
     }
 
+    {
+        print("\n\nprint size infos:\n\n");
+
+        auto def = test::definition(
+            ss.d = test::start(),
+            ss.d = pkt_size(u16_be),
+
+            ss.e = u16_le,
+
+            ss.d = test::stop(),
+
+            s.size = pkt_size(u16_be),
+            s.size = test::start(),
+
+            s.c = test::type(ascii_string(u16_be)),
+            s.c = values::size_bytes,
+            s.c = values::data,
+
+            s.size = test::stop(),
+
+            s.a = u8
+        );
+
+        print_size_infos(def);
+    }
+
     // {
-    //     InStream in(out.subarray(0, 1));
-    //     X224::tdpu_recv(in, X224::tpkt);
+    //     print("\n\nx224.tpkt:\n\n");
+    //     InStream in("\x03\x11\x11");
+    //     auto datas = X224::tdpu_recv(in, X224::tpkt);
+    //     println("datas.version: ", int(datas.version));
+    //     println("datas.len: ", datas.len);
     // }
 }
