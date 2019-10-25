@@ -455,7 +455,7 @@ public:
                     std::vector<uint8_t> data_out(cbMaxSignature+check_key.size());
                     // data_buffer
                     {
-                        array_view_u8 data_buffer = {&data_out.data()[cbMaxSignature], check_key.size()};
+                        array_view_u8 data_buffer = {data_out.data()+cbMaxSignature, check_key.size()};
                         this->SendRc4Seal.crypt(check_key.size(), check_key.data(), data_buffer.data());
                     }
                     // signature
