@@ -1126,72 +1126,37 @@ namespace test
             mp::call<mp::unpack<mp::cfe<tuple>>, CheckedSizes> states;
         };
 
-        template<std::size_t Max>
-        struct StackPtrArray
-        {
-            std::array<byte_ptr, Max> array;
-            int i = 0;
-
-            StackPtrArray() noexcept
-            {}
-
-            void push(byte_ptr p)
-            {
-                array[i++] = p;
-            }
-
-            byte_ptr pop()
-            {
-                return array[--i];
-            }
-        };
-
-        template<>
-        struct StackPtrArray<0>
-        {
-            void push(byte_ptr)
-            {
-                assert(false);
-            }
-
-            byte_ptr pop()
-            {
-                assert(false);
-                return {};
-            }
-        };
-
         // TODO C++20: class SizeCtx, SizeCtx const& size_ctx -> auto size_ctx
         template<class TParams, class TCtxValues, class ErrorFn, class SizeCtx, SizeCtx const& size_ctx>
         struct Ctx
         {
             InStream in;
-            StackPtrArray<size_ctx.rng_stack_size> end_stream_stack;
-            StackPtrArray<size_ctx.ptr_stack_size> pkt_pos_stack;
+            std::array<byte_ptr, size_ctx.rng_stack_size> end_stream_stack;
+            std::array<byte_ptr, size_ctx.ptr_stack_size> start_ptr_stack;
             TParams params;
             TCtxValues ctx_values;
             ErrorFn error;
 
-            void push_range(std::size_t new_size)
+            void save_stream(int i, std::size_t new_size)
             {
                 auto remain = in.remaining_bytes();
-                end_stream_stack.push(remain.end());
+                end_stream_stack[i] = remain.end();
                 in = InStream(remain.first(new_size));
             }
 
-            void pop_range()
+            void restore_stream(int i)
             {
-                in = InStream({in.get_current(), end_stream_stack.pop()});
+                in = InStream({in.get_current(), end_stream_stack[i]});
             }
 
-            void push_ptr_pos()
+            void save_start_pos(int i)
             {
-                pkt_pos_stack.push(in.get_current());
+                start_ptr_stack[i] = in.get_current();
             }
 
-            std::ptrdiff_t pop_ptr_pos()
+            std::ptrdiff_t get_start_distance(int i)
             {
-                return in.get_current() - pkt_pos_stack.pop();
+                return in.get_current() - start_ptr_stack[i];
             }
 
             static constexpr decltype(size_ctx.size_infos) const&
@@ -1382,6 +1347,8 @@ namespace test
                 bool is_inclusive_range = true;
                 int rng_raccu = -1;
                 int rng_raccu_next = -1;
+                int start_ptr_pos = -1;
+                int end_stream_pos = -1;
 
                 friend std::ostream& operator<<(std::ostream& out, SizeInfo const& info)
                 {
@@ -1394,6 +1361,8 @@ namespace test
                         << "  is_inclusive_range: " << std::setw(2) << info.is_inclusive_range
                         << "  rng_raccu: " << std::setw(2) << info.rng_raccu
                         << "  rng_raccu_next: " << std::setw(2) << info.rng_raccu_next
+                        << "  start_ptr_pos: " << std::setw(2) << info.start_ptr_pos
+                        << "  end_stream_pos: " << std::setw(2) << info.end_stream_pos
                     ;
                 }
             };
@@ -1513,11 +1482,12 @@ namespace test
                                 auto& rng = ranges[sz.idx_range];
                                 if (&sizes[rng.idx_start] == &sz)
                                 {
-                                    is_rng_static_size = is_rng_static_size_stack.pop();
+                                    is_rng_static_size &= is_rng_static_size_stack.pop();
                                 }
                                 else if (&sizes[rng.idx_stop] == &sz)
                                 {
                                     is_rng_static_size_stack.push(is_rng_static_size);
+                                    is_rng_static_size = 1;
                                 }
                             }
                             is_rng_static_size &= sz.is_static_size;
@@ -1526,6 +1496,7 @@ namespace test
                     }
 
                     // init idx_range, rng_raccu, rng_stack_size, ptr_stack_size
+                    // start_ptr_pos, end_stream_pos
                     {
                         size_ctx_stack<range_count> idx_rng_stack{};
                         int idx_rng = 0;
@@ -1540,6 +1511,11 @@ namespace test
                                 auto& rng = ranges[sz.idx_range];
                                 if (&sizes[rng.idx_start] == &sz)
                                 {
+                                    if (sz.is_inclusive_range)
+                                    {
+                                        sz.start_ptr_pos = count_ptr;
+                                    }
+                                    sz.end_stream_pos = idx_rng_stack.size();
                                     idx_rng_stack.push(idx_rng);
                                     idx_rng = sz.idx_range;
                                     result.rng_stack_size = std::max(result.rng_stack_size, idx_rng_stack.size());
@@ -1547,6 +1523,7 @@ namespace test
                                 else if (&sizes[rng.idx_stop] == &sz)
                                 {
                                     idx_rng = idx_rng_stack.pop();
+                                    sz.end_stream_pos = idx_rng_stack.size();
                                     count_ptr = count_ptr_stack.pop();
                                 }
                                 else
@@ -1554,6 +1531,8 @@ namespace test
                                     count_ptr_stack.push(count_ptr);
                                     if (sz.is_inclusive_range)
                                     {
+                                        sz.start_ptr_pos = count_ptr;
+                                        sz.end_stream_pos = idx_rng_stack.size()-1;
                                         ++count_ptr;
                                         result.ptr_stack_size = std::max(result.rng_stack_size, count_ptr);
                                     }
@@ -1875,22 +1854,38 @@ namespace test
                 {
                     println(" inclusive");
 
-                    auto diff = ctx.pop_ptr_pos();
+                    auto diff = ctx.get_start_distance(info.start_ptr_pos);
 
                     println("diff: ", diff);
 
-                    // TODO == if is_rng_rstatic_size
-                    // TODO info.rng_raccu == 0
-                    if (REDEMPTION_UNLIKELY(
-                        n <= diff ||
-                        n - diff < info.rng_raccu ||
-                        not ctx.in.in_check_rem(n - diff)
-                    ))
+                    bool too_sort = n < diff;
+                    if constexpr (info.is_rng_rstatic_size)
+                    {
+                        too_sort = too_sort
+                            || (n - diff != ctx.in.in_remain());
+                        if constexpr (info.rng_raccu != 0)
+                        {
+                            too_sort = too_sort
+                                || (n - diff != info.rng_raccu);
+                        }
+                    }
+                    else
+                    {
+                        too_sort = too_sort
+                            || n - diff > ctx.in.in_remain();
+                        if constexpr (info.rng_raccu != 0)
+                        {
+                            too_sort = too_sort
+                                || (n - diff < info.rng_raccu);
+                        }
+                    }
+
+                    if (REDEMPTION_UNLIKELY(too_sort))
                     {
                         ctx.error(Name{}, info.rng_raccu, n);
                     }
 
-                    ctx.push_range(n - diff);
+                    ctx.save_stream(info.end_stream_pos, n - diff);
                 }
                 else
                 {
@@ -2016,13 +2011,13 @@ namespace test
                         ctx.error(Name{}, info.rng_raccu, rng_size);
                     }
 
-                    ctx.push_range(rng_size);
+                    ctx.save_stream(info.end_stream_pos, rng_size);
                 }
                 else
                 {
                     println(" inclusive");
 
-                    ctx.push_ptr_pos();
+                    ctx.save_start_pos(info.start_ptr_pos);
                 }
             }
         };
@@ -2045,7 +2040,7 @@ namespace test
                     ctx.error(Name{}, ctx.in.in_remain(), 0);
                 }
 
-                ctx.pop_range();
+                ctx.restore_stream(info.end_stream_pos);
 
                 println(" inclusive or exclusive  ", info.rng_raccu_next, "/", ctx.in.in_remain());
                 if constexpr (info.rng_raccu_next > 0) {
@@ -2445,10 +2440,6 @@ int main()
             ss.d = test::start(),
             ss.d = pkt_size(u16_be),
 
-            ss.e = u16_le,
-
-            ss.d = test::stop(),
-
             s.size = pkt_size(u16_be),
             s.size = test::start(),
 
@@ -2457,6 +2448,8 @@ int main()
             s.c = values::data,
 
             s.size = test::stop(),
+
+            ss.d = test::stop(),
 
             s.a = u8
         );
