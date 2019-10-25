@@ -1377,7 +1377,6 @@ namespace test
                 int size;
                 int accu_size;
                 bool is_static_size;
-                bool accu_is_static_size;
                 bool is_rng_rstatic_size;
                 int idx_range;
                 bool is_inclusive_range = true;
@@ -1390,7 +1389,6 @@ namespace test
                         << "  size: " << std::setw(2) << info.size
                         << "  accu_size: " << std::setw(2) << info.accu_size
                         << "  is_static_size: " << std::setw(2) << info.is_static_size
-                        << "  accu_is_static_size: " << std::setw(2) << info.accu_is_static_size
                         << "  is_rng_rstatic_size: " << std::setw(2) << info.is_rng_rstatic_size
                         << "  idx_range: " << std::setw(2) << info.idx_range
                         << "  is_inclusive_range: " << std::setw(2) << info.is_inclusive_range
@@ -1406,6 +1404,28 @@ namespace test
                 std::array<SizeInfo, N> size_infos;
                 int rng_stack_size;
                 int ptr_stack_size;
+            };
+
+            template<std::size_t N>
+            struct size_ctx_stack
+            {
+                int stack[N];
+                int i = 0;
+
+                constexpr void push(int x)
+                {
+                    stack[i++] = x;
+                }
+
+                constexpr int pop()
+                {
+                    return stack[--i];
+                }
+
+                constexpr int size() const
+                {
+                    return i;
+                }
             };
 
             template<class... SizeOrRange>
@@ -1445,12 +1465,28 @@ namespace test
 
                     SizeCtx<sizeof...(SizeOrRange)> result{
                         {(SizeOrRange::is_size
-                            ? SizeInfo{SizeOrRange::size_or_range, 0, SizeOrRange::is_static_size, SizeOrRange::is_static_size, SizeOrRange::is_static_size, 0, /*SizeOrRange::range_binding*/}
-                            : SizeInfo{0, 0, 1, 1, 1, SizeOrRange::size_or_range+1, /*SizeOrRange::range_binding*/}
+                            ? SizeInfo{
+                                SizeOrRange::size_or_range, 0,
+                                SizeOrRange::is_static_size,
+                                SizeOrRange::is_static_size,
+                                SizeOrRange::range_binding+1,}
+                            : SizeInfo{0, 0, 1, 1,
+                                SizeOrRange::size_or_range+1,}
                         )...},
                         0, 0
                     };
                     auto& sizes = result.size_infos;
+
+                    // init is_inclusive_range
+                    for (auto const& rng : ranges)
+                    {
+                        if (rng.idx_value < rng.idx_start and rng.idx_value != -1)
+                        {
+                            sizes[rng.idx_value].is_inclusive_range = false;
+                            sizes[rng.idx_start].is_inclusive_range = false;
+                            sizes[rng.idx_stop].is_inclusive_range = false;
+                        }
+                    }
 
                     // init accu_size
                     {
@@ -1462,92 +1498,84 @@ namespace test
                         }
                     }
 
-                    // init is_rng_rstatic_size, accu_is_static_size
+                    // init is_rng_rstatic_size
                     {
-                        int i = std::size(sizes)-1;
-                        bool last_rng_rstatic_size = sizes[i].is_rng_rstatic_size;
-                        bool last_idx_range = sizes[i].idx_range;
-                        bool accu_is_static_size = sizes[i].accu_is_static_size;
-                        for (; i > 0; --i)
-                        {
-                            if (sizes[i-1].idx_range != last_idx_range)
-                            {
-                                last_rng_rstatic_size = true;
-                            }
-                            else
-                            {
-                                sizes[i-1].is_rng_rstatic_size = last_rng_rstatic_size;
-                                last_rng_rstatic_size &= sizes[i-1].is_rng_rstatic_size;
-                            }
+                        size_ctx_stack<range_count> is_rng_static_size_stack{};
+                        int is_rng_static_size = 1;
 
-                            accu_is_static_size &= sizes[i-1].accu_is_static_size;
-                            sizes[i-1].accu_is_static_size = accu_is_static_size;
+                        int i = std::size(sizes)-1;
+                        for (; i >= 0; --i)
+                        {
+                            auto& sz = sizes[i];
+
+                            if (sz.idx_range)
+                            {
+                                auto& rng = ranges[sz.idx_range];
+                                if (&sizes[rng.idx_start] == &sz)
+                                {
+                                    is_rng_static_size = is_rng_static_size_stack.pop();
+                                }
+                                else if (&sizes[rng.idx_stop] == &sz)
+                                {
+                                    is_rng_static_size_stack.push(is_rng_static_size);
+                                }
+                            }
+                            is_rng_static_size &= sz.is_static_size;
+                            sz.is_rng_rstatic_size = is_rng_static_size;
                         }
                     }
 
-                    // init idx_range, rng_stack_size, ptr_stack_size
+                    // init idx_range, rng_raccu, rng_stack_size, ptr_stack_size
                     {
+                        size_ctx_stack<range_count> idx_rng_stack{};
                         int idx_rng = 0;
-                        int ptr_stack_size = 0;
+
+                        size_ctx_stack<range_count> count_ptr_stack{};
+                        int count_ptr = 0;
+
                         for (auto& sz : sizes)
                         {
                             if (sz.idx_range)
                             {
-                                if (idx_rng == sz.idx_range)
+                                auto& rng = ranges[sz.idx_range];
+                                if (&sizes[rng.idx_start] == &sz)
                                 {
-                                    auto& rng = ranges[idx_rng];
-                                    if (rng.idx_value > rng.idx_start)
-                                    {
-                                        --ptr_stack_size;
-                                    }
-
-                                    --idx_rng;
+                                    idx_rng_stack.push(idx_rng);
+                                    idx_rng = sz.idx_range;
+                                    result.rng_stack_size = std::max(result.rng_stack_size, idx_rng_stack.size());
+                                }
+                                else if (&sizes[rng.idx_stop] == &sz)
+                                {
+                                    idx_rng = idx_rng_stack.pop();
+                                    count_ptr = count_ptr_stack.pop();
                                 }
                                 else
                                 {
-                                    ++idx_rng;
-                                    result.rng_stack_size = std::max(result.rng_stack_size, idx_rng);
-
-                                    auto& rng = ranges[idx_rng];
-                                    if (rng.idx_value > rng.idx_start)
+                                    count_ptr_stack.push(count_ptr);
+                                    if (sz.is_inclusive_range)
                                     {
-                                        ++ptr_stack_size;
+                                        ++count_ptr;
+                                        result.ptr_stack_size = std::max(result.rng_stack_size, count_ptr);
                                     }
-                                    result.ptr_stack_size = std::max(result.ptr_stack_size, ptr_stack_size);
                                 }
                             }
                             else
                             {
                                 sz.idx_range = idx_rng;
                             }
+
+                            auto& rng = ranges[sz.idx_range];
+                            sz.rng_raccu = sizes[rng.idx_stop].accu_size - sz.accu_size + sz.size;
                         }
                     }
 
-                    // init start_range_idx, is_inclusive_range, rng_raccu and rng_raccu_next
+                    // init rng_raccu_next
+                    for (auto const& rng : ranges)
                     {
-                        auto compute_rng_raccu = [&](SizeInfo const& sz){
-                            auto& rng = ranges[sz.idx_range];
-                            return sizes[rng.idx_stop].accu_size - sz.accu_size + sz.size;
-                        };
-
-                        for (auto& sz : sizes)
+                        auto& sz = sizes[rng.idx_stop];
+                        if (&sz != &sizes.back())
                         {
-                            // if (sz.start_range_idx != -1)
-                            // {
-                            //     sz.start_range_idx = ranges[sz.start_range_idx+1].idx_start;
-                            // }
-                            auto& rng = ranges[sz.idx_range];
-                            if (rng.idx_value < rng.idx_start and rng.idx_value != -1)
-                            {
-                                sizes[rng.idx_value].is_inclusive_range = false;
-                                sizes[rng.idx_start].is_inclusive_range = false;
-                                sizes[rng.idx_stop].is_inclusive_range = false;
-                            }
-                            sz.rng_raccu = compute_rng_raccu(sz);
-                            sz.rng_raccu_next
-                                = (&sizes[rng.idx_stop] != &sz || &sz == &sizes.back())
-                                ? -1
-                                : compute_rng_raccu(*(&sz + 1));
+                            sz.rng_raccu_next = (&sz+1)->rng_raccu;
                         }
                     }
 
