@@ -32,7 +32,7 @@ if (not $key and not $x509){
 }
 
 my $confpath = '';
-$confpath = '/etc/opt/wab/rdp/' if -e '/etc/opt/wab/rdp/';
+$confpath = '/var/wab/etc/rdp/' if -e '/var/wab/etc/rdp/';
 if (@ARGV > 0){
     $confpath = @ARGV[0];
 }
