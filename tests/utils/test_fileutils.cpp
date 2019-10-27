@@ -141,6 +141,41 @@ RED_AUTO_TEST_CASE(TestParsePath)
     }
 }
 
+
+RED_AUTO_TEST_CASE(TestParsePath2)
+{
+    struct Data
+    {
+        char const* filename;
+        std::string_view directory;
+        std::string_view basename;
+        std::string_view extension;
+    };
+    RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
+        Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
+        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     ""},
+        Data{"/etc/rdpproxy/",              "/etc/rdpproxy/",   "",             ""},
+        Data{"rdpproxy.ini",                "",                 "rdpproxy",     ".ini"},
+        Data{"rdpproxy.",                   "",                 "rdpproxy",     "."},
+        Data{"rdpproxy",                    "",                 "rdpproxy",     ""},
+        Data{".rdpproxy",                   "",                 ".rdpproxy",    ""},
+        Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
+        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     ""},
+        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     ""},
+        Data{"rdpproxy.ini",                "",                 "rdpproxy",     ".ini"},
+        Data{"rdpproxy",                    "",                 "rdpproxy",     ""},
+        Data{".rdpproxy.ini",               "",                 ".rdpproxy",    ".ini"},
+        Data{"a",                           "",                 "a"        ,    ""},
+        Data{"",                            "",                 "",             ""}
+    })
+    {
+        auto result = ParsePath(data.filename);
+        RED_CHECK(data.directory == result.directory);
+        RED_CHECK(data.basename == result.basename);
+        RED_CHECK(data.extension == result.extension);
+    }
+}
+
 RED_AUTO_TEST_CASE(TestMakePath)
 {
     struct Data

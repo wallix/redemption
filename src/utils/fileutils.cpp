@@ -185,6 +185,37 @@ void ParsePath(const char * fullpath, std::string & directory,
 }
 
 
+SplitedPath ParsePath(const std::string & fullpath)
+{
+    SplitedPath result;
+    const char * end_of_directory = strrchr(fullpath.c_str(), '/');
+    if (end_of_directory > fullpath.c_str()) {
+        result.directory.assign(fullpath.c_str(), end_of_directory - fullpath.c_str() + 1);
+    }
+
+    const char * begin_of_filename =
+        (end_of_directory ? end_of_directory + 1 : fullpath.c_str());
+    const char * end_of_filename   =
+        [begin_of_filename] () {
+            const char * dot = strrchr(begin_of_filename, '.');
+            if (!dot || (dot == begin_of_filename)) {
+                return begin_of_filename + strlen(begin_of_filename) - 1;
+            }
+            return dot - 1;
+        } ();
+
+    if (end_of_filename >= begin_of_filename) {
+        result.basename.assign(begin_of_filename,
+            end_of_filename - begin_of_filename + 1);
+    }
+
+    if (*(end_of_filename + 1)) {
+        result.extension = end_of_filename + 1;
+    }
+    return result;
+}
+
+
 void MakePath(std::string & fullpath, const char * directory,
               const char * filename, const char * extension)
 {

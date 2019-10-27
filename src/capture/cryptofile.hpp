@@ -137,7 +137,7 @@ public:
         reverse_iterator const last(derivator.begin());
         reverse_iterator const p = std::find(first, last, '.');
         constexpr auto ext = cstr_array_view(".log");
-        if (derivator.end()-p.base() == ext.size() - 1
+        if (derivator.end() == p.base() + ext.size() - 1
          && std::equal(
              p.base(), p.base() + ext.size() - 1,
              byte_ptr_cast(ext.data() + 1)

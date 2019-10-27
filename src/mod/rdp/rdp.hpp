@@ -2517,7 +2517,6 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-        LOG(LOG_INFO, "==========================================================");
         LOG(LOG_INFO, "============ SURFACE COMMAND ==========================");
 
         while (stream.in_check_rem(2)) {
