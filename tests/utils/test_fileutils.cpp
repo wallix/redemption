@@ -152,6 +152,13 @@ RED_AUTO_TEST_CASE(TestParsePath2)
         std::string_view extension;
     };
     RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
+        Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
+        Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
+        Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
+        Data{"result",              "",         "result",       ""},
+        Data{"result/",             "result/",  "",             ""},
+        Data{"result.tmp",          "",         "result",       ".tmp"},
+        Data{"tmp/.tmp",            "tmp/",     ".tmp",         ""},
         Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
         Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     ""},
         Data{"/etc/rdpproxy/",              "/etc/rdpproxy/",   "",             ""},
