@@ -1097,7 +1097,7 @@ namespace test
             }
 
             static constexpr decltype(size_ctx.size_infos) const&
-            size_infos = size_ctx.size_infos;
+                size_infos = size_ctx.size_infos;
         };
 
 
@@ -1500,7 +1500,41 @@ namespace test
                     return result;
                 }
 
-                constexpr static SizeCtx<sizeof...(SizeOrRange)> size_ctx = make_size_infos();
+                constexpr static SizeCtx<sizeof...(SizeOrRange)> _size_ctx = make_size_infos();
+
+                template<size_t i>
+                struct static_value_at
+                {
+                    static constexpr SizeInfo value = _size_ctx.size_infos[i];
+                };
+
+                using SizeInfoPtrs = std::array<SizeInfo const*, sizeof...(SizeOrRange)>;
+
+                template<size_t... ints>
+                struct StaticSizeInfos
+                {
+                    // fix foo<size_infos[i]>() with
+                    // template<SizeInfo const&> auto foo()
+                    // (it is not an object with linkage)
+                    // C++20: template<SizeInfo> auto foo()
+                    static constexpr SizeInfoPtrs const
+                        size_infos { &static_value_at<ints>::value... };
+                };
+
+                template<class... ints>
+                using to_static_size_infos = StaticSizeInfos<ints::value...>;
+
+                struct Ctx
+                {
+                    static constexpr SizeInfoPtrs const& size_infos = mp::call<
+                        mp::make_int_sequence<mp::cfe<to_static_size_infos>>,
+                        mp::uint_<sizeof...(SizeOrRange)>
+                    >::size_infos;
+                    static constexpr int rng_stack_size = _size_ctx.rng_stack_size;
+                    static constexpr int ptr_stack_size = _size_ctx.ptr_stack_size;
+                };
+
+                constexpr static Ctx size_ctx {};
             };
 
             using make_compute_sizes = mp::fork_front<
@@ -1548,12 +1582,12 @@ namespace test
                 println("ptr_stack_size: ", size_ctx.ptr_stack_size);
                 println(type_name(size_infos));
                 for (auto& sz_infos : size_infos) {
-                    println(sz_infos);
+                    println(*sz_infos);
                 }
 
                 using ctx_values = mp::eager::at<states_list, 0>;
 
-                constexpr auto min_size = size_infos.back().accu_size;
+                constexpr auto min_size = size_infos.back()->accu_size;
 
                 print("min_size: ", min_size, "\n\n");
 
@@ -1767,7 +1801,7 @@ namespace test
         };
 
         template<stream_readable2::SizeInfo const& info, class T>
-        bool is_too_short(T n, InStream const& in)
+        bool is_too_short_range(T n, InStream const& in)
         {
             if constexpr (info.is_rng_rstatic_size)
             {
@@ -1806,7 +1840,7 @@ namespace test
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = reader::read(ctx.in);
 
-                auto& info = Ctx::size_infos[I::value];
+                auto& info = *Ctx::size_infos[I::value];
                 println("pktsz: ", info);
                 std::flush(std::cout);
 
@@ -1818,31 +1852,9 @@ namespace test
 
                     println("diff: ", diff);
 
-
-                    // TODO is_too_short ^^^ŝ
-                    bool too_short = n < diff;
-                    if constexpr (info.is_rng_rstatic_size)
-                    {
-                        too_short = too_short
-                            || (n - diff != ctx.in.in_remain());
-                        if constexpr (info.rng_raccu != 0)
-                        {
-                            too_short = too_short
-                                || (n - diff != info.rng_raccu);
-                        }
-                    }
-                    else
-                    {
-                        too_short = too_short
-                            || (n - diff > ctx.in.in_remain());
-                        if constexpr (info.rng_raccu != 0)
-                        {
-                            too_short = too_short
-                                || (n - diff < info.rng_raccu);
-                        }
-                    }
-
-                    if (REDEMPTION_UNLIKELY(too_short))
+                    // TODO /!\ possible overflow on n < diff
+                    if (REDEMPTION_UNLIKELY(n < diff
+                        || is_too_short_range<info>(n - diff, ctx.in)))
                     {
                         ctx.error(Name{}, info.rng_raccu, n);
                     }
@@ -1926,12 +1938,12 @@ namespace test
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
 
-                auto& info = Ctx::size_infos[I::value];
+                auto& info = *Ctx::size_infos[I::value];
                 println("data:  ", info);
                 std::flush(std::cout);
 
                 bool too_short;
-                // TODO /!\ overflow on n
+                // TODO /!\ possible overflow on n
                 if constexpr (info.is_rng_rstatic_size)
                 {
                     too_short = (n + info.rng_raccu != ctx.in.in_remain());
@@ -1960,7 +1972,7 @@ namespace test
             template<class Ctx, class I, class X>
             static void make(Ctx& ctx, I, X const&)
             {
-                auto& info = Ctx::size_infos[I::value];
+                auto& info = *Ctx::size_infos[I::value];
                 println("start: ", info);
                 std::flush(std::cout);
 
@@ -1971,11 +1983,7 @@ namespace test
 
                     println(rng_size, " / ", info.rng_raccu, " | ", ctx.in.in_remain());
 
-                    // TODO == if is_rng_rstatic_size
-                    // TODO info.rng_raccu == 0
-                    if (REDEMPTION_UNLIKELY(
-                        rng_size < info.rng_raccu || not ctx.in.in_check_rem(rng_size)
-                    ))
+                    if (REDEMPTION_UNLIKELY(is_too_short_range<info>(rng_size, ctx.in)))
                     {
                         ctx.error(Name{}, info.rng_raccu, rng_size);
                     }
@@ -2001,7 +2009,7 @@ namespace test
             template<class Ctx, class I, class X>
             static void make(Ctx& ctx, I, X const&)
             {
-                auto& info = Ctx::size_infos[I::value];
+                auto& info = *Ctx::size_infos[I::value];
                 println("stop: ", info);
                 std::flush(std::cout);
 
