@@ -1,3 +1,10 @@
+redemption (7.2.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Use conntrack cli for transparent mode
+  * Default option on session_probe_on_launch_failure should be set to disconnect_user
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 28 Oct 2019 18:09:11 +0200
+
 redemption (7.2.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Increase the maximum delay before showing Remote Program disconnection message.
