@@ -114,6 +114,8 @@ template<class T> using value_type_t = typename T::value_type;
 template<class T> using name_t = typename T::name;
 template<class T> using proto_basic_type_t = typename T::proto_basic_type;
 
+// TODO Name -> Symbols | Symbol
+
 template<class Data, class Name>
 struct param
 {
@@ -134,9 +136,10 @@ struct value
 
 PROTO_IS_TYPE_VA(value);
 
-template<class Data, class... Names>
+template<class Data, class Name>
 struct lazy_value
 {
+    using name = Name;
     using data_type = Data;
 
     Data data;

@@ -79,8 +79,6 @@ void print_def(proto::tuple<Xs...> const&)
 
 namespace proto
 {
-    class RawData;
-
     template<template<class...> class Concept>
     struct concept_check
     {
@@ -109,24 +107,6 @@ namespace proto
 }
 
 template<class...> struct names {};
-
-template<class T>
-struct extract_name_impl;
-
-template<class T, class... Names>
-struct extract_name_impl<proto::value<T, Names...>>
-{
-    using type = names<Names...>;
-};
-
-template<class T, class... Names>
-struct extract_name_impl<proto::param<T, Names...>>
-{
-    using type = names<Names...>;
-};
-
-template<class T>
-using extract_name = typename extract_name_impl<T>::type;
 
 using proto::name_t;
 
@@ -252,12 +232,6 @@ struct real_type_impl<BasicType, Binding, view_buffer>
 template<class BasicType, class Binding>
 using real_type = typename real_type_impl<BasicType, Binding,
     std::remove_const_t<std::remove_reference_t<Binding>>>::type;
-
-template<class... Name, class F>
-void each_name(names<Name...>, F&& f)
-{
-    return (f(Name()), ...);
-}
 
 template<class Int, class Endianess>
 auto read_buf(proto::datas::types::Integer<Int, Endianess>, InStream& in, native)
@@ -435,75 +409,72 @@ namespace test
     namespace detail
     {
         class discard {};
-        template<class T> using is_discard = typename std::is_same<T, discard>::type;
-        template<class T> inline constexpr bool is_discard_v = std::is_same<T, discard>::value;
 
-
-        template<class X, class Name>
+        template<class X, class Symbols>
         struct value_to_definition_param;
 
-        template<class T, class Name>
-        struct value_to_definition_param<data<T>, Name>
+        template<class T, class Symbols>
+        struct value_to_definition_param<data<T>, Symbols>
         {
-            using type = param<T, Name>;
+            using type = param<T, Symbols>;
         };
 
-        template<class T, class Name>
-        struct value_to_definition_param<type_only<T>, Name>
+        template<class T, class Symbols>
+        struct value_to_definition_param<type_only<T>, Symbols>
         {
-            using type = param<T, Name>;
+            using type = param<T, Symbols>;
         };
 
-        template<template<class...> class Tpl, class Name>
-        struct value_to_definition_param<value_data<Tpl>, Name>
-        {
-            using type = discard;
-        };
-
-        template<class Name>
-        struct value_to_definition_param<start_range, Name>
+        template<template<class...> class Tpl, class Symbols>
+        struct value_to_definition_param<value_data<Tpl>, Symbols>
         {
             using type = discard;
         };
 
-        template<class Name>
-        struct value_to_definition_param<stop_range, Name>
+        template<class Symbols>
+        struct value_to_definition_param<start_range, Symbols>
+        {
+            using type = discard;
+        };
+
+        template<class Symbols>
+        struct value_to_definition_param<stop_range, Symbols>
         {
             using type = discard;
         };
 
 
-        template<class X, class Name>
+        template<class X, class Symbols>
         struct value_to_definition_value;
 
-        template<class T, class Name>
-        struct value_to_definition_value<type_only<T>, Name>
+        template<class T, class Symbols>
+        struct value_to_definition_value<type_only<T>, Symbols>
         {
             using type = discard;
         };
 
-        template<class T, class Name>
-        struct value_to_definition_value<data<T>, Name>
+        template<class T, class Symbols>
+        struct value_to_definition_value<data<T>, Symbols>
         {
-            using type = lazy_value<as_param, Name>;
+            using type = lazy_value<as_param, Symbols>;
         };
 
-        template<template<class...> class Tpl, class Name>
-        struct value_to_definition_value<value_data<Tpl>, Name>
+        template<template<class...> class Tpl, class Symbols>
+        struct value_to_definition_value<value_data<Tpl>, Symbols>
         {
-            using type = lazy_value<Tpl<as_param>, Name>;
+            using type = lazy_value<Tpl<as_param>, Symbols>;
         };
 
-        template<class Name>
-        struct value_to_definition_value<start_range, Name>
+        template<class Symbols>
+        struct value_to_definition_value<start_range, Symbols>
         {
-            using type = lazy_value<start_range, Name>;
+            using type = lazy_value<start_range, Symbols>;
         };
 
-        template<class Name>
-        struct value_to_definition_value<stop_range, Name>
+        template<class Symbols>
+        struct value_to_definition_value<stop_range, Symbols>
         {
-            using type = lazy_value<stop_range, Name>;
+            using type = lazy_value<stop_range, Symbols>;
         };
 
 
@@ -516,95 +487,61 @@ namespace test
             std::decay_t<value_type_t<V>>, name_t<V>>::type;
 
 
-        template<class X>
-        auto extract_lazy_value2(X const& x)
-        {
-            if constexpr (is_lazy_value_v<X>)
-            {
-                return x;
-            }
-            else if constexpr (is_param_and_lazy_value_v<X>)
-            {
-                return lazy_value<as_param, name_t<X>>{};
-            }
-            else
-            {
-                return discard{};
-            }
-        }
-
         template<class T> using type_t = typename T::type;
-        template<class T> using index_t = typename T::index;
         template<class T> using names_t = typename T::names;
 
-        template<class C = mp::identity> using mp_indexed_type_t = mp::unpack<mp::front<C>>;
-        template<class C = mp::identity> using mp_indexed_index_t = mp::unpack<mp::at1<C>>;
-
         template<class C, class... xs>
-        using mpc_remove_discard = mp::call<mp::remove_if<mp::same_as<detail::discard>, C>, xs...>;
+        using mpc_remove_discard = mp::call<
+            mp::remove_if<
+                mp::same_as<detail::discard>,
+                C
+            >,
+            xs...
+        >;
 
-        template<class X, class I>
-        struct indexed : X
+        // memoise for clang
+        template<class T, size_t n>
+        struct filled_sequence_impl
         {
-            using type = X;
-            using index = I;
+            using type = mp::call<
+                mp::make_int_sequence<mp::transform<mp::always<T>>>,
+                mp::uint_<n>>;
         };
 
-        template<class T, int n>
-        using filled_sequence = mp::call<
-            mp::make_int_sequence<mp::transform<mp::always<T>>>,
-            mp::int_<n>>;
+        template<class T, size_t n>
+        using filled_sequence = typename filled_sequence_impl<T, n>::type;
+
+        template<class x, class... xs>
+        constexpr bool _contains_v = (... && !std::is_same<x, xs>::value);
 
         template<class... x>
         struct set_difference
         {
             template<class... y>
             using f = mp::call<mp::join<>,
-                mp::call<mp::conditional<std::is_same_v<
-                    mp::call<mp::transform<mp::same_as<x>>, y...>,
-                    filled_sequence<mp::false_, sizeof...(y)>
-                >>, mp::list<x>, mp::list<>
+                typename mp::conditional<_contains_v<x, y...>>
+                ::template f<mp::list<x>, mp::list<>
             >...>;
-        };
-
-        template<class T>
-        struct flat_sequence_impl
-        {
-            using type = mp::list<T>;
-        };
-
-        template<class... xs>
-        struct flat_sequence_impl<mp::list<xs...>>
-        {
-            using type = mp::call<mp::join<>, typename flat_sequence_impl<xs>::type...>;
-        };
-
-        template<class C>
-        struct flat_sequence
-        {
-            template<class... xs>
-            using f = mp::call<mp::join<C>, typename flat_sequence_impl<xs>::type...>;
         };
 
         template<class... p>
         struct param_list
         {
             template<class C = mp::listify>
-            using names = mp::call<C, mp::call<mp_tpl1<>, p>...>;
+            using symbols = mp::call<C, name_t<p>...>;
 
-            struct param_must_be_unique : mp::call<mp_tpl1<>, p>...
+            struct param_must_be_unique : name_t<p>...
             {
                 using list = mp::list<p...>;
             };
         };
 
-        using mp_lazy_value_names = mp::unpack<mp::pop_front<>>;
-
         template<class... v>
         struct lazy_value_list
         {
             template<class C = mp::listify>
-            using names = mp::call<mp::transform<mp_lazy_value_names, mp::join<C>>, v...>;
+            // TODO symbols_t + join
+            using symbols = mp::call<C, name_t<v>...>;
 
             using list = mp::list<v...>;
         };
@@ -626,9 +563,9 @@ namespace test
         template<class x, class y, class Error>
         void check_unused_params()
         {
-            using l = typename x::template names<
+            using l = typename x::template symbols<
                 mp::cfe<detail::set_difference,
-                    mp::cfe<y::template names>>>;
+                    mp::cfe<y::template symbols>>>;
 
             using errtype = typename mp::conditional<std::is_same<l, mp::list<>>::value>
                 ::template f<no_error, mp::unpack<Error>>;
@@ -1829,6 +1766,29 @@ namespace test
             }
         };
 
+        template<stream_readable2::SizeInfo const& info, class T>
+        bool is_too_short(T n, InStream const& in)
+        {
+            if constexpr (info.is_rng_rstatic_size)
+            {
+                bool too_short = (n != in.in_remain());
+                if constexpr (info.rng_raccu != 0)
+                {
+                    return too_short || (n != info.rng_raccu);
+                }
+                return too_short;
+            }
+            else
+            {
+                bool too_short = (n > in.in_remain());
+                if constexpr (info.rng_raccu != 0)
+                {
+                    return too_short || (n < info.rng_raccu);
+                }
+                return too_short;
+            }
+        }
+
         template<class Name, class Data>
         struct stream_readable2::next_value<as_param,
             variable<lazy<datas::types::PktSize<Data>>, Name>>
@@ -1858,29 +1818,31 @@ namespace test
 
                     println("diff: ", diff);
 
-                    bool too_sort = n < diff;
+
+                    // TODO is_too_short ^^^ŝ
+                    bool too_short = n < diff;
                     if constexpr (info.is_rng_rstatic_size)
                     {
-                        too_sort = too_sort
+                        too_short = too_short
                             || (n - diff != ctx.in.in_remain());
                         if constexpr (info.rng_raccu != 0)
                         {
-                            too_sort = too_sort
+                            too_short = too_short
                                 || (n - diff != info.rng_raccu);
                         }
                     }
                     else
                     {
-                        too_sort = too_sort
-                            || n - diff > ctx.in.in_remain();
+                        too_short = too_short
+                            || (n - diff > ctx.in.in_remain());
                         if constexpr (info.rng_raccu != 0)
                         {
-                            too_sort = too_sort
+                            too_short = too_short
                                 || (n - diff < info.rng_raccu);
                         }
                     }
 
-                    if (REDEMPTION_UNLIKELY(too_sort))
+                    if (REDEMPTION_UNLIKELY(too_short))
                     {
                         ctx.error(Name{}, info.rng_raccu, n);
                     }
@@ -1968,11 +1930,18 @@ namespace test
                 println("data:  ", info);
                 std::flush(std::cout);
 
-                // TODO == if is_rng_rstatic_size
+                bool too_short;
                 // TODO /!\ overflow on n
-                if (REDEMPTION_UNLIKELY(
-                    not ctx.in.in_check_rem(n + info.rng_raccu)
-                ))
+                if constexpr (info.is_rng_rstatic_size)
+                {
+                    too_short = (n + info.rng_raccu != ctx.in.in_remain());
+                }
+                else
+                {
+                    too_short = (n + info.rng_raccu > ctx.in.in_remain());
+                }
+
+                if (REDEMPTION_UNLIKELY(too_short))
                 {
                     ctx.error(Name{}, n + info.rng_raccu, ctx.in.in_remain());
                 }
@@ -2078,7 +2047,6 @@ namespace test
 
     class readable_variable;
     class writable_variable;
-    class native_variable;
 
     template<class BasicType, class T>
     struct variable_builder<readable_variable, BasicType, T>
@@ -2457,11 +2425,11 @@ int main()
         print_size_infos(def);
     }
 
-    // {
-    //     print("\n\nx224.tpkt:\n\n");
-    //     InStream in("\x03\x11\x11");
-    //     auto datas = X224::tdpu_recv(in, X224::tpkt);
-    //     println("datas.version: ", int(datas.version));
-    //     println("datas.len: ", datas.len);
-    // }
+    {
+        print("\n\nx224.tpkt:\n\n");
+        InStream in("\x03\x11\x11");
+        auto datas = X224::tdpu_recv(in, X224::tpkt);
+        println("datas.version: ", int(datas.version));
+        println("datas.len: ", std::hex, datas.len);
+    }
 }
