@@ -209,24 +209,20 @@ struct named
     X x;
 };
 
-class no_type {};
 
-
-template<class Name>
+template<class Symbol>
 struct label
 {
-    using name = Name;
-
     template<class X>
     constexpr auto operator=(X&& x) const
     {
-        return value<X&&, Name>{FWD(x)};
+        return value<X&&, Symbol>{FWD(x)};
     }
 
     template<class X>
     constexpr auto operator()(X&& x) const
     {
-        return value<X&&, Name>{FWD(x)};
+        return value<X&&, Symbol>{FWD(x)};
     }
 };
 

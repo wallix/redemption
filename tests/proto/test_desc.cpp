@@ -410,35 +410,35 @@ namespace test
     {
         class discard {};
 
-        template<class X, class Symbols>
+        template<class X, class Symbol>
         struct value_to_definition_param;
 
-        template<class T, class Symbols>
-        struct value_to_definition_param<data<T>, Symbols>
+        template<class T, class Symbol>
+        struct value_to_definition_param<data<T>, Symbol>
         {
-            using type = param<T, Symbols>;
+            using type = param<T, Symbol>;
         };
 
-        template<class T, class Symbols>
-        struct value_to_definition_param<type_only<T>, Symbols>
+        template<class T, class Symbol>
+        struct value_to_definition_param<type_only<T>, Symbol>
         {
-            using type = param<T, Symbols>;
+            using type = param<T, Symbol>;
         };
 
-        template<template<class...> class Tpl, class Symbols>
-        struct value_to_definition_param<value_data<Tpl>, Symbols>
-        {
-            using type = discard;
-        };
-
-        template<class Symbols>
-        struct value_to_definition_param<start_range, Symbols>
+        template<template<class...> class Tpl, class Symbol>
+        struct value_to_definition_param<value_data<Tpl>, Symbol>
         {
             using type = discard;
         };
 
-        template<class Symbols>
-        struct value_to_definition_param<stop_range, Symbols>
+        template<class Symbol>
+        struct value_to_definition_param<start_range, Symbol>
+        {
+            using type = discard;
+        };
+
+        template<class Symbol>
+        struct value_to_definition_param<stop_range, Symbol>
         {
             using type = discard;
         };
@@ -498,18 +498,6 @@ namespace test
             >,
             xs...
         >;
-
-        // memoise for clang
-        template<class T, size_t n>
-        struct filled_sequence_impl
-        {
-            using type = mp::call<
-                mp::make_int_sequence<mp::transform<mp::always<T>>>,
-                mp::uint_<n>>;
-        };
-
-        template<class T, size_t n>
-        using filled_sequence = typename filled_sequence_impl<T, n>::type;
 
         template<class x, class... xs>
         constexpr bool _contains_v = (... && !std::is_same<x, xs>::value);
@@ -705,17 +693,28 @@ namespace test
 
     namespace detail
     {
+        struct add_const_lvalue { template<class T> using f = T const&; };
+
+        template<class x>
+        using value_ref = typename
+            mp::conditional<std::is_reference_v<x>>
+              ::template f<mp::identity, add_const_lvalue>
+              ::template f<x>;
+
         template<class Traits, class Param, class X>
         auto make_variable2(proto::value<X, name_t<Param>> const& v)
         {
-            using builder = typename Traits::template value_variable_builder<
-                data_type_t<Param>,
-                std::remove_reference_t<X>>;
-            // TODO v.value&&
+            using builder = typename Traits::template variable_builder<data_type_t<Param>, X>;
+
+            // T& -> T&
+            // T&& -> T&&
+            // T -> T const&
+            using Ref = value_ref<decltype(v.value)>;
+
             return variable<
-                decltype(builder::make(v.value)),
+                decltype(builder::make(static_cast<Ref>(v.value))),
                 name_t<Param>
-            >{builder::make(v.value)};
+            >{builder::make(static_cast<Ref>(v.value))};
         }
 
         template<class Traits, class Params, class... Xs>
@@ -729,8 +728,8 @@ namespace test
             detail::check_unused_params<params, value_params, errors::missing_parameters>();
             detail::check_unused_params<value_params, params, errors::unknown_parameters>();
 
-            // TODO value_type_t must be rvalue or lvalue
-            proto::tuple<Xs...> t{Xs{static_cast<value_type_t<Xs>>(xs.value)}...};
+            // copy value<T&> or value<T&&>
+            proto::tuple<Xs...> t{Xs{static_cast<decltype(xs.value)>(xs.value)}...};
 
             return apply(Params{}, [&](auto... p){
                 return tuple{make_variable2<Traits, decltype(p)>(t)...};
@@ -796,14 +795,14 @@ namespace test
         struct stream_writable
         {
             template<class Data, class BasicType>
-            struct value_variable_builder_impl;
+            struct variable_builder_impl;
 
             template<class Data, class T>
-            using value_variable_builder
-                = value_variable_builder_impl<Data, proto_basic_type_t<Data>>;
+            using variable_builder
+                = variable_builder_impl<Data, proto_basic_type_t<Data>>;
 
             template<class BasicType, class... NamedValues>
-            struct next_value;
+            struct value_state;
 
             template<class T>
             struct final_value;
@@ -815,39 +814,34 @@ namespace test
             using write_data = write_data_impl<proto_basic_type_t<T>>;
 
             template<class TParams, class>
-            struct LazyValueToNextValue;
+            struct lazy_value_to_value_state;
 
             template<class TParams, class Data, class... Name>
-            struct LazyValueToNextValue<TParams, lazy_value<Data, Name...>>
+            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name...>>
             {
-                using type = next_value<
+                using type = value_state<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...
                 >;
             };
 
-            template<class Params_, class Values_, class... Xs>
+            template<class Params, class Values, class... Xs>
             static auto make_context(writable_bytes_view buf, Xs const&... xs)
             {
-                using Params = mpe::flatten<Params_>;
-                using Values = mpe::flatten<Values_>;
-
                 using tparams = decltype(detail::build_params2<stream_writable, Params>(xs...));
                 using states_list = mp::call<
                     mp::unpack<
                         mp::transform<
-                            mp::push_front<tparams&, mp::cfl<LazyValueToNextValue>>,
-                            mp::fork<
-                                mp::transform<mp::cfe<context_value_list_t>,
-                                    mp::join<mp::cfe<tuple>>>,
-                                mp::listify
+                            mp::push_front<tparams&, mp::cfl<lazy_value_to_value_state>>,
+                            mp::transform<mp::cfe<context_value_list_t>,
+                                mp::join<mp::cfe<tuple>>
                             >
                         >
                     >,
                     Values
                 >;
 
-                using ctx_values = mp::eager::at<states_list, 0>;
+                using ctx_values = states_list;
 
                 return CtxW<tparams, ctx_values>{
                     OutStream{buf},
@@ -859,7 +853,7 @@ namespace test
             template<class Ctx, class Data, class... Name>
             static auto next_state(Ctx& ctx, lazy_value<Data, Name...>)
             {
-                using Next = next_value<
+                using Next = value_state<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...
                 >;
@@ -875,7 +869,7 @@ namespace test
 
 
         template<class Data, class Int, class Endianess>
-        struct stream_writable::value_variable_builder_impl<
+        struct stream_writable::variable_builder_impl<
             Data, datas::types::Integer<Int, Endianess>>
         {
             static auto make(safe_int<Int> x)
@@ -885,7 +879,7 @@ namespace test
         };
 
         template<class Data, class StringSize, class StringData>
-        struct stream_writable::value_variable_builder_impl<
+        struct stream_writable::variable_builder_impl<
             Data, datas::types::String<StringSize, StringData, datas::types::no_zero>>
         {
             static auto make(bytes_view str)
@@ -895,7 +889,7 @@ namespace test
         };
 
         template<class Data, class Size>
-        struct stream_writable::value_variable_builder_impl<
+        struct stream_writable::variable_builder_impl<
             Data, datas::types::PktSize<Size>>
         {
             static auto make(native)
@@ -906,7 +900,7 @@ namespace test
 
 
         template<class Data, class T, class Name>
-        struct stream_writable::next_value<as_param, variable<val<Data, T>, Name>>
+        struct stream_writable::value_state<as_param, variable<val<Data, T>, Name>>
         {
             using context_value_list = mp::list<>;
 
@@ -919,7 +913,7 @@ namespace test
         };
 
         template<class Name, class Data, class Bytes>
-        struct stream_writable::next_value<
+        struct stream_writable::value_state<
             datas::values::types::SizeBytes<as_param>,
             variable<val<Data, Bytes>, Name>>
         {
@@ -934,7 +928,7 @@ namespace test
         };
 
         template<class Name, class Data, class Bytes>
-        struct stream_writable::next_value<
+        struct stream_writable::value_state<
             datas::values::types::Data<as_param>,
             variable<val<Data, Bytes>, Name>>
         {
@@ -952,7 +946,7 @@ namespace test
         using pkt_size_variable = variable<val<DataSize, std::array<uint8_t*, 2>>, Name>;
 
         template<class DataSize, class Name>
-        struct stream_writable::next_value<as_param, variable<datas::types::PktSize<DataSize>, Name>>
+        struct stream_writable::value_state<as_param, variable<datas::types::PktSize<DataSize>, Name>>
         {
             using var_size = pkt_size_variable<DataSize, Name>;
             using context_value_list = mp::list<var_size>;
@@ -967,7 +961,7 @@ namespace test
         };
 
         template<class DataSize, class Name>
-        struct stream_writable::next_value<start_range, variable<datas::types::PktSize<DataSize>, Name>>
+        struct stream_writable::value_state<start_range, variable<datas::types::PktSize<DataSize>, Name>>
         {
             using context_value_list = mp::list<>;
 
@@ -981,7 +975,7 @@ namespace test
         };
 
         template<class DataSize, class Name>
-        struct stream_writable::next_value<stop_range, variable<datas::types::PktSize<DataSize>, Name>>
+        struct stream_writable::value_state<stop_range, variable<datas::types::PktSize<DataSize>, Name>>
         {
             // TODO automatically write size if packet is static
             // TODO compute static distance with a static packet
@@ -1104,16 +1098,16 @@ namespace test
         struct stream_readable2
         {
             template<class Data, class BasicType>
-            struct value_variable_builder_impl;
+            struct variable_builder_impl;
 
             template<class Data, class T>
-            using value_variable_builder
-                = value_variable_builder_impl<Data, proto_basic_type_t<Data>>;
+            using variable_builder
+                = variable_builder_impl<Data, proto_basic_type_t<Data>>;
 
-            // TODO next_value<BasicType, variable<V, Names...>...>::type
-            // -> next_value_impl<BasicType, Names...>
+            // TODO value_state<BasicType, variable<V, Names...>...>::type
+            // -> value_state_impl<BasicType, Names...>
             template<class BasicType, class... Variable>
-            struct next_value;
+            struct value_state;
 
             struct reader_impl;
 
@@ -1127,68 +1121,68 @@ namespace test
             using read_data = read_data_impl<proto_basic_type_t<T>>;
 
             template<class TParams, class>
-            struct LazyValueToNextValue;
+            struct lazy_value_to_value_state;
 
             template<class TParams, class Data, class... Name>
-            struct LazyValueToNextValue<TParams, lazy_value<Data, Name...>>
+            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name...>>
             {
-                using type = next_value<
+                using type = value_state<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...>;
             };
 
             template<class>
-            struct next_value_is_start_range
+            struct value_state_is_start_range
             : std::false_type
             {};
 
             template<class... Ts>
-            struct next_value_is_start_range<next_value<start_range, Ts...>>
+            struct value_state_is_start_range<value_state<start_range, Ts...>>
             : std::true_type
             {};
 
             template<class>
-            struct next_value_is_range
+            struct value_state_is_range
             : std::false_type
             {};
 
             template<class... Ts>
-            struct next_value_is_range<next_value<start_range, Ts...>>
+            struct value_state_is_range<value_state<start_range, Ts...>>
             : std::true_type
             {};
 
             template<class... Ts>
-            struct next_value_is_range<next_value<stop_range, Ts...>>
+            struct value_state_is_range<value_state<stop_range, Ts...>>
             : std::true_type
             {};
 
             template<class>
-            struct next_value_is_pkt_size
+            struct value_state_is_pkt_size
             : std::false_type
             {};
 
             template<class DataSize, class... Ts>
-            struct next_value_is_pkt_size<
-                next_value<as_param,
+            struct value_state_is_pkt_size<
+                value_state<as_param,
                     variable<lazy<datas::types::PktSize<DataSize>>, Ts...>>>
             : std::true_type
             {};
 
             template<class>
-            struct next_value_to_names;
+            struct value_state_to_names;
 
             template<class Data, class T, class... Names>
-            struct next_value_to_names<next_value<Data, variable<T, Names...>>>
+            struct value_state_to_names<value_state<Data, variable<T, Names...>>>
             {
                 using type = mp::list<Names...>;
             };
 
             template<class x>
-            using next_value_to_names_t = typename next_value_to_names<x>::type;
+            using value_state_to_names_t = typename value_state_to_names<x>::type;
 
             using lazy_value_to_name_list_if_start_range = mp::if_<
-                mp::cfe<next_value_is_start_range>,
-                mp::cfl<next_value_to_names, mp::listify>,
+                mp::cfe<value_state_is_start_range>,
+                mp::cfl<value_state_to_names, mp::listify>,
                 mp::always<mp::list<>>
             >;
 
@@ -1216,7 +1210,7 @@ namespace test
                 {
                     template<class NextValue>
                     using f = size_info_t<
-                        idx_names<next_value_to_names_t<NextValue>>,
+                        idx_names<value_state_to_names_t<NextValue>>,
                         false,
                         true,
                         -1
@@ -1230,7 +1224,7 @@ namespace test
                         static_min_size_t<NextValue>::value,
                         true,
                         is_static_size_t<NextValue>::value,
-                        idx_names<next_value_to_names_t<NextValue>>
+                        idx_names<value_state_to_names_t<NextValue>>
                     >;
                 };
 
@@ -1247,11 +1241,11 @@ namespace test
 
                 // to_size_or_negatif_index_range
                 using type = mp::if_<
-                    mp::cfe<next_value_is_range>,
+                    mp::cfe<value_state_is_range>,
                     // negative index
                     range_to_size_info,
                     mp::if_<
-                        mp::cfe<next_value_is_pkt_size>,
+                        mp::cfe<value_state_is_pkt_size>,
                         pkt_size_to_size_info,
                         regular_to_size_info
                     >
@@ -1561,7 +1555,7 @@ namespace test
                 using states_list = mp::call<
                     mp::unpack<
                         mp::transform<
-                            mp::push_front<tparams&, mp::cfl<LazyValueToNextValue>>,
+                            mp::push_front<tparams&, mp::cfl<lazy_value_to_value_state>>,
                             mp::fork<
                                 mp::transform<mp::cfe<context_value_list_t>,
                                     mp::join<mp::cfe<tuple>>>,
@@ -1606,7 +1600,7 @@ namespace test
             template<class Ctx, class I, class Data, class... Name>
             static auto next_state(Ctx& ctx, mp::list<I, lazy_value<Data, Name...>>)
             {
-                using Next = next_value<
+                using Next = value_state<
                     proto_basic_type_t<Data>,
                     std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...>;
                 println(type_name<Next>());
@@ -1721,7 +1715,7 @@ namespace test
 
 
         template<class Data, class Int, class Endianess>
-        struct stream_readable2::value_variable_builder_impl<
+        struct stream_readable2::variable_builder_impl<
             Data, datas::types::Integer<Int, Endianess>>
         {
             static auto make(native)
@@ -1736,7 +1730,7 @@ namespace test
         };
 
         template<class Data, class StringSize, class StringData, class ZeroPolicy>
-        struct stream_readable2::value_variable_builder_impl<
+        struct stream_readable2::variable_builder_impl<
             Data, datas::types::String<StringSize, StringData, ZeroPolicy>>
         {
             static auto make(native)
@@ -1751,7 +1745,7 @@ namespace test
         };
 
         template<class Data, class DataSize>
-        struct stream_readable2::value_variable_builder_impl<
+        struct stream_readable2::variable_builder_impl<
             Data, datas::types::PktSize<DataSize>>
         {
             static auto make(native)
@@ -1785,7 +1779,7 @@ namespace test
         }
 
         template<class Name, class Data>
-        struct stream_readable2::next_value<as_param,
+        struct stream_readable2::value_state<as_param,
             variable<lazy<Data>, Name>>
         {
             using reader = read_data<Data>;
@@ -1824,7 +1818,7 @@ namespace test
         }
 
         template<class Name, class Data>
-        struct stream_readable2::next_value<as_param,
+        struct stream_readable2::value_state<as_param,
             variable<lazy<datas::types::PktSize<Data>>, Name>>
         {
             using reader = read_data<Data>;
@@ -1871,7 +1865,7 @@ namespace test
         };
 
         template<class Name, class Data, class T>
-        struct stream_readable2::next_value<as_param,
+        struct stream_readable2::value_state<as_param,
             variable<val<Data, T&>, Name>>
         {
             using reader = read_data<Data>;
@@ -1888,7 +1882,7 @@ namespace test
         };
 
         template<class Name, class Data, class Bytes>
-        struct stream_readable2::next_value<
+        struct stream_readable2::value_state<
             datas::values::types::SizeBytes<as_param>,
             variable<val<Data, Bytes>, Name>>
         {
@@ -1925,7 +1919,7 @@ namespace test
         }
 
         template<class Name, class Data, class Bytes>
-        struct stream_readable2::next_value<
+        struct stream_readable2::value_state<
             datas::values::types::Data<as_param>,
             variable<val<Data, Bytes>, Name>>
         {
@@ -1963,7 +1957,7 @@ namespace test
         };
 
         template<class T, class Name>
-        struct stream_readable2::next_value<start_range, variable<T, Name>>
+        struct stream_readable2::value_state<start_range, variable<T, Name>>
         {
             using static_min_size = mp::int_<0>;
             using is_static_size = std::false_type;
@@ -2000,7 +1994,7 @@ namespace test
         };
 
         template<class T, class Name>
-        struct stream_readable2::next_value<stop_range, variable<T, Name>>
+        struct stream_readable2::value_state<stop_range, variable<T, Name>>
         {
             using static_min_size = mp::int_<0>;
             using is_static_size = std::false_type;
