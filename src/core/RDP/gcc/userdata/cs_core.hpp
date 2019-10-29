@@ -615,32 +615,46 @@ private:
         } 
         stream.out_uint16_le(this->postBeta2ColorDepth);
         if (this->length == 134) { return; }
+
         stream.out_uint16_le(this->clientProductId);
         if (this->length == 136) { return; }
+
         stream.out_uint32_le(this->serialNumber);
         if (this->length == 140) { return; }
+
         stream.out_uint16_le(this->highColorDepth);
         if (this->length == 142) { return; }
+
         stream.out_uint16_le(this->supportedColorDepths);
         if (this->length == 144) { return; }
+
         stream.out_uint16_le(this->earlyCapabilityFlags);
         if (this->length == 146) { return; }
+
         stream.out_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
         if (this->length == 210) { return; }
+
         stream.out_uint8(this->connectionType);
         if (this->length == 211) { return; }
+
         stream.out_uint8(this->pad1octet);
         if (this->length == 212) { return; }
+
         stream.out_uint32_le(this->serverSelectedProtocol);
         if (this->length == 216) { return; }
+
         stream.out_uint32_le(this->desktopPhysicalWidth);
         if (this->length == 220) { return; }
+
         stream.out_uint32_le(this->desktopPhysicalHeight);
         if (this->length == 224) { return; }
+
         stream.out_uint16_le(this->desktopOrientation);
         if (this->length == 226) { return; }
+
         stream.out_uint32_le(this->desktopScaleFactor);
         if (this->length == 230) { return; }
+
         stream.out_uint32_le(this->deviceScaleFactor);
         if (this->length == 234) { return; }
     }
@@ -778,22 +792,31 @@ public:
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:Unknown early capability flag %.4x", this->earlyCapabilityFlags);
         }
         if (this->length == 146) { return; }
+
         LOG(LOG_INFO, "cs_core::clientDigProductId=[%s]", log_array_02x_format(this->clientDigProductId));
         if (this->length == 210) { return; }
+
         LOG(LOG_INFO, "cs_core::connectionType = %s", this->connectionTypeString(this->connectionType));
         if (this->length == 211) { return; }
+
         LOG(LOG_INFO, "cs_core::pad1octet = %u", this->pad1octet);
         if (this->length == 212) { return; }
+
         LOG(LOG_INFO, "cs_core::serverSelectedProtocol = %u", this->serverSelectedProtocol);
         if (this->length == 216) { return; }
+
         LOG(LOG_INFO, "cs_core::desktopPhysicalWidth = %u", this->desktopPhysicalWidth);
         if (this->length == 220) { return; }
+
         LOG(LOG_INFO, "cs_core::desktopPhysicalHeight = %u", this->desktopPhysicalHeight);
         if (this->length == 224) { return; }
+
         LOG(LOG_INFO, "cs_core::desktopOrientation = %u", this->desktopOrientation);
         if (this->length == 226) { return; }
+
         LOG(LOG_INFO, "cs_core::desktopScaleFactor = %u", this->desktopScaleFactor);
         if (this->length == 230) { return; }
+
         LOG(LOG_INFO, "cs_core::deviceScaleFactor = %u", this->deviceScaleFactor);
         if (this->length == 234) { return; }
     }
