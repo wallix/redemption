@@ -4200,10 +4200,11 @@ protected:
                     rect1.left(), rect1.top(), rect1.width(), rect1.height(),
                     rect.left(), rect.top(), rect.width(), rect.height());
             RDPBitmapData bitmap_data;
-            bitmap_data.dest_left = rect.left();
-            bitmap_data.dest_right = rect.right() - 1;
-            bitmap_data.dest_top = rect.top();
-            bitmap_data.dest_bottom = rect.bottom() - 1;
+            const Rect &base = cmd.destRect;
+            bitmap_data.dest_left = base.x + rect.left();
+            bitmap_data.dest_right = base.x + rect.right() - 1;
+            bitmap_data.dest_top = base.y + rect.top();
+            bitmap_data.dest_bottom = base.y + rect.bottom() - 1;
             bitmap_data.width = rect.width();
             bitmap_data.height = rect.height();
             bitmap_data.bits_per_pixel = 32;

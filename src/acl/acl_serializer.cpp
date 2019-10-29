@@ -958,7 +958,7 @@ void AclSerializer::in_items()
             sauthid[min] = 0;
             // this invalidate key value
             auto val = reader.get_val();
-            LOG(LOG_WARNING, "Unexpected receving '%s' - '%.*s'",
+            LOG(LOG_WARNING, "Unexpected receiving '%s' - '%.*s'",
                 sauthid, int(val.size()), val.data());
         }
 
