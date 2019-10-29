@@ -392,31 +392,14 @@ static int do_recompress(
     int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
 ) {
     FileToChunk player(&in_wrm_trans, to_verbose_flags(verbose));
-/*
-    char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
-    char outfile_basename [1024] = "redrec_output"; // default value, actual one should come from output_filename
-    char outfile_extension[1024] = ""             ; // extension is ignored for targets anyway
-
-    canonical_path( output_filename.c_str()
-                  , outfile_path
-                  , sizeof(outfile_path)
-                  , outfile_basename
-                  , sizeof(outfile_basename)
-                  , outfile_extension
-                  , sizeof(outfile_extension)
-                  );
-*/
-    std::string outfile_path;
-    std::string outfile_basename;
-    std::string outfile_extension;
-    ParsePath(output_filename.c_str(), outfile_path, outfile_basename, outfile_extension);
+    auto outfile = ParsePath(output_filename);
 
     if (verbose) {
-        std::cout << "Output file path: " << outfile_path << outfile_basename << outfile_extension << '\n' << std::endl;
+        std::cout << "Output file path: " << outfile.directory << outfile.basename << outfile.extension << '\n' << std::endl;
     }
 
-    if (recursive_create_directory(outfile_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
-        std::cerr << "Failed to create directory: \"" << outfile_path << "\"" << std::endl;
+    if (recursive_create_directory(outfile.directory.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
+        std::cerr << "Failed to create directory: \"" << outfile.directory << "\"" << std::endl;
     }
 
 //    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
@@ -436,9 +419,9 @@ static int do_recompress(
             ini.get<cfg::globals::trace_type>() == TraceType::cryptofile ? cctx : cctx_no_crypto,
             rnd,
             fstat,
-            outfile_path.c_str(),
+            outfile.directory.c_str(),
             ini.get<cfg::video::hash_path>().c_str(),
-            outfile_basename.c_str(),
+            outfile.basename.c_str(),
             begin_record,
             player.info.width,
             player.info.height,
@@ -774,19 +757,11 @@ static inline int check_encrypted_or_checksumed(
         auto * const hash_filename = full_hash_path_tmp.c_str();
         auto * const meta_filename = full_mwrm_filename.c_str();
 
-        char path[1024] = {};
-        char basename[1024] = {};
-        char extension[256] = {};
         char filename[2048] = {};
 
-        canonical_path(
-            meta_filename,
-            path, sizeof(path),
-            basename, sizeof(basename),
-            extension, sizeof(extension)
-        );
+        auto meta_output = ParsePath(meta_filename);
 
-        snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+        snprintf(filename, sizeof(filename), "%s%s", meta_output.basename.c_str(), meta_output.extension.c_str());
 
         OutFilenameCp hash_file_cp(hash_filename, S_IRUSR | S_IRGRP);
         if (hash_file_cp.is_open()) {
@@ -916,22 +891,11 @@ static void raise_error(
         return;
     }
 
-    char outfile_path     [1024] = {};
-    char outfile_basename [1024] = {};
-    char outfile_extension[1024] = {};
-
-    canonical_path( output_filename.c_str()
-                  , outfile_path
-                  , sizeof(outfile_path)
-                  , outfile_basename
-                  , sizeof(outfile_basename)
-                  , outfile_extension
-                  , sizeof(outfile_extension)
-                  );
+    auto outfile = ParsePath(output_filename);
 
     char progress_filename[4096];
     std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-            , outfile_path, outfile_basename);
+            , outfile.directory.c_str(), outfile.basename.c_str());
 
     (void)unlink(progress_filename);
     UpdateProgressData update_progress_data(pgs_format, progress_filename, 0, 0, 0, 0);
@@ -1406,31 +1370,20 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                 int return_code = 0;
 
-                if (output_filename.length()) {
+                if (not output_filename.empty()) {
             //        char outfile_pid[32];
             //        std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
 
-                    char outfile_path     [1024] = {};
-                    char outfile_basename [1024] = {};
-                    char outfile_extension[1024] = {};
-
-                    canonical_path( output_filename.c_str()
-                                    , outfile_path
-                                    , sizeof(outfile_path)
-                                    , outfile_basename
-                                    , sizeof(outfile_basename)
-                                    , outfile_extension
-                                    , sizeof(outfile_extension)
-                                    );
+                    auto outfile = ParsePath(output_filename);
 
                     if (verbose) {
                         std::cout << "Output file path: "
-                                    << outfile_path << outfile_basename << outfile_extension
+                                    << outfile.directory << outfile.basename << outfile.extension
                                     << '\n' << std::endl;
                     }
 
                     if (clear) {
-                        clear_files_flv_meta_png(outfile_path, outfile_basename);
+                        clear_files_flv_meta_png(outfile.directory.c_str(), outfile.basename.c_str());
                     }
 
                     ini.set<cfg::video::wrm_compression_algorithm>(
@@ -1444,15 +1397,13 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                     }
 
                     {
-                        ini.set<cfg::video::hash_path>(outfile_path);
-                        ini.set<cfg::video::record_tmp_path>(outfile_path);
-                        ini.set<cfg::video::record_path>(outfile_path);
-
-                        ini.set<cfg::globals::movie_path>(&output_filename[0]);
+                        ini.set<cfg::video::hash_path>(outfile.directory);
+                        ini.set<cfg::video::record_tmp_path>(outfile.directory);
+                        ini.set<cfg::video::record_path>(outfile.directory);
 
                         char progress_filename[4096];
                         std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                                , outfile_path, outfile_basename);
+                                , outfile.directory.c_str(), outfile.basename.c_str());
                         UpdateProgressData update_progress_data(
                             pgs_format, progress_filename,
                             begin_record.tv_sec, end_record.tv_sec,
@@ -1509,25 +1460,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
                         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-                        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-                        char path[1024];
-                        char basename[1024];
-                        char extension[128];
-                        path[sizeof(path)-1] = 0;
-                        path[sizeof(path)-2] = 0;
-                        strncpy(path, app_path(AppPath::Wrm), sizeof(path)-2);
-                        strncat(path, "/", sizeof(path)-strlen(path)-1);
-                        strncpy(basename, movie_path, sizeof(basename));
-                        extension[0] = 0; // extension is currently ignored
-
-                        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-                        ) {
-                            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-                            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-                        }
-
-                        LOG(LOG_INFO, "canonical_path : %s%s%s", path, basename, extension);
+                        auto spath = ParsePath(output_filename);
 
                         // PngParams
                         png_params.remote_program_session = false;
@@ -1576,7 +1510,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ](timeval const & now) mutable {
                             CaptureParams capture_params{
                                 now,
-                                basename,
+                                spath.basename.c_str(),
                                 record_tmp_path,
                                 record_path,
                                 groupid,
@@ -1662,7 +1596,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                     }
 
                     if (!return_code && program_requested_to_shutdown) {
-                        clear_files_flv_meta_png(outfile_path, outfile_basename);
+                        clear_files_flv_meta_png(outfile.directory.c_str(), outfile.basename.c_str());
                     }
                 }
                 else {
@@ -2021,23 +1955,19 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     // if relative all command lines path are relative to current working directory
 
     {
-        char temp_path[1024]     = {};
-        char temp_basename[1024] = {};
-        char temp_extension[256] = {};
+        auto input = ParsePath(recorder.input_filename);
 
-        canonical_path(recorder.input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension));
-
-        if (strlen(temp_path) > 0) {
-            recorder.mwrm_path = temp_path;
+        if (not input.directory.empty()) {
+            recorder.mwrm_path = input.directory;
         }
 
         recorder.input_basename = "";
         recorder.input_filename = "";
         recorder.infile_extension = ".mwrm";
-        if (strlen(temp_basename) > 0) {
-            recorder.input_basename = temp_basename;
-            recorder.input_filename = temp_basename;
-            recorder.infile_extension = (strlen(temp_extension) > 0)?temp_extension:".mwrm";
+        if (not input.basename.empty()) {
+            recorder.input_basename = input.basename.c_str();
+            recorder.input_filename = input.basename.c_str();
+            recorder.infile_extension = (strlen(input.extension.c_str()) > 0)?input.extension.c_str():".mwrm";
             recorder.input_filename += recorder.infile_extension;
         }
 
@@ -2083,15 +2013,17 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     recorder.show_statistics    = (options.count("statistics"       ) > 0);
 
     if (!recorder.output_filename.empty()) {
-        std::string directory = str_concat(app_path(AppPath::Wrm), '/');
-        std::string filename                ;
-        std::string extension = ".mwrm"     ;
-
-        ParsePath(recorder.output_filename.c_str(), directory, filename, extension);
-        MakePath(recorder.output_filename, directory.c_str(), filename.c_str(), extension.c_str());
+        auto output = ParsePath(recorder.output_filename);
+        if (output.directory.empty()){
+            std::string directory = str_concat(app_path(AppPath::Wrm), '/');
+            recorder.output_filename.insert(0, directory);
+        }
+        if (output.extension.empty()){
+            std::string extension = ".mwrm"     ;
+            recorder.output_filename += extension;
+        }
         std::cout << "Output file is \"" << recorder.output_filename << "\".\n";
     }
-
     return ClRes::Ok;
 }
 
