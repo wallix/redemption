@@ -752,6 +752,7 @@ namespace test
         };
 
         struct no_value {};
+        struct as_lazy_value {};
 
         template<class T>
         std::ostream& operator<<(std::ostream& out, lazy<T> const&)
@@ -799,6 +800,22 @@ namespace test
             TCtxValues ctx_values;
         };
 
+        template<class Data>
+        struct as_param_if_variable_with_same_data
+        {
+            template<class Var>
+            using f = typename mp::conditional<
+                std::is_same_v<data_type_t<value_type_t<Var>>, Data>
+            >::template f<as_param, Data>;
+        };
+
+        template<>
+        struct as_param_if_variable_with_same_data<as_param>
+        {
+            template<class Var>
+            using f = as_param;
+        };
+
         struct stream_writable
         {
             template<class BasicType, class BasicTypeCopy = BasicType>
@@ -823,29 +840,13 @@ namespace test
             template<class TParams, class>
             struct lazy_value_to_value_state;
 
-            template<class Data, class = void>
-            struct to_data_type
-            {
-                template<class Var>
-                using f = typename mp::conditional<
-                    std::is_same_v<data_type_t<value_type_t<Var>>, Data>
-                >::template f<as_param, Data>;
-            };
-
-            template<class Void>
-            struct to_data_type<as_param, Void>
-            {
-                template<class Var>
-                using f = as_param;
-            };
-
             template<class TParams, class Data, class Name>
             struct lazy_value_to_value_state<TParams, lazy_value<Data, Name>>
             {
                 using Var = std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>;
                 using type = value_state<
                     // TODO unless proto_basic_type_t ?
-                    mp::call<to_data_type<proto_basic_type_t<Data>>, Var>,
+                    mp::call<as_param_if_variable_with_same_data<proto_basic_type_t<Data>>, Var>,
                     Var
                 >;
             };
@@ -891,7 +892,8 @@ namespace test
         };
 
         template<class Int, class Endianess, class Data>
-        struct stream_writable::variable_builder_impl<datas::types::Integer<Int, Endianess>, Data>
+        struct stream_writable::variable_builder_impl<
+            datas::types::Integer<Int, Endianess>, Data>
         {
             static auto make(safe_int<Int> x)
             {
@@ -900,7 +902,8 @@ namespace test
         };
 
         template<class StringSize, class StringData, class Data>
-        struct stream_writable::variable_builder_impl<datas::types::String<StringSize, StringData, datas::types::no_zero>, Data>
+        struct stream_writable::variable_builder_impl<
+            datas::types::String<StringSize, StringData, datas::types::no_zero>, Data>
         {
             static auto make(bytes_view str)
             {
@@ -1118,12 +1121,12 @@ namespace test
 
         struct stream_readable2
         {
-            template<class Data, class BasicType>
+            template<class BasicType, class BasicTypeCopy = BasicType>
             struct variable_builder_impl;
 
             template<class Data, class T>
             using variable_builder
-                = variable_builder_impl<Data, proto_basic_type_t<Data>>;
+                = variable_builder_impl<proto_basic_type_t<Data>>;
 
             // TODO value_state<BasicType, variable<V, Names...>...>::type
             // -> value_state_impl<BasicType, Names...>
@@ -1144,12 +1147,15 @@ namespace test
             template<class TParams, class>
             struct lazy_value_to_value_state;
 
-            template<class TParams, class Data, class... Name>
-            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name...>>
+            template<class TParams, class Data, class Name>
+            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name>>
             {
+                using Var = std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>;
                 using type = value_state<
-                    proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...>;
+                    // TODO unless proto_basic_type_t ?
+                    mp::call<as_param_if_variable_with_same_data<proto_basic_type_t<Data>>, Var>,
+                    Var
+                >;
             };
 
             template<class>
@@ -1185,7 +1191,7 @@ namespace test
             template<class DataSize, class... Ts>
             struct value_state_is_pkt_size<
                 value_state<as_param,
-                    variable<lazy<datas::types::PktSize<DataSize>>, Ts...>>>
+                    variable<val<datas::types::PktSize<DataSize>, as_lazy_value>, Ts...>>>
             : std::true_type
             {};
 
@@ -1618,14 +1624,13 @@ namespace test
             }
 
             // TODO rename to apply_state
-            template<class Ctx, class I, class Data, class... Name>
-            static auto next_state(Ctx& ctx, mp::list<I, lazy_value<Data, Name...>>)
+            template<class Ctx, class I, class Data, class Name>
+            static auto next_state(Ctx& ctx, mp::list<I, lazy_value<Data, Name>>)
             {
-                using Next = value_state<
-                    proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...>;
-                println(type_name<Next>());
-                return Next::make(ctx, I{}, get_var<Name>(ctx.params).value...);
+                using State = typename lazy_value_to_value_state<
+                    decltype(ctx.params)&, lazy_value<Data, Name>>::type;
+                println(type_name<State>());
+                return State::make(ctx, I{}, get_var<Name>(ctx.params).value.x);
             }
 
             template<class EV, class... V>
@@ -1735,13 +1740,13 @@ namespace test
         };
 
 
-        template<class Data, class Int, class Endianess>
+        template<class Int, class Endianess, class Data>
         struct stream_readable2::variable_builder_impl<
-            Data, datas::types::Integer<Int, Endianess>>
+            datas::types::Integer<Int, Endianess>, Data>
         {
             static auto make(native)
             {
-                return lazy<Data>{};
+                return val<Data, as_lazy_value>{};
             }
 
             static auto make(ref<Int> r)
@@ -1750,9 +1755,9 @@ namespace test
             }
         };
 
-        template<class Data, class StringSize, class StringData, class ZeroPolicy>
+        template<class StringSize, class StringData, class ZeroPolicy, class Data>
         struct stream_readable2::variable_builder_impl<
-            Data, datas::types::String<StringSize, StringData, ZeroPolicy>>
+            datas::types::String<StringSize, StringData, ZeroPolicy>, Data>
         {
             static auto make(native)
             {
@@ -1765,13 +1770,13 @@ namespace test
             }
         };
 
-        template<class Data, class DataSize>
+        template<class DataSize, class Data>
         struct stream_readable2::variable_builder_impl<
-            Data, datas::types::PktSize<DataSize>>
+            datas::types::PktSize<DataSize>, Data>
         {
             static auto make(native)
             {
-                return lazy<datas::types::PktSize<DataSize>>{};
+                return val<datas::types::PktSize<DataSize>, as_lazy_value>{};
             }
 
             static auto make(ref<value_type_t<proto_basic_type_t<DataSize>>> r)
@@ -1801,7 +1806,7 @@ namespace test
 
         template<class Name, class Data>
         struct stream_readable2::value_state<as_param,
-            variable<lazy<Data>, Name>>
+            variable<val<Data, as_lazy_value>, Name>>
         {
             using reader = read_data<Data>;
             using static_min_size = static_min_size_t<reader>;
@@ -1809,7 +1814,7 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx, class I>
-            static auto make(Ctx& ctx, I, lazy<Data>)
+            static auto make(Ctx& ctx, I, as_lazy_value)
             {
                 return make_mem<Name>(reader::read(ctx.in));
             }
@@ -1840,7 +1845,7 @@ namespace test
 
         template<class Name, class Data>
         struct stream_readable2::value_state<as_param,
-            variable<lazy<datas::types::PktSize<Data>>, Name>>
+            variable<val<datas::types::PktSize<Data>, as_lazy_value>, Name>>
         {
             using reader = read_data<Data>;
             using static_min_size = static_min_size_t<reader>;
@@ -1850,7 +1855,7 @@ namespace test
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx, class I>
-            static auto make(Ctx& ctx, I, lazy<datas::types::PktSize<Data>>)
+            static auto make(Ctx& ctx, I, as_lazy_value)
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = reader::read(ctx.in);
@@ -1895,10 +1900,10 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx, class I>
-            static auto make(Ctx& ctx, I, val<Data, T&> v)
+            static auto make(Ctx& ctx, I, T& x)
             {
-                v.x = reader::read(ctx.in);
-                return make_mem<Name>(v.x);
+                x = reader::read(ctx.in);
+                return make_mem<Name>(x);
             }
         };
 
@@ -1918,7 +1923,7 @@ namespace test
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx, class I>
-            static void make(Ctx& ctx, I, val<Data, Bytes>&)
+            static void make(Ctx& ctx, I, Bytes&)
             {
                 auto& n = static_cast<var_size&>(ctx.ctx_values).value;
                 n = reader::read(ctx.in);
@@ -1949,7 +1954,7 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx, class I>
-            static auto make(Ctx& ctx, I, val<Data, Bytes>& v)
+            static auto make(Ctx& ctx, I, Bytes& bytes)
             {
                 auto n = get_var<datas::values::types::SizeBytes<Name>>(ctx.ctx_values).value;
 
@@ -1973,7 +1978,7 @@ namespace test
                     ctx.error(Name{}, n + info.rng_raccu, ctx.in.in_remain());
                 }
 
-                return make_mem<Name>(read_data_bytes(ctx.in, v.x, n));
+                return make_mem<Name>(read_data_bytes(ctx.in, bytes, n));
             }
         };
 
