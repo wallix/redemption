@@ -801,7 +801,7 @@ namespace test
         };
 
         template<class Data>
-        struct as_param_if_variable_with_same_data
+        struct as_param_if_variable_with_data_same_as
         {
             template<class Var>
             using f = typename mp::conditional<
@@ -810,20 +810,79 @@ namespace test
         };
 
         template<>
-        struct as_param_if_variable_with_same_data<as_param>
+        struct as_param_if_variable_with_data_same_as<as_param>
         {
             template<class Var>
             using f = as_param;
         };
 
-        struct stream_writable
+        template<class Data>
+        struct ramify_data_impl
+        {
+            using type = proto_basic_type_t<Data>;
+        };
+
+        struct recursive_ramify_data
+        {
+            template<class Data>
+            using f = mp::call<
+                mp::if_<mp::same_as<Data>, mp::identity, recursive_ramify_data>,
+                typename ramify_data_impl<Data>::type>;
+        };
+
+        template<class Data>
+        using ramify_data = typename recursive_ramify_data::template f<Data>;
+
+        template<class DataSize>
+        struct ramify_data_impl<datas::types::PktSize<DataSize>>
+        {
+            using type = datas::types::PktSize<ramify_data<DataSize>>;
+        };
+
+
+        template<class Traits>
+        struct basic_stream_traits
+        {
+            template<class TParams, class LazyValue>
+            struct lazy_value_to_value_state;
+
+            template<class TParams, class Data, class Name>
+            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name>>
+            {
+                using BasicData = ramify_data<Data>;
+                using Var = std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>;
+                using type = typename Traits::template value_state<
+                    mp::call<as_param_if_variable_with_data_same_as<BasicData>, Var>,
+                    Var
+                >;
+            };
+
+            using states_to_context_value_list = mp::transform<
+                mp::cfe<context_value_list_t>,
+                mp::join<mp::cfe<tuple>>
+            >;
+
+            template<class tparams, class Values,
+                class StateConverter = states_to_context_value_list>
+            using values_to_context = mp::call<
+                mp::unpack<
+                    mp::transform<
+                        mp::push_front<tparams&, mp::cfl<lazy_value_to_value_state>>,
+                        StateConverter
+                    >
+                >,
+                Values
+            >;
+        };
+
+
+        struct stream_writable : basic_stream_traits<stream_writable>
         {
             template<class BasicType, class BasicTypeCopy = BasicType>
             struct variable_builder_impl;
 
             template<class Data, class T>
-            using variable_builder
-                = variable_builder_impl<proto_basic_type_t<Data>>;
+            using variable_builder = variable_builder_impl<ramify_data<Data>>;
 
             template<class BasicType, class... NamedValues>
             struct value_state;
@@ -837,37 +896,11 @@ namespace test
             template<class T>
             using write_data = write_data_impl<proto_basic_type_t<T>>;
 
-            template<class TParams, class>
-            struct lazy_value_to_value_state;
-
-            template<class TParams, class Data, class Name>
-            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name>>
-            {
-                using Var = std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>;
-                using type = value_state<
-                    // TODO unless proto_basic_type_t ?
-                    mp::call<as_param_if_variable_with_same_data<proto_basic_type_t<Data>>, Var>,
-                    Var
-                >;
-            };
-
             template<class Params, class Values, class... Xs>
             static auto make_context(writable_bytes_view buf, Xs const&... xs)
             {
                 using tparams = decltype(detail::build_params2<stream_writable, Params>(xs...));
-                using states_list = mp::call<
-                    mp::unpack<
-                        mp::transform<
-                            mp::push_front<tparams&, mp::cfl<lazy_value_to_value_state>>,
-                            mp::transform<mp::cfe<context_value_list_t>,
-                                mp::join<mp::cfe<tuple>>
-                            >
-                        >
-                    >,
-                    Values
-                >;
-
-                using ctx_values = states_list;
+                using ctx_values = values_to_context<tparams, Values>;
 
                 return CtxW<tparams, ctx_values>{
                     OutStream{buf},
@@ -911,10 +944,10 @@ namespace test
             }
         };
 
-        template<class Size, class Data>
+        template<class DataSize, class Data>
         // TODO proto_basic_type_t<Data> with PktSize
         // -> proto_basic_type_t<PktSize<proto_basic_type_t<Size>>>
-        struct stream_writable::variable_builder_impl<datas::types::PktSize<Size>, Data>
+        struct stream_writable::variable_builder_impl<datas::types::PktSize<DataSize>, Data>
         {
             static auto make(native)
             {
@@ -1033,7 +1066,8 @@ namespace test
         };
 
         template<>
-        struct stream_writable::write_data_impl<datas::types::StringData<proto::datas::types::ascii_charset>>
+        struct stream_writable::write_data_impl<
+            datas::types::StringData<proto::datas::types::ascii_charset>>
         {
             static void write(OutStream& out, bytes_view x)
             {
@@ -1119,14 +1153,13 @@ namespace test
         };
 
 
-        struct stream_readable2
+        struct stream_readable2 : basic_stream_traits<stream_readable2>
         {
             template<class BasicType, class BasicTypeCopy = BasicType>
             struct variable_builder_impl;
 
             template<class Data, class T>
-            using variable_builder
-                = variable_builder_impl<proto_basic_type_t<Data>>;
+            using variable_builder = variable_builder_impl<ramify_data<Data>>;
 
             // TODO value_state<BasicType, variable<V, Names...>...>::type
             // -> value_state_impl<BasicType, Names...>
@@ -1143,20 +1176,6 @@ namespace test
 
             template<class T>
             using read_data = read_data_impl<proto_basic_type_t<T>>;
-
-            template<class TParams, class>
-            struct lazy_value_to_value_state;
-
-            template<class TParams, class Data, class Name>
-            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name>>
-            {
-                using Var = std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>;
-                using type = value_state<
-                    // TODO unless proto_basic_type_t ?
-                    mp::call<as_param_if_variable_with_same_data<proto_basic_type_t<Data>>, Var>,
-                    Var
-                >;
-            };
 
             template<class>
             struct value_state_is_start_range
@@ -1579,19 +1598,13 @@ namespace test
             static auto make_context(bytes_view buf, ErrorFn& error, Xs const&... xs)
             {
                 using tparams = decltype(detail::build_params2<stream_readable2, Params>(xs...));
-                using states_list = mp::call<
-                    mp::unpack<
-                        mp::transform<
-                            mp::push_front<tparams&, mp::cfl<lazy_value_to_value_state>>,
-                            mp::fork<
-                                mp::transform<mp::cfe<context_value_list_t>,
-                                    mp::join<mp::cfe<tuple>>>,
-                                make_compute_sizes,
-                                mp::listify
-                            >
-                        >
-                    >,
-                    Values
+                using states_list = values_to_context<
+                    tparams, Values,
+                    mp::fork<
+                        states_to_context_value_list,
+                        make_compute_sizes,
+                        mp::listify
+                    >
                 >;
 
                 using SizeCtx = mp::eager::at<states_list, 1>;

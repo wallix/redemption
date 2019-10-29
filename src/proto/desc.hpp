@@ -484,16 +484,9 @@ namespace datas
             using data_size = Size;
             using proto_basic_type = PktSize;
         };
-
-        template<class Size> struct NextPktSize
-        {
-            using data_size = Size;
-            using proto_basic_type = NextPktSize;
-        };
     }
 
     inline constexpr tpl_data<types::PktSize> pkt_size {};
-    inline constexpr tpl_data<types::NextPktSize> next_pkt_size {};
 
     namespace values
     {
