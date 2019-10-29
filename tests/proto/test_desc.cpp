@@ -746,6 +746,8 @@ namespace test
         template<class> class lazy {};
         template<class Data, class T> struct val { T x; };
 
+        struct no_value {};
+
         template<class T>
         std::ostream& operator<<(std::ostream& out, lazy<T> const&)
         {
@@ -794,12 +796,12 @@ namespace test
 
         struct stream_writable
         {
-            template<class Data, class BasicType>
+            template<class BasicType, class BasicTypeCopy = BasicType>
             struct variable_builder_impl;
 
             template<class Data, class T>
             using variable_builder
-                = variable_builder_impl<Data, proto_basic_type_t<Data>>;
+                = variable_builder_impl<proto_basic_type_t<Data>>;
 
             template<class BasicType, class... NamedValues>
             struct value_state;
@@ -867,10 +869,8 @@ namespace test
             }
         };
 
-
-        template<class Data, class Int, class Endianess>
-        struct stream_writable::variable_builder_impl<
-            Data, datas::types::Integer<Int, Endianess>>
+        template<class Int, class Endianess, class Data>
+        struct stream_writable::variable_builder_impl<datas::types::Integer<Int, Endianess>, Data>
         {
             static auto make(safe_int<Int> x)
             {
@@ -878,9 +878,8 @@ namespace test
             }
         };
 
-        template<class Data, class StringSize, class StringData>
-        struct stream_writable::variable_builder_impl<
-            Data, datas::types::String<StringSize, StringData, datas::types::no_zero>>
+        template<class StringSize, class StringData, class Data>
+        struct stream_writable::variable_builder_impl<datas::types::String<StringSize, StringData, datas::types::no_zero>, Data>
         {
             static auto make(bytes_view str)
             {
@@ -888,13 +887,14 @@ namespace test
             }
         };
 
-        template<class Data, class Size>
-        struct stream_writable::variable_builder_impl<
-            Data, datas::types::PktSize<Size>>
+        template<class Size, class Data>
+        // TODO proto_basic_type_t<Data> with PktSize
+        // -> proto_basic_type_t<PktSize<proto_basic_type_t<Size>>>
+        struct stream_writable::variable_builder_impl<datas::types::PktSize<Size>, Data>
         {
             static auto make(native)
             {
-                return Data{};
+                return val<Data, no_value>{};
             }
         };
 
@@ -946,13 +946,13 @@ namespace test
         using pkt_size_variable = variable<val<DataSize, std::array<uint8_t*, 2>>, Name>;
 
         template<class DataSize, class Name>
-        struct stream_writable::value_state<as_param, variable<datas::types::PktSize<DataSize>, Name>>
+        struct stream_writable::value_state<as_param, variable<val<datas::types::PktSize<DataSize>, no_value>, Name>>
         {
             using var_size = pkt_size_variable<DataSize, Name>;
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, datas::types::PktSize<DataSize>)
+            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, no_value>)
             {
                 static_cast<var_size&>(ctx.ctx_values).value.x[0] = ctx.out.get_current();
                 ctx.out.out_skip_bytes(sizeof(value_type_t<DataSize>));
@@ -961,12 +961,12 @@ namespace test
         };
 
         template<class DataSize, class Name>
-        struct stream_writable::value_state<start_range, variable<datas::types::PktSize<DataSize>, Name>>
+        struct stream_writable::value_state<start_range, variable<val<datas::types::PktSize<DataSize>, no_value>, Name>>
         {
             using context_value_list = mp::list<>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, datas::types::PktSize<DataSize>)
+            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, no_value>)
             {
                 static_cast<pkt_size_variable<DataSize, Name>&>(ctx.ctx_values).value.x[1]
                     = ctx.out.get_current();
@@ -975,14 +975,14 @@ namespace test
         };
 
         template<class DataSize, class Name>
-        struct stream_writable::value_state<stop_range, variable<datas::types::PktSize<DataSize>, Name>>
+        struct stream_writable::value_state<stop_range, variable<val<datas::types::PktSize<DataSize>, no_value>, Name>>
         {
             // TODO automatically write size if packet is static
             // TODO compute static distance with a static packet
             using context_value_list = mp::list<>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, datas::types::PktSize<DataSize>)
+            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, no_value>)
             {
                 auto& ptrs = static_cast<pkt_size_variable<DataSize, Name>&>(ctx.ctx_values).value.x;
                 assert(ptrs[1] <= ctx.out.get_current());
