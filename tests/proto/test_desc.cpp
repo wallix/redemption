@@ -744,7 +744,12 @@ namespace test
         template<class T> using context_value_list_t = typename T::context_value_list;
 
         template<class> class lazy {};
-        template<class Data, class T> struct val { T x; };
+        template<class Data, class T>
+        struct val
+        {
+            using data_type = Data;
+            T x;
+        };
 
         struct no_value {};
 
@@ -818,12 +823,30 @@ namespace test
             template<class TParams, class>
             struct lazy_value_to_value_state;
 
-            template<class TParams, class Data, class... Name>
-            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name...>>
+            template<class Data, class = void>
+            struct to_data_type
             {
+                template<class Var>
+                using f = typename mp::conditional<
+                    std::is_same_v<data_type_t<value_type_t<Var>>, Data>
+                >::template f<as_param, Data>;
+            };
+
+            template<class Void>
+            struct to_data_type<as_param, Void>
+            {
+                template<class Var>
+                using f = as_param;
+            };
+
+            template<class TParams, class Data, class Name>
+            struct lazy_value_to_value_state<TParams, lazy_value<Data, Name>>
+            {
+                using Var = std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>;
                 using type = value_state<
-                    proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(std::declval<TParams>()))>...
+                    // TODO unless proto_basic_type_t ?
+                    mp::call<to_data_type<proto_basic_type_t<Data>>, Var>,
+                    Var
                 >;
             };
 
@@ -852,14 +875,12 @@ namespace test
                 };
             }
 
-            template<class Ctx, class Data, class... Name>
-            static auto next_state(Ctx& ctx, lazy_value<Data, Name...>)
+            template<class Ctx, class Data, class Name>
+            static auto next_state(Ctx& ctx, lazy_value<Data, Name>)
             {
-                using Next = value_state<
-                    proto_basic_type_t<Data>,
-                    std::remove_reference_t<decltype(get_var<Name>(ctx.params))>...
-                >;
-                return Next::make(ctx, get_var<Name>(ctx.params).value...);
+                using State = typename lazy_value_to_value_state<
+                    decltype(ctx.params)&, lazy_value<Data, Name>>::type;
+                return State::make(ctx, get_var<Name>(ctx.params).value.x);
             }
 
             template<class Ctx>
@@ -905,9 +926,9 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, val<Data, T> const& v)
+            static bool make(Ctx& ctx, T const& x)
             {
-                write_data<Data>::write(ctx.out, v.x);
+                write_data<Data>::write(ctx.out, x);
                 return true;
             }
         };
@@ -920,9 +941,9 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, val<Data, Bytes> const& v)
+            static bool make(Ctx& ctx, Bytes const& bytes)
             {
-                write_data<data_to_value_size<Data>>::write(ctx.out, v.x.size());
+                write_data<data_to_value_size<Data>>::write(ctx.out, bytes.size());
                 return true;
             }
         };
@@ -935,9 +956,9 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, val<Data, Bytes> const& v)
+            static bool make(Ctx& ctx, Bytes const& bytes)
             {
-                write_data<data_to_value_data<Data>>::write(ctx.out, v.x);
+                write_data<data_to_value_data<Data>>::write(ctx.out, bytes);
                 return true;
             }
         };
@@ -952,7 +973,7 @@ namespace test
             using context_value_list = mp::list<var_size>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, no_value>)
+            static bool make(Ctx& ctx, no_value)
             {
                 static_cast<var_size&>(ctx.ctx_values).value.x[0] = ctx.out.get_current();
                 ctx.out.out_skip_bytes(sizeof(value_type_t<DataSize>));
@@ -966,7 +987,7 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, no_value>)
+            static bool make(Ctx& ctx, no_value)
             {
                 static_cast<pkt_size_variable<DataSize, Name>&>(ctx.ctx_values).value.x[1]
                     = ctx.out.get_current();
@@ -982,7 +1003,7 @@ namespace test
             using context_value_list = mp::list<>;
 
             template<class Ctx>
-            static bool make(Ctx& ctx, val<datas::types::PktSize<DataSize>, no_value>)
+            static bool make(Ctx& ctx, no_value)
             {
                 auto& ptrs = static_cast<pkt_size_variable<DataSize, Name>&>(ctx.ctx_values).value.x;
                 assert(ptrs[1] <= ctx.out.get_current());
