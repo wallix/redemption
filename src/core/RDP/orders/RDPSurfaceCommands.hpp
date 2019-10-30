@@ -152,7 +152,7 @@ public:
 
     void emit(OutStream & stream) const {
         stream.out_uint16_le(destRect.ileft());
-        stream.out_uint16_le(destRect.top());
+        stream.out_uint16_le(destRect.itop());
         stream.out_uint16_le(destRect.eright());
         stream.out_uint16_le(destRect.ebottom());
 

@@ -1766,7 +1766,7 @@ public:
     }
 
     void receive(InStream & stream) {
-        // WindowId(4) + Left(2) + Top(2)
+        // WindowId(4) + iLeft(2) + iTop(2)
         ::check_throw(stream, 8, "Client System Menu PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
@@ -1778,12 +1778,12 @@ public:
 
     uint32_t WindowId() const { return this->WindowId_; }
 
-    int16_t Left() const { return this->Left_; }
+    int16_t iLeft() const { return this->Left_; }
 
-    int16_t Top() const { return this->Top_; }
+    int16_t iTop() const { return this->Top_; }
 
     static size_t size() {
-        return 8;   // WindowId(4) + Left(2) + Top(2)
+        return 8;   // WindowId(4) + iLeft(2) + iTop(2)
     }
 
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
@@ -2889,7 +2889,7 @@ public:
     }
 
     void receive(InStream & stream) {
-        // WindowId(4) + iLeft(2) + Top(2) + eRight(2) + eBottom(2)
+        // WindowId(4) + iLeft(2) + iTop(2) + eRight(2) + eBottom(2)
         ::check_throw(stream, 12, "Client Window Move PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
@@ -2909,9 +2909,9 @@ public:
 
     void iLeft(uint32_t Left_) { this->Left_ = Left_; }
 
-    uint16_t Top() const { return this->Top_; }
+    uint16_t iTop() const { return this->Top_; }
 
-    void Top(uint32_t Top_) { this->Top_ = Top_; }
+    void iTop(uint32_t Top_) { this->Top_ = Top_; }
 
     uint16_t eRight() const { return this->Right_; }
 
@@ -2922,7 +2922,7 @@ public:
     void eBottom(uint32_t Bottom_) { this->Bottom_ = Bottom_; }
 
     static size_t size() {
-        return 12;  // WindowId(4) + iLeft(2) + Top(2) +
+        return 12;  // WindowId(4) + iLeft(2) + iTop(2) +
                     //  eRight(2) + eBottom(2)
     }
 

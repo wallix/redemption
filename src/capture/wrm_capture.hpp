@@ -682,12 +682,12 @@ public:
             Bitmap bitmap(content.data, content.stride, rect);
 
             LOG(LOG_DEBUG, "WrmCapture::draw(RDPSurfaceContent, content): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
-                    rect1.ileft(), rect1.top(), rect1.width(), rect1.height(),
-                    rect.ileft(), rect.top(), rect.width(), rect.height());
+                    rect1.ileft(), rect1.itop(), rect1.width(), rect1.height(),
+                    rect.ileft(), rect.itop(), rect.width(), rect.height());
             RDPBitmapData bitmap_data;
             bitmap_data.dest_left = rect.ileft();
             bitmap_data.dest_right = rect.eright() - 1;
-            bitmap_data.dest_top = rect.top();
+            bitmap_data.dest_top = rect.itop();
             bitmap_data.dest_bottom = rect.ebottom() - 1;
             bitmap_data.width = rect.width();
             bitmap_data.height = rect.height();

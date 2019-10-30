@@ -51,7 +51,7 @@ struct Rect {
         return static_cast<int16_t>(this->x + this->cx);
     }
 
-    [[nodiscard]] int16_t top() const {
+    [[nodiscard]] int16_t itop() const {
         return this->y;
     }
 

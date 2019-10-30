@@ -95,7 +95,7 @@ public:
     }
 
     void receive(InStream & stream) {
-        // Left(2) + Top(2) + Right(2) + eBottom(2)
+        // iLeft(2) + iTop(2) + eRight(2) + eBottom(2)
         ::check_throw(stream,  8, "Rectangle", ERR_RAIL_PDU_TRUNCATED);
 
         this->Left_   = stream.in_uint16_le();
@@ -105,12 +105,12 @@ public:
     }
 
     static size_t size() {
-        return 8;   /* Left(2) + Top(2) + Right(2) + eBottom(2) */
+        return 8;   /* iLeft(2) + iTop(2) + eRight(2) + eBottom(2) */
     }
 
     [[nodiscard]] uint16_t iLeft() const { return this->Left_; }
 
-    [[nodiscard]] uint16_t Top() const { return this->Top_; }
+    [[nodiscard]] uint16_t iTop() const { return this->Top_; }
 
     [[nodiscard]] uint16_t eRight() const { return this->Right_; }
 

@@ -2206,9 +2206,9 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
         RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
 
         this->work_areas[this->work_area_count].x  = body_r.iLeft();
-        this->work_areas[this->work_area_count].y  = body_r.Top();
+        this->work_areas[this->work_area_count].y  = body_r.iTop();
         this->work_areas[this->work_area_count].cx = body_r.eRight() - body_r.iLeft();
-        this->work_areas[this->work_area_count].cy = body_r.eBottom() - body_r.Top();
+        this->work_areas[this->work_area_count].cy = body_r.eBottom() - body_r.iTop();
 
         if (this->verbose) {
             LOG(LOG_INFO, "WorkAreaRect: (%d, %d, %u, %u)",
@@ -2554,9 +2554,9 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
         RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
 
         this->task_bar_rect.x  = body_r.iLeft();
-        this->task_bar_rect.y  = body_r.Top();
+        this->task_bar_rect.y  = body_r.iTop();
         this->task_bar_rect.cx = body_r.eRight() - body_r.iLeft();
-        this->task_bar_rect.cy = body_r.eBottom() - body_r.Top();
+        this->task_bar_rect.cy = body_r.eBottom() - body_r.iTop();
 
         if (this->verbose) {
             LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%d, %d, %u, %u)",
@@ -2589,9 +2589,9 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
 
     if (INTERNAL_MODULE_WINDOW_ID == cwmpdu.WindowId()) {
         this->window_rect.x  = cwmpdu.iLeft() - this->window_offset_x;
-        this->window_rect.y  = cwmpdu.Top() - this->window_offset_y;
+        this->window_rect.y  = cwmpdu.iTop() - this->window_offset_y;
         this->window_rect.cx = cwmpdu.eRight() - cwmpdu.iLeft();
-        this->window_rect.cy = cwmpdu.eBottom() - cwmpdu.Top();
+        this->window_rect.cy = cwmpdu.eBottom() - cwmpdu.iTop();
 
         this->update_rects();
 

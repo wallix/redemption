@@ -3764,7 +3764,7 @@ private:
                 size_t numberOfAreas = sdata_in.payload.in_uint8();
                 sdata_in.payload.in_skip_bytes(3);
 
-                // numberOfAreas * (ileft(2) + top(2) + eright(2) + ebottom(2))
+                // numberOfAreas * (ileft(2) + itop(2) + eright(2) + ebottom(2))
                 ::check_throw(sdata_in.payload, numberOfAreas * 8,
                                                    "Front::process_data::Refresh rect PDU data", ERR_RDP_DATA_TRUNCATED);
 
@@ -3809,7 +3809,7 @@ private:
 
                 if (this->ini.get<cfg::client::enable_suppress_output>()) {
                     if (RDP::ALLOW_DISPLAY_UPDATES == sopdud.get_allowDisplayUpdates()) {
-                        cb.rdp_allow_display_updates(sopdud.get_ileft(), sopdud.get_top(),
+                        cb.rdp_allow_display_updates(sopdud.get_ileft(), sopdud.get_itop(),
                             sopdud.get_eright(), sopdud.get_ebottom());
                     }
                     else {
@@ -4223,12 +4223,12 @@ protected:
             Bitmap bitmap(content.data, content.stride, rect);
 
             LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
-                    rect1.ileft(), rect1.top(), rect1.width(), rect1.height(),
-                    rect.ileft(), rect.top(), rect.width(), rect.height());
+                    rect1.ileft(), rect1.itop(), rect1.width(), rect1.height(),
+                    rect.ileft(), rect.itop(), rect.width(), rect.height());
             const Rect &base = cmd.destRect;
 
             auto data = prepare_bitmap(base.x + rect.ileft(),
-                                       base.y + rect.top(),
+                                       base.y + rect.itop(),
                                        base.x + rect.eright() - 1,
                                        base.y + rect.ebottom() - 1,
                                        rect.width(),

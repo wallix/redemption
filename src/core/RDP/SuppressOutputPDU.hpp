@@ -160,7 +160,7 @@ public:
         stream.in_skip_bytes(3);    // Padding(3)
 
         if (ALLOW_DISPLAY_UPDATES == this->allowDisplayUpdates_) {
-            // ileft(2) + top(2) + eright(2) + ebottom(2)
+            // ileft(2) + itop(2) + eright(2) + ebottom(2)
             ::check_throw(stream, 8, "SuppressOutputPDUData::receive (1)", ERR_RDP_DATA_TRUNCATED);
 
             this->left_   = stream.in_uint16_le();
@@ -184,7 +184,7 @@ public:
     }
 
     [[nodiscard]] uint16_t get_ileft() const { return this->left_; }
-    [[nodiscard]] uint16_t get_top() const { return this->top_; }
+    [[nodiscard]] uint16_t get_itop() const { return this->top_; }
     // TODO: BOGUS: fix calling sites, this one is an inclusive rectangle
     [[nodiscard]] uint16_t get_eright() const { return this->right_; }
     [[nodiscard]] uint16_t get_ebottom() const { return this->bottom_; }
@@ -192,7 +192,7 @@ public:
     [[nodiscard]] size_t size() const {
         return 4 +  // allowDisplayUpdates(1) + Padding(3)
             ((ALLOW_DISPLAY_UPDATES == this->allowDisplayUpdates_) ?
-             8 :    // ileft(2) + top(2) + eright(2) + ebottom(2)
+             8 :    // ileft(2) + itop(2) + eright(2) + ebottom(2)
              0);
     }   // size_t size() const
 

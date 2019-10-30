@@ -55,7 +55,7 @@ public:
     [[nodiscard]] int16_t ileft() const {
         return this->leftRect;
     }
-    [[nodiscard]] int16_t top() const {
+    [[nodiscard]] int16_t itop() const {
         return this->topRect;
     }
     [[nodiscard]] int16_t eright() const {
@@ -69,7 +69,7 @@ public:
         return static_cast<uint16_t>(this->eright() - this->ileft());
     }
     [[nodiscard]] uint16_t height() const {
-        return static_cast<uint16_t>(this->ebottom() - this->top());
+        return static_cast<uint16_t>(this->ebottom() - this->itop());
     }
 
     [[nodiscard]] uint16_t radius_x() const {
@@ -83,11 +83,11 @@ public:
         return this->ileft() + (this->eright() - this->ileft()) / 2;
     }
     [[nodiscard]] int16_t center_y() const {
-        return this->top() + (this->ebottom() - this->top()) / 2;
+        return this->itop() + (this->ebottom() - this->itop()) / 2;
     }
 
     [[nodiscard]] Rect get_rect() const {
-        return Rect(this->ileft(), this->top(), this->width(), this->height());
+        return Rect(this->ileft(), this->itop(), this->width(), this->height());
     }
 
     bool operator == (const Ellipse & other) const noexcept {
