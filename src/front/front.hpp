@@ -113,30 +113,6 @@
 
 #include "system/tls_context.hpp"
 
-inline RDPBitmapData prepare_bitmap(
-                 uint16_t dest_left,
-                 uint16_t dest_top,
-                 uint16_t dest_right,
-                 uint16_t dest_bottom,
-                 uint16_t width,
-                 uint16_t height,
-                 uint16_t bits_per_pixel,
-                 uint16_t flags,
-                 uint16_t bitmap_length)
-{
-        RDPBitmapData data;
-        data.dest_left = dest_left;
-        data.dest_top = dest_top;
-        data.dest_right = dest_right;
-        data.dest_bottom = dest_bottom;
-        data.width = width;
-        data.height = height;
-        data.bits_per_pixel = bits_per_pixel;
-        data.flags = flags;
-        data.bitmap_length = bitmap_length;
-        return data;
-}
-
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 
@@ -267,26 +243,20 @@ private:
                             StaticOutStream<65535> bmp_stream;
                             sub_image.compress(this->capture_bpp, bmp_stream);
 
-                            Rect drect(bitmap_data.dest_left, 
-                                           bitmap_data.dest_top,
-                                           bitmap_data.dest_right-bitmap_data.dest_left,
-                                           bitmap_data.dest_bottom-bitmap_data.dest_top);
-                                           
-                            auto sub_image_data = prepare_bitmap(
-                                    drect.x + subrect.x,
-                                    drect.y + subrect.y,
-                                    std::min<uint16_t>(drect.x + subrect.x + subrect.cx - 1,
-                                                       drect.x + drect.cx),
-                                    drect.y + drect.cy + subrect.y + subrect.cy - 1,
-                                    subrect.cx,
-                                    subrect.cy,
-                                    safe_int(sub_image.bpp()),
-                                    BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR, /*NOLINT*/
-                                    bmp_stream.get_offset());
-                            // TODO: 3 lignes below probably useless: check
-                            sub_image_data.cb_comp_main_body_size = bitmap_data.cb_comp_main_body_size;
-                            sub_image_data.cb_scan_width = bitmap_data.cb_scan_width;
-                            sub_image_data.cb_uncompressed_size = bitmap_data.cb_uncompressed_size;
+                            RDPBitmapData sub_image_data = bitmap_data;
+
+                            sub_image_data.dest_left += subrect.x;
+                            sub_image_data.dest_top  += subrect.y;
+
+                            sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + subrect.cx - 1, bitmap_data.dest_right);
+                            sub_image_data.dest_bottom = sub_image_data.dest_top + subrect.cy - 1;
+
+                            sub_image_data.width = subrect.cx;
+                            sub_image_data.height = subrect.cy;
+
+                            sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
+                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                            sub_image_data.bitmap_length = bmp_stream.get_offset();
 
                             GraphicsUpdatePDU::draw(sub_image_data, sub_image);
                         }
@@ -3753,7 +3723,7 @@ private:
             // 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)
             // =============================================
             // The TS_RECTANGLE16 structure describes a rectangle expressed in inclusive coordinates
-            // (the right and bottom coordinates are included in the rectangle bounds).
+            // (the right and bottom coordinates are include " in the rectangle bounds).
             // left (2 bytes): A 16-bit, unsigned integer. The leftmost bound of the rectangle.
             // top (2 bytes): A 16-bit, unsigned integer. The upper bound of the rectangle.
             // right (2 bytes): A 16-bit, unsigned integer. The rightmost bound of the rectangle.
@@ -4159,18 +4129,21 @@ protected:
         else {
             Rect dest_rect = clip.intersect(cmd.rect);
             auto drew_bitmap = [this](Bitmap const &bitmap, Rect const & rect) {
+                RDPBitmapData bitmap_data;
 
-                auto data = prepare_bitmap(
-                        rect.x,
-                        rect.y,
-                        rect.x + rect.cx - 1,
-                        rect.y + rect.cy - 1,
-                        bitmap.cx(),
-                        bitmap.cy(),
-                        safe_int(bitmap.bpp()),
-                        0, /*NOLINT*/
-                        bitmap.bmp_size());
-                this->draw_impl(data, bitmap);
+                bitmap_data.dest_left = rect.x;
+                bitmap_data.dest_top = rect.y;
+                bitmap_data.dest_right = rect.x + rect.cx - 1;
+                bitmap_data.dest_bottom = rect.y + rect.cy - 1;
+
+                bitmap_data.width = bitmap.cx();
+                bitmap_data.height = bitmap.cy();
+                bitmap_data.bits_per_pixel = safe_int(bitmap.bpp());
+                bitmap_data.flags = 0;
+
+                bitmap_data.bitmap_length = bitmap.bmp_size();
+
+                this->draw_impl(bitmap_data, bitmap);
             };
             if (!dest_rect.isempty()) {
                 if (dest_rect == cmd.rect) {
@@ -4226,19 +4199,19 @@ protected:
             LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
                     rect1.ileft(), rect1.itop(), rect1.width(), rect1.height(),
                     rect.ileft(), rect.itop(), rect.width(), rect.height());
+            RDPBitmapData bitmap_data;
             const Rect &base = cmd.destRect;
+            bitmap_data.dest_left = base.x + rect.ileft();
+            bitmap_data.dest_right = base.x + rect.eright() - 1;
+            bitmap_data.dest_top = base.y + rect.itop();
+            bitmap_data.dest_bottom = base.y + rect.ebottom() - 1;
+            bitmap_data.width = rect.width();
+            bitmap_data.height = rect.height();
+            bitmap_data.bits_per_pixel = 32;
+            bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
+            bitmap_data.bitmap_length = bitmap.bmp_size();
 
-            auto data = prepare_bitmap(base.x + rect.ileft(),
-                                       base.y + rect.itop(),
-                                       base.x + rect.eright() - 1,
-                                       base.y + rect.ebottom() - 1,
-                                       rect.width(),
-                                       rect.height(),
-                                       32,
-                                       /*NO_BITMAP_COMPRESSION_HDR*/ 0,
-                                       bitmap.bmp_size());
-            this->draw_impl(data, bitmap);
-
+            this->draw_impl(bitmap_data, bitmap);
         }
     }
 
@@ -4305,22 +4278,23 @@ protected:
                         contiguous_sub_rect_f(CxCy{fc.width, fc.height}, SubCxCy{64, 64}, [&](Rect rect){
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
+                            RDPBitmapData rdpbd;
+                            rdpbd.dest_left      = rect.x + x;
+                            rdpbd.dest_top       = rect.y + y + fc.offsety;
+                            rdpbd.dest_right     = rect.cx + rect.x + x - 1;
+                            rdpbd.dest_bottom    = rect.cy + rect.y + y + fc.offsety - 1;
+                            rdpbd.bits_per_pixel = 24;
+                            rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION; /*NOLINT*/
+                            rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
+
                             const Rect tile(0, 0, rect.cx, rect.cy);
                             Bitmap bmp(glyphBitmap.data(), fc.width, fc.height, BitsPerPixel{24}, tile);
 
                             StaticOutStream<65535> bmp_stream;
                             bmp.compress(this->client_info.screen_info.bpp, bmp_stream);
 
-                            auto rdpbd = prepare_bitmap(
-                                    rect.x + x,
-                                    rect.y + y + fc.offsety,
-                                    rect.cx + rect.x + x - 1,
-                                    rect.cy + rect.y + y + fc.offsety - 1,
-                                    bmp.cx(),
-                                    bmp.cy(),
-                                    24,
-                                    NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION, /*NOLINT*/
-                                    rect.cx * rect.cy * 3);
+                            rdpbd.width          = bmp.cx();
+                            rdpbd.height         = bmp.cy();
 
                             this->draw_impl(rdpbd, bmp);
                         });
@@ -4454,17 +4428,20 @@ protected:
 
                     Bitmap const & sub_image = get_image(sub_image_width, sub_image_height, image_bpp, pixel_color);
 
-                    auto sub_image_data = prepare_bitmap(
-                            dest_rect.x + x,
-                            dest_rect.y + y,
-                            std::min<uint16_t>( dest_rect.x + x + sub_image_width - 1
-                                              , dest_rect.x + dest_rect.cx - 1),
-                            dest_rect.y + y + sub_image_height - 1,
-                            sub_image_width,
-                            sub_image_height,
-                            safe_int(sub_image.bpp()),
-                            NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION, /*NOLINT*/
-                            sub_image.data_compressed().size());
+                    RDPBitmapData sub_image_data;
+
+                    sub_image_data.dest_left = dest_rect.x + x;
+                    sub_image_data.dest_top  = dest_rect.y + y;
+
+                    sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + sub_image_width - 1, dest_rect.x + dest_rect.cx - 1);
+                    sub_image_data.dest_bottom = sub_image_data.dest_top + sub_image_height - 1;
+
+                    sub_image_data.width = sub_image_width;
+                    sub_image_data.height = sub_image_height;
+
+                    sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
+                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                    sub_image_data.bitmap_length = sub_image.data_compressed().size();
 
                     this->draw_impl(sub_image_data, sub_image);
                 }
