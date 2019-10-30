@@ -1,3 +1,9 @@
+redemption (7.3.37%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix display issue in Selecor with FreeRDP.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 30 Oct 2019 15:09:11 +0200
+
 redemption (7.3.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * update icap descriptions
