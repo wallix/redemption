@@ -148,18 +148,18 @@ public:
             header.control |= RDP::BOUNDS;
         }
 
-        const int16_t oldleft   = oldcmd.el.left();
+        const int16_t oldleft   = oldcmd.el.ileft();
         const int16_t oldtop    = oldcmd.el.top();
         const int16_t oldright  = oldcmd.el.right();
         const int16_t oldbottom = oldcmd.el.bottom();
 
-        header.control |= (is_1_byte(this->el.left() - oldleft) &&
+        header.control |= (is_1_byte(this->el.ileft() - oldleft) &&
                            is_1_byte(this->el.top() - oldtop) &&
                            is_1_byte(this->el.right() - oldright) &&
                            is_1_byte(this->el.bottom() - oldbottom)) * RDP::DELTA;
 
         header.fields =
-            ( this->el.left()   != oldleft        ) * 0x0001
+            ( this->el.ileft()   != oldleft        ) * 0x0001
             |(this->el.top()    != oldtop         ) * 0x0002
             |(this->el.right()  != oldright       ) * 0x0004
             |(this->el.bottom() != oldbottom      ) * 0x0008
@@ -168,7 +168,7 @@ public:
             |(this->color    != oldcmd.color   ) * 0x0040;
 
         common.emit(stream, header, oldcommon);
-        header.emit_coord(stream, 0x0001, this->el.left(),   oldleft);
+        header.emit_coord(stream, 0x0001, this->el.ileft(),   oldleft);
         header.emit_coord(stream, 0x0002, this->el.top(),    oldtop);
         header.emit_coord(stream, 0x0004, this->el.right(),  oldright);
         header.emit_coord(stream, 0x0008, this->el.bottom(), oldbottom);
@@ -187,7 +187,7 @@ public:
 
     void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
         // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
-        int16_t leftRect   = this->el.left();
+        int16_t leftRect   = this->el.ileft();
         int16_t topRect    = this->el.top();
         int16_t rightRect  = this->el.right();
         int16_t bottomRect = this->el.bottom();
@@ -215,7 +215,7 @@ public:
         lg += snprintf(buffer + lg, sz - lg,
             "ellipseSC(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
             "fillMode=%d Color=%.6x)",
-                       this->el.left(), this->el.top(), this->el.right(), this->el.bottom(),
+                       this->el.ileft(), this->el.top(), this->el.right(), this->el.bottom(),
                        unsigned(this->bRop2), this->fillMode, this->color.as_bgr().as_u32());
         if (lg >= sz) {
             return sz;

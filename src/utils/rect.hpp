@@ -41,7 +41,7 @@ struct Rect {
     uint16_t cx = 0;
     uint16_t cy = 0;
 
-    [[nodiscard]] int16_t left() const {
+    [[nodiscard]] int16_t ileft() const {
         return this->x;
     }
 

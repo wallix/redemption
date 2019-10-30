@@ -105,10 +105,10 @@ bool AgentDataExtractor::extract_list(Av data)
 
 
     if (pos_separator) {
-        auto left = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
+        auto ileft = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
         auto right = [](Av s, char const * pos) { return Av(pos + 1, begin(s) + s.size() - (pos + 1)); };
 
-        auto const order = left(data, pos_separator);
+        auto const order = ileft(data, pos_separator);
         auto const parameters = (data.back() == '\x0')
           ? Av(pos_separator+1, data.end()-1)
           : Av(pos_separator+1, data.end());
@@ -119,7 +119,7 @@ bool AgentDataExtractor::extract_list(Av data)
         auto line_with_2_var = [&](Av var1, Av var2) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
                 return kv_list(
-                    KVLog(var1, left(parameters, subitem_separator)),
+                    KVLog(var1, ileft(parameters, subitem_separator)),
                     KVLog(var2, right(parameters, subitem_separator))
                 );
             }
@@ -127,12 +127,12 @@ bool AgentDataExtractor::extract_list(Av data)
         };
         auto line_with_3_var = [&](Av var1, Av var2, Av var3) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
-                auto const text = left(parameters, subitem_separator);
+                auto const text = ileft(parameters, subitem_separator);
                 auto const remaining = right(parameters, subitem_separator);
                 if (auto const subitem_separator2 = find(remaining, '\x01')) {
                     return kv_list(
                         KVLog(var1, text),
-                        KVLog(var2, left(remaining, subitem_separator2)),
+                        KVLog(var2, ileft(remaining, subitem_separator2)),
                         KVLog(var3, right(remaining, subitem_separator2))
                     );
                 }
@@ -141,13 +141,13 @@ bool AgentDataExtractor::extract_list(Av data)
         };
         auto line_with_4_var = [&](Av var1, Av var2, Av var3, Av var4) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
-                auto const text = left(parameters, subitem_separator);
+                auto const text = ileft(parameters, subitem_separator);
                 auto const remaining = right(parameters, subitem_separator);
                 if (auto const subitem_separator2 = find(remaining, '\x01')) {
-                    auto const text2 = left(remaining, subitem_separator2);
+                    auto const text2 = ileft(remaining, subitem_separator2);
                     auto const remaining2 = right(remaining, subitem_separator2);
                     if (auto const subitem_separator3 = find(remaining2, '\x01')) {
-                        auto const text3 = left(remaining2, subitem_separator3);
+                        auto const text3 = ileft(remaining2, subitem_separator3);
                         auto const text4 = right(remaining2, subitem_separator3);
                         return kv_list(
                             KVLog(var1, text),
@@ -162,16 +162,16 @@ bool AgentDataExtractor::extract_list(Av data)
         };
         auto line_with_5_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
-                auto const text = left(parameters, subitem_separator);
+                auto const text = ileft(parameters, subitem_separator);
                 auto const remaining = right(parameters, subitem_separator);
                 if (auto const subitem_separator2 = find(remaining, '\x01')) {
-                    auto const text2 = left(remaining, subitem_separator2);
+                    auto const text2 = ileft(remaining, subitem_separator2);
                     auto const remaining2 = right(remaining, subitem_separator2);
                     if (auto const subitem_separator3 = find(remaining2, '\x01')) {
-                        auto const text3 = left(remaining2, subitem_separator3);
+                        auto const text3 = ileft(remaining2, subitem_separator3);
                         auto const remaining3 = right(remaining2, subitem_separator3);
                         if (auto const subitem_separator4 = find(remaining3, '\x01')) {
-                            auto const text4 = left(remaining3, subitem_separator4);
+                            auto const text4 = ileft(remaining3, subitem_separator4);
                             auto const text5 = right(remaining3, subitem_separator4);
                             return kv_list(
                                 KVLog(var1, text),
@@ -188,22 +188,22 @@ bool AgentDataExtractor::extract_list(Av data)
         };
         auto line_with_7_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5, Av var6, Av var7) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
-                auto const text = left(parameters, subitem_separator);
+                auto const text = ileft(parameters, subitem_separator);
                 auto const remaining = right(parameters, subitem_separator);
                 if (auto const subitem_separator2 = find(remaining, '\x01')) {
-                    auto const text2 = left(remaining, subitem_separator2);
+                    auto const text2 = ileft(remaining, subitem_separator2);
                     auto const remaining2 = right(remaining, subitem_separator2);
                     if (auto const subitem_separator3 = find(remaining2, '\x01')) {
-                        auto const text3 = left(remaining2, subitem_separator3);
+                        auto const text3 = ileft(remaining2, subitem_separator3);
                         auto const remaining3 = right(remaining2, subitem_separator3);
                         if (auto const subitem_separator4 = find(remaining3, '\x01')) {
-                            auto const text4 = left(remaining3, subitem_separator4);
+                            auto const text4 = ileft(remaining3, subitem_separator4);
                             auto const remaining4 = right(remaining3, subitem_separator4);
                             if (auto const subitem_separator5 = find(remaining4, '\x01')) {
-                                auto const text5 = left(remaining4, subitem_separator5);
+                                auto const text5 = ileft(remaining4, subitem_separator5);
                                 auto const remaining5 = right(remaining4, subitem_separator5);
                                 if (auto const subitem_separator6 = find(remaining5, '\x01')) {
-                                    auto const text6 = left(remaining5, subitem_separator6);
+                                    auto const text6 = ileft(remaining5, subitem_separator6);
                                     auto const text7 = right(remaining5, subitem_separator6);
                                     return kv_list(
                                         KVLog(var1, text),
@@ -259,13 +259,13 @@ bool AgentDataExtractor::extract_list(Av data)
                 return line_with_2_var("windows"_av, "button"_av);
             case LogId::CHECKBOX_CLICKED:
                 if (auto const subitem_separator = find(parameters, '\x01')) {
-                    auto const text = left(parameters, subitem_separator);
+                    auto const text = ileft(parameters, subitem_separator);
                     auto const remaining = right(parameters, subitem_separator);
                     if (auto const subitem_separator2 = find(remaining, '\x01')) {
                         auto const r = right(remaining, subitem_separator2);
                         return kv_list(
                             KVLog("windows"_av,  text),
-                            KVLog("checkbox"_av, left(remaining, subitem_separator2)),
+                            KVLog("checkbox"_av, ileft(remaining, subitem_separator2)),
                             KVLog("state"_av,    ::button_state_to_string('0'-r[0]))
                         );
                     }
@@ -314,7 +314,7 @@ bool AgentDataExtractor::extract_list(Av data)
             case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX:
             case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX:
                 if (auto const subitem_separator = find(parameters, '\x01')) {
-                    auto const format = left(parameters, subitem_separator);
+                    auto const format = ileft(parameters, subitem_separator);
                     auto const remaining = right(parameters, subitem_separator);
                     if (auto const subitem_separator2 = find(remaining, '\x01')) {
                         Av partial_data = right(remaining, subitem_separator2);
@@ -336,7 +336,7 @@ bool AgentDataExtractor::extract_list(Av data)
 
                         return kv_list(
                             KVLog("format"_av,  format),
-                            KVLog("size"_av, left(remaining, subitem_separator2)),
+                            KVLog("size"_av, ileft(remaining, subitem_separator2)),
                             KVLog("partial_data"_av, partial_data)
                         );
                     }

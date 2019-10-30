@@ -54,7 +54,7 @@ RED_AUTO_TEST_CASE(TestEllipse)
     RED_CHECK_EQUAL(45, elli.radius_x());
     RED_CHECK_EQUAL(32, elli.radius_y());
 
-    RED_CHECK_EQUAL(25, elli.left());
+    RED_CHECK_EQUAL(25, elli.ileft());
     RED_CHECK_EQUAL(28, elli.top());
     RED_CHECK_EQUAL(115, elli.right());
     RED_CHECK_EQUAL(92, elli.bottom());
@@ -64,7 +64,7 @@ RED_AUTO_TEST_CASE(TestEllipse)
 
     Rect rect = elli.get_rect();
 
-    RED_CHECK_EQUAL(rect.x, elli.left());
+    RED_CHECK_EQUAL(rect.x, elli.ileft());
     RED_CHECK_EQUAL(rect.y, elli.top());
     RED_CHECK_EQUAL(rect.cx, elli.width());
     RED_CHECK_EQUAL(rect.cy, elli.height());
