@@ -113,7 +113,8 @@
 
 #include "system/tls_context.hpp"
 
-inline RDPBitmapData prepare_bitmap(uint16_t dest_left,
+inline RDPBitmapData prepare_bitmap(
+                 uint16_t dest_left,
                  uint16_t dest_top,
                  uint16_t dest_right,
                  uint16_t dest_bottom,
@@ -276,7 +277,7 @@ private:
                                     drect.y + subrect.y,
                                     std::min<uint16_t>(drect.x + subrect.x + subrect.cx - 1,
                                                        drect.x + drect.cx),
-                                    drect.y+drect.cy + subrect.y + subrect.cy - 1,
+                                    drect.y + drect.cy + subrect.y + subrect.cy - 1,
                                     subrect.cx,
                                     subrect.cy,
                                     safe_int(sub_image.bpp()),
@@ -3752,7 +3753,7 @@ private:
             // 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)
             // =============================================
             // The TS_RECTANGLE16 structure describes a rectangle expressed in inclusive coordinates
-            // (the right and bottom coordinates are include " in the rectangle bounds).
+            // (the right and bottom coordinates are included in the rectangle bounds).
             // left (2 bytes): A 16-bit, unsigned integer. The leftmost bound of the rectangle.
             // top (2 bytes): A 16-bit, unsigned integer. The upper bound of the rectangle.
             // right (2 bytes): A 16-bit, unsigned integer. The rightmost bound of the rectangle.
@@ -4456,8 +4457,9 @@ protected:
                     auto sub_image_data = prepare_bitmap(
                             dest_rect.x + x,
                             dest_rect.y + y,
-                            std::min<uint16_t>(dest_rect.y + y + sub_image_width - 1, dest_rect.x + dest_rect.cx - 1),
-                            dest_rect.x + x + sub_image_height - 1,
+                            std::min<uint16_t>( dest_rect.x + x + sub_image_width - 1
+                                              , dest_rect.x + dest_rect.cx - 1),
+                            dest_rect.y + y + sub_image_height - 1,
                             sub_image_width,
                             sub_image_height,
                             safe_int(sub_image.bpp()),
