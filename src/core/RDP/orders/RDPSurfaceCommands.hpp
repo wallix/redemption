@@ -154,7 +154,7 @@ public:
         stream.out_uint16_le(destRect.ileft());
         stream.out_uint16_le(destRect.top());
         stream.out_uint16_le(destRect.eright());
-        stream.out_uint16_le(destRect.bottom());
+        stream.out_uint16_le(destRect.ebottom());
 
         stream.out_uint8(bpp);
         stream.out_uint8(flags);

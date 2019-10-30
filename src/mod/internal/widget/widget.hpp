@@ -290,9 +290,9 @@ public:
     }
 
     ///Return y()+cy()
-    [[nodiscard]] int16_t bottom() const
+    [[nodiscard]] int16_t ebottom() const
     {
-        return this->rect.bottom();
+        return this->rect.ebottom();
     }
 
     [[nodiscard]] Rect get_rect() const {

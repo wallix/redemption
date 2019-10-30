@@ -57,13 +57,13 @@ void FlatLogin::ScrollableMessage::notify(Widget * /*sender*/, notify_event_t /*
     auto const new_y = -this->scroll_bar.get_current_value() * this->step;
     this->message.set_xy(this->message.x(), this->y() + new_y);
 
-    if (this->message.bottom() < this->scroll_bar.bottom()) {
+    if (this->message.ebottom() < this->scroll_bar.ebottom()) {
         Rect const message_rect(
             this->x(), this->y(),
-            this->cx(), this->message.bottom() - this->y());
+            this->cx(), this->message.ebottom() - this->y());
         Rect const bottom_rect(
-            this->x(), message_rect.bottom(),
-            this->cx(), this->bottom() - message_rect.bottom());
+            this->x(), message_rect.ebottom(),
+            this->cx(), this->ebottom() - message_rect.ebottom());
 
         this->message.rdp_input_invalidate(message_rect);
         if (!bottom_rect.isempty()) {

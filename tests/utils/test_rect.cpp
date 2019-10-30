@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestRect)
     RED_CHECK_EQUAL(10, r.x);
     RED_CHECK_EQUAL(110, r.y);
     RED_CHECK_EQUAL(20, r.eright());
-    RED_CHECK_EQUAL(120, r.bottom());
+    RED_CHECK_EQUAL(120, r.ebottom());
 
     /* we can also create an empty rect, it's the default constructor */
     Rect empty;
@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(TestRect)
     RED_CHECK_EQUAL(0, empty.x);
     RED_CHECK_EQUAL(0, empty.y);
     RED_CHECK_EQUAL(0, empty.eright());
-    RED_CHECK_EQUAL(0, empty.bottom());
+    RED_CHECK_EQUAL(0, empty.ebottom());
 
     /* test if rect is empty */
     RED_CHECK(empty.isempty());
@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(120, res.y);
         RED_CHECK_EQUAL(30, res.eright());
-        RED_CHECK_EQUAL(130, res.bottom());
+        RED_CHECK_EQUAL(130, res.ebottom());
     }
 
     {
@@ -102,7 +102,7 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(120, res.y);
         RED_CHECK_EQUAL(30, res.eright());
-        RED_CHECK_EQUAL(130, res.bottom());
+        RED_CHECK_EQUAL(130, res.ebottom());
     }
 
     {
@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(110, res.y);
         RED_CHECK_EQUAL(20, res.eright());
-        RED_CHECK_EQUAL(110, res.bottom());
+        RED_CHECK_EQUAL(110, res.ebottom());
     }
 
     {
@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
         RED_CHECK_EQUAL(40, res.eright());
-        RED_CHECK_EQUAL(140, res.bottom());
+        RED_CHECK_EQUAL(140, res.ebottom());
     }
 
     {
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
         RED_CHECK_EQUAL(40, res.eright());
-        RED_CHECK_EQUAL(140, res.bottom());
+        RED_CHECK_EQUAL(140, res.ebottom());
     }
 
     {
@@ -159,7 +159,7 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
         RED_CHECK_EQUAL(20, res.eright());
-        RED_CHECK_EQUAL(120, res.bottom());
+        RED_CHECK_EQUAL(120, res.ebottom());
     }
 
     {
@@ -177,14 +177,14 @@ RED_AUTO_TEST_CASE(TestRect)
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
         RED_CHECK_EQUAL(20, res.eright());
-        RED_CHECK_EQUAL(120, res.bottom());
+        RED_CHECK_EQUAL(120, res.ebottom());
 
         res = res.offset(10, 100);
 
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(210, res.y);
         RED_CHECK_EQUAL(30, res.eright());
-        RED_CHECK_EQUAL(220, res.bottom());
+        RED_CHECK_EQUAL(220, res.ebottom());
     }
 
 //     {
@@ -194,7 +194,7 @@ RED_AUTO_TEST_CASE(TestRect)
 //         RED_CHECK_EQUAL(10, inner.x);
 //         RED_CHECK_EQUAL(110, inner.y);
 //         RED_CHECK_EQUAL(20, inner.eright());
-//         RED_CHECK_EQUAL(111, inner.bottom());
+//         RED_CHECK_EQUAL(111, inner.ebottom());
 //     }
 
     {

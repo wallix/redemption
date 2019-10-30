@@ -567,7 +567,7 @@ namespace
                 }
                 else {
                     if (srcy + overlap.cy > overlap.y) {
-                        P dest = dimpl.first_pixel(rect.x, rect.bottom());
+                        P dest = dimpl.first_pixel(rect.x, rect.ebottom());
                         cP src = dimpl.first_pixel(srcx, srcy + rect.cy);
                         cP esrc = src - dimpl.rowsize() * (srcy + rect.cy - overlap.y);
                         while (src > esrc) {
@@ -577,7 +577,7 @@ namespace
                         }
                     }
                     else {
-                        const Rect dest1(rect.x, rect.bottom() - ((srcy + rect.cy - overlap.y)), rect.cx, (srcy + rect.cy - overlap.y));
+                        const Rect dest1(rect.x, rect.ebottom() - ((srcy + rect.cy - overlap.y)), rect.cx, (srcy + rect.cy - overlap.y));
                         this->scr_blt_op_nooverlap(dest1, dest1.x + deltax, dest1.y + deltay, Op());
                     }
 

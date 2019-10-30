@@ -555,7 +555,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
         smmipdu.MaxWidth(adjusted_virtual_sreen_rect.cx - 1);
         smmipdu.MaxHeight(adjusted_virtual_sreen_rect.cy - 1);
         smmipdu.MaxPosX(adjusted_virtual_sreen_rect.eright());
-        smmipdu.MaxPosY(adjusted_virtual_sreen_rect.bottom());
+        smmipdu.MaxPosY(adjusted_virtual_sreen_rect.ebottom());
         smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
         smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
         smmipdu.MaxTrackWidth(adjusted_virtual_sreen_rect.cx - 1);
@@ -2205,10 +2205,10 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
     if (cspupdu.SystemParam() == SPI_SETWORKAREA) {
         RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
 
-        this->work_areas[this->work_area_count].x  = body_r.Left();
+        this->work_areas[this->work_area_count].x  = body_r.iLeft();
         this->work_areas[this->work_area_count].y  = body_r.Top();
-        this->work_areas[this->work_area_count].cx = body_r.Right() - body_r.Left();
-        this->work_areas[this->work_area_count].cy = body_r.Bottom() - body_r.Top();
+        this->work_areas[this->work_area_count].cx = body_r.eRight() - body_r.iLeft();
+        this->work_areas[this->work_area_count].cy = body_r.eBottom() - body_r.Top();
 
         if (this->verbose) {
             LOG(LOG_INFO, "WorkAreaRect: (%d, %d, %u, %u)",
@@ -2553,10 +2553,10 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
     else if (cspupdu.SystemParam() == RAIL_SPI_TASKBARPOS) {
         RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
 
-        this->task_bar_rect.x  = body_r.Left();
+        this->task_bar_rect.x  = body_r.iLeft();
         this->task_bar_rect.y  = body_r.Top();
-        this->task_bar_rect.cx = body_r.Right() - body_r.Left();
-        this->task_bar_rect.cy = body_r.Bottom() - body_r.Top();
+        this->task_bar_rect.cx = body_r.eRight() - body_r.iLeft();
+        this->task_bar_rect.cy = body_r.eBottom() - body_r.Top();
 
         if (this->verbose) {
             LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%d, %d, %u, %u)",
@@ -2588,10 +2588,10 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
     }
 
     if (INTERNAL_MODULE_WINDOW_ID == cwmpdu.WindowId()) {
-        this->window_rect.x  = cwmpdu.Left() - this->window_offset_x;
+        this->window_rect.x  = cwmpdu.iLeft() - this->window_offset_x;
         this->window_rect.y  = cwmpdu.Top() - this->window_offset_y;
-        this->window_rect.cx = cwmpdu.Right() - cwmpdu.Left();
-        this->window_rect.cy = cwmpdu.Bottom() - cwmpdu.Top();
+        this->window_rect.cx = cwmpdu.eRight() - cwmpdu.iLeft();
+        this->window_rect.cy = cwmpdu.eBottom() - cwmpdu.Top();
 
         this->update_rects();
 

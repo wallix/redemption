@@ -312,19 +312,19 @@ class ModuleManager : public MMIni
 
             drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 
-            RDPLineTo line_left(1, this->clip.x, this->clip.y, this->clip.x, this->clip.y + this->clip.cy - 1,
+            RDPLineTo line_ileft(1, this->clip.x, this->clip.y, this->clip.x, this->clip.y + this->clip.cy - 1,
                 encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-            drawable.draw(line_left, this->clip, color_ctx);
-            RDPLineTo line_bottom(1, this->clip.x, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1,
+            drawable.draw(line_ileft, this->clip, color_ctx);
+            RDPLineTo line_ibottom(1, this->clip.x, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1,
                 encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-            drawable.draw(line_bottom, this->clip, color_ctx);
+            drawable.draw(line_ibottom, this->clip, color_ctx);
 
-            RDPLineTo line_right(1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y,
+            RDPLineTo line_iright(1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y,
                 encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-            drawable.draw(line_right, this->clip, color_ctx);
-            RDPLineTo line_top(1, this->clip.x + this->clip.cx - 1, this->clip.y, this->clip.x, this->clip.y,
+            drawable.draw(line_iright, this->clip, color_ctx);
+            RDPLineTo line_etop(1, this->clip.x + this->clip.cx - 1, this->clip.y, this->clip.x, this->clip.y,
                 encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-            drawable.draw(line_top, this->clip, color_ctx);
+            drawable.draw(line_etop, this->clip, color_ctx);
 
             gdi::server_draw_text(
                 drawable, this->mm.load_font(),

@@ -111,7 +111,7 @@ void FlatWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
     if (this->hasform) {
         this->form.move_size_widget(left + 40, y, this->form.cx(), this->form.cy());
 
-        y = this->form.bottom() + 10;
+        y = this->form.ebottom() + 10;
     }
 
     dim = this->exit.get_optimal_dim();

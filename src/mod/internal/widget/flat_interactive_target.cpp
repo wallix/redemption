@@ -193,28 +193,28 @@ void FlatInteractiveTarget::move_size_widget(int16_t left, int16_t top, uint16_t
 
     this->caption_label.set_xy(left + (width - this->caption_label.cx()) / 2, top + y);
 
-    y = this->caption_label.bottom() + 20;
+    y = this->caption_label.ebottom() + 20;
 
     this->separator.set_xy(left + x_cbloc, y);
     this->separator.set_wh(cbloc_w, 2);
 
-    y = this->separator.bottom() + 20;
+    y = this->separator.ebottom() + 20;
 
     this->device_label.set_xy(left + x_cbloc, y);
     device_show->set_xy(left + x_cbloc + margin_w + 20, y - (this->ask_device ? this->device_edit.get_border_height() : 0));
 
-    y = device_show->bottom() + 20;
+    y = device_show->ebottom() + 20;
 
     if (this->ask_device) {
         this->device.set_xy(left + x_cbloc + margin_w + 20, y - 10);
 
-        y = this->device.bottom() + 20;
+        y = this->device.ebottom() + 20;
     }
 
     this->login_label.set_xy(left + x_cbloc, y);
     login_show->set_xy(left + x_cbloc + margin_w + 20, y - (this->ask_login ? this->login_edit.get_border_height() : 0));
 
-    y = login_show->bottom() + 20;
+    y = login_show->ebottom() + 20;
 
     if (this->ask_password) {
         this->password_label.set_xy(left + x_cbloc, y);

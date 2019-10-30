@@ -55,7 +55,7 @@ struct Rect {
         return this->y;
     }
 
-    [[nodiscard]] int16_t bottom() const {
+    [[nodiscard]] int16_t ebottom() const {
         return static_cast<int16_t>(this->y + this->cy);
     }
 
@@ -91,7 +91,7 @@ struct Rect {
     {
         return this->cx && this->cy
             && (x >= this->x && x < this->eright())
-            && (y >= this->y && y < this->bottom());
+            && (y >= this->y && y < this->ebottom());
     }
 
     // special cases: contains returns true
@@ -101,7 +101,7 @@ struct Rect {
         return (inner.x >= this->x
               && inner.y >= this->y
               && inner.eright() <= this->eright()
-              && inner.bottom() <= this->bottom());
+              && inner.ebottom() <= this->ebottom());
     }
 
     bool operator==(Rect const & other) const {
@@ -149,7 +149,7 @@ struct Rect {
         const int16_t x0 = std::min(this->x, x);
         const int16_t y0 = std::min(this->y, y);
         const int16_t x1 = std::max(static_cast<int16_t>(this->eright() - 1), x);
-        const int16_t y1 = std::max(static_cast<int16_t>(this->bottom() - 1), y);
+        const int16_t y1 = std::max(static_cast<int16_t>(this->ebottom() - 1), y);
         return Rect(x0, y0, uint16_t(x1 - x0 + 1), uint16_t(y1 - y0 + 1));
     }
 
@@ -190,7 +190,7 @@ struct Rect {
         int16_t max_x = std::max(in.x, this->x);
         int16_t max_y = std::max(in.y, this->y);
         int16_t min_right = std::min(in.eright(), this->eright());
-        int16_t min_bottom = std::min(in.bottom(), this->bottom());
+        int16_t min_bottom = std::min(in.ebottom(), this->ebottom());
 
         return Rect(max_x, max_y, uint16_t(min_right - max_x), uint16_t(min_bottom - max_y));
     }
@@ -207,7 +207,7 @@ struct Rect {
         auto x = std::min(r.x, this->x);
         auto y = std::min(r.y, this->y);
         auto cx = std::max(r.eright(), this->eright()) - x;
-        auto cy = std::max(r.bottom(), this->bottom()) - y;
+        auto cy = std::max(r.ebottom(), this->ebottom()) - y;
         return Rect(x, y, uint16_t(cx), uint16_t(cy));
     }
 
@@ -215,7 +215,7 @@ struct Rect {
     {
         return (this->cx && this->cy && !in.isempty()
         && ((in.x >= this->x && in.x < this->eright()) || (this->x >= in.x && this->x < in.eright()))
-        && ((in.y >= this->y && in.y < this->bottom()) || (this->y >= in.y && this->y < in.bottom()))
+        && ((in.y >= this->y && in.y < this->ebottom()) || (this->y >= in.y && this->y < in.ebottom()))
         );
     }
 
@@ -238,9 +238,9 @@ struct Rect {
                 fn(Rect(intersect.eright(), intersect.y,
                         static_cast<uint16_t>(this->eright() - intersect.eright()), intersect.cy));
             }
-            if (this->y + this->cy > intersect.bottom()) {
-                fn(Rect(this->x, intersect.bottom(),
-                        this->cx, static_cast<uint16_t>(this->bottom() - intersect.bottom())));
+            if (this->y + this->cy > intersect.ebottom()) {
+                fn(Rect(this->x, intersect.ebottom(),
+                        this->cx, static_cast<uint16_t>(this->ebottom() - intersect.ebottom())));
             }
         }
         else {
@@ -293,7 +293,7 @@ struct Rect {
         if (y < this->y) {
             res |= UP;
         }
-        else if (y >= this->bottom()) {
+        else if (y >= this->ebottom()) {
             res |= DOWN;
         }
         return static_cast<t_region>(res);
@@ -428,7 +428,7 @@ struct LineEquation {
 
         if (region & Rect::LEFT) {
             int tmpy = this->compute_y(rect.x);
-            if (tmpy >= rect.y && tmpy < rect.bottom()) {
+            if (tmpy >= rect.y && tmpy < rect.ebottom()) {
                 found = true;
                 interX = rect.x;
                 interY = tmpy;
@@ -436,7 +436,7 @@ struct LineEquation {
         }
         else if (region & Rect::RIGHT) {
             int tmpy = this->compute_y(rect.eright() - 1);
-            if (tmpy >= rect.y && tmpy < rect.bottom()) {
+            if (tmpy >= rect.y && tmpy < rect.ebottom()) {
                 found = true;
                 interX = rect.eright() - 1;
                 interY = tmpy;
@@ -452,11 +452,11 @@ struct LineEquation {
             }
         }
         else if (region & Rect::DOWN) {
-            int tmpx = this->compute_x(rect.bottom() - 1);
+            int tmpx = this->compute_x(rect.ebottom() - 1);
             if (tmpx >= rect.x && tmpx < rect.eright()) {
                 found = true;
                 interX = tmpx;
-                interY = rect.bottom() - 1;
+                interY = rect.ebottom() - 1;
             }
         }
 

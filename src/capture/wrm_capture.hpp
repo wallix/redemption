@@ -688,7 +688,7 @@ public:
             bitmap_data.dest_left = rect.ileft();
             bitmap_data.dest_right = rect.eright() - 1;
             bitmap_data.dest_top = rect.top();
-            bitmap_data.dest_bottom = rect.bottom() - 1;
+            bitmap_data.dest_bottom = rect.ebottom() - 1;
             bitmap_data.width = rect.width();
             bitmap_data.height = rect.height();
             bitmap_data.bits_per_pixel = 32;

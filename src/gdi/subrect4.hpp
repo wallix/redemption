@@ -39,7 +39,7 @@ inline subrect4_t subrect4(const Rect rect, const Rect & exclude_rect)
         // right
         Rect(inter.eright(), inter.y, rect.eright() - inter.eright(), inter.cy),
         // bottom
-        Rect(rect.x, inter.bottom(), rect.cx, rect.bottom() - inter.bottom()),
+        Rect(rect.x, inter.ebottom(), rect.cx, rect.ebottom() - inter.ebottom()),
         // left
         Rect(rect.x, inter.y, inter.x - rect.x, inter.cy)
     }};

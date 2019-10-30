@@ -49,7 +49,7 @@ public:
     }
 
     explicit Ellipse(const Rect r)
-    : Ellipse(r.x, r.y, r.eright(), r.bottom())
+    : Ellipse(r.x, r.y, r.eright(), r.ebottom())
     {}
 
     [[nodiscard]] int16_t ileft() const {
@@ -61,7 +61,7 @@ public:
     [[nodiscard]] int16_t eright() const {
         return this->rightRect;
     }
-    [[nodiscard]] int16_t bottom() const {
+    [[nodiscard]] int16_t ebottom() const {
         return this->bottomRect;
     }
 
@@ -69,7 +69,7 @@ public:
         return static_cast<uint16_t>(this->eright() - this->ileft());
     }
     [[nodiscard]] uint16_t height() const {
-        return static_cast<uint16_t>(this->bottom() - this->top());
+        return static_cast<uint16_t>(this->ebottom() - this->top());
     }
 
     [[nodiscard]] uint16_t radius_x() const {
@@ -83,7 +83,7 @@ public:
         return this->ileft() + (this->eright() - this->ileft()) / 2;
     }
     [[nodiscard]] int16_t center_y() const {
-        return this->top() + (this->bottom() - this->top()) / 2;
+        return this->top() + (this->ebottom() - this->top()) / 2;
     }
 
     [[nodiscard]] Rect get_rect() const {

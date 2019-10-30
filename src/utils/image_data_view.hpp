@@ -97,7 +97,7 @@ public:
 
     [[nodiscard]] ConstImageDataView sub_view(Rect rect) const noexcept
     {
-        const unsigned physical_y = (this->storage_ == Storage::BottomToTop ? (this->height_ - rect.bottom()) : rect.y);
+        const unsigned physical_y = (this->storage_ == Storage::BottomToTop ? (this->height_ - rect.ebottom()) : rect.y);
 
         return ConstImageDataView(
                 this->data_ + physical_y * this->rowsize_ + rect.x * underlying_cast(this->bytes_per_pixel_),

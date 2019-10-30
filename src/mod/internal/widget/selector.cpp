@@ -287,7 +287,7 @@ void WidgetSelector::rearrange()
     {
         // labels and filters position
         uint16_t offset = this->less_than_800 ? 0 : HORIZONTAL_MARGIN;
-        uint16_t labels_y = this->device_label.bottom() + HORIZONTAL_MARGIN;
+        uint16_t labels_y = this->device_label.ebottom() + HORIZONTAL_MARGIN;
         uint16_t filters_y = labels_y + this->header_labels[0].cy()
             + FILTER_SEPARATOR;
 
@@ -320,7 +320,7 @@ void WidgetSelector::rearrange()
     {
         // selector list position
         this->selector_lines.set_xy(this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN),
-                                    this->edit_filters[0].bottom() + FILTER_SEPARATOR);
+                                    this->edit_filters[0].ebottom() + FILTER_SEPARATOR);
     }
     {
         // Navigation buttons
