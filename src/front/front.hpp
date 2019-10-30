@@ -4411,19 +4411,42 @@ protected:
                         const int16_t x = cmd.bk.x + draw_pos_ref;
                         const int16_t y = cmd.bk.y;
 
-                        contiguous_sub_rect_f(CxCy{fc.width, fc.height}, SubCxCy{64, 64}, [&](Rect rect){
-                            GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
-
+                        contiguous_sub_rect_f(CxCy{fc.width, fc.height}, SubCxCy{64, 64}, [&](Rect rect) {
                             RDPBitmapData rdpbd;
                             rdpbd.dest_left      = rect.x + x;
                             rdpbd.dest_top       = rect.y + y + fc.offsety;
-                            rdpbd.dest_right     = rect.cx + rect.x + x - 1;
-                            rdpbd.dest_bottom    = rect.cy + rect.y + y + fc.offsety - 1;
+                            rdpbd.dest_right     = rect.cx + rdpbd.dest_left - 1;
+                            rdpbd.dest_bottom    = rect.cy + rdpbd.dest_top  - 1;
                             rdpbd.bits_per_pixel = 24;
                             rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION; /*NOLINT*/
                             rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
 
-                            const Rect tile(0, 0, rect.cx, rect.cy);
+                            Rect rectBitmap(rdpbd.dest_left, rdpbd.dest_top,
+                                rdpbd.dest_right - rdpbd.dest_left + 1, rdpbd.dest_bottom - rdpbd.dest_top + 1);
+                            if (!clip.has_intersection(rectBitmap)) {
+                                return;
+                            }
+
+                            GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
+
+                            Rect tile(0, 0, rect.cx, rect.cy);
+
+                            if (!clip.contains(rectBitmap))
+                            {
+                                Rect rectIntersect = clip.intersect(rectBitmap);
+
+                                tile.x  += rectIntersect.x - rectBitmap.x;
+                                tile.y  += rectIntersect.y - rectBitmap.y;
+                                tile.cx  = rectIntersect.cx;
+                                tile.cy  = rectIntersect.cy;
+
+                                rdpbd.dest_left     += rectIntersect.x - rectBitmap.x;
+                                rdpbd.dest_top      += rectIntersect.y - rectBitmap.y;
+                                rdpbd.dest_right     = rectIntersect.cx + rdpbd.dest_left - 1;
+                                rdpbd.dest_bottom    = rectIntersect.cy + rdpbd.dest_top  - 1;
+                                rdpbd.bitmap_length  = rectIntersect.cx * rectIntersect.cy * 3;
+                            }
+
                             Bitmap bmp(glyphBitmap.data(), fc.width, fc.height, BitsPerPixel{24}, tile);
 
                             StaticOutStream<65535> bmp_stream;
