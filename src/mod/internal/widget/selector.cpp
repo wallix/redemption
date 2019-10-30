@@ -394,13 +394,13 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
             }
         }
     }
-
     else if (widget->group_id == this->column_expansion_buttons[0].group_id) {
         if (NOTIFY_SUBMIT == event) {
             this->priority_column_index = 0;
 
             this->rearrange();
             this->rdp_input_invalidate(this->get_rect());
+            this->set_widget_focus(&this->selector_lines, focus_reason_tabkey);
         }
     }
     else if (widget->group_id == this->column_expansion_buttons[1].group_id) {
@@ -409,6 +409,7 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
 
             this->rearrange();
             this->rdp_input_invalidate(this->get_rect());
+            this->set_widget_focus(&this->selector_lines, focus_reason_tabkey);
         }
     }
     else if (widget->group_id == this->column_expansion_buttons[2].group_id) {
@@ -417,6 +418,7 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
 
             this->rearrange();
             this->rdp_input_invalidate(this->get_rect());
+            this->set_widget_focus(&this->selector_lines, focus_reason_tabkey);
         }
     }
 
