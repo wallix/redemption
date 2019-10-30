@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestEllipse)
 
     RED_CHECK_EQUAL(25, elli.ileft());
     RED_CHECK_EQUAL(28, elli.top());
-    RED_CHECK_EQUAL(115, elli.right());
+    RED_CHECK_EQUAL(115, elli.eright());
     RED_CHECK_EQUAL(92, elli.bottom());
 
     RED_CHECK_EQUAL(90, elli.width());

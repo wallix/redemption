@@ -3764,7 +3764,7 @@ private:
                 size_t numberOfAreas = sdata_in.payload.in_uint8();
                 sdata_in.payload.in_skip_bytes(3);
 
-                // numberOfAreas * (ileft(2) + top(2) + right(2) + bottom(2))
+                // numberOfAreas * (ileft(2) + top(2) + eright(2) + bottom(2))
                 ::check_throw(sdata_in.payload, numberOfAreas * 8,
                                                    "Front::process_data::Refresh rect PDU data", ERR_RDP_DATA_TRUNCATED);
 
@@ -3810,7 +3810,7 @@ private:
                 if (this->ini.get<cfg::client::enable_suppress_output>()) {
                     if (RDP::ALLOW_DISPLAY_UPDATES == sopdud.get_allowDisplayUpdates()) {
                         cb.rdp_allow_display_updates(sopdud.get_ileft(), sopdud.get_top(),
-                            sopdud.get_right(), sopdud.get_bottom());
+                            sopdud.get_eright(), sopdud.get_bottom());
                     }
                     else {
                         cb.rdp_suppress_display_updates();
@@ -4229,7 +4229,7 @@ protected:
 
             auto data = prepare_bitmap(base.x + rect.ileft(),
                                        base.y + rect.top(),
-                                       base.x + rect.right() - 1,
+                                       base.x + rect.eright() - 1,
                                        base.y + rect.bottom() - 1,
                                        rect.width(),
                                        rect.height(),

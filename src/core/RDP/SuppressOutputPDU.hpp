@@ -185,7 +185,8 @@ public:
 
     [[nodiscard]] uint16_t get_ileft() const { return this->left_; }
     [[nodiscard]] uint16_t get_top() const { return this->top_; }
-    [[nodiscard]] uint16_t get_right() const { return this->right_; }
+    // TODO: BOGUS: fix calling sites, this one is an inclusive rectangle
+    [[nodiscard]] uint16_t get_eright() const { return this->right_; }
     [[nodiscard]] uint16_t get_bottom() const { return this->bottom_; }
 
     [[nodiscard]] size_t size() const {

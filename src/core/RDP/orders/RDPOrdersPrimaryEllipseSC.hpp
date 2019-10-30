@@ -150,18 +150,18 @@ public:
 
         const int16_t oldleft   = oldcmd.el.ileft();
         const int16_t oldtop    = oldcmd.el.top();
-        const int16_t oldright  = oldcmd.el.right();
+        const int16_t oldright  = oldcmd.el.eright();
         const int16_t oldbottom = oldcmd.el.bottom();
 
         header.control |= (is_1_byte(this->el.ileft() - oldleft) &&
                            is_1_byte(this->el.top() - oldtop) &&
-                           is_1_byte(this->el.right() - oldright) &&
+                           is_1_byte(this->el.eright() - oldright) &&
                            is_1_byte(this->el.bottom() - oldbottom)) * RDP::DELTA;
 
         header.fields =
             ( this->el.ileft()   != oldleft        ) * 0x0001
             |(this->el.top()    != oldtop         ) * 0x0002
-            |(this->el.right()  != oldright       ) * 0x0004
+            |(this->el.eright()  != oldright       ) * 0x0004
             |(this->el.bottom() != oldbottom      ) * 0x0008
             |(this->bRop2    != oldcmd.bRop2   ) * 0x0010
             |(this->fillMode != oldcmd.fillMode) * 0x0020
@@ -170,7 +170,7 @@ public:
         common.emit(stream, header, oldcommon);
         header.emit_coord(stream, 0x0001, this->el.ileft(),   oldleft);
         header.emit_coord(stream, 0x0002, this->el.top(),    oldtop);
-        header.emit_coord(stream, 0x0004, this->el.right(),  oldright);
+        header.emit_coord(stream, 0x0004, this->el.eright(),  oldright);
         header.emit_coord(stream, 0x0008, this->el.bottom(), oldbottom);
 
         if (header.fields & 0x0010) { stream.out_uint8(this->bRop2); }
@@ -189,7 +189,7 @@ public:
         // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
         int16_t leftRect   = this->el.ileft();
         int16_t topRect    = this->el.top();
-        int16_t rightRect  = this->el.right();
+        int16_t rightRect  = this->el.eright();
         int16_t bottomRect = this->el.bottom();
         header.receive_coord(stream, 0x0001, leftRect);
         header.receive_coord(stream, 0x0002, topRect);
@@ -215,7 +215,7 @@ public:
         lg += snprintf(buffer + lg, sz - lg,
             "ellipseSC(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
             "fillMode=%d Color=%.6x)",
-                       this->el.ileft(), this->el.top(), this->el.right(), this->el.bottom(),
+                       this->el.ileft(), this->el.top(), this->el.eright(), this->el.bottom(),
                        unsigned(this->bRop2), this->fillMode, this->color.as_bgr().as_u32());
         if (lg >= sz) {
             return sz;

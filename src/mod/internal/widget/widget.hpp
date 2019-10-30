@@ -284,9 +284,9 @@ public:
     }
 
     ///Return x()+cx()
-    [[nodiscard]] int16_t right() const
+    [[nodiscard]] int16_t eright() const
     {
-        return this->rect.right();
+        return this->rect.eright();
     }
 
     ///Return y()+cy()

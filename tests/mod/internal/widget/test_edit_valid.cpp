@@ -473,7 +473,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     parent.set_widget_focus(&wedit, Widget::focus_reason_tabkey);
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.right() - 5, wedit.y() + 2, nullptr);
+                          wedit.eright() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png("editvalidpush1.png");
@@ -482,7 +482,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                          wedit.right() - 5, wedit.y() + 2, nullptr);
+                          wedit.eright() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png("editvalidpush2.png");
@@ -495,7 +495,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     notifier.sender = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.right() - 5, wedit.y() + 2, nullptr);
+                          wedit.eright() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png("editvalidpush3.png");
@@ -518,7 +518,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     notifier.sender = nullptr;
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                          wedit.right() - 5, wedit.y() + 2, nullptr);
+                          wedit.eright() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png("editvalidpush5.png");

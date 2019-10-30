@@ -686,7 +686,7 @@ public:
                     rect.ileft(), rect.top(), rect.width(), rect.height());
             RDPBitmapData bitmap_data;
             bitmap_data.dest_left = rect.ileft();
-            bitmap_data.dest_right = rect.right() - 1;
+            bitmap_data.dest_right = rect.eright() - 1;
             bitmap_data.dest_top = rect.top();
             bitmap_data.dest_bottom = rect.bottom() - 1;
             bitmap_data.width = rect.width();

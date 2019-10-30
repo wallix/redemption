@@ -94,7 +94,7 @@ void WidgetEditValid::set_xy(int16_t x, int16_t y)
 {
     Widget::set_xy(x, y);
     this->editbox->set_xy(x + 1, y + 1);
-    this->button.set_xy(this->editbox->right(), y + 1);
+    this->button.set_xy(this->editbox->eright(), y + 1);
 
     if (this->label) {
         this->label->set_xy(x + 2, y + 2);
@@ -111,7 +111,7 @@ void WidgetEditValid::set_wh(uint16_t w, uint16_t h)
     this->editbox->set_wh(w - this->button.cx() - 2,
                             h - 2 /* 2 x border */);
 
-    this->button.set_xy(this->editbox->right(), this->button.y());
+    this->button.set_xy(this->editbox->eright(), this->button.y());
 
     if (this->label) {
         this->label->set_wh(this->editbox->cx() - 4,
@@ -186,7 +186,7 @@ Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
     // TODO y is not used: suspicious
     (void)y;
     Widget * w = this->editbox;
-    if (x > this->editbox->right()) {
+    if (x > this->editbox->eright()) {
         w = &this->button;
     }
     return w;
@@ -194,7 +194,7 @@ Widget * WidgetEditValid::widget_at_pos(int16_t x, int16_t y)
 
 void WidgetEditValid::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
-    if (x > this->editbox->right()) {
+    if (x > this->editbox->eright()) {
         this->button.rdp_input_mouse(device_flags, x, y, keymap);
         this->rdp_input_invalidate(this->button.get_rect());
     }

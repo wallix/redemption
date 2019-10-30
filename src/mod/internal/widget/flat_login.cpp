@@ -246,7 +246,7 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
         this->scrollable_login_message_label.set_xy(
             this->login_message_label.x(), this->login_message_label.y());
         this->scrollable_login_message_label.scroll_bar.set_xy(
-            this->login_message_label.right(), this->login_message_label.y());
+            this->login_message_label.eright(), this->login_message_label.y());
         this->scrollable_login_message_label.scroll_bar.set_wh(scroll_dim.w, h);
         this->scrollable_login_message_label.set_wh(
             this->login_message_label.cx() + scroll_dim.w, h);

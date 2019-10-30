@@ -47,7 +47,7 @@ struct SubRegion
                 else {
                     const Rect a(rect1.x, rect1.y, rect1.cx, sect.y - rect1.y);
                     const Rect b(rect1.x, sect.y, sect.x - rect1.x, sect.cy);
-                    const Rect c(sect.right(), sect.y, rect1.right() - sect.right(), sect.cy);
+                    const Rect c(sect.eright(), sect.y, rect1.eright() - sect.eright(), sect.cy);
                     const Rect d(rect1.x, sect.bottom(), rect1.cx, rect1.bottom() - sect.bottom());
                     if (!a.isempty()) {
                         this->new_rects.push_back(a);

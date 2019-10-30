@@ -163,7 +163,7 @@ void FlatForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
                                     dim.h);
         this->duration_edit.set_xy(left + labelmaxwidth + 20, top + y);
 
-        this->duration_format.set_xy(this->duration_edit.right() + 10, top + y + 2);
+        this->duration_format.set_xy(this->duration_edit.eright() + 10, top + y + 2);
 
         y += 30;
     }

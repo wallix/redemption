@@ -356,8 +356,8 @@ void WidgetSelector::rearrange()
         nav_offset_x -= (this->first_page.cx() + NAV_SEPARATOR);
         this->first_page.set_xy(this->left + nav_offset_x, this->first_page.y());
 
-        int nav_w = this->last_page.right() - this->first_page.x();
-        this->connect.set_xy(this->last_page.right() - nav_w/4 - this->connect.cx()/2,
+        int nav_w = this->last_page.eright() - this->first_page.x();
+        this->connect.set_xy(this->last_page.eright() - nav_w/4 - this->connect.cx()/2,
             this->connect.y());
         this->logout.set_xy(this->first_page.x() + nav_w/4 - this->logout.cx()/2,
             this->logout.y());

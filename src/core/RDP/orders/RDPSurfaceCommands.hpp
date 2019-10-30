@@ -153,7 +153,7 @@ public:
     void emit(OutStream & stream) const {
         stream.out_uint16_le(destRect.ileft());
         stream.out_uint16_le(destRect.top());
-        stream.out_uint16_le(destRect.right());
+        stream.out_uint16_le(destRect.eright());
         stream.out_uint16_le(destRect.bottom());
 
         stream.out_uint8(bpp);

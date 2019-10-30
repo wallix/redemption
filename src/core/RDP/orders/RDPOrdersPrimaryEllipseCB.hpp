@@ -184,11 +184,11 @@ public:
 
         int16_t left      = this->el.ileft();
         int16_t top       = this->el.top();
-        int16_t right     = this->el.right();
+        int16_t right     = this->el.eright();
         int16_t bottom    = this->el.bottom();
         int16_t oldleft   = oldcmd.el.ileft();
         int16_t oldtop    = oldcmd.el.top();
-        int16_t oldright  = oldcmd.el.right();
+        int16_t oldright  = oldcmd.el.eright();
         int16_t oldbottom = oldcmd.el.bottom();
 
         header.control |= (is_1_byte(left - oldleft) &&
@@ -234,7 +234,7 @@ public:
         // using namespace RDP;
         int16_t  leftRect   = this->el.ileft();
         int16_t  topRect    = this->el.top();
-        int16_t  rightRect  = this->el.right();
+        int16_t  rightRect  = this->el.eright();
         int16_t  bottomRect = this->el.bottom();
         header.receive_coord(stream, 0x0001, leftRect);
         header.receive_coord(stream, 0x0002, topRect);
@@ -267,7 +267,7 @@ public:
                        "fillMode=%d backColor=%.6x foreColor=%.6x"
                        "brush.org_x=%d brush.org_y=%d "
                        "brush.style=%d brush.hatch=%d)",
-                       this->el.ileft(), this->el.top(), this->el.right(), this->el.bottom(),
+                       this->el.ileft(), this->el.top(), this->el.eright(), this->el.bottom(),
                        unsigned(this->brop2), this->fill_mode, this->back_color.as_bgr().as_u32(), this->fore_color.as_bgr().as_u32(),
                        this->brush.org_x, this->brush.org_y,
                        this->brush.style, this->brush.hatch);

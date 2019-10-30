@@ -554,7 +554,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
         smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
         smmipdu.MaxWidth(adjusted_virtual_sreen_rect.cx - 1);
         smmipdu.MaxHeight(adjusted_virtual_sreen_rect.cy - 1);
-        smmipdu.MaxPosX(adjusted_virtual_sreen_rect.right());
+        smmipdu.MaxPosX(adjusted_virtual_sreen_rect.eright());
         smmipdu.MaxPosY(adjusted_virtual_sreen_rect.bottom());
         smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
         smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);

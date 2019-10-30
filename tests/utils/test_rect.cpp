@@ -35,7 +35,7 @@ RED_AUTO_TEST_CASE(TestRect)
 
     RED_CHECK_EQUAL(10, r.x);
     RED_CHECK_EQUAL(110, r.y);
-    RED_CHECK_EQUAL(20, r.right());
+    RED_CHECK_EQUAL(20, r.eright());
     RED_CHECK_EQUAL(120, r.bottom());
 
     /* we can also create an empty rect, it's the default constructor */
@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestRect)
 
     RED_CHECK_EQUAL(0, empty.x);
     RED_CHECK_EQUAL(0, empty.y);
-    RED_CHECK_EQUAL(0, empty.right());
+    RED_CHECK_EQUAL(0, empty.eright());
     RED_CHECK_EQUAL(0, empty.bottom());
 
     /* test if rect is empty */
@@ -90,7 +90,7 @@ RED_AUTO_TEST_CASE(TestRect)
         Rect res = i1.intersect(i2);
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(120, res.y);
-        RED_CHECK_EQUAL(30, res.right());
+        RED_CHECK_EQUAL(30, res.eright());
         RED_CHECK_EQUAL(130, res.bottom());
     }
 
@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestRect)
         Rect res = i1.intersect(i2);
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(120, res.y);
-        RED_CHECK_EQUAL(30, res.right());
+        RED_CHECK_EQUAL(30, res.eright());
         RED_CHECK_EQUAL(130, res.bottom());
     }
 
@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE(TestRect)
         // Is it necessary to force empty rect to be canonical ?
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(110, res.y);
-        RED_CHECK_EQUAL(20, res.right());
+        RED_CHECK_EQUAL(20, res.eright());
         RED_CHECK_EQUAL(110, res.bottom());
     }
 
@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestRect)
         Rect res = i1.disjunct(i2);
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
-        RED_CHECK_EQUAL(40, res.right());
+        RED_CHECK_EQUAL(40, res.eright());
         RED_CHECK_EQUAL(140, res.bottom());
     }
 
@@ -147,7 +147,7 @@ RED_AUTO_TEST_CASE(TestRect)
         Rect res = i1.disjunct(i2);
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
-        RED_CHECK_EQUAL(40, res.right());
+        RED_CHECK_EQUAL(40, res.eright());
         RED_CHECK_EQUAL(140, res.bottom());
     }
 
@@ -158,7 +158,7 @@ RED_AUTO_TEST_CASE(TestRect)
 
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
-        RED_CHECK_EQUAL(20, res.right());
+        RED_CHECK_EQUAL(20, res.eright());
         RED_CHECK_EQUAL(120, res.bottom());
     }
 
@@ -176,14 +176,14 @@ RED_AUTO_TEST_CASE(TestRect)
         Rect res(10, 110, 10, 10);
         RED_CHECK_EQUAL(10, res.x);
         RED_CHECK_EQUAL(110, res.y);
-        RED_CHECK_EQUAL(20, res.right());
+        RED_CHECK_EQUAL(20, res.eright());
         RED_CHECK_EQUAL(120, res.bottom());
 
         res = res.offset(10, 100);
 
         RED_CHECK_EQUAL(20, res.x);
         RED_CHECK_EQUAL(210, res.y);
-        RED_CHECK_EQUAL(30, res.right());
+        RED_CHECK_EQUAL(30, res.eright());
         RED_CHECK_EQUAL(220, res.bottom());
     }
 
@@ -193,7 +193,7 @@ RED_AUTO_TEST_CASE(TestRect)
 //         const Rect inner = r.upper_side();
 //         RED_CHECK_EQUAL(10, inner.x);
 //         RED_CHECK_EQUAL(110, inner.y);
-//         RED_CHECK_EQUAL(20, inner.right());
+//         RED_CHECK_EQUAL(20, inner.eright());
 //         RED_CHECK_EQUAL(111, inner.bottom());
 //     }
 
