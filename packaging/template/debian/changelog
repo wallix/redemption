@@ -1,3 +1,10 @@
+redemption (7.3.41%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix reading VNC clipboard.
+  * Fix enabling MemBlt in Front.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 31 Oct 2019 16:15:58 +0200
+
 redemption (7.3.39%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix some RemoteFx issues.
