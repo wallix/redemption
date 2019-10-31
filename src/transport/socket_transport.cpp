@@ -208,7 +208,7 @@ bool SocketTransport::connect()
 size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
     LOG_IF(bool(this->verbose & Verbose::dump), LOG_INFO,
-        "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
+        "Socket %s (%d) asking for %zu bytes", this->name, this->sck, len);
 
     ssize_t const res = this->tls ? this->tls->privpartial_recv_tls(buffer, len) : socket_recv_partial(this->sck, buffer, len);
 
@@ -221,9 +221,9 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
         this->total_received += res;
 
         if (bool(this->verbose & Verbose::dump)) {
-            LOG(LOG_INFO, "Recv done on %s (%d) %zd bytes", this->name, this->sck, res);
+            LOG(LOG_INFO, "Recv done on %s (%d) got %zd bytes", this->name, this->sck, res);
             hexdump_c(buffer, res);
-            LOG(LOG_INFO, "Dump done on %s (%d) %zd bytes", this->name, this->sck, res);
+            LOG(LOG_INFO, "Dump done on %s (%d) of %zd bytes", this->name, this->sck, res);
         }
     }
 
