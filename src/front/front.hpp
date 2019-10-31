@@ -4121,7 +4121,7 @@ protected:
     }
 
     void draw_impl(RDPMemBlt const& cmd, Rect clip, Bitmap const & bitmap) {
-        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+        if (this->client_info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
             this->priv_draw_memblt(cmd, clip, bitmap);
         }
         else {
