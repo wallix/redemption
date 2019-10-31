@@ -1572,6 +1572,7 @@ private:
         		this->state = WAIT_SECURITY_RESULT;
         		break;
         	case VNC_AUTH_VNC:
+        		this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
         		break;
         	case VeNCRYPT_TLSNone:
         	case VeNCRYPT_TLSPlain:
