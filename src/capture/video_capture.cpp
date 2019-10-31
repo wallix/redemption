@@ -492,6 +492,7 @@ SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
 bool SequencedVideoCaptureImpl::SequenceTransport::next()
 {
     if (!this->status) {
+        LOG(LOG_ERR, "SequencedVideoCaptureImpl::SequenceTransport::next: Invalid status!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 

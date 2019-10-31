@@ -116,6 +116,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
 
             case Parse::Close:
                 this->disconnect();
+                LOG(LOG_ERR, "WebSocket: Parse::Close");
                 throw Error(ERR_TRANSPORT_NO_MORE_DATA);
 
             case Parse::Ok:

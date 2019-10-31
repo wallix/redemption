@@ -104,11 +104,13 @@ const FilenameGenerator * OutFilenameSequenceTransport::seqgen() const noexcept
 bool OutFilenameSequenceTransport::next()
 {
     if (!this->status) {
+        LOG(LOG_ERR, "OutFilenameSequenceTransport::next: Invalid status!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     if (this->do_next()) {
         this->status = false;
+        LOG(LOG_ERR, "OutFilenameSequenceTransport::next: Create next file failed!");
         throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
     }
 
@@ -142,6 +144,7 @@ int OutFilenameSequenceTransport::do_next()
         // LOG(LOG_INFO, "pngcapture: \"%s\" -> \"%s\".", this->current_filename_, this->rename_to);
         return this->rename_filename() ? 0 : 1;
     }
+
     return 1;
 }
 

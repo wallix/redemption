@@ -30,6 +30,7 @@
 #include "cxx/cxx.hpp"
 #include "core/error.hpp"
 #include "utils/invalid_socket.hpp"
+#include "utils/log.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 #include "utils/sugar/bytes_view.hpp"
@@ -99,6 +100,7 @@ public:
     writable_bytes_view recv_boom(writable_byte_ptr buffer, size_t len)
     {
         if (Read::Eof == this->atomic_read(buffer, len)) {
+            LOG(LOG_ERR, "Transport::recv_boom (1): Failed to read transport!");
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         return {buffer, len};
@@ -107,6 +109,7 @@ public:
     writable_bytes_view recv_boom(writable_bytes_view buffer)
     {
         if (Read::Eof == this->atomic_read(buffer.as_u8p(), buffer.size())) {
+            LOG(LOG_ERR, "Transport::recv_boom (2): Failed to read transport!");
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         return buffer;

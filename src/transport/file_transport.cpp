@@ -26,6 +26,7 @@
 void FileTransport::seek(int64_t offset, int whence)
 {
     if (lseek64(this->file.fd(), offset, whence) == static_cast<off_t>(-1)) {
+        LOG(LOG_ERR, "FileTransport::seek: Failed to reposition file offset!");
         throw this->report_error(Error(ERR_TRANSPORT_SEEK_FAILED, errno));
     }
 }
@@ -62,6 +63,7 @@ Transport::Read FileTransport::do_atomic_read(uint8_t * buffer, size_t len)
         remaining_len -= res;
     }
     if (remaining_len != 0){
+        LOG(LOG_ERR, "FileTransport::do_atomic_read: No more data to read!");
         throw this->report_error(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
     }
     return Read::Ok;

@@ -80,6 +80,7 @@ bool InMetaSequenceTransport::disconnect()
 bool InMetaSequenceTransport::next()
 {
     if (!this->status) {
+        LOG(LOG_ERR, "InMetaSequenceTransport::next: Invalid status!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 
@@ -87,6 +88,7 @@ bool InMetaSequenceTransport::next()
 
     if (Read::Eof == this->buf_next_line()) {
         this->status = false;
+        LOG(LOG_ERR, "InMetaSequenceTransport::next: No more line!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
     }
 

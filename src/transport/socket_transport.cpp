@@ -213,6 +213,7 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
     ssize_t const res = this->tls ? this->tls->privpartial_recv_tls(buffer, len) : socket_recv_partial(this->sck, buffer, len);
 
     if (res < 0){
+        LOG(LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
     }
 
@@ -243,10 +244,12 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
     }
 
     if (res < 0){
+        LOG(LOG_ERR, "SocketTransport::do_atomic_read: Failed to read from socket!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
     }
 
     if (static_cast<size_t>(res) < len){
+        LOG(LOG_ERR, "SocketTransport::do_atomic_read: Insufficient data to read!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
     }
 
