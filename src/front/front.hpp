@@ -558,6 +558,8 @@ public:
     ClientInfo client_info;
 
 private:
+    bool Revision2BitmapCachesAdvertised = false;
+
     Transport & trans;
 
     uint16_t userid = 0;
@@ -1176,6 +1178,8 @@ private:
             LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%d", this->client_info.bitmap_cache_version);
         }
 
+        this->Revision2BitmapCachesAdvertised = false;
+
         this->max_data_block_size = MAX_DATA_BLOCK_SIZE;
 
         int const mppc_type = this->get_appropriate_compression_type(
@@ -1464,7 +1468,7 @@ public:
                             break;
                             }
                             LOG(LOG_INFO, "Client Color Depth is %d", int(this->client_info.screen_info.bpp));
-                            
+
                             if (bool(this->ini.get<cfg::client::max_color_depth>())) {
                                 this->client_info.screen_info.bpp = std::min(
                                     this->client_info.screen_info.bpp,
@@ -3021,9 +3025,16 @@ private:
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
                     this->client_info.order_caps.recv(stream, capset_length);
+
                     if (bool(this->verbose)) {
                         this->client_info.order_caps.log("Front::process_confirm_active: Receiving from client");
                     }
+
+                    this->client_info.bitmap_cache_version =
+                        ((this->client_info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] &&
+                          this->client_info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] &&
+                          this->Revision2BitmapCachesAdvertised) ?
+                         2 : 0);
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: {
@@ -3183,7 +3194,13 @@ private:
                         this->client_info.cache5_entries = 0;
                     }
                     this->client_info.cache_flags          = this->client_info.bmp_cache_2_caps.cacheFlags;
-                    this->client_info.bitmap_cache_version = 2;
+
+                    this->Revision2BitmapCachesAdvertised = true;
+
+                    this->client_info.bitmap_cache_version =
+                        ((this->client_info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] &&
+                          this->client_info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]) ?
+                         2 : 0);
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
@@ -4123,7 +4140,7 @@ protected:
     }
 
     void draw_impl(RDPMemBlt const& cmd, Rect clip, Bitmap const & bitmap) {
-        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+        if (this->client_info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
             this->priv_draw_memblt(cmd, clip, bitmap);
         }
         else {
