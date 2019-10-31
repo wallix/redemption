@@ -827,7 +827,7 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                     config.tls_client_params_data.tls_max_level = std::stoi(info);
                 } else
                 if (tag == "tls-cipher-string") {
-                    config.tls_client_params_data.cipher_string = std::string(info);
+                    config.tls_client_params_data.cipher_string = info;
                 } else
                 if (tag == "show_common_cipher_list") {
                     config.tls_client_params_data.show_common_cipher_list = bool(std::stoi(info));
