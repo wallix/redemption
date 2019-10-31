@@ -123,6 +123,7 @@ void OutMetaSequenceTransport::timestamp(timeval now)
 bool OutMetaSequenceTransport::next()
 {
     if (!this->wrm_filter_encrypt_transport.is_open()) {
+        LOG(LOG_ERR, "OutMetaSequenceTransport::next: Create next file failed!");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 

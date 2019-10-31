@@ -398,6 +398,7 @@ void ModuleManager::create_mod_rdp(
                     {
                         size_t r = FileTransport::do_partial_read(buffer, len);
                         if (r == 0) {
+                            LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
                             throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
                         }
                         return r;
