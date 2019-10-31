@@ -982,7 +982,7 @@ protected:
             auto client_cut_text = [this](std::size_t n, auto f){
                 StreamBufMaker<65536> buf_maker;
                 OutStream stream = buf_maker.reserve_out_stream(n + 8u);
-                auto str = f(stream.get_bytes().from_offset(8));
+                auto str = f(stream.get_tail().from_offset(8));
 
                 stream.out_uint8(6);                // message-type : ClientCutText
                 stream.out_clear_bytes(3);          // padding
