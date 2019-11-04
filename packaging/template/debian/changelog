@@ -1,3 +1,8 @@
+redemption (7.4.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 04 Nov 2019 18:25:01 +0200
+
 redemption (7.3.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Do not disconnect the session due to screen layout change if recording is not started.
