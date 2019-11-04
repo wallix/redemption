@@ -884,7 +884,7 @@ codec_id = string(default='mp4')
 #_advanced
 framerate = integer(min=0, default=5)
 
-# FFmpeg optons for video codec.
+# FFmpeg options for video codec.
 #_advanced
 ffmpeg_options = string(default='profile=baseline preset=ultrafast flags=+qscale b=30000')
 

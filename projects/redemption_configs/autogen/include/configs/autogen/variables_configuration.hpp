@@ -3268,7 +3268,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    /// FFmpeg optons for video codec. <br/>
+    /// FFmpeg options for video codec. <br/>
     /// type: std::string <br/>
     /// value = "profile=baseline preset=ultrafast flags=+qscale b=30000" <br/>
     struct video::ffmpeg_options {
