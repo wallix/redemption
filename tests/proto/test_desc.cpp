@@ -1355,7 +1355,7 @@ namespace test
             template<std::size_t N>
             struct size_ctx_stack
             {
-                int stack[N];
+                std::array<int, N> stack;
                 int i = 0;
 
                 constexpr void push(int x)
@@ -1841,7 +1841,7 @@ namespace test
                 bool too_short = (n != in.in_remain());
                 if constexpr (info.rng_raccu != 0)
                 {
-                    return too_short || (n != info.rng_raccu);
+                    return too_short || (n != T{info.rng_raccu});
                 }
                 return too_short;
             }
@@ -1850,7 +1850,7 @@ namespace test
                 bool too_short = (n > in.in_remain());
                 if constexpr (info.rng_raccu != 0)
                 {
-                    return too_short || (n < info.rng_raccu);
+                    return too_short || (n < T{info.rng_raccu});
                 }
                 return too_short;
             }
@@ -1977,18 +1977,19 @@ namespace test
 
                 bool too_short;
                 // TODO /!\ possible overflow on n
+                auto const expected = n + decltype(n){info.rng_raccu};
                 if constexpr (info.is_rng_rstatic_size)
                 {
-                    too_short = (n + info.rng_raccu != ctx.in.in_remain());
+                    too_short = (expected != ctx.in.in_remain());
                 }
                 else
                 {
-                    too_short = (n + info.rng_raccu > ctx.in.in_remain());
+                    too_short = (expected > ctx.in.in_remain());
                 }
 
                 if (REDEMPTION_UNLIKELY(too_short))
                 {
-                    ctx.error(Name{}, n + info.rng_raccu, ctx.in.in_remain());
+                    ctx.error(Name{}, expected, ctx.in.in_remain());
                 }
 
                 return make_mem<Name>(read_data_bytes(ctx.in, bytes, n));
