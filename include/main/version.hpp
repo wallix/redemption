@@ -25,4 +25,4 @@
 
 #pragma once
 
-#define VERSION "1.3.175a"
+#define VERSION "1.3.176b"
