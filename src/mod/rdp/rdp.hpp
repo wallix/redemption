@@ -294,6 +294,7 @@ private:
     } connection_finalization_state;
 
     Pointer cursors[32];
+    bool    valid_cursor[sizeof(cursors) / sizeof(Pointer)] { false };
 
     Random& gen;
 
@@ -5041,12 +5042,25 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
         Pointer & cursor = this->cursors[pointer_idx];
-        if (cursor.is_valid()) {
+if (!cursor.is_valid()) {
+    LOG(LOG_INFO, "> > > > > Invalid cursor (1)");
+    LOG(LOG_INFO, " ");
+    LOG(LOG_INFO, " ");
+    LOG(LOG_INFO, " ");
+}
+else if (!this->valid_cursor[pointer_idx]) {
+    LOG(LOG_INFO, "> > > > > Invalid cursor (2)");
+    LOG(LOG_INFO, " ");
+    LOG(LOG_INFO, " ");
+    LOG(LOG_INFO, " ");
+}
+        if (cursor.is_valid() && this->valid_cursor[pointer_idx]) {
             drawable.set_pointer(cursor);
         }
         else {
             LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
                 pointer_idx);
+            drawable.set_pointer(system_normal_pointer());
         }
         if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -5142,6 +5156,7 @@ public:
         Pointer cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, bool(this->verbose & RDPVerbose::graphics_pointer));
 
         this->cursors[pointer_idx] = cursor;
+        this->valid_cursor[pointer_idx] = true;
         drawable.set_pointer(cursor);
     }   // process_new_pointer_pdu
 
