@@ -116,7 +116,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("unmasked", "keyboard input are not masked")
       .value("password_only", "only passwords are masked")
       .value("password_and_unidentified", "passwords and unidentified texts are masked")
-      .value("fully_masked", "keyboard input are fully masked")
+      .value("fully_masked", "keyboard inputs are not logged")
     ;
 
     e.enumeration_list("SessionProbeOnLaunchFailure", "Behavior on failure to launch Session Probe.")

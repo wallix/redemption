@@ -165,12 +165,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #log_path = 
 
-# (Please see also "Disable keyboard log" in "video" section of "Configuration Options".)
+# Keyboard Input Masking Level:
 # min = 0, max = 4
 #   0: keyboard input are not masked
 #   1: only passwords are masked
 #   2: passwords and unidentified texts are masked
-#   3: keyboard input are fully masked
+#   3: keyboard inputs are not logged
 #_hidden
 #keyboard_input_masking_level = 2
 
@@ -999,6 +999,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x2: disable keyboard log in recorded sessions
 #   0x4: disable keyboard log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_advanced
 #_hex
 #disable_keyboard_log = 1
 
@@ -1009,6 +1010,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x2: disable clipboard log in recorded sessions
 #   0x4: disable clipboard log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_advanced
 #_hex
 #disable_clipboard_log = 1
 
@@ -1019,6 +1021,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x2: disable (redirected) file system log in recorded sessions
 #   0x4: disable (redirected) file system log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_advanced
 #_hex
 #disable_file_system_log = 1
 

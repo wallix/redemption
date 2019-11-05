@@ -312,7 +312,7 @@ enum class KeyboardInputMaskingLevel : unsigned char
     password_only = 1,
     // passwords and unidentified texts are masked
     password_and_unidentified = 2,
-    // keyboard input are fully masked
+    // keyboard inputs are not logged
     fully_masked = 3,
 };
 
