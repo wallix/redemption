@@ -151,11 +151,11 @@
 "#_hidden\n"
 "#log_path = \n\n"
 
-"# (Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.)\n"
+"# Keyboard Input Masking Level:\n"
 "#   0: keyboard input are not masked\n"
 "#   1: only passwords are masked\n"
 "#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section\n"
-"#   3: keyboard input are fully masked\n"
+"#   3: keyboard inputs are not logged\n"
 "#_hidden\n"
 "#keyboard_input_masking_level = 2\n\n"
 
@@ -748,6 +748,7 @@
 "#   0x2: disable keyboard log in recorded sessions\n"
 "#   0x4: disable keyboard log in recorded meta\n"
 "# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
+"#_advanced\n"
 "#disable_keyboard_log = 1\n\n"
 
 "# Disable clipboard log:\n"
@@ -756,6 +757,7 @@
 "#   0x2: disable clipboard log in recorded sessions\n"
 "#   0x4: disable clipboard log in recorded meta\n"
 "# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
+"#_advanced\n"
 "#disable_clipboard_log = 1\n\n"
 
 "# Disable (redirected) file system log:\n"
@@ -764,6 +766,7 @@
 "#   0x2: disable (redirected) file system log in recorded sessions\n"
 "#   0x4: disable (redirected) file system log in recorded meta\n"
 "# Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)\n"
+"#_advanced\n"
 "#disable_file_system_log = 1\n\n"
 
 "#_hidden\n"

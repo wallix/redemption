@@ -718,7 +718,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// (Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.) <br/>
+    /// Keyboard Input Masking Level: <br/>
     /// type: KeyboardInputMaskingLevel <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(2) <br/>

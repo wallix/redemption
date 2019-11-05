@@ -203,7 +203,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, L, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.sep();
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
-            "(Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.)"
+            "Keyboard Input Masking Level:"
         }, set(KeyboardInputMaskingLevel::password_and_unidentified));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "hide_non_printable_kbd_input", set(false));
     });
@@ -533,15 +533,15 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
         W.sep();
 
-        W.member(ini_and_gui, rdp_connpolicy, sesman::authorize_ini_and_connpolicy{},  L, type_<KeyboardLogFlags>{}, sesman::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{
+        W.member(advanced_in_gui, rdp_connpolicy, sesman::authorize_ini_and_connpolicy{},  L, type_<KeyboardLogFlags>{}, sesman::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
             "(Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.)"
         }, disable_prefix_val, set(KeyboardLogFlags::syslog));
 
         W.sep();
-        W.member(ini_and_gui, no_sesman, L, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog));
+        W.member(advanced_in_gui, no_sesman, L, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog));
         W.sep();
-        W.member(ini_and_gui, no_sesman, L, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
+        W.member(advanced_in_gui, no_sesman, L, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
         W.sep();
         W.member(hidden_in_gui, sesman_to_proxy, L, type_<bool>(), "rt_display", set(false));
         W.sep();
