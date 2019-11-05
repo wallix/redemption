@@ -1226,7 +1226,12 @@ public:
     void end_update() override {
         LOG_IF(bool(this->verbose & Verbose::graphic), LOG_INFO,
             "Front::end_update: level=%d", this->order_level);
-        this->order_level--;
+        if (this->order_level) {
+            this->order_level--;
+        }
+        else {
+            LOG(LOG_WARNING, "Front::end_update: Unbalanced calls to BeginUpdate/EndUpdate methods");
+        }
         if (!this->up_and_running) {
             LOG(LOG_ERR, "Front::end_update: Front is not up and running.");
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
