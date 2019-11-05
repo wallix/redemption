@@ -28,11 +28,11 @@ inactivity_timeout = integer(min=0, default=0)
 
 [session_log]
 
-# (Please see also "Disable keyboard log" in "video" section of "Configuration Options".)
+# Keyboard Input Masking Level:
 #   0: keyboard input are not masked
 #   1: only passwords are masked
 #   2: passwords and unidentified texts are masked
-#   3: keyboard input are fully masked
+#   3: keyboard inputs are not logged
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [rdp]
@@ -301,6 +301,7 @@ log_if_accepted = boolean(default=True)
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions
 # Note: values can be added (disable all: 0x1 + 0x2 = 0x3)
+#_advanced
 #_hex
 disable_keyboard_log = integer(min=0, max=3, default=1)
 

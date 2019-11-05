@@ -133,11 +133,11 @@ enable_arcsight_log = boolean(default=False)
 #_hidden
 log_path = string(default='')
 
-# (Please see also "Disable keyboard log" in "video" section of "Configuration Options".)
+# Keyboard Input Masking Level:
 #   0: keyboard input are not masked
 #   1: only passwords are masked
 #   2: passwords and unidentified texts are masked
-#   3: keyboard input are fully masked
+#   3: keyboard inputs are not logged
 #_hidden
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
@@ -839,6 +839,7 @@ record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::R
 #   0x2: disable keyboard log in recorded sessions
 #   0x4: disable keyboard log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_advanced
 #_hex
 disable_keyboard_log = integer(min=0, max=7, default=1)
 
@@ -848,6 +849,7 @@ disable_keyboard_log = integer(min=0, max=7, default=1)
 #   0x2: disable clipboard log in recorded sessions
 #   0x4: disable clipboard log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_advanced
 #_hex
 disable_clipboard_log = integer(min=0, max=7, default=1)
 
@@ -857,6 +859,7 @@ disable_clipboard_log = integer(min=0, max=7, default=1)
 #   0x2: disable (redirected) file system log in recorded sessions
 #   0x4: disable (redirected) file system log in recorded meta
 # Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
+#_advanced
 #_hex
 disable_file_system_log = integer(min=0, max=7, default=1)
 
