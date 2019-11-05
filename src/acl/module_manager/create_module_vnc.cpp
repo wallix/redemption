@@ -114,6 +114,7 @@ void ModuleManager::create_mod_vnc(
             report_message,
             ini.get<cfg::mod_vnc::server_is_apple>(),
             ini.get<cfg::mod_vnc::server_unix_alt>(),
+            ini.get<cfg::mod_vnc::support_cursor_pseudo_encoding>(),
             (client_info.remote_program ? &rail_client_execute : nullptr),
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
             enable_metrics ? &metrics->protocol_metrics : nullptr

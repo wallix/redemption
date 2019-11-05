@@ -782,6 +782,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #server_unix_alt = 0
 
+# value: 0 or 1
+#_hidden
+#support_cursor_pseudo_encoding = 1
+
 [metrics]
 
 # value: 0 or 1

@@ -658,6 +658,9 @@ server_is_apple = boolean(default=False)
 #_hidden
 server_unix_alt = boolean(default=False)
 
+#_hidden
+support_cursor_pseudo_encoding = boolean(default=True)
+
 [metrics]
 
 #_advanced

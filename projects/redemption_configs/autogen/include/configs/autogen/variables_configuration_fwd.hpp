@@ -193,6 +193,7 @@ namespace cfg {
         struct bogus_clipboard_infinite_loop;
         struct server_is_apple;
         struct server_unix_alt;
+        struct support_cursor_pseudo_encoding;
     };
 
     struct metrics {

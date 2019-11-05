@@ -38,6 +38,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     ReportMessageApi& report_message,
     bool server_is_apple,
     bool send_alt_ksym,
+    bool cursor_pseudo_encoding_supported,
     ClientExecute* rail_client_execute,
     VNCVerbose verbose,
     VNCMetrics * metrics
@@ -48,5 +49,5 @@ std::unique_ptr<mod_api> new_mod_vnc(
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_apple, send_alt_ksym,
-        rail_client_execute, verbose, metrics);
+        cursor_pseudo_encoding_supported, rail_client_execute, verbose, metrics);
 }

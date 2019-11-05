@@ -31,6 +31,12 @@
           "type": "bool",
           "default": false,
           "description": ""
+        },
+        {
+          "name": "support_cursor_pseudo_encoding",
+          "type": "bool",
+          "default": true,
+          "description": ""
         }
       ]
     }

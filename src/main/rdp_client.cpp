@@ -209,6 +209,7 @@ int main(int argc, char** argv)
               , report_message
               , false
               , false          /*remove_server_alt_state_for_char*/
+              , true           /* support Cursor Pseudo-Encoding */
               , nullptr
               , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace
               , nullptr);

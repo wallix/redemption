@@ -477,6 +477,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_is_apple", set(false));
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_unix_alt", set(false));
+
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "support_cursor_pseudo_encoding", set(true));
     });
 
     W.section("mod_replay", [&]

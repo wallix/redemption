@@ -251,6 +251,7 @@ private:
 
     VncAuthType choosenAuth;
 
+    const bool cursor_pseudo_encoding_supported;
 
 public:
     mod_vnc( Transport & t
@@ -271,6 +272,7 @@ public:
            , ReportMessageApi & report_message
            , bool server_is_apple
            , bool server_is_unix
+           , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
@@ -295,6 +297,7 @@ public:
 	, choosenAuth(VNC_AUTH_INVALID)
 	, tlsSwitch(false)
     , frame_buffer_update_ctx(this->zd, verbose)
+    , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
     , clipboard_data_ctx(verbose)
     {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
@@ -2094,7 +2097,12 @@ private:
                 bool support_rre_encoding           = false;
                 bool support_raw_encoding           = true;
                 bool support_copyrect_encoding      = true;
-                bool support_cursor_pseudo_encoding = true;
+                bool support_cursor_pseudo_encoding = this->cursor_pseudo_encoding_supported;
+LOG(LOG_INFO, "support_cursor_pseudo_encoding=%s", (support_cursor_pseudo_encoding ? "Yes" : "No"));
+LOG(LOG_INFO, " ");
+LOG(LOG_INFO, " ");
+LOG(LOG_INFO, " ");
+
 
                 char const * p = this->encodings.c_str();
                 if (p && *p){

@@ -48,6 +48,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     ReportMessageApi& report_message,
     bool server_is_apple,
     bool send_alt_ksym,
+    bool cursor_pseudo_encoding_supported,
     ClientExecute* rail_client_execute,
     VNCVerbose verbose,
     VNCMetrics * metrics

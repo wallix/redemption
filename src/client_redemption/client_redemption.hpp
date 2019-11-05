@@ -463,6 +463,7 @@ public:
                   , this->reportMessage
                   , this->config.modVNCParamsData.is_apple
                   , true                                    // alt server unix
+                  , true                                    // support Cursor Pseudo-encoding
                   , nullptr
                   // , to_verbose_flags(0xfffffffd)
                   , to_verbose_flags(0)

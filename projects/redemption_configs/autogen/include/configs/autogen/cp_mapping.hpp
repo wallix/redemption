@@ -86,6 +86,7 @@ cp_spec = {
   'vnc': {
     u'mod_vnc:server_is_apple': ('server_is_apple', False),
     u'mod_vnc:server_unix_alt': ('server_unix_alt', False),
+    u'mod_vnc:support_cursor_pseudo_encoding': ('support_cursor_pseudo_encoding', True),
   },
 }
 )xxxyyyzzz"

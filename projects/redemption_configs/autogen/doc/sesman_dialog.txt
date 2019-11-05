@@ -191,6 +191,7 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop <- vnc_bogus_clipboard_infinite_loop
       2: continued
 cfg::mod_vnc::server_is_apple <- mod_vnc:server_is_apple   [bool]
 cfg::mod_vnc::server_unix_alt <- mod_vnc:server_unix_alt   [bool]
+cfg::mod_vnc::support_cursor_pseudo_encoding <- mod_vnc:support_cursor_pseudo_encoding   [bool]
 
 
 cfg::file_verification::enable_up <- file_verification:enable_up   [bool]
