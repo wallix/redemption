@@ -2887,6 +2887,7 @@ private:
 
                 MultiFragmentUpdateCaps multifrag_caps;
                 bool send_multifrag_caps = false;
+                uint32_t maxRequestSize = 0;
 
                 if (this->ini.get<cfg::globals::large_pointer_support>()) {
                     LargePointerCaps large_pointer_caps;
@@ -2898,12 +2899,15 @@ private:
                     large_pointer_caps.emit(stream);
                     caps_count++;
 
-                    multifrag_caps.MaxRequestSize = 38055;
+                    maxRequestSize = std::max(maxRequestSize, static_cast<uint32_t>(38055));
                     send_multifrag_caps = true;
                 }
 
                 if (this->ini.get<cfg::client::enable_remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
                     BitmapCodecCaps bitmap_codec_caps(false);
+
+                    ScreenInfo &screen_info = this->client_info.screen_info;
+                    maxRequestSize = std::max(maxRequestSize, static_cast<uint32_t>(screen_info.width * screen_info.height * 4));
 
                     bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
                     bitmap_codec_caps.emit(stream);
@@ -2914,6 +2918,7 @@ private:
                     if (bool(this->verbose)) {
                         multifrag_caps.log("Front::send_demand_active: Sending to client");
                     }
+                    multifrag_caps.MaxRequestSize = maxRequestSize;
                     multifrag_caps.emit(stream);
                     caps_count++;
                 }
@@ -4214,7 +4219,11 @@ protected:
 
         /* no front remoteFx support, fallback and transcode to bitmapUpdates */
         for (const Rect & rect1 : content.region.rects) {
-            Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
+        	int16_t x1 = rect1.x & ~3;
+        	int16_t y1 = rect1.y & ~3;
+        	int16_t x2 = align4(rect1.right());
+        	int16_t y2 = align4(rect1.bottom());
+            Rect rect(x1, y1, x2-x1, y2-y1);
 
             Bitmap bitmap(content.data, content.stride, rect);
 

@@ -359,3 +359,39 @@ RED_AUTO_TEST_CASE(TestStreamAt)
     stream.stream_at(1).out_uint8('x');
     RED_CHECK_MEM(stream.get_bytes(), "axcde"_av);
 }
+
+RED_AUTO_TEST_CASE(TestDynamicReservedStream)
+{
+	uint8_t expected1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
+	StaticOutStream<2> ostream;
+	ostream.out_uint16_be(0x0001);
+	writable_bytes_view packet;
+
+	DynamicOutReservedStreamHelper dstream(2, 8+2);
+	dstream.get_data_stream().out_uint64_be(0x0203040506070809); // 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09
+
+	dstream.copy_to_head(ostream);
+	RED_CHECK_EQ(memcmp(dstream.get_packet().as_u8p(), expected1, sizeof(expected1)), 0);
+
+	dstream.advance_stream(2);
+	dstream.copy_to_head(ostream);
+	uint8_t expected2[] = {0x00, 0x01, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
+	RED_CHECK_EQ(memcmp(dstream.get_packet().as_u8p(), expected2, sizeof(expected2)), 0);
+
+	// dstream is supposed to be
+	//     v headPtr
+	// 0 1 0 1 4 5 6 7 8 9
+	//         ^ payloadStream
+	OutReservedStreamHelper sub(dstream.get_sub_stream(1, 3));
+	uint8_t expected2b[] = {0x01, 0x04, 0x05};
+	packet = sub.get_packet();
+	RED_CHECK_EQ(packet.size(), sizeof(expected2b));
+	RED_CHECK_EQ(memcmp(packet.as_u8p(), expected2b, sizeof(expected2b)), 0);
+
+	sub.copy_to_head(ostream);
+	uint8_t expected3[] = {0x00, 0x01, 0x01, 0x04, 0x05};
+	packet = sub.get_packet();
+	RED_CHECK_EQ(packet.size(), sizeof(expected3));
+	RED_CHECK_EQ(memcmp(packet.as_u8p(), expected3, sizeof(expected3)), 0);
+}
+
