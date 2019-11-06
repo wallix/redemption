@@ -295,9 +295,9 @@ public:
     , metrics(metrics)
     #endif
 	, choosenAuth(VNC_AUTH_INVALID)
+    , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
 	, tlsSwitch(false)
     , frame_buffer_update_ctx(this->zd, verbose)
-    , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
     , clipboard_data_ctx(verbose)
     {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
@@ -2098,11 +2098,6 @@ private:
                 bool support_raw_encoding           = true;
                 bool support_copyrect_encoding      = true;
                 bool support_cursor_pseudo_encoding = this->cursor_pseudo_encoding_supported;
-LOG(LOG_INFO, "support_cursor_pseudo_encoding=%s", (support_cursor_pseudo_encoding ? "Yes" : "No"));
-LOG(LOG_INFO, " ");
-LOG(LOG_INFO, " ");
-LOG(LOG_INFO, " ");
-
 
                 char const * p = this->encodings.c_str();
                 if (p && *p){
