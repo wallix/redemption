@@ -850,16 +850,26 @@ private:
 // class DynamicOutStream;
 // class DynamicInStream;
 
+/**
+ * @brief an OutStream that has some space reserved before the payload
+ *
+ *                v  payload_stream
+ * 	 |------------+----------------------------------------------|
+ *            ^ head_ptr
+ * 	  <------>   reserved_leading_space
+ *    <----------------- full_size ----------------------------->
+ */
 struct OutReservedStreamHelper
 {
     OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len) noexcept
-    : buf(data + reserved_leading_space)
+    : head_ptr(data + reserved_leading_space)
     , reserved_leading_space(reserved_leading_space)
-    , stream({this->buf, buf_len - reserved_leading_space})
+    , full_size(buf_len)
+    , payload_stream({this->head_ptr, buf_len - reserved_leading_space})
     {}
 
     [[nodiscard]] writable_bytes_view get_packet() const noexcept {
-        return writable_bytes_view{this->buf, std::size_t(this->stream.get_current() - this->buf)};
+        return writable_bytes_view{this->head_ptr, std::size_t(this->payload_stream.get_current() - this->head_ptr)};
     }
 
     [[nodiscard]] std::size_t get_reserved_leading_space() const noexcept {
@@ -867,14 +877,43 @@ struct OutReservedStreamHelper
     }
 
     OutStream & get_data_stream() noexcept {
-        return this->stream;
+        return this->payload_stream;
+    }
+
+    /** returns an OutReservedStreamHelper that will start at offset with size len
+     * @param offset starts the sub stream at this offset
+     * @param len take only len bytes
+     * @return the corresponding substream
+     */
+    OutReservedStreamHelper get_sub_stream(size_t offset, size_t len = 0) noexcept {
+    	// this object is like:
+    	//    reserved_leading_space
+    	//  <----->
+    	//        v  headPtr
+    	//  |-----------+-------------------------|
+    	//              ^  payloadStream
+    	//  <------------------------------------->
+
+        // and we wanna return:
+    	//        |<--- offset -->|<-- len -->|
+    	//                        v headPtr
+    	//  |---------------------+-----------|
+    	//                        ^ payloadStream
+
+    	if (len == 0)
+    		len = (this->payload_stream.get_offset() - offset);
+    	uint8_t *originalBuf = this->head_ptr - this->reserved_leading_space;
+
+    	OutReservedStreamHelper ret(originalBuf, this->reserved_leading_space + offset, this->reserved_leading_space + offset + len);
+    	ret.payload_stream.rewind(len);
+    	return ret;
     }
 
     writable_bytes_view copy_to_head(OutStream const & stream) noexcept {
         assert(stream.get_offset() <= this->reserved_leading_space);
-        this->buf -= stream.get_offset();
+        this->head_ptr -= stream.get_offset();
         this->reserved_leading_space -= stream.get_offset();
-        memcpy(this->buf, stream.get_data(), stream.get_offset());
+        memcpy(this->head_ptr, stream.get_data(), stream.get_offset());
 
         return get_packet();
     }
@@ -883,9 +922,9 @@ struct OutReservedStreamHelper
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
-        this->buf -= total_stream_size;
+        this->head_ptr -= total_stream_size;
 
-        auto start = this->buf;
+        auto start = this->head_ptr;
         memcpy(start, stream1.get_data(), stream1.get_offset());
         start += stream1.get_offset();
         memcpy(start, stream2.get_data(), stream2.get_offset());
@@ -897,9 +936,9 @@ struct OutReservedStreamHelper
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
-        this->buf -= total_stream_size;
+        this->head_ptr -= total_stream_size;
 
-        auto start = this->buf;
+        auto start = this->head_ptr;
         memcpy(start, stream1.get_data(), stream1.get_offset());
         start += stream1.get_offset();
         memcpy(start, stream2.get_data(), stream2.get_offset());
@@ -910,17 +949,48 @@ struct OutReservedStreamHelper
     }
 
     void rewind() noexcept {
-        this->reserved_leading_space += this->stream.get_data() - this->buf;
-        this->buf = this->stream.get_data();
-        this->stream.rewind();
+        this->reserved_leading_space += this->payload_stream.get_data() - this->head_ptr;
+        this->head_ptr = this->payload_stream.get_data();
+        this->payload_stream.rewind();
     }
 
-private:
-    uint8_t * buf;
+    void rewind_head() noexcept {
+        this->reserved_leading_space += this->payload_stream.get_data() - this->head_ptr;
+        this->head_ptr = this->payload_stream.get_data();
+    }
+
+    void advance_stream(std::size_t delta) {
+    	this->reserved_leading_space += this->payload_stream.get_data() - this->head_ptr + delta;
+    	this->head_ptr = this->payload_stream.get_data() + delta;
+    	this->payload_stream = OutStream({this->head_ptr, this->full_size - this->reserved_leading_space});
+    }
+
+protected:
+    uint8_t * head_ptr;
     std::size_t reserved_leading_space;
-    OutStream stream;
+    std::size_t full_size;
+    OutStream payload_stream;
 };
 
+/**
+ * @brief a reserved stream helper that self allocates the target buffer
+ */
+struct DynamicOutReservedStreamHelper : OutReservedStreamHelper
+{
+	DynamicOutReservedStreamHelper(std::size_t reserved_leading_space, std::size_t buf_len)
+	: OutReservedStreamHelper(nullptr, reserved_leading_space, buf_len)
+	, allocatedBuf( new uint8_t[reserved_leading_space + buf_len]())
+	{
+		head_ptr = this->allocatedBuf + reserved_leading_space;
+		payload_stream = OutStream({this->head_ptr, buf_len - reserved_leading_space});
+	}
+
+	~DynamicOutReservedStreamHelper() {
+		delete[] allocatedBuf;
+	}
+protected:
+	uint8_t * allocatedBuf;
+};
 
 template<std::size_t HeaderSz, std::size_t StreamSz>
 struct StaticOutReservedStreamHelper : OutReservedStreamHelper

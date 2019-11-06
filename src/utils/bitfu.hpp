@@ -27,6 +27,12 @@
 #include <cstdint>
 #include <cstddef>
 
+// pad some number to next upper multiple of 2
+constexpr static inline uint16_t align2(uint16_t value) noexcept
+{
+    return (value+1) & ~1;
+}
+
 // pad some number to next upper multiple of 4
 constexpr static inline uint16_t align4(uint16_t value) noexcept
 {

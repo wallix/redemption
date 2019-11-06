@@ -33,7 +33,7 @@
 static inline void send_data_indication_ex( Transport & trans
                                           , int encryptionLevel, CryptContext & encrypt
                                           , uint16_t initiator
-                                          , StaticOutReservedStreamHelper<1024, 65536-1024> & stream)
+                                          , OutReservedStreamHelper & stream)
 {
     StaticOutStream<256> security_header;
     SEC::Sec_Send sec(security_header, stream.get_packet(), 0, encrypt, encryptionLevel);
@@ -86,13 +86,13 @@ inline
 void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_support
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator
-                       , StaticOutReservedStreamHelper<1024, 65536-1024> & data
+                       , OutReservedStreamHelper & data
                        // TODO enum Verbose
                        , uint32_t log_condition, uint32_t verbose) {
     assert(!compression_support || mppc_enc);
 
     StaticOutReservedStreamHelper<1024, 65536-1024> data_compressed;
-    std::reference_wrapper<StaticOutReservedStreamHelper<1024, 65536-1024> > data_(data);
+    OutReservedStreamHelper *data_ = &data;
 
     uint8_t compressionFlags = 0;
 
@@ -107,7 +107,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
 
         if (compressionFlags & PACKET_COMPRESSED) {
             mppc_enc->get_compressed_data(data_compressed.get_data_stream());
-            data_ = std::ref(data_compressed);
+            data_ = &data_compressed;
         }
     }
 
@@ -117,22 +117,22 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
     share_data.emit_begin( pduType2, shareId, RDP::STREAM_MED
                          , data.get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */
                          , compressionFlags
-                         , (compressionFlags ? data_.get().get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
+                         , (compressionFlags ? data_->get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
                          );
     share_data.emit_end();
-    data_.get().copy_to_head(share_data_header);
+    data_->copy_to_head(share_data_header);
 
     StaticOutStream<256> share_ctrl_header;
     ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
-                     , data_.get().get_packet().size());
-    data_.get().copy_to_head(share_ctrl_header);
+                     , data_->get_packet().size());
+    data_->copy_to_head(share_ctrl_header);
 
     if (verbose & log_condition) {
         LOG(LOG_INFO, "Sec clear payload to send:");
-        hexdump_d(data_.get().get_packet());
+        hexdump_d(data_->get_packet());
     }
 
-    ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, data_.get());
+    ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, *data_);
 }
 
 enum ServerUpdateType {
@@ -152,7 +152,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type
                        , uint16_t data_extra
-                       , StaticOutReservedStreamHelper<1024, 65536-1024> & data_common
+					   , OutReservedStreamHelper & data_common
                        // TODO enum Verbose
                        , uint32_t verbose) {
     LOG_IF(verbose & 4, LOG_INFO
@@ -165,17 +165,28 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
     assert(!compression_support || mppc_enc);
 
     if (fastpath_support) {
-        FastPath::UpdateType updateCode       = FastPath::UpdateType::ORDERS;
+
+        uint8_t compression = 0;
+        uint32_t fragmentId;
+        uint32_t fragmentMax = 0x3fff - 20; /* taken in FreeRDP */
+        uint32_t startAt = 0;
+
+        if (compression_support)
+            fragmentMax = std::min(fragmentMax, mppc_enc->get_max_data_block_size() - 20);
+
+        fragmentId = 0;
+
+        FastPath::UpdateType updateCode = FastPath::UpdateType::ORDERS;
 
         switch (type) {
             case SERVER_UPDATE_GRAPHICS_ORDERS:
-                {
+			{
                     updateCode = FastPath::UpdateType::ORDERS;
                     StaticOutStream<2> data;
                     data.out_uint16_le(data_extra);
                     data_common.copy_to_head(data);
-                }
-                break;
+			}
+			break;
 
             case SERVER_UPDATE_GRAPHICS_BITMAP:
                 updateCode = FastPath::UpdateType::BITMAP;
@@ -214,28 +225,22 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 break;
         }
 
-        uint8_t compression = 0;
-        uint32_t fragmentId;
-        uint32_t fragmentMax = 0x3fff - 20; /* taken in FreeRDP */
-        uint32_t startAt = 0;
-
-        if (compression_support)
-            fragmentMax = std::min(fragmentMax, mppc_enc->get_max_data_block_size() - 20);
-
         bytes_view fullPacket = data_common.get_packet();
-        fragmentId = 0;
+        uint32_t remaining = fullPacket.size();
+        uint32_t payloadSize = remaining;
         do {
             uint8_t compressionFlags = 0;
-            uint32_t remaining = fullPacket.size() - startAt;
             uint32_t fragmentSize = (remaining > fragmentMax) ? fragmentMax : remaining;
+            OutReservedStreamHelper packetFragment = data_common.get_sub_stream(startAt, fragmentSize);
 
             StaticOutReservedStreamHelper<1024, 65536-1024> data_common_compressed;
-            std::reference_wrapper<StaticOutReservedStreamHelper<1024, 65536-1024> > data_common_(data_common);
+            OutReservedStreamHelper * fragmentPayload = &data_common;
 
+            fragmentPayload = &packetFragment;
             if (compression_support) {
                 uint16_t compressed_data_size;
 
-                mppc_enc->compress( fullPacket.data() + startAt
+                mppc_enc->compress( packetFragment.get_data_stream().get_data()
                                   , fragmentSize
                                   , compressionFlags, compressed_data_size
                                   , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
@@ -245,44 +250,49 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
 
                     mppc_enc->get_compressed_data(data_common_compressed.get_data_stream());
-                    data_common_ = std::ref(data_common_compressed);
+                    fragmentPayload = &data_common_compressed;
                 }
             }
+
+            //LOG(LOG_INFO, "fastPdu fragment id=%d startAt=%d(%u) fragmentSize=%lu(%d)",
+            //		fragmentId, startAt, payloadSize, fragmentPayload->get_packet().size(), fragmentSize);
+
             startAt += fragmentSize;
 
             StaticOutStream<8> update_header;
             uint8_t fragFlags;
             if (fragmentId != 0)
-                fragFlags = (startAt == fullPacket.size()) ? FastPath::FASTPATH_FRAGMENT_LAST : FastPath::FASTPATH_FRAGMENT_NEXT;
+                fragFlags = (startAt == payloadSize) ? FastPath::FASTPATH_FRAGMENT_LAST : FastPath::FASTPATH_FRAGMENT_NEXT;
             else
-                fragFlags = (startAt == fullPacket.size()) ? FastPath::FASTPATH_FRAGMENT_SINGLE : FastPath::FASTPATH_FRAGMENT_FIRST;
+                fragFlags = (startAt == payloadSize) ? FastPath::FASTPATH_FRAGMENT_SINGLE : FastPath::FASTPATH_FRAGMENT_FIRST;
 
             // Fast-Path Update (TS_FP_UPDATE)
             FastPath::Update_Send Upd( update_header
-                                     , data_common_.get().get_packet().size()
+                                     , fragmentPayload->get_packet().size()
                                      , static_cast<uint8_t>(updateCode)
                                      , fragFlags
                                      , compression
                                      , compressionFlags
                                      );
-            data_common_.get().copy_to_head(update_header);
+            fragmentPayload->copy_to_head(update_header);
 
             StaticOutStream<256> server_update_header;
              // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
             FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
-                                                    , data_common_.get().get_packet().data()
-                                                    , data_common_.get().get_packet().size()
+                                                    , fragmentPayload->get_packet().data()
+                                                    , fragmentPayload->get_packet().size()
                                                     , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                                                     , encrypt
                                                     );
-            data_common_.get().copy_to_head(server_update_header);
+            fragmentPayload->copy_to_head(server_update_header);
 
-            auto packet = data_common_.get().get_packet();
+            auto packet = fragmentPayload->get_packet();
 
             trans.send(packet.data(), packet.size());
 
             fragmentId++;
-        } while(startAt < fullPacket.size());
+            remaining -= fragmentSize;
+        } while(remaining);
     }
     else {
         uint8_t pduType2 = 0;
@@ -904,7 +914,7 @@ public:
         LOG_IF(bool(this->verbose & Verbose::surface_commands), LOG_INFO,
             "GraphicsUpdatePDU::send_surface_command");
 
-        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        DynamicOutReservedStreamHelper stream(1024, 65535 + 1024 + cmd.bitmapDataLength);
         stream.get_data_stream().out_uint16_le(0x0001); // CMDTYPE_SET_SURFACE_BITS
         cmd.emit(stream.get_data_stream());
 
