@@ -5,6 +5,8 @@ try:
     from wallixconst.approval import (
         APPROVAL_PENDING as S_PENDING,
         APPROVAL_NONE as S_NONE,
+        APPROVAL_ACCEPTED as SHADOW_ACCEPTED,
+        APPROVAL_REJECTED as SHADOW_REJECTED,
     )
     from wallixconst.misc import (
         OK as S_OK,
@@ -27,6 +29,8 @@ except Exception as e:
         from fake.const import (
             APPROVAL_PENDING as S_PENDING,
             APPROVAL_NONE as S_NONE,
+            APPROVAL_ACCEPTED as SHADOW_ACCEPTED,
+            APPROVAL_REJECTED as SHADOW_REJECTED,
             OK as S_OK,
             ERROR as S_ERROR,
             CRED_TYPE_PASSWORD,

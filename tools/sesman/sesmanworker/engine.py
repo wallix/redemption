@@ -50,7 +50,9 @@ from .checkout import (
     APPROVAL_ACCEPTED,
     APPROVAL_REJECTED,
     APPROVAL_PENDING,
-    APPROVAL_NONE
+    APPROVAL_NONE,
+    SHADOW_ACCEPTED,
+    SHADOW_REJECTED,
 )
 
 DEFAULT_CONF_DIR = "/var/wab/etc/"
@@ -1305,7 +1307,7 @@ class Engine(object):
 
     def shadow_response(self, errcode, errmsg, token, userdata):
         try:
-            status = APPROVAL_ACCEPTED if errcode == '0' else APPROVAL_REJECTED
+            status = SHADOW_ACCEPTED if errcode == '0' else SHADOW_REJECTED
             self.wabengine.make_session_shadowing_response(
                 status=status, errmsg=errmsg, token=token, userdata=userdata
             )
