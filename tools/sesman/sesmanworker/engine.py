@@ -67,8 +67,10 @@ FINGERPRINT_SHA1_LEN = 20
 def tounicode(item):
     if not item:
         return u""
-    if type(item) is str:
+    try:
         return item.decode('utf8')
+    except:
+        pass
     return item
 
 
@@ -229,11 +231,11 @@ class Engine(object):
             if lang == 'fr':
                 message = (u"\033[1mAttention\033[0m: Cette connexion sera "
                            u"coupée à %s.\r\n" %
-                           str(self.deconnection_time)).encode('utf8')
+                           str(self.deconnection_time))
             else:
                 message = (u"\033[1mWarning\033[0m: This connection will "
                            u"be closed at %s.\r\n" %
-                           str(self.deconnection_time)).encode('utf8')
+                           str(self.deconnection_time))
         return message
 
     def check_device_fingerprint(self, hname, service_cn, finger_raw,
@@ -243,7 +245,10 @@ class Engine(object):
                            if hash_type == FINGERPRINT_SHA1
                            else FINGERPRINT_MD5_LEN)
         for i, char in enumerate(finger_raw):
-            finger_host += '%02x' % ord(char)
+            try:
+                finger_host += '%02x' % ord(char)
+            except:
+                finger_host += '%02x' % char
             if i < fingerprint_len - 1:
                 finger_host += ':'
 
@@ -252,7 +257,7 @@ class Engine(object):
             self.wabengine.save_fingerprint(
                 hname,
                 service_cn,
-                finger_host.decode("ascii")
+                finger_host
             )
             Notify(self.wabengine,
                    NEW_FINGERPRINT,
@@ -931,8 +936,8 @@ class Engine(object):
                     # with target_account
                     domres = t_htable.get((target_account, target_device), {})
                 if len(domres) == 1:
-                    # no ambiguity
-                    dom, results = domres.items()[0]
+                    # no ambiguity, get first (and only) value
+                    results = domres[next(iter(domres))]
                 else:
                     # ambiguity on domain
                     results = []
@@ -1006,7 +1011,7 @@ class Engine(object):
         target_str = u"%s@%s:%s (%s)" % (target_login, target_device,
                                          target_service, target_group)
         msg = invalid_str % target_str
-        return (None, msg.encode('utf8'))
+        return (None, msg)
 
     def get_selected_target(self, target_login, target_device, target_service,
                             target_group, target_context=None):
@@ -1043,10 +1048,7 @@ class Engine(object):
             return
         self.failed_secondary_set = True
         if reason:
-            try:
-                self.session_diag = reason.decode('utf8')
-            except:
-                self.session_diag = reason.decode('latin_1')
+            self.session_diag = tounicode(reason)
         self.session_result = False
         Notify(self.wabengine, SECONDARY_CX_FAILED, {
             'user': wabuser,
@@ -1498,6 +1500,32 @@ class Engine(object):
         if action.lower() == "kill":
             self.session_result = False
 
+    def start_tcpip_record(self, selected_target=None, filename=None):
+        target = selected_target or self.target_right
+        if not target:
+            Logger().debug("start_record failed: missing target right")
+            return False
+        try:
+            is_recorded = target['auth_is_recorded']
+            if is_recorded:
+                self.session_record = self.wabengine.get_trace_writer(
+                    self.session_id,
+                    filename=filename,
+                    trace_type=u'pcap'
+                )
+                self.session_record.initialize()
+        except Exception:
+            import traceback
+            Logger().info("Engine start_record failed")
+            Logger().debug("Engine get_trace_writer failed: %s" %
+                           (traceback.format_exc()))
+            return False
+        return True
+
+    def write(self, data):
+        if self.session_record:
+            self.session_record.writeraw(data)
+
     def start_record(self, selected_target=None, filename=None):
         target = selected_target or self.target_right
         if not target:
@@ -1660,7 +1688,7 @@ class Engine(object):
                 device_id=physical_target.get('device_uid')
             )
         port = physical_target['service_port']
-        if isinstance(port, basestring):
+        if not isinstance(port, int):
             port = int(port)
         return PhysicalTarget(
             device_host=physical_target['device_host'],
