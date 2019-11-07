@@ -173,7 +173,7 @@ public:
 
 
     unsigned bit_mask_size() const {
-        return ::nbbytes(this->dimensions.width) * this->dimensions.height;
+        return this->dimensions.height * ::even_pad_length(::nbbytes(this->dimensions.width));
     }
 
     unsigned xor_data_size() const {
