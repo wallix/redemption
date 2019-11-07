@@ -166,7 +166,7 @@ ReplayMod::ReplayMod(
     .set_delay(std::chrono::seconds(0))
     .on_action([this](auto ctx, gdi::GraphicApi& gd){
         this->draw_event(0, gd);
-        return ctx.ready_at(ctx.get_current_time());
+        return ctx.ready();
     });
 }
 

@@ -94,6 +94,9 @@ struct Pointer {
                                       const char * def,
                                       const unsigned hsx, const unsigned hsy,
                                       const unsigned inverted);
+
+    friend Pointer harmonize_pointer(Pointer const& src_ptr);
+
     enum  {
         POINTER_NULL             ,
         POINTER_NORMAL           ,
@@ -181,7 +184,7 @@ public:
 
 
     unsigned bit_mask_size() const {
-        return ::nbbytes(this->dimensions.width) * this->dimensions.height;
+        return this->dimensions.height * ::even_pad_length(::nbbytes(this->dimensions.width));
     }
 
     unsigned xor_data_size() const {
@@ -918,6 +921,37 @@ inline Pointer predefined_pointer(const unsigned width, const unsigned height,
     }
 
     return cursor;
+}
+
+inline Pointer harmonize_pointer(Pointer const& src_ptr) {
+    Pointer dest_ptr(CursorSize(::even_pad_length(src_ptr.dimensions.width), src_ptr.dimensions.height), Hotspot(src_ptr.hotspot.x, src_ptr.hotspot.y));
+
+    const unsigned int src_xor_line_length_in_byte = src_ptr.dimensions.width * 3;
+    const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
+    const unsigned int src_and_line_length_in_byte = ::nbbytes(src_ptr.dimensions.width);
+    const unsigned int src_and_padded_line_length_in_byte = ::even_pad_length(src_and_line_length_in_byte);
+
+    const unsigned int dest_xor_line_length_in_byte = dest_ptr.dimensions.width * 3;
+    const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
+    const unsigned int dest_and_line_length_in_byte = ::nbbytes(dest_ptr.dimensions.width);
+    const unsigned int dest_and_padded_line_length_in_byte = ::even_pad_length(dest_and_line_length_in_byte);
+
+    uint8_t const* src_xor  = src_ptr.data;
+    uint8_t const* src_and  = src_ptr.mask;
+    uint8_t* dest_xor = dest_ptr.data;
+    uint8_t* dest_and = dest_ptr.mask;
+    for (unsigned int i = 0; i < src_ptr.dimensions.height; ++i) {
+        memcpy(dest_xor, src_xor, src_xor_padded_line_length_in_byte);
+        memcpy(dest_and, src_and, src_and_padded_line_length_in_byte);
+
+        src_xor += src_xor_padded_line_length_in_byte;
+        src_and += src_and_padded_line_length_in_byte;
+
+        dest_xor += dest_xor_padded_line_length_in_byte;
+        dest_and += dest_and_padded_line_length_in_byte;
+    }
+
+    return dest_ptr;
 }
 
 inline Pointer normal_pointer()

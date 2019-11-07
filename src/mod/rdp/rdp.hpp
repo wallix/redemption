@@ -5153,9 +5153,13 @@ else if (!this->valid_cursor[pointer_idx]) {
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, bool(this->verbose & RDPVerbose::graphics_pointer));
+        Pointer& cursor = this->cursors[pointer_idx];
+        cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, bool(this->verbose & RDPVerbose::graphics_pointer));
+        const unsigned int cursor_width = cursor.get_dimensions().width;
+        if (cursor_width % 2) {
+            cursor = harmonize_pointer(cursor);
+        }
 
-        this->cursors[pointer_idx] = cursor;
         this->valid_cursor[pointer_idx] = true;
         drawable.set_pointer(cursor);
     }   // process_new_pointer_pdu
