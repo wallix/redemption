@@ -33,7 +33,7 @@ except Exception as e:
     import traceback
     tracelog = traceback.format_exc()
     try:
-        from fake.proxyengine import *
+        from .fake.proxyengine import *
         LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
