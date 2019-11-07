@@ -1,3 +1,9 @@
+redemption (1.3.175c%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix length of AndMask of pointer.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 07 Nov 2019 15:16:41 +0200
+
 redemption (1.3.176b%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Do not use empty pointer cache cells.
