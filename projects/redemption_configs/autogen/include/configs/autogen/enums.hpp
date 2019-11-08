@@ -85,9 +85,9 @@ operator << (std::basic_ostream<Ch, Tr> & os, ClipboardEncodingType e)
 
 enum class KeyboardLogFlags {
     none = 0,
-    // keyboard log in syslog
+    // keyboard log in syslog (not-applicable)
     syslog = 1,
-    // keyboard log in recorded sessions
+    // keyboard log in recorded sessions (not-applicable)
     wrm = 2,
     // keyboard log in recorded meta
     meta = 4,
@@ -151,9 +151,9 @@ operator << (std::basic_ostream<Ch, Tr> & os, KeyboardLogFlagsCP e)
 
 enum class ClipboardLogFlags {
     none = 0,
-    // clipboard log in syslog
+    // clipboard log in syslog (not-applicable)
     syslog = 1,
-    // clipboard log in recorded sessions
+    // clipboard log in recorded sessions (not-applicable)
     wrm = 2,
     // clipboard log in recorded meta
     meta = 4,
@@ -183,11 +183,45 @@ operator << (std::basic_ostream<Ch, Tr> & os, ClipboardLogFlags e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class ClipboardLogFlagsCP {
+    none = 0,
+    // clipboard log in syslog
+    syslog = 1,
+    // clipboard log in recorded sessions
+    wrm = 2,
+    // clipboard log in session meta
+    meta = 4,
+};
+
+inline bool is_valid_enum_value(ClipboardLogFlagsCP e)
+{
+    return static_cast<unsigned long>(e) <= 7;
+}
+
+inline ClipboardLogFlagsCP operator | (ClipboardLogFlagsCP x, ClipboardLogFlagsCP y)
+{ return static_cast<ClipboardLogFlagsCP>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
+inline ClipboardLogFlagsCP operator & (ClipboardLogFlagsCP x, ClipboardLogFlagsCP y)
+{ return static_cast<ClipboardLogFlagsCP>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
+inline ClipboardLogFlagsCP operator ~ (ClipboardLogFlagsCP x)
+{ return static_cast<ClipboardLogFlagsCP>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(7)); }
+inline ClipboardLogFlagsCP operator + (ClipboardLogFlagsCP & x, ClipboardLogFlagsCP y) { return x | y; }
+inline ClipboardLogFlagsCP operator - (ClipboardLogFlagsCP & x, ClipboardLogFlagsCP y) { return x & ~y; }
+inline ClipboardLogFlagsCP & operator |= (ClipboardLogFlagsCP & x, ClipboardLogFlagsCP y) { return x = x | y; }
+inline ClipboardLogFlagsCP & operator &= (ClipboardLogFlagsCP & x, ClipboardLogFlagsCP y) { return x = x & y; }
+inline ClipboardLogFlagsCP & operator += (ClipboardLogFlagsCP & x, ClipboardLogFlagsCP y) { return x = x + y; }
+inline ClipboardLogFlagsCP & operator -= (ClipboardLogFlagsCP & x, ClipboardLogFlagsCP y) { return x = x - y; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, ClipboardLogFlagsCP e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 enum class FileSystemLogFlags {
     none = 0,
-    // (redirected) file system log in syslog
+    // (redirected) file system log in syslog (not-applicable)
     syslog = 1,
-    // (redirected) file system log in recorded sessions
+    // (redirected) file system log in recorded sessions (not-applicable)
     wrm = 2,
     // (redirected) file system log in recorded meta
     meta = 4,
@@ -214,6 +248,40 @@ inline FileSystemLogFlags & operator -= (FileSystemLogFlags & x, FileSystemLogFl
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, FileSystemLogFlags e)
+{ return os << static_cast<unsigned long>(e); }
+
+
+enum class FileSystemLogFlagsCP {
+    none = 0,
+    // (redirected) file system log in syslog
+    syslog = 1,
+    // (redirected) file system log in recorded sessions
+    wrm = 2,
+    // (redirected) file system log in session meta
+    meta = 4,
+};
+
+inline bool is_valid_enum_value(FileSystemLogFlagsCP e)
+{
+    return static_cast<unsigned long>(e) <= 7;
+}
+
+inline FileSystemLogFlagsCP operator | (FileSystemLogFlagsCP x, FileSystemLogFlagsCP y)
+{ return static_cast<FileSystemLogFlagsCP>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
+inline FileSystemLogFlagsCP operator & (FileSystemLogFlagsCP x, FileSystemLogFlagsCP y)
+{ return static_cast<FileSystemLogFlagsCP>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
+inline FileSystemLogFlagsCP operator ~ (FileSystemLogFlagsCP x)
+{ return static_cast<FileSystemLogFlagsCP>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(7)); }
+inline FileSystemLogFlagsCP operator + (FileSystemLogFlagsCP & x, FileSystemLogFlagsCP y) { return x | y; }
+inline FileSystemLogFlagsCP operator - (FileSystemLogFlagsCP & x, FileSystemLogFlagsCP y) { return x & ~y; }
+inline FileSystemLogFlagsCP & operator |= (FileSystemLogFlagsCP & x, FileSystemLogFlagsCP y) { return x = x | y; }
+inline FileSystemLogFlagsCP & operator &= (FileSystemLogFlagsCP & x, FileSystemLogFlagsCP y) { return x = x & y; }
+inline FileSystemLogFlagsCP & operator += (FileSystemLogFlagsCP & x, FileSystemLogFlagsCP y) { return x = x + y; }
+inline FileSystemLogFlagsCP & operator -= (FileSystemLogFlagsCP & x, FileSystemLogFlagsCP y) { return x = x - y; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, FileSystemLogFlagsCP e)
 { return os << static_cast<unsigned long>(e); }
 
 

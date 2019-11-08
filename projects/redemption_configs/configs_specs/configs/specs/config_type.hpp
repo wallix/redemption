@@ -57,8 +57,8 @@ inline void config_type_definition(type_enumerations & e)
 
     e.enumeration_flags("KeyboardLogFlags")
       .value("none")
-      .value("syslog", "keyboard log in syslog")
-      .value("wrm", "keyboard log in recorded sessions")
+      .value("syslog", "keyboard log in syslog (not-applicable)")
+      .value("wrm", "keyboard log in recorded sessions (not-applicable)")
       .value("meta", "keyboard log in recorded meta")
     ;
 
@@ -70,16 +70,30 @@ inline void config_type_definition(type_enumerations & e)
 
     e.enumeration_flags("ClipboardLogFlags")
       .value("none")
+      .value("syslog", "clipboard log in syslog (not-applicable)")
+      .value("wrm", "clipboard log in recorded sessions (not-applicable)")
+      .value("meta", "clipboard log in recorded meta")
+    ;
+
+    e.enumeration_flags("ClipboardLogFlagsCP")
+      .value("none")
       .value("syslog", "clipboard log in syslog")
       .value("wrm", "clipboard log in recorded sessions")
-      .value("meta", "clipboard log in recorded meta")
+      .value("meta", "clipboard log in session meta")
     ;
 
     e.enumeration_flags("FileSystemLogFlags")
       .value("none")
+      .value("syslog", "(redirected) file system log in syslog (not-applicable)")
+      .value("wrm", "(redirected) file system log in recorded sessions (not-applicable)")
+      .value("meta", "(redirected) file system log in recorded meta")
+    ;
+
+    e.enumeration_flags("FileSystemLogFlagsCP")
+      .value("none")
       .value("syslog", "(redirected) file system log in syslog")
       .value("wrm", "(redirected) file system log in recorded sessions")
-      .value("meta", "(redirected) file system log in recorded meta")
+      .value("meta", "(redirected) file system log in session meta")
     ;
 
     e.enumeration_set("ColorDepth", "Specifies the maximum color resolution (color depth) for client session:")

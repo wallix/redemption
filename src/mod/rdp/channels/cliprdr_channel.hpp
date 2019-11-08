@@ -424,6 +424,7 @@ private:
 
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
+    const bool param_dont_log_data_into_meta;
 
     const bool param_log_only_relevant_clipboard_activities;
 
@@ -453,6 +454,7 @@ public:
 
         uninit_checked<bool> dont_log_data_into_syslog;
         uninit_checked<bool> dont_log_data_into_wrm;
+        uninit_checked<bool> dont_log_data_into_meta;
 
         uninit_checked<bool> log_only_relevant_clipboard_activities;
 
@@ -474,6 +476,7 @@ public:
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+    , param_dont_log_data_into_meta(params.dont_log_data_into_meta)
     , param_log_only_relevant_clipboard_activities(params.log_only_relevant_clipboard_activities)
 
     , front(front)
@@ -630,7 +633,7 @@ private:
                 arc_info.message = info;
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                if (log_current_activity) {
+                if (!this->param_dont_log_data_into_meta && log_current_activity) {
                     this->report_message.log6(info, arc_info, tvtime());
                 }
 
@@ -730,7 +733,9 @@ private:
         arc_info.WallixBastionSHA256Digest = std::string(digest_s);
         arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
 
-        this->report_message.log6(info, arc_info, tvtime());
+        if (!this->param_dont_log_data_into_meta) {
+            this->report_message.log6(info, arc_info, tvtime());
+        }
 
         if (!this->param_dont_log_data_into_syslog) {
             LOG(LOG_INFO, "%s", info);
@@ -1451,7 +1456,7 @@ public:
                 arc_info.message = info;
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                if (log_current_activity) {
+                if (!this->param_dont_log_data_into_meta && log_current_activity) {
                     this->report_message.log6(info, arc_info, tvtime());
                 }
 

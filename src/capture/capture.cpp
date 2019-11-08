@@ -999,6 +999,14 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             }
         };
 
+        auto str_n_case_equal = [](Av var1, auto const& var2) {
+            if (std::size(var2) - 1 != var1.size()) {
+                return false;
+            }
+
+            return !strncasecmp(var1.data(), var2, var1.size());
+        };
+
         const char Format_PreferredDropEffect[]  = "Preferred DropEffect(";
         const char Format_FileGroupDescriptorW[] = "FileGroupDescriptorW(";
 
@@ -1104,8 +1112,8 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             if (auto const subitem_separator = find(parameters, '\x01')) {
                 auto const format = left(parameters, subitem_separator);
                 if ((!underlying_cast(meta_params.log_only_relevant_clipboard_activities)) ||
-                    (strncasecmp(Format_PreferredDropEffect, format.data(), std::min<>(format.size(), sizeof(Format_PreferredDropEffect) - 1)) &&
-                     strncasecmp(Format_FileGroupDescriptorW, format.data(), std::min<>(format.size(), sizeof(Format_FileGroupDescriptorW) - 1)))) {
+                    (!str_n_case_equal(format, Format_PreferredDropEffect) &&
+                     !str_n_case_equal(format, Format_FileGroupDescriptorW))) {
                     message.assign(order, {
                         {zstr(var1), format},
                         {zstr(var2), right(parameters, subitem_separator)},
@@ -1124,8 +1132,8 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 auto const remaining = right(parameters, subitem_separator);
                 if (auto const subitem_separator2 = find(remaining, '\x01')) {
                     if ((!underlying_cast(meta_params.log_only_relevant_clipboard_activities)) ||
-                        (strncasecmp(Format_PreferredDropEffect, format.data(), std::min<>(format.size(), sizeof(Format_PreferredDropEffect) - 1)) &&
-                         strncasecmp(Format_FileGroupDescriptorW, format.data(), std::min<>(format.size(), sizeof(Format_FileGroupDescriptorW) - 1)))) {
+                        (!str_n_case_equal(format, Format_PreferredDropEffect) &&
+                         !str_n_case_equal(format, Format_FileGroupDescriptorW))) {
 
                         Av partial_data = right(remaining, subitem_separator2);
 

@@ -325,8 +325,10 @@ private:
     const bool enable_ninegrid_bitmap;
     const bool disable_clipboard_log_syslog;
     const bool disable_clipboard_log_wrm;
+    const bool disable_clipboard_log_meta;
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
+    const bool disable_file_system_log_meta;
 
     std::string proxy_managed_drive_prefix;
 
@@ -775,8 +777,10 @@ public:
         , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
         , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
         , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
+        , disable_clipboard_log_meta(mod_rdp_params.disable_clipboard_log_meta)
         , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
+        , disable_file_system_log_meta(mod_rdp_params.disable_file_system_log_meta)
         , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
         , use_application_driver(mod_rdp_params.alternate_shell &&
               !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
@@ -1261,6 +1265,8 @@ private:
             this->disable_clipboard_log_syslog;
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_clipboard_log_wrm;
+        clipboard_virtual_channel_params.dont_log_data_into_meta         =
+            this->disable_clipboard_log_meta;
         clipboard_virtual_channel_params.log_only_relevant_clipboard_activities =
             this->log_only_relevant_clipboard_activities;
 
@@ -1315,6 +1321,8 @@ private:
             this->disable_file_system_log_syslog;
         file_system_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_file_system_log_wrm;
+        file_system_virtual_channel_params.dont_log_data_into_meta         =
+            this->disable_file_system_log_meta;
 
         file_system_virtual_channel_params.proxy_managed_drive_prefix      =
             this->proxy_managed_drive_prefix.c_str();

@@ -539,9 +539,13 @@ void config_spec_definition(Writer && W)
         }, disable_prefix_val, set(KeyboardLogFlags::syslog));
 
         W.sep();
-        W.member(advanced_in_gui, no_sesman, L, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog));
+        W.member(advanced_in_gui, rdp_connpolicy, sesman::authorize_ini_and_connpolicy{}, L, type_<ClipboardLogFlags>(), sesman::type_<ClipboardLogFlagsCP>{}, "disable_clipboard_log", desc{
+            "Disable clipboard log:"
+        }, disable_prefix_val, set(ClipboardLogFlags::syslog));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, L, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
+        W.member(advanced_in_gui, rdp_connpolicy, sesman::authorize_ini_and_connpolicy{}, L, type_<FileSystemLogFlags>(), sesman::type_<FileSystemLogFlagsCP>{}, "disable_file_system_log", desc{
+            "Disable (redirected) file system log:"
+        }, disable_prefix_val, set(FileSystemLogFlags::syslog));
         W.sep();
         W.member(hidden_in_gui, sesman_to_proxy, L, type_<bool>(), "rt_display", set(false));
         W.sep();

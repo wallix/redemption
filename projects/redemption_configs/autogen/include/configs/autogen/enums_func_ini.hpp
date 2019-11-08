@@ -151,6 +151,22 @@ inline parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags> /*t
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
+template<> struct zstr_buffer_traits<ClipboardLogFlagsCP> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<ClipboardLogFlagsCP> & buf,
+    cfg_s_type<ClipboardLogFlagsCP> /*type*/,
+    ClipboardLogFlagsCP x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(ClipboardLogFlagsCP & x, spec_type<ClipboardLogFlagsCP> /*type*/, array_view_const_char value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
+}
+
 template<> struct zstr_buffer_traits<FileSystemLogFlags> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(
@@ -163,6 +179,22 @@ inline array_view_const_char assign_zbuf_from_cfg(
 }
 
 inline parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags> /*type*/, array_view_const_char value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
+}
+
+template<> struct zstr_buffer_traits<FileSystemLogFlagsCP> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<FileSystemLogFlagsCP> & buf,
+    cfg_s_type<FileSystemLogFlagsCP> /*type*/,
+    FileSystemLogFlagsCP x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(FileSystemLogFlagsCP & x, spec_type<FileSystemLogFlagsCP> /*type*/, array_view_const_char value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }

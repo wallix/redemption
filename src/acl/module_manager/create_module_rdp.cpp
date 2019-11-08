@@ -160,8 +160,10 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.disable_clipboard_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
     mod_rdp_params.disable_clipboard_log_wrm           = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
+    mod_rdp_params.disable_clipboard_log_meta          = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::meta);
     mod_rdp_params.disable_file_system_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
     mod_rdp_params.disable_file_system_log_wrm         = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
+    mod_rdp_params.disable_file_system_log_meta        = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::meta);
     mod_rdp_params.session_probe_extra_system_processes               =
         ini.get<cfg::context::session_probe_extra_system_processes>().c_str();
     mod_rdp_params.session_probe_outbound_connection_monitoring_rules =

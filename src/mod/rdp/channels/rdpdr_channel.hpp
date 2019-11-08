@@ -103,6 +103,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     const bool        param_dont_log_data_into_syslog;
     const bool        param_dont_log_data_into_wrm;
+    const bool        param_dont_log_data_into_meta;
 
     const char* const param_proxy_managed_drive_prefix;
 
@@ -940,6 +941,7 @@ public:
 
         uninit_checked<bool> dont_log_data_into_syslog;
         uninit_checked<bool> dont_log_data_into_wrm;
+        uninit_checked<bool> dont_log_data_into_meta;
 
         uninit_checked<const char*> proxy_managed_drive_prefix;
 
@@ -966,6 +968,7 @@ public:
     , param_random_number(params.random_number)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+    , param_dont_log_data_into_meta(params.dont_log_data_into_meta)
     , param_proxy_managed_drive_prefix(params.proxy_managed_drive_prefix)
     , device_redirection_manager(
           *this,
@@ -1685,7 +1688,9 @@ public:
                             arc_info.message = info;
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                            if (!this->param_dont_log_data_into_meta) {
+                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                            }
 
                             if (!this->param_dont_log_data_into_syslog) {
                                 LOG(LOG_INFO, "%s", info);
@@ -1800,7 +1805,9 @@ public:
                                     arc_info.WallixBastionSHA256Digest = std::string(digest_s);
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    if (!this->param_dont_log_data_into_meta) {
+                                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    }
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1829,7 +1836,9 @@ public:
                                     arc_info.filePath = file_path;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    if (!this->param_dont_log_data_into_meta) {
+                                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    }
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1874,7 +1883,9 @@ public:
                                     arc_info.WallixBastionSHA256Digest = std::string(digest_s);
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                    this->report_message.log6(info, arc_info, tvtime());
+                                    if (!this->param_dont_log_data_into_meta) {
+                                        this->report_message.log6(info, arc_info, tvtime());
+                                    }
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1903,7 +1914,9 @@ public:
                                     arc_info.filePath = file_path;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    if (!this->param_dont_log_data_into_meta) {
+                                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    }
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -2051,7 +2064,9 @@ public:
                                 arc_info.filePath = file_path;
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                if (!this->param_dont_log_data_into_meta) {
+                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                }
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
@@ -2091,7 +2106,9 @@ public:
                                 arc_info.oldFilePath = target_iter->file_path;
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                if (!this->param_dont_log_data_into_meta) {
+                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                }
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);

@@ -855,6 +855,139 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
 }
 
 
+RED_AUTO_TEST_CASE(TestSessionSessionLogClipboard)
+{
+    BufTransport trans;
+
+    {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans, false, meta_params);
+        SessionLogAgent log_agent(meta, meta_params);
+
+        log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX=F\01s\01toto")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:40 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:41 - type=\"CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX\" format=\"F\" size=\"s\" partial_data=\"toto\"\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"de\" button=\"fg\"\n"
+    );
+}
+
+
+RED_AUTO_TEST_CASE(TestSessionSessionLogClipboard1)
+{
+    BufTransport trans;
+
+    {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::No,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans, false, meta_params);
+        SessionLogAgent log_agent(meta, meta_params);
+
+        log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX=F\01s\01toto")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:40 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"de\" button=\"fg\"\n"
+    );
+}
+
+
+
+
+
+RED_AUTO_TEST_CASE(TestSessionSessionLogRdpdr)
+{
+    BufTransport trans;
+
+    {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans, false, meta_params);
+        SessionLogAgent log_agent(meta, meta_params);
+
+        log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("DRIVE_REDIRECTION_READ=toto.txt")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:40 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:41 - type=\"DRIVE_REDIRECTION_READ\" file_name=\"toto.txt\"\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"de\" button=\"fg\"\n"
+    );
+}
+
+
+RED_AUTO_TEST_CASE(TestSessionSessionLogRdpdr1)
+{
+    BufTransport trans;
+
+    {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::No,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans, false, meta_params);
+        SessionLogAgent log_agent(meta, meta_params);
+
+        log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("DRIVE_REDIRECTION_READ=toto.txt")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:40 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"de\" button=\"fg\"\n"
+    );
+}
+
+
 RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 {
     BufTransport trans;

@@ -46,6 +46,7 @@ namespace
 
         file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
         file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
+        file_system_virtual_channel_params.dont_log_data_into_meta      = false;
 
         file_system_virtual_channel_params.proxy_managed_drive_prefix   = "";
 

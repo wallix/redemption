@@ -74,8 +74,10 @@ struct ModRDPParams {
 
     bool disable_clipboard_log_syslog = false;
     bool disable_clipboard_log_wrm = false;
+    bool disable_clipboard_log_meta = false;
     bool disable_file_system_log_syslog = false;
     bool disable_file_system_log_wrm = false;
+    bool disable_file_system_log_meta = false;
 
     bool                         session_probe_use_clipboard_based_launcher = false;
     std::chrono::milliseconds    session_probe_launch_timeout {};
@@ -327,9 +329,11 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_meta);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_wrm);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_meta);
 
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
 

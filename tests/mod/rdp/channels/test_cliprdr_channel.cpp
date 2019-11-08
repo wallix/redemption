@@ -50,6 +50,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+    clipboard_virtual_channel_params.dont_log_data_into_meta   = false;
 
     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
@@ -85,6 +86,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+    clipboard_virtual_channel_params.dont_log_data_into_meta    = false;
 
     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
@@ -120,6 +122,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+    clipboard_virtual_channel_params.dont_log_data_into_meta   = false;
 
     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
@@ -155,6 +158,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+    clipboard_virtual_channel_params.dont_log_data_into_meta   = false;
 
     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
@@ -195,6 +199,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+    clipboard_virtual_channel_params.dont_log_data_into_meta    = false;
 
     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
@@ -255,6 +260,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+    clipboard_virtual_channel_params.dont_log_data_into_meta   = false;
 
     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
