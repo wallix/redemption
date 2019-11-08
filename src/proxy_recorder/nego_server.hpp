@@ -26,6 +26,8 @@
 #include "utils/utf.hpp"
 #include "core/RDP/nego.hpp"
 #include "proxy_recorder/extract_user_domain.hpp"
+#include "core/RDP/nla/nla_server_ntlm.hpp"
+
 
 class NegoServer
 {

@@ -87,10 +87,12 @@ target_renames = dict((
     ('ini_checker', 'rdpinichecker'),
     ('rdp_client', 'rdpclient'),
     ('proxy_recorder_cli', 'proxy_recorder'),
+    ('nla_server_cli', 'nla_server'),
 ))
 
 target_nosyslog = set((
     'proxy_recorder',
+    'nla_server',
     'rdpinichecker',
     'rdpclient',
     #'main_client_redemption',

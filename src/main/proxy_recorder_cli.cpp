@@ -63,11 +63,11 @@ public:
         if(pid == 0) {
             close(sck);
 
-            int nodelay = 1;
-            if (setsockopt(sck_in.fd(), IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
-                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
-                _exit(1);
-            }
+//            int nodelay = 1;
+//            if (setsockopt(sck_in.fd(), IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
+//                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
+//                _exit(1);
+//            }
 
             char finalPathBuffer[256];
             char const* finalPath = captureTemplate.format(
