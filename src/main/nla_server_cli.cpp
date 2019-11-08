@@ -128,7 +128,7 @@ public:
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
             }
-            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, this->nla_username, this->nla_password, this->verbosity > 8);
+            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, this->nla_username, this->nla_password, true);
             this->pstate = PState::NEGOTIATING_FRONT_NLA;
         }
         return cr_tpdu;
@@ -136,17 +136,21 @@ public:
 
     void front_nla(Transport & trans, TpduBuffer & buffer)
     {
-        auto [st, result] = this->nego_server->recv_data(buffer);
+        LOG(LOG_INFO, "starting NLA NegoServer");
+        auto [st, result] = this->nego_server->recv_data2(buffer);
         trans.send(result);
 
         switch (st) {
-        case credssp::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-        case credssp::State::Cont: break;
+        case credssp::State::Err: {
+            LOG(LOG_INFO, "NLA NegoServer Authentication Failed");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+        }
+        case credssp::State::Cont: {
+            LOG(LOG_INFO, "NLA NegoServer Running");
+        }
+        break;
         case credssp::State::Finish:
-            if (this->verbosity > 4) {
-                LOG(LOG_INFO, "stop NegoServer");
-                LOG(LOG_INFO, "start NegoClient");
-            }
+            LOG(LOG_INFO, "NLA NegoServer Done");
             this->pstate = PState::NEGOTIATING_FRONT_INITIAL_PDU;
             break;
         }
@@ -154,6 +158,7 @@ public:
 
     void front_initial_pdu_negociation(TpduBuffer & buffer)
     {
+        LOG(LOG_INFO, "RDP Init");
         array_view_u8 currentPacket = buffer.current_pdu_buffer();
 
         if (!nla_username.empty()) {

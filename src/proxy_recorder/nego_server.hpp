@@ -33,7 +33,6 @@ class NegoServer
 {
     FixedRandom rand;
     LCGTime timeobj;
-    std::string extra_message;
     std::string user;
     std::string password;
     NtlmServer credssp;
@@ -94,11 +93,26 @@ public:
     {
     }
 
+    std::pair<credssp::State,std::vector<uint8_t>> recv_data2(TpduBuffer& buffer)
+    {
+        LOG(LOG_INFO, "NegoServer recv_data");
+        std::vector<uint8_t> result;
+        credssp::State st = credssp::State::Cont;
+        while (credssp::State::Cont == st) {
+            LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
+            result << this->credssp.authenticate_next(buffer.current_pdu_buffer());
+            st = this->credssp.state;
+        }
+        return {st, result};
+    }
+
     std::pair<credssp::State,std::vector<uint8_t>> recv_data(TpduBuffer& buffer)
     {
+        LOG(LOG_INFO, "NegoServer recv_data");
         std::vector<uint8_t> result;
         credssp::State st = credssp::State::Cont;
         while (buffer.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
+            LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
             result << this->credssp.authenticate_next(buffer.current_pdu_buffer());
             st = this->credssp.state;
         }
