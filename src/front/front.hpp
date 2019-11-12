@@ -1386,6 +1386,310 @@ public:
         // +---------------------------------+--------------------------------------------------------+
     }
 
+    void basic_settings_exchange(InStream & new_x224_stream)
+    {
+        {
+            // Basic Settings Exchange
+            // -----------------------
+
+            // Basic Settings Exchange: Basic settings are exchanged between the client and
+            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+            // Connect Initial PDU contains a GCC Conference Create Request, while the
+            // Connect Response PDU contains a GCC Conference Create Response.
+
+            // These two Generic Conference Control (GCC) packets contain concatenated
+            // blocks of settings data (such as core data, security data and network data)
+            // which are read by client and server
+
+            // Client                                                     Server
+            //    |--------------MCS Connect Initial PDU with-------------> |
+            //                   GCC Conference Create Request
+            //    | <------------MCS Connect Response PDU with------------- |
+            //                   GCC conference Create Response
+
+            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                "Front::incoming: Basic Settings Exchange");
+
+            X224::DT_TPDU_Recv x224(new_x224_stream);
+            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
+
+            // GCC User Data
+            // -------------
+            GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
+            // TODO ensure gcc_data substream is fully consumed
+
+            while (gcc_cr.payload.in_check_rem(4)) {
+                GCC::UserData::RecvFactory f(gcc_cr.payload);
+                switch (f.tag) {
+                    case CS_CORE:
+                    {
+                        GCC::UserData::CSCore cs_core;
+                        cs_core.recv(f.payload);
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_core.log("Front::incoming: Received from Client");
+                        }
+
+                        this->client_info.screen_info.width     = cs_core.desktopWidth;
+                        this->client_info.screen_info.height    = cs_core.desktopHeight;
+                        this->client_info.keylayout = cs_core.keyboardLayout;
+                        this->client_info.build     = cs_core.clientBuild;
+                        for (size_t i = 0; i < 15 ; i++) {
+                            this->client_info.hostname[i] = cs_core.clientName[i];
+                        }
+                        this->client_info.hostname[15] = 0;
+                        //LOG(LOG_INFO, "hostname=\"%s\"", this->client_info.hostname);
+                        this->client_info.screen_info.bpp = BitsPerPixel{8};
+                        switch (cs_core.postBeta2ColorDepth) {
+                        case GCC::UserData::RNS_UD_COLOR_8BPP:
+                            /*
+                            this->client_info.bpp =
+                                (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                            */
+                            this->client_info.screen_info.bpp = (
+                                      (cs_core.earlyCapabilityFlags & GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION)
+                                    ? BitsPerPixel{32}
+                                    : BitsPerPixel{checked_int(cs_core.highColorDepth)}
+                                );
+                        break;
+                        case GCC::UserData::RNS_UD_COLOR_16BPP_555:
+                            this->client_info.screen_info.bpp = BitsPerPixel{15};
+                        break;
+                        case GCC::UserData::RNS_UD_COLOR_16BPP_565:
+                            this->client_info.screen_info.bpp = BitsPerPixel{16};
+                        break;
+                        case GCC::UserData::RNS_UD_COLOR_24BPP:
+                            this->client_info.screen_info.bpp = BitsPerPixel{24};
+                        break;
+                        default:
+                        break;
+                        }
+                        LOG(LOG_INFO, "Client Color Depth is %d", int(this->client_info.screen_info.bpp));
+
+                        if (bool(this->ini.get<cfg::client::max_color_depth>())) {
+                            this->client_info.screen_info.bpp = std::min(
+                                this->client_info.screen_info.bpp,
+                                BitsPerPixel{checked_int(this->ini.get<cfg::client::max_color_depth>())});
+                        }
+                        this->client_support_monitor_layout_pdu =
+                            (cs_core.earlyCapabilityFlags &
+                             GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU);
+                    }
+                    break;
+                    case CS_SECURITY:
+                    {
+                        GCC::UserData::CSSecurity cs_sec;
+                        cs_sec.recv(f.payload);
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_sec.log("Front::incoming: Received from Client");
+                        }
+                    }
+                    break;
+                    case CS_NET:
+                    {
+                        GCC::UserData::CSNet cs_net;
+                        cs_net.recv(f.payload);
+                        for (uint32_t index = 0; index < cs_net.channelCount; index++) {
+                            const auto & channel_def = cs_net.channelDefArray[index];
+                            CHANNELS::ChannelDef channel_item;
+                            channel_item.name = CHANNELS::ChannelNameId(channel_def.name);
+                            channel_item.flags = channel_def.options;
+                            channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
+                            this->channel_list.push_back(channel_item);
+
+                            if (!this->rail_channel_id &&
+                                channel_item.name == channel_names::rail) {
+                                this->rail_channel_id = channel_item.chanid;
+                            }
+                        }
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_net.log("Front::incoming: Received from Client");
+                        }
+                    }
+                    break;
+                    case CS_CLUSTER:
+                    {
+                        GCC::UserData::CSCluster cs_cluster;
+                        cs_cluster.recv(f.payload);
+                        this->client_info.console_session =
+                            (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID))
+                            && (0 == cs_cluster.redirectedSessionID);
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_cluster.log("Front::incoming: Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MONITOR:
+                    {
+                        GCC::UserData::CSMonitor & cs_monitor =
+                            this->client_info.cs_monitor;
+                        cs_monitor.recv(f.payload);
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_monitor.log("Front::incoming: Receiving from Client");
+                        }
+
+                        Rect client_monitors_rect = this->client_info.cs_monitor.get_rect();
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: MonitorsRect=(%d, %d, %d, %d)",
+                            client_monitors_rect.x, client_monitors_rect.y,
+                            client_monitors_rect.cx, client_monitors_rect.cy);
+
+                        if (this->ini.get<cfg::globals::allow_using_multiple_monitors>()) {
+                            this->client_info.screen_info.width  = client_monitors_rect.cx + 1;
+                            this->client_info.screen_info.height = client_monitors_rect.cy + 1;
+                        }
+                    }
+                    break;
+                    case CS_MCS_MSGCHANNEL:
+                    {
+                        GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+                        cs_mcs_msgchannel.recv(f.payload);
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_mcs_msgchannel.log("Front::incoming: Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MULTITRANSPORT:
+                    {
+                        GCC::UserData::CSMultiTransport cs_multitransport;
+                        cs_multitransport.recv(f.payload);
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_multitransport.log("Front::incoming: Receiving from Client");
+                        }
+                    }
+                    break;
+                    default:
+                        LOG(LOG_WARNING, "Front::incoming: Unexpected data block tag %x", f.tag);
+                    break;
+                }
+            }
+            if (gcc_cr.payload.in_check_rem(1)) {
+                LOG(LOG_ERR, "Front::incoming: recv connect request parsing gcc data : short header");
+                throw Error(ERR_MCS_DATA_SHORT_HEADER);
+            }
+
+            write_packets(
+                this->trans,
+                [this](StreamSize<65536-1024>, OutStream & stream) {
+                    {
+                        GCC::UserData::SCCore sc_core;
+                        sc_core.version = 0x00080004;
+                        if (this->tls_client_active) {
+                            sc_core.length = 12;
+                            sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
+                        }
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            sc_core.log("Front::incoming: Sending to client");
+                        }
+                        sc_core.emit(stream);
+                    }
+                    // ------------------------------------------------------------------
+                    {
+                        GCC::UserData::SCNet sc_net;
+                        sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
+                        sc_net.channelCount = this->channel_list.size();
+                        for (size_t index = 0; index < this->channel_list.size(); ++index) {
+                            sc_net.channelDefArray[index].id = this->channel_list[index].chanid;
+                        }
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            sc_net.log("Front::incoming: Sending to client");
+                        }
+                        sc_net.emit(stream);
+                    }
+                    // ------------------------------------------------------------------
+                    if (this->tls_client_active) {
+                        GCC::UserData::SCSecurity sc_sec1;
+                        sc_sec1.encryptionMethod = 0;
+                        sc_sec1.encryptionLevel = 0;
+                        sc_sec1.length = 12;
+                        sc_sec1.serverRandomLen = 0;
+                        sc_sec1.serverCertLen = 0;
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            sc_sec1.log("Front::incoming: Sending to client");
+                        }
+                        sc_sec1.emit(stream);
+                    }
+                    else {
+                        GCC::UserData::SCSecurity sc_sec1;
+                        /*
+                        For now rsa_keys are not in a configuration file any more, but as we were not changing keys
+                        the values have been embedded in code and the key generator file removed from source code.
+
+                        It will be put back at some later time using a clean parser/writer module and sll calls
+                        coherent with the remaining of ReDemPtion code. For reference to historical key generator
+                        code look for utils/keygen.cpp in old repository code.
+
+                        references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
+                        */
+                        uint8_t rsa_keys_pub_mod[64] = {
+                            0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3,
+                            0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
+                            0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d,
+                            0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
+                            0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f,
+                            0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
+                            0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92,
+                            0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
+                        };
+                        memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
+
+                        uint8_t rsa_keys_pri_exp[64] = {
+                            0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47,
+                            0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
+                            0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5,
+                            0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
+                            0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B,
+                            0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
+                            0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C,
+                            0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
+                        };
+                        memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
+                        memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
+
+                        uint8_t rsa_keys_pub_sig[64] = {
+                            0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1,
+                            0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
+                            0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a,
+                            0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
+                            0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e,
+                            0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
+                            0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41,
+                            0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
+                        };
+
+                        uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
+
+                        sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
+                        sc_sec1.encryptionLevel = this->encryptionLevel;
+                        sc_sec1.serverRandomLen = 32;
+                        this->gen.random(this->server_random, 32);
+                        memcpy(sc_sec1.serverRandom, this->server_random, 32);
+                        sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
+                        sc_sec1.temporary = false;
+                        memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
+                        memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
+                        memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
+                            "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+                        memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
+                        memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
+                            "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            sc_sec1.log("Front::incoming: Sending to client");
+                        }
+                        sc_sec1.emit(stream);
+                    }
+                },
+                [](StreamSize<256>, OutStream & gcc_header, std::size_t packed_size) {
+                    GCC::Create_Response_Send(gcc_header, packed_size);
+                },
+                [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
+                    MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
+                },
+                X224::write_x224_dt_tpdu_fn{}
+            );
+        }
+        this->state = CHANNEL_ATTACH_USER;
+    }
 
     void incoming(Callback & cb) /*NOLINT*/
     {
@@ -1401,307 +1705,7 @@ public:
                 this->connection_initiation(new_x224_stream);
             break;
             case BASIC_SETTINGS_EXCHANGE:
-            {
-                // Basic Settings Exchange
-                // -----------------------
-
-                // Basic Settings Exchange: Basic settings are exchanged between the client and
-                // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-                // Connect Initial PDU contains a GCC Conference Create Request, while the
-                // Connect Response PDU contains a GCC Conference Create Response.
-
-                // These two Generic Conference Control (GCC) packets contain concatenated
-                // blocks of settings data (such as core data, security data and network data)
-                // which are read by client and server
-
-                // Client                                                     Server
-                //    |--------------MCS Connect Initial PDU with-------------> |
-                //                   GCC Conference Create Request
-                //    | <------------MCS Connect Response PDU with------------- |
-                //                   GCC conference Create Response
-
-                LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                    "Front::incoming: Basic Settings Exchange");
-
-                X224::DT_TPDU_Recv x224(new_x224_stream);
-                MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
-
-                // GCC User Data
-                // -------------
-                GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
-                // TODO ensure gcc_data substream is fully consumed
-
-                while (gcc_cr.payload.in_check_rem(4)) {
-                    GCC::UserData::RecvFactory f(gcc_cr.payload);
-                    switch (f.tag) {
-                        case CS_CORE:
-                        {
-                            GCC::UserData::CSCore cs_core;
-                            cs_core.recv(f.payload);
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                cs_core.log("Front::incoming: Received from Client");
-                            }
-
-                            this->client_info.screen_info.width     = cs_core.desktopWidth;
-                            this->client_info.screen_info.height    = cs_core.desktopHeight;
-                            this->client_info.keylayout = cs_core.keyboardLayout;
-                            this->client_info.build     = cs_core.clientBuild;
-                            for (size_t i = 0; i < 15 ; i++) {
-                                this->client_info.hostname[i] = cs_core.clientName[i];
-                            }
-                            this->client_info.hostname[15] = 0;
-                            //LOG(LOG_INFO, "hostname=\"%s\"", this->client_info.hostname);
-                            this->client_info.screen_info.bpp = BitsPerPixel{8};
-                            switch (cs_core.postBeta2ColorDepth) {
-                            case GCC::UserData::RNS_UD_COLOR_8BPP:
-                                /*
-                                this->client_info.bpp =
-                                    (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
-                                */
-                                this->client_info.screen_info.bpp = (
-                                          (cs_core.earlyCapabilityFlags & GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION)
-                                        ? BitsPerPixel{32}
-                                        : BitsPerPixel{checked_int(cs_core.highColorDepth)}
-                                    );
-                            break;
-                            case GCC::UserData::RNS_UD_COLOR_16BPP_555:
-                                this->client_info.screen_info.bpp = BitsPerPixel{15};
-                            break;
-                            case GCC::UserData::RNS_UD_COLOR_16BPP_565:
-                                this->client_info.screen_info.bpp = BitsPerPixel{16};
-                            break;
-                            case GCC::UserData::RNS_UD_COLOR_24BPP:
-                                this->client_info.screen_info.bpp = BitsPerPixel{24};
-                            break;
-                            default:
-                            break;
-                            }
-                            LOG(LOG_INFO, "Client Color Depth is %d", int(this->client_info.screen_info.bpp));
-
-                            if (bool(this->ini.get<cfg::client::max_color_depth>())) {
-                                this->client_info.screen_info.bpp = std::min(
-                                    this->client_info.screen_info.bpp,
-                                    BitsPerPixel{checked_int(this->ini.get<cfg::client::max_color_depth>())});
-                            }
-                            this->client_support_monitor_layout_pdu =
-                                (cs_core.earlyCapabilityFlags &
-                                 GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU);
-                        }
-                        break;
-                        case CS_SECURITY:
-                        {
-                            GCC::UserData::CSSecurity cs_sec;
-                            cs_sec.recv(f.payload);
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                cs_sec.log("Front::incoming: Received from Client");
-                            }
-                        }
-                        break;
-                        case CS_NET:
-                        {
-                            GCC::UserData::CSNet cs_net;
-                            cs_net.recv(f.payload);
-                            for (uint32_t index = 0; index < cs_net.channelCount; index++) {
-                                const auto & channel_def = cs_net.channelDefArray[index];
-                                CHANNELS::ChannelDef channel_item;
-                                channel_item.name = CHANNELS::ChannelNameId(channel_def.name);
-                                channel_item.flags = channel_def.options;
-                                channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
-                                this->channel_list.push_back(channel_item);
-
-                                if (!this->rail_channel_id &&
-                                    channel_item.name == channel_names::rail) {
-                                    this->rail_channel_id = channel_item.chanid;
-                                }
-                            }
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                cs_net.log("Front::incoming: Received from Client");
-                            }
-                        }
-                        break;
-                        case CS_CLUSTER:
-                        {
-                            GCC::UserData::CSCluster cs_cluster;
-                            cs_cluster.recv(f.payload);
-                            this->client_info.console_session =
-                                (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID))
-                                && (0 == cs_cluster.redirectedSessionID);
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                cs_cluster.log("Front::incoming: Receiving from Client");
-                            }
-                        }
-                        break;
-                        case CS_MONITOR:
-                        {
-                            GCC::UserData::CSMonitor & cs_monitor =
-                                this->client_info.cs_monitor;
-                            cs_monitor.recv(f.payload);
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                cs_monitor.log("Front::incoming: Receiving from Client");
-                            }
-
-                            Rect client_monitors_rect = this->client_info.cs_monitor.get_rect();
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                                "Front::incoming: MonitorsRect=(%d, %d, %d, %d)",
-                                client_monitors_rect.x, client_monitors_rect.y,
-                                client_monitors_rect.cx, client_monitors_rect.cy);
-
-                            if (this->ini.get<cfg::globals::allow_using_multiple_monitors>()) {
-                                this->client_info.screen_info.width  = client_monitors_rect.cx + 1;
-                                this->client_info.screen_info.height = client_monitors_rect.cy + 1;
-                            }
-                        }
-                        break;
-                        case CS_MCS_MSGCHANNEL:
-                        {
-                            GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
-                            cs_mcs_msgchannel.recv(f.payload);
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                cs_mcs_msgchannel.log("Front::incoming: Receiving from Client");
-                            }
-                        }
-                        break;
-                        case CS_MULTITRANSPORT:
-                        {
-                            GCC::UserData::CSMultiTransport cs_multitransport;
-                            cs_multitransport.recv(f.payload);
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                cs_multitransport.log("Front::incoming: Receiving from Client");
-                            }
-                        }
-                        break;
-                        default:
-                            LOG(LOG_WARNING, "Front::incoming: Unexpected data block tag %x", f.tag);
-                        break;
-                    }
-                }
-                if (gcc_cr.payload.in_check_rem(1)) {
-                    LOG(LOG_ERR, "Front::incoming: recv connect request parsing gcc data : short header");
-                    throw Error(ERR_MCS_DATA_SHORT_HEADER);
-                }
-
-                write_packets(
-                    this->trans,
-                    [this](StreamSize<65536-1024>, OutStream & stream) {
-                        {
-                            GCC::UserData::SCCore sc_core;
-                            sc_core.version = 0x00080004;
-                            if (this->tls_client_active) {
-                                sc_core.length = 12;
-                                sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
-                            }
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                sc_core.log("Front::incoming: Sending to client");
-                            }
-                            sc_core.emit(stream);
-                        }
-                        // ------------------------------------------------------------------
-                        {
-                            GCC::UserData::SCNet sc_net;
-                            sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
-                            sc_net.channelCount = this->channel_list.size();
-                            for (size_t index = 0; index < this->channel_list.size(); ++index) {
-                                sc_net.channelDefArray[index].id = this->channel_list[index].chanid;
-                            }
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                sc_net.log("Front::incoming: Sending to client");
-                            }
-                            sc_net.emit(stream);
-                        }
-                        // ------------------------------------------------------------------
-                        if (this->tls_client_active) {
-                            GCC::UserData::SCSecurity sc_sec1;
-                            sc_sec1.encryptionMethod = 0;
-                            sc_sec1.encryptionLevel = 0;
-                            sc_sec1.length = 12;
-                            sc_sec1.serverRandomLen = 0;
-                            sc_sec1.serverCertLen = 0;
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                sc_sec1.log("Front::incoming: Sending to client");
-                            }
-                            sc_sec1.emit(stream);
-                        }
-                        else {
-                            GCC::UserData::SCSecurity sc_sec1;
-                            /*
-                            For now rsa_keys are not in a configuration file any more, but as we were not changing keys
-                            the values have been embedded in code and the key generator file removed from source code.
-
-                            It will be put back at some later time using a clean parser/writer module and sll calls
-                            coherent with the remaining of ReDemPtion code. For reference to historical key generator
-                            code look for utils/keygen.cpp in old repository code.
-
-                            references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
-                            */
-                            uint8_t rsa_keys_pub_mod[64] = {
-                                0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3,
-                                0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
-                                0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d,
-                                0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
-                                0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f,
-                                0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
-                                0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92,
-                                0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
-                            };
-                            memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
-
-                            uint8_t rsa_keys_pri_exp[64] = {
-                                0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47,
-                                0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
-                                0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5,
-                                0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
-                                0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B,
-                                0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
-                                0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C,
-                                0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
-                            };
-                            memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
-                            memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
-
-                            uint8_t rsa_keys_pub_sig[64] = {
-                                0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1,
-                                0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
-                                0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a,
-                                0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
-                                0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e,
-                                0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
-                                0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41,
-                                0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
-                            };
-
-                            uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
-
-                            sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-                            sc_sec1.encryptionLevel = this->encryptionLevel;
-                            sc_sec1.serverRandomLen = 32;
-                            this->gen.random(this->server_random, 32);
-                            memcpy(sc_sec1.serverRandom, this->server_random, 32);
-                            sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
-                            sc_sec1.temporary = false;
-                            memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
-                            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
-                            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
-                                "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
-                            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
-                            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
-                                "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
-
-                            if (bool(this->verbose & Verbose::basic_trace)) {
-                                sc_sec1.log("Front::incoming: Sending to client");
-                            }
-                            sc_sec1.emit(stream);
-                        }
-                    },
-                    [](StreamSize<256>, OutStream & gcc_header, std::size_t packed_size) {
-                        GCC::Create_Response_Send(gcc_header, packed_size);
-                    },
-                    [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
-                        MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
-                    },
-                    X224::write_x224_dt_tpdu_fn{}
-                );
-            }
-            this->state = CHANNEL_ATTACH_USER;
+                this->basic_settings_exchange(new_x224_stream);
             break;
             case CHANNEL_ATTACH_USER:
             {
