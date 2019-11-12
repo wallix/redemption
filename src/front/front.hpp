@@ -1284,6 +1284,109 @@ public:
     TpduBuffer rbuf;
     size_t channel_list_index = 0;
 
+    void connection_initiation(InStream & new_x224_stream)
+    {
+        // Connection Initiation
+        // ---------------------
+
+        // The client initiates the connection by sending the server an X.224 Connection
+        //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
+        // PDU (class 0). From this point, all subsequent data sent between client and
+        // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
+
+        // Client                                                     Server
+        //    |------------X224 Connection Request PDU----------------> |
+        //    | <----------X224 Connection Confirm PDU----------------- |
+
+        if (bool(this->verbose & Verbose::basic_trace)) {
+            LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
+            LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU");
+        }
+
+        {
+            auto x224 = X224::CR_TPDU_Data_Recv(new_x224_stream, this->ini.get<cfg::client::bogus_neg_request>(), false);
+            if (x224._header_size != new_x224_stream.get_capacity()) {
+                LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
+                             " %zu bytes remains", new_x224_stream.get_capacity() - x224._header_size);
+            }
+            this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+        }
+
+        if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+            LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
+        }
+
+        if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+            (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
+            // Fallback to legacy security protocol (RDP) is allowed.
+            && this->ini.get<cfg::client::tls_fallback_legacy>()
+        ) {
+            LOG(LOG_INFO, "Front::incoming: Fallback to legacy security protocol");
+            this->tls_client_active = false;
+        }
+        else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) &&
+                    !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+            LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
+        }
+
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+            "Front::incoming: sending x224 connection confirm PDU");
+
+        {
+            uint8_t rdp_neg_type = 0;
+            uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
+            uint32_t rdp_neg_code = 0;
+            if (this->tls_client_active) {
+                LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled");
+                if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
+                    rdp_neg_type = X224::RDP_NEG_RSP;
+                    rdp_neg_code = X224::PROTOCOL_TLS;
+                    this->encryptionLevel = 0;
+                }
+                else {
+                    rdp_neg_type = X224::RDP_NEG_FAILURE;
+                    rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
+                }
+            }
+            else {
+                LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support not Enabled");
+            }
+
+            StaticOutStream<256> stream;
+            X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
+            this->trans.send(stream.get_bytes());
+        }
+
+        if (this->tls_client_active) {
+            this->trans.enable_server_tls(
+                this->ini.get<cfg::globals::certificate_password>(),
+                this->ini.get<cfg::client::ssl_cipher_list>().c_str(),
+                this->ini.get<cfg::client::tls_min_level>(),
+                this->ini.get<cfg::client::tls_max_level>(),
+                this->ini.get<cfg::client::show_common_cipher_list>());
+        }
+
+        this->state = BASIC_SETTINGS_EXCHANGE;
+
+        // 2.2.10.2 Early User Authorization Result PDU
+        // ============================================
+
+        // The Early User Authorization Result PDU is sent from server to client and is used
+        // to convey authorization information to the client. This PDU is only sent by the server
+        // if the client advertised support for it by specifying the PROTOCOL_HYBRID_EX (0x00000008)
+        // flag in the requestedProtocols field of the RDP Negotiation Request (section 2.2.1.1.1)
+        // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2) has completed.
+
+        // authorizationResult (4 bytes): A 32-bit unsigned integer. Specifies the authorization result.
+
+        // +---------------------------------+--------------------------------------------------------+
+        // | AUTHZ_SUCCESS 0x00000000        | The user has permission to access the server.          |
+        // +---------------------------------+--------------------------------------------------------+
+        // | AUTHZ_ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
+        // +---------------------------------+--------------------------------------------------------+
+    }
+
+
     void incoming(Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
@@ -1295,106 +1398,7 @@ public:
 
             switch (this->state) {
             case CONNECTION_INITIATION:
-            {
-                // Connection Initiation
-                // ---------------------
-
-                // The client initiates the connection by sending the server an X.224 Connection
-                //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
-                // PDU (class 0). From this point, all subsequent data sent between client and
-                // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
-
-                // Client                                                     Server
-                //    |------------X224 Connection Request PDU----------------> |
-                //    | <----------X224 Connection Confirm PDU----------------- |
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
-                    LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU");
-                }
-
-                {
-                    auto x224 = X224::CR_TPDU_Data_Recv(new_x224_stream, this->ini.get<cfg::client::bogus_neg_request>(), false);
-                    if (x224._header_size != new_x224_stream.get_capacity()) {
-                        LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
-                                     " %zu bytes remains", new_x224_stream.get_capacity() - x224._header_size);
-                    }
-                    this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
-                }
-
-                if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                    LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
-                }
-
-                if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-                    (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
-                    // Fallback to legacy security protocol (RDP) is allowed.
-                    && this->ini.get<cfg::client::tls_fallback_legacy>()
-                ) {
-                    LOG(LOG_INFO, "Front::incoming: Fallback to legacy security protocol");
-                    this->tls_client_active = false;
-                }
-                else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) &&
-                            !this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                    LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
-                }
-
-                LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                    "Front::incoming: sending x224 connection confirm PDU");
-
-                {
-                    uint8_t rdp_neg_type = 0;
-                    uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
-                    uint32_t rdp_neg_code = 0;
-                    if (this->tls_client_active) {
-                        LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled");
-                        if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
-                            rdp_neg_type = X224::RDP_NEG_RSP;
-                            rdp_neg_code = X224::PROTOCOL_TLS;
-                            this->encryptionLevel = 0;
-                        }
-                        else {
-                            rdp_neg_type = X224::RDP_NEG_FAILURE;
-                            rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
-                        }
-                    }
-                    else {
-                        LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support not Enabled");
-                    }
-
-                    StaticOutStream<256> stream;
-                    X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-                    this->trans.send(stream.get_bytes());
-                }
-
-                if (this->tls_client_active) {
-                    this->trans.enable_server_tls(
-                        this->ini.get<cfg::globals::certificate_password>(),
-                        this->ini.get<cfg::client::ssl_cipher_list>().c_str(),
-                        this->ini.get<cfg::client::tls_min_level>(),
-                        this->ini.get<cfg::client::tls_max_level>(),
-                        this->ini.get<cfg::client::show_common_cipher_list>());
-                }
-
-                this->state = BASIC_SETTINGS_EXCHANGE;
-
-                // 2.2.10.2 Early User Authorization Result PDU
-                // ============================================
-
-                // The Early User Authorization Result PDU is sent from server to client and is used
-                // to convey authorization information to the client. This PDU is only sent by the server
-                // if the client advertised support for it by specifying the PROTOCOL_HYBRID_EX (0x00000008)
-                // flag in the requestedProtocols field of the RDP Negotiation Request (section 2.2.1.1.1)
-                // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2) has completed.
-
-                // authorizationResult (4 bytes): A 32-bit unsigned integer. Specifies the authorization result.
-
-                // +---------------------------------+--------------------------------------------------------+
-                // | AUTHZ_SUCCESS 0x00000000        | The user has permission to access the server.          |
-                // +---------------------------------+--------------------------------------------------------+
-                // | AUTHZ_ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
-                // +---------------------------------+--------------------------------------------------------+
-            }
+                this->connection_initiation(new_x224_stream);
             break;
             case BASIC_SETTINGS_EXCHANGE:
             {

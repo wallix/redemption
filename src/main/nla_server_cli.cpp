@@ -165,7 +165,7 @@ public:
         LOG(LOG_INFO, "RDP Init");
         array_view_u8 currentPacket = buffer.current_pdu_buffer();
 
-        if (!nla_username.empty()) {
+        if (!this->nla_username.empty()) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "Back: force protocol PROTOCOL_HYBRID");
             }
@@ -230,23 +230,26 @@ public:
                     }
 
                     if (FD_ISSET(front_fd, &rset)) {
-                       buffer.load_data(trans);
+                        LOG(LOG_INFO, "Data Received from Client");
+                        buffer.load_data(trans);
                         switch(pstate) {
                         case PState::NEGOTIATING_FRONT_HELLO:
+                            LOG(LOG_INFO, "NEGOTIATING_FRONT_HELLO");
                             if (buffer.next(TpduBuffer::PDU)) {
                                 this->front_CR_TPDU = this->front_hello(trans, buffer);
                             }
                             break;
 
                         case PState::NEGOTIATING_FRONT_NLA:
+                            LOG(LOG_INFO, "NEGOTIATING_FRONT_NLA");
                             if (buffer.next(TpduBuffer::CREDSSP)) {
                                 this->front_nla(trans, buffer);
                             }
                             break;
 
                         case PState::NEGOTIATING_FRONT_INITIAL_PDU:
+                            LOG(LOG_INFO, "NEGOTIATING_FRONT_INITIAL_PDU");
                             if (buffer.next(TpduBuffer::PDU)) {
-                                buffer.load_data(trans);
                                 this->front_initial_pdu_negociation(buffer);
                             }
                             break;

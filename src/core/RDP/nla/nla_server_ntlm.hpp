@@ -269,7 +269,7 @@ public:
                     //     | ASC_REQ_SEQUENCE_DETECT
                     //     | ASC_REQ_EXTENDED_ERROR;
 
-                    NTLMAuthenticateMessage authenticate = recvNTLMAuthenticateMessage(ts_request_in.negoTokens);
+                    NTLMAuthenticateMessage authenticate = recvNTLMAuthenticateMessage(ts_request_in.negoTokens, true);
 
                     if (authenticate.has_mic) {
                         this->UseMIC = true;

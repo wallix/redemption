@@ -93,11 +93,17 @@ public:
         license_dir_path[sizeof(license_dir_path) - 1] = '\0';
         if (::recursive_create_directory(license_dir_path, S_IRWXU | S_IRWXG, -1) != 0) {
             LOG(LOG_ERR, "FileSystemLicenseStore::put_license(): Failed to create directory: \"%s\"", license_dir_path);
+            return false;
         }
 
         char filename_temporary[4096] = {};
-        ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/%s-XXXXXX.tmp",
+        auto res = ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/%s-XXXXXX.tmp",
             license_dir_path, license_index);
+        if (res < 0 || (strlen(license_dir_path)+strlen(license_index)+12 >= sizeof(filename_temporary))){
+            LOG(LOG_ERR, "FileSystemLicenseStore::put_license: temporary filename for Licence truncated: %s/%s",
+                license_dir_path, license_index);
+            return false;
+        }
         filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
         int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);

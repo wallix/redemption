@@ -1328,9 +1328,11 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
     return result;
 }
 
-inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_message) {
-    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
-    hexdump_d(raw_message);
+inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_message, bool verbose) {
+    LOG_IF(verbose, LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
+    if (verbose){
+        hexdump_d(raw_message);
+    }
 
     InStream stream(raw_message);
     NTLMAuthenticateMessage self;
@@ -1405,9 +1407,11 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
     for(auto & tmp: l){
         tmp.f->buffer.assign(pBegin + tmp.f->bufferOffset, 
                              pBegin + tmp.f->bufferOffset + tmp.len);
-        LOG(LOG_INFO, "%s: offset=%u len=%u buffer_len=%lu",
+        LOG_IF(verbose, LOG_INFO, "%s: offset=%u len=%u buffer_len=%lu",
             tmp.fieldname.c_str(), tmp.f->bufferOffset, tmp.len, tmp.f->buffer.size());
-        hexdump_d(tmp.f->buffer);
+        if (verbose){
+            hexdump_d(tmp.f->buffer);
+        }
     }
 
     if (self.has_mic){

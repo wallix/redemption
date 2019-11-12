@@ -559,7 +559,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(AuthMsg.has_mic, true);
     // AuthMsg.recv(ts_req.negoTokens);
 
-    AuthMsg = recvNTLMAuthenticateMessage(ts_req.negoTokens);
+    AuthMsg = recvNTLMAuthenticateMessage(ts_req.negoTokens, true);
 
     RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
     // AuthMsg.negoFlags.print();
@@ -654,7 +654,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     NTLMAuthenticateMessage AuthMsgDuplicate;
 
-    AuthMsgDuplicate = recvNTLMAuthenticateMessage(auth_message);
+    AuthMsgDuplicate = recvNTLMAuthenticateMessage(auth_message, true);
 
     RED_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
     logNtlmFlags(AuthMsgDuplicate.negoFlags.flags);
