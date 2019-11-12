@@ -323,6 +323,9 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType fil
     // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
     //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
     //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+    //
+    // sssss and eeeee only with FileType::Mwrm
+    // hhhhh and HHHHH only with has_checksum
 
     auto line_buf = this->line_reader.get_buf();
     auto const line = line_buf.data();
