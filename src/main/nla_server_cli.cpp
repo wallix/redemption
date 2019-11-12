@@ -137,7 +137,11 @@ public:
     void front_nla(Transport & trans, TpduBuffer & buffer)
     {
         LOG(LOG_INFO, "starting NLA NegoServer");
-        auto [st, result] = this->nego_server->recv_data2(buffer);
+        std::vector<uint8_t> result;
+        credssp::State st = credssp::State::Cont;
+        LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
+        result << this->nego_server->credssp.authenticate_next(buffer.current_pdu_buffer());
+        st = this->nego_server->credssp.state;
         trans.send(result);
 
         switch (st) {

@@ -47,32 +47,32 @@ extract_user_domain(char const* target_user)
     return ret;
 }
 
-static std::pair<std::vector<uint8_t>, std::vector<uint8_t>>
-extract_user_domain(bytes_view target_user)
+static std::pair<std::string, std::string>
+extract_user_domain(std::string_view target_user)
 {
-    std::vector<uint8_t> username;
-    std::vector<uint8_t> domain;
+    std::string username;
+    std::string domain;
 
-    std::vector<uint8_t> tmp(target_user.data(), target_user.data() + target_user.size());
+    std::string tmp(target_user.data(), target_user.data() + target_user.size());
     tmp.push_back(0);
 
-    uint8_t * separator = reinterpret_cast<uint8_t*>(strchr(reinterpret_cast<char *>(tmp.data()), '\\'));
+    char * separator = strchr(tmp.data(), '\\');
     if (separator) {
-        username.assign(separator+1, tmp.data()+tmp.size());
+        username.assign(separator+1, tmp.data()+tmp.size()-1);
         domain.assign(tmp.data(), separator);
     }
     else {
-        separator = reinterpret_cast<uint8_t*>(strchr(reinterpret_cast<char *>(tmp.data()), '@'));
+        separator = strchr(tmp.data(), '@');
         if (separator) {
             username.assign(tmp.data(), separator);
             domain.assign(separator+1, tmp.data()+tmp.size()-1);
         }
         else {
-            username.assign(tmp.data(), tmp.data()+tmp.size());
+            username.assign(tmp.data(), tmp.data()+tmp.size()-1);
             domain = {};
         }
     }
 
-    return std::pair<std::vector<uint8_t>, std::vector<uint8_t>>(username, domain);
+    return std::pair<std::string, std::string>(username, domain);
 }
 
