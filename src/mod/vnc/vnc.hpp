@@ -353,7 +353,9 @@ public:
             {
                 case State::Size:
                     this->state = this->read_size(buf);
-                    break;
+                    if (this->state != State::Data)
+                    	return false;
+                    REDEMPTION_CXX_FALLTHROUGH;
                 case State::Data:
                     this->state = this->read_data(buf, f);
                     if (this->state == State::Size) {
@@ -461,7 +463,7 @@ public:
         T value;
     };
 
-    class AuthResponseCtx
+    class SecurityResult
     {
         enum class State
         {
@@ -527,7 +529,7 @@ public:
             return Result::ok(i ? State::ReasonFail : State::Finish);
         }
     };
-    AuthResponseCtx auth_response_ctx;
+    SecurityResult auth_response_ctx;
 
     class MsLogonCtx
     {
@@ -1561,15 +1563,6 @@ private:
         	break;
         }
         case WAIT_VENCRYPT_AUTH_ANSWER: {
-        	if (s.in_remain() < 1)
-        		return false;
-        	uint8_t ack = s.in_uint8();
-        	if (ack != 1) {
-        		LOG(LOG_ERR, "server not ok with our authType");
-        		throw Error(ERR_VNC_CONNECTION_ERROR);
-        	}
-        	this->server_data_buf.advance(1);
-
         	switch(this->choosenAuth ) {
         	case VNC_AUTH_NONE:
         		this->state = WAIT_SECURITY_RESULT;
@@ -1577,19 +1570,31 @@ private:
         	case VNC_AUTH_VNC:
         		this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
         		break;
+
         	case VeNCRYPT_TLSNone:
         	case VeNCRYPT_TLSPlain:
         	case VeNCRYPT_TLSVnc:
 
         	case VeNCRYPT_X509None:
         	case VeNCRYPT_X509Plain:
-        	case VeNCRYPT_X509Vnc:
-        		this->tlsSwitch = !this->doTlsSwitch();
-        		return true;
+        	case VeNCRYPT_X509Vnc: {
+        		/* only TLS and X509 subtypes have an answer packet */
+				if (s.in_remain() < 1)
+					return false;
+				uint8_t ack = s.in_uint8();
+				if (ack != 1) {
+					LOG(LOG_ERR, "server not ok with our authType");
+					throw Error(ERR_VNC_CONNECTION_ERROR);
+				}
+				this->server_data_buf.advance(1);
+				this->tlsSwitch = !this->doTlsSwitch();
+				break;
+        	}
         	default:
         		LOG(LOG_ERR, "unknown state");
         		throw Error(ERR_VNC_CONNECTION_ERROR);
         	}
+
         	break;
         }
         default:
