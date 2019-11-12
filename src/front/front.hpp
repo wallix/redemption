@@ -1691,6 +1691,108 @@ public:
         this->state = CHANNEL_ATTACH_USER;
     }
 
+    void channel_attach_user(InStream & new_x224_stream)
+    {
+        {
+            // Channel Connection
+            // ------------------
+
+            // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+            // followed by an MCS Attach User Request PDU to attach the primary user
+            // identity to the MCS domain.
+
+            // The server responds with an MCS Attach User Response PDU containing the user
+            // channel ID.
+
+            // The client then proceeds to join the :
+            // - user channel,
+            // - the input/output (I/O) channel
+            // - and all of the static virtual channels
+
+            // (the I/O and static virtual channel IDs are obtained from the data embedded
+            //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+            // The server confirms each channel with an MCS Channel Join Confirm PDU.
+            // (The client only sends a Channel Join Request after it has received the
+            // Channel Join Confirm for the previously sent request.)
+
+            // From this point, all subsequent data sent from the client to the server is
+            // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+            //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+            // addition to the data being wrapped by an X.224 Data PDU.
+
+            // Client                                                     Server
+            //    |-------MCS Erect Domain Request PDU--------------------> |
+            //    |-------MCS Attach User Request PDU---------------------> |
+
+            //    | <-----MCS Attach User Confirm PDU---------------------- |
+
+            //    |-------MCS Channel Join Request PDU--------------------> |
+            //    | <-----MCS Channel Join Confirm PDU--------------------- |
+
+            LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+                "Front::incoming: Channel Connection");
+
+            LOG_IF(bool(this->verbose), LOG_INFO,
+                "Front::incoming: Recv MCS::ErectDomainRequest");
+            {
+                assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
+                X224::DT_TPDU_Recv x224(new_x224_stream);
+                MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            }
+        }
+        this->state = CHANNEL_JOIN_REQUEST;
+    }
+
+    void channel_join_request(InStream & new_x224_stream)
+    {
+        LOG_IF(bool(this->verbose), LOG_INFO,
+            "Front::incoming: Recv MCS::AttachUserRequest");
+        {
+            X224::DT_TPDU_Recv x224(new_x224_stream);
+            MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+        }
+
+       if (this->ini.get<cfg::client::bogus_user_id>()) {
+            // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
+            //  when unexpected channel id is received.
+            this->userid = 32;
+        }
+
+        LOG_IF(bool(this->verbose), LOG_INFO,
+            "Front::incoming: Send MCS::AttachUserConfirm userid=%u", this->userid);
+
+        write_packets(
+            this->trans,
+            [this](StreamSize<256>, OutStream & mcs_data) {
+                MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
+            },
+            X224::write_x224_dt_tpdu_fn{}
+        );
+        this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
+    }
+
+    void channel_join_confirm_user_id(InStream & new_x224_stream)
+    {
+        this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv &mcs) {
+            this->userid = mcs.initiator;
+        });
+        this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
+    }
+
+    void channel_join_confirm_check_user_id(InStream & new_x224_stream)
+    {
+        this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv & mcs) {
+            if (mcs.initiator != this->userid) {
+                LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                throw Error(ERR_MCS_BAD_USERID);
+            }
+        });
+        this->channel_list_index = 0;
+        this->state = CHANNEL_JOIN_CONFIRM_LOOP;
+    }
+
+
     void incoming(Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
@@ -1708,105 +1810,17 @@ public:
                 this->basic_settings_exchange(new_x224_stream);
             break;
             case CHANNEL_ATTACH_USER:
-            {
-                // Channel Connection
-                // ------------------
-
-                // Channel Connection: The client sends an MCS Erect Domain Request PDU,
-                // followed by an MCS Attach User Request PDU to attach the primary user
-                // identity to the MCS domain.
-
-                // The server responds with an MCS Attach User Response PDU containing the user
-                // channel ID.
-
-                // The client then proceeds to join the :
-                // - user channel,
-                // - the input/output (I/O) channel
-                // - and all of the static virtual channels
-
-                // (the I/O and static virtual channel IDs are obtained from the data embedded
-                //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
-
-                // The server confirms each channel with an MCS Channel Join Confirm PDU.
-                // (The client only sends a Channel Join Request after it has received the
-                // Channel Join Confirm for the previously sent request.)
-
-                // From this point, all subsequent data sent from the client to the server is
-                // wrapped in an MCS Send Data Request PDU, while data sent from the server to
-                //  the client is wrapped in an MCS Send Data Indication PDU. This is in
-                // addition to the data being wrapped by an X.224 Data PDU.
-
-                // Client                                                     Server
-                //    |-------MCS Erect Domain Request PDU--------------------> |
-                //    |-------MCS Attach User Request PDU---------------------> |
-
-                //    | <-----MCS Attach User Confirm PDU---------------------- |
-
-                //    |-------MCS Channel Join Request PDU--------------------> |
-                //    | <-----MCS Channel Join Confirm PDU--------------------- |
-
-                LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
-                    "Front::incoming: Channel Connection");
-
-                LOG_IF(bool(this->verbose), LOG_INFO,
-                    "Front::incoming: Recv MCS::ErectDomainRequest");
-                {
-                    assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
-                    X224::DT_TPDU_Recv x224(new_x224_stream);
-                    MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                }
-            }
-            this->state = CHANNEL_JOIN_REQUEST;
+                this->channel_attach_user(new_x224_stream);
             break;
             case CHANNEL_JOIN_REQUEST:
-            {
-                LOG_IF(bool(this->verbose), LOG_INFO,
-                    "Front::incoming: Recv MCS::AttachUserRequest");
-
-                {
-                    X224::DT_TPDU_Recv x224(new_x224_stream);
-                    MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                }
-
-                if (this->ini.get<cfg::client::bogus_user_id>()) {
-                    // To avoid bug in freerdp 0.7.x and Remmina 0.8.x that causes client disconnection
-                    //  when unexpected channel id is received.
-                    this->userid = 32;
-                }
-
-                LOG_IF(bool(this->verbose), LOG_INFO,
-                    "Front::incoming: Send MCS::AttachUserConfirm userid=%u", this->userid);
-
-                write_packets(
-                    this->trans,
-                    [this](StreamSize<256>, OutStream & mcs_data) {
-                        MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
-                    },
-                    X224::write_x224_dt_tpdu_fn{}
-                );
-                this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
-                break;
-            }
+                this->channel_join_request(new_x224_stream);
+            break;
             case CHANNEL_JOIN_CONFIRM_USER_ID:
-            {
-                this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv &mcs) {
-                    this->userid = mcs.initiator;
-                });
-                this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
-                break;
-            }
+                this->channel_join_confirm_user_id(new_x224_stream);
+            break;
             case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
-            {
-                this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv & mcs) {
-                    if (mcs.initiator != this->userid) {
-                        LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
-                        throw Error(ERR_MCS_BAD_USERID);
-                    }
-                });
-                this->state = CHANNEL_JOIN_CONFIRM_LOOP;
-                this->channel_list_index = 0;
-                break;
-            }
+                this->channel_join_confirm_check_user_id(new_x224_stream);
+            break;
             case CHANNEL_JOIN_CONFIRM_LOOP:
             {
                 if (this->channel_list_index < this->channel_list.size()) {
