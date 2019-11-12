@@ -1329,8 +1329,8 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
 }
 
 inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_message) {
-//    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
-//    hexdump_d(stream.remaining_bytes());
+    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
+    hexdump_d(raw_message);
 
     InStream stream(raw_message);
     NTLMAuthenticateMessage self;
@@ -1352,15 +1352,16 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
     struct TmpNtlmField {
         uint16_t len;
         NtlmField * f;
+        std::string fieldname;
     };
 
     std::array<TmpNtlmField, 6> l{{
-        {0, &self.LmChallengeResponse},
-        {0, &self.NtChallengeResponse},
-        {0, &self.DomainName},
-        {0, &self.UserName},
-        {0, &self.Workstation},
-        {0, &self.EncryptedRandomSessionKey}}};
+        {0, &self.LmChallengeResponse, "LmChallengeResponse"},
+        {0, &self.NtChallengeResponse, ""},
+        {0, &self.DomainName, "DomainName"},
+        {0, &self.UserName, "UserName"},
+        {0, &self.Workstation, "Workstation"},
+        {0, &self.EncryptedRandomSessionKey, "EncryptedRandomSessionKey"}}};
 
     uint32_t min_offset = stream.get_current()+stream.in_remain() - pBegin;
     for (auto & tmp: l){
@@ -1396,6 +1397,7 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
              return std::max(a, size_t(tmp.f->bufferOffset + tmp.len));
     });
     if (pBegin + maxp > stream.get_current()) {
+        LOG(LOG_INFO, "NTLM Message Authenticate Payload Truncated");
         stream.in_skip_bytes(pBegin + maxp - stream.get_current());
     }
 
@@ -1403,6 +1405,9 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
     for(auto & tmp: l){
         tmp.f->buffer.assign(pBegin + tmp.f->bufferOffset, 
                              pBegin + tmp.f->bufferOffset + tmp.len);
+        LOG(LOG_INFO, "%s: offset=%u len=%u buffer_len=%lu",
+            tmp.fieldname.c_str(), tmp.f->bufferOffset, tmp.len, tmp.f->buffer.size());
+        hexdump_d(tmp.f->buffer);
     }
 
     if (self.has_mic){

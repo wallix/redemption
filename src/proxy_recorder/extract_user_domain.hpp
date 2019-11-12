@@ -23,31 +23,6 @@
 #pragma once
 
 static std::pair<std::string, std::string>
-extract_user_domain(char const* target_user)
-{
-    std::pair<std::string, std::string> ret;
-    auto& [username, domain] = ret;
-
-    char const* separator = strchr(target_user, '\\');
-    if (separator) {
-        username = separator+1;
-        domain.assign(target_user, separator-target_user);
-    }
-    else {
-        separator = strchr(target_user, '@');
-        if (separator) {
-            username.assign(target_user, separator-target_user);
-            domain = separator+1;
-        }
-        else {
-            username = target_user;
-        }
-    }
-
-    return ret;
-}
-
-static std::pair<std::string, std::string>
 extract_user_domain(std::string_view target_user)
 {
     std::string username;
