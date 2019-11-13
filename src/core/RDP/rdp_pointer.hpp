@@ -22,6 +22,7 @@
 #pragma once
 
 #include "utils/bitfu.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/colors.hpp"
@@ -93,6 +94,9 @@ struct Pointer {
                                       const char * def,
                                       const unsigned hsx, const unsigned hsy,
                                       const unsigned inverted);
+
+    friend Pointer harmonize_pointer(Pointer const& src_ptr);
+
     enum  {
         POINTER_NULL             ,
         POINTER_NORMAL           ,
@@ -311,22 +315,25 @@ public:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-
+        //LOG(LOG_INFO, "hotspot.x=%u", hotspot.x);
         stream.out_uint16_le(hotspot.x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
+        //LOG(LOG_INFO, "hotspot.y=%u", hotspot.y);
         stream.out_uint16_le(hotspot.y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
+        //LOG(LOG_INFO, "dimensions.width=%u", dimensions.width);
         stream.out_uint16_le(dimensions.width);
 
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
 
+        //LOG(LOG_INFO, "dimensions.height=%u", dimensions.height);
         stream.out_uint16_le(dimensions.height);
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
@@ -348,6 +355,8 @@ public:
 //      is being sent, then each scan-line will consume 10 bytes (3 pixels per
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
+        //LOG(LOG_INFO, "xorMaskData=%zu", av_data.size());
+        //hexdump(av_data.data(), av_data.size());
         stream.out_copy_bytes(av_data.data(), av_data.size());
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
@@ -356,6 +365,8 @@ public:
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
+        //LOG(LOG_INFO, "andMaskData=%zu", av_mask.size());
+        //hexdump(av_mask.data(), av_mask.size());
         stream.out_copy_bytes(av_mask.data(), av_mask.size()); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
@@ -881,6 +892,46 @@ inline Pointer predefined_pointer(const unsigned width, const unsigned height,
     }
 
     return cursor;
+}
+
+inline Pointer harmonize_pointer(Pointer const& src_ptr) {
+    Pointer dest_ptr(CursorSize(::even_pad_length(src_ptr.dimensions.width), src_ptr.dimensions.height), Hotspot(src_ptr.hotspot.x, src_ptr.hotspot.y));
+
+    if (src_ptr.dimensions.width % 2) {
+        const unsigned int src_xor_line_length_in_byte = src_ptr.dimensions.width * 3;
+        const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
+        const unsigned int src_and_line_length_in_byte = ::nbbytes(src_ptr.dimensions.width);
+        const unsigned int src_and_padded_line_length_in_byte = ::even_pad_length(src_and_line_length_in_byte);
+
+        const unsigned int dest_xor_line_length_in_byte = dest_ptr.dimensions.width * 3;
+        const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
+        const unsigned int dest_and_line_length_in_byte = ::nbbytes(dest_ptr.dimensions.width);
+        const unsigned int dest_and_padded_line_length_in_byte = ::even_pad_length(dest_and_line_length_in_byte);
+
+        div_t const div_result = ::div(dest_ptr.dimensions.width, 8);
+
+        uint8_t const* src_xor  = src_ptr.data;
+        uint8_t const* src_and  = src_ptr.mask;
+        uint8_t* dest_xor = dest_ptr.data;
+        uint8_t* dest_and = dest_ptr.mask;
+        for (unsigned int i = 0; i < src_ptr.dimensions.height; ++i) {
+            memcpy(dest_xor, src_xor, src_xor_padded_line_length_in_byte);
+            memcpy(dest_and, src_and, src_and_padded_line_length_in_byte);
+
+            (*(dest_and + div_result.quot)) |= (1 << (8 - div_result.rem));
+
+            src_xor += src_xor_padded_line_length_in_byte;
+            src_and += src_and_padded_line_length_in_byte;
+
+            dest_xor += dest_xor_padded_line_length_in_byte;
+            dest_and += dest_and_padded_line_length_in_byte;
+        }
+    }
+    else {
+        dest_ptr = src_ptr;
+    }
+
+    return dest_ptr;
 }
 
 inline Pointer normal_pointer()

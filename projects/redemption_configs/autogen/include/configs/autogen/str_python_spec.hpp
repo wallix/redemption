@@ -276,6 +276,8 @@ enable_osd_4_eyes = boolean(default=False)
 #_advanced
 enable_remotefx = boolean(default=True)
 
+bogus_pointer_xormask_padding = boolean(default=False)
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side

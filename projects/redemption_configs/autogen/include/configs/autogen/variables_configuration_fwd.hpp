@@ -96,6 +96,7 @@ namespace cfg {
         struct recv_timeout;
         struct enable_osd_4_eyes;
         struct enable_remotefx;
+        struct bogus_pointer_xormask_padding;
     };
 
     struct mod_rdp {

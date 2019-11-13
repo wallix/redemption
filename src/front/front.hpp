@@ -899,7 +899,13 @@ public:
     }
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
-        this->graphics_update->set_pointer(cache_idx, cursor, mode);
+        if ((cursor.get_dimensions().width % 2) && ini.get<cfg::client::bogus_pointer_xormask_padding>()) {
+            Pointer new_cursor = harmonize_pointer(cursor);
+            this->graphics_update->set_pointer(cache_idx, new_cursor, mode);
+        }
+        else {
+            this->graphics_update->set_pointer(cache_idx, cursor, mode);
+        }
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override

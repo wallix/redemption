@@ -260,6 +260,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "enable_osd_4_eyes", set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "enable_remotefx", desc{"Enable front remoteFx"}, set(true));
+
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_pointer_xormask_padding", set(false));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
