@@ -1096,6 +1096,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct client::bogus_pointer_xormask_padding {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "bogus_pointer_xormask_padding";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// type: RdpCompression <br/>
     /// value = static_cast<type>(4) <br/>
@@ -5183,6 +5195,7 @@ struct client
 , cfg::client::recv_timeout
 , cfg::client::enable_osd_4_eyes
 , cfg::client::enable_remotefx
+, cfg::client::bogus_pointer_xormask_padding
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

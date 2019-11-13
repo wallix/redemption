@@ -28,6 +28,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -195,5 +196,20 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
                 gd.draw(bitmap_data, tile);
             }
         }
+
+        uint8_t pointer_data[] =
+/* 0000 */ "\x02\x00\x02\x00\x05\x00\x05\x00\x0a\x00\x64\x00\x00\x00\x00\x00" // ..........d.....
+/* 0010 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00" // ................
+/* 0020 */ "\xff\xff\xff\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff" // ................
+/* 0030 */ "\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\xff\x00\x00\x00\xff" // ................
+/* 0040 */ "\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\xff" // ................
+/* 0050 */ "\x00\x00\x00\xff\x00\x00\x00\xff\xff\xff\xff\xff\x00\x00\x00\x00" // ................
+/* 0060 */ "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00" // ................
+/* 0070 */ "\x88\x00\x00\x00\x00\x00\x00\x00\x88\x00"                         // ..........
+            ;
+        InStream pointer_stream({pointer_data, 122});
+        Pointer pointer = pointer_loader_new(BitsPerPixel{32}, pointer_stream, BGRPalette::classic_332(), false);
+
+        gd.set_pointer(9, pointer, gdi::GraphicApi::SetPointerMode::New);
     }
 }
