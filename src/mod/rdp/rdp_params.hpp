@@ -235,6 +235,8 @@ struct ModRDPParams {
 
     bool use_license_store = true;
 
+    bool accept_monitor_layout_change_if_capture_is_not_started = true;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -450,6 +452,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             split_domain);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_license_store);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             accept_monitor_layout_change_if_capture_is_not_started);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

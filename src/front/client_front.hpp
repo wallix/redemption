@@ -63,6 +63,11 @@ public:
         return false;
     }
 
+    bool is_capture_in_progress() const override
+    {
+        return false;
+    }
+
     bool is_capture_state() const
     {
         return this->is_capture_state_;
@@ -101,7 +106,6 @@ public:
     void draw(const RDPBitmapData & /*cmd*/, const Bitmap & /*bmp*/) override { }
     void set_palette(const BGRPalette& /*unused*/) override { }
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) override {}
-
 
     ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
         this->info.screen_info.bpp = bpp;

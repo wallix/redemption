@@ -612,6 +612,9 @@
 "#_advanced\n"
 "use_license_store = boolean(default=True)\n\n"
 
+"#_advanced\n"
+"accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)\n\n"
+
 "[metrics]\n\n"
 
 "#_advanced\n"

@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/array_view.hpp"
 
@@ -37,6 +38,7 @@ class FrontAPI : public gdi::GraphicApi
 public:
     virtual bool can_be_start_capture() = 0;
     virtual bool must_be_stop_capture() = 0;
+    virtual bool is_capture_in_progress() const = 0;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
@@ -50,6 +52,8 @@ public:
         remoteapp = 3
     };
     virtual ResizeResult server_resize(int width, int height, BitsPerPixel bpp) = 0;
+
+    virtual void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) { (void)monitor_layout_pdu_ref; }
 
     virtual void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) {}
 

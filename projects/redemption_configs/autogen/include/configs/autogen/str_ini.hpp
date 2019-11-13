@@ -612,6 +612,9 @@
 "#_advanced\n"
 "#use_license_store = 1\n\n"
 
+"#_advanced\n"
+"#accept_monitor_layout_change_if_capture_is_not_started = 0\n\n"
+
 "[metrics]\n\n"
 
 "#_advanced\n"

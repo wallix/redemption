@@ -858,6 +858,11 @@ public:
         this->is_pipe_ok = false;
         return true;
     }
+    bool is_capture_in_progress() const override
+    {
+        return false;
+    }
+
     bool is_connected() const { return this->is_pipe_ok; }
     void begin_update() override {}
     void end_update() override {}

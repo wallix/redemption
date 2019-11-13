@@ -167,7 +167,7 @@ class MonitorLayoutPDU {
 
 public:
     MonitorLayoutPDU()
-    : 
+    :
      monitorDefArray() {}
 
     void set(GCC::UserData::CSMonitor const & cs_monitor) {
@@ -210,6 +210,19 @@ public:
         }
     }
 
+    Dimension get_dimension() const {
+        Rect rect;
+
+        for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
+            rect = rect.disjunct(Rect(this->monitorDefArray[monitorIndex].left,
+                                      this->monitorDefArray[monitorIndex].top,
+                                      this->monitorDefArray[monitorIndex].right - this->monitorDefArray[monitorIndex].left + 1,
+                                      this->monitorDefArray[monitorIndex].bottom - this->monitorDefArray[monitorIndex].top + 1));
+        }
+
+        return Dimension(rect.cx, rect.cy);
+    }
+
     void recv(InStream & stream) {
         if (!stream.in_check_rem(4)) {
             LOG(LOG_ERR,
@@ -249,7 +262,7 @@ public:
         return this->monitorCount;
     }
 
-    void log(const char * msg)
+    void log(const char * msg) const
     {
         char buffer[2048];
 

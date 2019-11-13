@@ -175,6 +175,7 @@ namespace cfg {
         struct split_domain;
         struct wabam_uses_translated_remoteapp;
         struct use_license_store;
+        struct accept_monitor_layout_change_if_capture_is_not_started;
     };
 
     struct metrics {

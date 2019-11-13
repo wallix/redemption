@@ -121,6 +121,10 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
+    bool has_private_drawable() const {
+        return static_cast<bool>(this->gd_drawable_);
+    }
+
 private:
     // Title changed
     //@{
@@ -281,7 +285,7 @@ private:
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
 
-    bool capture_drawable = false;
+    bool const capture_drawable;
 
     SmartVideoCropping smart_video_cropping;
 
