@@ -507,9 +507,9 @@ private:
 
     /// \param fn  Fn(MCS::ChannelJoinRequest_Recv &)
     template<class Fn>
-    void channel_join_request_transmission(InStream & x224_data, Fn fn) {
+    void channel_join_request_transmission(InStream & new_x224_stream, Fn fn) {
         assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
-        X224::DT_TPDU_Recv x224(x224_data);
+        X224::DT_TPDU_Recv x224(new_x224_stream);
         MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
         fn(mcs);
@@ -1780,20 +1780,52 @@ public:
 
     void channel_join_confirm_user_id(InStream & new_x224_stream)
     {
-        this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv &mcs) {
-            this->userid = mcs.initiator;
-        });
+        assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
+        X224::DT_TPDU_Recv x224(new_x224_stream);
+        MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+        this->userid = mcs.initiator;
+
+        write_packets(
+            this->trans,
+            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+                MCS::ChannelJoinConfirm_Send(
+                    mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                    mcs.initiator, mcs.channelId,
+                    true, mcs.channelId,
+                    MCS::PER_ENCODING
+                );
+            },
+            X224::write_x224_dt_tpdu_fn{}
+        );
+
         this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
     }
 
     void channel_join_confirm_check_user_id(InStream & new_x224_stream)
     {
-        this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv & mcs) {
-            if (mcs.initiator != this->userid) {
-                LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
-                throw Error(ERR_MCS_BAD_USERID);
-            }
-        });
+        assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
+        X224::DT_TPDU_Recv x224(new_x224_stream);
+        MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+        if (mcs.initiator != this->userid) {
+            LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+            throw Error(ERR_MCS_BAD_USERID);
+        }
+
+        write_packets(
+            this->trans,
+            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+                MCS::ChannelJoinConfirm_Send(
+                    mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                    mcs.initiator, mcs.channelId,
+                    true, mcs.channelId,
+                    MCS::PER_ENCODING
+                );
+            },
+            X224::write_x224_dt_tpdu_fn{}
+        );
+
         this->channel_list_index = 0;
         this->state = CHANNEL_JOIN_CONFIRM_LOOP;
     }
