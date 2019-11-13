@@ -1964,10 +1964,7 @@ public:
         LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", unsigned(this->client_info.keylayout));
         this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
         
-        // Reply
-        
         if (bool(this->verbose & Verbose::channel)) {
-            LOG(LOG_INFO, "Front::incoming: licencing not client_info.is_mce");
             LOG(LOG_INFO, "Front::incoming: licencing send_lic_initial");
         }
 
