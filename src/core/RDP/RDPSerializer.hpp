@@ -119,9 +119,9 @@
 class RDPSerializer
 : public gdi::GraphicApi
 {
+public:
     static constexpr std::size_t SERIALIZER_HEADER_SIZE = 106;
 
-public:
     // Packet more than 16384 bytes can cause MSTSC to crash.
     enum { MAX_ORDERS_SIZE = 16384 };
 

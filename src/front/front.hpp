@@ -1169,7 +1169,7 @@ private:
         );
         if (this->mppc_enc) {
             this->max_data_block_size = std::min<size_t>(MAX_DATA_BLOCK_SIZE,
-                this->mppc_enc->get_max_data_block_size());
+                this->mppc_enc->get_max_data_block_size() - RDPSerializer::SERIALIZER_HEADER_SIZE);
         }
 
         if (this->orders.has_bmp_cache_persister()) {
