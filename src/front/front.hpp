@@ -4243,8 +4243,8 @@ protected:
         for (const Rect & rect1 : content.region.rects) {
         	int16_t x1 = rect1.x & ~3;
         	int16_t y1 = rect1.y & ~3;
-        	int16_t x2 = align4(rect1.right());
-        	int16_t y2 = align4(rect1.bottom());
+        	int16_t x2 = align4(rect1.eright());
+        	int16_t y2 = align4(rect1.ebottom());
             Rect rect(x1, y1, x2-x1, y2-y1);
 
             Bitmap bitmap(content.data, content.stride, rect);
