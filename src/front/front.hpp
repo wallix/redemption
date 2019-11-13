@@ -589,6 +589,7 @@ private:
         CHANNEL_JOIN_CONFIRM_USER_ID,
         CHANNEL_JOIN_CONFIRM_CHECK_USER_ID,
         CHANNEL_JOIN_CONFIRM_LOOP,
+        RDP_SECURITY_COMMENCEMENT,
         WAITING_FOR_LOGON_INFO,
         WAITING_FOR_ANSWER_TO_LICENCE,
         ACTIVATE_AND_PROCESS_DATA
@@ -1830,6 +1831,72 @@ public:
         this->state = CHANNEL_JOIN_CONFIRM_LOOP;
     }
 
+    // RDP Security Commencement
+    // -------------------------
+
+    // RDP Security Commencement: If standard RDP security methods are being
+    // employed and encryption is in force (this is determined by examining the data
+    // embedded in the GCC Conference Create Response packet) then the client sends
+    // a Security Exchange PDU containing an encrypted 32-byte random number to the
+    // server. This random number is encrypted with the public key of the server
+    // (the server's public key, as well as a 32-byte server-generated random
+    // number, are both obtained from the data embedded in the GCC Conference Create
+    //  Response packet).
+
+    // The client and server then utilize the two 32-byte random numbers to generate
+    // session keys which are used to encrypt and validate the integrity of
+    // subsequent RDP traffic.
+
+    // From this point, all subsequent RDP traffic can be encrypted and a security
+    // header is included with the data if encryption is in force (the Client Info
+    // and licensing PDUs are an exception in that they always have a security
+    // header). The Security Header follows the X.224 and MCS Headers and indicates
+    // whether the attached data is encrypted.
+
+    // Even if encryption is in force server-to-client traffic may not always be
+    // encrypted, while client-to-server traffic will always be encrypted by
+    // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+    // however).
+
+    // Client                                                     Server
+    //    |------Security Exchange PDU ---------------------------> |
+    void rdp_security_commencement(InStream & new_x224_stream)
+    {
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+            "Front::incoming: RDP Security Commencement");
+
+            LOG(LOG_INFO, "Front::incoming: Legacy RDP mode: expecting exchange packet");
+            X224::DT_TPDU_Recv x224(new_x224_stream);
+
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
+                MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                const char * reason = MCS::get_reason(mcs.reason);
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+            }
+
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            SEC::SecExchangePacket_Recv sec(mcs.payload);
+
+            uint8_t client_random[64] = {};
+            {
+                ssllib::ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
+            }
+            // beware order of parameters for key generation (decrypt/encrypt)
+            // is inversed between server and client
+            SEC::KeyBlock key_block(client_random, this->server_random);
+            memcpy(this->encrypt.sign_key, key_block.blob0, 16);
+            if (this->encrypt.encryptionMethod == 1) {
+                ssllib::sec_make_40bit(this->encrypt.sign_key);
+            }
+            this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
+            this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
+            this->state = WAITING_FOR_LOGON_INFO;
+    }
+
 
     void incoming(Callback & cb) /*NOLINT*/
     {
@@ -1878,77 +1945,19 @@ public:
                     ++this->channel_list_index;
                     break;
                 }
-
-                LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                    "Front::incoming: RDP Security Commencement");
-
-                // RDP Security Commencement
-                // -------------------------
-
-                // RDP Security Commencement: If standard RDP security methods are being
-                // employed and encryption is in force (this is determined by examining the data
-                // embedded in the GCC Conference Create Response packet) then the client sends
-                // a Security Exchange PDU containing an encrypted 32-byte random number to the
-                // server. This random number is encrypted with the public key of the server
-                // (the server's public key, as well as a 32-byte server-generated random
-                // number, are both obtained from the data embedded in the GCC Conference Create
-                //  Response packet).
-
-                // The client and server then utilize the two 32-byte random numbers to generate
-                // session keys which are used to encrypt and validate the integrity of
-                // subsequent RDP traffic.
-
-                // From this point, all subsequent RDP traffic can be encrypted and a security
-                // header is included with the data if encryption is in force (the Client Info
-                // and licensing PDUs are an exception in that they always have a security
-                // header). The Security Header follows the X.224 and MCS Headers and indicates
-                // whether the attached data is encrypted.
-
-                // Even if encryption is in force server-to-client traffic may not always be
-                // encrypted, while client-to-server traffic will always be encrypted by
-                // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-                // however).
-
-                // Client                                                     Server
-                //    |------Security Exchange PDU ---------------------------> |
-                if (!this->tls_client_active) {
-                    LOG(LOG_INFO, "Front::incoming: Legacy RDP mode: expecting exchange packet");
-                    X224::DT_TPDU_Recv x224(new_x224_stream);
-
-                    int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-                    if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
-                        LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
-                        MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                        const char * reason = MCS::get_reason(mcs.reason);
-                        LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
-                        this->is_client_disconnected = true;
-                        throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-                    }
-
-                    MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                    SEC::SecExchangePacket_Recv sec(mcs.payload);
-
-                    uint8_t client_random[64] = {};
-                    {
-                        ssllib::ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
-                    }
-                    // beware order of parameters for key generation (decrypt/encrypt)
-                    // is inversed between server and client
-                    SEC::KeyBlock key_block(client_random, this->server_random);
-                    memcpy(this->encrypt.sign_key, key_block.blob0, 16);
-                    if (this->encrypt.encryptionMethod == 1) {
-                        ssllib::sec_make_40bit(this->encrypt.sign_key);
-                    }
-                    this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
-                    this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
-                    this->state = WAITING_FOR_LOGON_INFO;
-                    break;
-                }
-
-                LOG(LOG_INFO, "Front::incoming: TLS mode: exchange packet disabled");
-                this->state = WAITING_FOR_LOGON_INFO;
-                REDEMPTION_CXX_FALLTHROUGH;
             }
+
+            this->state = RDP_SECURITY_COMMENCEMENT;
+
+            if (!this->tls_client_active) {
+                this->rdp_security_commencement(new_x224_stream);
+                break;
+            }
+
+            LOG(LOG_INFO, "Front::incoming: TLS mode: exchange packet disabled");
+            this->state = WAITING_FOR_LOGON_INFO;
+
+            REDEMPTION_CXX_FALLTHROUGH;
             case WAITING_FOR_LOGON_INFO:
             // Secure Settings Exchange
             // ------------------------
