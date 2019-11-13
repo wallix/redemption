@@ -295,6 +295,8 @@ void ModuleManager::create_mod_rdp(
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 
+    mod_rdp_params.use_license_store                   = ini.get<cfg::mod_rdp::use_license_store>();
+
     try {
         const char * const name = "RDP Target";
 

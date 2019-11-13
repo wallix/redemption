@@ -2254,6 +2254,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Stores CALs issued by the terminal servers. <br/>
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct mod_rdp::use_license_store {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "use_license_store";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
 
     /// type: bool <br/>
     /// value{false} <br/>
@@ -4839,6 +4852,7 @@ struct mod_rdp
 , cfg::mod_rdp::experimental_fix_too_long_cookie
 , cfg::mod_rdp::split_domain
 , cfg::mod_rdp::wabam_uses_translated_remoteapp
+, cfg::mod_rdp::use_license_store
 { static constexpr bool is_section = true; };
 
 struct metrics

@@ -608,6 +608,10 @@
 "#_hidden\n"
 "#wabam_uses_translated_remoteapp = 0\n\n"
 
+"# Stores CALs issued by the terminal servers.\n"
+"#_advanced\n"
+"#use_license_store = 1\n\n"
+
 "[metrics]\n\n"
 
 "#_advanced\n"

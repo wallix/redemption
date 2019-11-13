@@ -158,6 +158,8 @@ private:
 
     InfoPacketFlags info_packet_extra_flags;
 
+    const bool use_license_store;
+
     char clientAddr[512] = {};
     const bool has_managed_drive;
     const bool convert_remoteapp_to_desktop;
@@ -168,6 +170,7 @@ private:
 
     size_t send_channel_index;
 
+    char license_dir_path[1024] = {};
     size_t lic_layer_license_size = 0;
     uint8_t lic_layer_license_key[16] = {};
     uint8_t lic_layer_license_sign_key[16] = {};

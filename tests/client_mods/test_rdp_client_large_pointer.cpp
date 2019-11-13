@@ -116,6 +116,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     std::string allow_channels{"rdpsnd_audio_output"};
     mod_rdp_params.allow_channels                    = &allow_channels;
+    mod_rdp_params.use_license_store                 = false;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
@@ -217,6 +218,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     std::string allow_channels{"rdpsnd_audio_output"};
     mod_rdp_params.allow_channels                    = &allow_channels;
+    mod_rdp_params.use_license_store                 = false;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
