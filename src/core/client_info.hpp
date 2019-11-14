@@ -195,7 +195,7 @@ struct ClientInfo
         if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
             this->has_sound_code = true;
         }
-        if (infoPacket.flags & INFO_AUTOLOGON)){
+        if (infoPacket.flags & INFO_AUTOLOGON){
             this->rdp_autologin = 1;
         }
         if (infoPacket.flags & INFO_COMPRESSION){
