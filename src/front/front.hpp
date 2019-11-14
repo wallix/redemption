@@ -915,7 +915,14 @@ public:
     }
 
     void set_pointer(const Pointer & cursor) override {
-        this->graphics_update->set_pointer(cursor);
+        if ((cursor.get_dimensions().width % 2) && ini.get<cfg::client::bogus_pointer_xormask_padding>()) {
+            Pointer new_cursor = harmonize_pointer(cursor);
+            this->graphics_update->set_pointer(new_cursor);
+        }
+        else {
+            this->graphics_update->set_pointer(cursor);
+        }
+
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override

@@ -272,6 +272,8 @@
 "#_advanced\n"
 "#recv_timeout = 1000\n\n"
 
+"#bogus_pointer_xormask_padding = 0\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"
