@@ -590,7 +590,7 @@ private:
         CHANNEL_JOIN_CONFIRM_CHECK_USER_ID,
         CHANNEL_JOIN_CONFIRM_LOOP,
         WAITING_FOR_LOGON_INFO,
-        WAITING_FOR_ANSWER_TO_LICENCE,
+        WAITING_FOR_ANSWER_TO_LICENSE,
         ACTIVATE_AND_PROCESS_DATA
     } state = CONNECTION_INITIATION;
 
@@ -2048,7 +2048,466 @@ public:
         LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
             "Front::incoming: Waiting for answer to lic_initial");
     }    
-    
+
+
+    void license_packet(InStream & new_x224_stream)
+    {
+        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+            "Front::incoming: WAITING_FOR_ANSWER_TO_LICENSE");
+        X224::DT_TPDU_Recv x224(new_x224_stream);
+
+        int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+
+        if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
+            MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            const char * reason = MCS::get_reason(mcs.reason);
+            LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
+            this->is_client_disconnected = true;
+            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+        }
+
+        MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+        SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+
+        if (bool(this->verbose & Verbose::global_channel)) {
+            LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
+            hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
+        }
+
+        // Licensing
+        // ---------
+
+        // Licensing: The goal of the licensing exchange is to transfer a
+        // license from the server to the client.
+
+        // The client should store this license and on subsequent
+        // connections send the license to the server for validation.
+        // However, in some situations the client may not be issued a
+        // license to store. In effect, the packets exchanged during this
+        // phase of the protocol depend on the licensing mechanisms
+        // employed by the server. Within the context of this document
+        // we will assume that the client will not be issued a license to
+        // store. For details regarding more advanced licensing scenarios
+        // that take place during the Licensing Phase, see [MS-RDPELE].
+
+        // Client                                                     Server
+        //    | <------ License Error PDU Valid Client ---------------- |
+
+        if (sec.flags & SEC::SEC_LICENSE_PKT) {
+            LIC::RecvFactory flic(sec.payload);
+            switch (flic.tag) {
+            case LIC::ERROR_ALERT:
+            {
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: LIC::ERROR_ALERT");
+                // TODO We should check what is actually returned by this message, as it may be an error
+                LIC::ErrorAlert_Recv lic(sec.payload);
+                LOG(LOG_ERR, "Front::incoming: License Alert: error=%u transition=%u",
+                    lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+            }
+            break;
+            case LIC::NEW_LICENSE_REQUEST:
+            {
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: LIC::NEW_LICENSE_REQUEST");
+                LIC::NewLicenseRequest_Recv lic(sec.payload);
+                // TODO Instead of returning a license we return a message saying that no license is OK
+                this->send_valid_client_license_data();
+            }
+            break;
+            case LIC::PLATFORM_CHALLENGE_RESPONSE:
+                // TODO As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: LIC::PLATFORM_CHALLENGE_RESPONSE");
+                break;
+            case LIC::LICENSE_INFO:
+                // TODO As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: LIC::LICENSE_INFO");
+                // TODO Instead of returning a license we return a message saying that no license is OK
+                this->send_valid_client_license_data();
+                break;
+            default:
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: LICENSE_TAG %u unknown or unsupported by server",
+                    flic.tag);
+                break;
+            }
+            // license received, proceed with capabilities exchange
+
+            // Capabilities Exchange
+            // ---------------------
+
+            // Capabilities Negotiation: The server sends the set of capabilities it
+            // supports to the client in a Demand Active PDU. The client responds with its
+            // capabilities by sending a Confirm Active PDU.
+
+            // Client                                                     Server
+            //    | <------- Demand Active PDU ---------------------------- |
+            //    |--------- Confirm Active PDU --------------------------> |
+
+            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                "Front::incoming: send_demand_active");
+            this->send_demand_active();
+            this->send_monitor_layout();
+
+            LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
+        }
+        else {
+            LOG(LOG_INFO, "Front::incoming: non license packet");
+            // at this point license negociation is still ongoing
+            // most data packets should not be received
+            // actually even input is dubious,
+            // but rdesktop actually sends input data
+            // also processing this is a problem because input data packets are broken
+
+            LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                "Front::incoming: non license packet: still waiting for license");
+            ShareControl_Recv sctrl(sec.payload);
+
+            switch (sctrl.pduType) {
+            case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: Unexpected DEMANDACTIVE PDU while in license negociation");
+            break;
+            case PDUTYPE_CONFIRMACTIVEPDU:
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: Unexpected CONFIRMACTIVE PDU");
+                {
+                    // shareId(4) + originatorId(2)
+                    ::check_throw(sctrl.payload, 6, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRUNCATED);
+                    uint32_t share_id = sctrl.payload.in_uint32_le();
+                    uint16_t originatorId = sctrl.payload.in_uint16_le();
+                    this->process_confirm_active(sctrl.payload);
+                    (void)share_id;
+                    (void)originatorId;
+                    ::check_end(sctrl.payload, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRAILINGDATA);
+                }
+            break;
+            case PDUTYPE_DATAPDU: /* 7 */
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: Unexpected DATA PDU while in license negociation");
+            break;
+            case PDUTYPE_DEACTIVATEALLPDU:
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: Unexpected DEACTIVATEALL PDU while in license negociation");
+            break;
+            case PDUTYPE_SERVER_REDIR_PKT:
+                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                    "Front::incoming: Unsupported SERVER_REDIR_PKT while in license negociation");
+            break;
+            default:
+                LOG(LOG_WARNING, "Front::incoming: Unknown PDU type received while in license negociation");
+            break;
+            }
+            this->is_client_disconnected = true;
+            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+        }
+        LOG(LOG_WARNING, "Front::incoming: got DATA PDU instead of expected license PDU");
+        sec.payload.in_skip_bytes(sec.payload.in_remain());
+    }
+            
+    void activate_and_process_data(InStream & new_x224_stream, Callback & cb)
+    {
+        if (this->rbuf.current_pdu_is_fast_path()) { // fastpath
+            FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
+
+            int num_events = cfpie.numEvents;
+            for (uint8_t i = 0; i < num_events; i++) {
+                ::check_throw(cfpie.payload, 1, "Front::Fast-Path input event PDU", ERR_RDP_DATA_TRUNCATED);
+
+                uint8_t byte = cfpie.payload.in_uint8();
+                uint8_t eventCode  = (byte & 0xE0) >> 5;
+
+                switch (eventCode) {
+                    case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
+                    {
+                        FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
+
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                            "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
+                            ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
+
+                        if ((1 == num_events) &&
+                            (0 == i) &&
+                            (cfpie.payload.in_remain() == 6) &&
+                            (0x1D == ke.keyCode) &&
+                            (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
+                             BogusNumberOfFastpathInputEvent::pause_key_only)) {
+                            LOG(LOG_INFO,
+                                "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
+                            num_events = 4;
+                        }
+
+                        this->input_event_scancode(ke, cb, 0);
+                    }
+                    break;
+
+                    case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
+                    {
+                        FastPath::MouseEvent_Recv me(cfpie.payload, byte);
+
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                            "Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                            me.pointerFlags, me.xPos, me.yPos);
+
+                        this->mouse_x = me.xPos;
+                        this->mouse_y = me.yPos;
+                        if (this->up_and_running) {
+                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            this->has_user_activity = true;
+                        }
+
+                        if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                                SlowPath::PTRFLAGS_BUTTON2 |
+                                                SlowPath::PTRFLAGS_BUTTON3)) &&
+                            !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                            if (this->capture) {
+                                this->capture->possible_active_window_change();
+                            }
+                        }
+                    }
+                    break;
+
+                    // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
+                    case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                    {
+                        FastPath::MouseExEvent_Recv me(cfpie.payload, byte);
+
+                        LOG(LOG_WARNING,
+                            "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                            me.pointerFlags, me.xPos, me.yPos);
+
+                        if (this->up_and_running) {
+                            this->has_user_activity = true;
+                        }
+
+                        if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
+                                                SlowPath::PTRXFLAGS_BUTTON2)) &&
+                            !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
+                            if (this->capture) {
+                                this->capture->possible_active_window_change();
+                            }
+                        }
+                    }
+                    break;
+
+                    case FastPath::FASTPATH_INPUT_EVENT_SYNC:
+                    {
+                        FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
+
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                            "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
+                            se.eventFlags);
+                        LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
+                            static_cast<unsigned int>(se.eventFlags));
+
+                        this->keymap.synchronize(se.eventFlags);
+                        if (this->up_and_running) {
+                            cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
+                            this->has_user_activity = true;
+                        }
+                    }
+                    break;
+
+                    case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
+                    {
+                        FastPath::UnicodeKeyboardEvent_Recv uke(cfpie.payload, byte);
+
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                            "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
+                            uke.unicodeCode);
+
+                        if (this->up_and_running) {
+                            cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
+                            this->has_user_activity = true;
+                        }
+                    }
+                    break;
+
+                    default:
+                        LOG(LOG_INFO,
+                            "Front::incoming: Received unexpected Fast-Path PUD, eventCode = %u",
+                            eventCode);
+                        throw Error(ERR_RDP_FASTPATH);
+                }
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                    "Front::incoming: Received Fast-Path PUD done");
+
+                if (cfpie.payload.in_remain() &&
+                    (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
+                     BogusNumberOfFastpathInputEvent::all_input_events) &&
+                    !((i + 1) < num_events)) {
+                    LOG(LOG_INFO,
+                        "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%d",
+                        cfpie.payload.in_remain(), num_events);
+                    num_events++;
+                }
+            }
+
+            if (cfpie.payload.in_remain() != 0) {
+                LOG(LOG_WARNING, "Front::incoming: Received Fast-Path PUD, remains=%zu",
+                    cfpie.payload.in_remain());
+            }
+        }
+        else { // slowpath
+            // TODO We shall put a specific case when we get Disconnect Request
+            if (this->rbuf.current_pdu_get_type() == X224::DR_TPDU) {
+                // TODO What is the clean way to actually disconnect ?
+                X224::DR_TPDU_Recv x224(new_x224_stream);
+                LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
+                this->is_client_disconnected = true;
+                throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
+            }
+            if (this->rbuf.current_pdu_get_type() != X224::DT_TPDU) {
+                LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", this->rbuf.current_pdu_get_type());
+                throw Error(ERR_X224_EXPECTED_DATA_PDU);
+            }
+
+            X224::DT_TPDU_Recv x224(new_x224_stream);
+
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
+                MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                const char * reason = MCS::get_reason(mcs.reason);
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+            }
+
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+            if (bool(this->verbose & Verbose::sec_decrypted)) {
+                LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
+                hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
+            }
+
+            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                "Front::incoming: sec_flags=%x", sec.flags);
+
+            if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+                    "Front::incoming: channel_data channelId=%u", mcs.channelId);
+
+                size_t num_channel_src = this->channel_list.size();
+                for (size_t index = 0; index < this->channel_list.size(); index++) {
+                    if (this->channel_list[index].chanid == mcs.channelId) {
+                        num_channel_src = index;
+                        break;
+                    }
+                }
+
+                if (num_channel_src >= this->channel_list.size()) {
+                    LOG(LOG_ERR, "Front::incoming: Unknown Channel");
+                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                }
+
+                const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
+                if (bool(this->verbose & Verbose::channel)) {
+                    channel.log(mcs.channelId);
+                }
+
+                // length(4) + flags(4)
+                ::check_throw(sec.payload, 8, "Front::Data", ERR_MCS);
+
+                uint32_t length = sec.payload.in_uint32_le();
+                uint32_t flags  = sec.payload.in_uint32_le();
+                size_t chunk_size = sec.payload.in_remain();
+
+                if (this->up_and_running) {
+                    LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+                        "Front::incoming: channel_name=\"%s\"", channel.name);
+
+                    InStream chunk({sec.payload.get_current(), chunk_size});
+                    cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                }
+                else {
+                    LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+                        "Front::incoming: not up_and_running send_to_mod_channel dropped");
+                }
+                sec.payload.in_skip_bytes(chunk_size);
+            }
+            else {
+                while (sec.payload.get_current() < sec.payload.get_data_end()) {
+                    ShareControl_Recv sctrl(sec.payload);
+
+                    switch (sctrl.pduType) {
+                    case PDUTYPE_DEMANDACTIVEPDU:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received DEMANDACTIVEPDU (unsupported)");
+                        break;
+                    case PDUTYPE_CONFIRMACTIVEPDU:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received CONFIRMACTIVEPDU");
+                        {
+                            // shareId(4) + originatorId(2)
+                            ::check_throw(sctrl.payload, 6, "Front::Confirm Active PDU", ERR_RDP_DATA_TRUNCATED);
+
+                            uint32_t share_id = sctrl.payload.in_uint32_le();
+                            uint16_t originatorId = sctrl.payload.in_uint16_le();
+                            this->process_confirm_active(sctrl.payload);
+                            (void)share_id;
+                            (void)originatorId;
+                        }
+                        // reset caches, etc.
+                        this->reset();
+                        // resizing done
+                        if (this->client_info.screen_info.bpp == BitsPerPixel{8}) {
+                            RDPColCache cmd(0, BGRPalette::classic_332());
+                            this->orders.graphics_update_pdu().draw(cmd);
+                        }
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received CONFIRMACTIVEPDU done");
+
+                        break;
+                    case PDUTYPE_DATAPDU: /* 7 */
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                            "Front::incoming: Received DATAPDU");
+                        // this is rdp_process_data that will set up_and_running to 1
+                        // when fonts have been received
+                        // we will not exit this loop until we are in this state.
+                        //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                        this->process_data(sctrl.payload, cb);
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                            "Front::incoming: Received DATAPDU done");
+
+                        if (!sctrl.payload.check_end())
+                        {
+                            LOG(LOG_ERR,
+                                "Front::incoming: Trailing data after DATAPDU: remains=%zu",
+                                sctrl.payload.in_remain());
+                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                        }
+                        break;
+                    case PDUTYPE_DEACTIVATEALLPDU:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received DEACTIVATEALLPDU (unsupported)");
+                        break;
+                    case PDUTYPE_SERVER_REDIR_PKT:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
+                        break;
+                    default:
+                        LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
+                        break;
+                    }
+
+                    // TODO check all sctrl.payload data is consumed
+                }
+            }
+
+            if (!sec.payload.check_end())
+            {
+                LOG(LOG_ERR,
+                    "Front::incoming: Trailing data after SEC: remains=%zu",
+                    sec.payload.in_remain());
+                throw Error(ERR_SEC_TRAILINGDATA);
+            }
+        } // fastpath/slowpath
+    }
+
+
     void incoming(Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
@@ -2093,173 +2552,18 @@ public:
                 }
                 else {
                     this->secure_settings_exchange(new_x224_stream);
-                    this->state = WAITING_FOR_ANSWER_TO_LICENCE;
+                    this->state = WAITING_FOR_ANSWER_TO_LICENSE;
                 }
             break;    
 
             case WAITING_FOR_LOGON_INFO:            
                 this->secure_settings_exchange(new_x224_stream);
-                this->state = WAITING_FOR_ANSWER_TO_LICENCE;
+                this->state = WAITING_FOR_ANSWER_TO_LICENSE;
             break;
 
-            case WAITING_FOR_ANSWER_TO_LICENCE:
-            {
-                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                    "Front::incoming: WAITING_FOR_ANSWER_TO_LICENCE");
-                X224::DT_TPDU_Recv x224(new_x224_stream);
-
-                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-
-                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
-                    MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                    const char * reason = MCS::get_reason(mcs.reason);
-                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
-                    this->is_client_disconnected = true;
-                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-                }
-
-                MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
-                if (bool(this->verbose & Verbose::global_channel)) {
-                    LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
-                    hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
-                }
-
-                // Licensing
-                // ---------
-
-                // Licensing: The goal of the licensing exchange is to transfer a
-                // license from the server to the client.
-
-                // The client should store this license and on subsequent
-                // connections send the license to the server for validation.
-                // However, in some situations the client may not be issued a
-                // license to store. In effect, the packets exchanged during this
-                // phase of the protocol depend on the licensing mechanisms
-                // employed by the server. Within the context of this document
-                // we will assume that the client will not be issued a license to
-                // store. For details regarding more advanced licensing scenarios
-                // that take place during the Licensing Phase, see [MS-RDPELE].
-
-                // Client                                                     Server
-                //    | <------ Licence Error PDU Valid Client ---------------- |
-
-                if (sec.flags & SEC::SEC_LICENSE_PKT) {
-                    LIC::RecvFactory flic(sec.payload);
-                    switch (flic.tag) {
-                    case LIC::ERROR_ALERT:
-                    {
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: LIC::ERROR_ALERT");
-                        // TODO We should check what is actually returned by this message, as it may be an error
-                        LIC::ErrorAlert_Recv lic(sec.payload);
-                        LOG(LOG_ERR, "Front::incoming: License Alert: error=%u transition=%u",
-                            lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
-
-                    }
-                    break;
-                    case LIC::NEW_LICENSE_REQUEST:
-                    {
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: LIC::NEW_LICENSE_REQUEST");
-                        LIC::NewLicenseRequest_Recv lic(sec.payload);
-                        // TODO Instead of returning a license we return a message saying that no license is OK
-                        this->send_valid_client_license_data();
-                    }
-                    break;
-                    case LIC::PLATFORM_CHALLENGE_RESPONSE:
-                        // TODO As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: LIC::PLATFORM_CHALLENGE_RESPONSE");
-                        break;
-                    case LIC::LICENSE_INFO:
-                        // TODO As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: LIC::LICENSE_INFO");
-                        // TODO Instead of returning a license we return a message saying that no license is OK
-                        this->send_valid_client_license_data();
-                        break;
-                    default:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: LICENCE_TAG %u unknown or unsupported by server",
-                            flic.tag);
-                        break;
-                    }
-                    // licence received, proceed with capabilities exchange
-
-                    // Capabilities Exchange
-                    // ---------------------
-
-                    // Capabilities Negotiation: The server sends the set of capabilities it
-                    // supports to the client in a Demand Active PDU. The client responds with its
-                    // capabilities by sending a Confirm Active PDU.
-
-                    // Client                                                     Server
-                    //    | <------- Demand Active PDU ---------------------------- |
-                    //    |--------- Confirm Active PDU --------------------------> |
-
-                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                        "Front::incoming: send_demand_active");
-                    this->send_demand_active();
-                    this->send_monitor_layout();
-
-                    LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
-                    this->state = ACTIVATE_AND_PROCESS_DATA;
-                }
-                else {
-                    LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                        "Front::incoming: non licence packet: still waiting for licence");
-                    ShareControl_Recv sctrl(sec.payload);
-
-                    switch (sctrl.pduType) {
-                    case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: Unexpected DEMANDACTIVE PDU while in licence negociation");
-                        break;
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: Unexpected CONFIRMACTIVE PDU");
-                        {
-                            // shareId(4) + originatorId(2)
-                            ::check_throw(sctrl.payload, 6, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRUNCATED);
-                            uint32_t share_id = sctrl.payload.in_uint32_le();
-                            uint16_t originatorId = sctrl.payload.in_uint16_le();
-                            this->process_confirm_active(sctrl.payload);
-                            (void)share_id;
-                            (void)originatorId;
-                            ::check_end(sctrl.payload, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRAILINGDATA);
-                        }
-                        break;
-                    case PDUTYPE_DATAPDU: /* 7 */
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: Unexpected DATA PDU while in licence negociation");
-                        // at this point licence negociation is still ongoing
-                        // most data packets should not be received
-                        // actually even input is dubious,
-                        // but rdesktop actually sends input data
-                        // also processing this is a problem because input data packets are broken
-//                        this->process_data(sctrl.payload, cb);
-
-                        // TODO check all payload data is consumed
-                        break;
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: Unexpected DEACTIVATEALL PDU while in licence negociation");
-                        // TODO check all payload data is consumed
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                            "Front::incoming: Unsupported SERVER_REDIR_PKT while in licence negociation");
-                        // TODO check all payload data is consumed
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "Front::incoming: Unknown PDU type received while in licence negociation (%d)", sctrl.pduType);
-                        break;
-                    }
-                    // TODO Check why this is necessary when using loop connection ?
-                }
-                sec.payload.in_skip_bytes(sec.payload.in_remain());
-            }
+            case WAITING_FOR_ANSWER_TO_LICENSE:
+                this->license_packet(new_x224_stream);
+                this->state = ACTIVATE_AND_PROCESS_DATA;
             break;
 
             case ACTIVATE_AND_PROCESS_DATA:
@@ -2300,305 +2604,7 @@ public:
             // client and server after the connection has been finalized include "
             // connection management information and virtual channel messages (exchanged
             // between client-side plug-ins and server-side applications).
-            {
-                if (this->rbuf.current_pdu_is_fast_path()) {
-                    FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
-
-                    int num_events = cfpie.numEvents;
-                    for (uint8_t i = 0; i < num_events; i++) {
-                        ::check_throw(cfpie.payload, 1, "Front::Fast-Path input event PDU", ERR_RDP_DATA_TRUNCATED);
-
-                        uint8_t byte = cfpie.payload.in_uint8();
-                        uint8_t eventCode  = (byte & 0xE0) >> 5;
-
-                        switch (eventCode) {
-                            case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
-                            {
-                                FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
-
-                                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
-                                    ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
-
-                                if ((1 == num_events) &&
-                                    (0 == i) &&
-                                    (cfpie.payload.in_remain() == 6) &&
-                                    (0x1D == ke.keyCode) &&
-                                    (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
-                                     BogusNumberOfFastpathInputEvent::pause_key_only)) {
-                                    LOG(LOG_INFO,
-                                        "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
-                                    num_events = 4;
-                                }
-
-                                this->input_event_scancode(ke, cb, 0);
-                            }
-                            break;
-
-                            case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
-                            {
-                                FastPath::MouseEvent_Recv me(cfpie.payload, byte);
-
-                                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
-                                    me.pointerFlags, me.xPos, me.yPos);
-
-                                this->mouse_x = me.xPos;
-                                this->mouse_y = me.yPos;
-                                if (this->up_and_running) {
-                                    cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                                    this->has_user_activity = true;
-                                }
-
-                                if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
-                                                        SlowPath::PTRFLAGS_BUTTON2 |
-                                                        SlowPath::PTRFLAGS_BUTTON3)) &&
-                                    !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                                    if (this->capture) {
-                                        this->capture->possible_active_window_change();
-                                    }
-                                }
-                            }
-                            break;
-
-                            // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
-                            case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
-                            {
-                                FastPath::MouseExEvent_Recv me(cfpie.payload, byte);
-
-                                LOG(LOG_WARNING,
-                                    "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
-                                    me.pointerFlags, me.xPos, me.yPos);
-
-                                if (this->up_and_running) {
-                                    this->has_user_activity = true;
-                                }
-
-                                if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
-                                                        SlowPath::PTRXFLAGS_BUTTON2)) &&
-                                    !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                                    if (this->capture) {
-                                        this->capture->possible_active_window_change();
-                                    }
-                                }
-                            }
-                            break;
-
-                            case FastPath::FASTPATH_INPUT_EVENT_SYNC:
-                            {
-                                FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
-
-                                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
-                                    se.eventFlags);
-                                LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
-                                    static_cast<unsigned int>(se.eventFlags));
-
-                                this->keymap.synchronize(se.eventFlags);
-                                if (this->up_and_running) {
-                                    cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
-                                    this->has_user_activity = true;
-                                }
-                            }
-                            break;
-
-                            case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
-                            {
-                                FastPath::UnicodeKeyboardEvent_Recv uke(cfpie.payload, byte);
-
-                                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
-                                    uke.unicodeCode);
-
-                                if (this->up_and_running) {
-                                    cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
-                                    this->has_user_activity = true;
-                                }
-                            }
-                            break;
-
-                            default:
-                                LOG(LOG_INFO,
-                                    "Front::incoming: Received unexpected Fast-Path PUD, eventCode = %u",
-                                    eventCode);
-                                throw Error(ERR_RDP_FASTPATH);
-                        }
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                            "Front::incoming: Received Fast-Path PUD done");
-
-                        if (cfpie.payload.in_remain() &&
-                            (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
-                             BogusNumberOfFastpathInputEvent::all_input_events) &&
-                            !((i + 1) < num_events)) {
-                            LOG(LOG_INFO,
-                                "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%d",
-                                cfpie.payload.in_remain(), num_events);
-                            num_events++;
-                        }
-                    }
-
-                    if (cfpie.payload.in_remain() != 0) {
-                        LOG(LOG_WARNING, "Front::incoming: Received Fast-Path PUD, remains=%zu",
-                            cfpie.payload.in_remain());
-                    }
-                    break;
-                }
-
-                // TODO We shall put a specific case when we get Disconnect Request
-                if (this->rbuf.current_pdu_get_type() == X224::DR_TPDU) {
-                    // TODO What is the clean way to actually disconnect ?
-                    X224::DR_TPDU_Recv x224(new_x224_stream);
-                    LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
-                    this->is_client_disconnected = true;
-                    throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
-                }
-                if (this->rbuf.current_pdu_get_type() != X224::DT_TPDU) {
-                    LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", this->rbuf.current_pdu_get_type());
-                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
-                }
-
-                X224::DT_TPDU_Recv x224(new_x224_stream);
-
-                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
-                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
-                    MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                    const char * reason = MCS::get_reason(mcs.reason);
-                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
-                    this->is_client_disconnected = true;
-                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-                }
-
-                MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
-                if (bool(this->verbose & Verbose::sec_decrypted)) {
-                    LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
-                    hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
-                }
-
-                LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                    "Front::incoming: sec_flags=%x", sec.flags);
-
-                if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-                    LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
-                        "Front::incoming: channel_data channelId=%u", mcs.channelId);
-
-                    size_t num_channel_src = this->channel_list.size();
-                    for (size_t index = 0; index < this->channel_list.size(); index++) {
-                        if (this->channel_list[index].chanid == mcs.channelId) {
-                            num_channel_src = index;
-                            break;
-                        }
-                    }
-
-                    if (num_channel_src >= this->channel_list.size()) {
-                        LOG(LOG_ERR, "Front::incoming: Unknown Channel");
-                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                    }
-
-                    const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
-                    if (bool(this->verbose & Verbose::channel)) {
-                        channel.log(mcs.channelId);
-                    }
-
-                    // length(4) + flags(4)
-                    ::check_throw(sec.payload, 8, "Front::Data", ERR_MCS);
-
-                    uint32_t length = sec.payload.in_uint32_le();
-                    uint32_t flags  = sec.payload.in_uint32_le();
-                    size_t chunk_size = sec.payload.in_remain();
-
-                    if (this->up_and_running) {
-                        LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
-                            "Front::incoming: channel_name=\"%s\"", channel.name);
-
-                        InStream chunk({sec.payload.get_current(), chunk_size});
-
-                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
-                    }
-                    else {
-                        LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
-                            "Front::incoming: not up_and_running send_to_mod_channel dropped");
-                    }
-                    sec.payload.in_skip_bytes(chunk_size);
-                }
-                else {
-                    while (sec.payload.get_current() < sec.payload.get_data_end()) {
-                        ShareControl_Recv sctrl(sec.payload);
-
-                        switch (sctrl.pduType) {
-                        case PDUTYPE_DEMANDACTIVEPDU:
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                                "Front::incoming: Received DEMANDACTIVEPDU (unsupported)");
-                            break;
-                        case PDUTYPE_CONFIRMACTIVEPDU:
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                                "Front::incoming: Received CONFIRMACTIVEPDU");
-                            {
-                                // shareId(4) + originatorId(2)
-                                ::check_throw(sctrl.payload, 6, "Front::Confirm Active PDU", ERR_RDP_DATA_TRUNCATED);
-
-                                uint32_t share_id = sctrl.payload.in_uint32_le();
-                                uint16_t originatorId = sctrl.payload.in_uint16_le();
-                                this->process_confirm_active(sctrl.payload);
-                                (void)share_id;
-                                (void)originatorId;
-                            }
-                            // reset caches, etc.
-                            this->reset();
-                            // resizing done
-                            if (this->client_info.screen_info.bpp == BitsPerPixel{8}) {
-                                RDPColCache cmd(0, BGRPalette::classic_332());
-                                this->orders.graphics_update_pdu().draw(cmd);
-                            }
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                                "Front::incoming: Received CONFIRMACTIVEPDU done");
-
-                            break;
-                        case PDUTYPE_DATAPDU: /* 7 */
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                                "Front::incoming: Received DATAPDU");
-                            // this is rdp_process_data that will set up_and_running to 1
-                            // when fonts have been received
-                            // we will not exit this loop until we are in this state.
-                            //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-                            this->process_data(sctrl.payload, cb);
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                                "Front::incoming: Received DATAPDU done");
-
-                            if (!sctrl.payload.check_end())
-                            {
-                                LOG(LOG_ERR,
-                                    "Front::incoming: Trailing data after DATAPDU: remains=%zu",
-                                    sctrl.payload.in_remain());
-                                throw Error(ERR_MCS_PDU_TRAILINGDATA);
-                            }
-                            break;
-                        case PDUTYPE_DEACTIVATEALLPDU:
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                                "Front::incoming: Received DEACTIVATEALLPDU (unsupported)");
-                            break;
-                        case PDUTYPE_SERVER_REDIR_PKT:
-                            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                                "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
-                            break;
-                        default:
-                            LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
-                            break;
-                        }
-
-                        // TODO check all sctrl.payload data is consumed
-                    }
-                }
-
-                if (!sec.payload.check_end())
-                {
-                    LOG(LOG_ERR,
-                        "Front::incoming: Trailing data after SEC: remains=%zu",
-                        sec.payload.in_remain());
-                    throw Error(ERR_SEC_TRAILINGDATA);
-                }
-            }
+              this->activate_and_process_data(new_x224_stream, cb);
             break;
             }
         }
