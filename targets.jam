@@ -839,6 +839,22 @@ test-run tests/capture/test_cryptofile :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/cryptofile.hpp
 ;
+test-run tests/capture/test_mwrm3 :
+  $(REDEMPTION_TEST_PATH)/capture/test_mwrm3.cpp
+:
+  <library>crypto
+  <library>snappy
+  <library>src/core/error.o
+  <library>src/core/report_error.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/capture/mwrm3.hpp
+;
 test-run tests/capture/test_ocr :
   $(REDEMPTION_TEST_PATH)/capture/test_ocr.cpp
 :
@@ -5639,6 +5655,7 @@ alias test_module_manager : tests/acl/test_module_manager ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
 alias test_capture : tests/capture/test_capture ;
 alias test_cryptofile : tests/capture/test_cryptofile ;
+alias test_mwrm3 : tests/capture/test_mwrm3 ;
 alias test_ocr : tests/capture/test_ocr ;
 alias test_ppocr : tests/capture/test_ppocr ;
 alias test_video_capture : tests/capture/test_video_capture ;
@@ -5981,6 +5998,7 @@ alias test_module_manager.coverage : tests/acl/test_module_manager.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
 alias test_capture.coverage : tests/capture/test_capture.coverage ;
 alias test_cryptofile.coverage : tests/capture/test_cryptofile.coverage ;
+alias test_mwrm3.coverage : tests/capture/test_mwrm3.coverage ;
 alias test_video_capture.coverage : tests/capture/test_video_capture.coverage ;
 alias test_wrm_capture.coverage : tests/capture/test_wrm_capture.coverage ;
 alias test_match_finder.coverage : tests/capture/utils/test_match_finder.coverage ;
@@ -6310,6 +6328,7 @@ alias tests/capture/ocr/locale.norec :
 alias tests/capture.norec :
   tests/capture/test_capture
   tests/capture/test_cryptofile
+  tests/capture/test_mwrm3
   tests/capture/test_ocr
   tests/capture/test_ppocr
   tests/capture/test_video_capture
