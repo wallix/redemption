@@ -274,7 +274,13 @@ public:
                             session_reactor.execute_callbacks(mm.get_callback());
                         }
                         if (front_is_set) {
-                            front.incoming(mm.get_callback());
+                            front.rbuf.load_data(front.trans);
+                            while (front.rbuf.next(TpduBuffer::PDU))
+                            {
+                                bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                                uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                                front.incoming(tpdu, current_pdu_type, mm.get_callback());
+                            }
                         }
                     } catch (Error const& e) {
                         if (ERR_DISCONNECT_BY_USER == e.id) {

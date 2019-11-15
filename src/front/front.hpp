@@ -536,9 +536,12 @@ public:
 
 private:
     bool Revision2BitmapCachesAdvertised = false;
-
+    
+public:
+   // TODO: this should be extracted from the class
     Transport & trans;
 
+private:
     uint16_t userid = 0;
     uint8_t pub_mod[512];
     uint8_t pri_exp[512];
@@ -1264,7 +1267,6 @@ public:
                                           , total_length, flags, chunk_data);
     }
 
-    TpduBuffer rbuf;
     size_t channel_list_index = 0;
 
     void connection_initiation(bytes_view tpdu)
@@ -2544,76 +2546,71 @@ public:
         } // fastpath/slowpath
     }
 
+    // TODO: this should be extracted
+    TpduBuffer rbuf;
 
-    void incoming(Callback & cb) /*NOLINT*/
+    void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
-        this->rbuf.load_data(this->trans);
-
-        while (this->rbuf.next(TpduBuffer::PDU))
-        {
-            bytes_view tpdu = this->rbuf.current_pdu_buffer();
-            uint8_t current_pdu_type = this->rbuf.current_pdu_get_type();
-            switch (this->state) {
-            case CONNECTION_INITIATION:
-                this->connection_initiation(tpdu);
-                this->state = BASIC_SETTINGS_EXCHANGE;
-            break;
-            case BASIC_SETTINGS_EXCHANGE:
-                this->basic_settings_exchange(tpdu);
-                this->state = CHANNEL_ATTACH_USER;
-            break;
-            case CHANNEL_ATTACH_USER:
-                assert(current_pdu_type == Extractors::DT_TPDU);
-                this->channel_attach_user(tpdu);
-                this->state = CHANNEL_JOIN_REQUEST;
-            break;
-            case CHANNEL_JOIN_REQUEST:
-                assert(current_pdu_type == Extractors::DT_TPDU);
-                this->channel_join_request(tpdu);
-                this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
-            break;
-            case CHANNEL_JOIN_CONFIRM_USER_ID:
-                assert(current_pdu_type == Extractors::DT_TPDU);
-                this->channel_join_confirm_user_id(tpdu);
-                this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
-            break;
-            case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
-                assert(current_pdu_type == Extractors::DT_TPDU);
-                this->channel_join_confirm_check_user_id(tpdu);
-                this->state = CHANNEL_JOIN_CONFIRM_LOOP;
-            break;
-            case CHANNEL_JOIN_CONFIRM_LOOP:
-                if (this->channel_list_index < this->channel_list.size()) {
-                    this->channel_join_confirm(tpdu);
-                }
-                else if (!this->tls_client_active) {
-                    this->rdp_security_commencement(tpdu);
-                    this->state = WAITING_FOR_LOGON_INFO;
-                }
-                else {
-                    this->secure_settings_exchange(tpdu);
-                    this->state = WAITING_FOR_ANSWER_TO_LICENSE;
-                }
-            break;    
-
-            case WAITING_FOR_LOGON_INFO:
+        switch (this->state) {
+        case CONNECTION_INITIATION:
+            this->connection_initiation(tpdu);
+            this->state = BASIC_SETTINGS_EXCHANGE;
+        break;
+        case BASIC_SETTINGS_EXCHANGE:
+            this->basic_settings_exchange(tpdu);
+            this->state = CHANNEL_ATTACH_USER;
+        break;
+        case CHANNEL_ATTACH_USER:
+            assert(current_pdu_type == Extractors::DT_TPDU);
+            this->channel_attach_user(tpdu);
+            this->state = CHANNEL_JOIN_REQUEST;
+        break;
+        case CHANNEL_JOIN_REQUEST:
+            assert(current_pdu_type == Extractors::DT_TPDU);
+            this->channel_join_request(tpdu);
+            this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
+        break;
+        case CHANNEL_JOIN_CONFIRM_USER_ID:
+            assert(current_pdu_type == Extractors::DT_TPDU);
+            this->channel_join_confirm_user_id(tpdu);
+            this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
+        break;
+        case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
+            assert(current_pdu_type == Extractors::DT_TPDU);
+            this->channel_join_confirm_check_user_id(tpdu);
+            this->state = CHANNEL_JOIN_CONFIRM_LOOP;
+        break;
+        case CHANNEL_JOIN_CONFIRM_LOOP:
+            if (this->channel_list_index < this->channel_list.size()) {
+                this->channel_join_confirm(tpdu);
+            }
+            else if (!this->tls_client_active) {
+                this->rdp_security_commencement(tpdu);
+                this->state = WAITING_FOR_LOGON_INFO;
+            }
+            else {
                 this->secure_settings_exchange(tpdu);
                 this->state = WAITING_FOR_ANSWER_TO_LICENSE;
-            break;
-
-            case WAITING_FOR_ANSWER_TO_LICENSE:
-                this->license_packet(tpdu);
-                this->state = ACTIVATE_AND_PROCESS_DATA;
-            break;
-
-            case ACTIVATE_AND_PROCESS_DATA:
-                LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                    "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
-                this->activate_and_process_data(tpdu, current_pdu_type, cb);
-            break;
             }
+        break;    
+
+        case WAITING_FOR_LOGON_INFO:
+            this->secure_settings_exchange(tpdu);
+            this->state = WAITING_FOR_ANSWER_TO_LICENSE;
+        break;
+
+        case WAITING_FOR_ANSWER_TO_LICENSE:
+            this->license_packet(tpdu);
+            this->state = ACTIVATE_AND_PROCESS_DATA;
+        break;
+
+        case ACTIVATE_AND_PROCESS_DATA:
+            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
+            this->activate_and_process_data(tpdu, current_pdu_type, cb);
+        break;
         }
     }
 

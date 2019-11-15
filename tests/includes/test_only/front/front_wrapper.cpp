@@ -112,7 +112,13 @@ void FrontWrapper::set_up_and_running(bool set)
 
 void FrontWrapper::incoming(Callback & cb)
 {
-    d->front.incoming(cb);
+    d->front.rbuf.load_data(d->front.trans);
+    while (d->front.rbuf.next(TpduBuffer::PDU))
+    {
+        bytes_view tpdu = d->front.rbuf.current_pdu_buffer();
+        uint8_t current_pdu_type = d->front.rbuf.current_pdu_get_type();
+        d->front.incoming(tpdu, current_pdu_type, cb);
+    }
 }
 
 void FrontWrapper::set_ignore_rdesktop_bogus_clip(bool set)
