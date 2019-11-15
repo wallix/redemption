@@ -251,3 +251,193 @@ constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
 #define RED_REQUIRE_FUNC(fname, ...) [&]{                          \
     auto BOOST_PP_CAT(fctx__, __LINE__) = RED_TEST_INVOKER(fname); \
     RED_REQUIRE(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()
+
+
+//
+// COLLECTIONS
+//
+
+#include "utils/sugar/bytes_view.hpp"
+
+namespace redemption_unit_test__
+{
+    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
+
+    struct Put2Mem
+    {
+        size_t & pos;
+        bytes_view lhs;
+        bytes_view rhs;
+        char pattern;
+        char const* revert;
+
+        friend std::ostream & operator<<(std::ostream & out, Put2Mem const & x);
+    };
+
+    // based on element_compare from boost/test/tools/collection_comparison_op.hpp
+    template <class OP>
+    boost::test_tools::assertion_result
+    bytes_compare(bytes_view a, bytes_view b, OP op, char pattern, char const* revert)
+    {
+        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end(), op).first - a.begin();
+        boost::test_tools::assertion_result ar(true);
+
+        if (pos != a.size() || a.size() != b.size())
+        {
+            ar = false;
+
+            ar.message() << "[" << Put2Mem{pos, a, b, pattern, revert};
+            ar.message() << "\nMismatch at position " << pos;
+
+            if (a.size() != b.size())
+            {
+                ar.message()
+                    << "\nCollections size mismatch: "
+                    << a.size() << " != " << b.size()
+                ;
+            }
+        }
+
+        return ar;
+    }
+
+    struct u8_EQ { bool operator()(uint8_t a, uint8_t b) { return a == b; } };
+    struct u8_NE { bool operator()(uint8_t a, uint8_t b) { return a != b; } };
+    struct u8_LT { bool operator()(uint8_t a, uint8_t b) { return a < b; } };
+    struct u8_LE { bool operator()(uint8_t a, uint8_t b) { return a <= b; } };
+    struct u8_GT { bool operator()(uint8_t a, uint8_t b) { return a > b; } };
+    struct u8_GE { bool operator()(uint8_t a, uint8_t b) { return a >= b; } };
+
+
+    template<class T> struct is_byte_view : std::false_type {};
+    template<class T> struct is_byte_view<array_view<T const>> : std::false_type {};
+    template<class T> struct is_byte_view<array_view<T>> : is_byte_view<array_view<T const>> {};
+    template<> struct is_byte_view<bytes_view> : std::true_type {};
+    template<> struct is_byte_view<writable_bytes_view> : std::true_type {};
+    template<> struct is_byte_view<array_view_const_char> : std::true_type {};
+    template<> struct is_byte_view<array_view_const_s8> : std::true_type {};
+    template<> struct is_byte_view<array_view_const_u8> : std::true_type {};
+
+    template<class T> struct is_array_view : std::false_type {};
+    template<class T> struct is_array_view<array_view<T>>
+    : std::integral_constant<bool, !is_byte_view<array_view<T>>::value>
+    {};
+
+    template<class T, class U>
+    struct is_array_view_comparable : std::integral_constant<bool,
+        is_array_view<T>::value || is_array_view<U>::value
+    >
+    {};
+
+    template<class T, class U, bool, bool>
+    struct is_bytes_comparable_impl : std::false_type {};
+
+    template<class T, class U>
+    struct is_bytes_comparable_impl<T, U, true, true>
+    : std::true_type
+    {};
+
+    template<class T, class U>
+    struct is_bytes_comparable_impl<T, U, false, true>
+    : std::is_convertible<T, U>
+    {};
+
+    template<class T, class U>
+    struct is_bytes_comparable_impl<T, U, true, false>
+    : std::is_convertible<U, T>
+    {};
+
+
+    template<class T, class U>
+    struct is_bytes_comparable
+    : is_bytes_comparable_impl<T, U, is_byte_view<T>::value, is_byte_view<U>::value>
+    {};
+
+    // boost::unit_test::is_forward_iterable<array_view<T>> -> false (see bellow)
+    template<class T>
+    struct View : array_view<T const>
+    {
+        using array_view<T const>::array_view;
+    };
+}
+
+namespace boost {
+
+namespace unit_test {
+    // disable collection_compare for array_view like type
+    // but this disable also test_tools::per_element() and test_tools::lexicographic()
+    // BOOST_TEST(a == b, tt::per_element())
+    template<class T> struct is_forward_iterable<array_view<T>> : mpl::false_ {};
+    template<> struct is_forward_iterable<bytes_view> : mpl::false_ {};
+    template<> struct is_forward_iterable<writable_bytes_view> : mpl::false_ {};
+}
+
+namespace test_tools {
+namespace assertion {
+namespace op {
+
+// BOOST_TEST_FOR_EACH_COMP_OP(action)
+// action( oper, name, rev )
+#define DEFINE_COLLECTION_COMPARISON(oper, name, rev)                 \
+template<class T, class U>                                            \
+struct name<T, U, std::enable_if_t<                                   \
+    ::redemption_unit_test__::is_bytes_comparable<T, U>::value>>      \
+{                                                                     \
+    using result_type = assertion_result;                             \
+                                                                      \
+    static assertion_result                                           \
+    eval( bytes_view lhs, bytes_view rhs )                            \
+    {                                                                 \
+        return ::redemption_unit_test__::bytes_compare(lhs, rhs,      \
+            ::redemption_unit_test__::u8_##name(), 'a', revert());    \
+    }                                                                 \
+                                                                      \
+    template<class PrevExprType>                                      \
+    static void                                                       \
+    report( std::ostream&,                                            \
+            PrevExprType const&,                                      \
+            bytes_view const&)                                        \
+    {}                                                                \
+                                                                      \
+    static char const* revert()                                       \
+    { return " " #rev " "; }                                          \
+};                                                                    \
+                                                                      \
+template<class T, class U>                                            \
+struct name<T, U, std::enable_if_t<                                   \
+    ::redemption_unit_test__::is_array_view_comparable<T, U>::value>> \
+{                                                                     \
+    using result_type = assertion_result;                             \
+    using OP = name<T, U>;                                            \
+    using L = typename T::type;                                       \
+    using R = typename U::type;                                       \
+    using elem_op = op::name<L, R>;                                   \
+                                                                      \
+    static assertion_result                                           \
+    eval( T const& lhs, U const& rhs )                                \
+    {                                                                 \
+        return boost::test_tools::assertion::op::compare_collections( \
+            redemption_unit_test__::View<L const>{lhs},               \
+            redemption_unit_test__::View<R const>{rhs},               \
+            static_cast<boost::type<elem_op>*>(nullptr),              \
+            mpl::true_());                                            \
+    }                                                                 \
+                                                                      \
+    template<class PrevExprType>                                      \
+    static void                                                       \
+    report( std::ostream&,                                            \
+            PrevExprType const&,                                      \
+            U const&)                                                 \
+    {}                                                                \
+                                                                      \
+    static char const* revert()                                       \
+    { return " " #rev " "; }                                          \
+};
+
+BOOST_TEST_FOR_EACH_COMP_OP(DEFINE_COLLECTION_COMPARISON)
+#undef DEFINE_COLLECTION_COMPARISON
+
+} // namespace op
+} // namespace assertion
+} // namespace test_tools
+} // namespace boost

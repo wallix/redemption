@@ -327,10 +327,10 @@ namespace redemption_unit_test__
     {
         out << "\"";
         switch (x.pattern) {
-            #define CASE(c, print) case c: \
-                print(x.pos, out, x.lhs);  \
-                out << "\" != \"";         \
-                print(x.pos, out, x.rhs);  \
+            #define CASE(c, print) case c:       \
+                print(x.pos, out, x.lhs);        \
+                out << "\"" << x.revert << "\""; \
+                print(x.pos, out, x.rhs);        \
                 break
             CASE('c', put_ascii_bytes);
             CASE('C', put_ascii_bytes2);
@@ -375,7 +375,7 @@ void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::ope
     }
 }
 
-std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e)
+std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::Enum const& e)
 {
     out.write(e.name.data(), e.name.size()) << "{";
     if (e.is_signed) {
@@ -385,4 +385,12 @@ std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& 
         out << static_cast<unsigned long long>(e.x);
     }
     return out << "}";
+}
+
+std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::BytesView const& v)
+{
+    out << "\"";
+    ::redemption_unit_test__::put_auto_bytes(v.bytes.size(), out, v.bytes);
+    out << "\"";
+    return out;
 }

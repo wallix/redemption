@@ -17,9 +17,9 @@ msg=$esc'1m'
 
 sed -E "$@" -e '/^\x1b/n
 /^tests\//{
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): error:? in "([^"]+)": check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset'('$line'\2'$reset'): '$err'error'$reset' in "'$name'\3'$reset'": '$cat'check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): error:? in "([^"]+)": check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\](\]\. )?$/'$file'\1'$reset'('$line'\2'$reset'): '$err'error'$reset' in "'$name'\3'$reset'": '$cat'check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
 
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): fatal error:? in "([^"]+)": critical check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset'('$line'\2'$reset'): '$err'fatal error'$reset' in "'$name'\3'$reset'": '$cat'critical check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): fatal error:? in "([^"]+)": critical check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\](\]\. )?$/'$file'\1'$reset'('$line'\2'$reset'): '$err'fatal error'$reset' in "'$name'\3'$reset'": '$cat'critical check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
 
   s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): (fatal )?error:? in "([^"]+)": (critical )?check (.*) (has )?failed$/'$file'\1'$reset'('$line'\2'$reset'): '$err'\3error'$reset' in "'$name'\4'$reset'": '$cat'\5check'$reset' '$code'\6'$reset' \7failed/;t
 

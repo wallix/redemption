@@ -61,6 +61,11 @@ namespace redemption_unit_test__
     constexpr fn_caller<F> fn_invoker(char const* /*name*/, F f);
 } // namespace redemption_unit_test__
 
+template<class T, class U> bool operator==(array_view<T>, array_view<U>);
+template<class T, class U> bool operator==(array_view<T>, bytes_view);
+template<class T, class U> bool operator==(bytes_view, bytes_view);
+template<class T, class U> bool operator==(bytes_view, array_view<U>);
+
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 
@@ -204,33 +209,21 @@ namespace redemption_unit_test__
         );                                    \
     }(a, b)
 
-# define RED_TEST_MEM(lvl, mem, memref, c)           \
-    [](bytes_view x_mem__, bytes_view x_memref__){   \
-        size_t pos__ = 0;                            \
-        RED_##lvl##_MESSAGE(                         \
-            ::redemption_unit_test__::compare_bytes( \
-                pos__, x_mem__, x_memref__),         \
-            RED_TEST_STRING_##lvl " "                \
-            #mem " == " #memref " has failed "       \
-            << (::redemption_unit_test__::Put2Mem{   \
-                pos__, x_mem__, x_memref__, c}));    \
+# define RED_TEST_MEM(lvl, mem, memref, c)                \
+    [](bytes_view x_mem__, bytes_view x_memref__){        \
+        size_t pos__ = 0;                                 \
+        RED_##lvl##_MESSAGE(                              \
+            ::redemption_unit_test__::compare_bytes(      \
+                pos__, x_mem__, x_memref__),              \
+            RED_TEST_STRING_##lvl " "                     \
+            #mem " == " #memref " has failed "            \
+            << (::redemption_unit_test__::Put2Mem{        \
+                pos__, x_mem__, x_memref__, c, " != "})); \
     }(mem, memref)
 
 
 namespace redemption_unit_test__
 {
-    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
-
-    struct Put2Mem
-    {
-        size_t & pos;
-        bytes_view lhs;
-        bytes_view rhs;
-        char pattern;
-
-        friend std::ostream & operator<<(std::ostream & out, Put2Mem const & x);
-    };
-
     struct Enum
     {
         template<class E, class = std::enable_if_t<std::is_enum<E>::value>>
@@ -252,9 +245,30 @@ namespace redemption_unit_test__
         long long x;
         bool is_signed;
     };
+
+    struct BytesView
+    {
+        BytesView(bytes_view bytes) noexcept : bytes(bytes) {}
+        BytesView(writable_bytes_view bytes) noexcept : bytes(bytes) {}
+        BytesView(array_view_const_char bytes) noexcept : bytes(bytes) {}
+        // BytesView(array_view_const_s8 bytes) noexcept : bytes(bytes) {}
+        BytesView(array_view_const_u8 bytes) noexcept : bytes(bytes) {}
+
+        bytes_view bytes;
+    };
+
 } // namespace redemption_unit_test__
 
-std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e);
+#if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK) || REDEMPTION_UNIT_TEST_FAST_CHECK != 1
+
+namespace std
+{
+    // hack hack hack :D
+    std::ostream& operator<<(std::ostream& out, ::redemption_unit_test__::Enum const& e);
+    std::ostream& operator<<(std::ostream& out, ::redemption_unit_test__::BytesView const& v);
+}
+
+#endif
 
 #endif
 
