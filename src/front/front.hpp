@@ -505,29 +505,6 @@ private:
         bool is_initialized = false;
     } orders;
 
-    /// \param fn  Fn(MCS::ChannelJoinRequest_Recv &)
-    template<class Fn>
-    void channel_join_request_transmission(InStream & new_x224_stream, Fn fn) {
-        assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
-        X224::DT_TPDU_Recv x224(new_x224_stream);
-        MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
-        fn(mcs);
-
-        write_packets(
-            this->trans,
-            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
-                MCS::ChannelJoinConfirm_Send(
-                    mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                    mcs.initiator, mcs.channelId,
-                    true, mcs.channelId,
-                    MCS::PER_ENCODING
-                );
-            },
-            X224::write_x224_dt_tpdu_fn{}
-        );
-    }
-
     not_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
     not_null_ptr<gdi::GraphicApi> graphics_update = &gdi::null_gd();
 
@@ -1743,7 +1720,6 @@ public:
             LOG_IF(bool(this->verbose), LOG_INFO,
                 "Front::incoming: Recv MCS::ErectDomainRequest");
             {
-                assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
                 X224::DT_TPDU_Recv x224(new_x224_stream);
                 MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
@@ -1782,7 +1758,6 @@ public:
     {
         InStream new_x224_stream(tpdu);
 
-        assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
         X224::DT_TPDU_Recv x224(new_x224_stream);
         MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -1805,7 +1780,6 @@ public:
     void channel_join_confirm_check_user_id(bytes_view tpdu)
     {
         InStream new_x224_stream(tpdu);
-        assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
         X224::DT_TPDU_Recv x224(new_x224_stream);
         MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -1833,19 +1807,33 @@ public:
     void channel_join_confirm(bytes_view tpdu)
     {
         InStream new_x224_stream(tpdu);
-        this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv & mcs) {
-            LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
-                "Front::incoming: cjrq[%zu] = %" PRIu16 " -> cjcf",
-                this->channel_list_index, mcs.channelId);
+        X224::DT_TPDU_Recv x224(new_x224_stream);
+        MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
-            if (mcs.initiator != this->userid) {
-                LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %" PRIu16 " got %" PRIu16,
-                    this->userid, mcs.initiator);
-                throw Error(ERR_MCS_BAD_USERID);
-            }
+        LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+            "Front::incoming: cjrq[%zu] = %" PRIu16 " -> cjcf",
+            this->channel_list_index, mcs.channelId);
 
-            this->channel_list.set_chanid(this->channel_list_index, mcs.channelId);
-        });
+        if (mcs.initiator != this->userid) {
+            LOG(LOG_ERR, "Front::incoming: MCS error bad userid, expecting %" PRIu16 " got %" PRIu16,
+                this->userid, mcs.initiator);
+            throw Error(ERR_MCS_BAD_USERID);
+        }
+
+        this->channel_list.set_chanid(this->channel_list_index, mcs.channelId);
+
+        write_packets(
+            this->trans,
+            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+                MCS::ChannelJoinConfirm_Send(
+                    mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                    mcs.initiator, mcs.channelId,
+                    true, mcs.channelId,
+                    MCS::PER_ENCODING
+                );
+            },
+            X224::write_x224_dt_tpdu_fn{}
+        );
         ++this->channel_list_index;
     }
 
@@ -2257,10 +2245,10 @@ public:
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
-    void activate_and_process_data(bytes_view tpdu, Callback & cb)
+    void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
     {
         InStream new_x224_stream(tpdu); 
-        if (this->rbuf.current_pdu_is_fast_path()) { // fastpath
+        if (current_pdu_type == Extractors::FASTPATH) { // fastpath
             FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
 
             int num_events = cfpie.numEvents;
@@ -2402,16 +2390,14 @@ public:
             }
         }
         else { // slowpath
-            // TODO We shall put a specific case when we get Disconnect Request
-            if (this->rbuf.current_pdu_get_type() == X224::DR_TPDU) {
-                // TODO What is the clean way to actually disconnect ?
+            if (current_pdu_type == Extractors::DR_TPDU) {
                 X224::DR_TPDU_Recv x224(new_x224_stream);
                 LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
                 this->is_client_disconnected = true;
                 throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
             }
-            if (this->rbuf.current_pdu_get_type() != X224::DT_TPDU) {
-                LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", this->rbuf.current_pdu_get_type());
+            if (current_pdu_type != Extractors::DT_TPDU) {
+                LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
 
@@ -2564,9 +2550,11 @@ public:
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
         this->rbuf.load_data(this->trans);
+
         while (this->rbuf.next(TpduBuffer::PDU))
         {
             bytes_view tpdu = this->rbuf.current_pdu_buffer();
+            uint8_t current_pdu_type = this->rbuf.current_pdu_get_type();
             switch (this->state) {
             case CONNECTION_INITIATION:
                 this->connection_initiation(tpdu);
@@ -2577,18 +2565,22 @@ public:
                 this->state = CHANNEL_ATTACH_USER;
             break;
             case CHANNEL_ATTACH_USER:
+                assert(current_pdu_type == Extractors::DT_TPDU);
                 this->channel_attach_user(tpdu);
                 this->state = CHANNEL_JOIN_REQUEST;
             break;
             case CHANNEL_JOIN_REQUEST:
+                assert(current_pdu_type == Extractors::DT_TPDU);
                 this->channel_join_request(tpdu);
                 this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
             break;
             case CHANNEL_JOIN_CONFIRM_USER_ID:
+                assert(current_pdu_type == Extractors::DT_TPDU);
                 this->channel_join_confirm_user_id(tpdu);
                 this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
             break;
             case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
+                assert(current_pdu_type == Extractors::DT_TPDU);
                 this->channel_join_confirm_check_user_id(tpdu);
                 this->state = CHANNEL_JOIN_CONFIRM_LOOP;
             break;
@@ -2618,8 +2610,8 @@ public:
 
             case ACTIVATE_AND_PROCESS_DATA:
                 LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
-                this->activate_and_process_data(tpdu, cb);
+                    "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
+                this->activate_and_process_data(tpdu, current_pdu_type, cb);
             break;
             }
         }

@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE(Test1Read1)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data1);
@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(Test1Read10)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data1);
@@ -122,7 +122,7 @@ RED_AUTO_TEST_CASE(Test1Read100)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data1);
@@ -140,7 +140,7 @@ RED_AUTO_TEST_CASE(Test2Read1)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 85);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));
@@ -151,7 +151,7 @@ RED_AUTO_TEST_CASE(Test2Read1)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));
@@ -168,7 +168,7 @@ RED_AUTO_TEST_CASE(Test2Read10)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 80);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));
@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(Test2Read10)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));
@@ -193,7 +193,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 70);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));
@@ -201,7 +201,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));
@@ -215,7 +215,7 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));
@@ -223,7 +223,7 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
-    RED_CHECK(!buf.current_pdu_is_fast_path());
+    RED_CHECK(!(buf.current_pdu_get_type() == Extractors::FASTPATH));
 
     av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.from_offset(85));

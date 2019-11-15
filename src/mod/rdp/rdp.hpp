@@ -3211,7 +3211,7 @@ public:
                     this->graphics_update_disabled
                       ? gdi::null_gd()
                       : gd;
-                if (this->buf.current_pdu_is_fast_path()) {
+                if (this->buf.current_pdu_get_type() == Extractors::FASTPATH) {
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
                 }
                 else {
