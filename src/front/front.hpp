@@ -1290,7 +1290,7 @@ public:
     TpduBuffer rbuf;
     size_t channel_list_index = 0;
 
-    void connection_initiation(InStream & new_x224_stream)
+    void connection_initiation(bytes_view tpdu)
     {
         // Connection Initiation
         // ---------------------
@@ -1304,6 +1304,7 @@ public:
         //    |------------X224 Connection Request PDU----------------> |
         //    | <----------X224 Connection Confirm PDU----------------- |
 
+        InStream new_x224_stream(tpdu);
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
             LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU");
@@ -1391,8 +1392,9 @@ public:
         // +---------------------------------+--------------------------------------------------------+
     }
 
-    void basic_settings_exchange(InStream & new_x224_stream)
+    void basic_settings_exchange(bytes_view tpdu)
     {
+        InStream new_x224_stream(tpdu);
         {
             // Basic Settings Exchange
             // -----------------------
@@ -1695,8 +1697,9 @@ public:
         }
     }
 
-    void channel_attach_user(InStream & new_x224_stream)
+    void channel_attach_user(bytes_view tpdu)
     {
+        InStream new_x224_stream(tpdu);
         {
             // Channel Connection
             // ------------------
@@ -1747,10 +1750,11 @@ public:
         }
     }
 
-    void channel_join_request(InStream & new_x224_stream)
+    void channel_join_request(bytes_view tpdu)
     {
         LOG_IF(bool(this->verbose), LOG_INFO,
             "Front::incoming: Recv MCS::AttachUserRequest");
+        InStream new_x224_stream(tpdu);
         {
             X224::DT_TPDU_Recv x224(new_x224_stream);
             MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1774,8 +1778,10 @@ public:
         );
     }
 
-    void channel_join_confirm_user_id(InStream & new_x224_stream)
+    void channel_join_confirm_user_id(bytes_view tpdu)
     {
+        InStream new_x224_stream(tpdu);
+
         assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
         X224::DT_TPDU_Recv x224(new_x224_stream);
         MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1796,8 +1802,9 @@ public:
         );
     }
 
-    void channel_join_confirm_check_user_id(InStream & new_x224_stream)
+    void channel_join_confirm_check_user_id(bytes_view tpdu)
     {
+        InStream new_x224_stream(tpdu);
         assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
         X224::DT_TPDU_Recv x224(new_x224_stream);
         MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1823,8 +1830,9 @@ public:
         this->channel_list_index = 0;
     }
 
-    void channel_join_confirm(InStream & new_x224_stream)
+    void channel_join_confirm(bytes_view tpdu)
     {
+        InStream new_x224_stream(tpdu);
         this->channel_join_request_transmission(new_x224_stream, [this](MCS::ChannelJoinRequest_Recv & mcs) {
             LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
                 "Front::incoming: cjrq[%zu] = %" PRIu16 " -> cjcf",
@@ -1871,10 +1879,12 @@ public:
 
     // Client                                                     Server
     //    |------Security Exchange PDU ---------------------------> |
-    void rdp_security_commencement(InStream & new_x224_stream)
+    void rdp_security_commencement(bytes_view tpdu)
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::incoming: RDP Security Commencement");
+
+        InStream new_x224_stream(tpdu);
 
         LOG(LOG_INFO, "Front::incoming: Legacy RDP mode: expecting exchange packet");
         X224::DT_TPDU_Recv x224(new_x224_stream);
@@ -1917,10 +1927,11 @@ public:
     // Client                                                     Server
     //    |------ Client Info PDU      ---------------------------> |
     
-    void secure_settings_exchange(InStream & new_x224_stream)
+    void secure_settings_exchange(bytes_view tpdu)
     {
         LOG(LOG_INFO, "Front::incoming: Secure Settings Exchange");
 
+        InStream new_x224_stream(tpdu);
         X224::DT_TPDU_Recv x224(new_x224_stream);
 
         int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2050,10 +2061,12 @@ public:
     }    
 
 
-    void license_packet(InStream & new_x224_stream)
+    void license_packet(bytes_view tpdu)
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
             "Front::incoming: WAITING_FOR_ANSWER_TO_LICENSE");
+
+        InStream new_x224_stream(tpdu);
         X224::DT_TPDU_Recv x224(new_x224_stream);
 
         int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2207,8 +2220,46 @@ public:
         sec.payload.in_skip_bytes(sec.payload.in_remain());
     }
             
-    void activate_and_process_data(InStream & new_x224_stream, Callback & cb)
+            
+    // Connection Finalization
+    // -----------------------
+
+    // Connection Finalization: The client and server send PDUs to finalize the
+    // connection details. The client-to-server and server-to-client PDUs exchanged
+    // during this phase may be sent concurrently as long as the sequencing in
+    // either direction is maintained (there are no cross-dependencies between any
+    // of the client-to-server and server-to-client PDUs). After the client receives
+    // the Font Map PDU it can start sending mouse and keyboard input to the server,
+    // and upon receipt of the Font List PDU the server can start sending graphics
+    // output to the client.
+
+    // Client                                                     Server
+    //    |----------Synchronize PDU------------------------------> |
+    //    |----------Control PDU Cooperate------------------------> |
+    //    |----------Control PDU Request Control------------------> |
+    //    |----------Persistent Key List PDU(s)-------------------> |
+    //    |----------Font List PDU--------------------------------> |
+
+    //    | <--------Synchronize PDU------------------------------- |
+    //    | <--------Control PDU Cooperate------------------------- |
+    //    | <--------Control PDU Granted Control------------------- |
+    //    | <--------Font Map PDU---------------------------------- |
+
+    // All PDU's in the client-to-server direction must be sent in the specified
+    // order and all PDU's in the server to client direction must be sent in the
+    // specified order. However, there is no requirement that client to server PDU's
+    // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
+    // as the sequencing in either direction is maintained.
+
+
+    // Besides input and graphics data, other data that can be exchanged between
+    // client and server after the connection has been finalized include "
+    // connection management information and virtual channel messages (exchanged
+    // between client-side plug-ins and server-side applications).
+
+    void activate_and_process_data(bytes_view tpdu, Callback & cb)
     {
+        InStream new_x224_stream(tpdu); 
         if (this->rbuf.current_pdu_is_fast_path()) { // fastpath
             FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
 
@@ -2515,96 +2566,60 @@ public:
         this->rbuf.load_data(this->trans);
         while (this->rbuf.next(TpduBuffer::PDU))
         {
-            InStream new_x224_stream(this->rbuf.current_pdu_buffer());
-
+            bytes_view tpdu = this->rbuf.current_pdu_buffer();
             switch (this->state) {
             case CONNECTION_INITIATION:
-                this->connection_initiation(new_x224_stream);
+                this->connection_initiation(tpdu);
                 this->state = BASIC_SETTINGS_EXCHANGE;
             break;
             case BASIC_SETTINGS_EXCHANGE:
-                this->basic_settings_exchange(new_x224_stream);
+                this->basic_settings_exchange(tpdu);
                 this->state = CHANNEL_ATTACH_USER;
             break;
             case CHANNEL_ATTACH_USER:
-                this->channel_attach_user(new_x224_stream);
+                this->channel_attach_user(tpdu);
                 this->state = CHANNEL_JOIN_REQUEST;
             break;
             case CHANNEL_JOIN_REQUEST:
-                this->channel_join_request(new_x224_stream);
+                this->channel_join_request(tpdu);
                 this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
             break;
             case CHANNEL_JOIN_CONFIRM_USER_ID:
-                this->channel_join_confirm_user_id(new_x224_stream);
+                this->channel_join_confirm_user_id(tpdu);
                 this->state = CHANNEL_JOIN_CONFIRM_CHECK_USER_ID;
             break;
             case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
-                this->channel_join_confirm_check_user_id(new_x224_stream);
+                this->channel_join_confirm_check_user_id(tpdu);
                 this->state = CHANNEL_JOIN_CONFIRM_LOOP;
             break;
             case CHANNEL_JOIN_CONFIRM_LOOP:
                 if (this->channel_list_index < this->channel_list.size()) {
-                    this->channel_join_confirm(new_x224_stream);
+                    this->channel_join_confirm(tpdu);
                 }
                 else if (!this->tls_client_active) {
-                    this->rdp_security_commencement(new_x224_stream);
+                    this->rdp_security_commencement(tpdu);
                     this->state = WAITING_FOR_LOGON_INFO;
                 }
                 else {
-                    this->secure_settings_exchange(new_x224_stream);
+                    this->secure_settings_exchange(tpdu);
                     this->state = WAITING_FOR_ANSWER_TO_LICENSE;
                 }
             break;    
 
-            case WAITING_FOR_LOGON_INFO:            
-                this->secure_settings_exchange(new_x224_stream);
+            case WAITING_FOR_LOGON_INFO:
+                this->secure_settings_exchange(tpdu);
                 this->state = WAITING_FOR_ANSWER_TO_LICENSE;
             break;
 
             case WAITING_FOR_ANSWER_TO_LICENSE:
-                this->license_packet(new_x224_stream);
+                this->license_packet(tpdu);
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             break;
 
             case ACTIVATE_AND_PROCESS_DATA:
-            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
-            // Connection Finalization
-            // -----------------------
-
-            // Connection Finalization: The client and server send PDUs to finalize the
-            // connection details. The client-to-server and server-to-client PDUs exchanged
-            // during this phase may be sent concurrently as long as the sequencing in
-            // either direction is maintained (there are no cross-dependencies between any
-            // of the client-to-server and server-to-client PDUs). After the client receives
-            // the Font Map PDU it can start sending mouse and keyboard input to the server,
-            // and upon receipt of the Font List PDU the server can start sending graphics
-            // output to the client.
-
-            // Client                                                     Server
-            //    |----------Synchronize PDU------------------------------> |
-            //    |----------Control PDU Cooperate------------------------> |
-            //    |----------Control PDU Request Control------------------> |
-            //    |----------Persistent Key List PDU(s)-------------------> |
-            //    |----------Font List PDU--------------------------------> |
-
-            //    | <--------Synchronize PDU------------------------------- |
-            //    | <--------Control PDU Cooperate------------------------- |
-            //    | <--------Control PDU Granted Control------------------- |
-            //    | <--------Font Map PDU---------------------------------- |
-
-            // All PDU's in the client-to-server direction must be sent in the specified
-            // order and all PDU's in the server to client direction must be sent in the
-            // specified order. However, there is no requirement that client to server PDU's
-            // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
-            // as the sequencing in either direction is maintained.
-
-
-            // Besides input and graphics data, other data that can be exchanged between
-            // client and server after the connection has been finalized include "
-            // connection management information and virtual channel messages (exchanged
-            // between client-side plug-ins and server-side applications).
-              this->activate_and_process_data(new_x224_stream, cb);
+                this->activate_and_process_data(tpdu, cb);
             break;
             }
         }
