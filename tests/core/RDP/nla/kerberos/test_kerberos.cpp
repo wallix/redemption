@@ -18,7 +18,6 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#include "core/RDP/nla/kerberos/kerberos.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/genrandom.hpp"
 

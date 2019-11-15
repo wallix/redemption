@@ -422,8 +422,7 @@ namespace X224
         uint16_t len = 0;
     };
 
-    inline Tpkt Tpkt_Recv(InStream & stream);
-    Tpkt Tpkt_Recv(InStream & stream) {
+    inline Tpkt Tpkt_Recv(InStream & stream) {
         uint16_t length = stream.get_capacity();
         if (length < 4){
             LOG(LOG_ERR, "Truncated TPKT: stream=%u", length);
@@ -624,14 +623,12 @@ namespace X224
         uint8_t class_option = 0;
     };
 
-    inline void CR_Header_Log(const CR_Header & header);
-    void CR_Header_Log(const CR_Header & header) {
+    inline void CR_Header_Log(const CR_Header & header) {
         LOG(LOG_INFO, "Connection Request Header: LI=%u code=%u dst_ref=%u src_ref=%u class_option=%u",
             header.LI, header.code, header.dst_ref, header.src_ref, header.class_option);
     }
 
-    inline CR_Header CR_Header_Recv(InStream & stream);
-    CR_Header CR_Header_Recv(InStream & stream)
+    inline CR_Header CR_Header_Recv(InStream & stream)
     {
         /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
         if (!stream.in_check_rem(7)){
@@ -745,8 +742,7 @@ namespace X224
 
 
 
-    inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose);
-    CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)
+    inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)
     {
         CR_TPDU_Data x224;
         Tpkt tpkt = Tpkt_Recv(stream);

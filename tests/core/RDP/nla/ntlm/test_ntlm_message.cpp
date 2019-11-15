@@ -27,9 +27,7 @@
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
 
-#include "core/RDP/nla/ntlm/ntlm_message.hpp"
-
-#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm_message.hpp"
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "utils/sugar/byte_ptr.hpp"

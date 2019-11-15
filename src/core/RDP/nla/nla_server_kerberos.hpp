@@ -27,7 +27,7 @@
 #include "system/ssl_sha256.hpp"
 
 #ifndef __EMSCRIPTEN__
-#include "core/RDP/nla/kerberos/kerberos.hpp"
+#include "core/RDP/nla/kerberos.hpp"
 #endif
 
 

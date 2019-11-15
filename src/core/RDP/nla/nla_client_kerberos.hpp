@@ -28,7 +28,7 @@
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
 
-#include "core/RDP/nla/kerberos/kerberos.hpp"
+#include "core/RDP/nla/kerberos.hpp"
 
 #include "transport/transport.hpp"
 

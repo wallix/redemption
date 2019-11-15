@@ -28,7 +28,7 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
-#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm_message.hpp"
 
 // BER Encoding Cheat Sheet
 // ========================

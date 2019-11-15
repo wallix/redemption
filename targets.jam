@@ -372,6 +372,7 @@ exe ppocr_extract_text :
   <library>src/core/error.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -848,6 +849,7 @@ test-run tests/capture/test_ocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -866,6 +868,7 @@ test-run tests/capture/test_ppocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -888,6 +891,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1013,6 +1017,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -1399,6 +1404,7 @@ test-run tests/core/RDP/caches/test_pointercache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
 :
   <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/caches/pointercache.hpp
@@ -1718,12 +1724,6 @@ test-run tests/core/RDP/mppc/test_mppc_61 :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/mppc/mppc_61.hpp
 ;
-test-run tests/core/RDP/nla/kerberos/test_credentials :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_credentials.cpp
-:
-  <library>krb5
-  <covfile>src/core/RDP/nla/kerberos/credentials.hpp
-;
 test-run tests/core/RDP/nla/kerberos/test_kerberos :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_kerberos.cpp
 :
@@ -1939,6 +1939,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -2013,6 +2014,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -2147,6 +2149,7 @@ test-run tests/core/RDP/test_rdp_pointer :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -2761,6 +2764,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -3234,6 +3238,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/mod/internal/test_card_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3279,6 +3284,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3304,6 +3310,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3333,6 +3340,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3359,6 +3367,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3393,6 +3402,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3421,6 +3431,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3452,6 +3463,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3487,6 +3499,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3519,6 +3532,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3550,6 +3564,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3576,6 +3591,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3603,6 +3619,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3630,6 +3647,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3655,6 +3673,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3683,6 +3702,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -3706,6 +3726,7 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -3727,6 +3748,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3759,6 +3781,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3786,6 +3809,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3812,6 +3836,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3839,6 +3864,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3869,6 +3895,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3894,6 +3921,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3907,6 +3935,7 @@ test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
 :
   <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget.hpp
@@ -3927,6 +3956,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -4397,6 +4427,7 @@ test-run tests/mod/xup/test_xup :
   <library>src/gdi/screen_functions.o
   <library>src/mod/xup/xup.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -5106,6 +5137,7 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -5221,6 +5253,7 @@ test-run tests/utils/test_drawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -5423,6 +5456,7 @@ test-run tests/utils/test_video_cropper :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -5671,7 +5705,6 @@ alias test_mppc_40 : tests/core/RDP/mppc/test_mppc_40 ;
 alias test_mppc_50 : tests/core/RDP/mppc/test_mppc_50 ;
 alias test_mppc_60 : tests/core/RDP/mppc/test_mppc_60 ;
 alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
-alias test_credentials : tests/core/RDP/nla/kerberos/test_credentials ;
 alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
 alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
 alias test_credssp : tests/core/RDP/nla/test_credssp ;
@@ -6008,7 +6041,6 @@ alias test_mppc_40.coverage : tests/core/RDP/mppc/test_mppc_40.coverage ;
 alias test_mppc_50.coverage : tests/core/RDP/mppc/test_mppc_50.coverage ;
 alias test_mppc_60.coverage : tests/core/RDP/mppc/test_mppc_60.coverage ;
 alias test_mppc_61.coverage : tests/core/RDP/mppc/test_mppc_61.coverage ;
-alias test_credentials.coverage : tests/core/RDP/nla/kerberos/test_credentials.coverage ;
 alias test_kerberos.coverage : tests/core/RDP/nla/kerberos/test_kerberos.coverage ;
 alias test_ntlm_message.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message.coverage ;
 alias test_credssp.coverage : tests/core/RDP/nla/test_credssp.coverage ;
@@ -6368,7 +6400,6 @@ alias tests/core/RDP/mppc.norec :
   tests/core/RDP/mppc/test_mppc_61
 ;
 alias tests/core/RDP/nla/kerberos.norec :
-  tests/core/RDP/nla/kerberos/test_credentials
   tests/core/RDP/nla/kerberos/test_kerberos
 ;
 alias tests/core/RDP/nla/ntlm.norec :

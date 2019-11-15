@@ -29,7 +29,7 @@
 #include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
 
-#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm_message.hpp"
 
 #include "transport/transport.hpp"
 
