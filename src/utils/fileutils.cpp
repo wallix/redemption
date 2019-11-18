@@ -82,7 +82,7 @@ char * basename_len(char * path, size_t & len) noexcept /* NOLINT(readability-no
     return const_cast<char*>(basename_len(const_path, len)); /*NOLINT*/
 }
 
-int filesize(const char * path) noexcept
+int64_t filesize(const char * path) noexcept
 {
     struct stat sb;
     int status = stat(path, &sb);
@@ -107,7 +107,7 @@ bool dir_exist(const char * path) noexcept
 }
 
 
-int filesize(std::string const& path) noexcept
+int64_t filesize(std::string const& path) noexcept
 {
     return filesize(path.c_str());
 }

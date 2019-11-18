@@ -465,6 +465,7 @@ lib libscytale :
   <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(LIB_DEPENDENCIES)
+  <define>SHOW_DEBUG_TRACES=1
   <include>$(REDEMPTION_TEST_PATH)/includes
 ;
 obj src/lib/do_recorder.cpp.lib.o :
@@ -487,6 +488,7 @@ obj src/lib/scytale.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/lib/scytale.cpp
 :
   $(LIB_DEPENDENCIES)
+  <define>SHOW_DEBUG_TRACES=1
   <include>$(REDEMPTION_TEST_PATH)/includes
 ;
 
@@ -842,17 +844,6 @@ test-run tests/capture/test_cryptofile :
 test-run tests/capture/test_mwrm3 :
   $(REDEMPTION_TEST_PATH)/capture/test_mwrm3.cpp
 :
-  <library>crypto
-  <library>snappy
-  <library>src/core/error.o
-  <library>src/core/report_error.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/mwrm3.hpp
 ;
 test-run tests/capture/test_ocr :
@@ -1752,7 +1743,6 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/kerberos/kerberos.hpp
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
@@ -1764,7 +1754,6 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/ntlm/ntlm_message.hpp
 ;
 test-run tests/core/RDP/nla/test_credssp :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_credssp.cpp
@@ -5540,7 +5529,7 @@ obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/files_validator_api.o : $(REDEMPTION_SRC_PATH)/lib/files_validator_api.cpp ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
-obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <define>SHOW_DEBUG_TRACES=1 <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
@@ -6059,8 +6048,6 @@ alias test_mppc_40.coverage : tests/core/RDP/mppc/test_mppc_40.coverage ;
 alias test_mppc_50.coverage : tests/core/RDP/mppc/test_mppc_50.coverage ;
 alias test_mppc_60.coverage : tests/core/RDP/mppc/test_mppc_60.coverage ;
 alias test_mppc_61.coverage : tests/core/RDP/mppc/test_mppc_61.coverage ;
-alias test_kerberos.coverage : tests/core/RDP/nla/kerberos/test_kerberos.coverage ;
-alias test_ntlm_message.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message.coverage ;
 alias test_credssp.coverage : tests/core/RDP/nla/test_credssp.coverage ;
 alias test_AlternateSecondaryWindowing.coverage : tests/core/RDP/orders/test_AlternateSecondaryWindowing.coverage ;
 alias test_RDPOrdersCommon.coverage : tests/core/RDP/orders/test_RDPOrdersCommon.coverage ;

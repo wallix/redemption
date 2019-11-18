@@ -22,15 +22,17 @@
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
-
-#include <memory>
-
+#include "capture/mwrm3.hpp"
 #include "test_only/lcg_random.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/c_interface.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "std17/charconv.hpp"
 
 #include "main/version.hpp"
+
+#include <memory>
 
 #define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
     do {                                                    \
@@ -53,7 +55,7 @@
         auto handle = new (std::nothrow) construct; /*NOLINT*/   \
         return handle,                                           \
         nullptr,                                                 \
-        RedCryptoErrorContext(),                                 \
+        ScytaleErrorContext(),                                 \
         ERR_MEMORY_ALLOCATION_FAILED                             \
     );                                                           \
 }()
@@ -86,9 +88,9 @@ struct CryptoContextWrapper
     }
 };
 
-struct RedCryptoErrorContext
+struct ScytaleErrorContext
 {
-    RedCryptoErrorContext() noexcept
+    ScytaleErrorContext() noexcept
     : error(NO_ERROR)
     , msg{}
     {}
@@ -105,7 +107,7 @@ struct RedCryptoErrorContext
         return this->error.errmsg();
     }
 
-    static char const * handle_error_message() noexcept
+    static char const * handle_get_error_message() noexcept
     {
         return "Handle is nullptr";
     }
@@ -143,31 +145,14 @@ namespace
     private:
         HashHexArray hashhex;
     };
-} // namespace
 
-struct RedCryptoWriterHandle
-{
-    enum RandomType { LCG, UDEV };
-
-    RedCryptoWriterHandle(
-        RandomType random_type,
-        bool with_encryption, bool with_checksum,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        int old_encryption_scheme , int one_shot_encryption_scheme,
-        char const * derivator)
-    : random_wrapper(random_type)
-    , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum,
-            old_encryption_scheme, one_shot_encryption_scheme,
-            derivator)
-    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
-    {}
-
-private:
-    struct RandomWrapper
+    struct ScytaleRandomWrapper
     {
+        enum RandomType : bool { LCG, UDEV };
+
         Random * rnd;
 
-        RandomWrapper(RandomType rnd_type)
+        ScytaleRandomWrapper(RandomType rnd_type)
         {
             switch (rnd_type) {
                 case LCG: rnd = new (&u.lcg) LCGRandom(0); break;
@@ -175,7 +160,7 @@ private:
             }
         }
 
-        ~RandomWrapper()
+        ~ScytaleRandomWrapper()
         {
             rnd->~Random();
         }
@@ -189,27 +174,44 @@ private:
             ~U() {} /*NOLINT*/
         } u;
     };
+} // namespace
 
-    RandomWrapper random_wrapper;
+struct ScytaleWriterHandle
+{
+    ScytaleWriterHandle(
+        ScytaleRandomWrapper::RandomType random_type,
+        bool with_encryption, bool with_checksum,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        int old_encryption_scheme , int one_shot_encryption_scheme,
+        char const * derivator)
+    : random_wrapper(random_type)
+    , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum,
+            old_encryption_scheme, one_shot_encryption_scheme,
+            derivator)
+    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
+    {}
+
+private:
+    ScytaleRandomWrapper random_wrapper;
     Fstat fstat;
 
-public:
     CryptoContextWrapper cctxw;
 
+public:
     HashHex qhashhex;
     HashHex fhashhex;
 
     OutCryptoTransport out_crypto_transport;
-    RedCryptoErrorContext error_ctx;
+    ScytaleErrorContext error_ctx;
 };
 
 
-struct RedCryptoReaderHandle
+struct ScytaleReaderHandle
 {
     HashHex qhashhex;
     HashHex fhashhex;
 
-    RedCryptoReaderHandle(
+    ScytaleReaderHandle(
         InCryptoTransport::EncryptionMode encryption,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_encryption_scheme, int one_shot_encryption_scheme,
@@ -225,7 +227,7 @@ struct RedCryptoReaderHandle
     Fstat fstat;
 
     InCryptoTransport in_crypto_transport;
-    RedCryptoErrorContext error_ctx;
+    ScytaleErrorContext error_ctx;
 };
 
 
@@ -234,7 +236,7 @@ static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
 
 namespace
 {
-    inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept {
+    inline void hash_to_hashhex(HashArray const & hash, HashHexArray& hashhex) noexcept {
         char const * t = "0123456789ABCDEF";
         static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
         auto phex = hashhex;
@@ -245,16 +247,33 @@ namespace
         *phex = '\0';
     }
 
-    inline void hashex_to_hash(HashHexArray const & hashhex, HashArray hash) noexcept {
-        // Undefined Behavior if hashhex is not a valid input hex key
-        static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
+    inline void chars_to_hash_impl(bytes_view hashhex, HashArray& hash)
+    {
+        assert(hashhex.size() == sizeof(HashHexArray) - 1);
         auto phex = hash;
-        for (size_t i = 0 ; i < sizeof(hashhex) - 1 ; i += 2) {
+        for (size_t i = 0 ; i < sizeof(HashHexArray) - 1; i += 2) {
             auto c1 = hashhex[i];
             auto c2 = hashhex[i+1];
             *phex++ = ((0xF & (c1 < 'A'? c1 - '0' : c1 < 'a' ? c1 - 'A' : c1 - 'a')) << 4)
                     |  (0xF & (c2 < 'A'? c2 - '0' : c2 < 'a' ? c2 - 'A' : c2 - 'a'));
         }
+    }
+
+    inline void hashex_to_hash(HashHexArray const & hashhex, HashArray& hash) noexcept {
+        // Undefined Behavior if hashhex is not a valid input hex key
+        static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
+        auto av = make_array_view(hashhex);
+        chars_to_hash_impl(av.drop_back(1), hash);
+    }
+
+    [[nodiscard]]
+    inline bool chars_to_hash(char const* hashhex, HashArray& hash) noexcept {
+        auto len = strlen(hashhex);
+        if (len != sizeof(HashHexArray)-1u) {
+            return false;
+        }
+        chars_to_hash_impl(bytes_view(hashhex, len), hash);
+        return true;
     }
 } // namespace
 
@@ -266,28 +285,28 @@ const char* scytale_version() {
 
 
 /// \return HashHexArray
-char const * scytale_writer_qhashhex(RedCryptoWriterHandle * handle) {
+char const * scytale_writer_get_qhashhex(ScytaleWriterHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
     return handle->qhashhex.c_str();
 }
 
 /// \return HashHexArray
-char const * scytale_writer_fhashhex(RedCryptoWriterHandle * handle) {
+char const * scytale_writer_get_fhashhex(ScytaleWriterHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
     return handle->fhashhex.c_str();
 }
 
 
-RedCryptoWriterHandle * scytale_writer_new(
+ScytaleWriterHandle * scytale_writer_new(
     int with_encryption, int with_checksum, const char * derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
     int old_scheme, int one_shot)
 {
     SCOPED_TRACE;
-    return CREATE_HANDLE(RedCryptoWriterHandle(
-        RedCryptoWriterHandle::UDEV,
+    return CREATE_HANDLE(ScytaleWriterHandle(
+        ScytaleRandomWrapper::UDEV,
         with_encryption, with_checksum,
         hmac_fn, trace_fn,
         old_scheme, one_shot,
@@ -296,14 +315,14 @@ RedCryptoWriterHandle * scytale_writer_new(
 }
 
 
-RedCryptoWriterHandle * scytale_writer_new_with_test_random(
+ScytaleWriterHandle * scytale_writer_new_with_test_random(
     int with_encryption, int with_checksum, const char * derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
     int old_scheme, int one_shot)
 {
     SCOPED_TRACE;
-    return CREATE_HANDLE(RedCryptoWriterHandle(
-        RedCryptoWriterHandle::LCG,
+    return CREATE_HANDLE(ScytaleWriterHandle(
+        ScytaleRandomWrapper::LCG,
         with_encryption, with_checksum,
         hmac_fn, trace_fn,
         old_scheme, one_shot,
@@ -311,7 +330,7 @@ RedCryptoWriterHandle * scytale_writer_new_with_test_random(
     ));
 }
 
-int scytale_writer_open(RedCryptoWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
+int scytale_writer_open(ScytaleWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
@@ -319,16 +338,14 @@ int scytale_writer_open(RedCryptoWriterHandle * handle, const char * path, char 
     return 0;
 }
 
-
-int scytale_writer_write(RedCryptoWriterHandle * handle, uint8_t const * buffer, unsigned long len) {
+int scytale_writer_write(ScytaleWriterHandle * handle, uint8_t const * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len), ERR_TRANSPORT_WRITE_FAILED);
     return len;
 }
 
-
-int scytale_writer_close(RedCryptoWriterHandle * handle) {
+int scytale_writer_close(ScytaleWriterHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     HashArray qhash;
@@ -339,28 +356,27 @@ int scytale_writer_close(RedCryptoWriterHandle * handle) {
     return 0;
 }
 
-
-void scytale_writer_delete(RedCryptoWriterHandle * handle)
+void scytale_writer_delete(ScytaleWriterHandle * handle)
 {
     SCOPED_TRACE;
     delete handle; /*NOLINT*/
 }
 
-char const * scytale_writer_error_message(RedCryptoWriterHandle * handle)
+char const * scytale_writer_get_error_message(ScytaleWriterHandle * handle)
 {
     SCOPED_TRACE;
-    return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
+    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
 }
 
 
 
-RedCryptoReaderHandle * scytale_reader_new(
+ScytaleReaderHandle * scytale_reader_new(
     const char * derivator,
     get_hmac_key_prototype* hmac_fn, get_trace_key_prototype* trace_fn,
     int old_scheme, int one_shot)
 {
     SCOPED_TRACE;
-    return CREATE_HANDLE(RedCryptoReaderHandle(
+    return CREATE_HANDLE(ScytaleReaderHandle(
         InCryptoTransport::EncryptionMode::Auto,
         hmac_fn, trace_fn,
         old_scheme, one_shot,
@@ -368,7 +384,7 @@ RedCryptoReaderHandle * scytale_reader_new(
     ));
 }
 
-int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator) {
+int scytale_reader_open(ScytaleReaderHandle * handle, char const * path, char const * derivator) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
@@ -379,7 +395,7 @@ int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char 
 }
 
 int scytale_reader_open_with_auto_detect_encryption_scheme(
-    RedCryptoReaderHandle * handle, char const * path, char const * derivator)
+    ScytaleReaderHandle * handle, char const * path, char const * derivator)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
@@ -410,31 +426,31 @@ int scytale_reader_open_with_auto_detect_encryption_scheme(
 
 
 // 0: if end of file, len: if data was read, negative number on error
-int scytale_reader_read(RedCryptoReaderHandle * handle, uint8_t * buffer, unsigned long len) {
+int scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(return int(handle->in_crypto_transport.partial_read(buffer, len)), ERR_TRANSPORT_READ_FAILED);
 }
 
 
-int scytale_reader_close(RedCryptoReaderHandle * handle) {
+int scytale_reader_close(ScytaleReaderHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->in_crypto_transport.close(), ERR_TRANSPORT_CLOSED);
     return 0;
 }
 
-void scytale_reader_delete(RedCryptoReaderHandle * handle) {
+void scytale_reader_delete(ScytaleReaderHandle * handle) {
     SCOPED_TRACE;
     delete handle; /*NOLINT*/
 }
 
-char const * scytale_reader_error_message(RedCryptoReaderHandle * handle)
+char const * scytale_reader_get_error_message(ScytaleReaderHandle * handle)
 {
-    return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
+    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
 }
 
-int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file)
+int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * file)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
@@ -446,7 +462,7 @@ int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file)
     return 0;
 }
 
-int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file)
+int scytale_reader_qhash(ScytaleReaderHandle * handle, const char * file)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
@@ -459,14 +475,14 @@ int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file)
 }
 
 
-const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle)
+const char * scytale_reader_get_qhashhex(ScytaleReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, nullptr);
     return handle->qhashhex.c_str();
 }
 
-const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle)
+const char * scytale_reader_get_fhashhex(ScytaleReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, nullptr);
@@ -474,13 +490,13 @@ const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle)
 }
 
 
-struct RedCryptoMetaReaderHandle
+struct ScytaleMetaReaderHandle
 {
-    explicit RedCryptoMetaReaderHandle(RedCryptoReaderHandle & reader)
+    explicit ScytaleMetaReaderHandle(ScytaleReaderHandle & reader)
       : mwrm_reader(reader.in_crypto_transport)
     {}
 
-    RedCryptoMwrmHeader & get_header() noexcept
+    ScytaleMwrmHeader & get_header() noexcept
     {
         auto const & header = this->mwrm_reader.get_header();
         this->c_header.version = static_cast<int>(header.version);
@@ -488,7 +504,7 @@ struct RedCryptoMetaReaderHandle
         return this->c_header;
     }
 
-    RedCryptoMwrmLine & get_meta_line() noexcept
+    ScytaleMwrmLine & get_meta_line() noexcept
     {
         if (this->meta_line.with_hash) {
             hash_to_hashhex(this->meta_line.hash1, this->hashhex1);
@@ -521,32 +537,32 @@ private:
     HashHexArray hashhex1;
     HashHexArray hashhex2;
 
-    RedCryptoMwrmHeader c_header;
-    RedCryptoMwrmLine c_mwrm_line;
+    ScytaleMwrmHeader c_header;
+    ScytaleMwrmLine c_mwrm_line;
 
 public:
     MwrmReader mwrm_reader;
     MetaLine meta_line;
     bool eof = false;
 
-    RedCryptoErrorContext error_ctx;
+    ScytaleErrorContext error_ctx;
 };
 
 
-RedCryptoMetaReaderHandle * scytale_meta_reader_new(RedCryptoReaderHandle * reader)
+ScytaleMetaReaderHandle * scytale_meta_reader_new(ScytaleReaderHandle * reader)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(reader, nullptr);
-    return CREATE_HANDLE(RedCryptoMetaReaderHandle(*reader));
+    return CREATE_HANDLE(ScytaleMetaReaderHandle(*reader));
 }
 
-char const * scytale_meta_reader_message(RedCryptoMetaReaderHandle * handle)
+char const * scytale_meta_reader_get_error_message(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
-    return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
+    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
 }
 
-int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum)
+int scytale_meta_reader_read_hash(ScytaleMetaReaderHandle * handle, int version, int has_checksum)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
@@ -557,7 +573,7 @@ int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int versio
     return 0;
 }
 
-int scytale_meta_reader_read_header(RedCryptoMetaReaderHandle * handle)
+int scytale_meta_reader_read_header(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
@@ -567,7 +583,7 @@ int scytale_meta_reader_read_header(RedCryptoMetaReaderHandle * handle)
     return 0;
 }
 
-int scytale_meta_reader_read_line(RedCryptoMetaReaderHandle * handle)
+int scytale_meta_reader_read_line(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
@@ -578,27 +594,27 @@ int scytale_meta_reader_read_line(RedCryptoMetaReaderHandle * handle)
     return handle->eof ? ERR_TRANSPORT_NO_MORE_DATA : 0;
 }
 
-int scytale_meta_reader_read_line_eof(RedCryptoMetaReaderHandle * handle)
+int scytale_meta_reader_read_line_eof(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     return handle->eof;
 }
 
-void scytale_meta_reader_delete(RedCryptoMetaReaderHandle * handle)
+void scytale_meta_reader_delete(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     delete handle; /*NOLINT*/
 }
 
-RedCryptoMwrmHeader * scytale_meta_reader_get_header(RedCryptoMetaReaderHandle * handle)
+ScytaleMwrmHeader * scytale_meta_reader_get_header(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, nullptr);
     return &handle->get_header();
 }
 
-RedCryptoMwrmLine * scytale_meta_reader_get_line(RedCryptoMetaReaderHandle * handle)
+ScytaleMwrmLine * scytale_meta_reader_get_line(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, nullptr);
@@ -606,22 +622,21 @@ RedCryptoMwrmLine * scytale_meta_reader_get_line(RedCryptoMetaReaderHandle * han
 }
 
 
-struct RedCryptoKeyHandle
+struct ScytaleKeyHandle
 {
     HashHexArray masterhex;
     HashArray master;
     HashHexArray derivatedhex;
     HashArray derivated;
 
-    explicit RedCryptoKeyHandle(const char * masterkeyhex)
+    explicit ScytaleKeyHandle(const char * masterkeyhex)
     {
         memcpy(this->masterhex, masterkeyhex, sizeof(this->masterhex));
         hashex_to_hash(this->masterhex, this->master);
     }
 };
 
-
-RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex)
+ScytaleKeyHandle * scytale_key_new(const char * masterkeyhex)
 {
     SCOPED_TRACE;
     constexpr auto key_len = sizeof(HashHexArray) - 1;
@@ -633,11 +648,10 @@ RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex)
             return nullptr;
         }
     }
-    return CREATE_HANDLE(RedCryptoKeyHandle(masterkeyhex));
+    return CREATE_HANDLE(ScytaleKeyHandle(masterkeyhex));
 }
 
-
-const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * derivator, size_t len)
+const char * scytale_key_derivate(ScytaleKeyHandle * handle, const uint8_t * derivator, size_t len)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
@@ -655,23 +669,248 @@ const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * d
     return handle->derivatedhex;
 }
 
-
-void scytale_key_delete(RedCryptoKeyHandle * handle) {
+void scytale_key_delete(ScytaleKeyHandle * handle) {
     SCOPED_TRACE;
     delete handle; /*NOLINT*/
 }
 
-
-const char * scytale_key_master(RedCryptoKeyHandle * handle) {
+const char * scytale_key_get_master(ScytaleKeyHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
     return handle->masterhex;
 }
 
-const char * scytale_key_derivated(RedCryptoKeyHandle * handle) {
+const char * scytale_key_get_derivated(ScytaleKeyHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
     return handle->derivatedhex;
+}
+
+
+struct ScytaleTflWriterHandler
+{
+    ScytaleTflWriterHandler(
+        ScytaleErrorContext& error_ctx,
+        uint64_t idx, std::string&& original_filename,
+        std::string finalname, char const* hash_filename, std::size_t pos_filename,
+        int groupid, CryptoContext& cctx, Random& random, Fstat& fstat)
+    : idx(idx)
+    , finalname(std::move(finalname))
+    , pos_filename(pos_filename)
+    , original_filename(std::move(original_filename))
+    , out_crypto_transport(cctx, random, fstat)
+    , error_ctx(error_ctx)
+    {
+        auto derivator = array_view(this->finalname).drop_front(pos_filename);
+        this->out_crypto_transport.open(
+            this->finalname.c_str(), hash_filename, groupid, derivator);
+    }
+
+    uint64_t idx;
+    std::string finalname;
+    std::size_t pos_filename;
+    std::string original_filename;
+
+    OutCryptoTransport out_crypto_transport;
+
+    ScytaleErrorContext& error_ctx;
+};
+
+struct ScytaleFdxWriterHandle
+{
+    ScytaleFdxWriterHandle(
+        char const * path, char const * hashpath, int groupid, array_view_const_char sid,
+        int with_encryption, int with_checksum, const char * master_derivator,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        ScytaleRandomWrapper::RandomType random_type)
+    : prefix(str_concat(std::string_view(path), '/', sid))
+    , hash_prefix(str_concat(std::string_view(hashpath), '/', sid))
+    , pos_filename(this->prefix.size() - sid.size())
+    , groupid(groupid)
+    , with_checksum(with_checksum)
+    , random_wrapper(random_type)
+    , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
+    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
+    {
+        auto ext = ".fdx"_av;
+        str_append(this->prefix, ext);
+        str_append(this->hash_prefix, ext);
+        auto derivator = array_view(this->prefix).drop_front(this->pos_filename);
+        this->out_crypto_transport.open(
+            this->prefix.c_str(), this->hash_prefix.c_str(), groupid, derivator);
+        this->out_crypto_transport.send(Mwrm3::top_header);
+        this->prefix.erase(this->prefix.size() - ext.size());
+        this->prefix += ',';
+        this->hash_prefix.erase(this->hash_prefix.size() - ext.size());
+        this->hash_prefix += ',';
+    }
+
+    ScytaleTflWriterHandler * open_tfl(char const* filename)
+    {
+        ++this->idx;
+
+        std::array<char, std::numeric_limits<uint64_t>::digits10+2> buf;
+        char* const p = begin(buf);
+        std::to_chars_result const chars_result = std::to_chars(p, end(buf), this->idx);
+        std::ptrdiff_t const len = std::distance(p, chars_result.ptr);
+
+        array_view const leftnum = "000000"_av.first(len < 6 ? 6 - len : 0);
+        array_view const rightnum = std::string_view(p, len);
+        array_view const ext = ".tfl"_av;
+
+        auto const old_size = this->prefix.size();
+        auto const old_hash_size = this->hash_prefix.size();
+
+        str_append(this->prefix, leftnum, rightnum, ext);
+        str_append(this->hash_prefix, array_view(this->prefix).drop_front(old_size));
+
+        auto* tfl = new(std::nothrow) ScytaleTflWriterHandler{ /*NOLINT*/
+            this->error_ctx,
+            // truncate filename if too long
+            this->idx, std::string(filename, strnlen(filename, Mwrm3::line_size_max - 32)),
+            this->prefix, this->hash_prefix.c_str(), this->pos_filename,
+            this->groupid, this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat,
+        };
+
+        this->prefix.erase(old_size);
+        this->hash_prefix.erase(old_hash_size);
+
+        return tfl;
+    }
+
+    int close_tfl(ScytaleTflWriterHandler& tfl)
+    {
+        HashArray qhash;
+        HashArray fhash;
+        tfl.out_crypto_transport.close(qhash, fhash);
+
+        uint8_t cbuf[Mwrm3::line_size_max*2];
+        writable_bytes_view remaining_buf = make_array_view(cbuf);
+
+        bool has_error = false;
+        auto set_error = [&](auto){ has_error = true; };
+        auto write_buf = [&](Mwrm3::Type type, Mwrm3::DataSize data_size, auto... data) {
+            remaining_buf = serialize_header_line(remaining_buf, type, data_size).second;
+            OutStream out_stream{remaining_buf};
+            (out_stream.out_copy_bytes(data), ...);
+            remaining_buf = out_stream.get_tail();
+        };
+
+        auto const signed_fsize = filesize(tfl.finalname.c_str());
+        if (REDEMPTION_UNLIKELY(signed_fsize < 0)) {
+            this->error_ctx.set_error(Error(ERR_TRANSPORT, errno));
+        }
+        auto const fsize = std::make_unsigned_t<decltype(signed_fsize)>(signed_fsize);
+
+
+        Mwrm3::serialize_tfl_new(
+            tfl.idx, tfl.original_filename,
+            array_view(tfl.finalname).drop_front(tfl.pos_filename),
+            write_buf, set_error);
+        Mwrm3::serialize_tfl_stat(tfl.idx, safe_cast<Mwrm3::FileSize>(fsize),
+            Mwrm3::QuickHash{!with_checksum ? bytes_view{} : make_array_view(qhash)},
+            Mwrm3::FullHash{!with_checksum ? bytes_view{} : make_array_view(fhash)},
+            write_buf);
+
+        this->out_crypto_transport.send(cbuf, std::distance(cbuf, remaining_buf.begin()));
+
+        return signed_fsize >= 0 ? 0 : -1;
+    }
+
+    int cancel_tfl(ScytaleTflWriterHandler& tfl)
+    {
+        return tfl.out_crypto_transport.cancel() ? 0 : -1;
+    }
+
+    void close()
+    {
+
+        HashArray qhash;
+        HashArray fhash;
+        this->out_crypto_transport.close(qhash, fhash);
+    }
+
+private:
+    uint64_t idx = 0;
+    std::string prefix;
+    std::string hash_prefix;
+    std::size_t pos_filename;
+    int groupid;
+    Fstat fstat;
+    bool with_checksum;
+    ScytaleRandomWrapper random_wrapper;
+
+    CryptoContextWrapper cctxw;
+
+    HashHex qhashhex;
+    HashHex fhashhex;
+
+    OutCryptoTransport out_crypto_transport;
+
+public:
+    ScytaleErrorContext error_ctx;
+};
+
+ScytaleFdxWriterHandle * scytale_fdx_writer_new(
+    char const * path, char const * hashpath, int groupid, char const * sid,
+    int with_encryption, int with_checksum, char const* master_derivator,
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+    int test_random)
+{
+    SCOPED_TRACE;
+    return CREATE_HANDLE(ScytaleFdxWriterHandle(
+        path, hashpath, groupid, std::string_view(sid),
+        with_encryption, with_checksum, master_derivator,
+        hmac_fn, trace_fn, test_random ? ScytaleRandomWrapper::LCG : ScytaleRandomWrapper::UDEV));
+}
+
+ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
+    ScytaleFdxWriterHandle * handle, char const * filename)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE_R(handle, nullptr);
+    CHECK_NOTHROW_R(return handle->open_tfl(filename),
+        nullptr, handle->error_ctx, ERR_TRANSPORT_OPEN_FAILED);
+}
+
+int scytale_tfl_writer_write(
+    ScytaleTflWriterHandler * handle, uint8_t const * buffer, unsigned long len)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len), ERR_TRANSPORT_WRITE_FAILED);
+    return len;
+}
+
+int scytale_fdx_writer_close_tfl(
+    ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE_R(handle && tfl, -1);
+    std::unique_ptr<ScytaleTflWriterHandler> auto_delete{tfl};
+    CHECK_NOTHROW(return handle->close_tfl(*tfl), ERR_TRANSPORT_WRITE_FAILED);
+}
+
+int scytale_fdx_writer_cancel_tfl(
+    ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE_R(handle && tfl, -1);
+    std::unique_ptr<ScytaleTflWriterHandler> auto_delete{tfl};
+    return handle->cancel_tfl(*tfl);
+}
+
+int scytale_fdx_writer_delete(ScytaleFdxWriterHandle * handle)
+{
+    SCOPED_TRACE;
+    delete handle; /*NOLINT*/
+    return 0;
+}
+
+char const * scytale_fdx_writer_get_error_message(ScytaleFdxWriterHandle * handle)
+{
+    SCOPED_TRACE;
+    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
 }
 
 }

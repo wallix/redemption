@@ -93,10 +93,10 @@ namespace Mwrm3
 
     struct QuickHash
     {
-        QuickHash(bytes_view hash) noexcept
+        explicit QuickHash(bytes_view hash) noexcept
         : hash(hash)
         {
-            assert(hash.size() == 64);
+            assert(hash.empty() || hash.size() == 32);
         }
 
         bytes_view hash;
@@ -104,10 +104,10 @@ namespace Mwrm3
 
     struct FullHash
     {
-        FullHash(bytes_view hash) noexcept
+        explicit FullHash(bytes_view hash) noexcept
         : hash(hash)
         {
-            assert(hash.size() == 64);
+            assert(hash.empty() || hash.size() == 32);
         }
 
         bytes_view hash;
@@ -250,116 +250,26 @@ namespace Mwrm3
     inline constexpr detail::serialize_new_file<Type::FdxNew> serialize_fdx_new {};
 
     template<class F, class FError>
-    auto serialize_tfl_new(bytes_view original_basename, bytes_view basename, F&& f, FError&& ferror)
+    auto serialize_tfl_new(
+        uint64_t idx, bytes_view original_filename, bytes_view reference_filename,
+        F&& f, FError&& ferror)
     {
-        assert(basename.size() <= 255);
+        assert(reference_filename.size() <= 255);
         return detail::serialize(Type::TflNew, f, ferror,
-            detail::Buffer{detail::types::u16_unsafe{original_basename.size()}}.bytes(),
-            original_basename, basename);
+            detail::Buffer{
+                detail::types::u64{idx},
+                detail::types::u16_unsafe{original_filename.size()},
+            }.bytes(),
+            original_filename, reference_filename);
     }
 
     template<class F>
-    auto serialize_tfl_stat(FileSize file_size, QuickHash quick_hash, FullHash full_hash, F&& f)
+    auto serialize_tfl_stat(uint64_t idx, FileSize file_size, QuickHash quick_hash, FullHash full_hash, F&& f)
     {
         return detail::unsafe_serialize(Type::TflState, f,
-            detail::Buffer{file_size}.bytes(), quick_hash.hash, full_hash.hash);
-    }
-}
-
-
-#include "transport/crypto_transport.hpp"
-#include <tuple>
-
-namespace Mwrm3
-{
-    struct FdxNewFile : public Transport
-    {
-        explicit FdxNewFile(
-            char const* path, const char* hash_path,
-            CryptoContext & cctx, Random & rnd, Fstat & fstat,
-            ReportError report_error = ReportError()
-        ) noexcept;
-
-        ~FdxNewFile();
-
-        void add_tfl(
-            uint64_t idx, bytes_view original_basename, bytes_view basename,
-            FileSize file_size, QuickHash qhash, FullHash fhash);
-
-        void close();
-
-    private:
-        OutCryptoTransport out;
-    };
-
-    inline FdxNewFile::FdxNewFile(
-        char const* path, const char* hash_path,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat,
-        ReportError report_error) noexcept
-    : out(cctx, rnd, fstat, std::move(report_error))
-    {
-        this->out.open(path, hash_path, S_IRUSR | S_IRGRP | S_IWUSR /*TODO suspicious groupid...*/);
-        this->out.send(top_header);
-    }
-
-    inline FdxNewFile::~FdxNewFile()
-    {
-        this->close();
-    }
-
-    namespace detail
-    {
-        inline constexpr struct not_empty
-        {
-            template<class C>
-            void operator = ([[maybe_unused]] C const& c) const
-            {
-                assert(not c.empty());
-            }
-        } not_empty {};
-    }
-
-    // TODO uint64_t index
-    inline void FdxNewFile::add_tfl(
-        uint64_t /*idx*/, bytes_view original_basename, bytes_view basename,
-        FileSize file_size, QuickHash qhash, FullHash fhash)
-    {
-        // TODO truncate
-        // TODO create basename (sid,dddddd-original.tfl)
-
-        uint8_t buf[line_size_max*2];
-        writable_bytes_view remaining_buf = make_array_view(buf);
-
-        bool has_error = false;
-        auto set_error = [&](auto){ has_error = true; };
-        auto write_buf = [&](Type type, DataSize data_size, auto... data) {
-            std::tie(detail::not_empty, remaining_buf)
-              = serialize_header_line(remaining_buf, type, data_size);
-            OutStream out_stream{remaining_buf};
-            (out_stream.out_copy_bytes(data), ...);
-            remaining_buf = out_stream.get_tail();
-        };
-
-        serialize_tfl_new(original_basename, basename, write_buf, set_error);
-        serialize_tfl_stat(file_size, qhash, fhash, write_buf);
-
-        // TODO assert
-        if (has_error)
-        {
-            LOG(LOG_ERR, "FdxNewFile::add_tfl: basename too long");
-            throw Error(ERR_BUFFER_TOO_SMALL);
-        }
-
-        this->out.send({buf, remaining_buf.end()});
-    }
-
-    inline void FdxNewFile::close()
-    {
-        if (this->out.is_open())
-        {
-            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-            this->out.close(qhash, fhash);
-        }
+            detail::Buffer{
+                detail::types::u64{idx},
+                file_size,
+            }.bytes(), quick_hash.hash, full_hash.hash);
     }
 }

@@ -42,8 +42,8 @@ const char * basename_len(const char * path, size_t & len) noexcept;
 
 char * basename_len(char * path, size_t & len) noexcept;
 
-int filesize(const char * path) noexcept;
-int filesize(std::string const& path) noexcept;
+int64_t filesize(const char * path) noexcept;
+int64_t filesize(std::string const& path) noexcept;
 
 bool file_exist(const char * path) noexcept;
 bool file_exist(std::string const& path) noexcept;

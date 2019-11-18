@@ -65,8 +65,8 @@ namespace
 
 #endif
 
-#define CHECK_HANDLE(handle) if (!handle) return -1
-#define CHECK_HANDLE_R(handle, return_err) if (!handle) return return_err
+#define CHECK_HANDLE(handle) if (REDEMPTION_UNLIKELY(!(handle))) return -1
+#define CHECK_HANDLE_R(handle, return_err) if (REDEMPTION_UNLIKELY(!(handle))) return return_err
 
 #define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
     do {                                                    \

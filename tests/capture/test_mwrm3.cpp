@@ -56,8 +56,8 @@ RED_AUTO_TEST_CASE(serialize)
     auto filename = "my_filename.wrm"_av;
     auto filename2 = "my_filename2.wrm"_av;
 
-    auto qhash = "0123456789012345678901234567890123456789012345678901234567890123"_av;
-    auto fhash = "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcd"_av;
+    auto qhash = "01234567890123456789012345678901"_av;
+    auto fhash = "abcdefghijabcdefghijabcdefghijab"_av;
 
     // warning if a value of Type is missing :)
     switch (Type::None)
@@ -77,13 +77,13 @@ RED_AUTO_TEST_CASE(serialize)
             serialize_wrm_stat(
                 FileSize(1244), std::chrono::seconds(125), QuickHash{qhash}, FullHash{fhash},
                 [&](Type type, DataSize data_size,
-                    bytes_view prefix, bytes_view qhash, bytes_view fhash
+                    bytes_view prefix, bytes_view qhash_, bytes_view fhash_
                 ){
                     RED_CHECK(type == Type::WrmState);
-                    RED_CHECK(data_size == DataSize(144));
+                    RED_CHECK(data_size == DataSize(80));
                     RED_CHECK(prefix == "\xdc\x04\x00\x00\x00\x00\x00\x00}\x00\x00\x00\x00\x00\x00\x00"_av);
-                    RED_CHECK(qhash == qhash);
-                    RED_CHECK(fhash == fhash);
+                    RED_CHECK(qhash == qhash_);
+                    RED_CHECK(fhash == fhash_);
                 }
             );
             [[fallthrough]];
@@ -98,12 +98,12 @@ RED_AUTO_TEST_CASE(serialize)
 
         case Type::TflNew:
             serialize_tfl_new(
-                filename, filename2, [&](Type type, DataSize data_size,
+                1, filename, filename2, [&](Type type, DataSize data_size,
                     bytes_view header, bytes_view file1, bytes_view file2
                 ){
                     RED_CHECK(type == Type::TflNew);
-                    RED_CHECK(data_size == DataSize(33));
-                    RED_CHECK(header == "\x0f\x00"_av);
+                    RED_CHECK(data_size == DataSize(41));
+                    RED_CHECK(header == "\x01\x00\x00\x00\x00\x00\x00\x00\x0f\x00"_av);
                     RED_CHECK(file1 == filename);
                     RED_CHECK(file2 == filename2);
                 },
@@ -113,15 +113,15 @@ RED_AUTO_TEST_CASE(serialize)
 
         case Type::TflState:
             serialize_tfl_stat(
-                FileSize(12), QuickHash{qhash}, FullHash{fhash},
+                1, FileSize(12), QuickHash{qhash}, FullHash{fhash},
                 [&](Type type, DataSize data_size,
-                    bytes_view prefix, bytes_view qhash, bytes_view fhash
+                    bytes_view prefix, bytes_view qhash_, bytes_view fhash_
                 ){
                     RED_CHECK(type == Type::TflState);
-                    RED_CHECK(data_size == DataSize(136));
-                    RED_CHECK(prefix == "\x0c\x00\x00\x00\x00\x00\x00\x00"_av);
-                    RED_CHECK(qhash == qhash);
-                    RED_CHECK(fhash == fhash);
+                    RED_CHECK(data_size == DataSize(80));
+                    RED_CHECK(prefix == "\x01\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00"_av);
+                    RED_CHECK(qhash == qhash_);
+                    RED_CHECK(fhash == fhash_);
                 }
             );
     }

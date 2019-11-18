@@ -884,6 +884,17 @@ void OutCryptoTransport::do_send(const uint8_t * data, size_t len)
     send_data(data, len, this->encrypter, this->out_file);
 }
 
+bool OutCryptoTransport::cancel()
+{
+    if (this->is_open()) {
+        this->out_file.close();
+        if (this->tmpname[0] != 0){
+            return ::remove(this->tmpname) == 0;
+        }
+    }
+    return true;
+}
+
 
 EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
     InCryptoTransport & in, const char * filename, bytes_view derivator, Error * err)

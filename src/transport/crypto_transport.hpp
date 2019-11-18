@@ -185,6 +185,8 @@ public:
 
     void do_send(const uint8_t * data, size_t len) override;
 
+    bool cancel();
+
 private:
     ocrypto encrypter;
     OutFileTransport out_file;

@@ -47,7 +47,10 @@ class Dep:
             linkflags=self.linkflags + other.linkflags,
             cxxflags=self.cxxflags + other.cxxflags)
 
-inc_test_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for lcg_random or fixed_random
+inc_test_dep = Dep(cxxflags=[
+    '<include>$(REDEMPTION_TEST_PATH)/includes', # for lcg_random or fixed_random
+    '<define>SHOW_DEBUG_TRACES=1', # for lcg_random or fixed_random
+])
 
 src_requirements = dict((
     ('src/lib/scytale.cpp', inc_test_dep),

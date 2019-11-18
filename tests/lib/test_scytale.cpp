@@ -21,7 +21,9 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
+#include "utils/sugar/algostring.hpp"
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
 #include <string_view>
@@ -89,10 +91,10 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 
         RED_CHECK_EQ(scytale_writer_close(handle), 0);
 
-        RED_CHECK_EQ(scytale_writer_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
-        RED_CHECK_EQ(scytale_writer_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+        RED_CHECK_EQ(scytale_writer_get_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+        RED_CHECK_EQ(scytale_writer_get_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
 
-        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error"sv);
+        RED_CHECK_EQ(scytale_writer_get_error_message(handle), "No error"sv);
 
         scytale_writer_delete(handle);
     }
@@ -114,13 +116,13 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
         RED_CHECK_MEM(writable_bytes_view(buf, 31), "We write, and again, and so on."_av);
         RED_CHECK_EQ(scytale_reader_close(handle), 0);
 
-        RED_CHECK_EQ(scytale_reader_error_message(handle), "No error"sv);
+        RED_CHECK_EQ(scytale_reader_get_error_message(handle), "No error"sv);
 
         RED_CHECK_EQ(scytale_reader_qhash(handle, finalname), 0);
         RED_CHECK_EQ(scytale_reader_fhash(handle, finalname), 0);
 
-        RED_CHECK_EQ(scytale_reader_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
-        RED_CHECK_EQ(scytale_reader_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+        RED_CHECK_EQ(scytale_reader_get_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+        RED_CHECK_EQ(scytale_reader_get_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
 
         scytale_reader_delete(handle);
     }
@@ -149,12 +151,12 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
 
         RED_CHECK_EQ(scytale_writer_close(handle), 0);
 
-        memcpy(qhash, scytale_writer_qhashhex(handle), sizeof(qhash));
-        memcpy(fhash, scytale_writer_fhashhex(handle), sizeof(fhash));
+        memcpy(qhash, scytale_writer_get_qhashhex(handle), sizeof(qhash));
+        memcpy(fhash, scytale_writer_get_fhashhex(handle), sizeof(fhash));
         RED_CHECK_NE(qhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
         RED_CHECK_NE(fhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
 
-        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error"sv);
+        RED_CHECK_EQ(scytale_writer_get_error_message(handle), "No error"sv);
 
         scytale_writer_delete(handle);
     }
@@ -177,12 +179,12 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
 
         RED_CHECK_EQ(scytale_writer_close(handle), 0);
 
-        auto qhash2 = scytale_writer_qhashhex(handle);
-        auto fhash2 = scytale_writer_fhashhex(handle);
+        auto qhash2 = scytale_writer_get_qhashhex(handle);
+        auto fhash2 = scytale_writer_get_fhashhex(handle);
         RED_CHECK_NE(qhash2, qhash);
         RED_CHECK_NE(fhash2, fhash);
 
-        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error"sv);
+        RED_CHECK_EQ(scytale_writer_get_error_message(handle), "No error"sv);
 
         scytale_writer_delete(handle);
     }
@@ -237,33 +239,33 @@ RED_AUTO_TEST_CASE(TestscytaleError)
 {
     auto handle_w = scytale_writer_new(1, 1, "/", &hmac_fn, &trace_fn, false, false);
     RED_CHECK_EQ(scytale_writer_open(handle_w, "/", "/", 0), -1);
-    RED_CHECK_NE(scytale_writer_error_message(handle_w), "No error"sv);
+    RED_CHECK_NE(scytale_writer_get_error_message(handle_w), "No error"sv);
 
     auto handle_r = scytale_reader_new("/", &hmac_fn, &trace_fn, 0, 0);
     RED_CHECK_EQ(scytale_reader_open(handle_r, "/", "/"), -1);
-    RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error"sv);
+    RED_CHECK_NE(scytale_reader_get_error_message(handle_r), "No error"sv);
 
     RED_CHECK_EQ(scytale_reader_qhash(handle_r, "/"), -1);
     RED_CHECK_EQ(scytale_reader_fhash(handle_r, "/"), -1);
-    RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error"sv);
+    RED_CHECK_NE(scytale_reader_get_error_message(handle_r), "No error"sv);
 
     scytale_writer_delete(handle_w);
     scytale_reader_delete(handle_r);
 
     RED_CHECK_EQ(scytale_writer_write(nullptr, bytes("We write, "), 10), -1);
     RED_CHECK_EQ(scytale_writer_close(nullptr), -1);
-    RED_CHECK_NE(scytale_writer_error_message(nullptr), "No error"sv);
+    RED_CHECK_NE(scytale_writer_get_error_message(nullptr), "No error"sv);
 
     uint8_t buf[12];
     RED_CHECK_EQ(scytale_reader_read(nullptr, buf, 10), -1);
     RED_CHECK_EQ(scytale_reader_close(nullptr), -1);
-    RED_CHECK_NE(scytale_reader_error_message(nullptr), "No error"sv);
+    RED_CHECK_NE(scytale_reader_get_error_message(nullptr), "No error"sv);
 }
 
 RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)
 {
     // master derivator: "toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
-    RedCryptoKeyHandle * handle = scytale_key_new("563eb6e8158f0eed2e5fb6bc2893bc15270d7e7815fa804a723ef4fb315ff4b2");
+    ScytaleKeyHandle * handle = scytale_key_new("563eb6e8158f0eed2e5fb6bc2893bc15270d7e7815fa804a723ef4fb315ff4b2");
     RED_CHECK_NE(handle, nullptr);
     bytes_view derivator = "toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"_av;
     const char * result = scytale_key_derivate(handle, derivator.as_u8p(), derivator.size());
@@ -280,7 +282,7 @@ RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)
 RED_AUTO_TEST_CASE(TestscytaleKeyDerivation)
 {
     // master derivator: "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm"
-    RedCryptoKeyHandle * handle = scytale_key_new("a86e1c63e1a6fded2f7317ca97ad480799f5cf84ad9f4a16663809b774e05834");
+    ScytaleKeyHandle * handle = scytale_key_new("a86e1c63e1a6fded2f7317ca97ad480799f5cf84ad9f4a16663809b774e05834");
     RED_CHECK_NE(handle, nullptr);
     bytes_view derivator = "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560-000000.wrm"_av;
     const char * result = scytale_key_derivate(handle, derivator.as_u8p(), derivator.size());
@@ -394,4 +396,58 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(scytale_reader_close(handle), 0);
         scytale_reader_delete(handle);
     }
+}
+
+
+RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
+{
+    auto wdhash = wd.create_subdirectory("hash");
+
+    auto sid = "0123456789abcdef"_av;
+
+    auto fdx_filename = str_concat(sid, ".fdx");
+
+    auto fdxpath = wd.add_file(fdx_filename);
+    (void)wdhash.add_file(fdx_filename);
+
+    auto* fdx = scytale_fdx_writer_new(
+        wd.dirname(), wdhash.dirname(), 0, sid.data(),
+        0, 0, "", hmac_fn, trace_fn, 1);
+    RED_TEST(fdx);
+
+    auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
+    RED_TEST(tfl);
+
+    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
+    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
+
+    RED_TEST(0 == scytale_fdx_writer_cancel_tfl(fdx, tfl));
+
+    auto fname = str_concat(sid, ",000002.tfl"_av);
+    auto file2path = wd.add_file(fname);
+    auto file2hash = wdhash.add_file(fname);
+
+    tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt");
+    RED_TEST(tfl);
+
+    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
+    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
+
+    RED_TEST(0 == scytale_fdx_writer_close_tfl(fdx, tfl));
+
+    RED_CHECK_FILE_CONTENTS(file2path, "abcdefg"_av);
+    auto hres = "v2\n\n\n0123456789abcdef,000002.tfl "sv;
+    std::string content;
+    (void)tu::append_file_contents(file2hash, content);
+    RED_TEST(content.substr(0, hres.size()) == hres);
+
+    RED_TEST("No error" == scytale_fdx_writer_get_error_message(fdx));
+
+    RED_TEST(0 == scytale_fdx_writer_delete(fdx));
+
+    RED_CHECK_FILE_CONTENTS(fdxpath,
+        "v3\n"
+        "\x04\x00.\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
+        "file2.txt0123456789abcdef,000002.tfl"
+        "\x05\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"_av);
 }
