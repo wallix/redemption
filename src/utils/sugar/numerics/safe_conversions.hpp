@@ -135,6 +135,9 @@ private:
 };
 
 
+template<class T> safe_int(T i) -> safe_int<T>;
+template<class T> checked_int(T i) -> checked_int<T>;
+
 template<class T> inline checked_int<T>   make_checked_int(T i)   noexcept { return {i}; }
 template<class T> inline saturated_int<T> make_saturated_int(T i) noexcept { return {i}; }
 template<class T> inline safe_int<T>      make_safe_int(T i)      noexcept { return {i}; }
