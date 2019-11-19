@@ -1269,7 +1269,7 @@ public:
 
     size_t channel_list_index = 0;
 
-    void connection_initiation(bytes_view tpdu)
+    void connection_initiation(bytes_view tpdu, bool bogus_neg_req)
     {
         // Connection Initiation
         // ---------------------
@@ -1283,27 +1283,32 @@ public:
         //    |------------X224 Connection Request PDU----------------> |
         //    | <----------X224 Connection Confirm PDU----------------- |
 
-        InStream new_x224_stream(tpdu);
+        InStream x224_stream(tpdu);
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
             LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU");
         }
 
         {
-            auto x224 = X224::CR_TPDU_Data_Recv(new_x224_stream, this->ini.get<cfg::client::bogus_neg_request>(), false);
-            if (x224._header_size != new_x224_stream.get_capacity()) {
+            bool verbosity = false;
+            auto cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, bogus_neg_req, verbosity);
+            if (cr_tpdu._header_size != x224_stream.get_capacity()) {
                 LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
-                             " %zu bytes remains", new_x224_stream.get_capacity() - x224._header_size);
+                             " %zu bytes remains", x224_stream.get_capacity() - cr_tpdu._header_size);
             }
-            this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+            this->clientRequestedProtocols = cr_tpdu.rdp_neg_requestedProtocols;
         }
 
-        if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
-            LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
+        if (!this->ini.get<cfg::client::tls_support>() 
+        && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+            LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy "
+                             "should not be disabled at same time. "
+                             "tls_support is assumed to be enabled.");
         }
 
         if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-            (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
+            (!this->ini.get<cfg::client::tls_support>() 
+            || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
             // Fallback to legacy security protocol (RDP) is allowed.
             && this->ini.get<cfg::client::tls_fallback_legacy>()
         ) {
@@ -2555,7 +2560,7 @@ public:
 
         switch (this->state) {
         case CONNECTION_INITIATION:
-            this->connection_initiation(tpdu);
+            this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>());
             this->state = BASIC_SETTINGS_EXCHANGE;
         break;
         case BASIC_SETTINGS_EXCHANGE:
