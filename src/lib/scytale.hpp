@@ -56,10 +56,13 @@ extern "C"
     char const * scytale_writer_get_error_message(ScytaleWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_writer_open(ScytaleWriterHandle * handle, char const * path, char const * hashpath, int groupid);
+    int scytale_writer_open(
+        ScytaleWriterHandle * handle,
+        char const * path, char const * hashpath, int groupid);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_writer_write(ScytaleWriterHandle * handle, uint8_t const * buffer, unsigned long len);
+    int scytale_writer_write(
+        ScytaleWriterHandle * handle, uint8_t const * buffer, unsigned long len);
 
     /// \return HashHexArray
     REDEMPTION_LIB_EXPORT
@@ -80,13 +83,17 @@ extern "C"
     // Reader
     //@{
     REDEMPTION_LIB_EXPORT
-    ScytaleReaderHandle * scytale_reader_new(const char * derivator, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_scheme, int one_shot);
+    ScytaleReaderHandle * scytale_reader_new(
+        const char * derivator,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     char const * scytale_reader_get_error_message(ScytaleReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_reader_open(ScytaleReaderHandle * handle, char const * path, char const * derivator);
+    int scytale_reader_open(
+        ScytaleReaderHandle * handle, char const * path, char const * derivator);
 
     // enum class EncryptionSchemeTypeResult
     // {
@@ -95,12 +102,12 @@ extern "C"
     //     OldScheme,
     //     NewScheme,
     // };
-    // result is a EncryptionSchemeTypeResult
+    /// \result EncryptionSchemeTypeResult
     REDEMPTION_LIB_EXPORT
     int scytale_reader_open_with_auto_detect_encryption_scheme(
         ScytaleReaderHandle * handle, char const * path, char const * derivator);
 
-    // < 0: error, 0: eof, >0: length read
+    /// < 0: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT
     int scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len);
 
@@ -135,7 +142,8 @@ extern "C"
     char const * scytale_meta_reader_get_error_message(ScytaleMetaReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_meta_reader_read_hash(ScytaleMetaReaderHandle * handle, int version, int has_checksum);
+    int scytale_meta_reader_read_hash(
+        ScytaleMetaReaderHandle * handle, int version, int has_checksum);
 
     REDEMPTION_LIB_EXPORT
     int scytale_meta_reader_read_header(ScytaleMetaReaderHandle * handle);
@@ -169,8 +177,8 @@ extern "C"
         uint64_t start_time;
         uint64_t stop_time;
         int with_hash;
-        char const * hash1;
-        char const * hash2;
+        char const * qhash;
+        char const * fhash;
     };
 
     REDEMPTION_LIB_EXPORT
@@ -187,7 +195,8 @@ extern "C"
     ScytaleKeyHandle * scytale_key_new(const char * masterkeyhex);
 
     REDEMPTION_LIB_EXPORT
-    const char * scytale_key_derivate(ScytaleKeyHandle * handle, const uint8_t * derivator, size_t len);
+    const char * scytale_key_derivate(
+        ScytaleKeyHandle * handle, const uint8_t * derivator, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
     void scytale_key_delete(ScytaleKeyHandle * handle);

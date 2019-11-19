@@ -651,7 +651,7 @@ ScytaleKeyHandle * scytale_key_new(const char * masterkeyhex)
     return CREATE_HANDLE(ScytaleKeyHandle(masterkeyhex));
 }
 
-const char * scytale_key_derivate(ScytaleKeyHandle * handle, const uint8_t * derivator, size_t len)
+const char * scytale_key_derivate(ScytaleKeyHandle * handle, const uint8_t * derivator, unsigned long len)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
