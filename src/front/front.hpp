@@ -825,7 +825,7 @@ public:
                     this->send_monitor_layout();
 
                     LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
-                    state = ACTIVATE_AND_PROCESS_DATA;
+                    this->state = ACTIVATE_AND_PROCESS_DATA;
                     this->is_first_memblt = true;
                     res = ResizeResult::done;
                 }
@@ -2101,78 +2101,13 @@ public:
         // Client                                                     Server
         //    | <------ License Error PDU Valid Client ---------------- |
 
-        if (sec.flags & SEC::SEC_LICENSE_PKT) {
-            LIC::RecvFactory flic(sec.payload);
-            switch (flic.tag) {
-            case LIC::ERROR_ALERT:
-            {
-                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                    "Front::incoming: LIC::ERROR_ALERT");
-                // TODO We should check what is actually returned by this message, as it may be an error
-                LIC::ErrorAlert_Recv lic(sec.payload);
-                LOG(LOG_ERR, "Front::incoming: License Alert: error=%u transition=%u",
-                    lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
-            }
-            break;
-            case LIC::NEW_LICENSE_REQUEST:
-            {
-                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                    "Front::incoming: LIC::NEW_LICENSE_REQUEST");
-                LIC::NewLicenseRequest_Recv lic(sec.payload);
-                // TODO Instead of returning a license we return a message saying that no license is OK
-                this->send_valid_client_license_data();
-            }
-            break;
-            case LIC::PLATFORM_CHALLENGE_RESPONSE:
-                // TODO As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE
-                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                    "Front::incoming: LIC::PLATFORM_CHALLENGE_RESPONSE");
-                break;
-            case LIC::LICENSE_INFO:
-                // TODO As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO
-                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                    "Front::incoming: LIC::LICENSE_INFO");
-                // TODO Instead of returning a license we return a message saying that no license is OK
-                this->send_valid_client_license_data();
-                break;
-            default:
-                LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                    "Front::incoming: LICENSE_TAG %u unknown or unsupported by server",
-                    flic.tag);
-                break;
-            }
-            // license received, proceed with capabilities exchange
-
-            // Capabilities Exchange
-            // ---------------------
-
-            // Capabilities Negotiation: The server sends the set of capabilities it
-            // supports to the client in a Demand Active PDU. The client responds with its
-            // capabilities by sending a Confirm Active PDU.
-
-            // Client                                                     Server
-            //    | <------- Demand Active PDU ---------------------------- |
-            //    |--------- Confirm Active PDU --------------------------> |
-
-            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                "Front::incoming: send_demand_active");
-            this->send_demand_active();
-            this->send_monitor_layout();
-
-            LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
-        }
-        else {
+        if (not (sec.flags & SEC::SEC_LICENSE_PKT)) {
             LOG(LOG_INFO, "Front::incoming: non license packet");
             // at this point license negociation is still ongoing
-            // most data packets should not be received
-            // actually even input is dubious,
-            // but rdesktop actually sends input data
-            // also processing this is a problem because input data packets are broken
-
+            // data packets should not be received
             LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
                 "Front::incoming: non license packet: still waiting for license");
             ShareControl_Recv sctrl(sec.payload);
-
             switch (sctrl.pduType) {
             case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                 LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
@@ -2181,16 +2116,6 @@ public:
             case PDUTYPE_CONFIRMACTIVEPDU:
                 LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
                     "Front::incoming: Unexpected CONFIRMACTIVE PDU");
-                {
-                    // shareId(4) + originatorId(2)
-                    ::check_throw(sctrl.payload, 6, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRUNCATED);
-                    uint32_t share_id = sctrl.payload.in_uint32_le();
-                    uint16_t originatorId = sctrl.payload.in_uint16_le();
-                    this->process_confirm_active(sctrl.payload);
-                    (void)share_id;
-                    (void)originatorId;
-                    ::check_end(sctrl.payload, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRAILINGDATA);
-                }
             break;
             case PDUTYPE_DATAPDU: /* 7 */
                 LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
@@ -2210,9 +2135,71 @@ public:
             }
             this->is_client_disconnected = true;
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+        }        
+
+        LIC::RecvFactory flic(sec.payload);
+        switch (flic.tag) {
+        // These cases are protocol error
+        case LIC::ERROR_ALERT:
+        {
+            LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                "Front::incoming: LIC::ERROR_ALERT");
+            LIC::ErrorAlert_Recv lic(sec.payload);
+            LOG(LOG_ERR, "Front::incoming: License Alert: error=%u transition=%u",
+                lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+            this->is_client_disconnected = true;
+            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
-        LOG(LOG_WARNING, "Front::incoming: got DATA PDU instead of expected license PDU");
-        sec.payload.in_skip_bytes(sec.payload.in_remain());
+        break;
+        case LIC::PLATFORM_CHALLENGE_RESPONSE:
+            // TODO As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE
+            LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                "Front::incoming: LIC::PLATFORM_CHALLENGE_RESPONSE");
+            this->is_client_disconnected = true;
+            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+        default:
+            LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                "Front::incoming: LICENSE_TAG %u unknown or unsupported by server",
+                flic.tag);
+            this->is_client_disconnected = true;
+            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+        // These cases are genuine licence requests from client
+        case LIC::NEW_LICENSE_REQUEST:
+        {
+            LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                "Front::incoming: LIC::NEW_LICENSE_REQUEST");
+            LIC::NewLicenseRequest_Recv lic(sec.payload);
+        }
+        break;
+        case LIC::LICENSE_INFO:
+            // TODO As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO
+            LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
+                "Front::incoming: LIC::LICENSE_INFO");
+            LOG(LOG_WARNING, "Front::incoming: got DATA PDU instead of expected license PDU");
+            sec.payload.in_skip_bytes(sec.payload.in_remain());
+        break;
+        }
+        // we don't return a license, instead we return a message saying that no license is OK
+        this->send_valid_client_license_data();
+
+        // license packet received, proceed with capabilities exchange
+        LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
+
+        // Capabilities Exchange
+        // ---------------------
+
+        // Capabilities Negotiation: The server sends the set of capabilities it
+        // supports to the client in a Demand Active PDU. The client responds with its
+        // capabilities by sending a Confirm Active PDU.
+
+        // Client                                                     Server
+        //    | <------- Demand Active PDU ---------------------------- |
+        //    |--------- Confirm Active PDU --------------------------> |
+
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+            "Front::incoming: send_demand_active");
+        this->send_demand_active();
+        this->send_monitor_layout();
     }
             
             
