@@ -112,6 +112,8 @@
 #include "core/stream_throw_helpers.hpp"
 
 #include "system/tls_context.hpp"
+#include "proxy_recorder/nego_server.hpp"
+
 
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
@@ -546,7 +548,8 @@ private:
     uint8_t pub_mod[512];
     uint8_t pri_exp[512];
     uint8_t server_random[32];
-    CryptContext encrypt, decrypt;
+    CryptContext encrypt;
+    CryptContext decrypt;
 
     int order_level = 0;
 
@@ -563,6 +566,7 @@ private:
 
     enum {
         CONNECTION_INITIATION,
+        PRIMARY_AUTH_NLA,
         BASIC_SETTINGS_EXCHANGE,
         CHANNEL_ATTACH_USER,
         CHANNEL_JOIN_REQUEST,
@@ -583,6 +587,13 @@ private:
     bool tls_client_active;
     bool mem3blt_support;
     int clientRequestedProtocols;
+
+    uint8_t front_public_key[1024] = {};
+    array_view_u8 front_public_key_av;
+    std::unique_ptr<NegoServer> nego_server;
+    std::string nla_username;
+    std::string nla_password;
+    
 
     std::string server_capabilities_filename;
 
@@ -1269,7 +1280,7 @@ public:
 
     size_t channel_list_index = 0;
 
-    void connection_initiation(bytes_view tpdu, bool bogus_neg_req)
+    void connection_initiation(bytes_view tpdu, bool bogus_neg_req, bool enable_nla, const Front::Verbose & verbose)
     {
         // Connection Initiation
         // ---------------------
@@ -1284,7 +1295,7 @@ public:
         //    | <----------X224 Connection Confirm PDU----------------- |
 
         InStream x224_stream(tpdu);
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
             LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU");
         }
@@ -1320,7 +1331,7 @@ public:
             LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
         }
 
-        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+        LOG_IF(bool(verbose & Verbose::basic_trace), LOG_INFO,
             "Front::incoming: sending x224 connection confirm PDU");
 
         {
@@ -1329,7 +1340,13 @@ public:
             uint32_t rdp_neg_code = 0;
             if (this->tls_client_active) {
                 LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled");
-                if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
+                if (enable_nla 
+                && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
+                    rdp_neg_type = X224::RDP_NEG_RSP;
+                    rdp_neg_code = X224::PROTOCOL_TLS;
+                    this->encryptionLevel = 0;
+                }
+                else if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                     rdp_neg_type = X224::RDP_NEG_RSP;
                     rdp_neg_code = X224::PROTOCOL_TLS;
                     this->encryptionLevel = 0;
@@ -1355,6 +1372,14 @@ public:
                 this->ini.get<cfg::client::tls_min_level>(),
                 this->ini.get<cfg::client::tls_max_level>(),
                 this->ini.get<cfg::client::show_common_cipher_list>());
+            bytes_view key = this->trans.get_public_key();
+            memcpy(this->front_public_key, key.data(), key.size());
+            this->front_public_key_av = array_view{this->front_public_key, key.size()};
+            if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
+                this->nla_username = std::string("u");
+                this->nla_password = std::string("upass");
+                this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, this->nla_username, this->nla_password, true);
+            }
         }
 
         // 2.2.10.2 Early User Authorization Result PDU
@@ -2056,7 +2081,7 @@ public:
     }    
 
 
-    void license_packet(bytes_view tpdu)
+    void license_packet(bytes_view tpdu, Transport & answer_trans)
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
             "Front::incoming: WAITING_FOR_ANSWER_TO_LICENSE");
@@ -2180,26 +2205,10 @@ public:
         break;
         }
         // we don't return a license, instead we return a message saying that no license is OK
-        this->send_valid_client_license_data();
+        this->send_valid_client_license_data(answer_trans);
 
         // license packet received, proceed with capabilities exchange
         LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
-
-        // Capabilities Exchange
-        // ---------------------
-
-        // Capabilities Negotiation: The server sends the set of capabilities it
-        // supports to the client in a Demand Active PDU. The client responds with its
-        // capabilities by sending a Confirm Active PDU.
-
-        // Client                                                     Server
-        //    | <------- Demand Active PDU ---------------------------- |
-        //    |--------- Confirm Active PDU --------------------------> |
-
-        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-            "Front::incoming: send_demand_active");
-        this->send_demand_active();
-        this->send_monitor_layout();
     }
             
             
@@ -2541,14 +2550,57 @@ public:
     // TODO: this should be extracted
     TpduBuffer rbuf;
 
+    bool is_in_nla()
+    {
+        return (this->state == PRIMARY_AUTH_NLA);
+    }
+
+    void front_nla(Transport & trans, bytes_view data)
+    {
+        LOG(LOG_INFO, "starting NLA NegoServer");
+        std::vector<uint8_t> result;
+        credssp::State st = credssp::State::Cont;
+        LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
+        result << this->nego_server->credssp.authenticate_next(data);
+        st = this->nego_server->credssp.state;
+        trans.send(result);
+
+        switch (st) {
+        case credssp::State::Err: {
+            LOG(LOG_INFO, "NLA NegoServer Authentication Failed");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+        }
+        case credssp::State::Cont: {
+            LOG(LOG_INFO, "NLA NegoServer Running");
+        }
+        break;
+        case credssp::State::Finish:
+            LOG(LOG_INFO, "NLA NegoServer Done");
+            this->state = BASIC_SETTINGS_EXCHANGE;
+            break;
+        }
+    }
+
+
     void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
         switch (this->state) {
         case CONNECTION_INITIATION:
-            this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>());
-            this->state = BASIC_SETTINGS_EXCHANGE;
+        {
+            bool enable_nla = false;
+            this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>(), enable_nla, this->verbose);
+            if (enable_nla){
+                this->state = PRIMARY_AUTH_NLA;
+            }
+            else {
+                this->state = BASIC_SETTINGS_EXCHANGE;
+            }
+        }
+        break;
+        case PRIMARY_AUTH_NLA:
+            this->front_nla(this->trans, tpdu);
         break;
         case BASIC_SETTINGS_EXCHANGE:
             this->basic_settings_exchange(tpdu);
@@ -2594,7 +2646,24 @@ public:
         break;
 
         case WAITING_FOR_ANSWER_TO_LICENSE:
-            this->license_packet(tpdu);
+            this->license_packet(tpdu, this->trans);
+
+            // Capabilities Exchange
+            // ---------------------
+
+            // Capabilities Negotiation: The server sends the set of capabilities it
+            // supports to the client in a Demand Active PDU. The client responds with its
+            // capabilities by sending a Confirm Active PDU.
+
+            // Client                                                     Server
+            //    | <------- Demand Active PDU ---------------------------- |
+            //    |--------- Confirm Active PDU --------------------------> |
+            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                "Front::incoming: send_demand_active");
+            
+            this->send_demand_active();
+            this->send_monitor_layout();
+
             this->state = ACTIVATE_AND_PROCESS_DATA;
         break;
 
@@ -2606,10 +2675,12 @@ public:
         }
     }
 
-    void send_valid_client_license_data() {
-        this->send_data_indication(
-            GCC::MCS_GLOBAL_CHANNEL,
-            [this](StreamSize<24>, OutStream & sec_header) {
+    void send_valid_client_license_data(Transport & answer_trans) {
+
+        uint16_t channelId = GCC::MCS_GLOBAL_CHANNEL;
+        auto userid = this->userid;
+        
+        auto data_writer = [this](StreamSize<24>, OutStream & sec_header) {
                 // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
                 /* some compilers need unsigned char to avoid warnings */
@@ -2634,7 +2705,18 @@ public:
                 }
 
                 sec_header.out_copy_bytes(lic2, sizeof(lic2));
-            }
+            };
+
+        write_packets(
+            answer_trans,
+            data_writer,
+            [channelId, userid](StreamSize<256>, OutStream & mcs_header, std::size_t packet_sz) {
+                MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, packet_sz,
+                    MCS::PER_ENCODING
+                );
+                (void)mcs;
+            },
+            X224::write_x224_dt_tpdu_fn{}
         );
     }
 

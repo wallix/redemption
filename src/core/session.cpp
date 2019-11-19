@@ -275,7 +275,7 @@ public:
                         }
                         if (front_is_set) {
                             front.rbuf.load_data(front.trans);
-                            while (front.rbuf.next(TpduBuffer::PDU))
+                            while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::PDU):(TpduBuffer::CREDSSP)))
                             {
                                 bytes_view tpdu = front.rbuf.current_pdu_buffer();
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
