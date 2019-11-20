@@ -1,3 +1,9 @@
+redemption (7.4.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Scytale: fdx and tfl files support (writer only)
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 20 Nov 2019 14:15:07 +0200
+
 redemption (7.4.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
