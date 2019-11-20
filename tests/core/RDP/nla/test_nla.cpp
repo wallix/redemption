@@ -531,6 +531,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
 /* 0030 */ 0xee, 0x36, 0xb7, 0xad, 0x29, 0xb9, 0x08, 0x2b, 0xbe, 0xaa, 0x6f,                                // .6..)..+..o
     };
 
+//    RED_CHECK(false);
     RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> answer with NTLM Pubauthkey");
     RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next(authenticate));
 //    

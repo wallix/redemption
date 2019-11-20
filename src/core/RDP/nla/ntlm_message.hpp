@@ -1394,14 +1394,17 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
 
     // PAYLOAD
     // Ensure payload is available
-    auto maxp = std::accumulate(l.begin(), l.end(), 0, 
+    size_t maxp = std::accumulate(l.begin(), l.end(), 0, 
         [](size_t a, const TmpNtlmField tmp) {
              return std::max(a, size_t(tmp.f->bufferOffset + tmp.len));
     });
-    if (pBegin + maxp > stream.get_current()) {
-        LOG(LOG_INFO, "NTLM Message Authenticate Payload Truncated");
-        stream.in_skip_bytes(pBegin + maxp - stream.get_current());
+    if (maxp > raw_message.size()) {
+        LOG(LOG_ERR, "NTLM Message Authenticate Payload Truncated (%u > %u)", unsigned(maxp), unsigned(raw_message.size()));
     }
+//    if (pBegin + maxp > stream.get_current()) {
+//        LOG(LOG_INFO, "NTLM Message Authenticate Payload Truncated (%u > %u)", unsigned(maxp), unsigned(stream.get_current()-pBegin));
+//        stream.in_skip_bytes(pBegin + maxp - stream.get_current());
+//    }
 
     // Actually read payload data
     for(auto & tmp: l){
@@ -1419,9 +1422,9 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
         std::vector<uint8_t> v;
         constexpr std::size_t null_data_sz = 16;
         uint8_t const null_data[null_data_sz]{0u};
-        push_back_array(v, {stream.get_data(), stream.get_data()+12+8+8+8+8+8+8+4+8});
+        push_back_array(v, {raw_message.data(), 12+8+8+8+8+8+8+4+8});
         push_back_array(v, {null_data, 16});
-        push_back_array(v, {stream.get_data() + 12+8+8+8+8+8+8+4+8 + 16, stream.get_offset() - (12+8+8+8+8+8+8+4+8 + 16)});
+        push_back_array(v, {raw_message.data() + 12+8+8+8+8+8+8+4+8 + 16, raw_message.size() - (12+8+8+8+8+8+8+4+8 + 16)});
         self.message_bytes_dump = v;
     }
     return self;

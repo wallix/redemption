@@ -300,9 +300,13 @@ public:
                     }
                     if (!authenticate.check_lm_response_from_authenticate(password_hash, this->ServerChallenge)) {
                         // SEC_E_LOGON_DENIED;
+                        LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
                         this->state = credssp::State::Err;
                         return {};
                     }
+
+                    LOG(LOG_ERR, "PASSWORD HASH OK: COMPUTE SHARED KEY");
+
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
                     array_md5 SessionBaseKey = authenticate.compute_session_base_key(password_hash);
                     array_md5 ExportedSessionKey = authenticate.get_exported_session_key(SessionBaseKey);

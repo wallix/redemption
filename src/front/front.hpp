@@ -1338,14 +1338,15 @@ public:
             uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
             uint32_t rdp_neg_code = 0;
             if (this->tls_client_active) {
-                LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled");
-                if (enable_nla 
-                && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
+                LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled nla=%s", enable_nla?"true":"false");
+                if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
+                    LOG(LOG_INFO, "Enable NLA");
                     rdp_neg_type = X224::RDP_NEG_RSP;
-                    rdp_neg_code = X224::PROTOCOL_TLS;
+                    rdp_neg_code = X224::PROTOCOL_HYBRID;
                     this->encryptionLevel = 0;
                 }
                 else if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
+                    LOG(LOG_INFO, "Enable TLS");
                     rdp_neg_type = X224::RDP_NEG_RSP;
                     rdp_neg_code = X224::PROTOCOL_TLS;
                     this->encryptionLevel = 0;
@@ -1371,9 +1372,11 @@ public:
                 this->ini.get<cfg::client::tls_min_level>(),
                 this->ini.get<cfg::client::tls_max_level>(),
                 this->ini.get<cfg::client::show_common_cipher_list>());
+
             bytes_view key = this->trans.get_public_key();
             memcpy(this->front_public_key, key.data(), key.size());
             this->front_public_key_av = array_view{this->front_public_key, key.size()};
+
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
                 this->nla_username = std::string("u");
                 this->nla_password = std::string("upass");
@@ -2588,7 +2591,7 @@ public:
         switch (this->state) {
         case CONNECTION_INITIATION:
         {
-            bool enable_nla = this->ini.get<cfg::client::bogus_neg_request>();
+            bool enable_nla = this->ini.get<cfg::client::enable_nla>();
             this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>(), enable_nla, this->verbose);
             if (enable_nla){
                 this->state = PRIMARY_AUTH_NLA;

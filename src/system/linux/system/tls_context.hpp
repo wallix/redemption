@@ -365,6 +365,7 @@ public:
 
     bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     {
+        LOG(LOG_INFO, "Enable server TLS");
         // reference doc: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_new.html
 
         SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
