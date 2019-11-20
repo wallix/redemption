@@ -466,8 +466,6 @@ lib libscytale :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
-  <variant>debug:<define>SHOW_DEBUG_TRACES=1
-  <variant>san:<define>SHOW_DEBUG_TRACES=1
 ;
 obj src/lib/do_recorder.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp
@@ -489,9 +487,7 @@ obj src/lib/scytale.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/lib/scytale.cpp
 :
   $(LIB_DEPENDENCIES)
-  <variant>san:<define>SHOW_DEBUG_TRACES=1
   <include>$(REDEMPTION_TEST_PATH)/includes
-  <variant>debug:<define>SHOW_DEBUG_TRACES=1
 ;
 
 test-run tests/acl/test_acl_serializer :
@@ -5531,7 +5527,7 @@ obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/files_validator_api.o : $(REDEMPTION_SRC_PATH)/lib/files_validator_api.cpp ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
-obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes <variant>debug:<define>SHOW_DEBUG_TRACES=1 <variant>san:<define>SHOW_DEBUG_TRACES=1 ;
+obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;

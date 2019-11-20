@@ -10,7 +10,7 @@ import scytale.keys
 
 # ./tools/cpp2ctypes.lua 'src/lib/scytale.hpp' 'lib.' '' 'get_hmac_key_prototype*=GETHMACKEY' 'get_trace_key_prototype*=GETTRACEKEY'
 
-from ctypes import CFUNCTYPE, POINTER, c_char_p, c_int, c_uint64, c_ulong, c_void_p
+from ctypes import CFUNCTYPE, POINTER, c_char_p, c_int, c_uint64, c_ulong, c_void_p, c_uint
 
 pathlib = 'libscytale.so'
 
@@ -20,13 +20,13 @@ GETTRACEKEY = CFUNCTYPE(c_int, c_char_p, c_int, c_void_p, c_uint)
 get_hmac_key_func = GETHMACKEY(keys.get_hmac_key)
 get_trace_key_func = GETTRACEKEY(keys.get_trace_key)
 
-class CtypeMwrmHeader(Structure):
+class CtypeMwrmHeader(ctypes.Structure):
     _fields_ = [
         ("version", c_int),
         ("has_checksum", c_int),
     ]
 
-class CtypeMwrmLine(Structure):
+class CtypeMwrmLine(ctypes.Structure):
     _fields_ = [
         ("filename", c_char_p),
         ("size", c_uint64),
@@ -232,14 +232,23 @@ lib.scytale_key_get_derivated.restype = c_char_p
 # @}
 # Tfl
 # @{
-# \param test_random for reproductible test
 # ScytaleFdxWriterHandle * scytale_fdx_writer_new(
-#     char const * path, char const * hashpath, int groupid, char const * sid,
 #     int with_encryption, int with_checksum, char const* master_derivator,
-#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-#     int test_random);
-lib.scytale_fdx_writer_new.argtypes = [c_char_p, c_char_p, c_int, c_char_p, c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_int]
+#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+lib.scytale_fdx_writer_new.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY]
 lib.scytale_fdx_writer_new.restype = c_void_p
+
+# ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
+#     int with_encryption, int with_checksum, char const* master_derivator,
+#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+lib.scytale_fdx_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY]
+lib.scytale_fdx_writer_new_with_test_random.restype = c_void_p
+
+# int scytale_fdx_writer_open(
+#     ScytaleFdxWriterHandle * handle,
+#     char const * path, char const * hashpath, int groupid, char const * sid);
+lib.scytale_fdx_writer_open.argtypes = [c_void_p, c_char_p, c_char_p, c_int, c_char_p]
+lib.scytale_fdx_writer_open.restype = c_int
 
 # ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
 #     ScytaleFdxWriterHandle * handle, char const * filename);
@@ -247,19 +256,31 @@ lib.scytale_fdx_writer_open_tfl.argtypes = [c_void_p, c_char_p]
 lib.scytale_fdx_writer_open_tfl.restype = c_void_p
 
 # int scytale_tfl_writer_write(
-#     ScytaleTflWriterHandler * tfl, uint8_t const * buffer, unsigned long len);
+#     ScytaleTflWriterHandler * handle, uint8_t const * buffer, unsigned long len);
 lib.scytale_tfl_writer_write.argtypes = [c_void_p, c_char_p, c_ulong]
 lib.scytale_tfl_writer_write.restype = c_int
 
-# int scytale_fdx_writer_close_tfl(
-#     ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl);
-lib.scytale_fdx_writer_close_tfl.argtypes = [c_void_p, c_void_p]
-lib.scytale_fdx_writer_close_tfl.restype = c_int
+# int scytale_tfl_writer_close(ScytaleTflWriterHandler * handle);
+lib.scytale_tfl_writer_close.argtypes = [c_void_p]
+lib.scytale_tfl_writer_close.restype = c_int
 
-# int scytale_fdx_writer_cancel_tfl(
-#     ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl);
-lib.scytale_fdx_writer_cancel_tfl.argtypes = [c_void_p, c_void_p]
-lib.scytale_fdx_writer_cancel_tfl.restype = c_int
+# int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle);
+lib.scytale_tfl_writer_cancel.argtypes = [c_void_p]
+lib.scytale_tfl_writer_cancel.restype = c_int
+
+# \return HashHexArray
+# char const * scytale_fdx_writer_get_qhashhex(ScytaleFdxWriterHandle * handle);
+lib.scytale_fdx_writer_get_qhashhex.argtypes = [c_void_p]
+lib.scytale_fdx_writer_get_qhashhex.restype = c_char_p
+
+# \return HashHexArray
+# char const * scytale_fdx_writer_get_fhashhex(ScytaleFdxWriterHandle * handle);
+lib.scytale_fdx_writer_get_fhashhex.argtypes = [c_void_p]
+lib.scytale_fdx_writer_get_fhashhex.restype = c_char_p
+
+# int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle);
+lib.scytale_fdx_writer_close.argtypes = [c_void_p]
+lib.scytale_fdx_writer_close.restype = c_int
 
 # int scytale_fdx_writer_delete(ScytaleFdxWriterHandle * handle);
 lib.scytale_fdx_writer_delete.argtypes = [c_void_p]

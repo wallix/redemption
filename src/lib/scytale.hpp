@@ -213,13 +213,20 @@ extern "C"
 
     // Tfl
     //@{
-    /// \param test_random for reproductible test
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new(
-        char const * path, char const * hashpath, int groupid, char const * sid,
         int with_encryption, int with_checksum, char const* master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        int test_random);
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+
+    REDEMPTION_LIB_EXPORT
+    ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
+        int with_encryption, int with_checksum, char const* master_derivator,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_fdx_writer_open(
+        ScytaleFdxWriterHandle * handle,
+        char const * path, char const * hashpath, int groupid, char const * sid);
 
     REDEMPTION_LIB_EXPORT
     ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
@@ -227,15 +234,24 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     int scytale_tfl_writer_write(
-        ScytaleTflWriterHandler * tfl, uint8_t const * buffer, unsigned long len);
+        ScytaleTflWriterHandler * handle, uint8_t const * buffer, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_fdx_writer_close_tfl(
-        ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl);
+    int scytale_tfl_writer_close(ScytaleTflWriterHandler * handle);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_fdx_writer_cancel_tfl(
-        ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl);
+    int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle);
+
+    /// \return HashHexArray
+    REDEMPTION_LIB_EXPORT
+    char const * scytale_fdx_writer_get_qhashhex(ScytaleFdxWriterHandle * handle);
+
+    /// \return HashHexArray
+    REDEMPTION_LIB_EXPORT
+    char const * scytale_fdx_writer_get_fhashhex(ScytaleFdxWriterHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle);
 
     REDEMPTION_LIB_EXPORT
     int scytale_fdx_writer_delete(ScytaleFdxWriterHandle * handle);

@@ -410,10 +410,10 @@ RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
     auto fdxpath = wd.add_file(fdx_filename);
     (void)wdhash.add_file(fdx_filename);
 
-    auto* fdx = scytale_fdx_writer_new(
-        wd.dirname(), wdhash.dirname(), 0, sid.data(),
-        0, 0, "", hmac_fn, trace_fn, 1);
+    auto* fdx = scytale_fdx_writer_new_with_test_random(0, 0, "", hmac_fn, trace_fn);
     RED_TEST(fdx);
+
+    RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
 
     auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
     RED_TEST(tfl);
@@ -421,7 +421,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
     RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
     RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
 
-    RED_TEST(0 == scytale_fdx_writer_cancel_tfl(fdx, tfl));
+    RED_TEST(0 == scytale_tfl_writer_cancel(tfl));
 
     auto fname = str_concat(sid, ",000002.tfl"_av);
     auto file2path = wd.add_file(fname);
@@ -433,7 +433,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
     RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
     RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
 
-    RED_TEST(0 == scytale_fdx_writer_close_tfl(fdx, tfl));
+    RED_TEST(0 == scytale_tfl_writer_close(tfl));
 
     RED_CHECK_FILE_CONTENTS(file2path, "abcdefg"_av);
     auto hres = "v2\n\n\n0123456789abcdef,000002.tfl "sv;

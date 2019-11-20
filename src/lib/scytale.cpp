@@ -72,7 +72,7 @@ struct CryptoContextWrapper
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         bool with_encryption, bool with_checksum,
         bool old_encryption_scheme, bool one_shot_encryption_scheme,
-        char const * derivator)
+        std::string_view derivator)
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
@@ -84,7 +84,7 @@ struct CryptoContextWrapper
                 : TraceType::localfile);
         cctx.old_encryption_scheme = old_encryption_scheme;
         cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
-        cctx.set_master_derivator({derivator, strlen(derivator)});
+        cctx.set_master_derivator(bytes_view(derivator));
     }
 };
 
@@ -690,7 +690,7 @@ const char * scytale_key_get_derivated(ScytaleKeyHandle * handle) {
 struct ScytaleTflWriterHandler
 {
     ScytaleTflWriterHandler(
-        ScytaleErrorContext& error_ctx,
+        ScytaleFdxWriterHandle& fdx,
         uint64_t idx, std::string&& original_filename,
         std::string finalname, char const* hash_filename, std::size_t pos_filename,
         int groupid, CryptoContext& cctx, Random& random, Fstat& fstat)
@@ -699,7 +699,7 @@ struct ScytaleTflWriterHandler
     , pos_filename(pos_filename)
     , original_filename(std::move(original_filename))
     , out_crypto_transport(cctx, random, fstat)
-    , error_ctx(error_ctx)
+    , fdx(fdx)
     {
         auto derivator = array_view(this->finalname).drop_front(pos_filename);
         this->out_crypto_transport.open(
@@ -713,35 +713,40 @@ struct ScytaleTflWriterHandler
 
     OutCryptoTransport out_crypto_transport;
 
-    ScytaleErrorContext& error_ctx;
+    ScytaleFdxWriterHandle& fdx;
 };
 
 struct ScytaleFdxWriterHandle
 {
+    static constexpr array_view_const_char fdx_suffix = ".fdx"_av;
+
     ScytaleFdxWriterHandle(
-        char const * path, char const * hashpath, int groupid, array_view_const_char sid,
         int with_encryption, int with_checksum, const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         ScytaleRandomWrapper::RandomType random_type)
-    : prefix(str_concat(std::string_view(path), '/', sid))
-    , hash_prefix(str_concat(std::string_view(hashpath), '/', sid))
-    , pos_filename(this->prefix.size() - sid.size())
-    , groupid(groupid)
-    , with_checksum(with_checksum)
+    : with_checksum(with_checksum)
     , random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
-        auto ext = ".fdx"_av;
-        str_append(this->prefix, ext);
-        str_append(this->hash_prefix, ext);
+        this->qhashhex[0] = 0;
+        this->fhashhex[0] = 0;
+    }
+
+    void open(std::string_view path, std::string_view hashpath, int groupid, std::string_view sid)
+    {
+        str_append(this->prefix, path, '/', sid, fdx_suffix);
+        str_append(this->hash_prefix, hashpath, '/', sid, fdx_suffix);
+        this->pos_filename = this->prefix.size() - sid.size() - fdx_suffix.size();
+        this->groupid = groupid;
+
         auto derivator = array_view(this->prefix).drop_front(this->pos_filename);
         this->out_crypto_transport.open(
             this->prefix.c_str(), this->hash_prefix.c_str(), groupid, derivator);
         this->out_crypto_transport.send(Mwrm3::top_header);
-        this->prefix.erase(this->prefix.size() - ext.size());
+        this->prefix.erase(this->prefix.size() - fdx_suffix.size());
         this->prefix += ',';
-        this->hash_prefix.erase(this->hash_prefix.size() - ext.size());
+        this->hash_prefix.erase(this->hash_prefix.size() - fdx_suffix.size());
         this->hash_prefix += ',';
     }
 
@@ -765,7 +770,7 @@ struct ScytaleFdxWriterHandle
         str_append(this->hash_prefix, array_view(this->prefix).drop_front(old_size));
 
         auto* tfl = new(std::nothrow) ScytaleTflWriterHandler{ /*NOLINT*/
-            this->error_ctx,
+            *this,
             // truncate filename if too long
             this->idx, std::string(filename, strnlen(filename, Mwrm3::line_size_max - 32)),
             this->prefix, this->hash_prefix.c_str(), this->pos_filename,
@@ -824,44 +829,66 @@ struct ScytaleFdxWriterHandle
 
     void close()
     {
-
         HashArray qhash;
         HashArray fhash;
         this->out_crypto_transport.close(qhash, fhash);
+        hash_to_hashhex(qhash, this->qhashhex);
+        hash_to_hashhex(fhash, this->fhashhex);
+
+        this->prefix.clear();
+        this->hash_prefix.clear();
+        this->pos_filename = 0;
     }
 
 private:
     uint64_t idx = 0;
     std::string prefix;
     std::string hash_prefix;
-    std::size_t pos_filename;
-    int groupid;
+    std::size_t pos_filename = 0;
+    int groupid = 0;
     Fstat fstat;
     bool with_checksum;
     ScytaleRandomWrapper random_wrapper;
 
     CryptoContextWrapper cctxw;
 
-    HashHex qhashhex;
-    HashHex fhashhex;
-
     OutCryptoTransport out_crypto_transport;
 
 public:
     ScytaleErrorContext error_ctx;
+    HashHexArray qhashhex;
+    HashHexArray fhashhex;
 };
 
+
 ScytaleFdxWriterHandle * scytale_fdx_writer_new(
-    char const * path, char const * hashpath, int groupid, char const * sid,
     int with_encryption, int with_checksum, char const* master_derivator,
-    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-    int test_random)
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
-        path, hashpath, groupid, std::string_view(sid),
         with_encryption, with_checksum, master_derivator,
-        hmac_fn, trace_fn, test_random ? ScytaleRandomWrapper::LCG : ScytaleRandomWrapper::UDEV));
+        hmac_fn, trace_fn, ScytaleRandomWrapper::UDEV));
+}
+
+ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
+    int with_encryption, int with_checksum, char const* master_derivator,
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+{
+    SCOPED_TRACE;
+    return CREATE_HANDLE(ScytaleFdxWriterHandle(
+        with_encryption, with_checksum, master_derivator,
+        hmac_fn, trace_fn, ScytaleRandomWrapper::LCG));
+}
+
+int scytale_fdx_writer_open(
+    ScytaleFdxWriterHandle * handle,
+    char const * path, char const * hashpath, int groupid, char const * sid)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(handle->open(path, hashpath, groupid, sid), ERR_TRANSPORT_OPEN_FAILED);
+    return 0;
 }
 
 ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
@@ -878,26 +905,45 @@ int scytale_tfl_writer_write(
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len), ERR_TRANSPORT_WRITE_FAILED);
+    CHECK_NOTHROW_R(handle->out_crypto_transport.send(buffer, len),
+        -1, handle->fdx.error_ctx, ERR_TRANSPORT_WRITE_FAILED);
     return len;
 }
 
-int scytale_fdx_writer_close_tfl(
-    ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl)
+int scytale_tfl_writer_close(ScytaleTflWriterHandler * handle)
 {
     SCOPED_TRACE;
-    CHECK_HANDLE_R(handle && tfl, -1);
-    std::unique_ptr<ScytaleTflWriterHandler> auto_delete{tfl};
-    CHECK_NOTHROW(return handle->close_tfl(*tfl), ERR_TRANSPORT_WRITE_FAILED);
+    CHECK_HANDLE(handle);
+    std::unique_ptr<ScytaleTflWriterHandler> auto_delete{handle};
+    CHECK_NOTHROW_R(return handle->fdx.close_tfl(*handle),
+        -1, handle->fdx.error_ctx, ERR_TRANSPORT_WRITE_FAILED);
 }
 
-int scytale_fdx_writer_cancel_tfl(
-    ScytaleFdxWriterHandle * handle, ScytaleTflWriterHandler * tfl)
+int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle)
 {
     SCOPED_TRACE;
-    CHECK_HANDLE_R(handle && tfl, -1);
-    std::unique_ptr<ScytaleTflWriterHandler> auto_delete{tfl};
-    return handle->cancel_tfl(*tfl);
+    CHECK_HANDLE(handle);
+    std::unique_ptr<ScytaleTflWriterHandler> auto_delete{handle};
+    return handle->fdx.cancel_tfl(*handle);
+}
+
+/// \return HashHexArray
+char const * scytale_fdx_writer_get_qhashhex(ScytaleFdxWriterHandle * handle) {
+    SCOPED_TRACE;
+    return handle ? handle->qhashhex : "";
+}
+
+/// \return HashHexArray
+char const * scytale_fdx_writer_get_fhashhex(ScytaleFdxWriterHandle * handle) {
+    SCOPED_TRACE;
+    return handle ? handle->fhashhex : "";
+}
+
+int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle)
+{
+    SCOPED_TRACE;
+    CHECK_NOTHROW(handle->close(), ERR_TRANSPORT_CLOSED);
+    return 0;
 }
 
 int scytale_fdx_writer_delete(ScytaleFdxWriterHandle * handle)

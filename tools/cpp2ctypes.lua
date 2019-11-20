@@ -78,7 +78,7 @@ defs={
         local name = t[1]
         local ctype = 'CType_' .. name
         typemap[name..'*'] = prefix_ctypes .. 'POINTER(' .. ctype .. ')'
-        lines[#lines+1] = 'class ' .. ctype .. '(Structure):\n    _fields_ = ['
+        lines[#lines+1] = 'class ' .. ctype .. '(ctypes.Structure):\n    _fields_ = ['
         for k,mem in ipairs(t[2]) do
             lines[#lines+1] = '        ("' .. mem[2] .. '", ' .. c2py(mem[1]) .. '),'
         end
