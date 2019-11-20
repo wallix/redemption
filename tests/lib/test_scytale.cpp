@@ -441,7 +441,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
     (void)tu::append_file_contents(file2hash, content);
     RED_TEST(content.substr(0, hres.size()) == hres);
 
-    RED_TEST("No error" == scytale_fdx_writer_get_error_message(fdx));
+    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
 
     RED_TEST(0 == scytale_fdx_writer_delete(fdx));
 
