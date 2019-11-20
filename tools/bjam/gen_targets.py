@@ -49,7 +49,8 @@ class Dep:
 
 inc_test_dep = Dep(cxxflags=[
     '<include>$(REDEMPTION_TEST_PATH)/includes', # for lcg_random or fixed_random
-    '<define>SHOW_DEBUG_TRACES=1', # for lcg_random or fixed_random
+    '<variant>debug:<define>SHOW_DEBUG_TRACES=1',
+    '<variant>san:<define>SHOW_DEBUG_TRACES=1',
 ])
 
 src_requirements = dict((
