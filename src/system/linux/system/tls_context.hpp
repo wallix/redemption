@@ -680,6 +680,7 @@ public:
             unsigned long error = SSL_get_error(this->io, rcvd);
             switch (error) {
                 case SSL_ERROR_NONE:
+                    LOG(LOG_INFO, "recv_tls SSL_ERROR_NONE");
                     return rcvd;
 
                 case SSL_ERROR_WANT_READ:
@@ -703,7 +704,8 @@ public:
                     continue;
 
                 case SSL_ERROR_ZERO_RETURN:
-                    return 0;
+                    // Other side closed TLS connection
+                    return -1;
 
                 default:
                 {
