@@ -217,6 +217,8 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(2));
         W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_nla", 
+                    desc{"Needed for primary NTLM or Kerberos connections over NLA."}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_user_id", desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."}, set(true));

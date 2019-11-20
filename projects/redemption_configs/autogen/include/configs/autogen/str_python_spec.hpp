@@ -187,6 +187,10 @@ tls_max_level = integer(min=0, default=0)
 # Show common cipher list supported by client and server
 show_common_cipher_list = boolean(default=False)
 
+# Needed for primary NTLM or Kerberos connections over NLA.
+#_advanced
+enable_nla = boolean(default=False)
+
 # Needed to connect with jrdp, based on bogus X224 layer code.
 #_advanced
 bogus_neg_request = boolean(default=False)

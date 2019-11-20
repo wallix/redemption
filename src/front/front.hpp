@@ -1295,18 +1295,17 @@ public:
         //    | <----------X224 Connection Confirm PDU----------------- |
 
         InStream x224_stream(tpdu);
-        if (bool(verbose & Verbose::basic_trace)) {
+        if (bool(verbose & Front::Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::incoming: CONNECTION_INITIATION");
-            LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU");
+            LOG(LOG_INFO, "Front::incoming: receiving x224 request PDU (%lu)", tpdu.size());
         }
 
         {
-            bool verbosity = false;
-            auto cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, bogus_neg_req, verbosity);
-            if (cr_tpdu._header_size != x224_stream.get_capacity()) {
-                LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
-                             " %zu bytes remains", x224_stream.get_capacity() - cr_tpdu._header_size);
-            }
+            auto cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, bogus_neg_req, 0);
+//            if (cr_tpdu._header_size != x224_stream.get_capacity()) {
+//                LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
+//                             " %zu bytes remains", x224_stream.get_capacity() - cr_tpdu._header_size);
+//            }
             this->clientRequestedProtocols = cr_tpdu.rdp_neg_requestedProtocols;
         }
 
@@ -2589,7 +2588,7 @@ public:
         switch (this->state) {
         case CONNECTION_INITIATION:
         {
-            bool enable_nla = false;
+            bool enable_nla = this->ini.get<cfg::client::bogus_neg_request>();
             this->connection_initiation(tpdu, this->ini.get<cfg::client::bogus_neg_request>(), enable_nla, this->verbose);
             if (enable_nla){
                 this->state = PRIMARY_AUTH_NLA;

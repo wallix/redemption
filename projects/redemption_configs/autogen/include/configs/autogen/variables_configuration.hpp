@@ -841,6 +841,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Needed for primary NTLM or Kerberos connections over NLA. <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct client::enable_nla {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "enable_nla";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
     /// Needed to connect with jrdp, based on bogus X224 layer code. <br/>
     /// type: bool <br/>
     /// value{false} <br/>
@@ -5176,6 +5189,7 @@ struct client
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
 , cfg::client::show_common_cipher_list
+, cfg::client::enable_nla
 , cfg::client::bogus_neg_request
 , cfg::client::bogus_user_id
 , cfg::client::disable_tsk_switch_shortcuts

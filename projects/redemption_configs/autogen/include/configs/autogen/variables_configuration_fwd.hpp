@@ -74,6 +74,7 @@ namespace cfg {
         struct tls_min_level;
         struct tls_max_level;
         struct show_common_cipher_list;
+        struct enable_nla;
         struct bogus_neg_request;
         struct bogus_user_id;
         struct disable_tsk_switch_shortcuts;

@@ -222,6 +222,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #show_common_cipher_list = 0
 
+# Needed for primary NTLM or Kerberos connections over NLA.
+# value: 0 or 1
+#_advanced
+#enable_nla = 0
+
 # Needed to connect with jrdp, based on bogus X224 layer code.
 # value: 0 or 1
 #_advanced
