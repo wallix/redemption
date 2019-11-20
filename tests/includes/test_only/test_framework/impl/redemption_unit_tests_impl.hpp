@@ -39,7 +39,11 @@ Author(s): Jonathan Poelen
 #define RED_TEST_PRINT_TYPE_FUNCTION_NAME boost_test_print_type
 #define RED_TEST_PRINT_TYPE_STRUCT_NAME boost::test_tools::tt_detail::print_log_value
 
-#if defined(REDEMPTION_UNIT_TEST_FAST_CHECK) && REDEMPTION_UNIT_TEST_FAST_CHECK == 1
+#if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
+# define REDEMPTION_UNIT_TEST_FAST_CHECK 0
+#endif
+
+#if REDEMPTION_UNIT_TEST_FAST_CHECK
 //@{
 #  define RED_TEST_CHECKPOINT(...)
 #  define RED_TEST_MESSAGE(...)
@@ -309,23 +313,19 @@ namespace redemption_unit_test__
     struct u8_GE { bool operator()(uint8_t a, uint8_t b) { return a >= b; } };
 
 
-    template<class T> struct is_byte_view : std::false_type {};
-    template<class T> struct is_byte_view<array_view<T const>> : std::false_type {};
-    template<class T> struct is_byte_view<array_view<T>> : is_byte_view<array_view<T const>> {};
-    template<> struct is_byte_view<bytes_view> : std::true_type {};
-    template<> struct is_byte_view<writable_bytes_view> : std::true_type {};
-    template<> struct is_byte_view<array_view_const_char> : std::true_type {};
-    template<> struct is_byte_view<array_view_const_s8> : std::true_type {};
-    template<> struct is_byte_view<array_view_const_u8> : std::true_type {};
+    template<class T> struct is_bytes_view : std::false_type {};
+    template<> struct is_bytes_view<bytes_view> : std::true_type {};
+    template<> struct is_bytes_view<writable_bytes_view> : std::true_type {};
 
     template<class T> struct is_array_view : std::false_type {};
     template<class T> struct is_array_view<array_view<T>>
-    : std::integral_constant<bool, !is_byte_view<array_view<T>>::value>
+    : std::integral_constant<bool, !is_bytes_view<array_view<T>>::value>
     {};
 
     template<class T, class U>
     struct is_array_view_comparable : std::integral_constant<bool,
-        is_array_view<T>::value || is_array_view<U>::value
+        (is_array_view<T>::value || is_array_view<U>::value)
+        && not (is_bytes_view<T>::value || is_bytes_view<U>::value)
     >
     {};
 
@@ -339,18 +339,18 @@ namespace redemption_unit_test__
 
     template<class T, class U>
     struct is_bytes_comparable_impl<T, U, false, true>
-    : std::is_convertible<T, U>
+    : std::is_convertible<T, bytes_view>
     {};
 
     template<class T, class U>
     struct is_bytes_comparable_impl<T, U, true, false>
-    : std::is_convertible<U, T>
+    : std::is_convertible<U, bytes_view>
     {};
 
 
     template<class T, class U>
     struct is_bytes_comparable
-    : is_bytes_comparable_impl<T, U, is_byte_view<T>::value, is_byte_view<U>::value>
+    : is_bytes_comparable_impl<T, U, is_bytes_view<T>::value, is_bytes_view<U>::value>
     {};
 
     // boost::unit_test::is_forward_iterable<array_view<T>> -> false (see bellow)
@@ -359,7 +359,93 @@ namespace redemption_unit_test__
     {
         using array_view<T const>::array_view;
     };
+
+#if REDEMPTION_UNIT_TEST_FAST_CHECK
+    template<class T, class U>
+    struct is_view_comparable
+    : std::integral_constant<bool,
+        is_bytes_comparable<T, U>::value
+     || is_array_view_comparable<T, U>::value>
+    {};
+
+    template<class Op, class T, class U>
+    bool av_equal(Op op, T const& x,  U const& y)
+    {
+        using std::begin;
+        using std::end;
+        if constexpr (is_bytes_view<T>::value || is_bytes_view<U>::value)
+        {
+            bytes_view a = x;
+            bytes_view b = y;
+            return std::equal(a.begin(), a.end(), b.begin(), b.end(), op);
+        }
+        else if constexpr (is_array_view<T>::value)
+        {
+            T v{x};
+            return std::equal(begin(v), end(v), begin(y), end(y), op);
+        }
+        else
+        {
+            U v{y};
+            return !std::equal(begin(x), end(x), begin(v), end(v), op);
+        }
+    }
+
+    namespace ops
+    {
+        template<class T, class U>
+        std::enable_if_t<is_view_comparable<T, U>::value, bool>
+        operator == (T const& x,  U const& y)
+        {
+            return av_equal(std::equal_to{}, x, y);
+        }
+
+        template<class T, class U>
+        std::enable_if_t<is_view_comparable<T, U>::value, bool>
+        operator != (T const& x,  U const& y)
+        {
+            return !av_equal(std::equal_to{}, x, y);
+        }
+
+        template<class T, class U>
+        std::enable_if_t<is_view_comparable<T, U>::value, bool>
+        operator < (T const& x,  U const& y)
+        {
+            return av_equal(std::less{}, x, y);
+        }
+
+        template<class T, class U>
+        std::enable_if_t<is_view_comparable<T, U>::value, bool>
+        operator >= (T const& x,  U const& y)
+        {
+            return !av_equal(std::less{}, x, y);
+        }
+
+        template<class T, class U>
+        std::enable_if_t<is_view_comparable<T, U>::value, bool>
+        operator > (T const& x,  U const& y)
+        {
+            return av_equal(std::less{}, y, x);
+        }
+
+        template<class T, class U>
+        std::enable_if_t<is_view_comparable<T, U>::value, bool>
+        operator <= (T const& x,  U const& y)
+        {
+            return !av_equal(std::less{}, y, x);
+        }
+    }
+#endif
 }
+
+#if REDEMPTION_UNIT_TEST_FAST_CHECK
+using redemption_unit_test__::ops::operator ==;
+using redemption_unit_test__::ops::operator !=;
+using redemption_unit_test__::ops::operator <;
+using redemption_unit_test__::ops::operator <=;
+using redemption_unit_test__::ops::operator >;
+using redemption_unit_test__::ops::operator >=;
+#endif
 
 namespace boost {
 
