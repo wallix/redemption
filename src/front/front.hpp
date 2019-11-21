@@ -538,7 +538,7 @@ public:
 
 private:
     bool Revision2BitmapCachesAdvertised = false;
-    
+
 public:
    // TODO: this should be extracted from the class
     Transport & trans;
@@ -591,7 +591,6 @@ private:
     uint8_t front_public_key[1024] = {};
     array_view_u8 front_public_key_av;
     std::unique_ptr<NegoServer> nego_server;
-    
 
     std::string server_capabilities_filename;
 
@@ -793,53 +792,52 @@ public:
 
         if (this->client_info.screen_info.width != screen_server.width
          || this->client_info.screen_info.height != screen_server.height) {
-            if (!this->client_info.remote_program) {
-                /* older client can't resize */
-                if (client_info.build <= 419) {
-                    LOG(LOG_WARNING, "Front::server_resize: Resizing is not available on older RDP clients");
-                    // resizing needed but not available
-                    res = ResizeResult::fail;
-                }
-                else {
-                    LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", screen_server.width, screen_server.height, this->client_info.screen_info.bpp);
-
-                    this->client_info.screen_info.width = screen_server.width;
-                    this->client_info.screen_info.height = screen_server.height;
-
-                    this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
-                    this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
-
-                    // TODO Why are we not calling this->flush() instead ? Looks dubious.
-                    // send buffered orders
-                    this->orders.graphics_update_pdu().sync();
-
-                    if (this->capture) {
-                        if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
-                            this->capture->resize(screen_server.width, screen_server.height);
-                        }
-                        else {
-                            this->must_be_stop_capture();
-                            this->can_be_start_capture();
-                        }
-                    }
-
-                    // clear all pending orders, caches data, and so on and
-                    // start a send_deactive, send_deman_active process with
-                    // the new resolution setting
-                    /* shut down the rdp client */
-                    this->up_and_running = false;
-                    this->send_deactive();
-                    /* this should do the actual resizing */
-                    this->send_demand_active();
-                    this->send_monitor_layout();
-
-                    LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
-                    this->state = ACTIVATE_AND_PROCESS_DATA;
-                    this->is_first_memblt = true;
-                    res = ResizeResult::done;
-                }
+            /* older client can't resize */
+            if (client_info.build <= 419) {
+                LOG(LOG_WARNING, "Front::server_resize: Resizing is not available on older RDP clients");
+                // resizing needed but not available
+                res = ResizeResult::fail;
             }
             else {
+                LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", screen_server.width, screen_server.height, this->client_info.screen_info.bpp);
+
+                this->client_info.screen_info.width = screen_server.width;
+                this->client_info.screen_info.height = screen_server.height;
+
+                this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
+                this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
+
+                // TODO Why are we not calling this->flush() instead ? Looks dubious.
+                // send buffered orders
+                this->orders.graphics_update_pdu().sync();
+
+                if (this->capture) {
+                    if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
+                        this->capture->resize(screen_server.width, screen_server.height);
+                    }
+                    else {
+                        this->must_be_stop_capture();
+                        this->can_be_start_capture();
+                    }
+                }
+
+                // clear all pending orders, caches data, and so on and
+                // start a send_deactive, send_deman_active process with
+                // the new resolution setting
+                /* shut down the rdp client */
+                this->up_and_running = false;
+                this->send_deactive();
+                /* this should do the actual resizing */
+                this->send_demand_active();
+                this->send_monitor_layout();
+
+                LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
+                this->state = ACTIVATE_AND_PROCESS_DATA;
+                this->is_first_memblt = true;
+                res = ResizeResult::done;
+            }
+
+            if (this->client_info.remote_program) {
                 this->incoming_event = this->session_reactor
                 .create_callback_event(std::ref(*this))
                 .on_action(jln::one_shot([](Callback& cb, Front& front){
@@ -857,33 +855,7 @@ public:
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::server_relayout");
 
-        this->orders.graphics_update_pdu().sync();
-
-        monitor_layout_pdu_ref.log("Front::server_relayout: Send to client");
-
-        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-
-        // Payload
-        monitor_layout_pdu_ref.emit(stream.get_data_stream());
-
-        const uint32_t log_condition = (128 | 1);
-        ::send_share_data_ex( this->trans
-                            , PDUTYPE2_MONITOR_LAYOUT_PDU
-                            , false
-                            , this->mppc_enc.get()
-                            , this->share_id
-                            , this->encryptionLevel
-                            , this->encrypt
-                            , this->userid
-                            , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
-                            );
-
-        if (this->capture) {
-            this->must_be_stop_capture();
-            this->can_be_start_capture();
-        }
+        monitor_layout_pdu_ref.get(this->client_info.cs_monitor);
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::server_relayout: done");
@@ -1307,7 +1279,7 @@ public:
             this->clientRequestedProtocols = cr_tpdu.rdp_neg_requestedProtocols;
         }
 
-        if (!this->ini.get<cfg::client::tls_support>() 
+        if (!this->ini.get<cfg::client::tls_support>()
         && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
             LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy "
                              "should not be disabled at same time. "
@@ -1315,7 +1287,7 @@ public:
         }
 
         if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-            (!this->ini.get<cfg::client::tls_support>() 
+            (!this->ini.get<cfg::client::tls_support>()
             || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
             // Fallback to legacy security protocol (RDP) is allowed.
             && this->ini.get<cfg::client::tls_fallback_legacy>()
@@ -1323,7 +1295,7 @@ public:
             LOG(LOG_INFO, "Front::incoming: Fallback to legacy security protocol");
             this->tls_client_active = false;
         }
-        else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) 
+        else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
              && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
             LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
         }
@@ -1387,7 +1359,7 @@ public:
         // to convey authorization information to the client. This PDU is only sent by the server
         // if the client advertised support for it by specifying the PROTOCOL_HYBRID_EX (0x00000008)
         // flag in the requestedProtocols field of the RDP Negotiation Request (section 2.2.1.1.1)
-        // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2) 
+        // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2)
         // has completed.
 
         // authorizationResult (4 bytes): A 32-bit unsigned integer. Specifies the authorization result.
@@ -1944,7 +1916,7 @@ public:
 
     // Client                                                     Server
     //    |------ Client Info PDU      ---------------------------> |
-    
+
     void secure_settings_exchange(bytes_view tpdu)
     {
         LOG(LOG_INFO, "Front::incoming: Secure Settings Exchange");
@@ -1992,7 +1964,7 @@ public:
         this->keymap.init_layout(this->client_info.keylayout);
         LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", unsigned(this->client_info.keylayout));
         this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
-        
+
         if (bool(this->verbose & Verbose::channel)) {
             LOG(LOG_INFO, "Front::incoming: licencing send_lic_initial");
         }
@@ -2076,7 +2048,7 @@ public:
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
             "Front::incoming: Waiting for answer to lic_initial");
-    }    
+    }
 
 
     void license_packet(bytes_view tpdu, Transport & answer_trans)
@@ -2158,7 +2130,7 @@ public:
             }
             this->is_client_disconnected = true;
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-        }        
+        }
 
         LIC::RecvFactory flic(sec.payload);
         switch (flic.tag) {
@@ -2208,8 +2180,8 @@ public:
         // license packet received, proceed with capabilities exchange
         LOG(LOG_INFO, "Front::incoming: ACTIVATED (new license request)");
     }
-            
-            
+
+
     // Connection Finalization
     // -----------------------
 
@@ -2248,7 +2220,7 @@ public:
 
     void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
     {
-        InStream new_x224_stream(tpdu); 
+        InStream new_x224_stream(tpdu);
         if (current_pdu_type == Extractors::FASTPATH) { // fastpath
             FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
 
@@ -2560,7 +2532,7 @@ public:
         credssp::State st = credssp::State::Cont;
         LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
         result << this->nego_server->credssp.authenticate_next(data);
-        
+
         if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
             bytes_view buffer = this->nego_server->credssp.authenticate.UserName.buffer;
             std::string username(buffer.data(), buffer.data()+buffer.size());
@@ -2679,7 +2651,7 @@ public:
                 this->secure_settings_exchange(tpdu);
                 this->state = WAITING_FOR_ANSWER_TO_LICENSE;
             }
-        break;    
+        break;
 
         case WAITING_FOR_LOGON_INFO:
             this->secure_settings_exchange(tpdu);
@@ -2701,7 +2673,7 @@ public:
             //    |--------- Confirm Active PDU --------------------------> |
             LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
                 "Front::incoming: send_demand_active");
-            
+
             this->send_demand_active();
             this->send_monitor_layout();
 
@@ -2720,7 +2692,7 @@ public:
 
         uint16_t channelId = GCC::MCS_GLOBAL_CHANNEL;
         auto userid = this->userid;
-        
+
         auto data_writer = [this](StreamSize<24>, OutStream & sec_header) {
                 // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
