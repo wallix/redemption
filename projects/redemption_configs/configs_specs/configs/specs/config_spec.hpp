@@ -126,7 +126,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, NL, type_<std::string>(), "target_application_password");
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "glyph_cache", set(false));
-        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Service must be restarted\nWarning: the port set in this field must not be already used, otherwise the service will not run."}, set(3389));
+        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Warning: Service will be automatically restarted and active sessions will be disconnected\nThe port set in this field must not be already used, otherwise the service will not run."}, set(3389));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
@@ -217,7 +217,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(2));
         W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_nla", 
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_nla",
                     desc{"Needed for primary NTLM or Kerberos connections over NLA."}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
