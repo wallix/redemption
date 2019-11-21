@@ -113,9 +113,14 @@ namespace redemption_unit_test__
         }
     }
 
-    static void put_char(std::ostream& out, unsigned c, char const* newline = "\\n")
+    static bool is_printable_ascii(uint8_t c)
     {
-        if (c >= 0x23 && c <= 127) {
+        return 0x20 <= c && c < 127;
+    }
+
+    static void put_char(std::ostream& out, uint8_t c, char const* newline = "\\n")
+    {
+        if (is_printable_ascii(c)) {
             out << char(c);
         }
         else {
@@ -159,7 +164,7 @@ namespace redemption_unit_test__
                 if (x.size()>split) {
                     out << "\" //";
                     for (size_t v = 0 ; v < i ; v++){
-                        if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] < 127)) {
+                        if (is_printable_ascii(tmpbuf[v])) {
                             out << char(tmpbuf[v]);
                         }
                         else {
@@ -181,7 +186,7 @@ namespace redemption_unit_test__
                     << std::setw((split - q % split) * 4 + 2)
                     << "//";
                 for (size_t v = 0 ; v < i ; v++){
-                    if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] <= 127)) {
+                    if (is_printable_ascii(tmpbuf[v])) {
                         out << char(tmpbuf[v]);
                     }
                     else {
@@ -258,7 +263,7 @@ namespace redemption_unit_test__
     {
         auto print = [&](bytes_view x){
             for (uint8_t c : x) {
-                if (c >= 0x23 && c <= 127) {
+                if (is_printable_ascii(c)) {
                     out << char(c);
                 }
                 else {
