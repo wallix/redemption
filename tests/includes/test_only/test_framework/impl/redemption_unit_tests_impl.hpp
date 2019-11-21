@@ -358,6 +358,8 @@ namespace redemption_unit_test__
     struct View : array_view<T const>
     {
         using array_view<T const>::array_view;
+
+        View(array_view<T const> v) noexcept : array_view<T const>(v) {}
     };
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
@@ -464,60 +466,69 @@ namespace op {
 
 // BOOST_TEST_FOR_EACH_COMP_OP(action)
 // action( oper, name, rev )
-#define DEFINE_COLLECTION_COMPARISON(oper, name, rev)                 \
-template<class T, class U>                                            \
-struct name<T, U, std::enable_if_t<                                   \
-    ::redemption_unit_test__::is_bytes_comparable<T, U>::value>>      \
-{                                                                     \
-    using result_type = assertion_result;                             \
-                                                                      \
-    static assertion_result                                           \
-    eval( bytes_view lhs, bytes_view rhs )                            \
-    {                                                                 \
-        return ::redemption_unit_test__::bytes_compare(lhs, rhs,      \
-            ::redemption_unit_test__::u8_##name(), 'a', revert());    \
-    }                                                                 \
-                                                                      \
-    template<class PrevExprType>                                      \
-    static void                                                       \
-    report( std::ostream&,                                            \
-            PrevExprType const&,                                      \
-            bytes_view const&)                                        \
-    {}                                                                \
-                                                                      \
-    static char const* revert()                                       \
-    { return " " #rev " "; }                                          \
-};                                                                    \
-                                                                      \
-template<class T, class U>                                            \
-struct name<T, U, std::enable_if_t<                                   \
-    ::redemption_unit_test__::is_array_view_comparable<T, U>::value>> \
-{                                                                     \
-    using result_type = assertion_result;                             \
-    using OP = name<T, U>;                                            \
-    using L = typename T::type;                                       \
-    using R = typename U::type;                                       \
-    using elem_op = op::name<L, R>;                                   \
-                                                                      \
-    static assertion_result                                           \
-    eval( T const& lhs, U const& rhs )                                \
-    {                                                                 \
-        return boost::test_tools::assertion::op::compare_collections( \
-            redemption_unit_test__::View<L const>{lhs},               \
-            redemption_unit_test__::View<R const>{rhs},               \
-            static_cast<boost::type<elem_op>*>(nullptr),              \
-            mpl::true_());                                            \
-    }                                                                 \
-                                                                      \
-    template<class PrevExprType>                                      \
-    static void                                                       \
-    report( std::ostream&,                                            \
-            PrevExprType const&,                                      \
-            U const&)                                                 \
-    {}                                                                \
-                                                                      \
-    static char const* revert()                                       \
-    { return " " #rev " "; }                                          \
+#define DEFINE_COLLECTION_COMPARISON(oper, name, rev)                     \
+template<class T, class U>                                                \
+struct name<T, U, std::enable_if_t<                                       \
+    ::redemption_unit_test__::is_bytes_comparable<T, U>::value>>          \
+{                                                                         \
+    using result_type = assertion_result;                                 \
+                                                                          \
+    static assertion_result                                               \
+    eval( bytes_view lhs, bytes_view rhs )                                \
+    {                                                                     \
+        return ::redemption_unit_test__::bytes_compare(lhs, rhs,          \
+            ::redemption_unit_test__::u8_##name(), 'a', revert());        \
+    }                                                                     \
+                                                                          \
+    template<class PrevExprType>                                          \
+    static void                                                           \
+    report( std::ostream&,                                                \
+            PrevExprType const&,                                          \
+            bytes_view const&)                                            \
+    {}                                                                    \
+                                                                          \
+    static char const* revert()                                           \
+    { return " " #rev " "; }                                              \
+};                                                                        \
+                                                                          \
+template<class T, class U>                                                \
+struct name<T, U, std::enable_if_t<                                       \
+    ::redemption_unit_test__::is_array_view_comparable<T, U>::value>>     \
+{                                                                         \
+    using result_type = assertion_result;                                 \
+    using OP = name<T, U>;                                                \
+    using L = typename T::value_type;                                     \
+    using R = typename U::value_type;                                     \
+    using elem_op = op::name<L, R>;                                       \
+                                                                          \
+    static assertion_result                                               \
+    eval( T const& lhs, U const& rhs )                                    \
+    {                                                                     \
+        if constexpr (std::is_convertible_v<T, bytes_view>                \
+                   && std::is_convertible_v<U, bytes_view>)               \
+        {                                                                 \
+            return ::redemption_unit_test__::bytes_compare(lhs, rhs,      \
+                ::redemption_unit_test__::u8_##name(), 'a', revert());    \
+        }                                                                 \
+        else                                                              \
+        {                                                                 \
+            return boost::test_tools::assertion::op::compare_collections( \
+                redemption_unit_test__::View<L const>{lhs},               \
+                redemption_unit_test__::View<R const>{rhs},               \
+                static_cast<boost::type<elem_op>*>(nullptr),              \
+                mpl::true_());                                            \
+        }                                                                 \
+    }                                                                     \
+                                                                          \
+    template<class PrevExprType>                                          \
+    static void                                                           \
+    report( std::ostream&,                                                \
+            PrevExprType const&,                                          \
+            U const&)                                                     \
+    {}                                                                    \
+                                                                          \
+    static char const* revert()                                           \
+    { return " " #rev " "; }                                              \
 };
 
 BOOST_TEST_FOR_EACH_COMP_OP(DEFINE_COLLECTION_COMPARISON)

@@ -103,11 +103,12 @@ namespace redemption_unit_test__
                         return f(N0{});
                     }
                     switch (v[0] & 0b111) {
-                        case 0: return (v[1] >> 4) != 0b1000 ? f(N4{}) : f(N0{});
+                        case 0b000: return (v[1] >> 6) == 0b10 && (v[1] >> 4) != 0b1000 ? f(N4{}) : f(N0{});
                         case 0b001:
                         case 0b010:
-                        case 0b011: return (v[1] >> 6) != 0b10 ? f(N4{}) : f(N0{});
-                        case 0b100: return (v[1] >> 4) != 0b1000 ? f(N4{}) : f(N0{});
+                        case 0b011: return (v[1] >> 6) == 0b10 ? f(N4{}) : f(N0{});
+                        case 0b100: return (v[1] >> 4) == 0b1000 ? f(N4{}) : f(N0{});
+                        default: return f(N0{});
                     }
             }
         }
@@ -226,22 +227,11 @@ namespace redemption_unit_test__
                 });
             };
 
-            while (p + 4 < end) {
+            while (p < end) {
                 consume_char([]{});
             }
 
-            bool is_marked = false;
-
-            while (p != end) {
-                consume_char([&]{
-                    if (is_markable) {
-                        out << "\x1b[35m";
-                        is_marked = true;
-                    }
-                });
-            }
-
-            if (is_markable && !is_marked) {
+            if (is_markable) {
                 out << "\x1b[35m";
             }
         };
