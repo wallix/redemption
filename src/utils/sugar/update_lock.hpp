@@ -41,3 +41,4 @@ public:
     update_lock&operator=(update_lock const &) = delete;
 };
 
+template <class T> update_lock(T & r) -> update_lock<T>;

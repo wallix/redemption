@@ -365,7 +365,7 @@ namespace X224
                     LOG(LOG_ERR, "Buffer too small to read data need=%zu available=%zu",
                         this->length, bufsize );
                     throw Error(ERR_X224);
-                };
+                }
                 t.recv_boom(*end, this->length - nbbytes);
                 *end += this->length - nbbytes;
 
