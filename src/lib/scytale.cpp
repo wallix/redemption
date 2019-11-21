@@ -72,7 +72,7 @@ struct CryptoContextWrapper
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         bool with_encryption, bool with_checksum,
         bool old_encryption_scheme, bool one_shot_encryption_scheme,
-        std::string_view derivator)
+        std::string_view master_derivator)
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
@@ -84,7 +84,7 @@ struct CryptoContextWrapper
                 : TraceType::localfile);
         cctx.old_encryption_scheme = old_encryption_scheme;
         cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
-        cctx.set_master_derivator(bytes_view(derivator));
+        cctx.set_master_derivator(master_derivator);
     }
 };
 
@@ -183,11 +183,11 @@ struct ScytaleWriterHandle
         bool with_encryption, bool with_checksum,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_encryption_scheme , int one_shot_encryption_scheme,
-        char const * derivator)
+        char const * master_derivator)
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum,
             old_encryption_scheme, one_shot_encryption_scheme,
-            derivator)
+            master_derivator)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {}
 
@@ -215,11 +215,11 @@ struct ScytaleReaderHandle
         InCryptoTransport::EncryptionMode encryption,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_encryption_scheme, int one_shot_encryption_scheme,
-        char const * derivator)
+        char const * master_derivator)
     : cctxw(hmac_fn, trace_fn,
             false /* unused for reading */, false /* unused for reading */,
             old_encryption_scheme, one_shot_encryption_scheme,
-            derivator)
+            master_derivator)
     , in_crypto_transport(cctxw.cctx, encryption, this->fstat)
     {}
 
@@ -300,7 +300,7 @@ char const * scytale_writer_get_fhashhex(ScytaleWriterHandle * handle) {
 
 
 ScytaleWriterHandle * scytale_writer_new(
-    int with_encryption, int with_checksum, const char * derivator,
+    int with_encryption, int with_checksum, const char * master_derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
     int old_scheme, int one_shot)
 {
@@ -310,13 +310,13 @@ ScytaleWriterHandle * scytale_writer_new(
         with_encryption, with_checksum,
         hmac_fn, trace_fn,
         old_scheme, one_shot,
-        derivator
+        master_derivator
     ));
 }
 
 
 ScytaleWriterHandle * scytale_writer_new_with_test_random(
-    int with_encryption, int with_checksum, const char * derivator,
+    int with_encryption, int with_checksum, const char * master_derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
     int old_scheme, int one_shot)
 {
@@ -326,7 +326,7 @@ ScytaleWriterHandle * scytale_writer_new_with_test_random(
         with_encryption, with_checksum,
         hmac_fn, trace_fn,
         old_scheme, one_shot,
-        derivator
+        master_derivator
     ));
 }
 
@@ -371,7 +371,7 @@ char const * scytale_writer_get_error_message(ScytaleWriterHandle * handle)
 
 
 ScytaleReaderHandle * scytale_reader_new(
-    const char * derivator,
+    const char * master_derivator,
     get_hmac_key_prototype* hmac_fn, get_trace_key_prototype* trace_fn,
     int old_scheme, int one_shot)
 {
@@ -380,7 +380,7 @@ ScytaleReaderHandle * scytale_reader_new(
         InCryptoTransport::EncryptionMode::Auto,
         hmac_fn, trace_fn,
         old_scheme, one_shot,
-        derivator
+        master_derivator
     ));
 }
 

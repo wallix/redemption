@@ -42,13 +42,13 @@ extern "C"
     //@{
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new(
-        int with_encryption, int with_checksum, const char * derivator,
+        int with_encryption, int with_checksum, const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new_with_test_random(
-        int with_encryption, int with_checksum, const char * derivator,
+        int with_encryption, int with_checksum, const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
@@ -84,7 +84,7 @@ extern "C"
     //@{
     REDEMPTION_LIB_EXPORT
     ScytaleReaderHandle * scytale_reader_new(
-        const char * derivator,
+        const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
