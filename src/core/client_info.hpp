@@ -86,6 +86,10 @@ struct ClientInfo
     char password[257] = {0};
     char domain[257] = {0};
 
+    std::string nla_ntlm_username;
+    std::string nla_ntlm_domain;
+    std::string md4_nla_ntlm_password;
+
     int rdp_compression = 0;
     int rdp_compression_type = 0;
     int rdp_autologin = 0;
@@ -132,6 +136,13 @@ struct ClientInfo
     BitmapCodecCaps	        bitmap_codec_caps {false};
 
     ClientInfo() = default;
+
+    void set_nla_ntlm_username_info(const std::string nla_ntlm_domain, const std::string nla_ntlm_username, const std::string md4_nla_ntlm_password)
+    {
+        this->nla_ntlm_username     = nla_ntlm_domain;
+        this->nla_ntlm_domain       = nla_ntlm_username;
+        this->md4_nla_ntlm_password = md4_nla_ntlm_password;
+    }
 
     void process_logon_info( InStream & stream
                            , bool ignore_logon_password

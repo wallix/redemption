@@ -161,7 +161,7 @@ public:
      * Generate server signing key (ServerSigningKey).\n
      * @msdn{cc236711}
      */
-
+    NTLMAuthenticateMessage authenticate;
     array_md5 ServerSigningKey;
 private:
     array_md5 ServerSealingKey;
@@ -179,7 +179,6 @@ public:
                const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
                TimeObj & timeobj,
-               std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)> get_password_hash_cb,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
                bool ignore_bogus_nego_flags,
                const bool credssp_verbose = false,
@@ -199,7 +198,6 @@ public:
         , timeobj(timeobj)
         , rand(rand)
         , public_key(key.data(),key.data()+key.size())
-        , get_password_hash_cb(get_password_hash_cb)
         , credssp_verbose(credssp_verbose)
         , verbose(verbose)
     {
@@ -219,7 +217,18 @@ public:
         this->server_auth_data.state = ServerAuthenticateData::Loop;
     }
 
+
 public:
+    PasswordCallback password_res;
+    array_md4 password_hash;
+    TSRequest authentication_token;
+    
+    void set_password_hash(PasswordCallback password_res, array_md4 password_hash)
+    {
+        this->password_res  = password_res;
+        this->password_hash = password_hash;
+//                    auto [res, password_hash] = get_password_hash_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer);
+    }
     std::vector<uint8_t> authenticate_next(bytes_view in_data)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLMServer::authenticate_next");
@@ -256,9 +265,9 @@ public:
                 case NTLM_STATE_AUTHENTICATE:
                 {
                     /* receive authentication token */
-                    TSRequest ts_request_in = recvTSRequest(in_data, this->credssp_verbose);
+                    this->authentication_token = recvTSRequest(in_data, this->credssp_verbose);
 
-                    this->error_code = ts_request_in.error_code;
+                    this->error_code = this->authentication_token.error_code;
 
                     // unsigned long const fContextReq = 0
                     //     | ASC_REQ_MUTUAL_AUTH
@@ -269,7 +278,7 @@ public:
                     //     | ASC_REQ_SEQUENCE_DETECT
                     //     | ASC_REQ_EXTENDED_ERROR;
 
-                    NTLMAuthenticateMessage authenticate = recvNTLMAuthenticateMessage(ts_request_in.negoTokens, true);
+                    this->authenticate = recvNTLMAuthenticateMessage(this->authentication_token.negoTokens, true);
 
                     if (authenticate.has_mic) {
                         this->UseMIC = true;
@@ -282,10 +291,17 @@ public:
                         this->state = credssp::State::Err;
                         return {};
                     }
+                    this->ntlm_state = NTLM_STATE_WAIT_PASSWORD;
+                    this->state = credssp::State::Cont;
+                    return {};
+                }
+                break;
 
-                    auto [res, password_hash] = get_password_hash_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer);
+                case NTLM_STATE_WAIT_PASSWORD:
+                {
+//                    auto [res, password_hash] = get_password_hash_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer);
 
-                    if (res == PasswordCallback::Error){
+                    if (this->password_res == PasswordCallback::Error){
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (3)");
                         // SEC_E_LOGON_DENIED;
                         this->state = credssp::State::Err;
@@ -346,8 +362,8 @@ public:
                     unsigned long MessageSeqNo = this->recv_seq_num++;
                     LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
-                    if (ts_request_in.pubKeyAuth.size() < cbMaxSignature) {
-                        if (ts_request_in.pubKeyAuth.size() == 0) {
+                    if (this->authentication_token.pubKeyAuth.size() < cbMaxSignature) {
+                        if (this->authentication_token.pubKeyAuth.size() == 0) {
                             // report_error
                             LOG(LOG_INFO, "Provided login/password is probably incorrect.");
                         }
@@ -359,8 +375,8 @@ public:
                         return {};
                     }
 
-                    // ts_request_in.pubKeyAuth [signature][data_buffer]
-                    array_view_u8 data_buffer = {ts_request_in.pubKeyAuth.data()+cbMaxSignature, ts_request_in.pubKeyAuth.size()-cbMaxSignature};
+                    // this->authentication_token.pubKeyAuth [signature][data_buffer]
+                    array_view_u8 data_buffer = {this->authentication_token.pubKeyAuth.data()+cbMaxSignature, this->authentication_token.pubKeyAuth.size()-cbMaxSignature};
                     std::vector<uint8_t> result_buffer(data_buffer.size());
 
                     /* Decrypt message using RC4 */
@@ -380,15 +396,15 @@ public:
                     push_back_array(expected_signature, {checksum, 8});
                     push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
 
-                    if (memcmp(ts_request_in.pubKeyAuth.data(), expected_signature.data(),  expected_signature.size()) != 0) {
+                    if (memcmp(this->authentication_token.pubKeyAuth.data(), expected_signature.data(),  expected_signature.size()) != 0) {
                         /* signature verification failed! */
                         LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
                         LOG(LOG_ERR, "Expected Signature:");
                         hexdump_c(expected_signature);
                         LOG(LOG_ERR, "Actual Signature:");
-                        hexdump_c(ts_request_in.pubKeyAuth.data(), 16);
+                        hexdump_c(this->authentication_token.pubKeyAuth.data(), 16);
 
-                        if (ts_request_in.pubKeyAuth.size() == 0) {
+                        if (this->authentication_token.pubKeyAuth.size() == 0) {
                             // report_error
                             LOG(LOG_INFO, "Provided login/password is probably incorrect.");
                         }
@@ -400,9 +416,9 @@ public:
                         return {};
                     }
 
-                    if (ts_request_in.use_version >= 5) {
-                        if (ts_request_in.clientNonce.isset()){
-                            this->SavedClientNonce = ts_request_in.clientNonce;
+                    if (this->authentication_token.use_version >= 5) {
+                        if (this->authentication_token.clientNonce.isset()){
+                            this->SavedClientNonce = this->authentication_token.clientNonce;
                         }
                         this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
                                                 this->SavedClientNonce.clientNonce,
@@ -434,12 +450,12 @@ public:
                     }
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMServer::encrypt_public_key_echo");
-                    uint32_t version = ts_request_in.use_version;
+                    uint32_t version = this->authentication_token.use_version;
 
                     std::vector<uint8_t> check_key;
                     if (version >= 5) {
-                        if (ts_request_in.clientNonce.isset()){
-                            this->SavedClientNonce = ts_request_in.clientNonce;
+                        if (this->authentication_token.clientNonce.isset()){
+                            this->SavedClientNonce = this->authentication_token.clientNonce;
                         }
                         array_sha256 ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
                                                     this->SavedClientNonce.clientNonce,
@@ -480,13 +496,13 @@ public:
                         memcpy(signature.data()+12, av_seqno.data(), av_seqno.size());
                     }
 
-                    ts_request_in.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
+                    this->authentication_token.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
-                    result = emitTSRequest(std::min(ts_request_in.version,this->credssp_version),
+                    result = emitTSRequest(std::min(this->authentication_token.version,this->credssp_version),
                                            {},
-                                           ts_request_in.authInfo,
-                                           ts_request_in.pubKeyAuth,
-                                           ts_request_in.error_code,
+                                           this->authentication_token.authInfo,
+                                           this->authentication_token.pubKeyAuth,
+                                           this->authentication_token.error_code,
                                            {},
                                            false,
                                            this->credssp_verbose);

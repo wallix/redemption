@@ -341,6 +341,7 @@ namespace cfg {
         struct target_port;
         struct target_protocol;
         struct password;
+        struct nla_password_hash;
         struct reporting;
         struct auth_channel_answer;
         struct auth_channel_target;

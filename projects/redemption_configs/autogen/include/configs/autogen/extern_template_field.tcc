@@ -116,6 +116,7 @@ template class Inifile::Field<cfg::context::target_service>;
 template class Inifile::Field<cfg::context::target_port>;
 template class Inifile::Field<cfg::context::target_protocol>;
 template class Inifile::Field<cfg::context::password>;
+template class Inifile::Field<cfg::context::nla_password_hash>;
 template class Inifile::Field<cfg::context::reporting>;
 template class Inifile::Field<cfg::context::auth_channel_answer>;
 template class Inifile::Field<cfg::context::auth_channel_target>;

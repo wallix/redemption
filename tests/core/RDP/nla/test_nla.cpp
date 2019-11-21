@@ -448,7 +448,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     NtlmServer ntlm_server(false, true, "RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,
                            public_key, 
                            {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, 
-                           rand, timeobj, get_password_hash, 5,
+                           rand, timeobj, 5,
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
                            false, true);
 
@@ -519,6 +519,12 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
 /* 01d0 */ 0xbd, 0xf5, 0x75, 0x0b, 0xec, 0x06, 0x73, 0x27, 0xdf, 0x8b, 0x40, 0xc2, 0xc9,                    // ..u...s'..@..
     };
 
+    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> ask for user password MD4");
+    RED_CHECK_HMEM({}, ntlm_server.authenticate_next(authenticate));
+
+    auto [password_res, password_hash] = get_password_hash(ntlm_server.authenticate.UserName.buffer, ntlm_server.authenticate.DomainName.buffer);
+    ntlm_server.set_password_hash(password_res, password_hash);
+
     std::vector<uint8_t> pubauthkey{
 ///* 0000 */ 0x30, 0x39, 0xa0, 0x03, 0x02, 0x01, 0x05, 0xa3, 0x32, 0x04, 0x30, 0x01, 0x00, 0x00, 0x00, 0xe2,  // 09......2.0.....
 ///* 0010 */ 0xa0, 0x66, 0x3d, 0x15, 0xbe, 0x53, 0x3f, 0x00, 0x00, 0x00, 0x00, 0x32, 0xf6, 0x1c, 0xb6, 0x53,  // .f=..S?....2...S
@@ -533,7 +539,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
 
 //    RED_CHECK(false);
     RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> answer with NTLM Pubauthkey");
-    RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next(authenticate));
+    RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next({}));
 //    
 //    RED_CHECK_EQUAL(credssp::State::Cont, ntlm_server.state);
 //    
@@ -601,7 +607,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
                            public_key, 
 //                           {MsvAvNbDomainName, MsvAvDnsDomainName, MsvAvNbComputerName,MsvAvDnsComputerName,MsvAvTimestamp}, 
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, 
-                           rand, timeobj, get_password_hash, 6, 
+                           rand, timeobj, 6, 
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_3, 9600, NTLMSSP_REVISION_W2K3},
                            false, true);
 
@@ -676,6 +682,12 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
 /* 01f0 */ 0xb8, 0x0d, 0x3e,                                                                                // ..>
     };
 
+    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> ask password hash");
+    RED_CHECK_HMEM({}, ntlm_server.authenticate_next(authenticate));
+
+    auto [password_res, password_hash] = get_password_hash(ntlm_server.authenticate.UserName.buffer, ntlm_server.authenticate.DomainName.buffer);
+    ntlm_server.set_password_hash(password_res, password_hash);
+
     std::vector<uint8_t> pubauthkey{
 /* 0000 */ 0x30, 0x39, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa3, 0x32, 0x04, 0x30, 0x01, 0x00, 0x00, 0x00, 0xec,  // 09......2.0.....
 /* 0010 */ 0x9d, 0xe0, 0xd7, 0xdd, 0xfb, 0xa6, 0xa8, 0x00, 0x00, 0x00, 0x00, 0x37, 0x51, 0x1a, 0x07, 0xf0,  // ...........7Q...
@@ -683,8 +695,8 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
 /* 0030 */ 0x7f, 0x11, 0x87, 0x7e, 0x64, 0xe9, 0x78, 0xec, 0x2c, 0x20, 0x7d,                                // ...~d.x., }
     };
 
-    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> answer with NTLM Pubauthkey");
-    RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next(authenticate));
+    RED_TEST_MESSAGE("+++++++++++++ Continue NTLM Authenticate response --> answer with NTLM Pubauthkey");
+    RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next({}));
     
     RED_CHECK_EQUAL(credssp::State::Cont, ntlm_server.state);
     
@@ -763,7 +775,7 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
     NtlmServer ntlm_server(true, false, "PROXYKDC"_av, "WIN10CGR"_av, "PROXYKDC"_av, "WIN10CGR.proxykdc.lab"_av, "proxykdc.lab"_av, "proxykdc.lab"_av,
                            public_key, 
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName, MsvAvDnsComputerName, MsvAvDnsTreeName, MsvAvTimestamp}, 
-                           rand, timeobj, get_password_hash, 6, 
+                           rand, timeobj, 6, 
                            NtlmVersion{10, 0, 0x4563, NTLMSSP_REVISION_W2K3},
                            false, true);
 
@@ -857,6 +869,12 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
 /* 01f0 */ 0xf0,                                                                                            // .
     };
 
+    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> ask password hash");
+    RED_CHECK_HMEM({}, ntlm_server.authenticate_next(authenticate));
+
+    auto [password_res, password_hash] = get_password_hash(ntlm_server.authenticate.UserName.buffer, ntlm_server.authenticate.DomainName.buffer);
+    ntlm_server.set_password_hash(password_res, password_hash);
+
     std::vector<uint8_t> pubauthkey{
 /* 0000 */ 0x30, 0x39, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa3, 0x32, 0x04, 0x30, 0x01, 0x00, 0x00, 0x00, 0xdf,  // 09......2.0.....
 /* 0010 */ 0xf2, 0x55, 0x73, 0x09, 0x73, 0xe1, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x99, 0x96, 0x44, 0x19, 0xcd,  // .Us.s........D..
@@ -864,8 +882,8 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
 /* 0030 */ 0x97, 0xa7, 0xed, 0xe2, 0x49, 0x26, 0x7d, 0x16, 0x22, 0x6f, 0x04,                                // ....I&}."o.
     };
 
-    RED_TEST_MESSAGE("+++++++++++++ Server receive NTLM Authenticate --> answer with NTLM Pubauthkey");
-    RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next(authenticate));
+    RED_TEST_MESSAGE("+++++++++++++ Continue with NTLM Authenticate --> answer with NTLM Pubauthkey");
+    RED_CHECK_HMEM(pubauthkey, ntlm_server.authenticate_next({}));
     
     RED_CHECK_EQUAL(credssp::State::Cont, ntlm_server.state);
     

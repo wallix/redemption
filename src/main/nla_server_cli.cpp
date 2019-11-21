@@ -52,12 +52,51 @@
 #include <sys/select.h>
 #include <openssl/ssl.h>
 
+
+
+
 /** @brief the server that handles RDP connections */
 class NLAServer
 {
     std::unique_ptr<NegoServer> nego_server;
     std::string nla_username;
     std::string nla_password;
+
+    std::pair<PasswordCallback,array_md4> get_password_hash(bytes_view user_av, bytes_view domain_av)
+    {
+        LOG(LOG_INFO, "NTLM Check identity");
+        hexdump_d(user_av);
+        
+        auto [username, domain] = extract_user_domain(this->nla_username);
+        // from protocol
+        auto tmp_utf8_user = ::encode_UTF16_to_UTF8(user_av);
+        std::string u8user(reinterpret_cast<char*>(tmp_utf8_user.data()),
+                             reinterpret_cast<char*>(tmp_utf8_user.data())+tmp_utf8_user.size());
+        auto tmp_utf8_domain = ::encode_UTF16_to_UTF8(domain_av);
+        std::string u8domain(reinterpret_cast<char*>(tmp_utf8_domain.data()),
+                             reinterpret_cast<char*>(tmp_utf8_domain.data())+tmp_utf8_domain.size());
+
+        LOG(LOG_INFO, "NTML IDENTITY(message): identity.User=%s identity.Domain=%s username=%s, domain=%s",
+            u8user, u8domain, username, domain);
+
+        if (u8domain.size() == 0){
+            auto [identity_username, identity_domain] = extract_user_domain(u8user);
+
+            bool user_match = username == identity_username;
+            bool domain_match = domain == identity_domain;
+
+            if (user_match && domain_match){
+                LOG(LOG_INFO, "known identity");
+                return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->nla_password))};
+            }
+        }
+        else if ((username == u8user) && (domain == u8domain)){
+            return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->nla_password))};
+        }
+
+        LOG(LOG_ERR, "Ntlm: unknwon identity");
+        return {PasswordCallback::Error, {}};
+    }
 
     enum class PState : unsigned {
         NEGOTIATING_FRONT_HELLO,
@@ -127,21 +166,28 @@ public:
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
             }
-            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, this->nla_username, this->nla_password, true);
+            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, true);
             this->pstate = PState::NEGOTIATING_FRONT_NLA;
         }
         return cr_tpdu;
     }
 
-    void front_nla(Transport & trans, TpduBuffer & buffer)
+    void front_nla(Transport & trans, bytes_view buffer)
     {
         LOG(LOG_INFO, "starting NLA NegoServer");
         std::vector<uint8_t> result;
         credssp::State st = credssp::State::Cont;
         LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
-        result << this->nego_server->credssp.authenticate_next(buffer.current_pdu_buffer());
+        if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
+            result << this->nego_server->credssp.authenticate_next({});
+        }
+        else {
+            result << this->nego_server->credssp.authenticate_next(buffer);
+        }
         st = this->nego_server->credssp.state;
-        trans.send(result);
+        if (result.size() > 0){ // If waiting for password, no data
+            trans.send(result);
+        }
 
         switch (st) {
         case credssp::State::Err: {
@@ -243,7 +289,15 @@ public:
                         case PState::NEGOTIATING_FRONT_NLA:
                             LOG(LOG_INFO, "NEGOTIATING_FRONT_NLA");
                             if (buffer.next(TpduBuffer::CREDSSP)) {
-                                this->front_nla(trans, buffer);
+                                this->front_nla(trans, buffer.current_pdu_buffer());
+                            }
+                            if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
+                                auto [password_res, password_hash] = get_password_hash(
+                                    this->nego_server->credssp.authenticate.UserName.buffer,
+                                    this->nego_server->credssp.authenticate.DomainName.buffer);
+                                
+                                this->nego_server->credssp.set_password_hash(password_res, password_hash);
+                                this->front_nla(trans, {});
                             }
                             break;
 

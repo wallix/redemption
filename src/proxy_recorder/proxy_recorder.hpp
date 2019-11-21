@@ -68,7 +68,6 @@ public:
             RecorderFile & outFile,
             TimeObj & timeobj,
             const char * host,
-            std::string nla_username, std::string nla_password,
             bool enable_kerberos,
             uint64_t verbosity
     )
@@ -76,25 +75,19 @@ public:
         , outFile(outFile)
         , timeobj(timeobj)
         , host(host)
-        , nla_username(std::move(nla_username))
-        , nla_password(std::move(nla_password))
         , enable_kerberos(enable_kerberos)
         , verbosity(verbosity)
     {
         this->frontBuffer.trace_pdu = (this->verbosity > 512);
         this->backBuffer.trace_pdu = (this->verbosity > 512);
-
-        if (!this->nla_password.empty()) {
-            this->nla_password.push_back('\0');
-        }
     }
 
     void front_step1(Transport & frontConn);
-    void back_step1(array_view_u8 key, Transport & backConn);
+    void back_step1(array_view_u8 key, Transport & backConn, std::string nla_username, std::string nla_password);
     void front_nla(Transport & frontConn);
-    void front_initial_pdu_negociation(Transport & backConn);
+    void front_initial_pdu_negociation(Transport & backConn, bool is_nla);
     void back_nla_negociation(Transport & backConn);
-    void back_initial_pdu_negociation(Transport & frontConn);
+    void back_initial_pdu_negociation(Transport & frontConn, bool is_nla);
 
 public:
     enum class PState : unsigned {
@@ -118,8 +111,6 @@ public:
     std::unique_ptr<NegoClient> nego_client;
     std::unique_ptr<NegoServer> nego_server;
 
-    std::string nla_username;
-    std::string nla_password;
     bool enable_kerberos;
     bool is_tls_client = false;
     bool is_nla_client = false;

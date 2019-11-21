@@ -60,14 +60,14 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     }
 }
 
-void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
+void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::string nla_username, std::string nla_password)
 {
 
     if (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "start NegoServer");
         }
-        this->nego_server = std::make_unique<NegoServer>(key, nla_username, nla_password, this->verbosity > 8);
+        this->nego_server = std::make_unique<NegoServer>(key, this->verbosity > 8);
         this->pstate = PState::NEGOCIATING_FRONT_NLA;
     }
     else {
@@ -103,7 +103,22 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
 void ProxyRecorder::front_nla(Transport & frontConn)
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
-    auto [st, result] = this->nego_server->recv_data(this->frontBuffer);
+    
+    TpduBuffer & buffer = this->frontBuffer;
+    std::vector<uint8_t> result;
+    credssp::State st = credssp::State::Cont;
+    while ((this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD
+                || buffer.next(TpduBuffer::CREDSSP)) 
+            && credssp::State::Cont == st) {
+        if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
+            result << this->nego_server->credssp.authenticate_next({});
+        }
+        else {
+            result << this->nego_server->credssp.authenticate_next(buffer.current_pdu_buffer());
+        }
+        st = this->nego_server->credssp.state;
+    }
+        
     frontConn.send(result);
 
     switch (st) {
@@ -121,14 +136,14 @@ void ProxyRecorder::front_nla(Transport & frontConn)
 }
 
 
-void ProxyRecorder::front_initial_pdu_negociation(Transport & backConn)
+void ProxyRecorder::front_initial_pdu_negociation(Transport & backConn, bool is_nla)
 {
     if (this->frontBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_INITIAL_PDU : front receive : frontbuffer content ======");
         array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
         LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_INITIAL_PDU frontbuffer content >>>>>>");
 
-        if (!nla_username.empty()) {
+        if (is_nla) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "Back: force protocol PROTOCOL_HYBRID");
             }
@@ -170,14 +185,14 @@ void ProxyRecorder::back_nla_negociation(Transport & backConn)
     }
 }
 
-void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
+void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn, bool is_nla)
 {
     if (backBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== BACK_INITIAL_PDU_NEGOCIATION  : back receive : backbuffer content ======");
         array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
         LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> BACK_INITIAL_PDU_NEGOCIATION backbuffer content >>>>>>");
 
-        if (!nla_username.empty()) {
+        if (is_nla) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "Front: force protocol tls=%u nla=%u",
                     (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS),

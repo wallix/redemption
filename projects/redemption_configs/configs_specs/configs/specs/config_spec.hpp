@@ -676,6 +676,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "target_protocol", sesman::name{"proto_dest"}, set("RDP"));
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, NL, type_<std::string>(), "password");
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "nla_password_hash");
 
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "reporting");
 

@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(181);
+constexpr authid_t MAX_AUTHID = authid_t(182);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -129,6 +129,7 @@ constexpr array_view_const_char const authstr[] = {
     "target_port"_av,
     "proto_dest"_av,
     "password"_av,
+    "nla_password_hash"_av,
     "reporting"_av,
     "auth_channel_answer"_av,
     "auth_channel_target"_av,

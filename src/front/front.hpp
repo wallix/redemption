@@ -591,8 +591,6 @@ private:
     uint8_t front_public_key[1024] = {};
     array_view_u8 front_public_key_av;
     std::unique_ptr<NegoServer> nego_server;
-    std::string nla_username;
-    std::string nla_password;
     
 
     std::string server_capabilities_filename;
@@ -1378,9 +1376,7 @@ public:
             this->front_public_key_av = array_view{this->front_public_key, key.size()};
 
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
-                this->nla_username = std::string("u");
-                this->nla_password = std::string("upass");
-                this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, this->nla_username, this->nla_password, true);
+                this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, true);
             }
         }
 
@@ -2564,8 +2560,19 @@ public:
         credssp::State st = credssp::State::Cont;
         LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
         result << this->nego_server->credssp.authenticate_next(data);
+        
+        if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
+            bytes_view buffer = this->nego_server->credssp.authenticate.UserName.buffer;
+            std::string username(buffer.data(), buffer.data()+buffer.size());
+            this->ini.set_acl<cfg::globals::auth_user>(username);
+            this->ini.ask<cfg::context::nla_password_hash>();
+
+        }
+
         st = this->nego_server->credssp.state;
-        trans.send(result);
+        if (result.size() > 0){
+            trans.send(result);
+        }
 
         switch (st) {
         case credssp::State::Err: {
@@ -2583,6 +2590,33 @@ public:
         }
     }
 
+    void front_nla_got_password(Transport & trans)
+    {
+        LOG(LOG_INFO, "starting NLA NegoServer");
+        std::vector<uint8_t> result;
+        credssp::State st = credssp::State::Cont;
+        LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
+        result << this->nego_server->credssp.authenticate_next({});
+        st = this->nego_server->credssp.state;
+        if (result.size() > 0){
+            trans.send(result);
+        }
+
+        switch (st) {
+        case credssp::State::Err: {
+            LOG(LOG_INFO, "NLA NegoServer Authentication Failed");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+        }
+        case credssp::State::Cont: {
+            LOG(LOG_INFO, "NLA NegoServer Running");
+        }
+        break;
+        case credssp::State::Finish:
+            LOG(LOG_INFO, "NLA NegoServer Done");
+            this->state = BASIC_SETTINGS_EXCHANGE;
+            break;
+        }
+    }
 
     void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb) /*NOLINT*/
     {
@@ -2602,7 +2636,12 @@ public:
         }
         break;
         case PRIMARY_AUTH_NLA:
-            this->front_nla(this->trans, tpdu);
+            if (this->nego_server->credssp.ntlm_state != NTLM_STATE_WAIT_PASSWORD){
+                this->front_nla(this->trans, tpdu);
+            }
+            else {
+                this->front_nla_got_password(this->trans);
+            }
         break;
         case BASIC_SETTINGS_EXCHANGE:
             this->basic_settings_exchange(tpdu);

@@ -1100,7 +1100,7 @@ namespace jln
     }
 
     template<auto x>
-    constexpr auto value = std::integral_constant<decltype(x), x>{};
+    inline constexpr auto value = std::integral_constant<decltype(x), x>{};
 
     enum class IndexSequence : int;
 

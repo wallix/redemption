@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
     NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
     NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-    ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, "0.0.0.0", nla_username, nla_password, enable_kerberos, verbosity);
+    ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, "0.0.0.0", enable_kerberos, verbosity);
 
     uint8_t front_public_key[1024] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
     array_view_u8 front_public_key_av = {front_public_key, 16};
@@ -309,7 +309,7 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
     conn.front_step1(frontConn);
     hexdump(front_public_key, 16);
     // front public key ready from here
-    conn.back_step1(front_public_key_av, backConn);
+    conn.back_step1(front_public_key_av, backConn, nla_username, nla_password);
 
     RED_TEST_PASSPOINT();
     // Receiving data from Client: CredSSP
