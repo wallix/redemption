@@ -724,8 +724,7 @@ struct ScytaleFdxWriterHandle
         int with_encryption, int with_checksum, const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         ScytaleRandomWrapper::RandomType random_type)
-    : with_checksum(with_checksum)
-    , random_wrapper(random_type)
+    : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
@@ -813,8 +812,8 @@ struct ScytaleFdxWriterHandle
             array_view(tfl.finalname).drop_front(tfl.pos_filename),
             write_buf, set_error);
         Mwrm3::serialize_tfl_stat(tfl.idx, safe_cast<Mwrm3::FileSize>(fsize),
-            Mwrm3::QuickHash{!with_checksum ? bytes_view{} : make_array_view(qhash)},
-            Mwrm3::FullHash{!with_checksum ? bytes_view{} : make_array_view(fhash)},
+            Mwrm3::QuickHash{this->with_checksum() ? make_array_view(qhash) : bytes_view{}},
+            Mwrm3::FullHash{this->with_checksum() ? make_array_view(fhash) : bytes_view{}},
             write_buf);
 
         this->out_crypto_transport.send(cbuf, std::distance(cbuf, remaining_buf.begin()));
@@ -841,13 +840,17 @@ struct ScytaleFdxWriterHandle
     }
 
 private:
+    bool with_checksum() const noexcept
+    {
+        return this->cctxw.cctx.get_with_checksum();
+    }
+
     uint64_t idx = 0;
     std::string prefix;
     std::string hash_prefix;
     std::size_t pos_filename = 0;
     int groupid = 0;
     Fstat fstat;
-    bool with_checksum;
     ScytaleRandomWrapper random_wrapper;
 
     CryptoContextWrapper cctxw;

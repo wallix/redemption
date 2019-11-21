@@ -441,6 +441,8 @@ RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
     (void)tu::append_file_contents(file2hash, content);
     RED_TEST(content.substr(0, hres.size()) == hres);
 
+    RED_TEST(0 == scytale_fdx_writer_close(fdx));
+
     RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
 
     RED_TEST(0 == scytale_fdx_writer_delete(fdx));
@@ -450,4 +452,104 @@ RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
         "\x04\x00.\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
         "file2.txt0123456789abcdef,000002.tfl"
         "\x05\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"_av);
+}
+
+RED_AUTO_TEST_CASE_WD(ScytaleTflChecksum, wd)
+{
+    auto wdhash = wd.create_subdirectory("hash");
+
+    auto sid = "0123456789abcdef"_av;
+
+    auto fdx_filename = str_concat(sid, ".fdx");
+
+    auto fdxpath = wd.add_file(fdx_filename);
+    (void)wdhash.add_file(fdx_filename);
+
+    auto* fdx = scytale_fdx_writer_new_with_test_random(0, 1, "", hmac_fn, trace_fn);
+    RED_TEST(fdx);
+
+    RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
+
+    auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
+    RED_TEST(tfl);
+
+    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
+    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
+    RED_TEST(0 == scytale_tfl_writer_close(tfl));
+
+    auto fname = str_concat(sid, ",000001.tfl"_av);
+    auto file2path = wd.add_file(fname);
+    auto file2hash = wdhash.add_file(fname);
+
+    RED_CHECK_FILE_CONTENTS(file2path, "abcdefg"_av);
+    auto hres = "v2\n\n\n0123456789abcdef,000001.tfl "sv;
+    std::string content;
+    (void)tu::append_file_contents(file2hash, content);
+    RED_TEST(content.substr(0, hres.size()) == hres);
+
+    RED_TEST(0 == scytale_fdx_writer_close(fdx));
+
+    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
+
+    RED_TEST(0 == scytale_fdx_writer_delete(fdx));
+
+    RED_CHECK_FILE_CONTENTS(fdxpath,
+        "v3\n"
+        "\x04\x00.\x00\x01\x00\x00\x00\x00\x00\x00\x00\t\x00"
+        "file1.txt0123456789abcdef,000001.tfl"
+        "\x05\x00P\x00\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00"
+        "\x00\x00\x00\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
+        "\xed\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xffɭD\xf9RG\xdc\x7f\xf9\x02"
+        "Jyh\xed\xf3\x90\x0c"_av);
+}
+
+RED_AUTO_TEST_CASE_WD(ScytaleTflEncrypted, wd)
+{
+    auto wdhash = wd.create_subdirectory("hash");
+
+    auto sid = "0123456789abcdef"_av;
+
+    auto fdx_filename = str_concat(sid, ".fdx");
+
+    auto fdxpath = wd.add_file(fdx_filename);
+    (void)wdhash.add_file(fdx_filename);
+
+    auto* fdx = scytale_fdx_writer_new_with_test_random(1, 1, "abc", hmac_fn, trace_fn);
+    RED_TEST(fdx);
+
+    RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
+    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
+
+    auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
+    RED_TEST(tfl);
+
+    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
+    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
+    RED_TEST(0 == scytale_tfl_writer_close(tfl));
+
+    auto fname = str_concat(sid, ",000001.tfl"_av);
+    auto file2path = wd.add_file(fname);
+    auto file2hash = wdhash.add_file(fname);
+
+    RED_CHECK_MEM_FILE_CONTENTS(file2path, "WCFM\x01\x00\x00\x00xX\xaeR\xb0\xael\x17hZ\x13\xbd\xa0Sz\xf3X\x12{\xce\x90\x8e\xa8\xadH@\x87""1\x80\x1f""E\xb6\x10\x00\x00\x00\xbd\xf0\xeb""eM\x8cs\xbf\x0b\xd1^\x15\x18""B\xadlMFCW\x07\x00\x00\x00"_av);
+    auto hres = "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6"_av;
+    std::string content;
+    (void)tu::append_file_contents(file2hash, content);
+    content.erase(std::min(content.size(), hres.size()));
+    RED_TEST(content == hres);
+
+    RED_TEST(0 == scytale_fdx_writer_close(fdx));
+
+    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
+
+    RED_TEST(0 == scytale_fdx_writer_delete(fdx));
+
+    RED_CHECK_MEM_FILE_CONTENTS(fdxpath,
+        "WCFM\x01\x00\x00\x00\xb8l\xda\xa6\xf0\xf6""0\x8d\xa8\x16\xa6n\xe0\xc3\xe5\xcc\x98"
+        "v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00\xb6\xdb\xa7\xdf\xa3\x06\x84"
+        "\xe7\x05\xfd/\xdeP\x04=X\xa5\xbe\xbd\x1d\xf5\xb6\x95\xca\x95\xb1\xf2\xb2\x10\xee"
+        "\x96*q\xf0I\xe4""d\x85o\b5\xbe""6\xde\xd9\x02\x85\xec\x82""cq\x97X#\xc5r\xdcn*\\"
+        "\x9a\xb6qq\x95\xa0.0!\x8f\xaa\xd7\xb8\xf8\xce\xbb\n\xbd^\xc2\x80\xb3\x02\x0e\x0cH"
+        "%\xb0\xe9\\\x99(o\xf4\xcb\xe4""4o\x8b|5\bh\xa4\x95\xba\xab\b\xd2\"c\x0bMFCW\x89"
+        "\x00\x00\x00"_av);
 }
