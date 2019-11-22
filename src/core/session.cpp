@@ -421,7 +421,8 @@ public:
                                 acl.reset();
                             }
                         }
-                        else if (this->ini.get<cfg::client::enable_nla>()) {
+                        else if ((!this->ini.is_asked<cfg::globals::nla_auth_user>())
+                        && this->ini.get<cfg::client::enable_nla>()) {
                             acl->acl_serial.send_acl_data();
                         }
                     }
