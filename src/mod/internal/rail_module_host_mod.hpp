@@ -50,7 +50,6 @@ public:
     {
         this->screen.clear();
 
-LOG(LOG_INFO, "RAIL Module Host Mod is not active");
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
     }
 

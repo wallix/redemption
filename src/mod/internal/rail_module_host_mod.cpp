@@ -50,7 +50,6 @@ RailModuleHostMod::RailModuleHostMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-LOG(LOG_INFO, "RAIL Module Host Mod is active");
     this->vars.set<cfg::context::rail_module_host_mod_is_active>(true);
 }
 
