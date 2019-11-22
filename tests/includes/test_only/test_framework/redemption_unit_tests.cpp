@@ -23,6 +23,7 @@ Author(s): Jonathan Poelen
 #endif
 
 #include "./redemption_unit_tests.hpp"
+#include "cxx/cxx.hpp"
 
 #include <boost/test/results_collector.hpp>
 // #include <boost/test/results_reporter.hpp>
@@ -66,12 +67,12 @@ namespace redemption_unit_test__
             // 10xx x[xxx]  invalid value
             0, 0, 0, 0,
             0, 0, 0, 0,
-            // 110x x[xxx]
+            // 110x x[xxx]  2 bytes
             2, 2, 2, 2,
-            // 1110 x[xxx]
-            3, 3,
-            // 1111 0[xxx]
-            4,
+            // 1110 x[xxx]  3 bytes
+            0, 0,
+            // 1111 0[xxx]  4 bytes
+            0,
             // 1111 1[xxx]  invalid value
             0,
         };
@@ -89,28 +90,30 @@ namespace redemption_unit_test__
                 case 0: return f(N0{});
                 case 1: return f(N1{});
                 case 2: return size >= 2 && (v[1] >> 6) == 0b10 ? f(N2{}) : f(N0{});
-                case 3:
-                    if (size < 3 || (v[2] >> 6) != 0b10) {
-                        return f(N0{});
-                    }
-                    switch (v[0] & 0b1111) {
-                        case 0: return (v[1] >> 5) == 0b101 ? f(N3{}) : f(N0{});
-                        case 0b1101: return (v[1] >> 5) == 0b100 ? f(N3{}) : f(N0{});
-                        default: return (v[1] >> 6) == 0b10 ? f(N3{}) : f(N0{});
-                    }
-                case 4:
-                    if (size < 4 || (v[2] >> 6) != 0b10 || (v[3] >> 6) != 0b10) {
-                        return f(N0{});
-                    }
-                    switch (v[0] & 0b111) {
-                        case 0b000: return (v[1] >> 6) == 0b10 && (v[1] >> 4) != 0b1000 ? f(N4{}) : f(N0{});
-                        case 0b001:
-                        case 0b010:
-                        case 0b011: return (v[1] >> 6) == 0b10 ? f(N4{}) : f(N0{});
-                        case 0b100: return (v[1] >> 4) == 0b1000 ? f(N4{}) : f(N0{});
-                        default: return f(N0{});
-                    }
+                // case 3:
+                //     if (size < 3 || (v[2] >> 6) != 0b10) {
+                //         return f(N0{});
+                //     }
+                //     switch (v[0] & 0b1111) {
+                //         case 0: return (v[1] >> 5) == 0b101 ? f(N3{}) : f(N0{});
+                //         case 0b1101: return (v[1] >> 5) == 0b100 ? f(N3{}) : f(N0{});
+                //         default: return (v[1] >> 6) == 0b10 ? f(N3{}) : f(N0{});
+                //     }
+                // case 4:
+                //     if (size < 4 || (v[2] >> 6) != 0b10 || (v[3] >> 6) != 0b10) {
+                //         return f(N0{});
+                //     }
+                //     switch (v[0] & 0b111) {
+                //         case 0b000: return (v[1] >> 6) == 0b10 && (v[1] >> 4) != 0b1000 ? f(N4{}) : f(N0{});
+                //         case 0b001:
+                //         case 0b010:
+                //         case 0b011: return (v[1] >> 6) == 0b10 ? f(N4{}) : f(N0{});
+                //         case 0b100: return (v[1] >> 4) == 0b1000 ? f(N4{}) : f(N0{});
+                //         default: return f(N0{});
+                //     }
             }
+
+            REDEMPTION_UNREACHABLE();
         }
     }
 
