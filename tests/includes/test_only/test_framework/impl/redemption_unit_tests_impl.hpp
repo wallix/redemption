@@ -389,7 +389,7 @@ namespace redemption_unit_test__
         else
         {
             U v{y};
-            return !std::equal(begin(x), end(x), begin(v), end(v), op);
+            return std::equal(begin(x), end(x), begin(v), end(v), op);
         }
     }
 
