@@ -1134,6 +1134,30 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Disables supported drawing orders: <br/>
+    ///    0: DstBlt <br/>
+    ///    1: PatBlt <br/>
+    ///    2: ScrBlt <br/>
+    ///    3: MemBlt <br/>
+    ///    4: Mem3Blt <br/>
+    ///    8: LineTo <br/>
+    ///   15: MultiDstBlt <br/>
+    ///   16: MultiPatBlt <br/>
+    ///   17: MultiScrBlt <br/>
+    ///   18: MultiOpaqueRect <br/>
+    ///   22: Polyline <br/>
+    /// type: std::string <br/>
+    /// value = "" <br/>
+    struct client::disabled_orders {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "disabled_orders";
+        using type = std::string;
+        using sesman_and_spec_type = ::configs::spec_types::list<unsigned int>;
+        using mapped_type = sesman_and_spec_type;
+        type value = "";
+    };
 
     /// type: RdpCompression <br/>
     /// value = static_cast<type>(4) <br/>
@@ -5170,6 +5194,7 @@ struct client
 , cfg::client::enable_osd_4_eyes
 , cfg::client::enable_remotefx
 , cfg::client::bogus_pointer_xormask_padding
+, cfg::client::disabled_orders
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

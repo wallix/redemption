@@ -97,6 +97,7 @@ namespace cfg {
         struct enable_osd_4_eyes;
         struct enable_remotefx;
         struct bogus_pointer_xormask_padding;
+        struct disabled_orders;
     };
 
     struct mod_rdp {

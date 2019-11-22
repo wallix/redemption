@@ -30,13 +30,14 @@
 #include "acl/dispatch_report_message.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/metrics_hmac.hpp"
-#include "mod/rdp/parse_extra_orders.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
+#include "utils/parse_primary_drawing_orders.hpp"
 
 namespace
 {
@@ -258,9 +259,10 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
     mod_rdp_params.cache_verbose                       = to_verbose_flags(ini.get<cfg::debug::cache>());
 
-    mod_rdp_params.primary_drawing_orders_support      += parse_extra_orders(
+    mod_rdp_params.primary_drawing_orders_support      += parse_primary_drawing_orders(
         ini.get<cfg::mod_rdp::extra_orders>().c_str(),
-        to_verbose_flags(ini.get<cfg::debug::mod_rdp>()));
+        bool(to_verbose_flags(ini.get<cfg::debug::mod_rdp>()) & (RDPVerbose::basic_trace | RDPVerbose::capabilities)),
+        OnlyThoseSupportedByModRdp::Yes);
 
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();

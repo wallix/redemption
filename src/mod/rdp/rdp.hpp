@@ -122,6 +122,7 @@ struct FileValidatorService;
 
 #include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/parse_primary_drawing_orders.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
@@ -1915,44 +1916,6 @@ class mod_rdp : public mod_api, public rdp_api
     FileValidatorService * file_validator_service;
 #endif
 
-    static constexpr auto order_indexes_supported() noexcept
-    {
-        // Apparently, these primary drawing orders are supported
-        // by both rdesktop and xfreerdp :
-        // TS_NEG_DSTBLT_INDEX
-        // TS_NEG_PATBLT_INDEX
-        // TS_NEG_SCRBLT_INDEX
-        // TS_NEG_MEMBLT_INDEX
-        // TS_NEG_LINETO_INDEX
-        // others orders may not be supported.
-
-        return [](auto... xs) noexcept {
-            return std::array<OrdersIndexes, sizeof...(xs)>{xs...};
-        }(
-            TS_NEG_DSTBLT_INDEX,
-            TS_NEG_PATBLT_INDEX,
-            TS_NEG_SCRBLT_INDEX,
-            TS_NEG_MEMBLT_INDEX,
-            TS_NEG_MEM3BLT_INDEX,
-            // TS_NEG_DRAWNINEGRID_INDEX,
-            TS_NEG_LINETO_INDEX,
-            // TS_NEG_MULTI_DRAWNINEGRID_INDEX,
-            // TS_NEG_SAVEBITMAP_INDEX,
-            TS_NEG_MULTIDSTBLT_INDEX,
-            TS_NEG_MULTIPATBLT_INDEX,
-            TS_NEG_MULTISCRBLT_INDEX,
-            TS_NEG_MULTIOPAQUERECT_INDEX,
-            // TS_NEG_FAST_GLYPH_INDEX,
-            TS_NEG_POLYGON_SC_INDEX,
-            TS_NEG_POLYGON_CB_INDEX,
-            TS_NEG_POLYLINE_INDEX,
-            // TS_NEG_FAST_GLYPH_INDEX,
-            TS_NEG_ELLIPSE_SC_INDEX,
-            TS_NEG_ELLIPSE_CB_INDEX,
-            TS_NEG_GLYPH_INDEX
-        );
-    }
-
 public:
     using Verbose = RDPVerbose;
 
@@ -3397,18 +3360,13 @@ public:
                     order_caps.orderSupport[idx] = this->primary_drawing_orders_support.test(idx);
                 }
 
-                order_caps.orderSupport[TS_NEG_OPAQUERECT_INDEX] = 1;
-                order_caps.orderSupport[TS_NEG_MEMBLT_V2_INDEX] = 1;
                 order_caps.textFlags                  = 0x06a1;
                 order_caps.orderSupportExFlags        = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
                 order_caps.textANSICodePage           = 0x4e4; // Windows-1252 codepage is passed (latin-1)
 
-
                 LOG_IF(bool(this->verbose & RDPVerbose::capabilities) && !order_caps.orderSupport[TS_NEG_MEMBLT_INDEX],
                     LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
 
-                // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
-                //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     order_caps.log("Sending to server");
                 }

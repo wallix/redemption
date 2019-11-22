@@ -262,6 +262,21 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "enable_remotefx", desc{"Enable front remoteFx"}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_pointer_xormask_padding", set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "disabled_orders", desc{
+            "Disables supported drawing orders:\n"
+            "   0: DstBlt\n"
+            "   1: PatBlt\n"
+            "   2: ScrBlt\n"
+            "   3: MemBlt\n"
+            "   4: Mem3Blt\n"
+            "   8: LineTo\n"
+            "  15: MultiDstBlt\n"
+            "  16: MultiPatBlt\n"
+            "  17: MultiScrBlt\n"
+            "  18: MultiOpaqueRect\n"
+            "  22: Polyline"
+        }, set(""));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]

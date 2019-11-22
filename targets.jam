@@ -74,6 +74,7 @@ exe headlessclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -178,7 +179,6 @@ exe rdpproxy :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -212,6 +212,7 @@ exe rdpproxy :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -314,6 +315,7 @@ exe rdpclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -349,6 +351,7 @@ exe ppocr_extract_text :
   <library>src/core/error.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -640,7 +643,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -672,6 +674,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -766,6 +769,7 @@ test-run tests/capture/test_ocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -784,6 +788,7 @@ test-run tests/capture/test_ppocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -806,6 +811,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -902,6 +908,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -931,6 +938,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -981,6 +989,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -1037,6 +1046,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -1317,6 +1327,7 @@ test-run tests/core/RDP/caches/test_pointercache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
 :
   <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/caches/pointercache.hpp
@@ -1857,6 +1868,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1931,6 +1943,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -2065,6 +2078,7 @@ test-run tests/core/RDP/test_rdp_pointer :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -2370,7 +2384,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -2404,6 +2417,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -2511,7 +2525,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -2545,6 +2558,7 @@ test-run tests/core/test_session :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -2633,6 +2647,7 @@ test-run tests/front/test_front :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -2679,6 +2694,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -3152,6 +3168,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/mod/internal/test_card_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3197,6 +3214,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3222,6 +3240,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3251,6 +3270,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3277,6 +3297,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3311,6 +3332,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3339,6 +3361,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3370,6 +3393,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3405,6 +3429,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3437,6 +3462,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3468,6 +3494,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3494,6 +3521,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3521,6 +3549,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3548,6 +3577,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3573,6 +3603,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3600,6 +3631,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -3621,6 +3653,7 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -3642,6 +3675,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3674,6 +3708,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3701,6 +3736,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3727,6 +3763,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3754,6 +3791,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3784,6 +3822,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3809,6 +3848,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3822,6 +3862,7 @@ test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
 :
   <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget.hpp
@@ -3842,6 +3883,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -4087,6 +4129,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -4312,6 +4355,7 @@ test-run tests/mod/xup/test_xup :
   <library>src/gdi/screen_functions.o
   <library>src/mod/xup/xup.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -4434,6 +4478,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4494,6 +4539,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4554,6 +4600,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -5016,6 +5063,7 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -5131,6 +5179,7 @@ test-run tests/utils/test_drawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -5333,6 +5382,7 @@ test-run tests/utils/test_video_cropper :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -5448,7 +5498,6 @@ obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
-obj src/mod/rdp/parse_extra_orders.o : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
@@ -5487,6 +5536,7 @@ obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
+obj src/utils/parse_primary_drawing_orders.o : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj src/utils/primitives/primitives.o : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
