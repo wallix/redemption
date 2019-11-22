@@ -386,6 +386,10 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
 
 RED_AUTO_TEST_CASE(ScytaleTfl)
 {
+    char const* master_derivator = "abc";
+
+    auto tfl2_hash_content_prefix = "v2\n\n\n0123456789abcdef,000002.tfl "_av;
+
     struct Data
     {
         std::string_view name;
@@ -394,6 +398,8 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         array_view_const_char tfl2_content;
         array_view_const_char tfl2_hash_content_prefix;
         array_view_const_char fdx_content;
+
+        array_view_const_char decrypted_fdx_content = {};
     };
 
     RED_TEST_CONTEXT_DATA(Data const& data, "encryption: " << data.has_encryption << " checksum: " << data.has_checksum, {
@@ -401,18 +407,19 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
             "abcdefg"_av,
 
-            "v2\n\n\n0123456789abcdef,000002.tfl "_av,
+            tfl2_hash_content_prefix,
 
             "v3\n"
             "\x04\x00.\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
             "file2.txt0123456789abcdef,000002.tfl"
-            "\x05\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"_av},
+            "\x05\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"_av
+        },
 
         Data{"checksum", false, true,
 
             "abcdefg"_av,
 
-            "v2\n\n\n0123456789abcdef,000002.tfl "_av,
+            tfl2_hash_content_prefix,
 
             "v3\n"
             "\x04\x00.\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00"
@@ -420,7 +427,8 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             "\x05\x00P\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00"
             "\x00\x00\x00\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
             "\xed\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xffɭD\xf9RG\xdc\x7f\xf9\x02"
-            "Jyh\xed\xf3\x90\x0c"_av},
+            "Jyh\xed\xf3\x90\x0c"_av
+        },
 
         Data{"encryption", true, true,
 
@@ -436,7 +444,16 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             "l\xfe\xe0\xa7\x89&d\xb5\xc2\x0e=\xba\xb2\xec\x1ek[\xa8P\x9c(\xb0\x0bTc\x86\xf5"
             "s\xc1\xc4Wb\x0f\x19\xe4\xa5\xfb\xf7y\xffp\xaav\xdb\xd9\x99I^Vp\x80\x06""aE\xd4"
             "\xd5k\xaf\xd2\xbb\xdf.W\xa7""D7L_\x0c\x16\x02\xf7\x87\xc3\x85\x00\x00MFCW\x89"
-            "\x00\x00\x00"_av},
+            "\x00\x00\x00"_av,
+
+            "v3\n"
+            "\x04\x00.\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00"
+            "file2.txt0123456789abcdef,000002.tfl"
+            "\x05\x00P\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00\x00"
+            "0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{"
+            "\x16\n\xfeP\xe3\x13\x88\xd4\xf7""0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2"
+            "\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16\n\xfeP\xe3\x13\x88\xd4\xf7"_av
+        },
     })
     {
         auto count_error = RED_ERROR_COUNT;
@@ -453,7 +470,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         (void)wdhash.add_file(fdx_filename);
 
         auto* fdx = scytale_fdx_writer_new_with_test_random(
-            data.has_encryption, data.has_checksum, "abc", hmac_fn, trace_fn);
+            data.has_encryption, data.has_checksum, master_derivator, hmac_fn, trace_fn);
         RED_REQUIRE(fdx);
 
         RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
@@ -478,11 +495,12 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_tfl_writer_close(tfl));
 
-        RED_CHECK_MEM_FILE_CONTENTS(file2path, data.tfl2_content);
         auto hres = data.tfl2_hash_content_prefix;
         std::string content;
         (void)tu::append_file_contents(file2hash, content);
         RED_TEST(content.substr(0, hres.size()) == hres);
+
+        RED_CHECK_MEM_FILE_CONTENTS(file2path, data.tfl2_content);
 
         RED_TEST(0 == scytale_fdx_writer_close(fdx));
 
@@ -491,6 +509,36 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         RED_TEST(0 == scytale_fdx_writer_delete(fdx));
 
         RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
+
+        if (data.has_encryption)
+        {
+            std::array<uint8_t, 1024> buffer;
+
+            auto readall = [&](char const* filename, char const* derivator){
+                RED_TEST_CONTEXT("filename: " << filename << "\n    derivator: " << derivator)
+                {
+                    auto* reader = scytale_reader_new(master_derivator, hmac_fn, trace_fn, 0, 0);
+                    RED_REQUIRE(reader);
+
+                    RED_TEST(0 == scytale_reader_open(reader, filename, derivator));
+
+                    auto len = scytale_reader_read(reader, buffer.data(), buffer.size());
+
+                    RED_TEST(0 == scytale_reader_close(reader));
+                    scytale_reader_delete(reader);
+
+                    return len > 0 ? bytes_view(buffer.data(), std::size_t(len)) : bytes_view{};
+                }
+                return bytes_view{};
+            };
+
+            auto content = readall(file2hash.c_str(), fname.c_str());
+            RED_TEST(content.first(std::min(content.size(), tfl2_hash_content_prefix.size())) == tfl2_hash_content_prefix);
+
+            RED_TEST(readall(file2path.c_str(), fname.c_str()) == "abcdefg"_av);
+
+            RED_TEST(readall(fdxpath.c_str(), fdx_filename.c_str()) == data.decrypted_fdx_content);
+        }
 
         RED_CHECK_WORKSPACE(wd);
 

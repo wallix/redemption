@@ -800,12 +800,14 @@ struct ScytaleFdxWriterHandle
             remaining_buf = out_stream.get_tail();
         };
 
-        auto const signed_fsize = filesize(tfl.finalname.c_str());
-        if (REDEMPTION_UNLIKELY(signed_fsize < 0)) {
-            this->error_ctx.set_error(Error(ERR_TRANSPORT, errno));
-        }
-        auto const fsize = std::make_unsigned_t<decltype(signed_fsize)>(signed_fsize);
-
+        auto const fsize = [&]{
+            int64_t signed_fsize { filesize(tfl.finalname.c_str()) };
+            if (REDEMPTION_UNLIKELY(signed_fsize < 0)) {
+                this->error_ctx.set_error(Error(ERR_TRANSPORT, errno));
+                return ~uint64_t{};
+            }
+            return uint64_t(signed_fsize);
+        }();
 
         Mwrm3::serialize_tfl_new(
             tfl.idx, tfl.original_filename,
@@ -818,7 +820,7 @@ struct ScytaleFdxWriterHandle
 
         this->out_crypto_transport.send(cbuf, std::distance(cbuf, remaining_buf.begin()));
 
-        return signed_fsize >= 0 ? 0 : -1;
+        return fsize != ~uint64_t{} ? 0 : -1;
     }
 
     int cancel_tfl(ScytaleTflWriterHandler& tfl)
