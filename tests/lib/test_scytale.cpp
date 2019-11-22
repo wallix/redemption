@@ -21,6 +21,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/data_test_case.hpp"
 #include "test_only/test_framework/file.hpp"
 
 #include "utils/sugar/algostring.hpp"
@@ -344,50 +345,34 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(header->version, 1);
         RED_CHECK_EQ(header->has_checksum, 0);
 
-        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
-        auto line = scytale_meta_reader_get_line(meta_handle);
-        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample0.wrm"sv);
-        RED_CHECK_EQ(line->size, 0);
-        RED_CHECK_EQ(line->mode, 0);
-        RED_CHECK_EQ(line->uid, 0);
-        RED_CHECK_EQ(line->gid, 0);
-        RED_CHECK_EQ(line->dev, 0);
-        RED_CHECK_EQ(line->ino, 0);
-        RED_CHECK_EQ(line->mtime, 0);
-        RED_CHECK_EQ(line->ctime, 0);
-        RED_CHECK_EQ(line->start_time, 1352304810);
-        RED_CHECK_EQ(line->stop_time, 1352304870);
-        RED_CHECK(not line->with_hash);
+        struct Data
+        {
+            std::string_view filename;
+            uint64_t start_time;
+            uint64_t stop_time;
+        };
 
-        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
-        line = scytale_meta_reader_get_line(meta_handle);
-        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample1.wrm"sv);
-        RED_CHECK_EQ(line->size, 0);
-        RED_CHECK_EQ(line->mode, 0);
-        RED_CHECK_EQ(line->uid, 0);
-        RED_CHECK_EQ(line->gid, 0);
-        RED_CHECK_EQ(line->dev, 0);
-        RED_CHECK_EQ(line->ino, 0);
-        RED_CHECK_EQ(line->mtime, 0);
-        RED_CHECK_EQ(line->ctime, 0);
-        RED_CHECK_EQ(line->start_time, 1352304870);
-        RED_CHECK_EQ(line->stop_time, 1352304930);
-        RED_CHECK(not line->with_hash);
-
-        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
-        line = scytale_meta_reader_get_line(meta_handle);
-        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample2.wrm"sv);
-        RED_CHECK_EQ(line->size, 0);
-        RED_CHECK_EQ(line->mode, 0);
-        RED_CHECK_EQ(line->uid, 0);
-        RED_CHECK_EQ(line->gid, 0);
-        RED_CHECK_EQ(line->dev, 0);
-        RED_CHECK_EQ(line->ino, 0);
-        RED_CHECK_EQ(line->mtime, 0);
-        RED_CHECK_EQ(line->ctime, 0);
-        RED_CHECK_EQ(line->start_time, 1352304930);
-        RED_CHECK_EQ(line->stop_time, 1352304990);
-        RED_CHECK(not line->with_hash);
+        RED_TEST_CONTEXT_DATA(Data const& data, "filename: " << data.filename, {
+            Data{"./tests/fixtures/sample0.wrm"sv, 1352304810, 1352304870},
+            Data{"./tests/fixtures/sample1.wrm"sv, 1352304870, 1352304930},
+            Data{"./tests/fixtures/sample2.wrm"sv, 1352304930, 1352304990},
+        })
+        {
+            RED_TEST(scytale_meta_reader_read_line(meta_handle) == 0);
+            auto line = scytale_meta_reader_get_line(meta_handle);
+            RED_TEST(line->filename == data.filename);
+            RED_TEST(line->size == 0);
+            RED_TEST(line->mode == 0);
+            RED_TEST(line->uid == 0);
+            RED_TEST(line->gid == 0);
+            RED_TEST(line->dev == 0);
+            RED_TEST(line->ino == 0);
+            RED_TEST(line->mtime == 0);
+            RED_TEST(line->ctime == 0);
+            RED_TEST(line->start_time == data.start_time);
+            RED_TEST(line->stop_time == data.stop_time);
+            RED_TEST(not line->with_hash);
+        }
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), ERR_TRANSPORT_NO_MORE_DATA);
         RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 1);
@@ -399,157 +384,118 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
 }
 
 
-RED_AUTO_TEST_CASE_WD(ScytaleTfl, wd)
+RED_AUTO_TEST_CASE(ScytaleTfl)
 {
-    auto wdhash = wd.create_subdirectory("hash");
+    struct Data
+    {
+        std::string_view name;
+        bool has_encryption;
+        bool has_checksum;
+        array_view_const_char tfl2_content;
+        array_view_const_char tfl2_hash_content_prefix;
+        array_view_const_char fdx_content;
+    };
 
-    auto sid = "0123456789abcdef"_av;
+    RED_TEST_CONTEXT_DATA(Data const& data, "encryption: " << data.has_encryption << " checksum: " << data.has_checksum, {
+        Data{"nochecksum noencryption", false, false,
 
-    auto fdx_filename = str_concat(sid, ".fdx");
+            "abcdefg"_av,
 
-    auto fdxpath = wd.add_file(fdx_filename);
-    (void)wdhash.add_file(fdx_filename);
+            "v2\n\n\n0123456789abcdef,000002.tfl "_av,
 
-    auto* fdx = scytale_fdx_writer_new_with_test_random(0, 0, "", hmac_fn, trace_fn);
-    RED_TEST(fdx);
+            "v3\n"
+            "\x04\x00.\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
+            "file2.txt0123456789abcdef,000002.tfl"
+            "\x05\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"_av},
 
-    RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
+        Data{"checksum", false, true,
 
-    auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
-    RED_TEST(tfl);
+            "abcdefg"_av,
 
-    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
-    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
+            "v2\n\n\n0123456789abcdef,000002.tfl "_av,
 
-    RED_TEST(0 == scytale_tfl_writer_cancel(tfl));
+            "v3\n"
+            "\x04\x00.\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00"
+            "file2.txt0123456789abcdef,000002.tfl"
+            "\x05\x00P\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00"
+            "\x00\x00\x00\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
+            "\xed\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xffɭD\xf9RG\xdc\x7f\xf9\x02"
+            "Jyh\xed\xf3\x90\x0c"_av},
 
-    auto fname = str_concat(sid, ",000002.tfl"_av);
-    auto file2path = wd.add_file(fname);
-    auto file2hash = wdhash.add_file(fname);
+        Data{"encryption", true, true,
 
-    tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt");
-    RED_TEST(tfl);
+            "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6""5\xa4(\xfe\x8b\xed`C\xf8\x13\x18\x0e@_"
+            "PV\xa2\xe6\b\x94\x0f\xd2@\xbf\xe1\xe0\x10\x00\x00\x00\xb0""CA|H\xbb\xb3r\xbeZ"
+            "\xbf\x1e\xfas\x0e\x91MFCW\x07\x00\x00\x00"_av,
 
-    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
-    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
+            "WCFM\x01\x00\x00\x00\xf8O\x14.0>"_av,
 
-    RED_TEST(0 == scytale_tfl_writer_close(tfl));
+            "WCFM\x01\x00\x00\x00\xb8l\xda\xa6\xf0\xf6""0\x8d\xa8\x16\xa6n\xe0\xc3\xe5\xcc"
+            "\x98v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00""C\x1a\xacN\xa7""C\xc8"
+            "d\"!\x8b\x8e\x07\xcc\xeb\xf3#6\x00\x95l$R\x1a\xfdRh\xa9M\xf8\t\xdb\xa5\x1f\xb4"
+            "l\xfe\xe0\xa7\x89&d\xb5\xc2\x0e=\xba\xb2\xec\x1ek[\xa8P\x9c(\xb0\x0bTc\x86\xf5"
+            "s\xc1\xc4Wb\x0f\x19\xe4\xa5\xfb\xf7y\xffp\xaav\xdb\xd9\x99I^Vp\x80\x06""aE\xd4"
+            "\xd5k\xaf\xd2\xbb\xdf.W\xa7""D7L_\x0c\x16\x02\xf7\x87\xc3\x85\x00\x00MFCW\x89"
+            "\x00\x00\x00"_av},
+    })
+    {
+        auto count_error = RED_ERROR_COUNT;
 
-    RED_CHECK_FILE_CONTENTS(file2path, "abcdefg"_av);
-    auto hres = "v2\n\n\n0123456789abcdef,000002.tfl "sv;
-    std::string content;
-    (void)tu::append_file_contents(file2hash, content);
-    RED_TEST(content.substr(0, hres.size()) == hres);
+        WorkingDirectory wd(data.name);
 
-    RED_TEST(0 == scytale_fdx_writer_close(fdx));
+        auto wdhash = wd.create_subdirectory("hash");
 
-    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
+        auto sid = "0123456789abcdef"_av;
 
-    RED_TEST(0 == scytale_fdx_writer_delete(fdx));
+        auto fdx_filename = str_concat(sid, ".fdx");
 
-    RED_CHECK_FILE_CONTENTS(fdxpath,
-        "v3\n"
-        "\x04\x00.\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
-        "file2.txt0123456789abcdef,000002.tfl"
-        "\x05\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"_av);
-}
+        auto fdxpath = wd.add_file(fdx_filename);
+        (void)wdhash.add_file(fdx_filename);
 
-RED_AUTO_TEST_CASE_WD(ScytaleTflChecksum, wd)
-{
-    auto wdhash = wd.create_subdirectory("hash");
+        auto* fdx = scytale_fdx_writer_new_with_test_random(
+            data.has_encryption, data.has_checksum, "abc", hmac_fn, trace_fn);
+        RED_REQUIRE(fdx);
 
-    auto sid = "0123456789abcdef"_av;
+        RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
 
-    auto fdx_filename = str_concat(sid, ".fdx");
+        auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
+        RED_REQUIRE(tfl);
 
-    auto fdxpath = wd.add_file(fdx_filename);
-    (void)wdhash.add_file(fdx_filename);
+        RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
+        RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
 
-    auto* fdx = scytale_fdx_writer_new_with_test_random(0, 1, "", hmac_fn, trace_fn);
-    RED_TEST(fdx);
+        RED_TEST(0 == scytale_tfl_writer_cancel(tfl));
 
-    RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
+        auto fname = str_concat(sid, ",000002.tfl"_av);
+        auto file2path = wd.add_file(fname);
+        auto file2hash = wdhash.add_file(fname);
 
-    auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
-    RED_TEST(tfl);
+        tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt");
+        RED_REQUIRE(tfl);
 
-    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
-    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
-    RED_TEST(0 == scytale_tfl_writer_close(tfl));
+        RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
+        RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
 
-    auto fname = str_concat(sid, ",000001.tfl"_av);
-    auto file2path = wd.add_file(fname);
-    auto file2hash = wdhash.add_file(fname);
+        RED_TEST(0 == scytale_tfl_writer_close(tfl));
 
-    RED_CHECK_FILE_CONTENTS(file2path, "abcdefg"_av);
-    auto hres = "v2\n\n\n0123456789abcdef,000001.tfl "sv;
-    std::string content;
-    (void)tu::append_file_contents(file2hash, content);
-    RED_TEST(content.substr(0, hres.size()) == hres);
+        RED_CHECK_MEM_FILE_CONTENTS(file2path, data.tfl2_content);
+        auto hres = data.tfl2_hash_content_prefix;
+        std::string content;
+        (void)tu::append_file_contents(file2hash, content);
+        RED_TEST(content.substr(0, hres.size()) == hres);
 
-    RED_TEST(0 == scytale_fdx_writer_close(fdx));
+        RED_TEST(0 == scytale_fdx_writer_close(fdx));
 
-    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
+        RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
 
-    RED_TEST(0 == scytale_fdx_writer_delete(fdx));
+        RED_TEST(0 == scytale_fdx_writer_delete(fdx));
 
-    RED_CHECK_FILE_CONTENTS(fdxpath,
-        "v3\n"
-        "\x04\x00.\x00\x01\x00\x00\x00\x00\x00\x00\x00\t\x00"
-        "file1.txt0123456789abcdef,000001.tfl"
-        "\x05\x00P\x00\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00"
-        "\x00\x00\x00\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
-        "\xed\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xffɭD\xf9RG\xdc\x7f\xf9\x02"
-        "Jyh\xed\xf3\x90\x0c"_av);
-}
+        RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
 
-RED_AUTO_TEST_CASE_WD(ScytaleTflEncrypted, wd)
-{
-    auto wdhash = wd.create_subdirectory("hash");
+        RED_CHECK_WORKSPACE(wd);
 
-    auto sid = "0123456789abcdef"_av;
-
-    auto fdx_filename = str_concat(sid, ".fdx");
-
-    auto fdxpath = wd.add_file(fdx_filename);
-    (void)wdhash.add_file(fdx_filename);
-
-    auto* fdx = scytale_fdx_writer_new_with_test_random(1, 1, "abc", hmac_fn, trace_fn);
-    RED_TEST(fdx);
-
-    RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
-    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
-
-    auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
-    RED_TEST(tfl);
-
-    RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
-    RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
-    RED_TEST(0 == scytale_tfl_writer_close(tfl));
-
-    auto fname = str_concat(sid, ",000001.tfl"_av);
-    auto file2path = wd.add_file(fname);
-    auto file2hash = wdhash.add_file(fname);
-
-    RED_CHECK_MEM_FILE_CONTENTS(file2path, "WCFM\x01\x00\x00\x00xX\xaeR\xb0\xael\x17hZ\x13\xbd\xa0Sz\xf3X\x12{\xce\x90\x8e\xa8\xadH@\x87""1\x80\x1f""E\xb6\x10\x00\x00\x00\xbd\xf0\xeb""eM\x8cs\xbf\x0b\xd1^\x15\x18""B\xadlMFCW\x07\x00\x00\x00"_av);
-    auto hres = "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6"_av;
-    std::string content;
-    (void)tu::append_file_contents(file2hash, content);
-    content.erase(std::min(content.size(), hres.size()));
-    RED_TEST(content == hres);
-
-    RED_TEST(0 == scytale_fdx_writer_close(fdx));
-
-    RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
-
-    RED_TEST(0 == scytale_fdx_writer_delete(fdx));
-
-    RED_CHECK_MEM_FILE_CONTENTS(fdxpath,
-        "WCFM\x01\x00\x00\x00\xb8l\xda\xa6\xf0\xf6""0\x8d\xa8\x16\xa6n\xe0\xc3\xe5\xcc\x98"
-        "v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00\xb6\xdb\xa7\xdf\xa3\x06\x84"
-        "\xe7\x05\xfd/\xdeP\x04=X\xa5\xbe\xbd\x1d\xf5\xb6\x95\xca\x95\xb1\xf2\xb2\x10\xee"
-        "\x96*q\xf0I\xe4""d\x85o\b5\xbe""6\xde\xd9\x02\x85\xec\x82""cq\x97X#\xc5r\xdcn*\\"
-        "\x9a\xb6qq\x95\xa0.0!\x8f\xaa\xd7\xb8\xf8\xce\xbb\n\xbd^\xc2\x80\xb3\x02\x0e\x0cH"
-        "%\xb0\xe9\\\x99(o\xf4\xcb\xe4""4o\x8b|5\bh\xa4\x95\xba\xab\b\xd2\"c\x0bMFCW\x89"
-        "\x00\x00\x00"_av);
+        if (count_error != RED_ERROR_COUNT) {
+            break;
+        }
+    }
 }
