@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "utils/fileutils.hpp"
+#include <string_view>
 #include <cstring>
 
 
@@ -74,7 +75,10 @@ namespace tu
 [&](auto&& filename__, auto&& content__){                                             \
     std::string file_contents_;                                                       \
     auto current_count_error = ::redemption_unit_test__::current_count_error();       \
-    RED_TEST_CONTEXT("filename: " << filename__) {                                    \
+    std::string_view strctx = #content;                                               \
+    RED_TEST_CONTEXT("filename: " << filename__ << "\n    content: "                  \
+    << std::string_view(strctx.data(), strctx.size() > 40 ? 40 : strctx.size())       \
+    << (strctx.size() > 40 ? "[...]" : "")) {                                         \
         RED_##lvl1(::tu::append_file_contents(filename__,                             \
             file_contents_) == FileContentsError::None);                              \
         if (current_count_error == ::redemption_unit_test__::current_count_error()) { \
