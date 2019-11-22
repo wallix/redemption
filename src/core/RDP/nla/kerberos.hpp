@@ -75,6 +75,41 @@ public:
             }
         }
         memset(&creds, 0, sizeof(creds));
+        
+        
+        /** krb5_parse_name (from krb5.h)
+         * Convert a string principal name to a krb5_principal structure.
+         *
+         * @param [in]  context         Library context
+         * @param [in]  name            String representation of a principal name
+         * @param [out] principal_out   New principal
+         *
+         * Convert a string representation of a principal name to a krb5_principal
+         * structure.
+         *
+         * A string representation of a Kerberos name consists of one or more principal
+         * name components, separated by slashes, optionally followed by the \@
+         * character and a realm name.  If the realm name is not specified, the local
+         * realm is used.
+         *
+         * To use the slash and \@ symbols as part of a component (quoted) instead of
+         * using them as a component separator or as a realm prefix), put a backslash
+         * (\) character in front of the symbol.  Similarly, newline, tab, backspace,
+         * and NULL characters can be included in a component by using @c n, @c t, @c b
+         * or @c 0, respectively.
+         *
+         * @note The realm in a Kerberos @a name cannot contain slash, colon,
+         * or NULL characters.
+         *
+         * Use krb5_free_principal() to free @a principal_out when it is no longer
+         * needed.
+         *
+         * @retval
+         * 0 Success
+         * @return
+         * Kerberos error codes
+         */
+        
         ret = krb5_parse_name(this->ctx, princname, &client_princ);
         LOG(LOG_INFO, "Parse name %s", princname);
         if (ret) {
@@ -82,6 +117,23 @@ public:
             goto cleanup;
         }
 
+        /** krb5_unparse_name (from krb5.h)
+         * Convert a krb5_principal structure to a string representation.
+         *
+         * @param [in]  context         Library context
+         * @param [in]  principal       Principal
+         * @param [out] name            String representation of principal name
+         *
+         * The resulting string representation uses the format and quoting conventions
+         * described for krb5_parse_name().
+         *
+         * Use krb5_free_unparsed_name() to free @a name when it is no longer needed.
+         *
+         * @retval
+         * 0 Success
+         * @return
+         * Kerberos error codes
+         */
         ret = krb5_unparse_name(this->ctx, client_princ, &name);
         if (ret) {
             LOG(LOG_ERR, "Unparse name");

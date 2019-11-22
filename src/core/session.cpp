@@ -181,6 +181,30 @@ public:
                     this->write_performance_log(now);
                 }
 
+                if (!acl) {
+                    if (!mm.last_module) {
+                        // authentifier never opened or closed by me (close box)
+                        try {
+                            // now is authentifier start time
+                            acl = std::make_unique<Acl>(
+                                ini, Session::acl_connect(ini.get<cfg::globals::authfile>()), now, cctx, rnd, fstat
+                            );
+                            const auto sck = acl->auth_trans.sck;
+                            fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+                            authentifier.set_acl_serial(&acl->acl_serial);
+                            session_reactor.set_next_event(BACK_EVENT_NEXT);
+                        }
+                        catch (...) {
+                            signal = BackEvent_t(session_reactor.signal);
+                            session_reactor.signal = 0;
+                            mm.invoke_close_box("No authentifier available", signal, authentifier, authentifier);
+                            if (!session_reactor.signal || signal) {
+                                session_reactor.signal = signal;
+                            }
+                        }
+                    }
+                }
+
                 auto check_exception = [&](Error const& e) {
                     auto invoke_close_box = [&]{
                         signal = BackEvent_t(session_reactor.signal);
@@ -345,31 +369,8 @@ public:
                             check_exception(e);
                         }
 
-                        // Incoming data from ACL, or opening authentifier
-                        if (!acl) {
-                            if (!mm.last_module) {
-                                // authentifier never opened or closed by me (close box)
-                                try {
-                                    // now is authentifier start time
-                                    acl = std::make_unique<Acl>(
-                                        ini, Session::acl_connect(ini.get<cfg::globals::authfile>()), now, cctx, rnd, fstat
-                                    );
-                                    const auto sck = acl->auth_trans.sck;
-                                    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
-                                    authentifier.set_acl_serial(&acl->acl_serial);
-                                    session_reactor.set_next_event(BACK_EVENT_NEXT);
-                                }
-                                catch (...) {
-                                    signal = BackEvent_t(session_reactor.signal);
-                                    session_reactor.signal = 0;
-                                    mm.invoke_close_box("No authentifier available", signal, authentifier, authentifier);
-                                    if (!session_reactor.signal || signal) {
-                                        session_reactor.signal = signal;
-                                    }
-                                }
-                            }
-                        }
-                        else if (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds)) {
+                        // Incoming data from ACL
+                        if (acl && acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds)) {
                             // authentifier received updated values
                             acl->acl_serial.receive();
                             if (!ini.changed_field_size()) {
