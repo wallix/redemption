@@ -573,6 +573,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "disabled_orders")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::disabled_orders&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::list<unsigned int>>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

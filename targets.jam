@@ -74,6 +74,7 @@ exe headlessclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -178,7 +179,6 @@ exe rdpproxy :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -212,6 +212,7 @@ exe rdpproxy :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -337,6 +338,7 @@ exe rdpclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -620,6 +622,7 @@ test-run tests/acl/test_license_api :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -723,7 +726,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -755,6 +757,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -993,6 +996,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -1073,6 +1077,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -1129,6 +1134,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -2458,7 +2464,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -2492,6 +2497,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -2599,7 +2605,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -2633,6 +2638,7 @@ test-run tests/core/test_session :
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -2721,6 +2727,7 @@ test-run tests/front/test_front :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -4205,6 +4212,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
@@ -4558,6 +4566,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4618,6 +4627,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4678,6 +4688,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -5576,7 +5587,6 @@ obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
-obj src/mod/rdp/parse_extra_orders.o : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
@@ -5615,6 +5625,7 @@ obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
+obj src/utils/parse_primary_drawing_orders.o : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj src/utils/primitives/primitives.o : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;

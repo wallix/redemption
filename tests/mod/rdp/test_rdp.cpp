@@ -37,6 +37,16 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 
+// Uncomment the code block below to generate testing data.
+//#include "core/listen.hpp"
+//#include "utils/netutils.hpp"
+
+// Uncomment the code block below to generate testing data.
+//#include "transport/socket_transport.hpp"
+
+// Uncomment the code block below to generate testing data.
+//#include <openssl/ssl.h>
+
 /*
 RED_AUTO_TEST_CASE(TestModRDPXPServer)
 {
@@ -127,6 +137,9 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
 
 RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
+    // Uncomment the code block below to generate testing data.
+    //SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
+
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = false;
@@ -141,19 +154,26 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
+    // Uncomment the code block below to generate testing data.
+    //SSL_library_init();
+
     FakeFront front(info.screen_info);
 
-    // const char * name = "RDP W2008 Target";
-    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
-    // std::string error_message;
-    // SocketTransport t( name
-    //                  , client_sck
-    //                  , "10.10.47.36"
-    //                  , 3389
-    //                  , verbose
-    //                  , &error_message
-    //                  );
+    // Uncomment the code block below to generate testing data.
+    //const char * name = "RDP W2008 Target";
+    //auto client_sck = ip_connect("10.10.44.101", 3389);
 
+    // Uncomment the code block below to generate testing data.
+    //std::string error_message;
+    //SocketTransport t( name
+    //                 , std::move(client_sck)
+    //                 , "10.10.44.101"
+    //                 , 3389
+    //                 , std::chrono::seconds(1)
+    //                 , STVerbose
+    //                 , nullptr);
+
+    // Comment the code block below to generate testing data.
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
 
@@ -162,8 +182,8 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
-                               , "S3cur3!1nux"
-                               , "10.10.47.36"
+                               , "S3cur3!1nux$H2"
+                               , "10.10.44.101"
                                , "10.10.43.33"
                                , 2
                                , global_font()
@@ -173,7 +193,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , RDPVerbose{}
                                );
     mod_rdp_params.device_id                       = "device_id";
-    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_tls                      = true;
     mod_rdp_params.enable_nla                      = false;
     //mod_rdp_params.enable_krb                      = false;
     //mod_rdp_params.enable_clipboard                = true;
@@ -208,10 +228,21 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
+    // Comment the code block below to generate testing data.
     execute_negociate_mod(session_reactor, *mod, front.gd());
     for (int count = 0; count < 38; ++count) {
         execute_graphics_event(session_reactor, front.gd());
     }
+
+    //session_reactor.execute_timers(
+    //    SessionReactor::EnableGraphics{true},
+    //    [&]()->gdi::GraphicApi&{ return front.gd(); });
+    //unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
+    //    (void)sck;
+    //    execute_graphics_event(session_reactor, front.gd());
+    //    LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
+    //    return !mod->is_up_and_running();
+    //});
 
     //front.dump_png("trace_w2008_");
 }

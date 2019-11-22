@@ -109,6 +109,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/strutils.hpp"
+#include "utils/parse_primary_drawing_orders.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include "system/tls_context.hpp"
@@ -3150,6 +3151,17 @@ private:
 
                     if (bool(this->verbose)) {
                         this->client_info.order_caps.log("Front::process_confirm_active: Receiving from client");
+                    }
+
+                    PrimaryDrawingOrdersSupport const disabled_orders = parse_primary_drawing_orders(
+                            this->ini.get<cfg::client::disabled_orders>().c_str(),
+                            bool(this->verbose),
+                            OnlyThoseSupportedByModRdp::No
+                        );
+                    for (auto idx : order_indexes_supported()) {
+                        if (disabled_orders.test(idx)) {
+                            this->client_info.order_caps.orderSupport[idx] = 0;
+                        }
                     }
 
                     this->client_info.bitmap_cache_version =
