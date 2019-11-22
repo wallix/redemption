@@ -1,4 +1,5 @@
 template class Inifile::Field<cfg::globals::capture_chunk>;
+template class Inifile::Field<cfg::globals::nla_auth_user>;
 template class Inifile::Field<cfg::globals::auth_user>;
 template class Inifile::Field<cfg::globals::host>;
 template class Inifile::Field<cfg::globals::target>;

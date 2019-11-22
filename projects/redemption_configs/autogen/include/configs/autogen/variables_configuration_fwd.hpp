@@ -9,6 +9,7 @@ enum authid_t : unsigned;
 namespace cfg {
     struct globals {
         struct capture_chunk;
+        struct nla_auth_user;
         struct auth_user;
         struct host;
         struct target;

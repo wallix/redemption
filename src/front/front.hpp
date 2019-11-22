@@ -2537,10 +2537,10 @@ public:
 
         if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
             bytes_view buffer = this->nego_server->credssp.authenticate.UserName.buffer;
-            std::string username(buffer.data(), buffer.data()+buffer.size());
-            this->ini.set_acl<cfg::globals::auth_user>(username);
+            std::string username = UTF16toUTF8(buffer);
+            LOG(LOG_INFO, "NegoServer sending nla username");
+            this->ini.set_acl<cfg::globals::nla_auth_user>(username);
             this->ini.ask<cfg::context::nla_password_hash>();
-
         }
 
         st = this->nego_server->credssp.state;

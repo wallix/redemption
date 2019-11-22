@@ -114,6 +114,7 @@ void config_spec_definition(Writer && W)
     {
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "capture_chunk");
 
+        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "nla_auth_user", sesman::name{"nla_login"});
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "auth_user", sesman::name{"login"});
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "host", sesman::name{"ip_client"});
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "target", sesman::name{"ip_target"});

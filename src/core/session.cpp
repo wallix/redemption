@@ -124,11 +124,12 @@ public:
 
             using namespace std::chrono_literals;
 
-            session_reactor.set_current_time(tvtime());
+            timeval now = tvtime();
+            session_reactor.set_current_time(now);
 
             while (run_session) {
 
-                timeval default_timeout = session_reactor.get_current_time();
+                timeval default_timeout = now;
                 default_timeout.tv_sec += this->select_timeout_tv_sec;
 
                 Select ioswitch(default_timeout);
@@ -141,19 +142,19 @@ public:
                     front_trans, mm, acl);
 
                 // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
-                session_reactor.set_current_time(tvtime());
+                now = tvtime();
+                session_reactor.set_current_time(now);
                 ioswitch.set_timeout(
-                    session_reactor.get_next_timeout(
-                        enable_graphics, ioswitch.get_timeout(session_reactor.get_current_time())));
+                        session_reactor.get_next_timeout(enable_graphics, ioswitch.get_timeout(now)));
 
                 // 0 if tv < tv_now : returns immediately
 //                ioswitch.timeoutastv = to_timeval(
 //                                        session_reactor.get_next_timeout(enable_graphics, timeout)
-//                                      - session_reactor.get_current_time());
+//                                      - now);
                 // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
                 // session_reactor.timer_events_.info(tv_now);
 
-                int num = ioswitch.select(session_reactor.get_current_time());
+                int num = ioswitch.select(now);
 
                 // for (unsigned i = 0; i <= max; ++i) {
                 //     LOG(LOG_DEBUG, "fd %u is set %d", i, io_fd_isset(i, rfds));
@@ -175,10 +176,10 @@ public:
 
                 this->send_waiting_data(ioswitch, sck_no_read, front_trans, mm, acl);
 
-                session_reactor.set_current_time(tvtime());
-                const time_t now = session_reactor.get_current_time().tv_sec;
+                now = tvtime();
+                session_reactor.set_current_time(now);
                 if (ini.get<cfg::debug::performance>() & 0x8000) {
-                    this->write_performance_log(now);
+                    this->write_performance_log(now.tv_sec);
                 }
 
                 if (!acl) {
@@ -187,7 +188,7 @@ public:
                         try {
                             // now is authentifier start time
                             acl = std::make_unique<Acl>(
-                                ini, Session::acl_connect(ini.get<cfg::globals::authfile>()), now, cctx, rnd, fstat
+                                ini, Session::acl_connect(ini.get<cfg::globals::authfile>()), now.tv_sec, cctx, rnd, fstat
                             );
                             const auto sck = acl->auth_trans.sck;
                             fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
@@ -370,7 +371,7 @@ public:
                         }
 
                         // Incoming data from ACL
-                        if (acl && acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds)) {
+                        if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
                             // authentifier received updated values
                             acl->acl_serial.receive();
                             if (!ini.changed_field_size()) {
@@ -381,42 +382,47 @@ public:
                         if (enable_osd) {
                             const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {
-                                mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now);
+                                mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now.tv_sec);
                             }
                         }
 
-                        if (acl) {
-                            signal = BackEvent_t(session_reactor.signal);
-                            int i = 0;
-                            do {
-                                if (++i == 11) {
-                                    LOG(LOG_ERR, "loop event error");
-                                    break;
-                                }
-                                session_reactor.signal = 0;
-                                run_session = acl->acl_serial.check(
-                                    authentifier, authentifier, mm,
-                                    now, signal, front_signal, front.has_user_activity
-                                );
-                                if (!session_reactor.signal) {
-                                    session_reactor.signal = signal;
-                                    break;
-                                }
+                        if (acl){
+                            if (front.up_and_running) {
+                                signal = BackEvent_t(session_reactor.signal);
+                                int i = 0;
+                                do {
+                                    if (++i == 11) {
+                                        LOG(LOG_ERR, "loop event error");
+                                        break;
+                                    }
+                                    session_reactor.signal = 0;
+                                    run_session = acl->acl_serial.check(
+                                        authentifier, authentifier, mm,
+                                        now.tv_sec, signal, front_signal, front.has_user_activity
+                                    );
+                                    if (!session_reactor.signal) {
+                                        session_reactor.signal = signal;
+                                        break;
+                                    }
 
-                                if (signal) {
-                                    session_reactor.signal = signal;
-                                }
-                                else {
-                                    signal = BackEvent_t(session_reactor.signal);
-                                }
-                            } while (session_reactor.signal);
+                                    if (signal) {
+                                        session_reactor.signal = signal;
+                                    }
+                                    else {
+                                        signal = BackEvent_t(session_reactor.signal);
+                                    }
+                                } while (session_reactor.signal);
+                            }
+                            else if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                                run_session = false;
+                            }
+                            if (mm.last_module) {
+                                authentifier.set_acl_serial(nullptr);
+                                acl.reset();
+                            }
                         }
-                        else if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                            run_session = false;
-                        }
-                        if (mm.last_module) {
-                            authentifier.set_acl_serial(nullptr);
-                            acl.reset();
+                        else if (this->ini.get<cfg::client::enable_nla>()) {
+                            acl->acl_serial.send_acl_data();
                         }
                     }
                 } catch (Error const& e) {
@@ -664,9 +670,9 @@ private:
             front_trans.send_waiting_data();
         }
 
-        // if (is_set(sck_no_read.sck_acl)) {
-        //     acl->auth_trans.send_waiting_data();
-        // }
+//         if (is_set(sck_no_read.sck_acl)) {
+//             acl->auth_trans.send_waiting_data();
+//         }
     }
 
     static SckNoRead set_fds(
@@ -701,13 +707,7 @@ private:
         }
 
         if (acl) {
-        //     if (acl->auth_trans.has_waiting_data()) {
-        //         sck_no_read.sck_acl = acl->auth_trans.sck;
-        //         ioswitch.set_write_sck(sck_no_read.sck_acl);
-        //     }
-        //     else {
-                ioswitch.set_read_sck(acl->auth_trans.sck);
-        //     }
+            ioswitch.set_read_sck(acl->auth_trans.sck);
         }
 
         if (front_trans.has_pending_data()
