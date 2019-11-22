@@ -49,6 +49,9 @@ RailModuleHostMod::RailModuleHostMod(
         Widget::focus_reason_tabkey);
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
+
+LOG(LOG_INFO, "RAIL Module Host Mod is active");
+    this->vars.set<cfg::context::rail_module_host_mod_is_active>(true);
 }
 
 RailModuleHost& RailModuleHostMod::get_module_host()

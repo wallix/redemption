@@ -792,49 +792,51 @@ public:
 
         if (this->client_info.screen_info.width != screen_server.width
          || this->client_info.screen_info.height != screen_server.height) {
-            /* older client can't resize */
-            if (client_info.build <= 419) {
-                LOG(LOG_WARNING, "Front::server_resize: Resizing is not available on older RDP clients");
-                // resizing needed but not available
-                res = ResizeResult::fail;
-            }
-            else {
-                LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", screen_server.width, screen_server.height, this->client_info.screen_info.bpp);
-
-                this->client_info.screen_info.width = screen_server.width;
-                this->client_info.screen_info.height = screen_server.height;
-
-                this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
-                this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
-
-                // TODO Why are we not calling this->flush() instead ? Looks dubious.
-                // send buffered orders
-                this->orders.graphics_update_pdu().sync();
-
-                if (this->capture) {
-                    if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
-                        this->capture->resize(screen_server.width, screen_server.height);
-                    }
-                    else {
-                        this->must_be_stop_capture();
-                        this->can_be_start_capture();
-                    }
+            if (!this->ini.get<cfg::context::rail_module_host_mod_is_active>()) {
+                /* older client can't resize */
+                if (client_info.build <= 419) {
+                    LOG(LOG_WARNING, "Front::server_resize: Resizing is not available on older RDP clients");
+                    // resizing needed but not available
+                    res = ResizeResult::fail;
                 }
+                else {
+                    LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", screen_server.width, screen_server.height, this->client_info.screen_info.bpp);
 
-                // clear all pending orders, caches data, and so on and
-                // start a send_deactive, send_deman_active process with
-                // the new resolution setting
-                /* shut down the rdp client */
-                this->up_and_running = false;
-                this->send_deactive();
-                /* this should do the actual resizing */
-                this->send_demand_active();
-                this->send_monitor_layout();
+                    this->client_info.screen_info.width = screen_server.width;
+                    this->client_info.screen_info.height = screen_server.height;
 
-                LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
-                this->state = ACTIVATE_AND_PROCESS_DATA;
-                this->is_first_memblt = true;
-                res = ResizeResult::done;
+                    this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
+                    this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
+
+                    // TODO Why are we not calling this->flush() instead ? Looks dubious.
+                    // send buffered orders
+                    this->orders.graphics_update_pdu().sync();
+
+                    if (this->capture) {
+                        if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
+                            this->capture->resize(screen_server.width, screen_server.height);
+                        }
+                        else {
+                            this->must_be_stop_capture();
+                            this->can_be_start_capture();
+                        }
+                    }
+
+                    // clear all pending orders, caches data, and so on and
+                    // start a send_deactive, send_deman_active process with
+                    // the new resolution setting
+                    /* shut down the rdp client */
+                    this->up_and_running = false;
+                    this->send_deactive();
+                    /* this should do the actual resizing */
+                    this->send_demand_active();
+                    this->send_monitor_layout();
+
+                    LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
+                    this->state = ACTIVATE_AND_PROCESS_DATA;
+                    this->is_first_memblt = true;
+                    res = ResizeResult::done;
+                }
             }
 
             if (this->client_info.remote_program) {
