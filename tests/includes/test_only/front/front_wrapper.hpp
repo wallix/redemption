@@ -78,7 +78,7 @@ public:
     operator gdi::GraphicApi& () noexcept { return this->gd(); }
 
     bool is_up_and_running() const;
-    void set_up_and_running(bool set);
+    void set_up_and_running();
     void incoming(Callback & cb);
     void set_ignore_rdesktop_bogus_clip(bool set);
     ScreenInfo const& screen_info() const;

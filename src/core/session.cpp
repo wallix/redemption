@@ -134,7 +134,7 @@ public:
 
                 Select ioswitch(default_timeout);
 
-                SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
+                SessionReactor::EnableGraphics enable_graphics{front.state == Front::UP_AND_RUNNING};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
                 auto const sck_no_read = this->set_fds(
@@ -215,7 +215,7 @@ public:
                         auto const enable_close_box
                             = ini.get<cfg::globals::enable_close_box>();
                         ini.set<cfg::globals::enable_close_box>(
-                            enable_close_box && front.up_and_running);
+                            enable_close_box && front.state == Front::UP_AND_RUNNING);
 
                         mm.invoke_close_box(
                             auth_error_message,
@@ -333,7 +333,7 @@ public:
                 }
 
                 try {
-                    if (front.up_and_running) {
+                    if (front.state == Front::UP_AND_RUNNING) {
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {
                             auto const rt_status
@@ -387,7 +387,7 @@ public:
                         }
 
                         if (acl){
-                            if (front.up_and_running) {
+                            if (front.state == Front::UP_AND_RUNNING) {
                                 signal = BackEvent_t(session_reactor.signal);
                                 int i = 0;
                                 do {

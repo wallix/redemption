@@ -526,10 +526,6 @@ public:
 protected:
     CHANNELS::ChannelDefArray channel_list;
 
-    // TODO private !!!
-public:
-    bool up_and_running = false;
-
 private:
     int share_id = 65538;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
@@ -565,6 +561,7 @@ private:
     BitsPerPixel mod_bpp {0};
     BitsPerPixel capture_bpp {0};
 
+public:
     enum {
         CONNECTION_INITIATION,
         PRIMARY_AUTH_NLA,
@@ -576,9 +573,11 @@ private:
         CHANNEL_JOIN_CONFIRM_LOOP,
         WAITING_FOR_LOGON_INFO,
         WAITING_FOR_ANSWER_TO_LICENSE,
-        ACTIVATE_AND_PROCESS_DATA
+        ACTIVATE_AND_PROCESS_DATA,
+        UP_AND_RUNNING
     } state = CONNECTION_INITIATION;
 
+private:
     Random & gen;
     Fstat fstat;
 
@@ -752,7 +751,7 @@ public:
             this->flow_control_timer = this->session_reactor.create_timer()
             .set_delay(std::chrono::milliseconds(0))
             .on_action([this](auto ctx){
-                if (this->up_and_running) {
+                if (this->state == UP_AND_RUNNING) {
                     this->send_data_indication_ex_impl(
                         GCC::MCS_GLOBAL_CHANNEL,
                         [&](StreamSize<256>, OutStream & stream) {
@@ -827,14 +826,13 @@ public:
                     // start a send_deactive, send_deman_active process with
                     // the new resolution setting
                     /* shut down the rdp client */
-                    this->up_and_running = false;
+                    this->state = ACTIVATE_AND_PROCESS_DATA;
                     this->send_deactive();
                     /* this should do the actual resizing */
                     this->send_demand_active();
                     this->send_monitor_layout();
 
                     LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
-                    this->state = ACTIVATE_AND_PROCESS_DATA;
                     this->is_first_memblt = true;
                     res = ResizeResult::done;
                 }
@@ -1202,7 +1200,7 @@ public:
         else {
             LOG(LOG_WARNING, "Front::end_update: Unbalanced calls to BeginUpdate/EndUpdate methods");
         }
-        if (!this->up_and_running) {
+        if (!(this->state == UP_AND_RUNNING)) {
             LOG(LOG_ERR, "Front::end_update: Front is not up and running.");
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }
@@ -2109,8 +2107,8 @@ public:
             switch (sctrl.pduType) {
             case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                 LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
-                    "Front::incoming: Unexpected DEMANDACTIVE PDU while in license negociation");
-            break;
+                    "Front::incoming: Unexpected DEMANDACTIVE PDU while in license negociation (should be issued by server only, not client)");
+                throw Error(ERR_MCS);
             case PDUTYPE_CONFIRMACTIVEPDU:
                 LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO,
                     "Front::incoming: Unexpected CONFIRMACTIVE PDU");
@@ -2185,6 +2183,149 @@ public:
     }
 
 
+    void process_data_fastpath(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
+    {
+        InStream new_x224_stream(tpdu);
+        FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
+        int num_events = cfpie.numEvents;
+        for (uint8_t i = 0; i < num_events; i++) {
+            ::check_throw(cfpie.payload, 1, "Front::Fast-Path input event PDU", ERR_RDP_DATA_TRUNCATED);
+
+            uint8_t byte = cfpie.payload.in_uint8();
+            uint8_t eventCode  = (byte & 0xE0) >> 5;
+
+            switch (eventCode) {
+                case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
+                {
+                    FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
+
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                        "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
+                        ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
+
+                    if ((1 == num_events) &&
+                        (0 == i) &&
+                        (cfpie.payload.in_remain() == 6) &&
+                        (0x1D == ke.keyCode) &&
+                        (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
+                         BogusNumberOfFastpathInputEvent::pause_key_only)) {
+                        LOG(LOG_INFO,
+                            "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
+                        num_events = 4;
+                    }
+
+                    this->input_event_scancode(ke, cb, 0);
+                }
+                break;
+
+                case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
+                {
+                    FastPath::MouseEvent_Recv me(cfpie.payload, byte);
+
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                        "Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                        me.pointerFlags, me.xPos, me.yPos);
+
+                    this->mouse_x = me.xPos;
+                    this->mouse_y = me.yPos;
+                    if (this->state == UP_AND_RUNNING) {
+                        cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                        this->has_user_activity = true;
+                    }
+
+                    if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                            SlowPath::PTRFLAGS_BUTTON2 |
+                                            SlowPath::PTRFLAGS_BUTTON3)) &&
+                        !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                        if (this->capture) {
+                            this->capture->possible_active_window_change();
+                        }
+                    }
+                }
+                break;
+
+                // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
+                case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                {
+                    FastPath::MouseExEvent_Recv me(cfpie.payload, byte);
+
+                    LOG(LOG_WARNING,
+                        "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                        me.pointerFlags, me.xPos, me.yPos);
+
+                    if (this->state == UP_AND_RUNNING) {
+                        this->has_user_activity = true;
+                    }
+
+                    if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
+                                            SlowPath::PTRXFLAGS_BUTTON2)) &&
+                        !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
+                        if (this->capture) {
+                            this->capture->possible_active_window_change();
+                        }
+                    }
+                }
+                break;
+
+                case FastPath::FASTPATH_INPUT_EVENT_SYNC:
+                {
+                    FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
+
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                        "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
+                        se.eventFlags);
+                    LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
+                        static_cast<unsigned int>(se.eventFlags));
+
+                    this->keymap.synchronize(se.eventFlags);
+                    if (this->state == UP_AND_RUNNING) {
+                        cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
+                        this->has_user_activity = true;
+                    }
+                }
+                break;
+
+                case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
+                {
+                    FastPath::UnicodeKeyboardEvent_Recv uke(cfpie.payload, byte);
+
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                        "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
+                        uke.unicodeCode);
+
+                    if (this->state == UP_AND_RUNNING) {
+                        cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
+                        this->has_user_activity = true;
+                    }
+                }
+                break;
+
+                default:
+                    LOG(LOG_INFO,
+                        "Front::incoming: Received unexpected Fast-Path PUD, eventCode = %u",
+                        eventCode);
+                    throw Error(ERR_RDP_FASTPATH);
+            }
+            LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                "Front::incoming: Received Fast-Path PUD done");
+
+            if (cfpie.payload.in_remain() &&
+                (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
+                 BogusNumberOfFastpathInputEvent::all_input_events) &&
+                !((i + 1) < num_events)) {
+                LOG(LOG_INFO,
+                    "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%d",
+                    cfpie.payload.in_remain(), num_events);
+                num_events++;
+            }
+        }
+
+        if (cfpie.payload.in_remain() != 0) {
+            LOG(LOG_WARNING, "Front::incoming: Received Fast-Path PUD, remains=%zu",
+                cfpie.payload.in_remain());
+        }
+    }
+
     // Connection Finalization
     // -----------------------
 
@@ -2217,155 +2358,17 @@ public:
 
 
     // Besides input and graphics data, other data that can be exchanged between
-    // client and server after the connection has been finalized include "
+    // client and server after the connection has been finalized include
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
     void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
     {
-        InStream new_x224_stream(tpdu);
         if (current_pdu_type == Extractors::FASTPATH) { // fastpath
-            FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
-
-            int num_events = cfpie.numEvents;
-            for (uint8_t i = 0; i < num_events; i++) {
-                ::check_throw(cfpie.payload, 1, "Front::Fast-Path input event PDU", ERR_RDP_DATA_TRUNCATED);
-
-                uint8_t byte = cfpie.payload.in_uint8();
-                uint8_t eventCode  = (byte & 0xE0) >> 5;
-
-                switch (eventCode) {
-                    case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
-                    {
-                        FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
-
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                            "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
-                            ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
-
-                        if ((1 == num_events) &&
-                            (0 == i) &&
-                            (cfpie.payload.in_remain() == 6) &&
-                            (0x1D == ke.keyCode) &&
-                            (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
-                             BogusNumberOfFastpathInputEvent::pause_key_only)) {
-                            LOG(LOG_INFO,
-                                "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
-                            num_events = 4;
-                        }
-
-                        this->input_event_scancode(ke, cb, 0);
-                    }
-                    break;
-
-                    case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
-                    {
-                        FastPath::MouseEvent_Recv me(cfpie.payload, byte);
-
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                            "Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
-                            me.pointerFlags, me.xPos, me.yPos);
-
-                        this->mouse_x = me.xPos;
-                        this->mouse_y = me.yPos;
-                        if (this->up_and_running) {
-                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                            this->has_user_activity = true;
-                        }
-
-                        if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
-                                                SlowPath::PTRFLAGS_BUTTON2 |
-                                                SlowPath::PTRFLAGS_BUTTON3)) &&
-                            !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                            if (this->capture) {
-                                this->capture->possible_active_window_change();
-                            }
-                        }
-                    }
-                    break;
-
-                    // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
-                    case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
-                    {
-                        FastPath::MouseExEvent_Recv me(cfpie.payload, byte);
-
-                        LOG(LOG_WARNING,
-                            "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
-                            me.pointerFlags, me.xPos, me.yPos);
-
-                        if (this->up_and_running) {
-                            this->has_user_activity = true;
-                        }
-
-                        if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
-                                                SlowPath::PTRXFLAGS_BUTTON2)) &&
-                            !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                            if (this->capture) {
-                                this->capture->possible_active_window_change();
-                            }
-                        }
-                    }
-                    break;
-
-                    case FastPath::FASTPATH_INPUT_EVENT_SYNC:
-                    {
-                        FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
-
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                            "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
-                            se.eventFlags);
-                        LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
-                            static_cast<unsigned int>(se.eventFlags));
-
-                        this->keymap.synchronize(se.eventFlags);
-                        if (this->up_and_running) {
-                            cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
-                            this->has_user_activity = true;
-                        }
-                    }
-                    break;
-
-                    case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
-                    {
-                        FastPath::UnicodeKeyboardEvent_Recv uke(cfpie.payload, byte);
-
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                            "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
-                            uke.unicodeCode);
-
-                        if (this->up_and_running) {
-                            cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
-                            this->has_user_activity = true;
-                        }
-                    }
-                    break;
-
-                    default:
-                        LOG(LOG_INFO,
-                            "Front::incoming: Received unexpected Fast-Path PUD, eventCode = %u",
-                            eventCode);
-                        throw Error(ERR_RDP_FASTPATH);
-                }
-                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                    "Front::incoming: Received Fast-Path PUD done");
-
-                if (cfpie.payload.in_remain() &&
-                    (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
-                     BogusNumberOfFastpathInputEvent::all_input_events) &&
-                    !((i + 1) < num_events)) {
-                    LOG(LOG_INFO,
-                        "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%d",
-                        cfpie.payload.in_remain(), num_events);
-                    num_events++;
-                }
-            }
-
-            if (cfpie.payload.in_remain() != 0) {
-                LOG(LOG_WARNING, "Front::incoming: Received Fast-Path PUD, remains=%zu",
-                    cfpie.payload.in_remain());
-            }
+            this->process_data_fastpath(tpdu, current_pdu_type, cb);
         }
         else { // slowpath
+            InStream new_x224_stream(tpdu);
             if (current_pdu_type == Extractors::DR_TPDU) {
                 X224::DR_TPDU_Recv x224(new_x224_stream);
                 LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
@@ -2428,7 +2431,7 @@ public:
                 uint32_t flags  = sec.payload.in_uint32_le();
                 size_t chunk_size = sec.payload.in_remain();
 
-                if (this->up_and_running) {
+                if (this->state == UP_AND_RUNNING) {
                     LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
                         "Front::incoming: channel_name=\"%s\"", channel.name);
 
@@ -2448,8 +2451,8 @@ public:
                     switch (sctrl.pduType) {
                     case PDUTYPE_DEMANDACTIVEPDU:
                         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received DEMANDACTIVEPDU (unsupported)");
-                        break;
+                            "Front::incoming: Received DEMANDACTIVEPDU (should be issued by server only, not client)");
+                        throw Error(ERR_MCS);
                     case PDUTYPE_CONFIRMACTIVEPDU:
                         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
                             "Front::incoming: Received CONFIRMACTIVEPDU");
@@ -2519,6 +2522,149 @@ public:
             }
         } // fastpath/slowpath
     }
+
+
+    void up_and_running(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
+    {
+        if (current_pdu_type == Extractors::FASTPATH) { // fastpath
+            this->process_data_fastpath(tpdu, current_pdu_type, cb);
+        }
+        else { // slowpath
+            InStream new_x224_stream(tpdu);
+            if (current_pdu_type == Extractors::DR_TPDU) {
+                X224::DR_TPDU_Recv x224(new_x224_stream);
+                LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
+                this->is_client_disconnected = true;
+                throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
+            }
+            if (current_pdu_type != Extractors::DT_TPDU) {
+                LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
+                throw Error(ERR_X224_EXPECTED_DATA_PDU);
+            }
+
+            X224::DT_TPDU_Recv x224(new_x224_stream);
+
+            int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
+                MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                const char * reason = MCS::get_reason(mcs.reason);
+                LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+            }
+
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+            if (bool(this->verbose & Verbose::sec_decrypted)) {
+                LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
+                hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
+            }
+
+            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                "Front::incoming: sec_flags=%x", sec.flags);
+
+            if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+                    "Front::incoming: channel_data channelId=%u", mcs.channelId);
+
+                size_t num_channel_src = this->channel_list.size();
+                for (size_t index = 0; index < this->channel_list.size(); index++) {
+                    if (this->channel_list[index].chanid == mcs.channelId) {
+                        num_channel_src = index;
+                        break;
+                    }
+                }
+
+                if (num_channel_src >= this->channel_list.size()) {
+                    LOG(LOG_ERR, "Front::incoming: Unknown Channel");
+                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                }
+
+                const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
+                if (bool(this->verbose & Verbose::channel)) {
+                    channel.log(mcs.channelId);
+                }
+
+                // length(4) + flags(4)
+                ::check_throw(sec.payload, 8, "Front::Data", ERR_MCS);
+
+                uint32_t length = sec.payload.in_uint32_le();
+                uint32_t flags  = sec.payload.in_uint32_le();
+                size_t chunk_size = sec.payload.in_remain();
+
+                if (this->state == UP_AND_RUNNING) {
+                    LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+                        "Front::incoming: channel_name=\"%s\"", channel.name);
+
+                    InStream chunk({sec.payload.get_current(), chunk_size});
+                    cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                }
+                else {
+                    LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+                        "Front::incoming: not up_and_running send_to_mod_channel dropped");
+                }
+                sec.payload.in_skip_bytes(chunk_size);
+            }
+            else {
+                while (sec.payload.get_current() < sec.payload.get_data_end()) {
+                    ShareControl_Recv sctrl(sec.payload);
+
+                    switch (sctrl.pduType) {
+                    case PDUTYPE_DEMANDACTIVEPDU:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received DEMANDACTIVEPDU : this should only come from server");
+                        throw Error(ERR_MCS);
+                    case PDUTYPE_CONFIRMACTIVEPDU:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                           "Front::incoming: Received CONFIRMACTIVEPDU : server already up and runningthis should only come from server");
+                        throw Error(ERR_MCS);
+                    case PDUTYPE_DATAPDU: /* 7 */
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                            "Front::incoming: Received DATAPDU");
+                        // this is rdp_process_data that will set up_and_running to 1
+                        // when fonts have been received
+                        // we will not exit this loop until we are in this state.
+                        //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                        this->process_data(sctrl.payload, cb);
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                            "Front::incoming: Received DATAPDU done");
+
+                        if (!sctrl.payload.check_end())
+                        {
+                            LOG(LOG_ERR,
+                                "Front::incoming: Trailing data after DATAPDU: remains=%zu",
+                                sctrl.payload.in_remain());
+                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                        }
+                        throw Error(ERR_MCS);
+                    case PDUTYPE_DEACTIVATEALLPDU:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received DEACTIVATEALLPDU : this should only come from server");
+                        break;
+                    case PDUTYPE_SERVER_REDIR_PKT:
+                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                            "Front::incoming: Received SERVER_REDIR_PKT : this should only come from server");
+                        throw Error(ERR_MCS);
+                    default:
+                        LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
+                        throw Error(ERR_MCS);
+                    }
+
+                    // TODO check all sctrl.payload data is consumed
+                }
+            }
+
+            if (!sec.payload.check_end())
+            {
+                LOG(LOG_ERR,
+                    "Front::incoming: Trailing data after SEC: remains=%zu",
+                    sec.payload.in_remain());
+                throw Error(ERR_SEC_TRAILINGDATA);
+            }
+        } // fastpath/slowpath
+    }
+
 
     // TODO: this should be extracted
     TpduBuffer rbuf;
@@ -2684,9 +2830,14 @@ public:
         break;
 
         case ACTIVATE_AND_PROCESS_DATA:
-            LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
             this->activate_and_process_data(tpdu, current_pdu_type, cb);
+        break;
+        case UP_AND_RUNNING:
+            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                "Front::incoming: UP_AND_RUNNING");
+            this->up_and_running(tpdu, current_pdu_type, cb);
         break;
         }
     }
@@ -3751,7 +3902,7 @@ private:
 
                             // happens when client gets focus and sends key modifier info
                             this->keymap.synchronize(se.toggleFlags & 0xFFFF);
-                            if (this->up_and_running) {
+                            if (this->state == UP_AND_RUNNING) {
                                 cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
                                 this->has_user_activity = true;
                             }
@@ -3767,7 +3918,7 @@ private:
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
-                            if (this->up_and_running) {
+                            if (this->state == UP_AND_RUNNING) {
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 this->has_user_activity = true;
                             }
@@ -3791,7 +3942,7 @@ private:
                             LOG(LOG_WARNING, "Front::process_data: Unexpected Slow-Path INPUT_EVENT_MOUSEX eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
 
-                            if (this->up_and_running) {
+                            if (this->state == UP_AND_RUNNING) {
                                 this->has_user_activity = true;
                             }
 
@@ -3825,7 +3976,7 @@ private:
                                 "Front::process_data: Slow-Path INPUT_EVENT_UNICODE eventTime=%u unicodeCode=0x%04X",
                                 ie.eventTime, uke.unicodeCode);
                             // happens when client gets focus and sends key modifier info
-                            if (this->up_and_running) {
+                            if (this->state == UP_AND_RUNNING) {
                                 cb.rdp_input_unicode(uke.unicodeCode, uke.keyboardFlags);
                                 this->has_user_activity = true;
                             }
@@ -3903,7 +4054,7 @@ private:
                         " left=%d top=%d right=%d bottom=%d cx=%u cy=%u",
                         left, top, right, bottom, rect.cx, rect.cy);
                     // // TODO we should consider adding to API some function to refresh several rects at once
-                    // if (this->up_and_running) {
+                    // if (this->state == UP_AND_RUNNING) {
                     //     cb.rdp_input_invalidate(rect);
                     // }
                 }
@@ -4041,7 +4192,7 @@ private:
                     this->set_gd(this->orders.graphics_update_pdu());
                 }
 
-                this->up_and_running = true;
+                this->state = UP_AND_RUNNING;
                 this->handshake_timeout.reset();
                 cb.rdp_input_up_and_running();
                 // TODO we should use accessors to set that, also not sure it's the right place to set it
@@ -4867,7 +5018,7 @@ private:
             ;
         }();
 
-        if (this->up_and_running) {
+        if (this->state == UP_AND_RUNNING) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }

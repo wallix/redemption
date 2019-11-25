@@ -102,12 +102,12 @@ int FrontWrapper::get_keylayout() const
 
 bool FrontWrapper::is_up_and_running() const
 {
-    return d->front.up_and_running;
+    return d->front.state == Front::UP_AND_RUNNING;
 }
 
-void FrontWrapper::set_up_and_running(bool set)
+void FrontWrapper::set_up_and_running()
 {
-    d->front.up_and_running = set;
+    d->front.state = Front::UP_AND_RUNNING;
 }
 
 void FrontWrapper::incoming(Callback & cb)

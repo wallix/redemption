@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
-    front.set_up_and_running(true);
+    front.set_up_and_running();
 
     RED_TEST_PASSPOINT();
 
