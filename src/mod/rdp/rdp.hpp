@@ -2369,8 +2369,6 @@ public:
 
                                     this->front.server_relayout(monitor_layout_pdu);
 
-                                    LOG(LOG_INFO, "Dimension=%s", monitor_layout_pdu.get_dimension());
-
                                     this->monitor_count = ((monitor_layout_pdu.get_monitorCount() == 1) ? 0 : monitor_layout_pdu.get_monitorCount());
 
                                     if (this->session_probe_virtual_channel) {

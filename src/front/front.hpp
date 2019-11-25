@@ -818,7 +818,7 @@ public:
 
         if (this->client_info.screen_info.width != width
          || this->client_info.screen_info.height != height) {
-            if (!this->client_info.remote_program) {
+            if (!this->ini.get<cfg::context::rail_module_host_mod_is_active>()) {
                 /* older client can't resize */
                 if (client_info.build <= 419) {
                     LOG(LOG_WARNING, "Front::server_resize: Resizing is not available on older RDP clients");
@@ -864,7 +864,8 @@ public:
                     res = ResizeResult::done;
                 }
             }
-            else {
+
+            if (this->client_info.remote_program) {
                 this->incoming_event = this->session_reactor
                 .create_callback_event(std::ref(*this))
                 .on_action(jln::one_shot([](Callback& cb, Front& front){
@@ -882,33 +883,7 @@ public:
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::server_relayout");
 
-        this->orders.graphics_update_pdu().sync();
-
-        monitor_layout_pdu_ref.log("Front::server_relayout: Send to client");
-
-        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-
-        // Payload
-        monitor_layout_pdu_ref.emit(stream.get_data_stream());
-
-        const uint32_t log_condition = (128 | 1);
-        ::send_share_data_ex( this->trans
-                            , PDUTYPE2_MONITOR_LAYOUT_PDU
-                            , false
-                            , this->mppc_enc.get()
-                            , this->share_id
-                            , this->encryptionLevel
-                            , this->encrypt
-                            , this->userid
-                            , stream
-                            , log_condition
-                            , underlying_cast(this->verbose)
-                            );
-
-        if (this->capture) {
-            this->must_be_stop_capture();
-            this->can_be_start_capture();
-        }
+        monitor_layout_pdu_ref.get(this->client_info.cs_monitor);
 
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::server_relayout: done");
@@ -1153,7 +1128,7 @@ public:
 
     bool is_capture_in_progress() const override
     {
-        return (this->capture && this->capture->has_private_drawable());
+        return (this->capture && this->capture->has_wrm_capture());
     }
 
     void update_config(bool enable_rt_display) {

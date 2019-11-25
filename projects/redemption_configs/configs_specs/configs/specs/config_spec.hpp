@@ -783,6 +783,8 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<bool>(), "is_wabam", set(false));
         W.sep();
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
     });
 }
 

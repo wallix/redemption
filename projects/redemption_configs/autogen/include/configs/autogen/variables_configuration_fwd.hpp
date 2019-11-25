@@ -376,6 +376,7 @@ namespace cfg {
         struct session_probe_launch_error_message;
         struct close_box_extra_message;
         struct is_wabam;
+        struct rail_module_host_mod_is_active;
     };
 
 } // namespace cfg

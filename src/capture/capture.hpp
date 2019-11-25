@@ -121,8 +121,8 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
-    bool has_private_drawable() const {
-        return static_cast<bool>(this->gd_drawable_);
+    bool has_wrm_capture() const {
+        return static_cast<bool>(this->wrm_capture_obj);
     }
 
 private:

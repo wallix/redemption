@@ -31,7 +31,8 @@ class SessionReactor;
 
 using RailModuleHostModVariables = vcfg::variables<
     vcfg::var<cfg::translation::language,                        vcfg::accessmode::get>,
-    vcfg::var<cfg::remote_program::allow_resize_hosted_desktop,  vcfg::accessmode::get>
+    vcfg::var<cfg::remote_program::allow_resize_hosted_desktop,  vcfg::accessmode::get>,
+    vcfg::var<cfg::context::rail_module_host_mod_is_active,      vcfg::accessmode::set>
 >;
 
 
@@ -48,6 +49,8 @@ public:
     ~RailModuleHostMod() override
     {
         this->screen.clear();
+
+        this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
     }
 
     void notify(Widget* /*sender*/, notify_event_t /*event*/) override

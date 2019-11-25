@@ -4705,6 +4705,17 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct context::rail_module_host_mod_is_active {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rail_module_host_mod_is_active";
+        using type = bool;
+        using mapped_type = type;
+        type value{false};
+    };
 
 } // namespace cfg
 
@@ -5078,6 +5089,7 @@ struct context
 , cfg::context::rail_disconnect_message_delay
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::is_wabam
+, cfg::context::rail_module_host_mod_is_active
 { static constexpr bool is_section = true; };
 
 } // namespace cfg_section
