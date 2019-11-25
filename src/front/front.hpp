@@ -2365,11 +2365,12 @@ public:
     void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
     {
         if (current_pdu_type == Extractors::FASTPATH) { // fastpath
+            LOG(LOG_WARNING, "Received FastPath Input Data before up and running");
             this->process_data_fastpath(tpdu, current_pdu_type, cb);
         }
         else { // slowpath
-            InStream new_x224_stream(tpdu);
             if (current_pdu_type == Extractors::DR_TPDU) {
+                InStream new_x224_stream(tpdu);
                 X224::DR_TPDU_Recv x224(new_x224_stream);
                 LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
                 this->is_client_disconnected = true;
@@ -2380,6 +2381,7 @@ public:
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
 
+            InStream new_x224_stream(tpdu);
             X224::DT_TPDU_Recv x224(new_x224_stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2445,71 +2447,67 @@ public:
                 sec.payload.in_skip_bytes(chunk_size);
             }
             else {
-                while (sec.payload.get_current() < sec.payload.get_data_end()) {
-                    ShareControl_Recv sctrl(sec.payload);
+                ShareControl_Recv sctrl(sec.payload);
 
-                    switch (sctrl.pduType) {
-                    case PDUTYPE_DEMANDACTIVEPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received DEMANDACTIVEPDU (should be issued by server only, not client)");
-                        throw Error(ERR_MCS);
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received CONFIRMACTIVEPDU");
-                        {
-                            // shareId(4) + originatorId(2)
-                            ::check_throw(sctrl.payload, 6, "Front::Confirm Active PDU", ERR_RDP_DATA_TRUNCATED);
+                switch (sctrl.pduType) {
+                case PDUTYPE_DEMANDACTIVEPDU:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received DEMANDACTIVEPDU (should be issued by server only, not client)");
+                    throw Error(ERR_MCS);
+                case PDUTYPE_CONFIRMACTIVEPDU:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received CONFIRMACTIVEPDU");
+                    {
+                        // shareId(4) + originatorId(2)
+                        ::check_throw(sctrl.payload, 6, "Front::Confirm Active PDU", ERR_RDP_DATA_TRUNCATED);
 
-                            uint32_t share_id = sctrl.payload.in_uint32_le();
-                            uint16_t originatorId = sctrl.payload.in_uint16_le();
-                            this->process_confirm_active(sctrl.payload);
-                            (void)share_id;
-                            (void)originatorId;
-                        }
-                        // reset caches, etc.
-                        this->reset();
-                        // resizing done
-                        if (this->client_info.screen_info.bpp == BitsPerPixel{8}) {
-                            RDPColCache cmd(0, BGRPalette::classic_332());
-                            this->orders.graphics_update_pdu().draw(cmd);
-                        }
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received CONFIRMACTIVEPDU done");
-
-                        break;
-                    case PDUTYPE_DATAPDU: /* 7 */
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                            "Front::incoming: Received DATAPDU");
-                        // this is rdp_process_data that will set up_and_running to 1
-                        // when fonts have been received
-                        // we will not exit this loop until we are in this state.
-                        //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-                        this->process_data(sctrl.payload, cb);
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                            "Front::incoming: Received DATAPDU done");
-
-                        if (!sctrl.payload.check_end())
-                        {
-                            LOG(LOG_ERR,
-                                "Front::incoming: Trailing data after DATAPDU: remains=%zu",
-                                sctrl.payload.in_remain());
-                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
-                        }
-                        break;
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received DEACTIVATEALLPDU (unsupported)");
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
-                        break;
+                        uint32_t share_id = sctrl.payload.in_uint32_le();
+                        uint16_t originatorId = sctrl.payload.in_uint16_le();
+                        this->process_confirm_active(sctrl.payload);
+                        (void)share_id;
+                        (void)originatorId;
                     }
+                    // reset caches, etc.
+                    this->reset();
+                    // resizing done
+                    if (this->client_info.screen_info.bpp == BitsPerPixel{8}) {
+                        RDPColCache cmd(0, BGRPalette::classic_332());
+                        this->orders.graphics_update_pdu().draw(cmd);
+                    }
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received CONFIRMACTIVEPDU done");
 
-                    // TODO check all sctrl.payload data is consumed
+                    break;
+                case PDUTYPE_DATAPDU: /* 7 */
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                        "Front::incoming: Received DATAPDU");
+                    // this is rdp_process_data that will set up_and_running to 1
+                    // when fonts have been received
+                    // we will not exit this loop until we are in this state.
+                    //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                    this->process_data(sctrl.payload, cb);
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                        "Front::incoming: Received DATAPDU done");
+
+                    if (!sctrl.payload.check_end())
+                    {
+                        LOG(LOG_ERR,
+                            "Front::incoming: Trailing data after DATAPDU: remains=%zu",
+                            sctrl.payload.in_remain());
+                        throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                    }
+                    break;
+                case PDUTYPE_DEACTIVATEALLPDU:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received DEACTIVATEALLPDU (unsupported)");
+                    break;
+                case PDUTYPE_SERVER_REDIR_PKT:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
+                    break;
+                default:
+                    LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
+                    break;
                 }
             }
 
@@ -2530,8 +2528,8 @@ public:
             this->process_data_fastpath(tpdu, current_pdu_type, cb);
         }
         else { // slowpath
-            InStream new_x224_stream(tpdu);
             if (current_pdu_type == Extractors::DR_TPDU) {
+                InStream new_x224_stream(tpdu);
                 X224::DR_TPDU_Recv x224(new_x224_stream);
                 LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
                 this->is_client_disconnected = true;
@@ -2542,6 +2540,7 @@ public:
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
 
+            InStream new_x224_stream(tpdu);
             X224::DT_TPDU_Recv x224(new_x224_stream);
 
             int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
@@ -2607,51 +2606,47 @@ public:
                 sec.payload.in_skip_bytes(chunk_size);
             }
             else {
-                while (sec.payload.get_current() < sec.payload.get_data_end()) {
-                    ShareControl_Recv sctrl(sec.payload);
+                ShareControl_Recv sctrl(sec.payload);
 
-                    switch (sctrl.pduType) {
-                    case PDUTYPE_DEMANDACTIVEPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received DEMANDACTIVEPDU : this should only come from server");
-                        throw Error(ERR_MCS);
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                           "Front::incoming: Received CONFIRMACTIVEPDU : server already up and runningthis should only come from server");
-                        throw Error(ERR_MCS);
-                    case PDUTYPE_DATAPDU: /* 7 */
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                            "Front::incoming: Received DATAPDU");
-                        // this is rdp_process_data that will set up_and_running to 1
-                        // when fonts have been received
-                        // we will not exit this loop until we are in this state.
-                        //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-                        this->process_data(sctrl.payload, cb);
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                            "Front::incoming: Received DATAPDU done");
+                switch (sctrl.pduType) {
+                case PDUTYPE_DEMANDACTIVEPDU:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received DEMANDACTIVEPDU : this should only come from server");
+                    throw Error(ERR_MCS);
+                case PDUTYPE_CONFIRMACTIVEPDU:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                       "Front::incoming: Received CONFIRMACTIVEPDU : server already up and runningthis should only come from server");
+                    throw Error(ERR_MCS);
+                case PDUTYPE_DATAPDU: /* 7 */
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                        "Front::incoming: Received DATAPDU");
+                    // this is rdp_process_data that will set up_and_running to 1
+                    // when fonts have been received
+                    // we will not exit this loop until we are in this state.
+                    //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                    this->process_data(sctrl.payload, cb);
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                        "Front::incoming: Received DATAPDU done");
 
-                        if (!sctrl.payload.check_end())
-                        {
-                            LOG(LOG_ERR,
-                                "Front::incoming: Trailing data after DATAPDU: remains=%zu",
-                                sctrl.payload.in_remain());
-                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
-                        }
-                        throw Error(ERR_MCS);
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received DEACTIVATEALLPDU : this should only come from server");
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
-                            "Front::incoming: Received SERVER_REDIR_PKT : this should only come from server");
-                        throw Error(ERR_MCS);
-                    default:
-                        LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
-                        throw Error(ERR_MCS);
+                    if (!sctrl.payload.check_end())
+                    {
+                        LOG(LOG_ERR,
+                            "Front::incoming: Trailing data after DATAPDU: remains=%zu",
+                            sctrl.payload.in_remain());
+                        throw Error(ERR_MCS_PDU_TRAILINGDATA);
                     }
-
-                    // TODO check all sctrl.payload data is consumed
+                    throw Error(ERR_MCS);
+                case PDUTYPE_DEACTIVATEALLPDU:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received DEACTIVATEALLPDU : this should only come from server");
+                    break;
+                case PDUTYPE_SERVER_REDIR_PKT:
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
+                        "Front::incoming: Received SERVER_REDIR_PKT : this should only come from server");
+                    throw Error(ERR_MCS);
+                default:
+                    LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
+                    throw Error(ERR_MCS);
                 }
             }
 
