@@ -2439,7 +2439,15 @@ public:
         }
     }
 
-
+    void virtual_channel_slowpath_activate(uint8_t channel_id, InStream & stream, Callback & cb)
+    {
+        LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
+            "Front::incoming: channel_data channelId=%u", channel_id);
+        LOG(LOG_INFO, "Front is not yet up and running, dropping channel data");
+        // TODO: failing should be better than dropping (controled by some flag)
+        stream.in_skip_bytes(stream.in_remain());
+    }
+    
     void process_data_tpdu_activate(bytes_view tpdu, Callback & cb)
     {
         InStream new_x224_stream(tpdu);
@@ -2466,38 +2474,7 @@ public:
             "Front::incoming: sec_flags=%x", sec.flags);
 
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-            LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
-                "Front::incoming: channel_data channelId=%u", mcs.channelId);
-
-            size_t num_channel_src = this->channel_list.size();
-            for (size_t index = 0; index < this->channel_list.size(); index++) {
-                if (this->channel_list[index].chanid == mcs.channelId) {
-                    num_channel_src = index;
-                    break;
-                }
-            }
-
-            if (num_channel_src >= this->channel_list.size()) {
-                LOG(LOG_ERR, "Front::incoming: Unknown Channel");
-                throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-            }
-
-            const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
-            if (bool(this->verbose & Verbose::channel)) {
-                channel.log(mcs.channelId);
-            }
-
-            // length(4) + flags(4)
-            ::check_throw(sec.payload, 8, "Front::Data", ERR_MCS);
-
-//            uint32_t length = sec.payload.in_uint32_le();
-//            uint32_t flags  = sec.payload.in_uint32_le();
-            size_t chunk_size = sec.payload.in_remain();
-
-            LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
-                "Front:: Not up_and_running send to channel dropped");
-
-            sec.payload.in_skip_bytes(chunk_size);
+            this->virtual_channel_slowpath_activate(mcs.channelId, sec.payload, cb);
         }
         else {
             this->global_channel_slowpath_activate(sec.payload, cb);
