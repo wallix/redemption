@@ -55,7 +55,7 @@
         auto handle = new (std::nothrow) construct; /*NOLINT*/   \
         return handle,                                           \
         nullptr,                                                 \
-        ScytaleErrorContext(),                                 \
+        ScytaleErrorContext(),                                   \
         ERR_MEMORY_ALLOCATION_FAILED                             \
     );                                                           \
 }()
@@ -771,7 +771,7 @@ struct ScytaleFdxWriterHandle
         auto* tfl = new(std::nothrow) ScytaleTflWriterHandler{ /*NOLINT*/
             *this,
             // truncate filename if too long
-            this->idx, std::string(filename, strnlen(filename, Mwrm3::line_size_max - 32)),
+            this->idx, std::string(filename, strnlen(filename, ~uint16_t())),
             this->prefix, this->hash_prefix.c_str(), this->pos_filename,
             this->groupid, this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat,
         };
@@ -788,16 +788,41 @@ struct ScytaleFdxWriterHandle
         HashArray fhash;
         tfl.out_crypto_transport.close(qhash, fhash);
 
-        uint8_t cbuf[Mwrm3::line_size_max*2];
-        writable_bytes_view remaining_buf = make_array_view(cbuf);
+        constexpr unsigned buf_size = 4096;
+        uint8_t cbuf[buf_size];
+        unsigned buf_pos = 0;
 
-        bool has_error = false;
-        auto set_error = [&](auto){ has_error = true; };
-        auto write_buf = [&](Mwrm3::Type type, Mwrm3::DataSize data_size, auto... data) {
-            remaining_buf = serialize_header_line(remaining_buf, type, data_size).second;
-            OutStream out_stream{remaining_buf};
-            (out_stream.out_copy_bytes(data), ...);
-            remaining_buf = out_stream.get_tail();
+        auto write_data = [&](bytes_view bytes){
+            if (buf_pos + bytes.size() < buf_size)
+            {
+                memcpy(cbuf + buf_pos, bytes.data(), bytes.size());
+                buf_pos += bytes.size();
+            }
+            else
+            {
+                memcpy(cbuf + buf_pos, bytes.data(), buf_size - buf_pos);
+                this->out_crypto_transport.send(cbuf, buf_size);
+
+                auto* p = bytes.data() + buf_size - buf_pos;
+                auto* end = bytes.end();
+
+                for (;;)
+                {
+                    if (p + buf_size > end)
+                    {
+                        buf_pos = end - p;
+                        memcpy(cbuf, p, buf_pos);
+                        break;
+                    }
+
+                    this->out_crypto_transport.send(p, buf_size);
+                    p += buf_size;
+                }
+            }
+        };
+
+        auto write_in_buf = [&](Mwrm3::Type /*type*/, auto... data) {
+            (write_data(data), ...);
         };
 
         auto const fsize = [&]{
@@ -812,13 +837,16 @@ struct ScytaleFdxWriterHandle
         Mwrm3::serialize_tfl_new(
             tfl.idx, tfl.original_filename,
             array_view(tfl.finalname).drop_front(tfl.pos_filename),
-            write_buf, set_error);
+            write_in_buf);
         Mwrm3::serialize_tfl_stat(tfl.idx, safe_cast<Mwrm3::FileSize>(fsize),
             Mwrm3::QuickHash{this->with_checksum() ? make_array_view(qhash) : bytes_view{}},
             Mwrm3::FullHash{this->with_checksum() ? make_array_view(fhash) : bytes_view{}},
-            write_buf);
+            write_in_buf);
 
-        this->out_crypto_transport.send(cbuf, std::distance(cbuf, remaining_buf.begin()));
+        if (buf_pos)
+        {
+            this->out_crypto_transport.send(cbuf, buf_pos);
+        }
 
         return fsize != ~uint64_t{} ? 0 : -1;
     }

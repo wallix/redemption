@@ -30,6 +30,7 @@ extern "C"
 
     class ScytaleFdxWriterHandle;
     class ScytaleTflWriterHandler;
+    class ScytaleMwrm3ReaderHandle;
 
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
@@ -260,4 +261,5 @@ extern "C"
     char const * scytale_fdx_writer_get_error_message(
         ScytaleFdxWriterHandle * handle);
     //@}
+
 }

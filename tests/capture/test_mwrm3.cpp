@@ -22,36 +22,25 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "utils/sugar/algostring.hpp"
 #include "capture/mwrm3.hpp"
 
 #include <iterator>
 
-RED_AUTO_TEST_CASE(header_line)
+
+namespace
 {
-    using namespace Mwrm3;
+    template<unsigned> class should_be_same_size{};
 
-    char buffer[128];
-
-    using std::size;
-    using std::empty;
-
-    Type type{1};
-    DataSize data_size{5u};
-
-    writable_buffer_view result;
-    for (unsigned i = 0; i < size(buffer) && empty(result); ++i) {
-        std::tie(result, std::ignore)
-          = serialize_header_line(writable_bytes_view(buffer, i), type, data_size);
-    }
-
-    RED_CHECK_MEM(result, "\x01\x00\x05\x00"_av);
+    template<class T> T const& ramify(T const& x) { return x; }
+    bytes_view ramify(Mwrm3::QuickHash h) { return h.hash; }
+    bytes_view ramify(Mwrm3::FullHash h) { return h.hash; }
+    auto ramify(std::chrono::seconds seconds) { return seconds.count(); }
 }
 
 RED_AUTO_TEST_CASE(serialize)
 {
     using namespace Mwrm3;
-
-#define as_error() []([[maybe_unused]] auto... xs){ RED_FAIL("error on serialize_*"); }
 
     auto filename = "my_filename.wrm"_av;
     auto filename2 = "my_filename2.wrm"_av;
@@ -63,66 +52,56 @@ RED_AUTO_TEST_CASE(serialize)
     switch (Type::None)
     {
         case Type::None:
-            [[fallthrough]];
 
-        case Type::WrmNew:
-            serialize_wrm_new(filename, [&](Type type, DataSize data_size, auto data){
-                RED_CHECK(type == Type::WrmNew);
-                RED_CHECK(data_size == DataSize(filename.size()));
-                RED_CHECK(data == filename);
-            }, as_error());
-            [[fallthrough]];
+#define CASE_UNPACK(...) __VA_ARGS__
+#define CASE(type_test, fn, params, ...) [[fallthrough]];                 \
+    case type_test: do {                                                  \
+        bytes_view rhs[]{__VA_ARGS__};                                    \
+        auto checker = [&](Type type, bytes_view av, auto... avs){        \
+            RED_CHECK(type == type_test);                                 \
+            RED_CHECK(type == Type(InStream(av).in_uint8()));             \
+            bytes_view lhs[]{av, avs...};                                 \
+            should_be_same_size<sizeof(lhs)/sizeof(lhs[0])>{} =           \
+                should_be_same_size<sizeof(rhs)/sizeof(rhs[0])>{};        \
+            for (unsigned i = 0; i < std::size(lhs); ++i) {               \
+                RED_TEST_CONTEXT("i = " << i) {                           \
+                    RED_CHECK(lhs[i] == rhs[i]);                          \
+                }                                                         \
+            }                                                             \
+            return str_concat(av.as_chars(), avs.as_chars()...);          \
+        };                                                                \
+        std::string data = fn(CASE_UNPACK params, checker);               \
+        un##fn(array_view(data).drop_front(2), [&](auto... xs){           \
+            /* for clang < 9 */                                           \
+            REDEMPTION_DIAGNOSTIC_PUSH                                    \
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-lambda-capture") \
+            [&xs...](auto... ys){                                         \
+                int i = 0;                                                \
+                ([&](){                                                   \
+                    RED_TEST_CONTEXT("i = " << i++) {                     \
+                        RED_CHECK(ramify(ys) == ramify(xs));              \
+                    }                                                     \
+                }(), ...);                                                \
+            }(CASE_UNPACK params);                                        \
+            REDEMPTION_DIAGNOSTIC_POP                                     \
+        }, [](){ RED_FAIL("error on un" #fn); });                         \
+    } while(0)
 
-        case Type::WrmState:
-            serialize_wrm_stat(
-                FileSize(1244), std::chrono::seconds(125), QuickHash{qhash}, FullHash{fhash},
-                [&](Type type, DataSize data_size,
-                    bytes_view prefix, bytes_view qhash_, bytes_view fhash_
-                ){
-                    RED_CHECK(type == Type::WrmState);
-                    RED_CHECK(data_size == DataSize(80));
-                    RED_CHECK(prefix == "\xdc\x04\x00\x00\x00\x00\x00\x00}\x00\x00\x00\x00\x00\x00\x00"_av);
-                    RED_CHECK(qhash == qhash_);
-                    RED_CHECK(fhash == fhash_);
-                }
-            );
-            [[fallthrough]];
+        CASE(Type::WrmNew, serialize_wrm_new, (filename), "\x01\x00\x0f\x00"_av, filename);
 
-        case Type::FdxNew:
-            serialize_fdx_new(filename, [&](Type type, DataSize data_size, auto data){
-                RED_CHECK(type == Type::FdxNew);
-                RED_CHECK(data_size == DataSize(filename.size()));
-                RED_CHECK(data == filename);
-            }, as_error());
-            [[fallthrough]];
+        CASE(Type::WrmState, serialize_wrm_stat,
+            (FileSize(1244), std::chrono::seconds(125), QuickHash{qhash}, FullHash{fhash}),
+            "\x02\x00\xdc\x04\x00\x00\x00\x00\x00\x00}\x00\x00\x00\x00\x00\x00\x00"_av,
+            qhash, fhash);
 
-        case Type::TflNew:
-            serialize_tfl_new(
-                1, filename, filename2, [&](Type type, DataSize data_size,
-                    bytes_view header, bytes_view file1, bytes_view file2
-                ){
-                    RED_CHECK(type == Type::TflNew);
-                    RED_CHECK(data_size == DataSize(41));
-                    RED_CHECK(header == "\x01\x00\x00\x00\x00\x00\x00\x00\x0f\x00"_av);
-                    RED_CHECK(file1 == filename);
-                    RED_CHECK(file2 == filename2);
-                },
-                as_error()
-            );
-            [[fallthrough]];
+        CASE(Type::FdxNew, serialize_fdx_new, (filename), "\x03\x00\x0f\x00"_av, filename);
 
-        case Type::TflState:
-            serialize_tfl_stat(
-                1, FileSize(12), QuickHash{qhash}, FullHash{fhash},
-                [&](Type type, DataSize data_size,
-                    bytes_view prefix, bytes_view qhash_, bytes_view fhash_
-                ){
-                    RED_CHECK(type == Type::TflState);
-                    RED_CHECK(data_size == DataSize(80));
-                    RED_CHECK(prefix == "\x01\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00"_av);
-                    RED_CHECK(qhash == qhash_);
-                    RED_CHECK(fhash == fhash_);
-                }
-            );
+        CASE(Type::TflNew, serialize_tfl_new, (42, filename, filename2),
+            "\x04\x00*\x00\x00\x00\x00\x00\x00\x00\x0f\x00"_av, filename, "\x10\x00"_av, filename2);
+
+        CASE(Type::TflState, serialize_tfl_stat,
+            (42, FileSize(12), QuickHash{qhash}, FullHash{fhash}),
+            "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00"_av,
+            qhash, fhash);
     }
 }
