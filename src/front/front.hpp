@@ -933,16 +933,6 @@ public:
             return false;
         }
 
-        bool const capture_pattern_checker
-          = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
-
-        if (!ini.get<cfg::globals::is_rec>()) {
-            ini.set<cfg::video::capture_flags>(
-                capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none);
-            ini.set<cfg::video::png_limit>(0);
-        }
-
         LOG(LOG_INFO, "---<>  Front::can_be_start_capture  <>---");
 
         if (bool(this->verbose & Verbose::basic_trace)) {
@@ -979,7 +969,12 @@ public:
             }
         }
 
-        const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
+        bool const capture_pattern_checker
+          = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+          || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+
+        const CaptureFlags capture_flags = (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::capture_flags>() :
+            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none));
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
 
@@ -1020,7 +1015,7 @@ public:
             0, 0,
             ini.get<cfg::video::png_interval>(),
             100u,
-            ini.get<cfg::video::png_limit>(),
+            (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::png_limit>() : 0),
             true,
             this->client_info.remote_program,
             ini.get<cfg::video::rt_display>()
