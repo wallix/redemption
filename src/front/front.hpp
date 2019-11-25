@@ -1100,7 +1100,7 @@ public:
 
     [[nodiscard]] bool is_capture_in_progress() const override
     {
-        return (this->capture && this->capture->has_private_drawable());
+        return (this->capture && this->capture->has_wrm_capture());
     }
 
     Capture::RTDisplayResult set_rt_display(bool enable_rt_display)
