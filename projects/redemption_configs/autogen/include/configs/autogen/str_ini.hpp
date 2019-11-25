@@ -345,6 +345,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
+# This option takes precedence over the option Extra orders of section mod_rdp.
 #_advanced
 #disabled_orders = 
 
@@ -373,7 +374,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   16: MultiPatBlt
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
-#   22: Polyline
+#   22: PolylinePlease see also "Disabled orders" in "client" section.
 #_advanced
 #extra_orders = 15,16,17,18,22
 

@@ -290,6 +290,7 @@ bogus_pointer_xormask_padding = boolean(default=False)
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
+# This option takes precedence over the option Extra orders of section mod_rdp.
 #_advanced
 disabled_orders = string_list(default=list())
 
@@ -316,7 +317,7 @@ open_session_timeout = integer(min=0, default=0)
 #   16: MultiPatBlt
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
-#   22: Polyline
+#   22: PolylinePlease see also "Disabled orders" in "client" section.
 #_advanced
 extra_orders = string_list(default=list('15,16,17,18,22'))
 

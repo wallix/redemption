@@ -1146,6 +1146,7 @@ namespace cfg {
     ///   17: MultiScrBlt <br/>
     ///   18: MultiOpaqueRect <br/>
     ///   22: Polyline <br/>
+    /// This option takes precedence over the option Extra orders of section mod_rdp. <br/>
     /// type: std::string <br/>
     /// value = "" <br/>
     struct client::disabled_orders {
@@ -1200,7 +1201,7 @@ namespace cfg {
     ///   16: MultiPatBlt <br/>
     ///   17: MultiScrBlt <br/>
     ///   18: MultiOpaqueRect <br/>
-    ///   22: Polyline <br/>
+    ///   22: PolylinePlease see also "Disabled orders" in "client" section. <br/>
     /// type: std::string <br/>
     /// value = "15,16,17,18,22" <br/>
     struct mod_rdp::extra_orders {

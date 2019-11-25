@@ -275,7 +275,8 @@ void config_spec_definition(Writer && W)
             "  16: MultiPatBlt\n"
             "  17: MultiScrBlt\n"
             "  18: MultiOpaqueRect\n"
-            "  22: Polyline"
+            "  22: Polyline\n"
+            "This option takes precedence over the option Extra orders of section mod_rdp."
         }, set(""));
     });
 
@@ -297,6 +298,7 @@ void config_spec_definition(Writer && W)
             "  17: MultiScrBlt\n"
             "  18: MultiOpaqueRect\n"
             "  22: Polyline"
+            "Please see also \"Disabled orders\" in \"client\" section."
         }, set("15,16,17,18,22"));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
