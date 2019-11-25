@@ -2823,8 +2823,6 @@ public:
 
                                     this->front.server_relayout(monitor_layout_pdu);
 
-                                    LOG(LOG_INFO, "Dimension=%s", monitor_layout_pdu.get_dimension());
-
                                     this->monitor_count = ((monitor_layout_pdu.get_monitorCount() == 1) ? 0 : monitor_layout_pdu.get_monitorCount());
 
 #ifndef __EMSCRIPTEN__
@@ -4744,7 +4742,7 @@ public:
         //    "Domain username format 0=(%s) Domain username format 1=(%s)",
         //    domain_username_format_0, domain_username_format_0);
 
-        if (this->disconnect_on_logon_user_change 
+        if (this->disconnect_on_logon_user_change
             && ((0 != ::strcasecmp(domain, this->logon_info.domain().c_str())
              || 0 != ::strcasecmp(username, this->logon_info.username().c_str())) &&
              (this->logon_info.domain().c_str() ||

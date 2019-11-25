@@ -775,6 +775,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_id");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_addr");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_port");
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
     });
 }
 
