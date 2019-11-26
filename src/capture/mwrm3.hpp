@@ -47,6 +47,19 @@ namespace Mwrm3
 
     enum class FileSize : uint64_t;
 
+    template<class F, class FError>
+    auto unserialize_type(bytes_view av, F&& f, FError&& ferror)
+    {
+        if (av.size() >= 2)
+        {
+            return f(av.drop_front(2));
+        }
+        else
+        {
+            return ferror();
+        }
+    }
+
     // TODO 32 -> constante
 
     struct QuickHash
@@ -369,45 +382,46 @@ namespace Mwrm3
         template<class... Data>
         Buffer(Data...) -> Buffer<(... + wrap_type<Data>::type::size)>;
 
-        template<class F, class... x0>
-        auto unwrapper_group(F& f, readers::Group<x0...>& g0)
+        template<Type type>
+        using integral_type = std::integral_constant<Type, type>;
+
+        template<Type type, class F, class... x0>
+        auto unwrapper_group(F& f, bytes_view remaining, readers::Group<x0...>& g0)
         {
-            return f(static_cast<x0&>(g0).reader.value()...);
+            return f(std::integral_constant<Type, type>(), remaining,
+                static_cast<x0&>(g0).reader.value()...);
         }
 
-        template<class F, class... x0, class... x1>
-        auto unwrapper_group(F& f, readers::Group<x0...>& g0, readers::Group<x1...>& g1)
+        template<Type type, class F, class... x0, class... x1>
+        auto unwrapper_group(F& f, bytes_view remaining,
+            readers::Group<x0...>& g0,
+            readers::Group<x1...>& g1)
         {
-            return f(
+            return f(std::integral_constant<Type, type>(), remaining,
                 static_cast<x0&>(g0).reader.value()...,
                 static_cast<x1&>(g1).reader.value()...);
         }
 
-        template<class F, class... x0, class... x1, class... x2>
-        auto unwrapper_group(F& f,
+        template<Type type, class F, class... x0, class... x1, class... x2>
+        auto unwrapper_group(F& f, bytes_view remaining,
             readers::Group<x0...>& g0,
             readers::Group<x1...>& g1,
             readers::Group<x2...>& g2)
         {
-            return f(
+            return f(std::integral_constant<Type, type>(), remaining,
                 static_cast<x0&>(g0).reader.value()...,
                 static_cast<x1&>(g1).reader.value()...,
                 static_cast<x2&>(g2).reader.value()...);
         }
 
-        template<class F, class FError, class... ReaderGroup>
+        template<Type type, class F, class FError, class... ReaderGroup>
         auto unserialize(bytes_view buf, F&& f, FError&& ferror, ReaderGroup... reader)
         {
             InStream in{buf};
 
-            if ((... && reader.read(in)))
-            {
-                return unwrapper_group(f, reader...);
-            }
-            else
-            {
-                return ferror();
-            }
+            return ((... && reader.read(in)))
+                ? unwrapper_group<type>(f, in.remaining_bytes(), reader...)
+                : ferror();
         }
 
         template<Type type>
@@ -429,7 +443,7 @@ namespace Mwrm3
             template<class F, class FError>
             auto operator()(bytes_view buf, F&& f, FError&& ferror) const noexcept
             {
-                return unserialize(buf, f, ferror, readers::group(readers::u16bytes()));
+                return unserialize<type>(buf, f, ferror, readers::group(readers::u16bytes()));
             }
         };
     }
@@ -460,7 +474,7 @@ namespace Mwrm3
     auto unserialize_wrm_stat(bytes_view buf, F&& f, FError&& ferror)
     {
         using namespace detail::readers;
-        return detail::unserialize(buf, f, ferror,
+        return detail::unserialize<Type::WrmState>(buf, f, ferror,
             group(file_size(), seconds(), quick_hash(), full_hash())
         );
     }
@@ -491,7 +505,7 @@ namespace Mwrm3
     auto unserialize_tfl_new(bytes_view buf, F&& f, FError&& ferror)
     {
         using namespace detail::readers;
-        return detail::unserialize(buf, f, ferror,
+        return detail::unserialize<Type::TflNew>(buf, f, ferror,
             group(u64(), u16bytes()), group(u16bytes())
         );
     }
@@ -513,7 +527,7 @@ namespace Mwrm3
     auto unserialize_tfl_stat(bytes_view buf, F&& f, FError&& ferror)
     {
         using namespace detail::readers;
-        return detail::unserialize(buf, f, ferror,
+        return detail::unserialize<Type::TflState>(buf, f, ferror,
             group(u64(), file_size(), quick_hash(), full_hash())
         );
     }

@@ -28,10 +28,12 @@
 #include "utils/genfstat.hpp"
 #include "utils/c_interface.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/string_c.hpp"
 #include "std17/charconv.hpp"
 
 #include "main/version.hpp"
 
+#include <type_traits>
 #include <memory>
 
 #define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
@@ -990,6 +992,353 @@ char const * scytale_fdx_writer_get_error_message(ScytaleFdxWriterHandle * handl
 {
     SCOPED_TRACE;
     return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
+}
+
+}
+
+namespace
+{
+    enum class Result
+    {
+        Ok,
+        Unknown,
+        NeedMoreData,
+    };
+
+    template<class F, class FError>
+    decltype(auto) mwrm3_unserialize(Mwrm3::Type type, bytes_view av, F&& f_ok, FError&& f_error)
+    {
+        using namespace Mwrm3;
+
+#define X_CASE(f)                     \
+    f(WrmNew, unserialize_wrm_new)    \
+    f(WrmState, unserialize_wrm_stat) \
+    f(FdxNew, unserialize_fdx_new)    \
+    f(TflNew, unserialize_tfl_new)    \
+    f(TflState, unserialize_tfl_stat)
+
+#define LIST(v, f) decltype(f(av, f_ok, f_error)),
+#define CASE(v, f) case Type::v: return Result(f(av, f_ok, f_error));
+
+        using Result = std::common_type_t<X_CASE(LIST) decltype(f_error())>;
+
+
+        switch (type)
+        {
+            X_CASE(CASE)
+            case Type::None:;
+        }
+
+        return Result(f_error());
+
+#undef LIST
+#undef CASE
+#undef X_CASE
+    }
+
+    template<class F>
+    Result mwrm3_next_chunk(bytes_view av, F&& f)
+    {
+        if (av.size() > 2)
+        {
+            using namespace Mwrm3;
+
+            auto type = Type(InStream(av).in_uint16_le());
+            av = av.drop_front(2);
+
+            auto f_ok = [&](bytes_view remaining, auto... xs){
+                f(remaining, xs...);
+                return Result::Ok;
+            };
+            auto f_error = [](){ return Result::NeedMoreData; };
+
+            switch (type)
+            {
+                case Type::WrmNew: return unserialize_wrm_new(av, f_ok, f_error); break;
+                case Type::WrmState: return unserialize_wrm_stat(av, f_ok, f_error); break;
+                case Type::FdxNew: return unserialize_fdx_new(av, f_ok, f_error); break;
+                case Type::TflNew: return unserialize_tfl_new(av, f_ok, f_error); break;
+                case Type::TflState: return unserialize_tfl_stat(av, f_ok, f_error); break;
+
+                case Type::None:;
+            }
+
+            return Result::Unknown;
+        }
+
+        return Result::NeedMoreData;
+    }
+
+    template<class T>
+    constexpr char char_type_fmt()
+    {
+        if constexpr (std::is_same_v<T, bytes_view>)
+        {
+            return 's';
+        }
+        else if constexpr (std::is_enum_v<T> || std::is_unsigned_v<T>)
+        {
+            // unsigned
+            return 'u';
+        }
+        else /*if constexpr (std::is_signed_v<T>)*/
+        {
+            return 'i';
+        }
+    }
+
+    template<class... xs>
+    using string_type_fmt = jln::string_c<char_type_fmt<xs>()...>;
+
+    namespace detail
+    {
+        template<std::size_t i, class T>
+        struct tuple_elem
+        {
+            T value;
+        };
+
+        template<class... xs>
+        struct tuple : xs... {};
+
+        template<class Ints, class... xs>
+        struct tuple_impl;
+
+        template<std::size_t... ints, class... Ts>
+        struct tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>
+        {
+            using type = tuple<tuple_elem<ints, Ts>...>;
+        };
+    }
+
+    template<class... xs>
+    using tuple = typename detail::tuple_impl<std::index_sequence_for<xs...>, xs...>::type;
+
+    template<class... Ts>
+    struct storage_params
+    {
+        using fmt = string_type_fmt<Ts...>;
+        using storage = tuple<Ts...>;
+    };
+
+    template<Mwrm3::Type type> class tag
+    {
+        friend constexpr auto storage(tag<type>);
+    };
+
+    template<bool, Mwrm3::Type type, class... Ts>
+    struct _storage_binder
+    {
+        friend constexpr auto storage(tag<type>)
+        {
+            return storage_params<Ts...>{};
+        }
+    };
+
+    template<Mwrm3::Type type>
+    struct storage_binder
+    {
+        template<Mwrm3::Type U> static std::size_t ins(...);
+        template<Mwrm3::Type U, std::size_t = sizeof(test(tag<U>{}))> static char ins(int);
+
+        // instanciate _storage_binder::storage()
+        template<class... Ts, Mwrm3::Type U = type, std::size_t = sizeof(
+            _storage_binder<sizeof(ins<U>(0)) == sizeof(char), type, Ts...>)>
+        static void set_params()
+        {}
+    };
+
+    template<int i>
+    struct maxima_value
+    {
+        static const int value = i;
+
+        maxima_value() = default;
+
+        template<int j, class = std::enable_if_t<(j < i)>>
+        maxima_value(maxima_value<j> const&)
+        {}
+    };
+
+    template<Mwrm3::Type... types>
+    struct recursive_storage_union
+    {
+        struct type
+        {
+            detail::tuple<> storage;
+        };
+    };
+
+    template<Mwrm3::Type t, Mwrm3::Type... others>
+    struct recursive_storage_union<t, others...>
+    {
+        using storage_type = decltype(storage(tag<t>()));
+
+        union type
+        {
+
+            typename storage_type::storage storage;
+            typename recursive_storage_union<others...>::type next;
+
+            type() noexcept {}
+        };
+    };
+
+    // fastpath
+    template<Mwrm3::Type t0, Mwrm3::Type t1, Mwrm3::Type t2, Mwrm3::Type t3,
+        Mwrm3::Type... others>
+    struct recursive_storage_union<t0, t1, t2, t3, others...>
+    {
+        using storage_type0 = decltype(storage(tag<t0>()));
+        using storage_type1 = decltype(storage(tag<t1>()));
+        using storage_type2 = decltype(storage(tag<t2>()));
+        using storage_type3 = decltype(storage(tag<t3>()));
+
+        union type
+        {
+            typename storage_type0::storage storage;
+            union type1
+            {
+                typename storage_type1::storage storage;
+                union type2
+                {
+                    typename storage_type2::storage storage;
+                    union type3
+                    {
+                        typename storage_type3::storage storage;
+                        typename recursive_storage_union<others...>::type next;
+
+                        type3() noexcept {}
+                    } next;
+
+                    type2() noexcept {}
+                } next;
+
+                type1() noexcept {}
+            } next;
+
+            type() noexcept {}
+        };
+    };
+
+    template<class L>
+    struct storage_union;
+
+    template<std::size_t... ints>
+    struct storage_union<std::integer_sequence<size_t, 0, ints...>>
+    : recursive_storage_union<Mwrm3::Type(ints)...>
+    {};
+
+    template<unsigned i, class Union>
+    auto& get_union_element(Union& u)
+    {
+        if constexpr (i >= 8)
+        {
+            return get_union_element<i-8>(u.next.next.next.next.next.next.next.next);
+        }
+        else if constexpr (i >= 4)
+        {
+            return get_union_element<i-4>(u.next.next.next.next);
+        }
+        else if constexpr (i == 3)
+        {
+            return u.next.next.next;
+        }
+        else if constexpr (i == 2)
+        {
+            return u.next.next;
+        }
+        else if constexpr (i == 1)
+        {
+            return u.next;
+        }
+        else
+        {
+            return u;
+        }
+    }
+
+    template<std::size_t n>
+    struct storage_variant
+    {
+        using union_type = typename storage_union<std::make_index_sequence<n+1>>::type;
+
+        union_type v;
+    };
+}
+
+extern "C"
+{
+
+struct ScytaleMwrm3ReaderHandle
+{
+    ScytaleMwrm3ReaderHandle(ScytaleReaderHandle& reader)
+    : reader(reader)
+    {}
+
+    int next()
+    {
+        auto bind_params = [](auto type, bytes_view remaining, auto... xs){
+            storage_binder<type.value>::template set_params<decltype(xs)...>();
+            return maxima_value<int(type.value)>();
+        };
+
+        auto maxima = mwrm3_unserialize(Mwrm3::Type::None, {}, bind_params, []{
+            return maxima_value<0>();
+        });
+
+        // assomption: Mwrm3::Type has incremental value
+        storage_variant<maxima.value>();
+
+        return 0;
+    }
+
+    char const* types() const noexcept
+    {
+        return "";
+    }
+
+    void* data_at(int i) noexcept
+    {
+        return nullptr;
+    }
+
+    ScytaleReaderHandle& reader;
+    char buffer[1064*16];
+    ScytaleErrorContext error_ctx;
+};
+
+ScytaleMwrm3ReaderHandle * scytale_mwrm3_reader_new(ScytaleReaderHandle * reader)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE_R(reader, nullptr);
+    return CREATE_HANDLE(ScytaleMwrm3ReaderHandle(*reader));
+}
+
+int scytale_mwrm3_reader_read_next(ScytaleMwrm3ReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(return handle->next(), ERR_TRANSPORT_READ_FAILED);
+}
+
+char const* scytale_mwrm3_reader_current_types(ScytaleMwrm3ReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    return handle ? handle->types() : nullptr;
+}
+
+void* scytale_mwrm3_reader_current_data_at(ScytaleMwrm3ReaderHandle * handle, int i)
+{
+    SCOPED_TRACE;
+    return handle ? handle->data_at(i) : nullptr;
+}
+
+int scytale_mwrm3_reader_delete(ScytaleMwrm3ReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    delete handle; /*NOLINT*/
+    return 0;
 }
 
 }

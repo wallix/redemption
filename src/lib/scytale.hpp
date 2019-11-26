@@ -262,4 +262,21 @@ extern "C"
         ScytaleFdxWriterHandle * handle);
     //@}
 
+    // Mwrm3 Reader
+    //@{
+    REDEMPTION_LIB_EXPORT
+    ScytaleMwrm3ReaderHandle * scytale_mwrm3_reader_new(ScytaleReaderHandle * reader);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_mwrm3_reader_read_next(ScytaleMwrm3ReaderHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    char const* scytale_mwrm3_reader_current_types(ScytaleMwrm3ReaderHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    void* scytale_mwrm3_reader_current_data_at(ScytaleMwrm3ReaderHandle * handle, int i);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_mwrm3_reader_delete(ScytaleMwrm3ReaderHandle * handle);
+    //@}
 }

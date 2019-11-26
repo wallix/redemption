@@ -71,8 +71,12 @@ RED_AUTO_TEST_CASE(serialize)
             return str_concat(av.as_chars(), avs.as_chars()...);          \
         };                                                                \
         std::string data = fn(CASE_UNPACK params, checker);               \
-        un##fn(array_view(data).drop_front(2), [&](auto... xs){           \
-            /* for clang < 9 */                                           \
+        un##fn(array_view(data).drop_front(2), [&](                       \
+            Type type, bytes_view av, auto... xs                          \
+        ){                                                                \
+            RED_CHECK(type == type_test);                                 \
+            RED_CHECK(av.empty());                                        \
+            /* fix for clang < 9 */                                       \
             REDEMPTION_DIAGNOSTIC_PUSH                                    \
             REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-lambda-capture") \
             [&xs...](auto... ys){                                         \
