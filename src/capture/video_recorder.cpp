@@ -169,6 +169,10 @@ video_recorder::video_recorder(
     // keyframe managed by this->pkt.flags |= AV_PKT_FLAG_KEY and av_interleaved_write_frame
     this->video_st->codec->gop_size = std::max(2, frame_rate);
 
+#ifndef CODEC_FLAG_QSCALE
+#define CODEC_FLAG_QSCALE AV_CODEC_FLAG_QSCALE
+#endif
+
     this->video_st->codec->pix_fmt = STREAM_PIX_FMT;
     this->video_st->codec->flags |= CODEC_FLAG_QSCALE; // TODO
     this->video_st->codec->global_quality = FF_QP2LAMBDA * qscale; // TODO
@@ -207,6 +211,10 @@ video_recorder::video_recorder(
         break;
     }
     REDEMPTION_DIAGNOSTIC_POP
+
+#ifndef CODEC_FLAG_GLOBAL_HEADER
+#define CODEC_FLAG_GLOBAL_HEADER AV_CODEC_FLAG_GLOBAL_HEADER
+#endif
 
     // some formats want stream headers to be separate
     if(this->oc->oformat->flags & AVFMT_GLOBALHEADER){
@@ -266,7 +274,10 @@ video_recorder::video_recorder(
     };
     AvCodecPtr av_codec_close_if_fails{this};
 
-    if (!(this->oc->oformat->flags & AVFMT_RAWPICTURE)) {
+#ifdef AVFMT_RAWPICTURE
+    if (!(this->oc->oformat->flags & AVFMT_RAWPICTURE)) 
+#endif
+    {
         /* allocate output buffer */
         /* XXX: API change will be done */
         /* buffers passed into lav* can be allocated any way you prefer,
@@ -279,6 +290,7 @@ video_recorder::video_recorder(
             throw Error(ERR_RECORDER_FAILED_TO_ALLOCATE_PICTURE);
         }
     }
+
 
     // init picture frame
     {
