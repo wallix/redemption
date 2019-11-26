@@ -2202,12 +2202,22 @@ public:
                     LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                         "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
                         ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
+                    // Bug #14538
+                    // Workaround for a bug of RDP Linux client xfreerdp.
+                    // freerdp send 4 keyboard events in a FastPath packet
+                    // pretending (bogusly) it only contains 1
+                    // Microsoft RDP Servers seems able to handle that ill formed message
 
-                    if ((1 == num_events) &&
-                        (0 == i) &&
-                        (cfpie.payload.in_remain() == 6) &&
-                        (0x1D == ke.keyCode) &&
-                        (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
+                    // Microsoft RDP Clients (mstsc from Windows 10 or Windows 2003)
+                    // are sending correctly formed messages.
+
+                    // rdesktop Linux client is not affected 
+                    // (sending only slowpath keyboard input events)
+                    if ((1 == num_events) 
+                    && (0 == i) 
+                    && (cfpie.payload.in_remain() == 6) 
+                    && (0x1D == ke.keyCode) 
+                    && (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
                          BogusNumberOfFastpathInputEvent::pause_key_only)) {
                         LOG(LOG_INFO,
                             "Front::incoming: BogusNumberOfFastpathInputEvent::pause_key_only");
