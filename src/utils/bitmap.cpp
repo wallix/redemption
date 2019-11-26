@@ -167,10 +167,12 @@ Bitmap::Bitmap(const uint8_t *data, size_t stride, const Rect &rect)
     : data_bitmap(DataBitmap::construct(BitsPerPixel{32}, rect.width(), rect.height()))
 {
     uint8_t *dest = this->data_bitmap->get();
-    const uint8_t *src = data + ((rect.ebottom() - 1) * stride) + (4 * rect.ileft());
+    const size_t pixelSize = 4;
+    const size_t lineSize = rect.width() * pixelSize;
+    const uint8_t *src = data + ((rect.ebottom() - 1) * stride) + (pixelSize * rect.ileft());
 
-    for (uint16_t i = 0; i < rect.height(); i++, src-= stride, dest += rect.width() * 4) {
-        memcpy(dest, src, rect.width() * 4);
+    for (uint16_t i = 0; i < rect.height(); i++, src-= stride, dest += lineSize) {
+        memcpy(dest, src, lineSize);
     }
 }
 

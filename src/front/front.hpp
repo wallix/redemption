@@ -237,10 +237,14 @@ private:
                         );
                     const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(new_bmp.bpp()));
 
+                    /*LOG(LOG_DEBUG, "draw(RDPBitmapData,Bitmap): x=%d y=%d max_w=%d max_h=%d", new_bmp.cx(), new_bmp.cy(),
+                    		max_image_width, max_image_height);*/
+
                     contiguous_sub_rect_f(
                         CxCy{new_bmp.cx(), new_bmp.cy()},
                         SubCxCy{max_image_width, max_image_height},
                         [&](Rect subrect){
+                            /*LOG(LOG_INFO, " *subrect: (%d,%d)-%dx%d", subrect.x, subrect.y, subrect.width(), subrect.height());*/
                             Bitmap sub_image(new_bmp, subrect);
 
                             StaticOutStream<65535> bmp_stream;
@@ -4478,20 +4482,16 @@ protected:
         }
 
         /* no front remoteFx support, fallback and transcode to bitmapUpdates */
-        for (const Rect & rect1 : content.region.rects) {
-        	int16_t x1 = rect1.x & ~3;
-        	int16_t y1 = rect1.y & ~3;
-        	int16_t x2 = align4(rect1.eright());
-        	int16_t y2 = align4(rect1.ebottom());
-            Rect rect(x1, y1, x2-x1, y2-y1);
+        for (const Rect & rect : content.region.rects) {
 
             Bitmap bitmap(content.data, content.stride, rect);
-
-            LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
-                    rect1.ileft(), rect1.itop(), rect1.width(), rect1.height(),
-                    rect.ileft(), rect.itop(), rect.width(), rect.height());
             RDPBitmapData bitmap_data;
             const Rect &base = cmd.destRect;
+
+            LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): base=(%d,%d) (%d,%d)-%dx%d",
+            		base.x, base.y,
+                    rect.ileft(), rect.itop(), rect.width(), rect.height());
+
             bitmap_data.dest_left = base.x + rect.ileft();
             bitmap_data.dest_right = base.x + rect.eright() - 1;
             bitmap_data.dest_top = base.y + rect.itop();
