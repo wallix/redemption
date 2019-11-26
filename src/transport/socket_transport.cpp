@@ -193,7 +193,10 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
     ssize_t const res = this->tls ? this->tls->privpartial_recv_tls(buffer, len) : socket_recv_partial(this->sck, buffer, len);
 
     if (res <= 0){
-        LOG(LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket! (%s)", this->name);
+        if (0 == strcmp("127.0.0.1", this->ip_address)){
+            // silent trace in the case of watchdog
+            LOG(LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket! (%s)", this->name);
+        }
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
     }
 
