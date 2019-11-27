@@ -1081,7 +1081,7 @@ namespace
             // unsigned
             return 'u';
         }
-        else /*if constexpr (std::is_signed_v<T>)*/
+        else if constexpr (std::is_signed_v<T>)
         {
             return 'i';
         }

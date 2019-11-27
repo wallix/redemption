@@ -38,7 +38,7 @@ namespace
     auto ramify(std::chrono::seconds seconds) { return seconds.count(); }
 }
 
-RED_AUTO_TEST_CASE(serialize)
+RED_AUTO_TEST_CASE(serialize_unserialize)
 {
     using namespace Mwrm3;
 
@@ -57,7 +57,12 @@ RED_AUTO_TEST_CASE(serialize)
 #define CASE(type_test, fn, params, ...) [[fallthrough]];                 \
     case type_test: do {                                                  \
         bytes_view rhs[]{__VA_ARGS__};                                    \
-        auto checker = [&](Type type, bytes_view av, auto... avs){        \
+                                                                          \
+        /* serialize */                                                   \
+                                                                          \
+        fn(CASE_UNPACK params, [&](                                       \
+            Type type, bytes_view av, auto... avs                         \
+        ){                                                                \
             RED_CHECK(type == type_test);                                 \
             RED_CHECK(type == Type(InStream(av).in_uint8()));             \
             bytes_view lhs[]{av, avs...};                                 \
@@ -68,24 +73,27 @@ RED_AUTO_TEST_CASE(serialize)
                     RED_CHECK(lhs[i] == rhs[i]);                          \
                 }                                                         \
             }                                                             \
-            return str_concat(av.as_chars(), avs.as_chars()...);          \
-        };                                                                \
-        std::string data = fn(CASE_UNPACK params, checker);               \
+        });                                                               \
+                                                                          \
+        /* unserialize */                                                 \
+                                                                          \
+        auto data = str_concat(__VA_ARGS__);                              \
         un##fn(array_view(data).drop_front(2), [&](                       \
-            Type type, bytes_view av, auto... xs                          \
+            Type type, bytes_view remaining, auto... xs                   \
         ){                                                                \
             RED_CHECK(type == type_test);                                 \
-            RED_CHECK(av.empty());                                        \
+            RED_CHECK(remaining.empty());                                 \
+            int i = 0;                                                    \
+            auto cmp = [&i](auto x, auto y){                              \
+                RED_TEST_CONTEXT("i = " << i++) {                         \
+                    RED_CHECK(ramify(y) == ramify(x));                    \
+                }                                                         \
+            };                                                            \
             /* fix for clang < 9 */                                       \
             REDEMPTION_DIAGNOSTIC_PUSH                                    \
             REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-lambda-capture") \
-            [&xs...](auto... ys){                                         \
-                int i = 0;                                                \
-                ([&](){                                                   \
-                    RED_TEST_CONTEXT("i = " << i++) {                     \
-                        RED_CHECK(ramify(ys) == ramify(xs));              \
-                    }                                                     \
-                }(), ...);                                                \
+            [&, xs...](auto... ys){                                       \
+                (cmp(ys, xs), ...);                                       \
             }(CASE_UNPACK params);                                        \
             REDEMPTION_DIAGNOSTIC_POP                                     \
         }, [](){ RED_FAIL("error on un" #fn); });                         \
