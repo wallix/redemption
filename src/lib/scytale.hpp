@@ -110,7 +110,8 @@ extern "C"
 
     /// < 0: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT
-    int scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len);
+    long long scytale_reader_read(ScytaleReaderHandle * handle,
+        uint8_t * buffer, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
     int scytale_reader_close(ScytaleReaderHandle * handle);
@@ -267,14 +268,19 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     ScytaleMwrm3ReaderHandle * scytale_mwrm3_reader_new(ScytaleReaderHandle * reader);
 
-    REDEMPTION_LIB_EXPORT
-    int scytale_mwrm3_reader_read_next(ScytaleMwrm3ReaderHandle * handle);
+    struct ScytaleMwrm3ReaderData
+    {
+        uint32_t type;
+        char const* fmt;
+        void const* data;
+    };
 
     REDEMPTION_LIB_EXPORT
-    char const* scytale_mwrm3_reader_current_types(ScytaleMwrm3ReaderHandle * handle);
+    ScytaleMwrm3ReaderData const* scytale_mwrm3_reader_read_next(
+        ScytaleMwrm3ReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    void* scytale_mwrm3_reader_current_data_at(ScytaleMwrm3ReaderHandle * handle, int i);
+    char const * scytale_mwrm3_reader_get_error_message(ScytaleMwrm3ReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
     int scytale_mwrm3_reader_delete(ScytaleMwrm3ReaderHandle * handle);

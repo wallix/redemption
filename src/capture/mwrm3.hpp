@@ -43,6 +43,9 @@ namespace Mwrm3
         TflState,
     };
 
+    template<Type type>
+    using integral_type = std::integral_constant<Type, type>;
+
     inline constexpr auto top_header = "v3\n"_av;
 
     enum class FileSize : uint64_t;
@@ -381,9 +384,6 @@ namespace Mwrm3
 
         template<class... Data>
         Buffer(Data...) -> Buffer<(... + wrap_type<Data>::type::size)>;
-
-        template<Type type>
-        using integral_type = std::integral_constant<Type, type>;
 
         template<Type type, class F, class... x0>
         auto unwrapper_group(F& f, bytes_view remaining, readers::Group<x0...>& g0)

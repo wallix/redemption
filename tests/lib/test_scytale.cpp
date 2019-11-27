@@ -27,7 +27,10 @@
 #include "utils/sugar/algostring.hpp"
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
+
 #include <string_view>
+#include <fstream>
+
 
 using namespace std::string_view_literals;
 
@@ -547,3 +550,39 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         }
     }
 }
+
+
+// RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
+// {
+//     auto filename = wd.add_file("a.mwrm3");
+//
+//     std::ofstream(filename.string()) <<
+//         "v3\n"
+//         "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
+//         "file2.txt\x1b\x00""0123456789abcdef,000002.tfl"
+//         "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"
+//     ;
+//
+//     auto reader = scytale_reader_new(filename.c_str(), nullptr, nullptr, 0, 0);
+//     RED_REQUIRE(reader);
+//
+//     auto mwrm3 = scytale_mwrm3_reader_new(reader);
+//     RED_REQUIRE(mwrm3);
+//
+//     ScytaleMwrm3ReaderData const* data;
+//
+//     data = scytale_mwrm3_reader_read_next(mwrm3);
+//     RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+//     RED_REQUIRE(data);
+//     RED_TEST(data->fmt == "bbb");
+//
+//     data = scytale_mwrm3_reader_read_next(mwrm3);
+//     RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+//     RED_REQUIRE(data);
+//     RED_TEST(data->fmt == "bbb");
+//
+//     RED_TEST(!scytale_mwrm3_reader_read_next(mwrm3));
+//
+//     scytale_mwrm3_reader_delete(mwrm3);
+//     scytale_reader_delete(reader);
+// }

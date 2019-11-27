@@ -238,13 +238,13 @@ static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
 
 namespace
 {
+    constexpr inline char const* hexadecimal_string = "0123456789ABCDEF";
     inline void hash_to_hashhex(HashArray const & hash, HashHexArray& hashhex) noexcept {
-        char const * t = "0123456789ABCDEF";
         static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
         auto phex = hashhex;
         for (uint8_t c : hash) {
-            *phex++ = t[c >> 4];
-            *phex++ = t[c & 0xf];
+            *phex++ = hexadecimal_string[c >> 4];
+            *phex++ = hexadecimal_string[c & 0xf];
         }
         *phex = '\0';
     }
@@ -428,10 +428,10 @@ int scytale_reader_open_with_auto_detect_encryption_scheme(
 
 
 // 0: if end of file, len: if data was read, negative number on error
-int scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len) {
+long long scytale_reader_read(ScytaleReaderHandle * handle, uint8_t * buffer, unsigned long len) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(return int(handle->in_crypto_transport.partial_read(buffer, len)), ERR_TRANSPORT_READ_FAILED);
+    CHECK_NOTHROW(return handle->in_crypto_transport.partial_read(buffer, len), ERR_TRANSPORT_READ_FAILED);
 }
 
 
@@ -998,75 +998,76 @@ char const * scytale_fdx_writer_get_error_message(ScytaleFdxWriterHandle * handl
 
 namespace
 {
-    enum class Result
-    {
-        Ok,
-        Unknown,
-        NeedMoreData,
-    };
-
     template<class F, class FError>
     decltype(auto) mwrm3_unserialize(Mwrm3::Type type, bytes_view av, F&& f_ok, FError&& f_error)
     {
         using namespace Mwrm3;
 
-#define X_CASE(f)                     \
+        auto error_caller = [&](auto type){
+            return [&f_error]{
+                return f_error(decltype(type){});
+            };
+        };
+
+        auto unknown_type_error = error_caller(integral_type<Type::None>());
+
+#define X_MACRO(f)                    \
     f(WrmNew, unserialize_wrm_new)    \
     f(WrmState, unserialize_wrm_stat) \
     f(FdxNew, unserialize_fdx_new)    \
     f(TflNew, unserialize_tfl_new)    \
     f(TflState, unserialize_tfl_stat)
 
-#define LIST(v, f) decltype(f(av, f_ok, f_error)),
-#define CASE(v, f) case Type::v: return Result(f(av, f_ok, f_error));
+#define CALL(v, f) f(av, f_ok, error_caller(integral_type<Type::v>()))
+#define TYPE(v, f) decltype(CALL(v, f)),
+#define CASE(v, f) case Type::v: return Result(CALL(v, f));
 
-        using Result = std::common_type_t<X_CASE(LIST) decltype(f_error())>;
-
+        using Result = std::common_type_t<X_MACRO(TYPE) decltype(unknown_type_error())>;
 
         switch (type)
         {
-            X_CASE(CASE)
+            X_MACRO(CASE)
             case Type::None:;
         }
 
-        return Result(f_error());
+        return Result(unknown_type_error());
 
 #undef LIST
+#undef TYPE
 #undef CASE
-#undef X_CASE
+#undef X_MACRO
     }
 
-    template<class F>
-    Result mwrm3_next_chunk(bytes_view av, F&& f)
+    enum class Mwrm3ParserResult
     {
-        if (av.size() > 2)
+        Ok,
+        UnknownType,
+        NeedMoreData,
+    };
+
+    template<class F>
+    Mwrm3ParserResult mwrm3_parse(bytes_view av, F&& f)
+    {
+        if (av.size() >= 2)
         {
             using namespace Mwrm3;
 
-            auto type = Type(InStream(av).in_uint16_le());
-            av = av.drop_front(2);
-
-            auto f_ok = [&](bytes_view remaining, auto... xs){
-                f(remaining, xs...);
-                return Result::Ok;
+            auto f_ok = [&](auto type, bytes_view remaining, auto... xs){
+                f(type, remaining, xs...);
+                return Mwrm3ParserResult::Ok;
             };
-            auto f_error = [](){ return Result::NeedMoreData; };
+            auto f_error = [](Type type){
+                return type == Type::None
+                    ? Mwrm3ParserResult::UnknownType
+                    : Mwrm3ParserResult::NeedMoreData;
+            };
 
-            switch (type)
-            {
-                case Type::WrmNew: return unserialize_wrm_new(av, f_ok, f_error); break;
-                case Type::WrmState: return unserialize_wrm_stat(av, f_ok, f_error); break;
-                case Type::FdxNew: return unserialize_fdx_new(av, f_ok, f_error); break;
-                case Type::TflNew: return unserialize_tfl_new(av, f_ok, f_error); break;
-                case Type::TflState: return unserialize_tfl_stat(av, f_ok, f_error); break;
-
-                case Type::None:;
-            }
-
-            return Result::Unknown;
+            InStream in(av);
+            auto type = Type(in.in_uint16_le());
+            return mwrm3_unserialize(type, in.remaining_bytes(), f_ok, f_error);
         }
 
-        return Result::NeedMoreData;
+        return Mwrm3ParserResult::NeedMoreData;
     }
 
     template<class T>
@@ -1076,9 +1077,8 @@ namespace
         {
             return 's';
         }
-        else if constexpr (std::is_enum_v<T> || std::is_unsigned_v<T>)
+        else if constexpr (std::is_unsigned_v<T>)
         {
-            // unsigned
             return 'u';
         }
         else if constexpr (std::is_signed_v<T>)
@@ -1114,53 +1114,32 @@ namespace
     template<class... xs>
     using tuple = typename detail::tuple_impl<std::index_sequence_for<xs...>, xs...>::type;
 
-    template<class... Ts>
+    template<class Type, class... Ts>
     struct storage_params
     {
         using fmt = string_type_fmt<Ts...>;
-        using storage = tuple<Ts...>;
+        using mwrm3_type = Type;
+        using storage_type = tuple<Ts...>;
     };
 
-    template<Mwrm3::Type type> class tag
+    template<class... Ts>
+    struct storage_list
     {
-        friend constexpr auto storage(tag<type>);
-    };
+        storage_list() = default;
 
-    template<bool, Mwrm3::Type type, class... Ts>
-    struct _storage_binder
-    {
-        friend constexpr auto storage(tag<type>)
-        {
-            return storage_params<Ts...>{};
-        }
-    };
-
-    template<Mwrm3::Type type>
-    struct storage_binder
-    {
-        template<Mwrm3::Type U> static std::size_t ins(...);
-        template<Mwrm3::Type U, std::size_t = sizeof(test(tag<U>{}))> static char ins(int);
-
-        // instanciate _storage_binder::storage()
-        template<class... Ts, Mwrm3::Type U = type, std::size_t = sizeof(
-            _storage_binder<sizeof(ins<U>(0)) == sizeof(char), type, Ts...>)>
-        static void set_params()
+        template<class... Us>
+        storage_list(storage_list<Us...>) noexcept
         {}
+
+        static const std::size_t size = sizeof...(Ts);
     };
 
-    template<int i>
-    struct maxima_value
-    {
-        static const int value = i;
+    // storage list for error (test ? storage_list<xs...> : storage_list<>) -> storage_list<xs...>
+    template<>
+    struct storage_list<>
+    {};
 
-        maxima_value() = default;
-
-        template<int j, class = std::enable_if_t<(j < i)>>
-        maxima_value(maxima_value<j> const&)
-        {}
-    };
-
-    template<Mwrm3::Type... types>
+    template<class... StorageParams>
     struct recursive_storage_union
     {
         struct type
@@ -1169,15 +1148,14 @@ namespace
         };
     };
 
-    template<Mwrm3::Type t, Mwrm3::Type... others>
-    struct recursive_storage_union<t, others...>
+    template<class StorageParams0, class ... others>
+    struct recursive_storage_union<StorageParams0, others...>
     {
-        using storage_type = decltype(storage(tag<t>()));
-
         union type
         {
+            using storage_params = StorageParams0;
 
-            typename storage_type::storage storage;
+            typename storage_params::storage_type storage;
             typename recursive_storage_union<others...>::type next;
 
             type() noexcept {}
@@ -1185,27 +1163,39 @@ namespace
     };
 
     // fastpath
-    template<Mwrm3::Type t0, Mwrm3::Type t1, Mwrm3::Type t2, Mwrm3::Type t3,
-        Mwrm3::Type... others>
-    struct recursive_storage_union<t0, t1, t2, t3, others...>
+    template<
+        class StorageParams0,
+        class StorageParams1,
+        class StorageParams2,
+        class StorageParams3,
+        class... others>
+    struct recursive_storage_union<
+        StorageParams0,
+        StorageParams1,
+        StorageParams2,
+        StorageParams3,
+        others...>
     {
-        using storage_type0 = decltype(storage(tag<t0>()));
-        using storage_type1 = decltype(storage(tag<t1>()));
-        using storage_type2 = decltype(storage(tag<t2>()));
-        using storage_type3 = decltype(storage(tag<t3>()));
-
         union type
         {
-            typename storage_type0::storage storage;
+            using storage_params = StorageParams0;
+
+            typename storage_params::storage_type storage;
             union type1
             {
-                typename storage_type1::storage storage;
+                using storage_params = StorageParams1;
+
+                typename storage_params::storage_type storage;
                 union type2
                 {
-                    typename storage_type2::storage storage;
+                    using storage_params = StorageParams2;
+
+                    typename storage_params::storage_type storage;
                     union type3
                     {
-                        typename storage_type3::storage storage;
+                        using storage_params = StorageParams3;
+
+                        typename storage_params::storage_type storage;
                         typename recursive_storage_union<others...>::type next;
 
                         type3() noexcept {}
@@ -1220,14 +1210,6 @@ namespace
             type() noexcept {}
         };
     };
-
-    template<class L>
-    struct storage_union;
-
-    template<std::size_t... ints>
-    struct storage_union<std::integer_sequence<size_t, 0, ints...>>
-    : recursive_storage_union<Mwrm3::Type(ints)...>
-    {};
 
     template<unsigned i, class Union>
     auto& get_union_element(Union& u)
@@ -1258,13 +1240,91 @@ namespace
         }
     }
 
-    template<std::size_t n>
-    struct storage_variant
-    {
-        using union_type = typename storage_union<std::make_index_sequence<n+1>>::type;
+    template<class L>
+    struct storage_variant;
 
-        union_type v;
+    template<class... StorageParams>
+    struct storage_variant<storage_list<StorageParams...>>
+    {
+        using union_type = typename recursive_storage_union<
+            StorageParams...,
+            storage_params<void>
+        >::type;
+
+        constexpr static unsigned get_index(Mwrm3::Type type)
+        {
+            unsigned i = 0;
+            (void)(... && (StorageParams::mwrm3_type::value != type && ++i));
+            return i;
+        }
+
+        template<class Mwrm3Type>
+        auto& operator[](Mwrm3Type type)
+        {
+            return get_union_element<get_index(type)>(this->u);
+        }
+
+        union_type u;
     };
+}
+
+namespace std
+{
+    template<class... Ts, class... Us>
+    struct common_type<storage_list<Ts...>, storage_list<Us...>>
+    {
+        using type = storage_list<Ts..., Us...>;
+    };
+}
+
+namespace
+{
+    template<class T>
+    auto mwrm3_raw_value(T const& x)
+    {
+        if constexpr (std::is_enum_v<T>)
+        {
+            return std::underlying_type_t<T>();
+        }
+        else if constexpr (std::is_same_v<Mwrm3::QuickHash, T>)
+        {
+            return x.hash;
+        }
+        else if constexpr (std::is_same_v<Mwrm3::FullHash, T>)
+        {
+            return x.hash;
+        }
+        else if constexpr (std::is_same_v<bytes_view, T>)
+        {
+            return x;
+        }
+        else if constexpr (std::is_integral_v<T>)
+        {
+            return x;
+        }
+        else
+        {
+            // assume std::chrono::duration
+            return x.count();
+        }
+    }
+
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-internal-declaration")
+    // returns a storage_list of storage_params
+    inline auto make_storage_list()
+    {
+        auto bind_params = [](auto type, bytes_view /*remaining*/, auto... xs){
+            return storage_list<storage_params<
+                decltype(type), decltype(mwrm3_raw_value(xs))...
+            >>();
+        };
+
+        return mwrm3_unserialize(Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type){
+            return storage_list<>();
+        });
+    }
+    REDEMPTION_DIAGNOSTIC_POP
 }
 
 extern "C"
@@ -1276,36 +1336,89 @@ struct ScytaleMwrm3ReaderHandle
     : reader(reader)
     {}
 
-    int next()
+    char const* get_error() const noexcept
     {
-        auto bind_params = [](auto type, bytes_view remaining, auto... xs){
-            storage_binder<type.value>::template set_params<decltype(xs)...>();
-            return maxima_value<int(type.value)>();
+        return this->message_error.c_str();
+    }
+
+    ScytaleMwrm3ReaderData const* next()
+    {
+        auto store_values = [this](auto type, bytes_view remaining_data, auto... xs){
+            auto& union_element = this->storage_variant[type];
+            using UnionElement = std::remove_reference_t<decltype(union_element)>;
+            using StorageParams = typename UnionElement::storage_params;
+
+            this->raw_data.type = safe_int{type.value};
+            this->raw_data.fmt = StorageParams::fmt::c_str();
+            this->raw_data.data = new(&union_element.storage)
+                typename StorageParams::storage_type{{mwrm3_raw_value(xs)}...};
+
+            this->remaining_data = remaining_data;
         };
 
-        auto maxima = mwrm3_unserialize(Mwrm3::Type::None, {}, bind_params, []{
-            return maxima_value<0>();
-        });
+        for (;;)
+        {
+            switch (mwrm3_parse(this->remaining_data, store_values))
+            {
+                case Mwrm3ParserResult::Ok:
+                    return &this->raw_data;
 
-        // assomption: Mwrm3::Type has incremental value
-        storage_variant<maxima.value>();
+                case Mwrm3ParserResult::UnknownType: {
+                    auto int_type = InStream(this->remaining_data).in_uint16_le();
+                    const char chars[]{
+                        hexadecimal_string[(int_type >> 12)],
+                        hexadecimal_string[(int_type >> 8) & 0xff],
+                        hexadecimal_string[(int_type >> 4) & 0xff],
+                        hexadecimal_string[int_type & 0xff],
+                    };
+                    str_assign(this->message_error,
+                        "Unknown type: 0x"_av, make_array_view(chars));
+                    return nullptr;
+                }
 
-        return 0;
+                case Mwrm3ParserResult::NeedMoreData: {
+                    if (this->remaining_data.size() == this->buffer.size())
+                    {
+                        str_assign(this->message_error, "Data too large"_av);
+                        return nullptr;
+                    }
+
+                    memmove(this->buffer.data(), this->remaining_data.data(), this->remaining_data.size());
+
+                    auto free_buffer_len = this->buffer.size() - this->remaining_data.size();
+
+                    long long r = scytale_reader_read(
+                        &this->reader, this->buffer.end(), free_buffer_len);
+
+                    if (r <= 0)
+                    {
+                        if (r != 0)
+                        {
+                            str_assign(this->message_error,
+                                "Read error: ", this->reader.error_ctx.message());
+                        }
+                        return nullptr;
+                    }
+
+                    this->remaining_data = array_view(this->buffer).drop_front(free_buffer_len);
+                }
+            }
+        }
     }
 
-    char const* types() const noexcept
-    {
-        return "";
-    }
-
-    void* data_at(int i) noexcept
-    {
-        return nullptr;
-    }
-
+private:
     ScytaleReaderHandle& reader;
-    char buffer[1064*16];
-    ScytaleErrorContext error_ctx;
+    bytes_view remaining_data;
+
+    using storage_list_t = decltype(make_storage_list());
+
+    ScytaleMwrm3ReaderData raw_data;
+
+    ::storage_variant<storage_list_t> storage_variant;
+
+    std::string message_error;
+
+    std::array<uint8_t, 1064*16> buffer;
 };
 
 ScytaleMwrm3ReaderHandle * scytale_mwrm3_reader_new(ScytaleReaderHandle * reader)
@@ -1315,23 +1428,17 @@ ScytaleMwrm3ReaderHandle * scytale_mwrm3_reader_new(ScytaleReaderHandle * reader
     return CREATE_HANDLE(ScytaleMwrm3ReaderHandle(*reader));
 }
 
-int scytale_mwrm3_reader_read_next(ScytaleMwrm3ReaderHandle * handle)
+ScytaleMwrm3ReaderData const* scytale_mwrm3_reader_read_next(ScytaleMwrm3ReaderHandle * handle)
 {
     SCOPED_TRACE;
-    CHECK_HANDLE(handle);
-    CHECK_NOTHROW(return handle->next(), ERR_TRANSPORT_READ_FAILED);
+    CHECK_HANDLE_R(handle, nullptr);
+    return handle->next();
 }
 
-char const* scytale_mwrm3_reader_current_types(ScytaleMwrm3ReaderHandle * handle)
+char const * scytale_mwrm3_reader_get_error_message(ScytaleMwrm3ReaderHandle * handle)
 {
     SCOPED_TRACE;
-    return handle ? handle->types() : nullptr;
-}
-
-void* scytale_mwrm3_reader_current_data_at(ScytaleMwrm3ReaderHandle * handle, int i)
-{
-    SCOPED_TRACE;
-    return handle ? handle->data_at(i) : nullptr;
+    return handle ? handle->get_error() : nullptr;
 }
 
 int scytale_mwrm3_reader_delete(ScytaleMwrm3ReaderHandle * handle)
