@@ -36,6 +36,42 @@ namespace
     bytes_view ramify(Mwrm3::QuickHash h) { return h.hash; }
     bytes_view ramify(Mwrm3::FullHash h) { return h.hash; }
     auto ramify(std::chrono::seconds seconds) { return seconds.count(); }
+
+    template<std::size_t n>
+    struct SerializeResult
+    {
+        Mwrm3::Type type;
+        std::array<std::vector<uint8_t>, n> buffers;
+    };
+
+    template<class... Ts>
+    struct UnserializeResult
+    {
+        Mwrm3::Type type;
+        std::size_t remaining;
+        std::tuple<Ts...> values;
+    };
+
+    struct CommonType
+    {
+        template<class T>
+        operator T () const { return T(); }
+    };
+
+    inline constexpr auto make_serialize_result = [](Mwrm3::Type type, auto... bytes_views){
+        return SerializeResult<sizeof...(bytes_views)>{
+            type,
+            {std::vector<uint8_t>(bytes_views.begin(), bytes_views.end())...}
+        };
+    };
+
+    inline constexpr auto make_unserialize_result = [](Mwrm3::Type type, auto remaining_bytes, auto... values){
+        return UnserializeResult<std::decay_t<decltype(ramify(values))>...>{
+            type,
+            remaining_bytes.size(),
+            {ramify(values)...}
+        };
+    };
 }
 
 RED_AUTO_TEST_CASE(serialize_unserialize)
@@ -54,49 +90,55 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
         case Type::None:
 
 #define CASE_UNPACK(...) __VA_ARGS__
-#define CASE(type_test, fn, params, ...) [[fallthrough]];                 \
-    case type_test: do {                                                  \
-        bytes_view rhs[]{__VA_ARGS__};                                    \
-                                                                          \
-        /* serialize */                                                   \
-                                                                          \
-        fn(CASE_UNPACK params, [&](                                       \
-            Type type, bytes_view av, auto... avs                         \
-        ){                                                                \
-            RED_CHECK(type == type_test);                                 \
-            RED_CHECK(type == Type(InStream(av).in_uint8()));             \
-            bytes_view lhs[]{av, avs...};                                 \
-            should_be_same_size<sizeof(lhs)/sizeof(lhs[0])>{} =           \
-                should_be_same_size<sizeof(rhs)/sizeof(rhs[0])>{};        \
-            for (unsigned i = 0; i < std::size(lhs); ++i) {               \
-                RED_TEST_CONTEXT("i = " << i) {                           \
-                    RED_CHECK(lhs[i] == rhs[i]);                          \
-                }                                                         \
-            }                                                             \
-        });                                                               \
-                                                                          \
-        /* unserialize */                                                 \
-                                                                          \
-        auto data = str_concat(__VA_ARGS__);                              \
-        un##fn(array_view(data).drop_front(2), [&](                       \
-            Type type, bytes_view remaining, auto... xs                   \
-        ){                                                                \
-            RED_CHECK(type == type_test);                                 \
-            RED_CHECK(remaining.empty());                                 \
-            int i = 0;                                                    \
-            auto cmp = [&i](auto x, auto y){                              \
-                RED_TEST_CONTEXT("i = " << i++) {                         \
-                    RED_CHECK(ramify(y) == ramify(x));                    \
-                }                                                         \
-            };                                                            \
-            /* fix for clang < 9 */                                       \
-            REDEMPTION_DIAGNOSTIC_PUSH                                    \
-            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-lambda-capture") \
-            [&, xs...](auto... ys){                                       \
-                (cmp(ys, xs), ...);                                       \
-            }(CASE_UNPACK params);                                        \
-            REDEMPTION_DIAGNOSTIC_POP                                     \
-        }, [](){ RED_FAIL("error on un" #fn); });                         \
+#define CASE(type_test, fn, params, /*output_buffer*/...) [[fallthrough]];                    \
+    case type_test: do {                                                                      \
+        const bytes_view output_buffers[]{__VA_ARGS__};                                       \
+        const auto input_buffer = str_concat(__VA_ARGS__);                                    \
+        const auto input_buffer_without_type = array_view(input_buffer).drop_front(2);        \
+                                                                                              \
+        const auto unserialize_error = [](){                                                  \
+            RED_FAIL("error on un" #fn);                                                      \
+            return CommonType{};                                                              \
+        };                                                                                    \
+                                                                                              \
+        auto serialize_result = fn(CASE_UNPACK params,                                        \
+            make_serialize_result);                                                           \
+        auto unserialize_result = un##fn(input_buffer_without_type,                           \
+            make_unserialize_result, unserialize_error);                                      \
+                                                                                              \
+        /* test serialize */                                                                  \
+                                                                                              \
+        {                                                                                     \
+            RED_CHECK(type_test == serialize_result.type);                                    \
+            RED_CHECK(type_test == Type(InStream(serialize_result.buffers[0]).in_uint8()));   \
+            RED_CHECK(serialize_result.buffers.size() == std::size(output_buffers));          \
+            auto size = std::min(serialize_result.buffers.size(), std::size(output_buffers)); \
+            for (unsigned i = 0; i < size; ++i) {                                             \
+                RED_TEST_CONTEXT("i = " << i) {                                               \
+                    RED_CHECK(output_buffers[i] == serialize_result.buffers[i]);              \
+                }                                                                             \
+            }                                                                                 \
+        }                                                                                     \
+                                                                                              \
+        /* test unserialize */                                                                \
+                                                                                              \
+        {                                                                                     \
+            RED_CHECK(type_test == unserialize_result.type);                                  \
+            RED_CHECK(0 == unserialize_result.remaining);                                     \
+            int i = 0;                                                                        \
+            auto cmp = [&i](auto x, auto y){                                                  \
+                RED_TEST_CONTEXT("i = " << i++) {                                             \
+                    RED_CHECK(ramify(y) == ramify(x));                                        \
+                }                                                                             \
+            };                                                                                \
+            /* fix for clang < 9 */                                                           \
+            REDEMPTION_DIAGNOSTIC_PUSH                                                        \
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-lambda-capture")                     \
+            std::apply([&](auto... xs){                                                       \
+                [&, xs...](auto... ys){ (cmp(ys, xs), ...); }(CASE_UNPACK params);            \
+            }, unserialize_result.values);                                                    \
+            REDEMPTION_DIAGNOSTIC_POP                                                         \
+        }                                                                                     \
     } while(0)
 
         CASE(Type::WrmNew, serialize_wrm_new, (filename), "\x01\x00\x0f\x00"_av, filename);
