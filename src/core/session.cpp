@@ -69,6 +69,109 @@ class Session
 
     static const time_t select_timeout_tv_sec = 3;
 
+
+    void invoke_close_box(Error const& e, BackEvent_t & signal, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, Front & front, bool & run_session)
+    {
+        signal = BackEvent_t(session_reactor.signal);
+
+        const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+        auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+        ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+        mm.invoke_close_box(
+            auth_error_message,
+            signal, authentifier, authentifier);
+        session_reactor.signal = signal;
+
+        ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+        if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+            run_session = false;
+        }
+    }
+
+
+    void check_exception(Error const& e, BackEvent_t & signal, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, Front & front, bool & run_session, const Acl * acl)
+    {
+        if ((e.id == ERR_SESSION_PROBE_LAUNCH) ||
+            (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
+            (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
+            (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
+            (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
+            (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
+            (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
+            (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
+            (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
+            (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
+            (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
+            if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
+                SessionProbeOnLaunchFailure::retry_without_session_probe) {
+                   ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
+
+                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+            }
+            else if (acl) {
+                ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
+
+                authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
+            }
+            else {
+                LOG(LOG_ERR, "Session::Session exception (1) = %s", e.errmsg());
+                this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+            }
+        }
+        else if ((e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) ||
+                 (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)) {
+            if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+                ini.set<cfg::context::perform_automatic_reconnection>(true);
+            }
+
+            session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+        }
+        else if (e.id == ERR_RAIL_NOT_ENABLED) {
+            ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+
+            session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+        }
+        else if ((e.id == ERR_RDP_SERVER_REDIR) &&
+                 ini.get<cfg::mod_rdp::server_redirection_support>()) {
+            set_server_redirection_target(ini, authentifier);
+            session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
+        }
+        else {
+            LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
+            this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+        }
+    }
+
+    void start_acl(std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, BackEvent_t signal, Fstat & fstat)
+    {
+        if (!acl) {
+            if (!mm.last_module) {
+                // authentifier never opened or closed by me (close box)
+                try {
+                    // now is authentifier start time
+                    acl = std::make_unique<Acl>(
+                        ini, Session::acl_connect(ini.get<cfg::globals::authfile>()), now.tv_sec, cctx, rnd, fstat
+                    );
+                    const auto sck = acl->auth_trans.sck;
+                    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+                    authentifier.set_acl_serial(&acl->acl_serial);
+                    session_reactor.set_next_event(BACK_EVENT_NEXT);
+                }
+                catch (...) {
+                    signal = BackEvent_t(session_reactor.signal);
+                    session_reactor.signal = 0;
+                    mm.invoke_close_box("No authentifier available", signal, authentifier, authentifier);
+                    if (!session_reactor.signal || signal) {
+                        session_reactor.signal = signal;
+                    }
+                }
+            }
+        }
+    }
+
 public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
@@ -128,11 +231,20 @@ public:
             session_reactor.set_current_time(now);
 
             while (run_session) {
-
                 timeval default_timeout = now;
                 default_timeout.tv_sec += this->select_timeout_tv_sec;
 
                 Select ioswitch(default_timeout);
+
+//                switch (front.state) {
+//                case Front::UP_AND_RUNNING:
+//                {
+//                }
+//                break;
+//                default:
+//                {
+//                }
+//                }
 
                 SessionReactor::EnableGraphics enable_graphics{front.state == Front::UP_AND_RUNNING};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
@@ -181,117 +293,23 @@ public:
                 if (ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now.tv_sec);
                 }
-
                 if (!acl) {
-                    if (!mm.last_module) {
-                        // authentifier never opened or closed by me (close box)
-                        try {
-                            // now is authentifier start time
-                            acl = std::make_unique<Acl>(
-                                ini, Session::acl_connect(ini.get<cfg::globals::authfile>()), now.tv_sec, cctx, rnd, fstat
-                            );
-                            const auto sck = acl->auth_trans.sck;
-                            fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
-                            authentifier.set_acl_serial(&acl->acl_serial);
-                            session_reactor.set_next_event(BACK_EVENT_NEXT);
-                        }
-                        catch (...) {
-                            signal = BackEvent_t(session_reactor.signal);
-                            session_reactor.signal = 0;
-                            mm.invoke_close_box("No authentifier available", signal, authentifier, authentifier);
-                            if (!session_reactor.signal || signal) {
-                                session_reactor.signal = signal;
-                            }
-                        }
-                    }
+                    this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                 }
-
-                auto check_exception = [&](Error const& e) {
-                    auto invoke_close_box = [&]{
-                        signal = BackEvent_t(session_reactor.signal);
-
-                        const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
-
-                        auto const enable_close_box
-                            = ini.get<cfg::globals::enable_close_box>();
-                        ini.set<cfg::globals::enable_close_box>(
-                            enable_close_box && front.state == Front::UP_AND_RUNNING);
-
-                        mm.invoke_close_box(
-                            auth_error_message,
-                            signal, authentifier, authentifier);
-                        session_reactor.signal = signal;
-
-                        ini.set<cfg::globals::enable_close_box>(enable_close_box);
-
-                        if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                            run_session = false;
-                        }
-                    };
-
-                    if ((e.id == ERR_SESSION_PROBE_LAUNCH) ||
-                        (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
-                        (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
-                        (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
-                        (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
-                        if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
-                            SessionProbeOnLaunchFailure::retry_without_session_probe) {
-                            ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
-
-                            session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-                        }
-                        else if (acl) {
-                            ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-
-                            authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-                        }
-                        else {
-                            LOG(LOG_ERR, "Session::Session exception (1) = %s", e.errmsg());
-                            invoke_close_box();
-                        }
-                    }
-                    else if ((e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) ||
-                             (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)) {
-                        if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
-                            ini.set<cfg::context::perform_automatic_reconnection>(true);
-                        }
-
-                        session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-                    }
-                    else if (e.id == ERR_RAIL_NOT_ENABLED) {
-                        ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
-
-                        session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-                    }
-                    else if ((e.id == ERR_RDP_SERVER_REDIR) &&
-                             ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                        set_server_redirection_target(ini, authentifier);
-                        session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
-                    }
-                    else {
-                        LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
-                        invoke_close_box();
-                    }
-                };
 
                 try {
                     session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
                         return mm.get_graphic_wrapper();
                     });
                 } catch (Error const& e) {
-                    check_exception(e);
+                    this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
                 }
 
                 session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
                     return io_fd_isset(fd, ioswitch.rfds);
                 });
 
+                // front event
                 bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                 if (session_reactor.has_front_event() || front_is_set) {
                     try {
@@ -323,15 +341,18 @@ public:
                                 LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                             }
                             run_session = false;
-                            continue;
                         }
                     } catch (...) {
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
-                        continue;
                     };
                 }
 
+                if (run_session == false){
+                    break;
+                }
+
+                // acl event
                 try {
                     if (front.state == Front::UP_AND_RUNNING) {
                         // new value incoming from authentifier
@@ -367,7 +388,7 @@ public:
                             }
                         }
                         catch (Error const & e) {
-                            check_exception(e);
+                            this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
                         }
 
                         // Incoming data from ACL
