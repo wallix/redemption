@@ -367,7 +367,8 @@ void scytale_writer_delete(ScytaleWriterHandle * handle)
 char const * scytale_writer_get_error_message(ScytaleWriterHandle * handle)
 {
     SCOPED_TRACE;
-    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
+    CHECK_HANDLE_R(handle, ScytaleErrorContext::handle_get_error_message());
+    return handle->error_ctx.message();
 }
 
 
@@ -449,7 +450,8 @@ void scytale_reader_delete(ScytaleReaderHandle * handle) {
 
 char const * scytale_reader_get_error_message(ScytaleReaderHandle * handle)
 {
-    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
+    CHECK_HANDLE_R(handle, ScytaleErrorContext::handle_get_error_message());
+    return handle->error_ctx.message();
 }
 
 int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * file)
@@ -561,7 +563,8 @@ ScytaleMetaReaderHandle * scytale_meta_reader_new(ScytaleReaderHandle * reader)
 char const * scytale_meta_reader_get_error_message(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
-    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
+    CHECK_HANDLE_R(handle, ScytaleErrorContext::handle_get_error_message());
+    return handle->error_ctx.message();
 }
 
 int scytale_meta_reader_read_hash(ScytaleMetaReaderHandle * handle, int version, int has_checksum)
@@ -589,6 +592,7 @@ int scytale_meta_reader_read_line(ScytaleMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
+    // TODO use InCryptoTransport::is_eof()
     CHECK_NOTHROW(
         handle->eof
             = Transport::Read::Eof == handle->mwrm_reader.read_meta_line(handle->meta_line),
@@ -841,8 +845,8 @@ struct ScytaleFdxWriterHandle
             array_view(tfl.finalname).drop_front(tfl.pos_filename),
             write_in_buf);
         Mwrm3::serialize_tfl_stat(tfl.idx, safe_cast<Mwrm3::FileSize>(fsize),
-            Mwrm3::QuickHash{this->with_checksum() ? make_array_view(qhash) : bytes_view{}},
-            Mwrm3::FullHash{this->with_checksum() ? make_array_view(fhash) : bytes_view{}},
+            Mwrm3::QuickHash{this->with_checksum() ? make_array_view(qhash) : bytes_view{"", 0}},
+            Mwrm3::FullHash{this->with_checksum() ? make_array_view(fhash) : bytes_view{"", 0}},
             write_in_buf);
 
         if (buf_pos)
@@ -965,13 +969,15 @@ int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle)
 /// \return HashHexArray
 char const * scytale_fdx_writer_get_qhashhex(ScytaleFdxWriterHandle * handle) {
     SCOPED_TRACE;
-    return handle ? handle->qhashhex : "";
+    CHECK_HANDLE_R(handle, "");
+    return handle->qhashhex;
 }
 
 /// \return HashHexArray
 char const * scytale_fdx_writer_get_fhashhex(ScytaleFdxWriterHandle * handle) {
     SCOPED_TRACE;
-    return handle ? handle->fhashhex : "";
+    CHECK_HANDLE_R(handle, "");
+    return handle->fhashhex;
 }
 
 int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle)
@@ -991,7 +997,8 @@ int scytale_fdx_writer_delete(ScytaleFdxWriterHandle * handle)
 char const * scytale_fdx_writer_get_error_message(ScytaleFdxWriterHandle * handle)
 {
     SCOPED_TRACE;
-    return handle ? handle->error_ctx.message() : ScytaleErrorContext::handle_get_error_message();
+    CHECK_HANDLE_R(handle, ScytaleErrorContext::handle_get_error_message());
+    return handle->error_ctx.message();
 }
 
 }
@@ -1016,7 +1023,8 @@ namespace
     f(WrmState, unserialize_wrm_stat) \
     f(FdxNew, unserialize_fdx_new)    \
     f(TflNew, unserialize_tfl_new)    \
-    f(TflState, unserialize_tfl_stat)
+    f(TflState, unserialize_tfl_stat) \
+    f(MwrmHeaderCompatibility, unserialize_mwrm_header_compatibility)
 
 #define CALL(v, f) f(av, f_ok, error_caller(integral_type<Type::v>()))
 #define TYPE(v, f) decltype(CALL(v, f)),
@@ -1367,9 +1375,9 @@ struct ScytaleMwrm3ReaderHandle
                     auto int_type = InStream(this->remaining_data).in_uint16_le();
                     const char chars[]{
                         hexadecimal_string[(int_type >> 12)],
-                        hexadecimal_string[(int_type >> 8) & 0xff],
-                        hexadecimal_string[(int_type >> 4) & 0xff],
-                        hexadecimal_string[int_type & 0xff],
+                        hexadecimal_string[(int_type >> 8) & 0xf],
+                        hexadecimal_string[(int_type >> 4) & 0xf],
+                        hexadecimal_string[int_type & 0xf],
                     };
                     str_assign(this->message_error,
                         "Unknown type: 0x"_av, make_array_view(chars));
@@ -1385,10 +1393,13 @@ struct ScytaleMwrm3ReaderHandle
 
                     memmove(this->buffer.data(), this->remaining_data.data(), this->remaining_data.size());
 
-                    auto free_buffer_len = this->buffer.size() - this->remaining_data.size();
+                    const auto free_buffer_len
+                      = this->buffer.size() - this->remaining_data.size();
 
                     long long r = scytale_reader_read(
-                        &this->reader, this->buffer.end(), free_buffer_len);
+                        &this->reader,
+                        this->buffer.data() + this->remaining_data.size(),
+                        free_buffer_len);
 
                     if (r <= 0)
                     {
@@ -1400,7 +1411,8 @@ struct ScytaleMwrm3ReaderHandle
                         return nullptr;
                     }
 
-                    this->remaining_data = array_view(this->buffer).drop_front(free_buffer_len);
+                    this->remaining_data = array_view(this->buffer)
+                      .first(r + this->remaining_data.size());
                 }
             }
         }
@@ -1408,7 +1420,7 @@ struct ScytaleMwrm3ReaderHandle
 
 private:
     ScytaleReaderHandle& reader;
-    bytes_view remaining_data;
+    bytes_view remaining_data {"", 0};
 
     using storage_list_t = decltype(make_storage_list());
 
@@ -1418,7 +1430,7 @@ private:
 
     std::string message_error;
 
-    std::array<uint8_t, 1064*16> buffer;
+    std::array<uint8_t, 1024*16> buffer;
 };
 
 ScytaleMwrm3ReaderHandle * scytale_mwrm3_reader_new(ScytaleReaderHandle * reader)
@@ -1438,7 +1450,8 @@ ScytaleMwrm3ReaderData const* scytale_mwrm3_reader_read_next(ScytaleMwrm3ReaderH
 char const * scytale_mwrm3_reader_get_error_message(ScytaleMwrm3ReaderHandle * handle)
 {
     SCOPED_TRACE;
-    return handle ? handle->get_error() : nullptr;
+    CHECK_HANDLE_R(handle, ScytaleErrorContext::handle_get_error_message());
+    return handle->get_error();
 }
 
 int scytale_mwrm3_reader_delete(ScytaleMwrm3ReaderHandle * handle)

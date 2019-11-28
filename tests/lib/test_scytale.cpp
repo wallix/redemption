@@ -25,6 +25,7 @@
 #include "test_only/test_framework/file.hpp"
 
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/finally.hpp"
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
 
@@ -413,9 +414,9 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             tfl2_hash_content_prefix,
 
             "v3\n"
-            "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
-            "file2.txt\x1b\x00""0123456789abcdef,000002.tfl"
-            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"_av
+            "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+            "file2.txt0123456789abcdef,000002.tfl"
+            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00\x00"_av
         },
 
         Data{"checksum", false, true,
@@ -425,10 +426,10 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             tfl2_hash_content_prefix,
 
             "v3\n"
-            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00"
-            "file2.txt\x1b\x00""0123456789abcdef,000002.tfl"
+            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+            "file2.txt0123456789abcdef,000002.tfl"
             "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00"
-            "\x00\x00\x00\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
+            "\x00\x00\x00\x01\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
             "\xed\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xffɭD\xf9RG\xdc\x7f\xf9\x02"
             "Jyh\xed\xf3\x90\x0c"_av
         },
@@ -442,20 +443,20 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             "WCFM\x01\x00\x00\x00\xf8O\x14.0>"_av,
 
             "WCFM\x01\x00\x00\x00\xb8l\xda\xa6\xf0\xf6""0\x8d\xa8\x16\xa6n\xe0\xc3\xe5\xcc"
-            "\x98v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00""\x94\t\x94\xf2\x93^"
-            "\xe4g\xba""8$\x89n\xaf\x8b\x03\x0f\x8e""d\xaf\x82`\xc2\x98|\x1b""D\xccU\xc0"
-            "\x11\xff\xfe\x9e\xec\xb8Q\xdc\xe5\x02G|\"V\xf1X\x92\xce\xa0\xe7\xfa\xb6<\xbdi"
-            "\xbf\x9f\xa7\n\xccy#Z\xac\xebg\x13^7r'= \x11hT\x7f""Dk\xa7xr\xff\xb0\x00\x92"
-            "\xd4 6\xbf\xa5\xa1\x1cS\x1cl\xbe\xf5W\xf0\xb5%\x9f""fE\xe9\xddQFJw2MFCW\x87"
-            "\x00\x00\x00"_av,
+            "\x98v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00\xb9\x8f\x84\xb4x\x17"
+            "#\x92\x99""Er\xf1\xc3\x07""D[\xa2\\\xe1@\x01\xd3\xee""4Q\xee\x16W\xb3rW\xfd\xa5"
+            "?\x16\xe7""f\xce\xf2""8\x85\x89\xae*\xe9\xbe>\xdf'\xb8\xd8\xaa\xd5\xc8\x04\xe0"
+            "\xcd\xab\x8f\x9fI\xeb\xe6z\xb8\x80\xfdR\xfd\n+k\xec\xab\xd3\xc8\x9f\x15\xc7\xaf"
+            "\xb5\xe9oL|\x84\x94\xe5\xef\x07@\xc4\xe7""E6I\x11\xb7G\xaf\x1d\xb0""E\xe4\x96"
+            "\xb2\xe5\x98\xb6""C\xf9\xc9MFCW\x88\x00\x00\x00"_av,
 
             "v3\n"
-            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00"
-            "file2.txt\x1b\x00""0123456789abcdef,000002.tfl"
-            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00\x00""0\xeb"
-            "e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16\n\xfeP"
-            "\xe3\x13\x88\xd4\xf7""0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7"
-            "\x8a\xf9\x03\"\xdd{\x16\n\xfeP\xe3\x13\x88\xd4\xf7"_av
+            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+            "file2.txt0123456789abcdef,000002.tfl"
+            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00\x00\x01""0"
+            "\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16"
+            "\n\xfeP\xe3\x13\x88\xd4\xf7""0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2["
+            "\xbb""7\x8a\xf9\x03\"\xdd{\x16\n\xfeP\xe3\x13\x88\xd4\xf7"_av
         },
     })
     {
@@ -552,37 +553,46 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 }
 
 
-// RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
-// {
-//     auto filename = wd.add_file("a.mwrm3");
-//
-//     std::ofstream(filename.string()) <<
-//         "v3\n"
-//         "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00"
-//         "file2.txt\x1b\x00""0123456789abcdef,000002.tfl"
-//         "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00"
-//     ;
-//
-//     auto reader = scytale_reader_new(filename.c_str(), nullptr, nullptr, 0, 0);
-//     RED_REQUIRE(reader);
-//
-//     auto mwrm3 = scytale_mwrm3_reader_new(reader);
-//     RED_REQUIRE(mwrm3);
-//
-//     ScytaleMwrm3ReaderData const* data;
-//
-//     data = scytale_mwrm3_reader_read_next(mwrm3);
-//     RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
-//     RED_REQUIRE(data);
-//     RED_TEST(data->fmt == "bbb");
-//
-//     data = scytale_mwrm3_reader_read_next(mwrm3);
-//     RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
-//     RED_REQUIRE(data);
-//     RED_TEST(data->fmt == "bbb");
-//
-//     RED_TEST(!scytale_mwrm3_reader_read_next(mwrm3));
-//
-//     scytale_mwrm3_reader_delete(mwrm3);
-//     scytale_reader_delete(reader);
-// }
+RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
+{
+    auto filename = wd.add_file("a.mwrm3");
+
+    std::ofstream(filename.string()) <<
+        "v3\n"
+        "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+        "file2.txt0123456789abcdef,000002.tfl"
+        "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00\x00"sv
+    ;
+
+    auto reader = scytale_reader_new(nullptr, nullptr, nullptr, 0, 0);
+    RED_REQUIRE(reader);
+    auto free_reader = finally([&]{ scytale_reader_delete(reader); });
+
+    RED_REQUIRE(0 == scytale_reader_open(reader, filename.c_str(), ""));
+
+    auto mwrm3 = scytale_mwrm3_reader_new(reader);
+    RED_REQUIRE(mwrm3);
+    auto free_mwrm3 = finally([&]{ scytale_mwrm3_reader_delete(mwrm3); });
+
+    ScytaleMwrm3ReaderData const* data;
+
+    data = scytale_mwrm3_reader_read_next(mwrm3);
+    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+    RED_REQUIRE(data);
+    RED_TEST(data->type == ('v' | '3' << 8));
+    RED_TEST(data->fmt == "");
+
+    data = scytale_mwrm3_reader_read_next(mwrm3);
+    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+    RED_REQUIRE(data);
+    RED_TEST(data->type == 4);
+    RED_TEST(data->fmt == "uss");
+
+    data = scytale_mwrm3_reader_read_next(mwrm3);
+    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+    RED_REQUIRE(data);
+    RED_TEST(data->type == 5);
+    RED_TEST(data->fmt == "uuss");
+
+    RED_TEST(!scytale_mwrm3_reader_read_next(mwrm3));
+}

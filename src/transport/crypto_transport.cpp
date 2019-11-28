@@ -188,6 +188,7 @@ void InCryptoTransport::open(const char * const pathname, bytes_view derivator)
 
     const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
     this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+    // TODO only if encrypted
     this->enc_buffer_handle.allocate(this->MAX_CIPHERED_SIZE);
 
     // todo: we could read in clear_data, that would avoid some copying

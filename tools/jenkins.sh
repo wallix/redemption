@@ -62,6 +62,7 @@ toolset_gcc=toolset=gcc-9
 toolset_clang=toolset=clang-8.0
 
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
+export UBSAN_OPTIONS=print_stacktrace=1
 
 export BOOST_TEST_COLOR_OUTPUT=0
 
