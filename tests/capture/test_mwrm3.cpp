@@ -95,8 +95,8 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
     {
         case Type::None:
 
-#define CASE_UNPACK(...) __VA_ARGS__
-#define CASE(type_test, fn, params, /*output_buffer*/...) [[fallthrough]];                 \
+#define CASE2_UNPACK(...) __VA_ARGS__
+#define CASE2(type_test, fn, params, results, /*output_buffer*/...) [[fallthrough]];                 \
     case type_test: do {                                                                   \
         const bytes_view output_buffers[]{__VA_ARGS__};                                    \
         const auto input_buffer = str_concat(__VA_ARGS__);                                 \
@@ -109,7 +109,7 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
                                                                                            \
         auto serialize_result = [&](auto&&... xs) {                                        \
             return fn(xs..., make_serialize_result);                                       \
-        }(CASE_UNPACK params);                                                             \
+        }(CASE2_UNPACK params);                                                             \
                                                                                            \
         auto unserialize_result = un##fn(input_buffer_without_type,                        \
             make_unserialize_result, unserialize_error);                                   \
@@ -133,7 +133,7 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
         /* test unserialize */                                                             \
                                                                                            \
         {                                                                                  \
-            auto t = std::forward_as_tuple(CASE_UNPACK params);                            \
+            results;                                                                       \
             int counter = 0;                                                               \
             auto cmp = [&](auto i){                                                        \
                 RED_TEST_CONTEXT("i = " << counter++) {                                    \
@@ -152,22 +152,50 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
         }                                                                                  \
     } while(0)
 
-        CASE(Type::MwrmHeaderCompatibility, serialize_mwrm_header_compatibility, (), "v3\n"_av);
+        CASE2(Type::MwrmHeaderCompatibility, serialize_mwrm_header_compatibility, (),
+            auto t = std::forward_as_tuple()
+            ,
+            "v3\n"_av);
 
-        CASE(Type::WrmNew, serialize_wrm_new, (filename), "\x01\x00\x0f\x00"_av, filename);
+        CASE2(Type::WrmNew, serialize_wrm_new, (filename),
+            auto a = filename;
+            auto t = std::forward_as_tuple(a)
+            ,
+             "\x01\x00\x0f\x00"_av, filename);
 
-        CASE(Type::WrmState, serialize_wrm_stat,
+        CASE2(Type::WrmState, serialize_wrm_stat,
             (FileSize(1244), std::chrono::seconds(125), QuickHash{qhash}, FullHash{fhash}),
+            auto a = FileSize(1244);
+            auto b = std::chrono::seconds(125);
+            auto c = QuickHash{qhash};
+            auto d = FullHash{fhash};
+            auto t = std::forward_as_tuple(a, b, c, d)
+            ,
             "\x02\x00\xdc\x04\x00\x00\x00\x00\x00\x00}\x00\x00\x00\x00\x00\x00\x00\x01"_av,
             qhash, fhash);
 
-        CASE(Type::FdxNew, serialize_fdx_new, (filename), "\x03\x00\x0f\x00"_av, filename);
+        CASE2(Type::FdxNew, serialize_fdx_new, (filename), 
+            auto a = filename;
+            auto t = std::forward_as_tuple(a)
+            ,
+            "\x03\x00\x0f\x00"_av, filename);
 
-        CASE(Type::TflNew, serialize_tfl_new, (42, filename, filename2),
+        CASE2(Type::TflNew, serialize_tfl_new, (42, filename, filename2),
+            auto a = 42;
+            auto b = filename;
+            auto c = filename2;
+            auto t = std::forward_as_tuple(a, b, c)
+            ,
             "\x04\x00*\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x10\x00"_av, filename, filename2);
 
-        CASE(Type::TflState, serialize_tfl_stat,
+        CASE2(Type::TflState, serialize_tfl_stat,
             (42, FileSize(12), QuickHash{qhash}, FullHash{fhash}),
+            auto a = 42;
+            auto b = FileSize(12);
+            auto c = QuickHash{qhash};
+            auto d = FullHash{fhash};
+            auto t = std::forward_as_tuple(a, b, c, d)
+            ,
             "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x01"_av,
             qhash, fhash);
     }
