@@ -2337,7 +2337,7 @@ public:
     }
 
 
-    void process_disconnect_request(bytes_view tpdu)
+    [[noreturn]] void process_disconnect_request(bytes_view tpdu)
     {
         InStream new_x224_stream(tpdu);
         X224::DR_TPDU_Recv x224(new_x224_stream);

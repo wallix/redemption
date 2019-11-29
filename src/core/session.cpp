@@ -61,6 +61,90 @@ namespace
 
 class Session
 {
+
+    struct Select
+    {
+        unsigned max = 0;
+        fd_set rfds;
+        fd_set wfds;
+        timeval timeout;
+        bool want_write = false;
+
+        Select(timeval timeout)
+        : timeout{timeout}
+        {
+            io_fd_zero(this->rfds);
+        }
+
+        int select(timeval now)
+        {
+            timeval timeoutastv = {0,0};
+            const timeval & ultimatum = this->timeout;
+            const timeval & starttime = now;
+            if (ultimatum > starttime) {
+                timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
+                    - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
+            }
+
+            return ::select(
+                this->max + 1, &this->rfds,
+                this->want_write ? &this->wfds : nullptr,
+                nullptr, &timeoutastv);
+        }
+
+        void set_timeout(timeval next_timeout)
+        {
+            this->timeout = next_timeout;
+        }
+
+        std::chrono::milliseconds get_timeout(timeval now)
+        {
+            const timeval & ultimatum = this->timeout;
+            const timeval & starttime = now;
+            if (ultimatum > starttime) {
+                return std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
+                        - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
+            }
+            return 0ms;
+        }
+
+        void set_read_sck(int sck)
+        {
+            this->max = prepare_fds(sck, this->max, this->rfds);
+        }
+
+        void set_write_sck(int sck)
+        {
+            if (!this->want_write) {
+                this->want_write = true;
+                io_fd_zero(this->wfds);
+            }
+            this->max = prepare_fds(sck, this->max, this->wfds);
+        }
+
+        void immediate_wakeup(timeval now)
+        {
+            this->timeout = now;
+        }
+    };
+
+    struct [[nodiscard]] SckNoRead
+    {
+        int sck_front = INVALID_SOCKET;
+        int sck_mod = INVALID_SOCKET;
+        // int sck_acl = INVALID_SOCKET;
+
+        [[nodiscard]] bool contains(int fd) const noexcept
+        {
+            return sck_front == fd
+                || sck_mod == fd
+                // || sck_acl == fd
+            ;
+        }
+    };
+
+
     Inifile & ini;
 
     time_t      perf_last_info_collect_time = 0;
@@ -172,6 +256,347 @@ class Session
         }
     }
 
+
+    void front_starting(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor::EnableGraphics enable_graphics, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
+    {
+        if (!acl) {
+            this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+        }
+
+        try {
+            session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
+                return mm.get_graphic_wrapper();
+            });
+        } catch (Error const& e) {
+            this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
+        }
+
+        session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+            return io_fd_isset(fd, ioswitch.rfds);
+        });
+
+        // front event
+        bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+        if (session_reactor.has_front_event() || front_is_set) {
+            try {
+                if (session_reactor.has_front_event()) {
+                    session_reactor.execute_callbacks(mm.get_callback());
+                }
+                if (front_is_set) {
+                    front.rbuf.load_data(front.trans);
+                    while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
+                    {
+                        bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                        uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                        front.incoming(tpdu, current_pdu_type, mm.get_callback());
+                    }
+                }
+            } catch (Error const& e) {
+                if (ERR_DISCONNECT_BY_USER == e.id) {
+                    front_signal = BACK_EVENT_NEXT;
+                }
+                else {
+                    if (
+                        // Can be caused by client disconnect.
+                        (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                        // Can be caused by client disconnect.
+                        (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                        (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                        // Can be caused by wabwatchdog.
+                        (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                        LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                    }
+                    run_session = false;
+                }
+            } catch (...) {
+                LOG(LOG_ERR, "Proxy data processing raised unknown error");
+                run_session = false;
+            }
+        }
+
+        if (run_session == false){
+            return;
+        }
+
+        // acl event
+        try {
+            if (front.state == Front::UP_AND_RUNNING) {
+                // new value incoming from authentifier
+                if (ini.check_from_acl()) {
+                    auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
+
+                    if (ini.get<cfg::client::enable_osd_4_eyes>()) {
+                        Translator tr(language(ini));
+                        switch (rt_status) {
+                            case Capture::RTDisplayResult::Enabled:
+                                mm.osd_message(tr(trkeys::enable_rt_display).to_string(), true);
+                                break;
+                            case Capture::RTDisplayResult::Disabled:
+                                mm.osd_message(tr(trkeys::disable_rt_display).to_string(), true);
+                                break;
+                            case Capture::RTDisplayResult::Unchanged:
+                                break;
+                        }
+                    }
+
+                    mm.check_module();
+                }
+
+                try
+                {
+                    if (BACK_EVENT_NONE == session_reactor.signal) {
+                        // Process incoming module trafic
+                        auto& gd = mm.get_graphic_wrapper();
+                        session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
+                            return io_fd_isset(fd, ioswitch.rfds);
+                        }, gd);
+                    }
+                }
+                catch (Error const & e) {
+                    this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
+                }
+
+                // Incoming data from ACL
+                if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
+                    // authentifier received updated values
+                    acl->acl_serial.receive();
+                    if (!ini.changed_field_size()) {
+                        session_reactor.execute_sesman(ini);
+                    }
+                }
+
+                const bool enable_osd = ini.get<cfg::globals::enable_osd>();
+                if (enable_osd) {
+                    const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+                    if (enddate && mm.is_up_and_running()) {
+                        mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now.tv_sec);
+                    }
+                }
+
+                if (acl){
+                    if (front.state == Front::UP_AND_RUNNING) {
+                        signal = BackEvent_t(session_reactor.signal);
+                        int i = 0;
+                        do {
+                            if (++i == 11) {
+                                LOG(LOG_ERR, "loop event error");
+                                break;
+                            }
+                            session_reactor.signal = 0;
+                            run_session = acl->acl_serial.check(
+                                authentifier, authentifier, mm,
+                                now.tv_sec, signal, front_signal, front.has_user_activity
+                            );
+                            if (!session_reactor.signal) {
+                                session_reactor.signal = signal;
+                                break;
+                            }
+
+                            if (signal) {
+                                session_reactor.signal = signal;
+                            }
+                            else {
+                                signal = BackEvent_t(session_reactor.signal);
+                            }
+                        } while (session_reactor.signal);
+                    }
+                    else if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        run_session = false;
+                    }
+                    if (mm.last_module) {
+                        authentifier.set_acl_serial(nullptr);
+                        acl.reset();
+                    }
+                }
+                else if ((!this->ini.is_asked<cfg::globals::nla_auth_user>())
+                && this->ini.get<cfg::client::enable_nla>()) {
+                    acl->acl_serial.send_acl_data();
+                }
+            }
+        } catch (Error const& e) {
+            LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
+            signal = BackEvent_t(session_reactor.signal);
+            mm.invoke_close_box(
+                local_err_msg(e, language(ini)),
+                signal, authentifier, authentifier);
+            session_reactor.signal = signal;
+
+            if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                run_session = false;
+            }
+        }
+    }
+
+    void front_up_and_running(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor::EnableGraphics enable_graphics, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
+    {
+        if (!acl) {
+            this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+        }
+
+        try {
+            session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
+                return mm.get_graphic_wrapper();
+            });
+        } catch (Error const& e) {
+            this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
+        }
+
+        session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+            return io_fd_isset(fd, ioswitch.rfds);
+        });
+
+        // front event
+        bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+        if (session_reactor.has_front_event() || front_is_set) {
+            try {
+                if (session_reactor.has_front_event()) {
+                    session_reactor.execute_callbacks(mm.get_callback());
+                }
+                if (front_is_set) {
+                    front.rbuf.load_data(front.trans);
+                    while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
+                    {
+                        bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                        uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                        front.incoming(tpdu, current_pdu_type, mm.get_callback());
+                    }
+                }
+            } catch (Error const& e) {
+                if (ERR_DISCONNECT_BY_USER == e.id) {
+                    front_signal = BACK_EVENT_NEXT;
+                }
+                else {
+                    if (
+                        // Can be caused by client disconnect.
+                        (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                        // Can be caused by client disconnect.
+                        (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                        (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                        // Can be caused by wabwatchdog.
+                        (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                        LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                    }
+                    run_session = false;
+                }
+            } catch (...) {
+                LOG(LOG_ERR, "Proxy data processing raised unknown error");
+                run_session = false;
+            }
+        }
+
+        if (run_session == false){
+            return;
+        }
+
+        // acl event
+        try {
+            if (front.state == Front::UP_AND_RUNNING) {
+                // new value incoming from authentifier
+                if (ini.check_from_acl()) {
+                    auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
+
+                    if (ini.get<cfg::client::enable_osd_4_eyes>()) {
+                        Translator tr(language(ini));
+                        switch (rt_status) {
+                            case Capture::RTDisplayResult::Enabled:
+                                mm.osd_message(tr(trkeys::enable_rt_display).to_string(), true);
+                                break;
+                            case Capture::RTDisplayResult::Disabled:
+                                mm.osd_message(tr(trkeys::disable_rt_display).to_string(), true);
+                                break;
+                            case Capture::RTDisplayResult::Unchanged:
+                                break;
+                        }
+                    }
+
+                    mm.check_module();
+                }
+
+                try
+                {
+                    if (BACK_EVENT_NONE == session_reactor.signal) {
+                        // Process incoming module trafic
+                        auto& gd = mm.get_graphic_wrapper();
+                        session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
+                            return io_fd_isset(fd, ioswitch.rfds);
+                        }, gd);
+                    }
+                }
+                catch (Error const & e) {
+                    this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
+                }
+
+                // Incoming data from ACL
+                if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
+                    // authentifier received updated values
+                    acl->acl_serial.receive();
+                    if (!ini.changed_field_size()) {
+                        session_reactor.execute_sesman(ini);
+                    }
+                }
+
+                const bool enable_osd = ini.get<cfg::globals::enable_osd>();
+                if (enable_osd) {
+                    const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+                    if (enddate && mm.is_up_and_running()) {
+                        mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now.tv_sec);
+                    }
+                }
+
+                if (acl){
+                    if (front.state == Front::UP_AND_RUNNING) {
+                        signal = BackEvent_t(session_reactor.signal);
+                        int i = 0;
+                        do {
+                            if (++i == 11) {
+                                LOG(LOG_ERR, "loop event error");
+                                break;
+                            }
+                            session_reactor.signal = 0;
+                            run_session = acl->acl_serial.check(
+                                authentifier, authentifier, mm,
+                                now.tv_sec, signal, front_signal, front.has_user_activity
+                            );
+                            if (!session_reactor.signal) {
+                                session_reactor.signal = signal;
+                                break;
+                            }
+
+                            if (signal) {
+                                session_reactor.signal = signal;
+                            }
+                            else {
+                                signal = BackEvent_t(session_reactor.signal);
+                            }
+                        } while (session_reactor.signal);
+                    }
+                    else if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        run_session = false;
+                    }
+                    if (mm.last_module) {
+                        authentifier.set_acl_serial(nullptr);
+                        acl.reset();
+                    }
+                }
+                else if ((!this->ini.is_asked<cfg::globals::nla_auth_user>())
+                && this->ini.get<cfg::client::enable_nla>()) {
+                    acl->acl_serial.send_acl_data();
+                }
+            }
+        } catch (Error const& e) {
+            LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
+            signal = BackEvent_t(session_reactor.signal);
+            mm.invoke_close_box(
+                local_err_msg(e, language(ini)),
+                signal, authentifier, authentifier);
+            session_reactor.signal = signal;
+
+            if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                run_session = false;
+            }
+        }
+    }
+
 public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
@@ -212,9 +637,6 @@ public:
 
             bool run_session = true;
 
-            const bool enable_osd = ini.get<cfg::globals::enable_osd>();
-
-
             // TODO: we should define some select object to wrap rfds, wfds and timeouts
             // and hide events inside modules managing sockets (or timers)
             // this should help in the future to generalise architecture
@@ -236,16 +658,6 @@ public:
 
                 Select ioswitch(default_timeout);
 
-//                switch (front.state) {
-//                case Front::UP_AND_RUNNING:
-//                {
-//                }
-//                break;
-//                default:
-//                {
-//                }
-//                }
-
                 SessionReactor::EnableGraphics enable_graphics{front.state == Front::UP_AND_RUNNING};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
@@ -260,9 +672,9 @@ public:
                         session_reactor.get_next_timeout(enable_graphics, ioswitch.get_timeout(now)));
 
                 // 0 if tv < tv_now : returns immediately
-//                ioswitch.timeoutastv = to_timeval(
-//                                        session_reactor.get_next_timeout(enable_graphics, timeout)
-//                                      - now);
+        //                ioswitch.timeoutastv = to_timeval(
+        //                                        session_reactor.get_next_timeout(enable_graphics, timeout)
+        //                                      - now);
                 // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
                 // session_reactor.timer_events_.info(tv_now);
 
@@ -293,171 +705,23 @@ public:
                 if (ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now.tv_sec);
                 }
-                if (!acl) {
-                    this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
-                }
 
-                try {
-                    session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
-                        return mm.get_graphic_wrapper();
-                    });
-                } catch (Error const& e) {
-                    this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
-                }
-
-                session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-                    return io_fd_isset(fd, ioswitch.rfds);
-                });
-
-                // front event
-                bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                if (session_reactor.has_front_event() || front_is_set) {
-                    try {
-                        if (session_reactor.has_front_event()) {
-                            session_reactor.execute_callbacks(mm.get_callback());
-                        }
-                        if (front_is_set) {
-                            front.rbuf.load_data(front.trans);
-                            while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
-                            {
-                                bytes_view tpdu = front.rbuf.current_pdu_buffer();
-                                uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                                front.incoming(tpdu, current_pdu_type, mm.get_callback());
-                            }
-                        }
-                    } catch (Error const& e) {
-                        if (ERR_DISCONNECT_BY_USER == e.id) {
-                            front_signal = BACK_EVENT_NEXT;
-                        }
-                        else {
-                            if (
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                                // Can be caused by wabwatchdog.
-                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                            }
-                            run_session = false;
-                        }
-                    } catch (...) {
-                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                        run_session = false;
-                    };
-                }
-
-                if (run_session == false){
-                    break;
-                }
-
-                // acl event
-                try {
-                    if (front.state == Front::UP_AND_RUNNING) {
-                        // new value incoming from authentifier
-                        if (ini.check_from_acl()) {
-                            auto const rt_status
-                              = front.set_rt_display(ini.get<cfg::video::rt_display>());
-
-                            if (ini.get<cfg::client::enable_osd_4_eyes>()) {
-                                Translator tr(language(ini));
-                                switch (rt_status) {
-                                    case Capture::RTDisplayResult::Enabled:
-                                        mm.osd_message(tr(trkeys::enable_rt_display).to_string(), true);
-                                        break;
-                                    case Capture::RTDisplayResult::Disabled:
-                                        mm.osd_message(tr(trkeys::disable_rt_display).to_string(), true);
-                                        break;
-                                    case Capture::RTDisplayResult::Unchanged:
-                                        break;
-                                }
-                            }
-
-                            mm.check_module();
-                        }
-
-                        try
-                        {
-                            if (BACK_EVENT_NONE == session_reactor.signal) {
-                                // Process incoming module trafic
-                                auto& gd = mm.get_graphic_wrapper();
-                                session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
-                                    return io_fd_isset(fd, ioswitch.rfds);
-                                }, gd);
-                            }
-                        }
-                        catch (Error const & e) {
-                            this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
-                        }
-
-                        // Incoming data from ACL
-                        if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
-                            // authentifier received updated values
-                            acl->acl_serial.receive();
-                            if (!ini.changed_field_size()) {
-                                session_reactor.execute_sesman(ini);
-                            }
-                        }
-
-                        if (enable_osd) {
-                            const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-                            if (enddate && mm.is_up_and_running()) {
-                                mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now.tv_sec);
-                            }
-                        }
-
-                        if (acl){
-                            if (front.state == Front::UP_AND_RUNNING) {
-                                signal = BackEvent_t(session_reactor.signal);
-                                int i = 0;
-                                do {
-                                    if (++i == 11) {
-                                        LOG(LOG_ERR, "loop event error");
-                                        break;
-                                    }
-                                    session_reactor.signal = 0;
-                                    run_session = acl->acl_serial.check(
-                                        authentifier, authentifier, mm,
-                                        now.tv_sec, signal, front_signal, front.has_user_activity
-                                    );
-                                    if (!session_reactor.signal) {
-                                        session_reactor.signal = signal;
-                                        break;
-                                    }
-
-                                    if (signal) {
-                                        session_reactor.signal = signal;
-                                    }
-                                    else {
-                                        signal = BackEvent_t(session_reactor.signal);
-                                    }
-                                } while (session_reactor.signal);
-                            }
-                            else if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                                run_session = false;
-                            }
-                            if (mm.last_module) {
-                                authentifier.set_acl_serial(nullptr);
-                                acl.reset();
-                            }
-                        }
-                        else if ((!this->ini.is_asked<cfg::globals::nla_auth_user>())
-                        && this->ini.get<cfg::client::enable_nla>()) {
-                            acl->acl_serial.send_acl_data();
-                        }
+                switch (front.state) {
+                case Front::UP_AND_RUNNING:
+                {
+                    this->front_up_and_running(run_session, front_trans, ioswitch, enable_graphics, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    if (run_session == false){
+                        break;
                     }
-                } catch (Error const& e) {
-                    LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
-                    signal = BackEvent_t(session_reactor.signal);
-                    mm.invoke_close_box(
-                        local_err_msg(e, language(ini)),
-                        signal, authentifier, authentifier);
-                    session_reactor.signal = signal;
-
-                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                        run_session = false;
+                }
+                break;
+                default:
+                {
+                    this->front_starting(run_session, front_trans, ioswitch, enable_graphics, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    if (run_session == false){
+                        break;
                     }
+                }
                 }
             }
             if (mm.get_mod()) {
@@ -589,89 +853,6 @@ private:
 
         return client_sck;
     }
-
-
-    struct Select
-    {
-        unsigned max = 0;
-        fd_set rfds;
-        fd_set wfds;
-        timeval timeout;
-        bool want_write = false;
-
-        Select(timeval timeout)
-        : timeout{timeout}
-        {
-            io_fd_zero(this->rfds);
-        }
-
-        int select(timeval now)
-        {
-            timeval timeoutastv = {0,0};
-            const timeval & ultimatum = this->timeout;
-            const timeval & starttime = now;
-            if (ultimatum > starttime) {
-                timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                    - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
-            }
-
-            return ::select(
-                this->max + 1, &this->rfds,
-                this->want_write ? &this->wfds : nullptr,
-                nullptr, &timeoutastv);
-        }
-
-        void set_timeout(timeval next_timeout)
-        {
-            this->timeout = next_timeout;
-        }
-
-        std::chrono::milliseconds get_timeout(timeval now)
-        {
-            const timeval & ultimatum = this->timeout;
-            const timeval & starttime = now;
-            if (ultimatum > starttime) {
-                return std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                        - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
-            }
-            return 0ms;
-        }
-
-        void set_read_sck(int sck)
-        {
-            this->max = prepare_fds(sck, this->max, this->rfds);
-        }
-
-        void set_write_sck(int sck)
-        {
-            if (!this->want_write) {
-                this->want_write = true;
-                io_fd_zero(this->wfds);
-            }
-            this->max = prepare_fds(sck, this->max, this->wfds);
-        }
-
-        void immediate_wakeup(timeval now)
-        {
-            this->timeout = now;
-        }
-    };
-
-    struct [[nodiscard]] SckNoRead
-    {
-        int sck_front = INVALID_SOCKET;
-        int sck_mod = INVALID_SOCKET;
-        // int sck_acl = INVALID_SOCKET;
-
-        [[nodiscard]] bool contains(int fd) const noexcept
-        {
-            return sck_front == fd
-                || sck_mod == fd
-                // || sck_acl == fd
-            ;
-        }
-    };
 
     static void send_waiting_data(
         Select& ioswitch,
