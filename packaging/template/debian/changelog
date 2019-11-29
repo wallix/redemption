@@ -1,3 +1,10 @@
+redemption (1.1.177%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * [Back to selector] Fix issue of 'Cannot use session recording after termination of an unrecored session'.
+  * Fix display issues in FreeRDP-X11.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 29 Nov 2019 11:07:22 +0200
+
 redemption (1.1.175%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Increase the maximum delay before showing Remote Program disconnection message.
