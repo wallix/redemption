@@ -257,8 +257,10 @@ class Session
     }
 
 
-    void front_starting(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor::EnableGraphics enable_graphics, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
+    void front_starting(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
     {
+        SessionReactor::EnableGraphics enable_graphics{false};
+
         if (!acl) {
             this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
         }
@@ -276,42 +278,40 @@ class Session
         });
 
         // front event
-        bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-        if (session_reactor.has_front_event() || front_is_set) {
-            try {
-                if (session_reactor.has_front_event()) {
-                    session_reactor.execute_callbacks(mm.get_callback());
+        try {
+            if (session_reactor.has_front_event()) {
+                session_reactor.execute_callbacks(mm.get_callback());
+            }
+            bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+            if (front_is_set) {
+                front.rbuf.load_data(front.trans);
+                while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
+                {
+                    bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                    uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                    front.incoming(tpdu, current_pdu_type, mm.get_callback());
                 }
-                if (front_is_set) {
-                    front.rbuf.load_data(front.trans);
-                    while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
-                    {
-                        bytes_view tpdu = front.rbuf.current_pdu_buffer();
-                        uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                        front.incoming(tpdu, current_pdu_type, mm.get_callback());
-                    }
+            }
+        } catch (Error const& e) {
+            if (ERR_DISCONNECT_BY_USER == e.id) {
+                front_signal = BACK_EVENT_NEXT;
+            }
+            else {
+                if (
+                    // Can be caused by client disconnect.
+                    (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                    // Can be caused by client disconnect.
+                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                    (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                    // Can be caused by wabwatchdog.
+                    (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                    LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                 }
-            } catch (Error const& e) {
-                if (ERR_DISCONNECT_BY_USER == e.id) {
-                    front_signal = BACK_EVENT_NEXT;
-                }
-                else {
-                    if (
-                        // Can be caused by client disconnect.
-                        (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                        // Can be caused by client disconnect.
-                        (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                        (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                        // Can be caused by wabwatchdog.
-                        (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                        LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                    }
-                    run_session = false;
-                }
-            } catch (...) {
-                LOG(LOG_ERR, "Proxy data processing raised unknown error");
                 run_session = false;
             }
+        } catch (...) {
+            LOG(LOG_ERR, "Proxy data processing raised unknown error");
+            run_session = false;
         }
 
         if (run_session == false){
@@ -427,12 +427,9 @@ class Session
         }
     }
 
-    void front_up_and_running(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor::EnableGraphics enable_graphics, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
+    void front_up_and_running(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
     {
-        if (!acl) {
-            this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
-        }
-
+        SessionReactor::EnableGraphics enable_graphics{true};
         try {
             session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
                 return mm.get_graphic_wrapper();
@@ -441,47 +438,49 @@ class Session
             this->check_exception(e, signal, ini, mm, session_reactor, authentifier, front, run_session, acl.get());
         }
 
+        if (!acl) {
+            this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+        }
+
         session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
             return io_fd_isset(fd, ioswitch.rfds);
         });
 
         // front event
-        bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-        if (session_reactor.has_front_event() || front_is_set) {
-            try {
-                if (session_reactor.has_front_event()) {
-                    session_reactor.execute_callbacks(mm.get_callback());
+        try {
+            if (session_reactor.has_front_event()) {
+                session_reactor.execute_callbacks(mm.get_callback());
+            }
+            bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+            if (front_is_set) {
+                front.rbuf.load_data(front.trans);
+                while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
+                {
+                    bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                    uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                    front.incoming(tpdu, current_pdu_type, mm.get_callback());
                 }
-                if (front_is_set) {
-                    front.rbuf.load_data(front.trans);
-                    while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
-                    {
-                        bytes_view tpdu = front.rbuf.current_pdu_buffer();
-                        uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                        front.incoming(tpdu, current_pdu_type, mm.get_callback());
-                    }
+            }
+        } catch (Error const& e) {
+            if (ERR_DISCONNECT_BY_USER == e.id) {
+                front_signal = BACK_EVENT_NEXT;
+            }
+            else {
+                if (
+                    // Can be caused by client disconnect.
+                    (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                    // Can be caused by client disconnect.
+                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                    (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                    // Can be caused by wabwatchdog.
+                    (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                    LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                 }
-            } catch (Error const& e) {
-                if (ERR_DISCONNECT_BY_USER == e.id) {
-                    front_signal = BACK_EVENT_NEXT;
-                }
-                else {
-                    if (
-                        // Can be caused by client disconnect.
-                        (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                        // Can be caused by client disconnect.
-                        (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                        (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                        // Can be caused by wabwatchdog.
-                        (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                        LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                    }
-                    run_session = false;
-                }
-            } catch (...) {
-                LOG(LOG_ERR, "Proxy data processing raised unknown error");
                 run_session = false;
             }
+        } catch (...) {
+            LOG(LOG_ERR, "Proxy data processing raised unknown error");
+            run_session = false;
         }
 
         if (run_session == false){
@@ -709,7 +708,7 @@ public:
                 switch (front.state) {
                 case Front::UP_AND_RUNNING:
                 {
-                    this->front_up_and_running(run_session, front_trans, ioswitch, enable_graphics, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    this->front_up_and_running(run_session, front_trans, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
                     if (run_session == false){
                         break;
                     }
@@ -717,7 +716,7 @@ public:
                 break;
                 default:
                 {
-                    this->front_starting(run_session, front_trans, ioswitch, enable_graphics, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    this->front_starting(run_session, front_trans, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
                     if (run_session == false){
                         break;
                     }
