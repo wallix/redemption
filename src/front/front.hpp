@@ -157,6 +157,7 @@ public:
         bmp_info         = 1u << 11,
 
         // SocketTransport (see 'socket_transport.hpp')
+        sock_basic       = 1u << 29,
         sock_dump        = 1u << 30,
         sock_watch       = 1u << 31
     };

@@ -489,7 +489,8 @@ void ModuleManager::create_mod_rdp(
 
         if (enable_validator) {
             auto const& socket_path = ini.get<cfg::file_verification::socket_path>();
-            unique_fd ufd = addr_connect(socket_path.c_str());
+            bool const no_log_for_unix_socket = false;
+            unique_fd ufd = addr_connect(socket_path.c_str(), no_log_for_unix_socket);
             if (ufd) {
                 validator_fd = ufd.fd();
                 fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);

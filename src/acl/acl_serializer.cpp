@@ -1110,7 +1110,7 @@ Acl::Acl(
     "Authentifier", std::move(client_sck),
     ini.get<cfg::globals::authfile>().c_str(), 0,
     std::chrono::seconds(1),
-    to_verbose_flags(ini.get<cfg::debug::auth>()))
+    to_verbose_flags(ini.get<cfg::debug::auth>() | (!strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") ? uint64_t(SocketTransport::Verbose::watchdog) : 0)))
 , acl_serial(
     ini, now, this->auth_trans, cctx, rnd, fstat,
     to_verbose_flags(ini.get<cfg::debug::auth>()))

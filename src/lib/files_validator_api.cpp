@@ -90,7 +90,7 @@ struct ValidatorApi
     {}
 
     ValidatorApi(char const* path)
-    : ValidatorApi(addr_connect(path))
+    : ValidatorApi(addr_connect(path, false /*no_log_for_unix_socket*/))
     {}
 
     ValidatorTransport transport;

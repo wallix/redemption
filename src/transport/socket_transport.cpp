@@ -58,7 +58,7 @@ SocketTransport::SocketTransport(
     , recv_timeout(recv_timeout)
     , verbose(verbose)
 {
-    LOG_IF(bool(verbose), LOG_INFO,
+    LOG_IF(bool(verbose & Verbose::basic), LOG_INFO,
         "SocketTransport: recv_timeout=%zu", size_t(recv_timeout.count()));
 
     strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
@@ -73,7 +73,7 @@ SocketTransport::~SocketTransport()
 
     this->tls.reset();
 
-    LOG_IF(bool(verbose), LOG_INFO
+    LOG_IF(bool(verbose & Verbose::basic), LOG_INFO
       , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
       , this->name, this->sck, this->total_received, this->total_sent);
 }

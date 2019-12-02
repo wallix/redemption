@@ -56,8 +56,13 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        state = 0x10,
-        arcsight = 0x20
+        state    = 0x10,
+        arcsight = 0x20,
+
+        // SocketTransport (see 'socket_transport.hpp')
+        sock_basic = 1u << 29,
+        sock_dump  = 1u << 30,
+        sock_watch = 1u << 31
     };
 
     KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose);

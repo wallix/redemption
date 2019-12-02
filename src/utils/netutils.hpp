@@ -39,9 +39,9 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
 unique_fd ip_connect(const char* ip, int port, char const** error_result = nullptr);
 
-unique_fd local_connect(const char* sck_name);
+unique_fd local_connect(const char* sck_name, bool no_log);
 
-unique_fd addr_connect(const char* addr);
+unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket);
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
                        writable_bytes_view transparent_dest, uint32_t verbose = 0);

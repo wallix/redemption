@@ -92,7 +92,7 @@ namespace
     }
 
     unique_fd connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr,
-                          socklen_t addr_len, const char * target, char const** error_result = nullptr)
+                          socklen_t addr_len, const char * target, bool no_log, char const** error_result = nullptr)
     {
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
@@ -142,7 +142,7 @@ namespace
             return unique_fd{-1};
         }
 
-        LOG(LOG_INFO, "connection to %s succeeded : socket %d", target, sck);
+        LOG_IF(!no_log, LOG_INFO, "connection to %s succeeded : socket %d", target, sck);
         return unique_fd{sck};
     }
 } // namespace
@@ -212,16 +212,17 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
 
     int nbretry = 3;
     int retry_delai_ms = 1000;
-    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, error_result);
+    bool const no_log = false;
+    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
 }
 
 
-unique_fd local_connect(const char* sck_name)
+unique_fd local_connect(const char* sck_name, bool no_log)
 {
     char target[1024] = {};
     snprintf(target, sizeof(target), "%s", sck_name);
 
-    LOG(LOG_INFO, "connecting to %s", sck_name);
+    LOG_IF(!no_log, LOG_INFO, "connecting to %s", sck_name);
     // we will try connection several time
     // the trial process include "ocket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
@@ -246,15 +247,15 @@ unique_fd local_connect(const char* sck_name)
 
     int nbretry = 1;
     int retry_delai_ms = 1000;
-    return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u), target);
+    return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u), target, no_log);
 }
 
 
-unique_fd addr_connect(const char* addr)
+unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
 {
     const char* pos = strchr(addr, ':');
     if (!pos) {
-        return local_connect(addr);
+        return local_connect(addr, no_log_for_unix_socket);
     }
 
     char* end;

@@ -73,6 +73,8 @@ public:
     {
         none,
 
+        basic    = 1u << 29,
+
         dump     = 1u << 30,
 
         watchdog = 1u << 31

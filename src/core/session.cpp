@@ -237,7 +237,7 @@ class Session
                 try {
                     // now is authentifier start time
                     acl = std::make_unique<Acl>(
-                        ini, Session::acl_connect(ini.get<cfg::globals::authfile>()), now.tv_sec, cctx, rnd, fstat
+                        ini, Session::acl_connect(ini.get<cfg::globals::authfile>(), (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0)), now.tv_sec, cctx, rnd, fstat
                     );
                     const auto sck = acl->auth_trans.sck;
                     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
@@ -840,9 +840,9 @@ private:
         while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
     }
 
-    static unique_fd acl_connect(std::string const & authtarget)
+    static unique_fd acl_connect(std::string const & authtarget, bool no_log)
     {
-        unique_fd client_sck = addr_connect(authtarget.c_str());
+        unique_fd client_sck = addr_connect(authtarget.c_str(), no_log);
         if (!client_sck.is_open()) {
             LOG(LOG_ERR,
                 "Failed to connect to authentifier (%s)",
