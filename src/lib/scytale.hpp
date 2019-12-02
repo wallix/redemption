@@ -271,7 +271,7 @@ extern "C"
     struct ScytaleMwrm3ReaderData
     {
         uint32_t type;
-        // 'u': uint64_t  'i': int64_t  's': {char*, uint32_t};
+        // 'u': uint64_t  'i': int64_t  's': {char*, uint32_t}
         char const* fmt;
         void const* data;
     };
