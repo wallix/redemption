@@ -133,7 +133,7 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
         /* test unserialize */                                                             \
                                                                                            \
         {                                                                                  \
-            auto t = std::forward_as_tuple(CASE_UNPACK params);                            \
+            auto t = std::make_tuple(CASE_UNPACK params);                                  \
             int counter = 0;                                                               \
             auto cmp = [&](auto i){                                                        \
                 RED_TEST_CONTEXT("i = " << counter++) {                                    \
