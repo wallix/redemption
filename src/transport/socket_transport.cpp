@@ -58,7 +58,7 @@ SocketTransport::SocketTransport(
     , recv_timeout(recv_timeout)
     , verbose(verbose)
 {
-    LOG_IF(bool(verbose), LOG_INFO,
+    LOG_IF(bool(verbose & Verbose::basic), LOG_INFO,
         "SocketTransport: recv_timeout=%zu", size_t(recv_timeout.count()));
 
     strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
@@ -73,7 +73,7 @@ SocketTransport::~SocketTransport()
 
     this->tls.reset();
 
-    LOG_IF(bool(verbose), LOG_INFO
+    LOG_IF(bool(verbose & Verbose::basic), LOG_INFO
       , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
       , this->name, this->sck, this->total_received, this->total_sent);
 }
@@ -184,10 +184,8 @@ Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_
 
 bool SocketTransport::disconnect()
 {
-    if (0 == strcmp("127.0.0.1", this->ip_address)){
-        // silent trace in the case of watchdog
-        LOG(LOG_INFO, "Socket %s (%d) : closing connection", this->name, this->sck);
-    }
+    // silent trace in the case of watchdog
+    LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_INFO, "Socket %s (%d) : closing connection", this->name, this->sck);
     this->tls_state = TLSState::Uninit;
     // Disconnect tls if needed
     this->tls.reset();
@@ -213,10 +211,8 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
     ssize_t const res = this->tls ? this->tls->privpartial_recv_tls(buffer, len) : socket_recv_partial(this->sck, buffer, len);
 
     if (res < 0){
-        if (0 == strcmp("127.0.0.1", this->ip_address)){
-            // silent trace in the case of watchdog
-            LOG(LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket! (%s)", this->name);
-        }
+        // silent trace in the case of watchdog
+        LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket! (%s)", this->name);
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
     }
 
