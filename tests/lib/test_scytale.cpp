@@ -633,13 +633,13 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
     ScytaleMwrm3ReaderData const* data;
 
     data = scytale_mwrm3_reader_read_next(mwrm3);
-    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == ""sv);
     RED_REQUIRE(data);
     RED_TEST(data->type == ('v' | '3' << 8));
     RED_TEST(data->fmt == "");
 
     data = scytale_mwrm3_reader_read_next(mwrm3);
-    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == ""sv);
     RED_REQUIRE(data);
     RED_TEST(data->type == 4);
     {
