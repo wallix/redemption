@@ -137,24 +137,28 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        basic_trace     = 1 << 0,
-        basic_trace2    = 1 << 1,
-        basic_trace3    = 1 << 2,
-        basic_trace4    = 1 << 3,
-        basic_trace5    = 1 << 5,
-        graphic         = 1 << 6,
-        channel         = 1 << 7,
-        global_channel  = 1 << 13,
-        sec_decrypted   = 1 << 14,
-        keymap          = 1 << 15,
+        basic_trace     = 1u << 0,
+        basic_trace2    = 1u << 1,
+        basic_trace3    = 1u << 2,
+        basic_trace4    = 1u << 3,
+        basic_trace5    = 1u << 5,
+        graphic         = 1u << 6,
+        channel         = 1u << 7,
+        global_channel  = 1u << 13,
+        sec_decrypted   = 1u << 14,
+        keymap          = 1u << 15,
 
         // RDPSerializer
-        bmp_cache        = 1 << 8,
-        internal_buffer  = 1 << 9,
+        bmp_cache        = 1u << 8,
+        internal_buffer  = 1u << 9,
 
         // BmpCachePersister
-        cache_from_disk  = 1 << 10,
-        bmp_info         = 1 << 11,
+        cache_from_disk  = 1u << 10,
+        bmp_info         = 1u << 11,
+
+        // SocketTransport (see 'socket_transport.hpp')
+        sock_dump        = 1u << 30,
+        sock_watch       = 1u << 31
     };
 
 private:
@@ -2206,12 +2210,12 @@ public:
                     // Microsoft RDP Clients (mstsc from Windows 10 or Windows 2003)
                     // are sending correctly formed messages.
 
-                    // rdesktop Linux client is not affected 
+                    // rdesktop Linux client is not affected
                     // (sending only slowpath keyboard input events)
-                    if ((1 == num_events) 
-                    && (0 == i) 
-                    && (cfpie.payload.in_remain() == 6) 
-                    && (0x1D == ke.keyCode) 
+                    if ((1 == num_events)
+                    && (0 == i)
+                    && (cfpie.payload.in_remain() == 6)
+                    && (0x1D == ke.keyCode)
                     && (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
                          BogusNumberOfFastpathInputEvent::pause_key_only)) {
                         LOG(LOG_INFO,
@@ -2452,7 +2456,7 @@ public:
         // TODO: failing should be better than dropping (controled by some flag)
         stream.in_skip_bytes(stream.in_remain());
     }
-    
+
     void process_data_tpdu_activate(bytes_view tpdu, Callback & cb)
     {
         InStream new_x224_stream(tpdu);

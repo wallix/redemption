@@ -257,7 +257,7 @@ class Session
     }
 
 
-    void front_starting(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
+    void front_starting(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
     {
         SessionReactor::EnableGraphics enable_graphics{false};
 
@@ -427,7 +427,7 @@ class Session
         }
     }
 
-    void front_up_and_running(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat) 
+    void front_up_and_running(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
     {
         SessionReactor::EnableGraphics enable_graphics{true};
         try {
@@ -940,7 +940,7 @@ void session_start_sck(
     Session session(SocketType(
         name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
         static_cast<Args&&>(args)...,
-        to_verbose_flags(ini.get<cfg::debug::front>())
+        to_verbose_flags(ini.get<cfg::debug::front>() | (!strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") ? uint64_t(SocketTransport::Verbose::watchdog) : 0))
     ), ini, cctx, rnd, fstat);
 }
 
