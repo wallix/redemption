@@ -76,6 +76,7 @@ namespace
     template<class F, std::size_t... ints>
     void each_index(std::integer_sequence<std::size_t, ints...>, F f)
     {
+        (void)f; // disable warning if ints... is empty
         (f(std::integral_constant<std::size_t, ints>()), ...);
     }
 }

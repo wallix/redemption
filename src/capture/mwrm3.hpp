@@ -505,6 +505,7 @@ namespace Mwrm3
             }
             else if constexpr (std::is_same_v<T, readers::no_value>)
             {
+                (void)x;
                 return ignore_no_value_impl<i, type>(f, remaining, xs...);
             }
             else
