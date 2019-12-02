@@ -1,6 +1,6 @@
 # ./tools/cpp2ctypes.lua 'src/lib/scytale.hpp' 'lib.' '' 'get_hmac_key_prototype*=GETHMACKEY' 'get_trace_key_prototype*=GETTRACEKEY'
 
-from ctypes import CFUNCTYPE, POINTER, c_char_p, c_int, c_longlong, c_uint32, c_uint64, c_ulong, c_void_p
+from ctypes import CFUNCTYPE, POINTER, c_char_p, c_int, c_longlong, c_uint32, c_uint64, c_ulong, c_void_p, c_uint
 
 pathlib = 'libscytale.so'
 
