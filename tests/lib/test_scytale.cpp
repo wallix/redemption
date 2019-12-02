@@ -620,7 +620,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
         "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00"sv
     ;
 
-    auto reader = scytale_reader_new(nullptr, nullptr, nullptr, 0, 0);
+    auto reader = scytale_reader_new("", nullptr, nullptr, 0, 0);
     RED_REQUIRE(reader);
     auto free_reader = finally([&]{ scytale_reader_delete(reader); });
 
