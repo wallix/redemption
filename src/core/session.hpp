@@ -77,7 +77,7 @@ public:
 
         SocketTransport front_trans(
             "RDP Client", std::move(sck), "", 0, std::chrono::milliseconds(ini.get<cfg::client::recv_timeout>()),
-            to_verbose_flags(this->ini.get<cfg::debug::front>())
+            to_verbose_flags(this->ini.get<cfg::debug::front>() | (!strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") ? uint64_t(SocketTransport::Verbose::watchdog) : 0))
         );
 
         const bool mem3blt_support = true;
