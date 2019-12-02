@@ -55,7 +55,7 @@ void Bouncer2Mod::rdp_input_scancode(
     long /*param1*/, long /*param2*/, long /*param3*/, long /*param4*/, Keymap2 * keymap)
 {
     if (keymap->nb_kevent_available() > 0 && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->session_reactor.set_event_next(BACK_EVENT_STOP);
+        this->session_reactor.set_next_event(BACK_EVENT_STOP);
         return ;
     }
 

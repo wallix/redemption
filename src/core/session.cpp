@@ -193,7 +193,7 @@ class Session
                 SessionProbeOnLaunchFailure::retry_without_session_probe) {
                    ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
-                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+                session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
             }
             else if (acl) {
                 ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
@@ -211,12 +211,12 @@ class Session
                 ini.set<cfg::context::perform_automatic_reconnection>(true);
             }
 
-            session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+            session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
         }
         else if (e.id == ERR_RAIL_NOT_ENABLED) {
             ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
 
-            session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+            session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
         }
         else if ((e.id == ERR_RDP_SERVER_REDIR) &&
                  ini.get<cfg::mod_rdp::server_redirection_support>()) {
@@ -257,7 +257,7 @@ class Session
     }
 
 
-    void front_starting(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
+    void front_starting(bool & run_session, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
     {
         SessionReactor::EnableGraphics enable_graphics{false};
 
@@ -282,7 +282,7 @@ class Session
             if (session_reactor.has_front_event()) {
                 session_reactor.execute_callbacks(mm.get_callback());
             }
-            bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+    
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
                 while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
@@ -427,7 +427,7 @@ class Session
         }
     }
 
-    void front_up_and_running(bool & run_session, SocketTransport& front_trans, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
+    void front_up_and_running(bool & run_session, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
     {
         SessionReactor::EnableGraphics enable_graphics{true};
         try {
@@ -451,7 +451,6 @@ class Session
             if (session_reactor.has_front_event()) {
                 session_reactor.execute_callbacks(mm.get_callback());
             }
-            bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
                 while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
@@ -708,7 +707,8 @@ public:
                 switch (front.state) {
                 case Front::UP_AND_RUNNING:
                 {
-                    this->front_up_and_running(run_session, front_trans, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                    this->front_up_and_running(run_session, front_is_set, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
                     if (run_session == false){
                         break;
                     }
@@ -716,7 +716,8 @@ public:
                 break;
                 default:
                 {
-                    this->front_starting(run_session, front_trans, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                    this->front_starting(run_session, front_is_set, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
                     if (run_session == false){
                         break;
                     }

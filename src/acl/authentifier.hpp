@@ -120,7 +120,8 @@ public:
         if (this->acl_serial &&
             // Call disconnect_target >>> Show Close Box (with back to selector)
             this->acl_serial->ini.get<cfg::globals::enable_close_box>()) {
-            this->acl_serial->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
+            // TODO: STRMODULE_CLOSE
+            this->acl_serial->ini.set_acl<cfg::context::module>("close");
         }
     }
 

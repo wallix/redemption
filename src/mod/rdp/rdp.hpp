@@ -5761,7 +5761,7 @@ public:
         this->authentifier.disconnect_target();
         this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
 
-        this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
     }
 
     void sespro_launch_process_ended() override {

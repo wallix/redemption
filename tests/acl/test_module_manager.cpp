@@ -30,11 +30,10 @@ RED_AUTO_TEST_CASE(TestModuleManagerNextMod)
 
     SessionReactor session_reactor;
     MMIni mm(session_reactor, ini);
-    int res;
 
     ini.set_acl<cfg::context::module>("login");
 
-    res = mm.next_module();
+    int res = mm.next_module();
     RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_LOGIN);
 
     ini.set_acl<cfg::globals::auth_user>("user");

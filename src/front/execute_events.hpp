@@ -65,7 +65,8 @@ inline ExecuteEventsResult execute_events(
         return ExecuteEventsResult::Error;
     }
 
-    session_reactor.execute_timers_at(enable_graphics, tvtime(), [&]() -> gdi::GraphicApi& { return front; });
+    session_reactor.set_current_time(tvtime());
+    session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& { return front; });
 
     if (num) {
         session_reactor.execute_callbacks(callback);

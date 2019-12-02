@@ -106,22 +106,26 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     session_reactor.execute_timers(disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "");
 
-    // execute_timers_at or set_current_time + execute_timers
-    session_reactor.execute_timers_at(disable_gd, {11, 222}, &gdi::null_gd);
+    // set_current_time + execute_timers, to simulate times flying
+    session_reactor.set_current_time({11, 222});
+    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
 
-    session_reactor.execute_timers_at(disable_gd, {13, 0}, &gdi::null_gd);
+    session_reactor.set_current_time({13, 0});
+    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
 
-    session_reactor.execute_timers_at(disable_gd, {14, 0}, &gdi::null_gd);
+    session_reactor.set_current_time({14, 0});
+    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\n");
     RED_CHECK(bool(timer2));
 
-    session_reactor.execute_timers_at(disable_gd, {15, 0}, &gdi::null_gd);
+    session_reactor.set_current_time({15, 0});
+    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\n");
     RED_CHECK(bool(timer2));
 
@@ -129,10 +133,12 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     RED_CHECK(!timer2);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
-    session_reactor.execute_timers_at(disable_gd, {16, 0}, &gdi::null_gd);
+    session_reactor.set_current_time({16, 0});
+    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
-    session_reactor.execute_timers_at(enable_gd, {16, 0}, &gdi::null_gd);
+    session_reactor.set_current_time({16, 0});
+    session_reactor.execute_timers(enable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\ntimer4\n");
 }
 

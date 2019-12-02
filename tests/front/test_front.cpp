@@ -324,10 +324,10 @@ RED_AUTO_TEST_CASE(TestFront2)
     RED_TEST_PASSPOINT();
 
     RED_REQUIRE(!session_reactor.timer_events_.is_empty());
+    session_reactor.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
     RED_CHECK_EXCEPTION_ERROR_ID(
-        session_reactor.execute_timers_at(
+        session_reactor.execute_timers(
             SessionReactor::EnableGraphics{false},
-            {ini.get<cfg::globals::handshake_timeout>().count(), 0},
             [&]{ return std::ref(front.gd()); }),
         ERR_RDP_HANDSHAKE_TIMEOUT);
 

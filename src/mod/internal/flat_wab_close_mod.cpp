@@ -104,7 +104,7 @@ FlatWabCloseMod::FlatWabCloseMod(
                 this->close_widget.refresh_timeleft((close_timeout - seconds).count());
                 return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
-            ctx.get_reactor().set_event_next(BACK_EVENT_STOP);
+            ctx.get_reactor().set_next_event(BACK_EVENT_STOP);
             return ctx.terminate();
         });
     }

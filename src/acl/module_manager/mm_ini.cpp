@@ -90,97 +90,35 @@ void MMIni::invoke_close_box(
 
 ModuleIndex MMIni::next_module()
 {
-    LOG(LOG_INFO, "----------> ACL next_module <--------");
     auto & module_cstr = this->ini.get<cfg::context::module>();
-
-    if (module_cstr == STRMODULE_LOGIN) {
-        LOG(LOG_INFO, "===========> MODULE_LOGIN");
-        return MODULE_INTERNAL_WIDGET_LOGIN;
-    }
-    if (module_cstr == STRMODULE_SELECTOR || module_cstr == STRMODULE_SELECTOR_LEGACY) {
-        LOG(LOG_INFO, "===============> MODULE_SELECTOR");
-        return MODULE_INTERNAL_WIDGET_SELECTOR;
-    }
-    if (module_cstr == STRMODULE_CONFIRM) {
-        LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
-        return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
-    }
-    if (module_cstr == STRMODULE_CHALLENGE) {
-        LOG(LOG_INFO, "===========> MODULE_DIALOG_CHALLENGE");
-        return MODULE_INTERNAL_DIALOG_CHALLENGE;
-    }
-    if (module_cstr == STRMODULE_VALID) {
-        LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
-        return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
-    }
-    if (module_cstr == STRMODULE_WAITINFO) {
-        LOG(LOG_INFO, "===========> MODULE_WAITINFO");
-        return MODULE_INTERNAL_WAIT_INFO;
-    }
-    if (module_cstr == STRMODULE_TARGET) {
-        LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_TARGET");
-        return MODULE_INTERNAL_TARGET;
-    }
-    if (module_cstr == STRMODULE_TRANSITORY) {
-        LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
-        return MODULE_TRANSITORY;
-    }
-    if (module_cstr == STRMODULE_CLOSE) {
-        LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
-        return MODULE_INTERNAL_CLOSE;
-    }
-    if (module_cstr == STRMODULE_CLOSE_BACK) {
-        LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
-        return MODULE_INTERNAL_CLOSE_BACK;
-    }
-    if (this->connected && (module_cstr == STRMODULE_RDP || module_cstr == STRMODULE_VNC)) {
-        LOG(LOG_INFO, "===========> MODULE_CLOSE");
+    auto module_id = get_module_id(module_cstr);
+    LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
+    
+    if (this->connected && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
+        LOG(LOG_INFO, "===========> Connection close asked by admin while connected");
         if (this->ini.get<cfg::context::auth_error_message>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
         }
         return MODULE_INTERNAL_CLOSE;
     }
-    if (module_cstr == STRMODULE_RDP) {
-        LOG(LOG_INFO, "===========> MODULE_RDP");
-        return MODULE_RDP;
+    if (module_id == MODULE_INTERNAL)
+    {
+        auto module_id = get_internal_module_id_from_target(this->ini.get<cfg::context::target_host>());
+        LOG(LOG_INFO, "===========> %s (from target)", get_module_name(module_id));
+        return module_id;
     }
-    if (module_cstr == STRMODULE_VNC) {
-        LOG(LOG_INFO, "===========> MODULE_VNC");
-        return MODULE_VNC;
+    if (module_id == MODULE_UNKNOWN)
+    {
+        LOG(LOG_INFO, "===========> UNKNOWN MODULE (closing)");
+        return MODULE_INTERNAL_CLOSE;
     }
-    if (module_cstr == STRMODULE_INTERNAL) {
-        ModuleIndex res = MODULE_EXIT;
-        auto & target = this->ini.get<cfg::context::target_host>();
-        if (target == "bouncer2") {
-            LOG(LOG_INFO, "==========> MODULE_INTERNAL bouncer2");
-            res = MODULE_INTERNAL_BOUNCER2;
-        }
-        else if (target == "autotest") {
-            LOG(LOG_INFO, "==========> MODULE_INTERNAL test");
-            res = MODULE_INTERNAL_TEST;
-        }
-        else if (target == "widget_message") {
-            LOG(LOG_INFO, "==========> MODULE_INTERNAL widget_message");
-            res = MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
-        }
-        else if (target == "widgettest") {
-            LOG(LOG_INFO, "==========> MODULE_INTERNAL widgettest");
-            res = MODULE_INTERNAL_WIDGETTEST;
-        }
-        else {
-            LOG(LOG_INFO, "==========> MODULE_INTERNAL card");
-            res = MODULE_INTERNAL_CARD;
-        }
-        return res;
-    }
-    LOG(LOG_INFO, "===========> UNKNOWN MODULE");
-    return MODULE_INTERNAL_CLOSE;
+    return module_id;
 }
 
 void MMIni::check_module()
 {
     if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
-        this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
         this->ini.set<cfg::context::forcemodule>(false);
         // Do not send back the value to sesman.
     }

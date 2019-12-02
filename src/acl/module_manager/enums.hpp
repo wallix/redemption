@@ -24,22 +24,9 @@
 
 #pragma once
 
-#define STRMODULE_LOGIN            "login"
-#define STRMODULE_SELECTOR         "selector"
-#define STRMODULE_SELECTOR_LEGACY  "selector_legacy"
-#define STRMODULE_CONFIRM          "confirm"
-#define STRMODULE_CHALLENGE        "challenge"
-#define STRMODULE_VALID            "valid"
-#define STRMODULE_TRANSITORY       "transitory"
-#define STRMODULE_CLOSE            "close"
-#define STRMODULE_CLOSE_BACK       "close_back"
-#define STRMODULE_TARGET           "interactive_target"
-#define STRMODULE_RDP              "RDP"
-#define STRMODULE_VNC              "VNC"
-#define STRMODULE_INTERNAL         "INTERNAL"
-#define STRMODULE_WAITINFO         "waitinfo"
+#include "utils/log.hpp"
+#include <string>
 
-// TODO enum class
 enum ModuleIndex : int
 {
     MODULE_EXIT,
@@ -66,6 +53,68 @@ enum ModuleIndex : int
 
     MODULE_UNKNOWN
 };
+
+inline ModuleIndex get_internal_module_id_from_target(const std::string & target_name)
+{
+    struct {
+        std::string name;
+        ModuleIndex id;
+    } names_id[5] = {
+            {"bouncer2",           MODULE_INTERNAL_BOUNCER2},
+            {"autotest",           MODULE_INTERNAL_TEST},
+            {"widget_message",     MODULE_INTERNAL_WIDGET_SELECTOR},
+            {"widgettest",         MODULE_INTERNAL_WIDGETTEST},
+            {"card",               MODULE_INTERNAL_CARD},
+    };
+    ModuleIndex mi = MODULE_EXIT;
+    for (auto f: names_id){
+        if (f.name == target_name){
+            mi = f.id;
+            break;
+        }
+    }
+    return mi;
+}
+
+
+inline ModuleIndex get_module_id(const std::string & module_name)
+{
+    struct {
+        std::string name;
+        ModuleIndex id;
+    } names_id[20] = {
+            {"login",              MODULE_INTERNAL_WIDGET_LOGIN},
+            {"selector",           MODULE_INTERNAL_WIDGET_SELECTOR},
+            {"selector_legacy",    MODULE_INTERNAL_WIDGET_SELECTOR},
+            {"confirm",            MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE},
+            {"challenge",          MODULE_INTERNAL_DIALOG_CHALLENGE},
+            {"valid",              MODULE_INTERNAL_DIALOG_VALID_MESSAGE},
+            {"transitory",         MODULE_TRANSITORY},
+            {"close",              MODULE_INTERNAL_CLOSE},
+            {"close_back",         MODULE_INTERNAL_CLOSE_BACK},
+            {"interactive_target", MODULE_INTERNAL_TARGET},
+            {"RDP",                MODULE_RDP},
+            {"VNC",                MODULE_VNC},
+            {"INTERNAL",           MODULE_INTERNAL},
+            {"waitinfo",           MODULE_INTERNAL_WAIT_INFO},
+            {"bouncer2",           MODULE_INTERNAL_BOUNCER2},
+            {"autotest",           MODULE_INTERNAL_TEST},
+            {"widget_message",     MODULE_INTERNAL_WIDGET_SELECTOR},
+            {"widget_test",        MODULE_INTERNAL_WIDGETTEST},
+            {"card",               MODULE_INTERNAL_CARD},
+            {"exit",               MODULE_INTERNAL_CARD}
+    };
+
+    ModuleIndex mi = MODULE_UNKNOWN;
+    for (auto f: names_id){
+        LOG(LOG_INFO, "%s %s ", f.name, module_name);
+        if (f.name == module_name){
+            mi = f.id;
+            break;
+        }
+    }
+    return mi;
+}
 
 inline const char * get_module_name(ModuleIndex module_id) noexcept
 {

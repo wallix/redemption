@@ -3004,13 +3004,6 @@ struct SessionReactor
         }
     }
 
-    template<class GetGd>
-    void execute_timers_at(EnableGraphics enable_gd, timeval const& end_tv, GetGd get_gd)
-    {
-        this->set_current_time(end_tv);
-        this->execute_timers(enable_gd, get_gd);
-    }
-
     template<class IsSetElem>
     void execute_graphics(IsSetElem is_set, gdi::GraphicApi& gd)
     {
@@ -3063,10 +3056,6 @@ struct SessionReactor
         this->signal = signal;
         // assert(is not already set)
         // TODO unimplemented
-    }
-    void set_event_next(/*BackEvent_t*/int signal)
-    {
-        this->set_next_event(signal);
     }
 };
 

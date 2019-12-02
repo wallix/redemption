@@ -648,7 +648,8 @@ bool AclSerializer::check(
             }
             catch (Error const& e) {
                 if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                    this->ini.set_acl<cfg::context::module>(STRMODULE_TRANSITORY);
+                    // TODO : see STRMODULE_TRANSITORY
+                    this->ini.set_acl<cfg::context::module>("transitory");
 
                     signal = BACK_EVENT_NEXT;
 
