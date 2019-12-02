@@ -1078,10 +1078,16 @@ namespace
         return Mwrm3ParserResult::NeedMoreData;
     }
 
+    struct scytale_bytes_view
+    {
+        uint8_t const* ptr;
+        uint32_t size;
+    };
+
     template<class T>
     constexpr char char_type_fmt()
     {
-        if constexpr (std::is_same_v<T, bytes_view>)
+        if constexpr (std::is_same_v<T, scytale_bytes_view>)
         {
             return 's';
         }
@@ -1092,6 +1098,10 @@ namespace
         else if constexpr (std::is_signed_v<T>)
         {
             return 'i';
+        }
+        else
+        {
+            assert(false);
         }
     }
 
@@ -1287,33 +1297,51 @@ namespace std
 
 namespace
 {
+    scytale_bytes_view scytale_raw_bytes_view(bytes_view bytes)
+    {
+        return scytale_bytes_view{bytes.data(), checked_int(bytes.size())};
+    }
+
     template<class T>
-    auto mwrm3_raw_value(T const& x)
+    auto scytale_raw_integral(T x)
+    {
+        if constexpr (std::is_unsigned_v<T>)
+        {
+            return uint64_t(x);
+        }
+        else
+        {
+            return int64_t(x);
+        }
+    }
+
+    template<class T>
+    auto scytale_raw_value(T const& x)
     {
         if constexpr (std::is_enum_v<T>)
         {
-            return std::underlying_type_t<T>();
-        }
-        else if constexpr (std::is_same_v<Mwrm3::QuickHash, T>)
-        {
-            return x.hash;
-        }
-        else if constexpr (std::is_same_v<Mwrm3::FullHash, T>)
-        {
-            return x.hash;
+            return scytale_raw_integral(std::underlying_type_t<T>(x));
         }
         else if constexpr (std::is_same_v<bytes_view, T>)
         {
-            return x;
+            return scytale_raw_bytes_view(x);
+        }
+        else if constexpr (std::is_same_v<Mwrm3::QuickHash, T>)
+        {
+            return scytale_raw_bytes_view(x.hash);
+        }
+        else if constexpr (std::is_same_v<Mwrm3::FullHash, T>)
+        {
+            return scytale_raw_bytes_view(x.hash);
         }
         else if constexpr (std::is_integral_v<T>)
         {
-            return x;
+            return scytale_raw_integral(x);
         }
         else
         {
             // assume std::chrono::duration
-            return x.count();
+            return scytale_raw_integral(x.count());
         }
     }
 
@@ -1324,7 +1352,7 @@ namespace
     {
         auto bind_params = [](auto type, bytes_view /*remaining*/, auto... xs){
             return storage_list<storage_params<
-                decltype(type), decltype(mwrm3_raw_value(xs))...
+                decltype(type), decltype(scytale_raw_value(xs))...
             >>();
         };
 
@@ -1359,7 +1387,7 @@ struct ScytaleMwrm3ReaderHandle
             this->raw_data.type = safe_int{type.value};
             this->raw_data.fmt = StorageParams::fmt::c_str();
             this->raw_data.data = new(&union_element.storage)
-                typename StorageParams::storage_type{{mwrm3_raw_value(xs)}...};
+                typename StorageParams::storage_type{{scytale_raw_value(xs)}...};
 
             this->remaining_data = remaining_data;
         };
