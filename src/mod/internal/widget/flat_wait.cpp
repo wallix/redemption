@@ -162,7 +162,12 @@ void FlatWait::rdp_input_scancode(long int param1, long int param2, long int par
         switch (keymap->top_kevent()){
         case Keymap2::KEVENT_ESC:
             keymap->get_kevent();
-            this->send_notify(NOTIFY_SUBMIT);
+            if (!this->hide_back_to_selector) {
+                this->send_notify(NOTIFY_SUBMIT);
+            }
+            else {
+                this->send_notify(NOTIFY_CANCEL);
+            }
             break;
         default:
             WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
