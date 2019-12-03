@@ -1,3 +1,9 @@
+redemption (1.1.179%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * [Approval] Fix 'Button "back to selector" displayed when only one target is available'.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 03 Dec 2019 15:22:15 +0200
+
 redemption (1.1.177%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * [Back to selector] Fix issue of 'Cannot use session recording after termination of an unrecored session'.
