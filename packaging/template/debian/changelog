@@ -1,3 +1,15 @@
+redemption (7.3.43%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * [Session Probe] Fix 'Can't use hostnames in outbound connection monitoring rules'.
+  * Fix 'RDP Session disconnected during a Copy/Paste'.
+  * [Back to selector] Fix 'Cannot use session recording after termination of an unrecored session'.
+  * Provide mechanism to disable individually each supported Primary Drawing Order.
+  * Hide rdpproxy log in case of watchdog dirty disconnection.
+  * Fix 'FreeRDP/Remmina crash when showing non-standard size (mouse) pointer'.
+  * Fix 'FreeRDP/Remmina crashes when receiving unsupported features'.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 03 Dec 2019 10:32:03 +0200
+
 redemption (7.3.41%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix reading VNC clipboard.
