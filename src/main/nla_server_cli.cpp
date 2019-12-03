@@ -31,6 +31,7 @@
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/listen.hpp"
 #include "core/server_notifier_api.hpp"
+#include "proxy_recorder/extract_user_domain.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/socket_trace_transport.hpp"
@@ -66,7 +67,7 @@ class NLAServer
     {
         LOG(LOG_INFO, "NTLM Check identity");
         hexdump_d(user_av);
-        
+
         auto [username, domain] = extract_user_domain(this->nla_username);
         // from protocol
         auto tmp_utf8_user = ::encode_UTF16_to_UTF8(user_av);
@@ -113,7 +114,7 @@ class NLAServer
 public:
     NLAServer(std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
         : nla_username(nla_username)
-        , nla_password(nla_password) 
+        , nla_password(nla_password)
         , enable_kerberos(enable_kerberos)
         , forkable(forkable)
         , verbosity(verbosity)
@@ -161,7 +162,7 @@ public:
             memcpy(this->front_public_key, key.data(), key.size());
             this->front_public_key_av = array_view{this->front_public_key, key.size()};
         }
-        
+
         if (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
@@ -281,7 +282,7 @@ public:
                         case PState::NEGOTIATING_FRONT_HELLO:
                             LOG(LOG_INFO, "NEGOTIATING_FRONT_HELLO");
                             if (buffer.next(TpduBuffer::PDU)) {
-                                bool bogus_neg_req = false;                                
+                                bool bogus_neg_req = false;
                                 this->front_CR_TPDU = this->front_hello(trans, buffer.current_pdu_buffer(), bogus_neg_req, this->verbosity);
                             }
                             break;
@@ -295,7 +296,7 @@ public:
                                 auto [password_res, password_hash] = get_password_hash(
                                     this->nego_server->credssp.authenticate.UserName.buffer,
                                     this->nego_server->credssp.authenticate.DomainName.buffer);
-                                
+
                                 this->nego_server->credssp.set_password_hash(password_res, password_hash);
                                 this->front_nla(trans, {});
                             }

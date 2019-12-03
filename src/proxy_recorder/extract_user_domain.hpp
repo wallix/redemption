@@ -22,32 +22,40 @@
 
 #pragma once
 
+#include <utility>
+#include <string>
+#include <string_view>
+
+// \return {username, domain}
 static std::pair<std::string, std::string>
 extract_user_domain(std::string_view target_user)
 {
-    std::string username;
-    std::string domain;
-
-    std::string tmp(target_user.data(), target_user.data() + target_user.size());
-    tmp.push_back(0);
-
-    char * separator = strchr(tmp.data(), '\\');
-    if (separator) {
-        username.assign(separator+1, tmp.data()+tmp.size()-1);
-        domain.assign(tmp.data(), separator);
-    }
-    else {
-        separator = strchr(tmp.data(), '@');
-        if (separator) {
-            username.assign(tmp.data(), separator);
-            domain.assign(separator+1, tmp.data()+tmp.size()-1);
-        }
-        else {
-            username.assign(tmp.data(), tmp.data()+tmp.size()-1);
-            domain = {};
-        }
+    std::string::size_type
+    pos = target_user.find('\\');
+    if (pos != std::string::npos) {
+        return {
+            // username
+            std::string(target_user.begin() + pos + 1, target_user.end()),
+            // domain
+            std::string(target_user.begin(), target_user.begin() + pos),
+        };
     }
 
-    return std::pair<std::string, std::string>(username, domain);
+    pos = target_user.find('@');
+    if (pos != std::string::npos) {
+        return {
+            // username
+            std::string(target_user.begin(), target_user.begin() + pos),
+            // domain
+            std::string(target_user.begin() + pos + 1, target_user.end()),
+        };
+    }
+
+    return {
+        // username
+        std::string(target_user),
+        // domain
+        std::string(),
+    };
 }
 

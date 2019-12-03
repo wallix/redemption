@@ -25,7 +25,6 @@
 #include "utils/fixed_random.hpp"
 #include "utils/utf.hpp"
 #include "core/RDP/nego.hpp"
-#include "proxy_recorder/extract_user_domain.hpp"
 #include "core/RDP/nla/nla_server_ntlm.hpp"
 
 
@@ -38,8 +37,8 @@ public:
 
 public:
     NegoServer(array_view_u8 key, uint64_t verbosity)
-    : credssp(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, "win7"_av, key, 
-            {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, rand, timeobj, 6, 
+    : credssp(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, "win7"_av, key,
+            {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, rand, timeobj, 6,
         NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
         false, verbosity)
     {
