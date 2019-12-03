@@ -96,6 +96,7 @@ inline Rect get_widget_rect(uint16_t width, uint16_t height,
 #define STRMODULE_VNC              "VNC"
 #define STRMODULE_INTERNAL         "INTERNAL"
 #define STRMODULE_WAITINFO         "waitinfo"
+#define STRMODULE_WAITINFO_BACK    "waitinfo_back"
 
 // TODO enum class
 enum {
@@ -123,6 +124,7 @@ enum {
     MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY,
     MODULE_INTERNAL_WIDGETTEST,
     MODULE_INTERNAL_WAIT_INFO,
+    MODULE_INTERNAL_WAIT_INFO_BACK,
     MODULE_INTERNAL_TRANSITION,
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
@@ -158,7 +160,8 @@ inline const char * get_module_name(int module_id) {
         case MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY:    return "MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY";
         case MODULE_INTERNAL_WIDGETTEST:                return "MODULE_INTERNAL_WIDGETTEST";
         case MODULE_INTERNAL_WAIT_INFO:                 return "MODULE_INTERNAL_WAIT_INFO";
-        case MODULE_INTERNAL_TRANSITION:                 return "MODULE_INTERNAL_TRANSITION";
+        case MODULE_INTERNAL_WAIT_INFO_BACK:            return "MODULE_INTERNAL_WAIT_INFO_BACK";
+        case MODULE_INTERNAL_TRANSITION:                return "MODULE_INTERNAL_TRANSITION";
         case MODULE_EXIT_INTERNAL_CLOSE:                return "MODULE_EXIT_INTERNAL_CLOSE";
         case MODULE_TRANSITORY:                         return "MODULE_TRANSITORY";
         case MODULE_AUTH:                               return "MODULE_AUTH";
@@ -252,6 +255,10 @@ public:
         else if (module_cstr == STRMODULE_WAITINFO) {
             LOG(LOG_INFO, "===========> MODULE_WAITINFO");
             return MODULE_INTERNAL_WAIT_INFO;
+        }
+        else if (module_cstr == STRMODULE_WAITINFO_BACK) {
+            LOG(LOG_INFO, "===========> MODULE_WAITINFO_BACK");
+            return MODULE_INTERNAL_WAIT_INFO_BACK;
         }
         else if (module_cstr == STRMODULE_TARGET) {
             LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_TARGET");
@@ -1214,11 +1221,43 @@ public:
                     now,
                     this->client_execute,
                     showform,
-                    flag
+                    flag,
+                    false
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
             }
             break;
+
+        case MODULE_INTERNAL_WAIT_INFO_BACK:
+            {
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message (Back)'");
+                const char * message = this->ini.get<cfg::context::message>().c_str();
+                const char * caption = TR(trkeys::information, language(this->ini));
+                bool showform = this->ini.get<cfg::context::showform>();
+                uint flag = this->ini.get<cfg::context::formflag>();
+                this->set_mod(new FlatWaitMod(
+                    this->ini,
+                    this->front,
+                    this->front.client_info.width,
+                    this->front.client_info.height,
+                    this->client_execute.adjust_rect(get_widget_rect(
+                        this->front.client_info.width,
+                        this->front.client_info.height,
+                        this->front.client_info.cs_monitor
+                    )),
+                    caption,
+                    message,
+                    now,
+                    this->client_execute,
+                    showform,
+                    flag,
+                    true
+                ));
+                LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message (Back)' ready");
+            }
+            break;
+
+
         case MODULE_INTERNAL_TRANSITION:
             {
                 this->set_mod(new TransitionMod(

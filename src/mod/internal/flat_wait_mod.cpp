@@ -28,7 +28,7 @@
 FlatWaitMod::FlatWaitMod(
     FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message, time_t now,
-    ClientExecute & client_execute, bool showform, uint32_t flag
+    ClientExecute & client_execute, bool showform, uint32_t flag, bool back_selector
 )
     : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
@@ -37,7 +37,8 @@ FlatWaitMod::FlatWaitMod(
                     vars.get<cfg::font>(),
                     vars.get<cfg::theme>(),
                     language(vars),
-                    showform, flag, vars.get<cfg::context::duration_max>()
+                    showform, flag, vars.get<cfg::context::duration_max>(),
+                    back_selector
                     )
     , vars(vars)
     , timeout(now, 600)
@@ -48,7 +49,9 @@ FlatWaitMod::FlatWaitMod(
         this->wait_widget.set_widget_focus(&this->wait_widget.form, Widget::focus_reason_tabkey);
     }
     else {
-        this->wait_widget.set_widget_focus(&this->wait_widget.goselector, Widget::focus_reason_tabkey);
+        if (this->wait_widget.goselector) {
+            this->wait_widget.set_widget_focus(this->wait_widget.goselector, Widget::focus_reason_tabkey);
+        }
     }
     this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());

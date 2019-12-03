@@ -37,7 +37,7 @@ private:
     WidgetMultiLine    dialog;
 public:
     FlatForm           form;
-    WidgetFlatButton   goselector;
+    WidgetFlatButton   * goselector;
 private:
     WidgetFlatButton   exit;
     WidgetFlatButton * extra_button;
@@ -54,7 +54,7 @@ public:
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             bool showform = false, int required = FlatForm::NONE, int duration_max = 0);
+             bool showform = false, int required = FlatForm::NONE, int duration_max = 0, bool back_selector = true);
 
     ~FlatWait() override;
 

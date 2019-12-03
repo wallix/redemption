@@ -1131,11 +1131,13 @@ class Sesman():
         target = infos.get('target')
         if target:
             show_message = "%s: %s\n%s" % (TR(u"selected_target"), target, show_message)
-        tosend = { u'module' : u'waitinfo',
+        tosend = { u'module' : u'waitinfo_back',
                    u'message' : cut_message(show_message),
                    u'display_message' : MAGICASK,
                    u'waitinforeturn' : MAGICASK
                    }
+        if not self.back_selector:
+            tosend["module"] = u'waitinfo'
         ticketfields = infos.get("ticket_fields")
         flag = 0
         if ticketfields:

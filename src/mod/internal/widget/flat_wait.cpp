@@ -37,7 +37,7 @@ FlatWait::FlatWait(
     const char* caption, const char * text, int group_id,
     WidgetFlatButton * extra_button,
     Font const & font, Theme const & theme, Translation::language_t lang,
-    bool showform, int required, int duration_max
+    bool showform, int required, int duration_max, bool back_selector
 )
     : WidgetParent(drawable, parent, notifier, group_id)
     , groupbox(drawable, *this, nullptr, caption,
@@ -46,9 +46,10 @@ FlatWait::FlatWait(
              theme.global.fgcolor, theme.global.bgcolor, font,
              WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , form(drawable, *this, this, -20, font, theme, lang, required, duration_max)
-    , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
-                 theme.global.fgcolor, theme.global.bgcolor,
-                 theme.global.focus_color, 2, font, 6, 2)
+    , goselector(back_selector ? new WidgetFlatButton(drawable, this->groupbox,
+                                                      this, TR(trkeys::back_selector, lang), -12,
+                                                      theme.global.fgcolor, theme.global.bgcolor,
+                                                      theme.global.focus_color, 2, font, 6, 2) : nullptr)
     , exit(drawable, this->groupbox, this, TR(trkeys::exit, lang), -11,
            theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
            6, 2)
@@ -64,7 +65,9 @@ FlatWait::FlatWait(
         this->groupbox.add_widget(&this->form);
     }
 
-    this->groupbox.add_widget(&this->goselector);
+    if (this->goselector) {
+        this->groupbox.add_widget(this->goselector);
+    }
     this->groupbox.add_widget(&this->exit);
 
     this->add_widget(&this->groupbox);
@@ -78,6 +81,7 @@ FlatWait::FlatWait(
 
 FlatWait::~FlatWait()
 {
+    delete this->goselector;
     this->clear();
 }
 
@@ -112,11 +116,13 @@ void FlatWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
     this->exit.set_wh(dim);
     this->exit.set_xy(left + width - 40 - this->exit.cx(), y);
 
-    dim = this->goselector.get_optimal_dim();
-    this->goselector.set_wh(dim);
-    this->goselector.set_xy(this->exit.x() - (this->goselector.cx() + 10), y);
+    if (this->goselector) {
+        dim = this->goselector->get_optimal_dim();
+        this->goselector->set_wh(dim);
+        this->goselector->set_xy(this->exit.x() - (this->goselector->cx() + 10), y);
+    }
 
-    y += this->goselector.cy() + 20;
+    y += this->exit.cy() + 20;
 
     this->groupbox.set_wh(this->groupbox.cx(), y - top);
     this->groupbox.move_xy(0, (height - (y - top)) / 2);
@@ -132,7 +138,7 @@ void FlatWait::notify(Widget* widget, NotifyApi::notify_event_t event)
         ((event == NOTIFY_SUBMIT) && (widget == &this->exit))) {
         this->send_notify(NOTIFY_CANCEL);
     }
-    else if ((event == NOTIFY_SUBMIT) && (widget == &this->goselector)) {
+    else if ((event == NOTIFY_SUBMIT) && this->goselector && (widget == this->goselector)) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     else if ((event == NOTIFY_SUBMIT) && (widget->group_id == this->form.group_id)) {
@@ -154,7 +160,12 @@ void FlatWait::rdp_input_scancode(long int param1, long int param2, long int par
         switch (keymap->top_kevent()){
         case Keymap2::KEVENT_ESC:
             keymap->get_kevent();
-            this->send_notify(NOTIFY_SUBMIT);
+            if (this->goselector) {
+                this->send_notify(NOTIFY_SUBMIT);
+            }
+            else {
+                this->send_notify(NOTIFY_CANCEL);
+            }
             break;
         default:
             WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);

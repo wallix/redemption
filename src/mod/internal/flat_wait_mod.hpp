@@ -59,7 +59,7 @@ public:
     FlatWaitMod(
         FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message, time_t now,
-        ClientExecute & client_execute, bool showform = false, uint32_t flag = 0);
+        ClientExecute & client_execute, bool showform = false, uint32_t flag = 0, bool back_selector = false);
 
     ~FlatWaitMod() override;
 
