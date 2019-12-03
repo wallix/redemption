@@ -761,10 +761,6 @@ private:
                     is_from_remote_session ? "client" : "server"
                 );
 
-                if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    this->clip_data.requestedFormatId = 0;
-                }
-
                 this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
             }
             else {
@@ -813,6 +809,10 @@ private:
                     }
                 }
             }
+        }
+
+        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            this->clip_data.requestedFormatId = 0;
         }
 
         return true;
