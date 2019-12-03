@@ -168,7 +168,7 @@ namespace spec_types
 
         [[nodiscard]] char const * c_str() const noexcept { return this->path.c_str(); }
 
-        [[nodiscard]] std::string const & to_string() const noexcept { return this->path; }
+        [[nodiscard]] std::string const & as_string() const noexcept { return this->path; }
 
     private:
         void normalize()
@@ -191,11 +191,11 @@ namespace spec_types
         std::string path;
     };
 
-    inline bool operator == (directory_path const & x, directory_path const & y) { return x.to_string() == y.to_string(); }
-    inline bool operator == (std::string const & x, directory_path const & y) { return x == y.to_string(); }
-    inline bool operator == (char const * x, directory_path const & y) { return x == y.to_string(); }
-    inline bool operator == (directory_path const & x, std::string const & y) { return x.to_string() == y; }
-    inline bool operator == (directory_path const & x, char const * y) { return x.to_string() == y; }
+    inline bool operator == (directory_path const & x, directory_path const & y) { return x.as_string() == y.as_string(); }
+    inline bool operator == (std::string const & x, directory_path const & y) { return x == y.as_string(); }
+    inline bool operator == (char const * x, directory_path const & y) { return x == y.as_string(); }
+    inline bool operator == (directory_path const & x, std::string const & y) { return x.as_string() == y; }
+    inline bool operator == (directory_path const & x, char const * y) { return x.as_string() == y; }
 
     inline bool operator != (directory_path const & x, directory_path const & y) { return !(x == y); }
     inline bool operator != (std::string const & x, directory_path const & y) { return !(x == y); }
@@ -205,7 +205,7 @@ namespace spec_types
 
     template<class Ch, class Tr>
     std::basic_ostream<Ch, Tr> & operator << (std::basic_ostream<Ch, Tr> & out, directory_path const & path)
-    { return out << path.to_string(); }
+    { return out << path.as_string(); }
 } // namespace spec_types
 
 
@@ -219,7 +219,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<spec_types::directory_path> & /*buf*/,
     cfg_s_type<spec_types::directory_path> /*type*/,
     spec_types::directory_path const & dir
-) { return {dir.to_string().c_str(), dir.to_string().size()}; }
+) { return {dir.as_string().c_str(), dir.as_string().size()}; }
 
 inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::string> & /*buf*/,

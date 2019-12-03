@@ -728,7 +728,7 @@ public:
                 this->front,
                 this->front,
                 [this]{
-                    auto movie_path = this->ini.get<cfg::video::replay_path>().to_string()
+                    auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()
                                     + this->ini.get<cfg::globals::target_user>();
                     if (movie_path.size() < 5u || !std::equal(movie_path.end() - 5u, movie_path.end(), ".mwrm")) {
                         movie_path += ".mwrm";

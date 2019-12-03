@@ -481,7 +481,7 @@ void ModuleManager::create_mod_rdp(
 
         bool enable_validator = ini.get<cfg::file_verification::enable_up>() || ini.get<cfg::file_verification::enable_down>();
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
-            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
+            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
         std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
         std::unique_ptr<ModRDPWithMetrics::FileValidator> file_validator;
@@ -522,7 +522,7 @@ void ModuleManager::create_mod_rdp(
 
         if (enable_metrics) {
             metrics = std::make_unique<ModRDPWithMetrics::ModMetrics>(
-                ini.get<cfg::metrics::log_dir_path>().to_string(),
+                ini.get<cfg::metrics::log_dir_path>().as_string(),
                 ini.get<cfg::context::session_id>(),
                 hmac_user(
                     ini.get<cfg::globals::auth_user>(),

@@ -60,13 +60,13 @@ void ModuleManager::create_mod_vnc(
         };
 
         bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
-            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
+            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
         std::unique_ptr<ModVNCWithMetrics::ModMetrics> metrics;
 
         if (enable_metrics) {
             metrics = std::make_unique<ModVNCWithMetrics::ModMetrics>(
-                ini.get<cfg::metrics::log_dir_path>().to_string(),
+                ini.get<cfg::metrics::log_dir_path>().as_string(),
                 ini.get<cfg::context::session_id>(),
                 hmac_user(
                     ini.get<cfg::globals::auth_user>(),

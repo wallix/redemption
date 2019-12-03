@@ -503,7 +503,7 @@ void AclSerializer::start_session_log()
     LOG_IF(!d.has_date(), LOG_WARNING, "AclSerializer::start_session_log: failed to extract date");
 
     const int groupid = ini.get<cfg::video::capture_groupid>();
-    std::string hash_path = this->ini.get<cfg::video::hash_path>().to_string();
+    std::string hash_path = this->ini.get<cfg::video::hash_path>().as_string();
     hash_path.append(d.date_path().begin(), d.date_path().end());
     std::string log_dir = log_path.substr(0, log_path.size()-d.filename().size());
 

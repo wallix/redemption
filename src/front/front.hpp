@@ -917,9 +917,9 @@ public:
         VideoParams video_params = video_params_from_ini(std::chrono::seconds::zero(), ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        std::string record_path = ini.get<cfg::video::record_path>().to_string();
+        std::string record_path = ini.get<cfg::video::record_path>().as_string();
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        std::string hash_path = ini.get<cfg::video::hash_path>().to_string();
+        std::string hash_path = ini.get<cfg::video::hash_path>().as_string();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
         {
