@@ -10,8 +10,8 @@
 "#_advanced\n"
 "glyph_cache = boolean(default=False)\n\n"
 
-"# Service must be restarted\n"
-"# Warning: the port set in this field must not be already used, otherwise the service will not run.\n"
+"# Warning: Service will be automatically restarted and active sessions will be disconnected\n"
+"# The port set in this field must not be already used, otherwise the service will not run.\n"
 "#_iptables\n"
 "#_advanced\n"
 "port = integer(min=0, default=3389)\n\n"
