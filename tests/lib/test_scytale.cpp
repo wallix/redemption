@@ -552,63 +552,6 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
     }
 }
 
-namespace
-{
-    struct scytale_bytes_view
-    {
-        uint8_t const* ptr;
-        uint32_t size;
-
-        bytes_view bytes() const
-        {
-            return {ptr, size};
-        }
-    };
-
-    template<char... Fmt>
-    struct ScytaleRawDataFormat
-    {
-        constexpr static auto mk_fmt_pad()
-        {
-            std::array<int, sizeof...(Fmt)+1> fmt_pad {};
-
-            auto get_pad = [](char c) -> int {
-                if (c == 'i' || c == 'u') {
-                    return sizeof(int64_t);
-                }
-                // c == 's'
-                static_assert(sizeof(char*) == sizeof(uint64_t));
-                return sizeof(uint64_t) * 2;
-            };
-
-            unsigned i = 1;
-            (((fmt_pad[i] = fmt_pad[i-1] + get_pad(Fmt)), ++i), ...);
-
-            return fmt_pad;
-        }
-
-        static constexpr std::array<int, sizeof...(Fmt)+1> fmt_pad = mk_fmt_pad();
-        static constexpr char fmt[sizeof...(Fmt)+1] {Fmt..., '\0'};
-
-        template<unsigned i>
-        static auto extract(char const* p)
-        {
-            if constexpr (fmt[i] == 'u')
-            {
-                return *reinterpret_cast<uint64_t const*>(p + fmt_pad[i]);
-            }
-            else if constexpr (fmt[i] == 'i')
-            {
-                return *reinterpret_cast<int64_t const*>(p + fmt_pad[i]);
-            }
-            else if constexpr (fmt[i] == 's')
-            {
-                return reinterpret_cast<scytale_bytes_view const*>(p + fmt_pad[i])->bytes();
-            }
-        }
-    };
-}
-
 RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
 {
     auto filename = wd.add_file("a.mwrm3");
@@ -632,39 +575,63 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
 
     ScytaleMwrm3ReaderData const* data;
 
+    struct scytale_bytes_view
+    {
+        uint8_t const* ptr;
+        uint32_t size;
+
+        bytes_view bytes() const
+        {
+            return {ptr, size};
+        }
+    };
+
     data = scytale_mwrm3_reader_read_next(mwrm3);
     RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == ""sv);
     RED_REQUIRE(data);
     RED_TEST(data->type == ('v' | '3' << 8));
-    RED_TEST(data->fmt == "");
+    RED_TEST(data->fmt == ""sv);
 
     data = scytale_mwrm3_reader_read_next(mwrm3);
     RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == ""sv);
     RED_REQUIRE(data);
     RED_TEST(data->type == 4);
     {
-        ScytaleRawDataFormat<'u', 's', 's'> fmt;
-        RED_REQUIRE(data->fmt == fmt.fmt);
+        RED_REQUIRE(data->fmt == "uss"sv);
         auto* raw_data = static_cast<char const*>(data->data);
         RED_REQUIRE(!!raw_data);
-        RED_TEST(fmt.extract<0>(raw_data) == 2);
-        RED_TEST(fmt.extract<1>(raw_data) == "file2.txt"_av);
-        RED_TEST(fmt.extract<2>(raw_data) == "0123456789abcdef,000002.tfl"_av);
+        struct D
+        {
+            uint64_t a;
+            scytale_bytes_view b;
+            scytale_bytes_view c;
+        };
+        D const& d = *reinterpret_cast<D const*>(raw_data);
+        RED_TEST(d.a == 2);
+        RED_TEST(d.b.bytes() == "file2.txt"_av);
+        RED_TEST(d.c.bytes() == "0123456789abcdef,000002.tfl"_av);
     }
 
     data = scytale_mwrm3_reader_read_next(mwrm3);
-    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == "");
+    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == ""sv);
     RED_REQUIRE(data);
     RED_TEST(data->type == 5);
     {
-        ScytaleRawDataFormat<'u', 'u', 's', 's'> fmt;
-        RED_REQUIRE(data->fmt == fmt.fmt);
+        RED_REQUIRE(data->fmt == "uuss"sv);
         auto* raw_data = static_cast<char const*>(data->data);
         RED_REQUIRE(!!raw_data);
-        RED_TEST(fmt.extract<0>(raw_data) == 2);
-        RED_TEST(fmt.extract<1>(raw_data) == 7);
-        RED_TEST(fmt.extract<2>(raw_data) == ""_av);
-        RED_TEST(fmt.extract<3>(raw_data) == ""_av);
+        struct D
+        {
+            uint64_t a;
+            uint64_t b;
+            scytale_bytes_view c;
+            scytale_bytes_view d;
+        };
+        D const& d = *reinterpret_cast<D const*>(raw_data);
+        RED_TEST(d.a == 2);
+        RED_TEST(d.b == 7);
+        RED_TEST(d.c.bytes() == ""_av);
+        RED_TEST(d.d.bytes() == ""_av);
     }
 
     RED_TEST(!scytale_mwrm3_reader_read_next(mwrm3));
