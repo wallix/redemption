@@ -94,6 +94,12 @@ template<std::size_t N>
 struct zstr_buffer_traits<std::array<unsigned char, N>>
 { using type = zstr_buffer<N*2>; };
 
+namespace spec_types
+{
+    struct directory_path;
+}
+
+template<> struct zstr_buffer_traits<spec_types::directory_path> { using type = zstr_buffer<0>; };
 
 template<class T>
 using zstr_buffer_from = typename zstr_buffer_traits<T>::type;
@@ -208,6 +214,12 @@ template<class> struct cfg_s_type {};
 
 // assign_zbuf_from_cfg (guarantee with null terminal)
 //@{
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<spec_types::directory_path> & /*buf*/,
+    cfg_s_type<spec_types::directory_path> /*type*/,
+    spec_types::directory_path const & dir
+) { return {dir.to_string().c_str(), dir.to_string().size()}; }
 
 inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::string> & /*buf*/,

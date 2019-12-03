@@ -97,7 +97,7 @@
           "name": "cipher_string",
           "type": "string",
           "default": "",
-          "description": "Tlv1.2 additional ciphers supported by client"
+          "description": "TLSv1.2 additional ciphers supported by client"
         },
         {
           "name": "show_common_cipher_list",

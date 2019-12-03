@@ -999,15 +999,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #replay_path = /tmp/
 
 # maxlen = 4096
-#_advanced
+#_hidden
 #hash_path = )gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(
 
 # maxlen = 4096
-#_advanced
+#_hidden
 #record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(
 
 # maxlen = 4096
-#_advanced
+#_hidden
 #record_path = )gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(
 
 # Disable keyboard log:

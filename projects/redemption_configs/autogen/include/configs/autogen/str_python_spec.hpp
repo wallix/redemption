@@ -845,13 +845,13 @@ png_limit = integer(min=0, default=5)
 #_advanced
 replay_path = string(max=4096, default='/tmp/')
 
-#_advanced
+#_hidden
 hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(')
 
-#_advanced
+#_hidden
 record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(')
 
-#_advanced
+#_hidden
 record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(')
 
 # Disable keyboard log:

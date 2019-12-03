@@ -50,7 +50,7 @@ cfg::mod_rdp::tls_min_level <- mod_rdp:tls_min_level   [unsigned int]
 cfg::mod_rdp::tls_max_level <- mod_rdp:tls_max_level   [unsigned int]
     Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 cfg::mod_rdp::cipher_string <- mod_rdp:cipher_string   [std::string]
-    Tlv1.2 additional ciphers supported by client
+    TLSv1.2 additional ciphers supported by client
 cfg::mod_rdp::show_common_cipher_list <- mod_rdp:show_common_cipher_list   [bool]
     Show common cipher list supported by client and server
 cfg::mod_rdp::allow_channels <- allow_channels   [std::string]
@@ -213,6 +213,9 @@ cfg::mod_replay::replay_on_loop <- replay_on_loop   [bool]
     0 - replay once, 1 - loop replay
 
 
+cfg::video::hash_path <- hash_path   [::configs::spec_types::directory_path]
+cfg::video::record_tmp_path <- record_tmp_path   [::configs::spec_types::directory_path]
+cfg::video::record_path <- record_path   [::configs::spec_types::directory_path]
 cfg::video::disable_keyboard_log <- video:disable_keyboard_log   [KeyboardLogFlags]
     Disable keyboard log:
     (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)

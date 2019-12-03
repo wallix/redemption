@@ -535,9 +535,9 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "replay_path", set("/tmp/"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash).to_string())));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp).to_string())));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record).to_string())));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash).to_string())));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp).to_string())));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record).to_string())));
 
         W.member(advanced_in_gui, allow_connpolicy_and_gui, rdp_connpolicy, L, type_<KeyboardLogFlags>{}, connpolicy::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
