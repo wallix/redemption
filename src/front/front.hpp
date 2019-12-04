@@ -2633,8 +2633,6 @@ public:
         else { // slowpath
             if (current_pdu_type == Extractors::DR_TPDU) {
                 this->process_disconnect_request(tpdu);
-                this->is_client_disconnected = true;
-                throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
             }
             if (current_pdu_type != Extractors::DT_TPDU) {
                 LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
@@ -2653,8 +2651,6 @@ public:
         else { // slowpath
             if (current_pdu_type == Extractors::DR_TPDU) {
                 this->process_disconnect_request(tpdu);
-                this->is_client_disconnected = true;
-                throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
             }
             if (current_pdu_type != Extractors::DT_TPDU) {
                 LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
