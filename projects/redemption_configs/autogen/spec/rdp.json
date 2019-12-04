@@ -97,7 +97,7 @@
           "name": "cipher_string",
           "type": "string",
           "default": "",
-          "description": "Tlv1.2 additional ciphers supported by client"
+          "description": "Tlv1.2 additional ciphers supported by client, default to @SECLEVEL=2, @SECLEVEL=1 for compatibility with older ciphers, ALL for all ciphers"
         },
         {
           "name": "show_common_cipher_list",

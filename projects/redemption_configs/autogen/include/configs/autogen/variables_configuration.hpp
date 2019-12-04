@@ -1287,7 +1287,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// Tlv1.2 additional ciphers supported by client <br/>
+    /// Tlv1.2 additional ciphers supported by client, default to @SECLEVEL=2, @SECLEVEL=1 for compatibility with older ciphers, ALL for all ciphers <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:cipher_string <br/>
