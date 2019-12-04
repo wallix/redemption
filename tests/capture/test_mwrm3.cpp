@@ -164,11 +164,11 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
 
         CASE(Type::FdxNew, serialize_fdx_new, (filename), "\x03\x00\x0f\x00"_av, filename);
 
-        CASE(Type::TflNew, serialize_tfl_new, (42, filename, filename2),
+        CASE(Type::TflNew, serialize_tfl_new, (FileId(42), filename, filename2),
             "\x04\x00*\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x10\x00"_av, filename, filename2);
 
         CASE(Type::TflState, serialize_tfl_stat,
-            (42, FileSize(12), QuickHash{qhash}, FullHash{fhash}),
+            (FileId(42), FileSize(12), QuickHash{qhash}, FullHash{fhash}),
             "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x01"_av,
             qhash, fhash);
     }

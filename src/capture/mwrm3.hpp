@@ -48,9 +48,10 @@ namespace Mwrm3
     template<Type type>
     using integral_type = std::integral_constant<Type, type>;
 
-    inline constexpr auto top_header = "v3\n"_av;
+    inline constexpr auto header_compatibility_packet = "v3\n"_av;
 
     enum class FileSize : uint64_t;
+    enum class FileId : uint64_t;
 
     template<class F, class FError>
     auto unserialize_type(bytes_view av, F&& f, FError&& ferror)
@@ -235,6 +236,7 @@ namespace Mwrm3
 
             using seconds = to<u64, std::chrono::seconds>;
             using file_size = to<u64, FileSize>;
+            using file_id = to<u64, FileId>;
 
             template<std::size_t n>
             struct static_bytes
@@ -563,7 +565,7 @@ namespace Mwrm3
             InStream in{buf};
 
             return ((... && reader.read(in)))
-                // TODO should be static_cast<Value&>(static_cast<Group&>(flat_tuple))...
+                // TODO should be static_cast<Value&>(static_cast<Group&>(flat_tuple)...)...
                 ? unwrapper_group<type>(f, in.remaining_bytes(), reader...)
                 : ferror();
         }
@@ -602,11 +604,7 @@ namespace Mwrm3
     template<class F>
     auto serialize_mwrm_header_compatibility(F&& f)
     {
-        return f(Type::MwrmHeaderCompatibility,
-            detail::Buffer{
-                Type::MwrmHeaderCompatibility,
-                detail::types::u8_unsafe{'\n'},
-            }.bytes());
+        return f(Type::MwrmHeaderCompatibility, header_compatibility_packet);
     }
 
     template<class F, class FError>
@@ -656,7 +654,7 @@ namespace Mwrm3
 
     template<class F>
     auto serialize_tfl_new(
-        uint64_t idx, bytes_view original_filename, bytes_view reference_filename,
+        FileId idx, bytes_view original_filename, bytes_view reference_filename,
         F&& f)
     {
         assert(reference_filename.size() <= 255);
@@ -679,7 +677,7 @@ namespace Mwrm3
         u16bytes_ref reference_filename;
         return detail::unserialize<Type::TflNew>(buf, f, ferror,
             group(
-                u64(),
+                file_id(),
                 original_filename.size(),
                 reference_filename.size(),
                 original_filename.data(),
@@ -689,7 +687,7 @@ namespace Mwrm3
     }
 
     template<class F>
-    auto serialize_tfl_stat(uint64_t idx, FileSize file_size, QuickHash quick_hash, FullHash full_hash, F&& f)
+    auto serialize_tfl_stat(FileId idx, FileSize file_size, QuickHash quick_hash, FullHash full_hash, F&& f)
     {
         assert(quick_hash.hash.size() == full_hash.hash.size());
         return f(Type::TflState,
@@ -709,7 +707,7 @@ namespace Mwrm3
         using namespace detail::readers;
         u8 has_hashs;
         return detail::unserialize<Type::TflState>(buf, f, ferror,
-            group(u64(), file_size(), shadow_ref{has_hashs}),
+            group(file_id(), file_size(), shadow_ref{has_hashs}),
             group(optional_quick_hash{has_hashs}),
             group(optional_full_hash{has_hashs})
         );

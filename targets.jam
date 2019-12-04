@@ -4001,6 +4001,24 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
 ;
+test-run tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file.cpp
+:
+  <library>crypto
+  <library>snappy
+  <library>src/core/error.o
+  <library>src/core/report_error.o
+  <library>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.cpp
+  <covfile>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.hpp
+;
 test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_send_and_receive.cpp
 :
@@ -5585,6 +5603,7 @@ obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widg
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
+obj src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel_copy_transfered_file.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
@@ -5849,6 +5868,7 @@ alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
+alias test_cliprdr_channel_copy_transfered_file : tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
 alias test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task ;
@@ -6178,6 +6198,7 @@ alias test_widget_rect.coverage : tests/mod/internal/widget/test_widget_rect.cov
 alias test_null.coverage : tests/mod/null/test_null.coverage ;
 alias test_base_channel.coverage : tests/mod/rdp/channels/test_base_channel.coverage ;
 alias test_cliprdr_channel.coverage : tests/mod/rdp/channels/test_cliprdr_channel.coverage ;
+alias test_cliprdr_channel_copy_transfered_file.coverage : tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file.coverage ;
 alias test_cliprdr_channel_send_and_receive.coverage : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive.coverage ;
 alias test_rail_window_id_manager.coverage : tests/mod/rdp/channels/test_rail_window_id_manager.coverage ;
 alias test_rdpdr_asynchronous_task.coverage : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.coverage ;
@@ -6576,6 +6597,7 @@ alias tests/mod/null.norec :
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
   tests/mod/rdp/channels/test_cliprdr_channel
+  tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager
   tests/mod/rdp/channels/test_rdpdr_asynchronous_task

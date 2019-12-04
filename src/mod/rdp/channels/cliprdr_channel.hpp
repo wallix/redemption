@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
-
 #pragma once
 
 #include "core/error.hpp"
@@ -30,15 +29,11 @@
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
-#include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 
-
 #include <vector>
-#include <optional>
-#include <algorithm>
-#include <string_view>
+#include <string>
 
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel

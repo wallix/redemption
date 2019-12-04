@@ -724,8 +724,6 @@ struct ScytaleTflWriterHandler
 
 struct ScytaleFdxWriterHandle
 {
-    static constexpr array_view_const_char fdx_suffix = ".fdx"_av;
-
     ScytaleFdxWriterHandle(
         int with_encryption, int with_checksum, const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
@@ -740,6 +738,8 @@ struct ScytaleFdxWriterHandle
 
     void open(std::string_view path, std::string_view hashpath, int groupid, std::string_view sid)
     {
+        constexpr array_view_const_char fdx_suffix = ".fdx"_av;
+
         str_append(this->prefix, path, '/', sid, fdx_suffix);
         str_append(this->hash_prefix, hashpath, '/', sid, fdx_suffix);
         this->pos_filename = this->prefix.size() - sid.size() - fdx_suffix.size();
@@ -748,7 +748,7 @@ struct ScytaleFdxWriterHandle
         auto derivator = array_view(this->prefix).drop_front(this->pos_filename);
         this->out_crypto_transport.open(
             this->prefix.c_str(), this->hash_prefix.c_str(), groupid, derivator);
-        this->out_crypto_transport.send(Mwrm3::top_header);
+        this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
         this->prefix.erase(this->prefix.size() - fdx_suffix.size());
         this->prefix += ',';
         this->hash_prefix.erase(this->hash_prefix.size() - fdx_suffix.size());
@@ -841,10 +841,10 @@ struct ScytaleFdxWriterHandle
         }();
 
         Mwrm3::serialize_tfl_new(
-            tfl.idx, tfl.original_filename,
+            Mwrm3::FileId(tfl.idx), tfl.original_filename,
             array_view(tfl.finalname).drop_front(tfl.pos_filename),
             write_in_buf);
-        Mwrm3::serialize_tfl_stat(tfl.idx, safe_cast<Mwrm3::FileSize>(fsize),
+        Mwrm3::serialize_tfl_stat(Mwrm3::FileId(tfl.idx), Mwrm3::FileSize(fsize),
             Mwrm3::QuickHash{this->with_checksum() ? make_array_view(qhash) : bytes_view{"", 0}},
             Mwrm3::FullHash{this->with_checksum() ? make_array_view(fhash) : bytes_view{"", 0}},
             write_in_buf);
