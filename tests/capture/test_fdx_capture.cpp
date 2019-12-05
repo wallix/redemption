@@ -25,6 +25,9 @@
 
 #include "capture/fdx_capture.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "test_only/fake_stat.hpp"
+#include "test_only/lcg_random.hpp"
+#include "transport/mwrm_reader.hpp"
 
 
 RED_AUTO_TEST_CASE(tfl_suffix_genarator)
@@ -70,11 +73,6 @@ RED_AUTO_TEST_CASE(fdx_name_generator)
 #undef MY_HASH_PATH
 #undef MY_SID
 }
-
-
-#include "test_only/fake_stat.hpp"
-#include "test_only/lcg_random.hpp"
-#include "transport/mwrm_reader.hpp"
 
 RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
 {
