@@ -66,6 +66,11 @@ template<class T> bool operator==(array_view<T>, bytes_view);
 template<class U> bool operator==(bytes_view, array_view<U>);
 bool operator==(bytes_view, bytes_view);
 
+template<class T, class U>  bool operator!=(array_view<T>, array_view<U>);
+template<class T> bool operator!=(array_view<T>, bytes_view);
+template<class U> bool operator!=(bytes_view, array_view<U>);
+bool operator!=(bytes_view, bytes_view);
+
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 

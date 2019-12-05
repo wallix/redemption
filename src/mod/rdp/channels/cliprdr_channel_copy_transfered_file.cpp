@@ -194,8 +194,11 @@ void FdxCapture::close_tfl(FdxCapture::TflFile& tfl, std::string_view original_f
 
     bool const with_checksum = this->cctx.get_with_checksum();
 
+    auto const dirname_len = this->name_generator.get_current_record_path().size()
+        - this->name_generator.get_current_filename().size();
+
     Mwrm3::serialize_tfl_new(
-        tfl.file_id, original_filename, std::string_view(filename), write_in_buf);
+        tfl.file_id, original_filename, std::string_view(filename + dirname_len), write_in_buf);
     Mwrm3::serialize_tfl_stat(
         tfl.file_id, Mwrm3::FileSize(stat.st_size),
         Mwrm3::QuickHash{with_checksum ? make_array_view(qhash) : bytes_view{"", 0}},

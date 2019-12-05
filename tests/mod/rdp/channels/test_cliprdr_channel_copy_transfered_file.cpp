@@ -72,7 +72,7 @@ RED_AUTO_TEST_CASE(fdx_name_generator)
 }
 
 
-#include "utils/genfstat.hpp"
+#include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "transport/mwrm_reader.hpp"
 
@@ -157,7 +157,21 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     auto fdx_filepath = fdx_record_path.add_file(str_concat(sid, ".fdx"));
     std::string file_content = RED_REQUIRE_GET_FILE_CONTENTS(fdx_filepath);
 
-    // TODO check file_content
+    RED_TEST(bytes_view(file_content) ==
+        "v3\n\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00"
+        "file4my_session_id,000004.tfl\x05\x00\x04\x00\x00\x00\x00\x00"
+        "\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x05\x00"
+        "\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00""file5my_session_id"
+        ",000005.tfl\x05\x00\x05\x00\x00\x00\x00\x00\x00\x00\x05\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x04\x00\x01\x00\x00\x00\x00\x00"
+        "\x00\x00\x05\x00\x18\x00""file1my_session_id,000001.tfl\x05"
+        "\x00\x01\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x05\x00"
+        "\x18\x00""file1my_session_id,000003.tfl\x05\x00\x03\x00\x00"
+        "\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x04"
+        "\x00\x06\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00""file6"
+        "my_session_id,000006.tfl\x05\x00\x06\x00\x00\x00\x00\x00\x00"
+        "\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ".fdx")), str_concat(
         "v2\n\n\nmy_session_id.fdx "sv,
@@ -180,4 +194,70 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
         "v2\n\n\nmy_session_id,000005.tfl 5 1 2 3 4 5 12345678 12345678\n"sv);
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000006.tfl")),
         "v2\n\n\nmy_session_id,000006.tfl 5 1 2 3 4 5 12345678 12345678\n"sv);
+}
+
+RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
+{
+    using namespace std::string_view_literals;
+
+    auto record_path = wd.create_subdirectory("record");
+    auto hash_path = wd.create_subdirectory("hash");
+
+    auto sid = "my_session_id"sv;
+
+    CryptoContext cctx;
+
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+        "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+        "\x49\x21\x57\x87\x47\x74\x08\x8a"
+        "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+        "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+    cctx.set_trace_type(TraceType::cryptofile);
+
+    LCGRandom rnd;
+    FakeFstat fstat;
+
+    FdxCapture fdx_capture(
+        record_path.dirname().string(),
+        hash_path.dirname().string(),
+        sid, -1, cctx, rnd, fstat);
+
+    {
+        FdxCapture::TflFile tfl1 = fdx_capture.new_tfl();
+        tfl1.trans.send("ijkl"sv);
+        fdx_capture.close_tfl(tfl1, "file1");
+    }
+
+    OutCryptoTransport::HashArray qhash {};
+    OutCryptoTransport::HashArray fhash {};
+    fdx_capture.close(qhash, fhash);
+
+    OutCryptoTransport::HashArray ref {};
+    RED_TEST(make_array_view(qhash) != make_array_view(ref));
+    RED_TEST(make_array_view(fhash) != make_array_view(ref));
+
+    auto fdx_record_path = record_path.create_subdirectory(sid);
+    auto fdx_hash_path = hash_path.create_subdirectory(sid);
+
+    (void)fdx_hash_path.add_file(str_concat(sid, ",000001.tfl"));
+    (void)fdx_hash_path.add_file(str_concat(sid, ".fdx"));
+
+    std::string file_content = RED_REQUIRE_GET_FILE_CONTENTS(
+        fdx_record_path.add_file(str_concat(sid, ".fdx")));
+
+    RED_REQUIRE(file_content.size() > 4);
+    RED_REQUIRE(array_view(file_content).first(4) == "WCFM"sv);
+
+    file_content = RED_REQUIRE_GET_FILE_CONTENTS(
+        fdx_record_path.add_file(str_concat(sid, ",000001.tfl")));
+
+    RED_REQUIRE(file_content.size() > 4);
+    RED_REQUIRE(array_view(file_content).first(4) == "WCFM"sv);
 }
