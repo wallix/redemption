@@ -196,6 +196,12 @@ std::string WorkingDirectory::SubDirectory::path_of(std::string_view path) const
     return this->wd_.path_of(str_concat(this->dirname(), path));
 }
 
+WorkingDirectory::SubDirectory
+WorkingDirectory::SubDirectory::create_subdirectory(std::string_view dirname)
+{
+    return this->wd_.create_subdirectory(str_concat(this->subdirname(), dirname));
+}
+
 
 WorkingDirectory::Path::Path() noexcept = default;
 

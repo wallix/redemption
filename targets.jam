@@ -4015,6 +4015,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.cpp
   <covfile>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.hpp

@@ -67,6 +67,8 @@ struct FdxNameGenerator
     std::string const& get_current_hash_path() const noexcept { return this->hash_path; }
     //@}
 
+    Mwrm3::FileId get_current_id() const noexcept { return this->tfl_suffix_generator.get_current_id(); }
+
     void next_tfl();
 
 private:
@@ -83,32 +85,34 @@ struct FdxCapture
     using FileId = Mwrm3::FileId;
     using FileSize = Mwrm3::FileSize;
 
-    struct TflFile
+    class TflFile
     {
-        FileId id;
-        std::unique_ptr<OutCryptoTransport> trans;
+        friend FdxCapture;
+        TflFile(FdxCapture const& fdx);
 
-        std::string_view get_final_filename() const;
+    public:
+        FileId file_id;
+        OutCryptoTransport trans;
     };
 
+
     explicit FdxCapture(
+        std::string_view record_path, std::string_view hash_path,
+        std::string_view sid, int groupid,
         CryptoContext& cctx, Random& rnd, Fstat& fstat,
         ReportError report_error = ReportError());
 
-    void open(std::string_view path, std::string_view hashpath, int groupid, std::string_view sid);
-
     TflFile new_tfl();
 
-    void write_tfl(
-        FileId id, std::string_view tfl_filename, FileSize file_size,
-        Mwrm3::QuickHash qhash, Mwrm3::FullHash fhash, std::string_view original_filename);
+    void cancel_tfl(TflFile& tfl);
+    void close_tfl(TflFile& tfl, std::string_view original_filename);
+
+    void close(OutCryptoTransport::HashArray & qhash, OutCryptoTransport::HashArray & fhash);
 
 private:
-    std::string record_prefix;
-    std::string hash_prefix;
-    std::size_t pos_end_record_prefix;
-    std::size_t pos_end_hash_prefix;
-    TflSuffixGenerator tfl_name_generator;
+    friend TflFile;
+
+    FdxNameGenerator name_generator;
 
     CryptoContext& cctx;
     Random& rnd;

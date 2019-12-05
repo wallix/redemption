@@ -583,9 +583,7 @@ ocrypto::Result ocrypto::open(bytes_view derivator)
     return Result{{this->header_buf, 0u}, 0u};
 }
 
-ocrypto::Result ocrypto::close(
-    uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH],
-    uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+ocrypto::Result ocrypto::close(HashArray & qhash, HashArray & fhash)
 {
     size_t towrite = 0;
     if (this->cctx.get_with_encryption()) {
@@ -664,11 +662,6 @@ OutCryptoTransport::OutCryptoTransport(
     this->finalname[0] = 0;
 }
 
-const char * OutCryptoTransport::get_tmp() const
-{
-    return &this->tmpname[0];
-}
-
 ReportError & OutCryptoTransport::get_report_error()
 {
     return this->out_file.get_report_error();
@@ -680,14 +673,14 @@ OutCryptoTransport::~OutCryptoTransport()
         return;
     }
     try {
-        uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
-        uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+        HashArray qhash{};
+        HashArray fhash{};
         this->close(qhash, fhash);
         if (this->cctx.get_with_checksum()){
-            char mes[MD_HASH::DIGEST_LENGTH*4+1+128]{};
+            char mes[std::size(qhash)*4+1+128]{};
             char * p = mes;
             p += sprintf(mes, "Encrypted transport implicitly closed, hash checksums dropped :");
-            auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
+            auto hexdump = [&p](HashArray & hash) {
                 *p++ = ' ';                // 1 octet
                 for (unsigned c : hash) {
                     sprintf(p, "%02x", c); // 64 octets (hash)
@@ -771,7 +764,7 @@ void OutCryptoTransport::open(const char * finalname, const char * const hash_fi
     this->open(finalname, hash_filename, groupid, {base, base_len});
 }
 
-void OutCryptoTransport::close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH])
+void OutCryptoTransport::close(HashArray & qhash, HashArray & fhash)
 {
     // Force hash result if no checksum asked
     if (!this->cctx.get_with_checksum()){
@@ -815,9 +808,7 @@ namespace
     }
 } // namespace
 
-void OutCryptoTransport::create_hash_file(
-    uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
-    uint8_t const (&fhash)[MD_HASH::DIGEST_LENGTH])
+void OutCryptoTransport::create_hash_file(HashArray const & qhash, HashArray const & fhash)
 {
     ocrypto hash_encrypter(this->cctx, this->rnd);
     OutFileTransport hash_out_file(unique_fd(::open(
@@ -868,8 +859,8 @@ void OutCryptoTransport::create_hash_file(
 
     // close
     {
-        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
+        HashArray qhash;
+        HashArray fhash;
         const ocrypto::Result res = hash_encrypter.close(qhash, fhash);
         hash_out_file.send(res.buf.data(), res.buf.size());
         hash_out_file.close();

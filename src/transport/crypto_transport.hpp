@@ -120,13 +120,15 @@ struct ocrypto : noncopyable
         std::size_t consumed;
     };
 
+    using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
+
     ocrypto(CryptoContext & cctx, Random & rnd);
 
     ~ocrypto();
 
     Result open(bytes_view derivator);
 
-    ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH]);
+    ocrypto::Result close(HashArray & qhash, HashArray & fhash);
 
     ocrypto::Result write(bytes_view data);
 
@@ -156,12 +158,14 @@ private:
 class OutCryptoTransport : public Transport
 {
 public:
+    using HashArray = ocrypto::HashArray;
+
     explicit OutCryptoTransport(
         CryptoContext & cctx, Random & rnd, Fstat & fstat,
         ReportError report_error = ReportError()
     ) noexcept;
 
-    [[nodiscard]] const char * get_tmp() const;
+    [[nodiscard]] const char * get_finalname() const noexcept { return this->finalname; }
 
     ReportError & get_report_error();
 
@@ -177,11 +181,9 @@ public:
     // derivator implicitly basename(finalname)
     void open(const char * finalname, const char * const hash_filename, int groupid);
 
-    void close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH]);
+    void close(HashArray & qhash, HashArray & fhash);
 
-    void create_hash_file(
-        uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
-        uint8_t const (&fhash)[MD_HASH::DIGEST_LENGTH]);
+    void create_hash_file(HashArray const & qhash, HashArray const & fhash);
 
     void do_send(const uint8_t * data, size_t len) override;
 

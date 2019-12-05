@@ -45,7 +45,8 @@ namespace
                     const auto prefix_msg_error = "Exception of type 'Error': "_av;
                     if (e.errnum) {
                         throw std::runtime_error{str_concat(
-                            prefix_msg_error, e.errmsg(), ", errno=", std::to_string(e.errnum)
+                            prefix_msg_error, e.errmsg(), ", errno=", std::to_string(e.errnum),
+                            ", error=", strerror(e.errnum)
                         )};
                     }
                     throw std::runtime_error{str_concat(prefix_msg_error, e.errmsg())};

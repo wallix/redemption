@@ -93,6 +93,8 @@ struct [[nodiscard]] WorkingDirectory
         [[nodiscard]] WorkingFileBase const& dirname() const noexcept { return this->fullpath; }
         [[nodiscard]] std::string_view subdirname() const noexcept;
 
+        SubDirectory create_subdirectory(std::string_view dirname);
+
         [[nodiscard]] WorkingDirectory& wd() const noexcept
         {
             return this->wd_;

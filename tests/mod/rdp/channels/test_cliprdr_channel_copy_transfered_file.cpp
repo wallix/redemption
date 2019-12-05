@@ -20,6 +20,8 @@
 
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "mod/rdp/channels/cliprdr_channel_copy_transfered_file.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -36,7 +38,6 @@ RED_AUTO_TEST_CASE(tfl_suffix_genarator)
     RED_TEST(gen.name_at(1000000) == ",1000000.tfl");
 }
 
-
 RED_AUTO_TEST_CASE(fdx_name_generator)
 {
     using namespace std::string_view_literals;
@@ -48,22 +49,135 @@ RED_AUTO_TEST_CASE(fdx_name_generator)
     FdxNameGenerator gen(MY_RECORD_PATH, MY_HASH_PATH, MY_SID);
 
     RED_TEST(gen.get_current_filename() == MY_SID ".fdx");
-    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID ".fdx");
-    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID ".fdx");
+    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID ".fdx");
+    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID ".fdx");
 
     gen.next_tfl();
 
+    RED_TEST(gen.get_current_id() == Mwrm3::FileId(1));
     RED_TEST(gen.get_current_filename() == MY_SID ",000001.tfl");
-    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID ",000001.tfl");
-    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID ",000001.tfl");
+    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID ",000001.tfl");
+    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID ",000001.tfl");
 
     gen.next_tfl();
 
+    RED_TEST(gen.get_current_id() == Mwrm3::FileId(2));
     RED_TEST(gen.get_current_filename() == MY_SID ",000002.tfl");
-    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID ",000002.tfl");
-    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID ",000002.tfl");
+    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID ",000002.tfl");
+    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID ",000002.tfl");
 
 #undef MY_RECORD_PATH
 #undef MY_HASH_PATH
 #undef MY_SID
+}
+
+
+#include "utils/genfstat.hpp"
+#include "test_only/lcg_random.hpp"
+#include "transport/mwrm_reader.hpp"
+
+RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
+{
+    using namespace std::string_view_literals;
+
+    auto record_path = wd.create_subdirectory("record");
+    auto hash_path = wd.create_subdirectory("hash");
+
+    auto sid = "my_session_id"sv;
+
+    CryptoContext cctx;
+    LCGRandom rnd;
+    struct : Fstat
+    {
+        int stat(const char * filename, struct stat & stat) override
+        {
+            int err = Fstat::stat(filename, stat);
+            stat.st_mode = 1;
+            stat.st_uid = 2;
+            stat.st_gid = 3;
+            stat.st_dev = 4;
+            stat.st_ino = 5;
+            stat.st_mtim.tv_sec = 12345678;
+            stat.st_ctim.tv_sec = 12345678;
+            return err;
+        }
+
+        int i = 42;
+    } fstat;
+
+    FdxCapture fdx_capture(
+        record_path.dirname().string(),
+        hash_path.dirname().string(),
+        sid, -1, cctx, rnd, fstat);
+
+    {
+        FdxCapture::TflFile tfl1 = fdx_capture.new_tfl();
+        FdxCapture::TflFile tfl2 = fdx_capture.new_tfl();
+        FdxCapture::TflFile tfl3 = fdx_capture.new_tfl();
+        FdxCapture::TflFile tfl4 = fdx_capture.new_tfl();
+        FdxCapture::TflFile tfl5 = fdx_capture.new_tfl();
+        RED_TEST(tfl1.file_id == Mwrm3::FileId(1));
+        RED_TEST(tfl2.file_id == Mwrm3::FileId(2));
+        RED_TEST(tfl3.file_id == Mwrm3::FileId(3));
+        RED_TEST(tfl4.file_id == Mwrm3::FileId(4));
+        RED_TEST(tfl5.file_id == Mwrm3::FileId(5));
+        tfl1.trans.send("ijkl"sv);
+        tfl2.trans.send("mnop"sv);
+        tfl3.trans.send("qr"sv);
+        tfl4.trans.send("stu"sv);
+        tfl5.trans.send("vwxyz"sv);
+        fdx_capture.close_tfl(tfl4, "file4");
+        fdx_capture.cancel_tfl(tfl2);
+        fdx_capture.close_tfl(tfl5, "file5");
+        fdx_capture.close_tfl(tfl1, "file1");
+        fdx_capture.close_tfl(tfl3, "file1"); // same name than tfl1
+    }
+
+    {
+        FdxCapture::TflFile tfl = fdx_capture.new_tfl();
+        RED_TEST(tfl.file_id == Mwrm3::FileId(6));
+        tfl.trans.send("abcde"sv);
+        fdx_capture.close_tfl(tfl, "file6");
+    }
+
+    {
+        FdxCapture::TflFile tfl = fdx_capture.new_tfl();
+        RED_TEST(tfl.file_id == Mwrm3::FileId(7));
+        tfl.trans.send("fgh"sv);
+        fdx_capture.cancel_tfl(tfl);
+    }
+
+    OutCryptoTransport::HashArray qhash;
+    OutCryptoTransport::HashArray fhash;
+    fdx_capture.close(qhash, fhash);
+
+    auto fdx_record_path = record_path.create_subdirectory(sid);
+    auto fdx_hash_path = hash_path.create_subdirectory(sid);
+
+    auto fdx_filepath = fdx_record_path.add_file(str_concat(sid, ".fdx"));
+    std::string file_content = RED_REQUIRE_GET_FILE_CONTENTS(fdx_filepath);
+
+    // TODO check file_content
+
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ".fdx")), str_concat(
+        "v2\n\n\nmy_session_id.fdx "sv,
+        std::to_string(file_content.size()),
+        " 1 2 3 4 5 12345678 12345678\n"sv));
+
+    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000001.tfl")), "ijkl"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000003.tfl")), "qr"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000004.tfl")), "stu"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000005.tfl")), "vwxyz"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000006.tfl")), "abcde"sv);
+
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000001.tfl")),
+        "v2\n\n\nmy_session_id,000001.tfl 4 1 2 3 4 5 12345678 12345678\n"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000003.tfl")),
+        "v2\n\n\nmy_session_id,000003.tfl 2 1 2 3 4 5 12345678 12345678\n"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000004.tfl")),
+        "v2\n\n\nmy_session_id,000004.tfl 3 1 2 3 4 5 12345678 12345678\n"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000005.tfl")),
+        "v2\n\n\nmy_session_id,000005.tfl 5 1 2 3 4 5 12345678 12345678\n"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000006.tfl")),
+        "v2\n\n\nmy_session_id,000006.tfl 5 1 2 3 4 5 12345678 12345678\n"sv);
 }
