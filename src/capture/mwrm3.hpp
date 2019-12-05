@@ -604,7 +604,7 @@ namespace Mwrm3
     template<class F>
     auto serialize_mwrm_header_compatibility(F&& f)
     {
-        return f(Type::MwrmHeaderCompatibility, header_compatibility_packet);
+        return f(Type::MwrmHeaderCompatibility, bytes_view(header_compatibility_packet));
     }
 
     template<class F, class FError>
