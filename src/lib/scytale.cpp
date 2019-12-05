@@ -1005,79 +1005,6 @@ char const * scytale_fdx_writer_get_error_message(ScytaleFdxWriterHandle * handl
 
 namespace
 {
-    template<class F, class FError>
-    decltype(auto) mwrm3_unserialize(Mwrm3::Type type, bytes_view av, F&& f_ok, FError&& f_error)
-    {
-        using namespace Mwrm3;
-
-        auto error_caller = [&](auto type){
-            return [&f_error]{
-                return f_error(decltype(type){});
-            };
-        };
-
-        auto unknown_type_error = error_caller(integral_type<Type::None>());
-
-#define X_MACRO(f)                    \
-    f(WrmNew, unserialize_wrm_new)    \
-    f(WrmState, unserialize_wrm_stat) \
-    f(FdxNew, unserialize_fdx_new)    \
-    f(TflNew, unserialize_tfl_new)    \
-    f(TflState, unserialize_tfl_stat) \
-    f(MwrmHeaderCompatibility, unserialize_mwrm_header_compatibility)
-
-#define CALL(v, f) f(av, f_ok, error_caller(integral_type<Type::v>()))
-#define TYPE(v, f) decltype(CALL(v, f)),
-#define CASE(v, f) case Type::v: return Result(CALL(v, f));
-
-        using Result = std::common_type_t<X_MACRO(TYPE) decltype(unknown_type_error())>;
-
-        switch (type)
-        {
-            X_MACRO(CASE)
-            case Type::None:;
-        }
-
-        return Result(unknown_type_error());
-
-#undef LIST
-#undef TYPE
-#undef CASE
-#undef X_MACRO
-    }
-
-    enum class Mwrm3ParserResult
-    {
-        Ok,
-        UnknownType,
-        NeedMoreData,
-    };
-
-    template<class F>
-    Mwrm3ParserResult mwrm3_parse(bytes_view av, F&& f)
-    {
-        if (av.size() >= 2)
-        {
-            using namespace Mwrm3;
-
-            auto f_ok = [&](auto type, bytes_view remaining, auto... xs){
-                f(type, remaining, xs...);
-                return Mwrm3ParserResult::Ok;
-            };
-            auto f_error = [](Type type){
-                return type == Type::None
-                    ? Mwrm3ParserResult::UnknownType
-                    : Mwrm3ParserResult::NeedMoreData;
-            };
-
-            InStream in(av);
-            auto type = Type(in.in_uint16_le());
-            return mwrm3_unserialize(type, in.remaining_bytes(), f_ok, f_error);
-        }
-
-        return Mwrm3ParserResult::NeedMoreData;
-    }
-
     struct scytale_bytes_view
     {
         uint8_t const* ptr;
@@ -1129,6 +1056,7 @@ namespace
         };
     }
 
+    // compatibility C layout
     template<class... xs>
     using tuple = typename detail::tuple_impl<std::index_sequence_for<xs...>, xs...>::type;
 
@@ -1356,7 +1284,7 @@ namespace
             >>();
         };
 
-        return mwrm3_unserialize(Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type){
+        return Mwrm3::unserialize_packet(Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type){
             return storage_list<>();
         });
     }
@@ -1394,12 +1322,12 @@ struct ScytaleMwrm3ReaderHandle
 
         for (;;)
         {
-            switch (mwrm3_parse(this->remaining_data, store_values))
+            switch (Mwrm3::parse_packet(this->remaining_data, store_values))
             {
-                case Mwrm3ParserResult::Ok:
+                case Mwrm3::ParserResult::Ok:
                     return &this->raw_data;
 
-                case Mwrm3ParserResult::UnknownType: {
+                case Mwrm3::ParserResult::UnknownType: {
                     auto int_type = InStream(this->remaining_data).in_uint16_le();
                     const char chars[]{
                         hexadecimal_string[(int_type >> 12)],
@@ -1412,7 +1340,7 @@ struct ScytaleMwrm3ReaderHandle
                     return nullptr;
                 }
 
-                case Mwrm3ParserResult::NeedMoreData: {
+                case Mwrm3::ParserResult::NeedMoreData: {
                     if (this->remaining_data.size() == this->buffer.size())
                     {
                         str_assign(this->message_error, "Data too large"_av);
