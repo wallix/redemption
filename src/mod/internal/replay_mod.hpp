@@ -101,6 +101,7 @@ public:
         gdi::KbdInputApi * kbd_input_ptr,
         gdi::CaptureProbeApi * capture_probe_ptr,
         gdi::ExternalCaptureApi * external_event_ptr,
+        gdi::RelayoutApi * relayout_ptr,
         gdi::ResizeApi * resize_ptr
     );
 

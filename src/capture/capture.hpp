@@ -28,6 +28,7 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
+#include "gdi/relayout_api.hpp"
 #include "gdi/resize_api.hpp"
 #include "capture/notify_next_video.hpp"
 
@@ -60,6 +61,7 @@ class Capture final
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
+, public gdi::RelayoutApi
 , public gdi::ResizeApi
 {
 public:
@@ -80,6 +82,8 @@ public:
     );
 
     ~Capture();
+
+    void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override;
 
     void resize(uint16_t width, uint16_t height) override;
 

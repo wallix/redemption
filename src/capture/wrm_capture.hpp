@@ -36,6 +36,7 @@
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/kbd_input_api.hpp"
+#include "gdi/relayout_api.hpp"
 
 #include "transport/out_meta_sequence_transport.hpp"
 
@@ -101,6 +102,7 @@ class GraphicToFile
 : public RDPSerializer
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
+, public gdi::RelayoutApi
 {
     enum {
         GTF_SIZE_KEYBUF_REC = 1024
@@ -485,6 +487,15 @@ public:
 
         send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
     }
+
+    void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override {
+        send_wrm_chunk(this->trans, WrmChunkType::MONITOR_LAYOUT, monitor_layout_pdu.size(), 1);
+
+        StaticOutStream<1024> payload;
+        monitor_layout_pdu.emit(payload);
+
+        this->trans.send(payload.get_bytes());
+    }
 };  // struct GraphicToFile
 
 
@@ -494,7 +505,8 @@ class WrmCaptureImpl :
     public gdi::CaptureApi,
     public gdi::GraphicApi,
     public gdi::CaptureProbeApi,
-    public gdi::ExternalCaptureApi // from gdi/capture_api.hpp
+    public gdi::ExternalCaptureApi, // from gdi/capture_api.hpp
+    public gdi::RelayoutApi
 {
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
@@ -847,5 +859,9 @@ public:
             this->min_image_frame_dim.w = std::max(this->min_image_frame_dim.w, rect.cx);
             this->min_image_frame_dim.h = std::max(this->min_image_frame_dim.h, rect.cy);
         }
+    }
+
+    void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override {
+        this->graphic_to_file.relayout(monitor_layout_pdu);
     }
 };

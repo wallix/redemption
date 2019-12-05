@@ -1535,7 +1535,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             );
 
                             player.clear_consumer();
-                            player.add_consumer(ptr, ptr, ptr, ptr, ptr, ptr);
+                            player.add_consumer(ptr, ptr, ptr, ptr, ptr, ptr, ptr);
                         };
 
                         auto lazy_capture = [&](timeval const & now) {
@@ -1564,7 +1564,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         if (begin_capture.tv_sec) {
                             player.add_consumer(
-                                &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr);
+                                &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr, nullptr);
                         }
                         else {
                             set_capture_consumer(player.record_now);

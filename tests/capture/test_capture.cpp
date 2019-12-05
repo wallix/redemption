@@ -1301,7 +1301,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     BufTransport buftrans;
     dump_png24(buftrans, drawable1, true);
@@ -1904,7 +1904,7 @@ RED_AUTO_TEST_CASE(TestReload)
                 in_wrm_trans, begin_capture, end_capture,
                 false, false, to_verbose_flags(0));
             RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-            player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
+            player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
             while (player.next_order()){
                 player.interpret_order();
             }
@@ -2076,7 +2076,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
 
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     BufSequenceTransport out_wrm_trans;
 
@@ -2108,8 +2108,8 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     );
     WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder, nullptr, nullptr);
 
     bool requested_to_stop = false;
 

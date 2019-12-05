@@ -863,6 +863,10 @@ public:
 
         monitor_layout_pdu_ref.get(this->client_info.cs_monitor);
 
+        if (this->capture) {
+            this->capture->relayout(monitor_layout_pdu_ref);
+        }
+
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::server_relayout: done");
     }

@@ -1686,6 +1686,12 @@ Capture::~Capture()
     }
 }
 
+void Capture::relayout(MonitorLayoutPDU const & monitor_layout_pdu) {
+    if (this->wrm_capture_obj) {
+        this->wrm_capture_obj->relayout(monitor_layout_pdu);
+    }
+}
+
 void Capture::resize(uint16_t width, uint16_t height)
 {
     if (this->sequenced_video_capture_obj || this->full_video_capture_obj) {

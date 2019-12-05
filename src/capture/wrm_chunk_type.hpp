@@ -43,6 +43,7 @@ enum class WrmChunkType : uint16_t
     POSSIBLE_ACTIVE_WINDOW_CHANGE = 0x2000,
     IMAGE_FRAME_RECT              = 0x2001,
     KBD_INPUT_MASK                = 0x2002,
+    MONITOR_LAYOUT                = 0x2003,
 
     // 0x5000 ~ 0x5FFF : Reserved for SSH Proxy.
 

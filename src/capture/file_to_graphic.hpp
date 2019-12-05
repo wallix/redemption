@@ -45,6 +45,7 @@ namespace gdi
     class KbdInputApi;
     class CaptureProbeApi;
     class ExternalCaptureApi;
+    class RelayoutApi;
     class ResizeApi;
 }
 namespace RDP
@@ -131,6 +132,7 @@ private:
     fixed_ptr_array<gdi::KbdInputApi, 10> kbd_input_consumers;
     fixed_ptr_array<gdi::CaptureProbeApi, 10> capture_probe_consumers;
     fixed_ptr_array<gdi::ExternalCaptureApi, 10> external_event_consumers;
+    fixed_ptr_array<gdi::RelayoutApi, 10> relayout_consumers;
     fixed_ptr_array<gdi::ResizeApi, 10> resize_consumers;
 
     bool meta_ok;
@@ -225,6 +227,7 @@ public:
         gdi::KbdInputApi * kbd_input_ptr,
         gdi::CaptureProbeApi * capture_probe_ptr,
         gdi::ExternalCaptureApi * external_event_ptr,
+        gdi::RelayoutApi * relayout_ptr,
         gdi::ResizeApi * resize_ptr
     );
 

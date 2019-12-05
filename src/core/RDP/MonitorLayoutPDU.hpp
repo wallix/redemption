@@ -259,6 +259,13 @@ public:
         return this->monitorCount;
     }
 
+    [[nodiscard]] size_t size() const {
+        return (   4                    //  4 = monitorCount(4)
+                 + 20                   // 20 = left(4) + top(4) + right(4) + bottom(4) + flags(4)
+                 * this->monitorCount
+               );
+    }
+
     void log(const char * msg) const
     {
         char buffer[2048];

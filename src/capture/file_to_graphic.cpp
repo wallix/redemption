@@ -24,6 +24,7 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
+#include "gdi/relayout_api.hpp"
 #include "gdi/resize_api.hpp"
 
 #include "capture/file_to_graphic.hpp"
@@ -86,6 +87,7 @@ void FileToGraphic::add_consumer(
     gdi::KbdInputApi * kbd_input_ptr,
     gdi::CaptureProbeApi * capture_probe_ptr,
     gdi::ExternalCaptureApi * external_event_ptr,
+    gdi::RelayoutApi * relayout_ptr,
     gdi::ResizeApi * resize_ptr
 )
 {
@@ -94,6 +96,7 @@ void FileToGraphic::add_consumer(
     this->kbd_input_consumers.push_back(kbd_input_ptr);
     this->capture_probe_consumers.push_back(capture_probe_ptr);
     this->external_event_consumers.push_back(external_event_ptr);
+    this->relayout_consumers.push_back(relayout_ptr);
     this->resize_consumers.push_back(resize_ptr);
 }
 
@@ -853,6 +856,18 @@ void FileToGraphic::interpret_order()
 
             for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
                 kbd->enable_kbd_input_mask(enable);
+            }
+        }
+    break;
+
+    case WrmChunkType::MONITOR_LAYOUT:
+        {
+            MonitorLayoutPDU monitor_layout_pdu;
+
+            monitor_layout_pdu.recv(this->stream);
+
+            for (gdi::RelayoutApi * relayout : this->relayout_consumers){
+                relayout->relayout(monitor_layout_pdu);
             }
         }
     break;
