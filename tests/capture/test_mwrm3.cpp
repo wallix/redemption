@@ -96,8 +96,8 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
     {
         case Type::None:
 
-#define CASE_UNPACK(...) __VA_ARGS__
-#define CASE(type_test, fn, params, /*output_buffer*/...) [[fallthrough]];                 \
+#define PARSE_TEST_UNPACK(...) __VA_ARGS__
+#define PARSE_TEST(type_test, fn, params, /*output_buffer*/...) [[fallthrough]];                 \
     case type_test: do {                                                                   \
         const bytes_view output_buffers[]{__VA_ARGS__};                                    \
         const auto input_buffer = str_concat(__VA_ARGS__);                                 \
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
                                                                                            \
         auto serialize_result = [&](auto&&... xs) {                                        \
             return fn(xs..., make_serialize_result);                                       \
-        }(CASE_UNPACK params);                                                             \
+        }(PARSE_TEST_UNPACK params);                                                             \
                                                                                            \
         auto unserialize_result = un##fn(input_buffer_without_type,                        \
             make_unserialize_result, unserialize_error);                                   \
@@ -134,7 +134,7 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
         /* test unserialize */                                                             \
                                                                                            \
         {                                                                                  \
-            auto t = std::make_tuple(CASE_UNPACK params);                                  \
+            auto t = std::make_tuple(PARSE_TEST_UNPACK params);                                  \
             int counter = 0;                                                               \
             auto cmp = [&](auto i){                                                        \
                 RED_TEST_CONTEXT("i = " << counter++) {                                    \
@@ -153,23 +153,72 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
         }                                                                                  \
     } while(0)
 
-        CASE(Type::MwrmHeaderCompatibility, serialize_mwrm_header_compatibility, (), "v3\n"_av);
+        PARSE_TEST(Type::MwrmHeaderCompatibility, serialize_mwrm_header_compatibility, (), "v3\n"_av);
 
-        CASE(Type::WrmNew, serialize_wrm_new, (filename), "\x01\x00\x0f\x00"_av, filename);
+        PARSE_TEST(Type::WrmNew, serialize_wrm_new, (filename), "\x01\x00\x0f\x00"_av, filename);
 
-        CASE(Type::WrmState, serialize_wrm_stat,
+        PARSE_TEST(Type::WrmState, serialize_wrm_stat,
             (FileSize(1244), std::chrono::seconds(125), QuickHash{qhash}, FullHash{fhash}),
             "\x02\x00\xdc\x04\x00\x00\x00\x00\x00\x00}\x00\x00\x00\x00\x00\x00\x00\x01"_av,
             qhash, fhash);
 
-        CASE(Type::FdxNew, serialize_fdx_new, (filename), "\x03\x00\x0f\x00"_av, filename);
+        PARSE_TEST(Type::FdxNew, serialize_fdx_new, (filename), "\x03\x00\x0f\x00"_av, filename);
 
-        CASE(Type::TflNew, serialize_tfl_new, (FileId(42), filename, filename2),
+        PARSE_TEST(Type::TflNew, serialize_tfl_new, (FileId(42), filename, filename2),
             "\x04\x00*\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x10\x00"_av, filename, filename2);
 
-        CASE(Type::TflState, serialize_tfl_stat,
+        PARSE_TEST(Type::TflState, serialize_tfl_stat,
             (FileId(42), FileSize(12), QuickHash{qhash}, FullHash{fhash}),
             "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x01"_av,
             qhash, fhash);
     }
+
+#undef PARSE_TEST
+}
+
+RED_AUTO_TEST_CASE(mwrm3_parser)
+{
+    auto data =
+        "v3\n\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00""file"
+        "4my_session_id,000004.tfl\x05\x00\x04\x00\x00\x00\x00\x00\x00\x00"
+        "\x03\x00\x00\x00\x00\x00\x00\x00\x00"_av;
+
+    bytes_view remaining = data.first(33);
+
+    using namespace Mwrm3;
+    using namespace std::string_view_literals;
+
+#define PARSE_TEST(vtype, ...) RED_TEST(parse_packet(remaining, [&]( \
+    auto type, auto remaining_bytes, auto... xs                      \
+){                                                                   \
+    if constexpr (type == vtype) { __VA_ARGS__ (xs...); }            \
+    else RED_TEST(type.value == vtype);                              \
+    remaining = remaining_bytes;                                     \
+}) == ParserResult::Ok);
+
+    PARSE_TEST(Type::MwrmHeaderCompatibility, [](){});
+
+    RED_TEST(parse_packet(remaining, [](auto...){}) == ParserResult::NeedMoreData);
+    remaining = data.drop_front(remaining.data() - byte_ptr(data.data()));
+
+    PARSE_TEST(Type::TflNew,
+        [](FileId file_id, bytes_view original_filename, bytes_view tfl_filename){
+            RED_TEST(file_id == FileId(4));
+            RED_TEST(original_filename == "file4"sv);
+            RED_TEST(tfl_filename == "my_session_id,000004.tfl"sv);
+        });
+
+    PARSE_TEST(Type::TflState,
+        [](FileId file_id, FileSize file_size, QuickHash qhash, FullHash fhash){
+            RED_TEST(file_id == FileId(4));
+            RED_TEST(file_size == FileSize(3));
+            RED_TEST(qhash.hash.empty());
+            RED_TEST(fhash.hash.empty());
+        });
+
+    RED_REQUIRE(remaining.size() == 0);
+
+#undef PARSE_TEST
+
+    RED_TEST(parse_packet("\xff\xff"_av, [](auto...){}) == ParserResult::UnknownType);
 }

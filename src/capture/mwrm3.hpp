@@ -712,4 +712,75 @@ namespace Mwrm3
             group(optional_full_hash{has_hashs})
         );
     }
+
+    template<class F, class FError>
+    decltype(auto) unserialize_packet(Mwrm3::Type type, bytes_view av, F&& f_ok, FError&& f_error)
+    {
+        auto error_caller = [&](auto type){
+            return [&f_error]{
+                return f_error(decltype(type){});
+            };
+        };
+
+        auto unknown_type_error = error_caller(integral_type<Type::None>());
+
+#define X_MACRO(f)                    \
+    f(WrmNew, unserialize_wrm_new)    \
+    f(WrmState, unserialize_wrm_stat) \
+    f(FdxNew, unserialize_fdx_new)    \
+    f(TflNew, unserialize_tfl_new)    \
+    f(TflState, unserialize_tfl_stat) \
+    f(MwrmHeaderCompatibility, unserialize_mwrm_header_compatibility)
+
+#define CALL(v, f) f(av, f_ok, error_caller(integral_type<Type::v>()))
+#define TYPE(v, f) decltype(CALL(v, f)),
+#define CASE(v, f) case Type::v: return Result(CALL(v, f));
+
+        using Result = std::common_type_t<X_MACRO(TYPE) decltype(unknown_type_error())>;
+
+        switch (type)
+        {
+            X_MACRO(CASE)
+            case Type::None:;
+        }
+
+        return Result(unknown_type_error());
+
+#undef LIST
+#undef TYPE
+#undef CASE
+#undef X_MACRO
+    }
+
+    enum class ParserResult
+    {
+        Ok,
+        UnknownType,
+        NeedMoreData,
+    };
+
+    template<class F>
+    ParserResult parse_packet(bytes_view av, F&& f)
+    {
+        if (av.size() >= 2)
+        {
+            using namespace Mwrm3;
+
+            auto f_ok = [&](auto type, bytes_view remaining, auto... xs){
+                f(type, remaining, xs...);
+                return ParserResult::Ok;
+            };
+            auto f_error = [](Type type){
+                return type == Type::None
+                    ? ParserResult::UnknownType
+                    : ParserResult::NeedMoreData;
+            };
+
+            InStream in(av);
+            auto type = Type(in.in_uint16_le());
+            return unserialize_packet(type, in.remaining_bytes(), f_ok, f_error);
+        }
+
+        return ParserResult::NeedMoreData;
+    }
 }
