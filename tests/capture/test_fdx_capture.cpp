@@ -23,7 +23,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
-#include "mod/rdp/channels/cliprdr_channel_copy_transfered_file.hpp"
+#include "capture/fdx_capture.hpp"
 #include "utils/sugar/algostring.hpp"
 
 

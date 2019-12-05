@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
-#include "mod/rdp/channels/cliprdr_channel_copy_transfered_file.hpp"
+#include "capture/fdx_capture.hpp"
 #include "std17/charconv.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"

@@ -842,6 +842,25 @@ test-run tests/capture/test_cryptofile :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/cryptofile.hpp
 ;
+test-run tests/capture/test_fdx_capture :
+  $(REDEMPTION_TEST_PATH)/capture/test_fdx_capture.cpp
+:
+  <library>crypto
+  <library>snappy
+  <library>src/capture/fdx_capture.o
+  <library>src/core/error.o
+  <library>src/core/report_error.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/capture/fdx_capture.cpp
+  <covfile>src/capture/fdx_capture.hpp
+;
 test-run tests/capture/test_mwrm3 :
   $(REDEMPTION_TEST_PATH)/capture/test_mwrm3.cpp
 :
@@ -4001,25 +4020,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
 ;
-test-run tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file.cpp
-:
-  <library>crypto
-  <library>snappy
-  <library>src/core/error.o
-  <library>src/core/report_error.o
-  <library>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.cpp
-  <covfile>src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.hpp
-;
 test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_send_and_receive.cpp
 :
@@ -5518,6 +5518,7 @@ obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/modu
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
+obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 obj src/capture/ocr/main/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/display_learning.cc ;
@@ -5604,7 +5605,6 @@ obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widg
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
-obj src/mod/rdp/channels/cliprdr_channel_copy_transfered_file.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel_copy_transfered_file.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
@@ -5673,6 +5673,7 @@ alias test_module_manager : tests/acl/test_module_manager ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
 alias test_capture : tests/capture/test_capture ;
 alias test_cryptofile : tests/capture/test_cryptofile ;
+alias test_fdx_capture : tests/capture/test_fdx_capture ;
 alias test_mwrm3 : tests/capture/test_mwrm3 ;
 alias test_ocr : tests/capture/test_ocr ;
 alias test_ppocr : tests/capture/test_ppocr ;
@@ -5869,7 +5870,6 @@ alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
-alias test_cliprdr_channel_copy_transfered_file : tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
 alias test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task ;
@@ -6017,6 +6017,7 @@ alias test_module_manager.coverage : tests/acl/test_module_manager.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
 alias test_capture.coverage : tests/capture/test_capture.coverage ;
 alias test_cryptofile.coverage : tests/capture/test_cryptofile.coverage ;
+alias test_fdx_capture.coverage : tests/capture/test_fdx_capture.coverage ;
 alias test_mwrm3.coverage : tests/capture/test_mwrm3.coverage ;
 alias test_video_capture.coverage : tests/capture/test_video_capture.coverage ;
 alias test_wrm_capture.coverage : tests/capture/test_wrm_capture.coverage ;
@@ -6199,7 +6200,6 @@ alias test_widget_rect.coverage : tests/mod/internal/widget/test_widget_rect.cov
 alias test_null.coverage : tests/mod/null/test_null.coverage ;
 alias test_base_channel.coverage : tests/mod/rdp/channels/test_base_channel.coverage ;
 alias test_cliprdr_channel.coverage : tests/mod/rdp/channels/test_cliprdr_channel.coverage ;
-alias test_cliprdr_channel_copy_transfered_file.coverage : tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file.coverage ;
 alias test_cliprdr_channel_send_and_receive.coverage : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive.coverage ;
 alias test_rail_window_id_manager.coverage : tests/mod/rdp/channels/test_rail_window_id_manager.coverage ;
 alias test_rdpdr_asynchronous_task.coverage : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.coverage ;
@@ -6346,6 +6346,7 @@ alias tests/capture/ocr/locale.norec :
 alias tests/capture.norec :
   tests/capture/test_capture
   tests/capture/test_cryptofile
+  tests/capture/test_fdx_capture
   tests/capture/test_mwrm3
   tests/capture/test_ocr
   tests/capture/test_ppocr
@@ -6598,7 +6599,6 @@ alias tests/mod/null.norec :
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
   tests/mod/rdp/channels/test_cliprdr_channel
-  tests/mod/rdp/channels/test_cliprdr_channel_copy_transfered_file
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager
   tests/mod/rdp/channels/test_rdpdr_asynchronous_task
