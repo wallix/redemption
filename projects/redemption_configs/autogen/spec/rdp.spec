@@ -50,7 +50,7 @@ tls_min_level = integer(min=0, default=0)
 # Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 tls_max_level = integer(min=0, default=0)
 
-# Tls v1.2 additional ciphers supported by client, default to @SECLEVEL=2, @SECLEVEL=1 for compatibility with older ciphers, ALL for all ciphers
+# Tls v1.2 additional ciphers supported by client, default is empty t apply system wide configuration (ssl security level 2), ALL for all ciphers to maximize compatibility (usefull for some WIN2008 servers not up to date)
 cipher_string = string(default='')
 
 # Show common cipher list supported by client and server

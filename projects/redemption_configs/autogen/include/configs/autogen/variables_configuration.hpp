@@ -1287,7 +1287,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// Tls v1.2 additional ciphers supported by client, default to @SECLEVEL=2, @SECLEVEL=1 for compatibility with older ciphers, ALL for all ciphers <br/>
+    /// Tls v1.2 additional ciphers supported by client, default is empty t apply system wide configuration (ssl security level 2), ALL for all ciphers to maximize compatibility (usefull for some WIN2008 servers not up to date) <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:cipher_string <br/>

@@ -49,7 +49,7 @@ cfg::mod_rdp::tls_min_level <- mod_rdp:tls_min_level   [unsigned int]
 cfg::mod_rdp::tls_max_level <- mod_rdp:tls_max_level   [unsigned int]
     Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3
 cfg::mod_rdp::cipher_string <- mod_rdp:cipher_string   [std::string]
-    Tls v1.2 additional ciphers supported by client, default to @SECLEVEL=2, @SECLEVEL=1 for compatibility with older ciphers, ALL for all ciphers
+    Tls v1.2 additional ciphers supported by client, default is empty t apply system wide configuration (ssl security level 2), ALL for all ciphers to maximize compatibility (usefull for some WIN2008 servers not up to date)
 cfg::mod_rdp::show_common_cipher_list <- mod_rdp:show_common_cipher_list   [bool]
     Show common cipher list supported by client and server
 cfg::mod_rdp::server_redirection_support <- mod_rdp:server_redirection_support   [bool]

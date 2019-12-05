@@ -97,7 +97,7 @@
           "name": "cipher_string",
           "type": "string",
           "default": "",
-          "description": "Tls v1.2 additional ciphers supported by client, default to @SECLEVEL=2, @SECLEVEL=1 for compatibility with older ciphers, ALL for all ciphers"
+          "description": "Tls v1.2 additional ciphers supported by client, default is empty t apply system wide configuration (ssl security level 2), ALL for all ciphers to maximize compatibility (usefull for some WIN2008 servers not up to date)"
         },
         {
           "name": "show_common_cipher_list",
