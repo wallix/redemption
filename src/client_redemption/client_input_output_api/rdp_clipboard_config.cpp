@@ -18,43 +18,20 @@
    Author(s): Clément Moroldo, David Fort
 */
 
-#pragma once
-
-#include <vector>
-#include <string>
-#include <cstdint>
+#include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
+#include "core/RDP/clipboard.hpp"
 
 
-namespace rdpdr
+RDPClipboardConfig::RDPClipboardConfig() noexcept
+: generalFlags(RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS)
+{}
+
+void RDPClipboardConfig::add_format(uint32_t id, Cliprdr::AsciiName name)
 {
-    // forward declaration from core/RDP/channels/rdpdr.hpp
-    enum RDPDR_DTYP : uint32_t;
+    this->formats.push(id, name);
 }
 
-struct RDPDiskConfig
+void RDPClipboardConfig::add_format(RDPECLIP::CF cf)
 {
-    struct DeviceInfo {
-        char name[8];
-        rdpdr::RDPDR_DTYP type;
-
-        DeviceInfo(const char * name, rdpdr::RDPDR_DTYP type) noexcept;
-    };
-
-    std::vector<DeviceInfo> device_list;
-
-    RDPDiskConfig() noexcept;
-
-    void add_drive(const std::string & name, rdpdr::RDPDR_DTYP type);
-
-    bool enable_drive_type = true;
-    bool enable_printer_type = true;
-    bool enable_port_type = true;
-    bool enable_smart_card_type = true;
-
-    uint32_t ioCode1;
-    uint32_t extendedPDU;
-    uint32_t extraFlags1;
-    uint32_t SpecialTypeDeviceCap;
-    uint32_t general_capability_version;
-};
-
+    this->formats.push(cf, Cliprdr::AsciiName{{}});
+}

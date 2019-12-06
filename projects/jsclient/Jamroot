@@ -101,6 +101,7 @@ project redjs
     # # UNSAFE
 
     <cxxflags>-Wno-dollar-in-identifier-extension
+    <cxxflags>-Wno-missing-variable-declarations
 
     : default-build release
 ;

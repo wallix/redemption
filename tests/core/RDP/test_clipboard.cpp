@@ -23,6 +23,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
 
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFileList)

@@ -23,6 +23,8 @@
 
 #include "core/channel_list.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
+#include "core/FSCC/FileInformation.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/file_validator_service.hpp"

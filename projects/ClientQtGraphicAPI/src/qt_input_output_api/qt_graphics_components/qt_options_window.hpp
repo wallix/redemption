@@ -34,12 +34,7 @@
 
 #include "../keymaps/qt_scancode_keymap.hpp"
 
-
-#if REDEMPTION_QT_VERSION == 4
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
-#else
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#endif
+#include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QCheckBox)
@@ -57,10 +52,6 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QHeaderView)
-
-#undef REDEMPTION_QT_INCLUDE_WIDGET
-
-
 
 
 class QtKeyLabel :  public QWidget

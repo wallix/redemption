@@ -21,6 +21,8 @@
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include "capture/cryptofile.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "utils/cli.hpp"
@@ -634,7 +636,7 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
             "nla ", std::to_string(config.modRDPParamsData.enable_nla), "\n"
             "tls-min-level ", std::to_string(config.tls_client_params_data.tls_min_level), "\n"
             "tls-max-level ", std::to_string(config.tls_client_params_data.tls_max_level), "\n"
-            "tls-cipher-string ", config.tls_client_params_data.cipher_string, "\n"            
+            "tls-cipher-string ", config.tls_client_params_data.cipher_string, "\n"
             "show_common_cipher_list ", std::to_string(config.tls_client_params_data.show_common_cipher_list), "\n"
             "sound ", std::to_string(config.modRDPParamsData.enable_sound), "\n"
             "console_mode ", std::to_string(config.info.console_session), "\n"

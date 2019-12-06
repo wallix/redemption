@@ -97,6 +97,8 @@ project redemption_qt_client
 
     <cxxflags>-isystem$(QT_INCLUDES)
 
+    <include>src
+
     <toolset>gcc:<cxxflags>-Wno-missing-include-dirs
 
    : default-build release
@@ -188,6 +190,7 @@ obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
 
 exe client_rdp :
     src/qt_input_output_api/qt_output_sound.hpp
+    src/qt_input_output_api/qt_input_output_clipboard.cpp
     src/qt_input_output_api/qt_input_output_clipboard.hpp
     src/qt_input_output_api/qt_input_socket.hpp
     src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp

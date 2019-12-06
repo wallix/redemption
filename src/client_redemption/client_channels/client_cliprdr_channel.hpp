@@ -24,10 +24,11 @@
 #pragma once
 
 #include "mod/rdp/rdp_verbose.hpp"
-#include "core/RDP/clipboard.hpp"
-#include "gdi/screen_info.hpp"
+#include "core/RDP/clipboard/format_name.hpp"
+#include "utils/image_data_view.hpp"
 
 #include <unordered_map>
+#include <memory>
 #include <vector>
 #include <string>
 
@@ -73,10 +74,6 @@ public:
     ClientIOClipboardAPI * clientIOClipboardAPI;
     ClientChannelMod * callback;
 
-    enum : int {
-        PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - 8
-      , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - 8
-    };
     bool format_list_nego_done = false;
 
     enum class CustomFormatName;

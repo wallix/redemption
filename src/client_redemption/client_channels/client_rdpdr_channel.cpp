@@ -20,13 +20,22 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-
+#include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
+
+#include "core/channel_list.hpp"
+#include "core/FSCC/FileInformation.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+uint32_t ClientIODiskAPI::FileStatvfs::_default_FileSystemAttributes() noexcept
+{
+    return fscc::NEW_FILE_ATTRIBUTES;
+}
 
 // [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
 //
@@ -95,8 +104,6 @@
 //       |                                                             |
 //
 // Figure 2: Drive redirection sequence
-
-
 
 ClientRDPDRChannel::ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * callback,  RDPDiskConfig & config)
     : verbose(verbose)

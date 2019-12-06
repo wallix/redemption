@@ -22,7 +22,10 @@ exe headlessclient :
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
+  <library>src/client_redemption/client_channels/client_remoteapp_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -1181,7 +1184,10 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
+  <library>src/client_redemption/client_channels/client_remoteapp_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1208,7 +1214,6 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/client_redemption/client_channels/client_cliprdr_channel.cpp
   <covfile>src/client_redemption/client_channels/client_cliprdr_channel.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpdr_channel.cpp
@@ -1222,7 +1227,10 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
+  <library>src/client_redemption/client_channels/client_remoteapp_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1249,7 +1257,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/client_redemption/client_channels/client_rdpdr_channel.cpp
   <covfile>src/client_redemption/client_channels/client_rdpdr_channel.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpsnd_channel.cpp
@@ -1263,7 +1270,10 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
+  <library>src/client_redemption/client_channels/client_remoteapp_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1290,7 +1300,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/client_redemption/client_channels/client_rdpsnd_channel.cpp
   <covfile>src/client_redemption/client_channels/client_rdpsnd_channel.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_remoteapp_channel.cpp
@@ -1304,7 +1313,10 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
+  <library>src/client_redemption/client_channels/client_remoteapp_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1329,6 +1341,7 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/utils/utf.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/client_redemption/client_channels/client_remoteapp_channel.cpp
   <covfile>src/client_redemption/client_channels/client_remoteapp_channel.hpp
   <define>ZLIB_CONST
 ;
@@ -1344,7 +1357,10 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
+  <library>src/client_redemption/client_channels/client_remoteapp_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
+  <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1372,7 +1388,6 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/client_redemption/client_config/client_redemption_config.cpp
   <covfile>src/client_redemption/client_config/client_redemption_config.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
@@ -2339,7 +2354,6 @@ test-run tests/core/test_check_files :
 test-run tests/core/test_client_info :
   $(REDEMPTION_TEST_PATH)/core/test_client_info.cpp
 :
-  <library>crypto
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/utils/hexdump.o
@@ -5534,7 +5548,10 @@ obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpsnd_channel.cpp ;
+obj src/client_redemption/client_channels/client_remoteapp_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_remoteapp_channel.cpp : <define>ZLIB_CONST ;
 obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
+obj src/client_redemption/client_input_output_api/rdp_clipboard_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_clipboard_config.cpp ;
+obj src/client_redemption/client_input_output_api/rdp_disk_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_disk_config.cpp ;
 obj src/core/HTTP/http_parser.o : $(REDEMPTION_SRC_PATH)/core/HTTP/http_parser.cpp ;
 obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;

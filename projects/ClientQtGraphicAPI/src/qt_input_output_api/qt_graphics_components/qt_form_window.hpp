@@ -39,11 +39,7 @@
 #include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>
 
-#if REDEMPTION_QT_VERSION == 4
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
-#else
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#endif
+#include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
@@ -64,8 +60,6 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QScrollArea)
 
 #define QT_ORANGE_WALLIX QColor(0xFF, 0x8C, 0x00)
-
-#undef REDEMPTION_QT_INCLUDE_WIDGET
 
 #include <vector>
 

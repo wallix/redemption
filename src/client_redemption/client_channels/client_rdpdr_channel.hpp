@@ -23,21 +23,11 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "core/FSCC/FileInformation.hpp"
-#include "core/RDP/channels/rdpdr.hpp"
-
-#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-// #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
-#include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
-
+#include "utils/sugar/bytes_view.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
 #include <unordered_map>
-
-#include "utils/sugar/bytes_view.hpp"
-#include "core/FSCC/FileInformation.hpp"
-
+#include <memory>
 #include <vector>
 #include <string>
 
@@ -45,9 +35,8 @@
 constexpr long long WINDOWS_TICK = 10000000;
 constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 
-class ClientIODiskAPI {
-
-
+class ClientIODiskAPI
+{
 public:
     virtual ~ClientIODiskAPI() = default;
 
@@ -68,11 +57,15 @@ public:
 
     struct FileStatvfs
     {
+    private:
+        static uint32_t _default_FileSystemAttributes() noexcept;
+
+    public:
         uint64_t VolumeCreationTime             = 0;
         array_view_const_char VolumeLabel       = ""_av;
         array_view_const_char FileSystemName    = "ext4"_av;
 
-        uint32_t FileSystemAttributes           = fscc::NEW_FILE_ATTRIBUTES;
+        uint32_t FileSystemAttributes           = _default_FileSystemAttributes();
         uint32_t SectorsPerAllocationUnit       = 8;
 
         uint32_t BytesPerSector                 = 0;
@@ -122,8 +115,20 @@ public:
 };
 
 
-class ClientRDPDRChannel {
+namespace rdpdr
+{
+    enum RDPDR_DTYP : uint32_t;
+    class DeviceIOResponse;
+}
 
+class RDPDiskConfig;
+class ClientChannelMod;
+class InStream;
+class OutStream;
+
+
+class ClientRDPDRChannel
+{
     RDPVerbose verbose;
 
     ClientIODiskAPI * impl_io_disk;
@@ -151,12 +156,12 @@ public:
 
     struct DeviceData {
         char name[8] = {0};
-        uint32_t ID = 0;
-        rdpdr::RDPDR_DTYP type = rdpdr::RDPDR_DTYP::RDPDR_DTYP_UNSPECIFIED;
+        uint32_t ID;
+        rdpdr::RDPDR_DTYP type;
 
         DeviceData(const char * name, uint32_t ID, rdpdr::RDPDR_DTYP type)
-          : ID(ID)
-          , type(type)
+        : ID(ID)
+        , type(type)
         {
             for (int i = 0; i < 8; i++) {
                 this->name[i] = name[i];

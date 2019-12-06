@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"

@@ -22,6 +22,10 @@
 
 #include "client_redemption/client_channels/fake_client_mod.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
+
+#include "core/FSCC/FileInformation.hpp"
+#include "core/RDP/clipboard.hpp"
 
 #include <string>
 
@@ -166,7 +170,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(stream_formatDataRequest.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
     RED_CHECK_EQUAL(stream_formatDataRequest.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
     RED_CHECK_EQUAL(stream_formatDataRequest.in_uint32_le(), 4);
-    RED_CHECK_EQUAL(stream_formatDataRequest.in_uint32_le(), RDPECLIP::CF_TEXT);
+    RED_CHECK_EQUAL(stream_formatDataRequest.in_uint32_le(), uint32_t(RDPECLIP::CF_TEXT));
 
     // Format Data Response PDU part 1
     StaticOutStream<1600> out_FormatDataResponsep_part1;
@@ -250,7 +254,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint16_le(), RDPECLIP::CB_FORMAT_LIST);
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint32_le(), 6);
-    RED_CHECK_EQUAL(stream_formatListPDU.in_uint32_le(), RDPECLIP::CF_TEXT);
+    RED_CHECK_EQUAL(stream_formatListPDU.in_uint32_le(), uint32_t(RDPECLIP::CF_TEXT));
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint16_le(), 0);
 
     // Format List Response PDU

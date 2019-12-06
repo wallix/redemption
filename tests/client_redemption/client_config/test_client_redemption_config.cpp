@@ -22,15 +22,17 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-
 #include "client_redemption/client_channels/fake_client_mod.hpp"
 
+#include "core/RDP/clipboard.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "test_only/test_framework/working_directory.hpp"
 
 #include <string_view>
 
@@ -135,10 +137,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[1].utf8_name(),
         Cliprdr::formats::file_contents.ascii_name);
 
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].format_id(), RDPECLIP::CF_TEXT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].format_id(), uint32_t(RDPECLIP::CF_TEXT));
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[2].utf8_name(), ""_av);
 
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), RDPECLIP::CF_METAFILEPICT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), uint32_t(RDPECLIP::CF_METAFILEPICT));
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[3].utf8_name(), ""_av);
 
     RED_CHECK(config.rDPClipboardConfig.path == "/DATA/clipboard_temp"sv);
@@ -311,10 +313,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[1].utf8_name(),
         Cliprdr::formats::file_contents.ascii_name);
 
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].format_id(), RDPECLIP::CF_TEXT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].format_id(), uint32_t(RDPECLIP::CF_TEXT));
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[2].utf8_name(), ""_av);
 
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), RDPECLIP::CF_METAFILEPICT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), uint32_t(RDPECLIP::CF_METAFILEPICT));
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[3].utf8_name(), ""_av);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp"sv);

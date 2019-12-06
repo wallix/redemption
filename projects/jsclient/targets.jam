@@ -48,6 +48,7 @@ exe-js js_client :
   src/utils/bitmap.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
+  src/utils/parse_primary_drawing_orders.bc
   src/utils/primitives/primitives.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
@@ -69,6 +70,7 @@ exe-js js_player :
   src/gdi/graphic_api.bc
   src/transport/mwrm_reader.bc
   src/utils/bitmap.bc
+  src/utils/hexdump.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
   src/utils/utf.bc
@@ -126,6 +128,7 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
 :
   src/redjs/image_data_from_pointer.bc
   src/core/error.bc
+  src/utils/hexdump.bc
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -163,6 +166,7 @@ objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reade
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
+objjs src/utils/parse_primary_drawing_orders.bc : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
 objjs src/utils/primitives/primitives.bc : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 objjs src/utils/rle.bc : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 objjs src/utils/stacktrace.bc : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;

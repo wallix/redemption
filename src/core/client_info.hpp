@@ -29,7 +29,8 @@
 #include <cstring>
 
 #include "core/misc.hpp"
-#include "core/RDP/gcc.hpp"
+#include "core/RDP/gcc/userdata/cs_core.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/capabilities/bmpcache2.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"

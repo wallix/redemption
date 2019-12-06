@@ -21,21 +21,19 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-
-
-#include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_channels/client_cliprdr_channel.hpp"
-#include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
-#include "client_redemption/client_channels/client_rdpdr_channel.hpp"
-#include "client_redemption/client_channels/client_remoteapp_channel.hpp"
-#include "client_redemption/client_redemption_api.hpp"
-
-#include "core/RDP/clipboard.hpp"
+#include "gdi/graphic_api.hpp"
+#include "core/channel_names.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/image_data_view.hpp"
+#include "utils/stream.hpp"
+#include "client_redemption/client_channels/client_cliprdr_channel.hpp"
+#include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
+#include "client_redemption/client_channels/client_remoteapp_channel.hpp"
+#include "client_redemption/client_channels/client_rdpdr_channel.hpp"
+#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 #include <chrono>
 

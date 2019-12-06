@@ -21,6 +21,7 @@
 
 #include "mod/internal/copy_paste.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
 #include "utils/stream.hpp"

@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 #include "red_channels/clipboard.hpp"
 
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
 
 #include <tuple>
 #include <vector>

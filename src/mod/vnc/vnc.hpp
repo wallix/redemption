@@ -32,6 +32,7 @@
 #include "core/front_api.hpp"
 #include "core/server_notifier_api.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"

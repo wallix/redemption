@@ -39,18 +39,10 @@
 #include <QtGui/QWheelEvent>
 // #include <QtGui/QWindowsCEStyle>
 
-#if REDEMPTION_QT_VERSION == 4
-#   include <QtCore/QUrl>
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
-#else
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#endif
+#include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
-
-#undef REDEMPTION_QT_INCLUDE_WIDGET
-
 
 
 class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI

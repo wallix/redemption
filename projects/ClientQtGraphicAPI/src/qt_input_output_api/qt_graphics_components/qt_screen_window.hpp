@@ -32,20 +32,13 @@
 #include <QtGui/QPainter>
 #include <QtGui/QImage>
 
-#if REDEMPTION_QT_VERSION == 4
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
-#else
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#endif
+#include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QLabel)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
-
-#undef REDEMPTION_QT_INCLUDE_WIDGET
-
 
 
 class QtScreen : public QWidget

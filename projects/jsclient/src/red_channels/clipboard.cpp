@@ -29,6 +29,8 @@ Author(s): Jonathan Poelen
 #include "core/callback.hpp"
 
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
+#include "core/channel_list.hpp"
 
 
 namespace redjs::channels::clipboard

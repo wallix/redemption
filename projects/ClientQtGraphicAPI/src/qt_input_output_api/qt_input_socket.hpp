@@ -27,11 +27,7 @@
 #include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
-#if REDEMPTION_QT_VERSION == 4
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
-#else
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#endif
+#include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 #include <QtCore/QSocketNotifier>

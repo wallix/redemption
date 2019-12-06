@@ -26,6 +26,10 @@
 
 #include "client_redemption/client_channels/fake_client_mod.hpp"
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
+#include "client_redemption/mod_wrapper/client_callback.hpp"
+
+#include "core/RDP/remote_programs.hpp"
 
 
 

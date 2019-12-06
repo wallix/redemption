@@ -30,6 +30,7 @@
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 
+#include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -42,28 +43,28 @@
 #include "mod/vnc/new_mod_vnc.hpp"
 
 #include "transport/crypto_transport.hpp"
-#include "transport/recorder_transport.hpp"
 #include "transport/replay_transport.hpp"
 #include "transport/socket_transport.hpp"
 
+#include "configs/config.hpp"
+#include "RAIL/client_execute.hpp"
+
+#include "capture/capture_params.hpp"
 #include "capture/wrm_capture.hpp"
 
+#include "front/execute_events.hpp"
+
+#include "client_redemption/mod_wrapper/client_callback.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
-
+//
 #include "client_redemption/client_config/client_redemption_config.hpp"
-
-#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
+//
+// #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "client_redemption/client_redemption_api.hpp"
-
-#include "client_redemption/mod_wrapper/client_callback.hpp"
-#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-
-#include "configs/config.hpp"
-#include "front/execute_events.hpp"
-#include "RAIL/client_execute.hpp"
 
 #include <iostream>
 

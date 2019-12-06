@@ -20,19 +20,21 @@
 
 #pragma once
 
-#include "core/RDP/clipboard.hpp"
-
+#include "core/RDP/clipboard/format_name.hpp"
 
 namespace ClientCLIPRDRConfig
 {
-// Arbitrary format ID client redemption specifique must be superior to 0xbb00, else collision is a risk
-enum : uint32_t {
-      CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-    , CF_QT_CLIENT_FILECONTENTS         = 48026
-};
-
+    // Arbitrary format ID client redemption specifique must be superior to 0xbb00, else collision is a risk
+    enum : uint32_t {
+        CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+        , CF_QT_CLIENT_FILECONTENTS       = 48026
+    };
 }
 
+namespace RDPECLIP
+{
+    enum CF : uint16_t;
+}
 
 struct RDPClipboardConfig
 {
@@ -45,16 +47,12 @@ struct RDPClipboardConfig
 
     bool server_use_long_format_names = true;
     uint16_t cCapabilitiesSets = 1;
-    uint32_t generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
+    uint32_t generalFlags;
 
     Cliprdr::FormatNameInventory formats;
 
-    void add_format(uint32_t id, Cliprdr::AsciiName name)
-    {
-        this->formats.push(id, name);
-    }
+    RDPClipboardConfig() noexcept;
 
-    void add_format(RDPECLIP::CF cf) {
-        this->formats.push(cf, Cliprdr::AsciiName{{}});
-    }
+    void add_format(uint32_t id, Cliprdr::AsciiName name);
+    void add_format(RDPECLIP::CF cf);
 };

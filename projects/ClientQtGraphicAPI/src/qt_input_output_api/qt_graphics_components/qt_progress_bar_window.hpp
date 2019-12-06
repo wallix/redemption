@@ -23,11 +23,7 @@
 
 #include "cxx/diagnostic.hpp"
 
-#if REDEMPTION_QT_VERSION == 4
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
-#else
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#endif
+#include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QProgressBar)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)

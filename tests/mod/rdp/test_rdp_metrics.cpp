@@ -25,6 +25,7 @@
 #include "utils/timeval_ops.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
+#include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "mod/rdp/rdp_metrics.hpp"
 #include "mod/metrics_hmac.hpp"
 
