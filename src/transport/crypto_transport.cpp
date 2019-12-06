@@ -446,7 +446,7 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
         remaining_len -= res;
-    };
+    }
 
     this->current_len += len;
     if (this->file_len <= this->current_len) {

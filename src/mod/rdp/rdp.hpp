@@ -3227,7 +3227,7 @@ public:
                     }
                     catch(Error const & e){
                         LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
-                    };
+                    }
                 }
 
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);

@@ -5010,7 +5010,6 @@ private:
                 || (2 == decoded_keys.count
                     && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
                     && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
-            ;
         }();
 
         if (this->state == UP_AND_RUNNING) {

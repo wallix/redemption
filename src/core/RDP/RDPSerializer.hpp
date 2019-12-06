@@ -279,7 +279,7 @@ private:
                 new_cmd
             );
             f(new_cmd);
-        };
+        }
     }
 
 public:

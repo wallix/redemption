@@ -269,7 +269,7 @@ void WidgetSelector::rearrange()
         column_width_strategies[i] = { static_cast<uint16_t>(tm.width + 5 + COLUMN_EXPANSION_BUTTON_PLACE_HOLDER), this->weight[i] };
 
         column_width_is_optimal[i] = false;
-    };
+    }
 
     BufMaker<128, uint16_t> rows_height_buffer;
     auto rows_height = rows_height_buffer.dyn_array(this->selector_lines.get_nb_rows());

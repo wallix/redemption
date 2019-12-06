@@ -301,7 +301,7 @@ public:
         return 0;
     }
 
-    virtual void update_keylayout() override {;
+    virtual void update_keylayout() override {
 
         switch (this->config.mod_state) {
             case ClientRedemptionConfig::MOD_VNC:

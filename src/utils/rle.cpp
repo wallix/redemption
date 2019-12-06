@@ -1181,7 +1181,7 @@ void get_run(
             data_size--;
             data++;
         }
-        /*LOG(LOG_INFO, "run=%c", *data)*/;
+        // LOG(LOG_INFO, "run=%c", *data);
         if (run_length >= 3) {
             break;
         }

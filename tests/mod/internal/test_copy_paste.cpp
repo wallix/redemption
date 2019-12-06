@@ -167,7 +167,7 @@ RED_AUTO_TEST_CASE(TestPaste)
 
     RED_REQUIRE(copy_paste.ready(front));
 
-    #define edit_paste(s, sig) {                                   \
+    #define edit_paste(s, sig) do {                                \
         keymap.push_kevent(Keymap2::KEVENT_PASTE);                 \
         copy_paste.paste(edit);                                    \
         RED_CHECK_EQUAL(s ""sv, edit.get_text());                  \
@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestPaste)
         /*mod.save_to_png(filename);*/                             \
                                                                    \
         RED_CHECK_SIG(gd, sig);                                    \
-    }
+    } while (0)
     edit_paste("",
         "\x55\x78\x56\xd2\x65\x6c\x78\x4a\x23\x26\x2b\xf5\xfb\x67\xdd\x0f\xa9\x96\xaf\xa6");
     edit_paste("",

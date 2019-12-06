@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(mwrm3_parser)
     if constexpr (type == vtype) { __VA_ARGS__ (xs...); }            \
     else RED_TEST(type.value == vtype);                              \
     remaining = remaining_bytes;                                     \
-}) == ParserResult::Ok);
+}) == ParserResult::Ok)
 
     PARSE_TEST(Type::MwrmHeaderCompatibility, [](){});
 
