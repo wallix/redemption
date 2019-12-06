@@ -407,7 +407,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
     };
 
     RED_TEST_CONTEXT_DATA(Data const& data, "encryption: " << data.has_encryption << " checksum: " << data.has_checksum, {
-        Data{"nochecksum noencryption", false, false,
+        Data{"nochecksum_noencryption", false, false,
 
             "abcdefg"_av,
 
@@ -464,20 +464,19 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         WorkingDirectory wd(data.name);
 
-        auto wdhash = wd.create_subdirectory("hash");
+        auto wd_hash = wd.create_subdirectory("hash");
+        auto wd_record = wd.create_subdirectory("record");
 
-        auto sid = "0123456789abcdef"_av;
+        auto sid = "0123456789abcdef"sv;
 
-        auto fdx_filename = str_concat(sid, ".fdx");
-
-        auto fdxpath = wd.add_file(fdx_filename);
-        (void)wdhash.add_file(fdx_filename);
+        auto wd_fdx_record = wd_record.create_subdirectory(sid);
+        auto wd_fdx_hash = wd_hash.create_subdirectory(sid);
 
         auto* fdx = scytale_fdx_writer_new_with_test_random(
             data.has_encryption, data.has_checksum, master_derivator, hmac_fn, trace_fn);
         RED_REQUIRE(fdx);
 
-        RED_TEST(0 == scytale_fdx_writer_open(fdx, wd.dirname(), wdhash.dirname(), 0, sid.data()));
+        RED_TEST(0 == scytale_fdx_writer_open(fdx, wd_record.dirname(), wd_hash.dirname(), 0, sid.data()));
 
         auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
         RED_REQUIRE(tfl);
@@ -487,10 +486,6 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_tfl_writer_cancel(tfl));
 
-        auto fname = str_concat(sid, ",000002.tfl"_av);
-        auto file2path = wd.add_file(fname);
-        auto file2hash = wdhash.add_file(fname);
-
         tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt");
         RED_REQUIRE(tfl);
 
@@ -499,9 +494,13 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_tfl_writer_close(tfl));
 
+        auto fname = str_concat(sid, ",000002.tfl"_av);
+        auto file2path = wd_fdx_record.add_file(fname);
+        auto file2hash = wd_fdx_hash.add_file(fname);
+
         auto hres = data.tfl2_hash_content_prefix;
-        std::string content;
-        (void)tu::append_file_contents(file2hash, content);
+        std::string content = RED_REQUIRE_GET_FILE_CONTENTS(file2hash);
+        RED_REQUIRE(content.size() >= hres.size());
         RED_TEST(content.substr(0, hres.size()) == hres);
 
         RED_CHECK_MEM_FILE_CONTENTS(file2path, data.tfl2_content);
@@ -511,6 +510,10 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
 
         RED_TEST(0 == scytale_fdx_writer_delete(fdx));
+
+        auto fdx_filename = str_concat(sid, ".fdx");
+        auto fdxpath = wd_fdx_record.add_file(fdx_filename);
+        (void)wd_fdx_hash.add_file(fdx_filename);
 
         RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
 

@@ -99,8 +99,6 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
             stat.st_ctim.tv_sec = 12345678;
             return err;
         }
-
-        int i = 42;
     } fstat;
 
     FdxCapture fdx_capture(
@@ -237,9 +235,9 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
     OutCryptoTransport::HashArray fhash {};
     fdx_capture.close(qhash, fhash);
 
-    OutCryptoTransport::HashArray ref {};
-    RED_TEST(make_array_view(qhash) != make_array_view(ref));
-    RED_TEST(make_array_view(fhash) != make_array_view(ref));
+    OutCryptoTransport::HashArray zero_hash {};
+    RED_TEST(make_array_view(qhash) != make_array_view(zero_hash));
+    RED_TEST(make_array_view(fhash) != make_array_view(zero_hash));
 
     auto fdx_record_path = record_path.create_subdirectory(sid);
     auto fdx_hash_path = hash_path.create_subdirectory(sid);

@@ -23,6 +23,7 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "capture/mwrm3.hpp"
+#include "capture/fdx_capture.hpp"
 #include "test_only/lcg_random.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"
@@ -34,6 +35,7 @@
 #include "main/version.hpp"
 
 #include <type_traits>
+#include <optional>
 #include <memory>
 
 #define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
@@ -695,30 +697,8 @@ const char * scytale_key_get_derivated(ScytaleKeyHandle * handle) {
 
 struct ScytaleTflWriterHandler
 {
-    ScytaleTflWriterHandler(
-        ScytaleFdxWriterHandle& fdx,
-        uint64_t idx, std::string&& original_filename,
-        std::string finalname, char const* hash_filename, std::size_t pos_filename,
-        int groupid, CryptoContext& cctx, Random& random, Fstat& fstat)
-    : idx(idx)
-    , finalname(std::move(finalname))
-    , pos_filename(pos_filename)
-    , original_filename(std::move(original_filename))
-    , out_crypto_transport(cctx, random, fstat)
-    , fdx(fdx)
-    {
-        auto derivator = array_view(this->finalname).drop_front(pos_filename);
-        this->out_crypto_transport.open(
-            this->finalname.c_str(), hash_filename, groupid, derivator);
-    }
-
-    uint64_t idx;
-    std::string finalname;
-    std::size_t pos_filename;
+    FdxCapture::TflFile tfl_file;
     std::string original_filename;
-
-    OutCryptoTransport out_crypto_transport;
-
     ScytaleFdxWriterHandle& fdx;
 };
 
@@ -730,168 +710,64 @@ struct ScytaleFdxWriterHandle
         ScytaleRandomWrapper::RandomType random_type)
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
-    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
         this->qhashhex[0] = 0;
         this->fhashhex[0] = 0;
     }
 
-    void open(std::string_view path, std::string_view hashpath, int groupid, std::string_view sid)
+    void open(std::string_view record_path, std::string_view hash_path, int groupid, std::string_view sid)
     {
-        constexpr array_view_const_char fdx_suffix = ".fdx"_av;
+        assert(!bool(this->fdx_capture));
 
-        str_append(this->prefix, path, '/', sid, fdx_suffix);
-        str_append(this->hash_prefix, hashpath, '/', sid, fdx_suffix);
-        this->pos_filename = this->prefix.size() - sid.size() - fdx_suffix.size();
-        this->groupid = groupid;
-
-        auto derivator = array_view(this->prefix).drop_front(this->pos_filename);
-        this->out_crypto_transport.open(
-            this->prefix.c_str(), this->hash_prefix.c_str(), groupid, derivator);
-        this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
-        this->prefix.erase(this->prefix.size() - fdx_suffix.size());
-        this->prefix += ',';
-        this->hash_prefix.erase(this->hash_prefix.size() - fdx_suffix.size());
-        this->hash_prefix += ',';
+        this->fdx_capture.emplace(
+            record_path, hash_path, sid, groupid,
+            this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat);
     }
 
     ScytaleTflWriterHandler * open_tfl(char const* filename)
     {
-        ++this->idx;
-
-        std::array<char, std::numeric_limits<uint64_t>::digits10+2> buf;
-        char* const p = begin(buf);
-        std::to_chars_result const chars_result = std::to_chars(p, end(buf), this->idx);
-        std::ptrdiff_t const len = std::distance(p, chars_result.ptr);
-
-        array_view const leftnum = "000000"_av.first(len < 6 ? 6 - len : 0);
-        array_view const rightnum = std::string_view(p, len);
-        array_view const ext = ".tfl"_av;
-
-        auto const old_size = this->prefix.size();
-        auto const old_hash_size = this->hash_prefix.size();
-
-        str_append(this->prefix, leftnum, rightnum, ext);
-        str_append(this->hash_prefix, array_view(this->prefix).drop_front(old_size));
-
         auto* tfl = new(std::nothrow) ScytaleTflWriterHandler{ /*NOLINT*/
+            this->fdx_capture->new_tfl(),
+            filename,
             *this,
-            // truncate filename if too long
-            this->idx, std::string(filename, strnlen(filename, ~uint16_t())),
-            this->prefix, this->hash_prefix.c_str(), this->pos_filename,
-            this->groupid, this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat,
         };
 
-        this->prefix.erase(old_size);
-        this->hash_prefix.erase(old_hash_size);
+        if (not tfl)
+        {
+            this->error_ctx.set_error(Error(ERR_MEMORY_ALLOCATION_FAILED));
+        }
 
         return tfl;
     }
 
     int close_tfl(ScytaleTflWriterHandler& tfl)
     {
-        HashArray qhash;
-        HashArray fhash;
-        tfl.out_crypto_transport.close(qhash, fhash);
-
-        constexpr unsigned buf_size = 4096;
-        uint8_t cbuf[buf_size];
-        unsigned buf_pos = 0;
-
-        auto write_data = [&](bytes_view bytes){
-            if (buf_pos + bytes.size() < buf_size)
-            {
-                memcpy(cbuf + buf_pos, bytes.data(), bytes.size());
-                buf_pos += bytes.size();
-            }
-            else
-            {
-                memcpy(cbuf + buf_pos, bytes.data(), buf_size - buf_pos);
-                this->out_crypto_transport.send(cbuf, buf_size);
-
-                auto* p = bytes.data() + buf_size - buf_pos;
-                auto* end = bytes.end();
-
-                for (;;)
-                {
-                    if (p + buf_size > end)
-                    {
-                        buf_pos = end - p;
-                        memcpy(cbuf, p, buf_pos);
-                        break;
-                    }
-
-                    this->out_crypto_transport.send(p, buf_size);
-                    p += buf_size;
-                }
-            }
-        };
-
-        auto write_in_buf = [&](Mwrm3::Type /*type*/, auto... data) {
-            (write_data(data), ...);
-        };
-
-        auto const fsize = [&]{
-            int64_t signed_fsize { filesize(tfl.finalname.c_str()) };
-            if (REDEMPTION_UNLIKELY(signed_fsize < 0)) {
-                this->error_ctx.set_error(Error(ERR_TRANSPORT, errno));
-                return ~uint64_t{};
-            }
-            return uint64_t(signed_fsize);
-        }();
-
-        Mwrm3::serialize_tfl_new(
-            Mwrm3::FileId(tfl.idx), tfl.original_filename,
-            array_view(tfl.finalname).drop_front(tfl.pos_filename),
-            write_in_buf);
-        Mwrm3::serialize_tfl_stat(Mwrm3::FileId(tfl.idx), Mwrm3::FileSize(fsize),
-            Mwrm3::QuickHash{this->with_checksum() ? make_array_view(qhash) : bytes_view{"", 0}},
-            Mwrm3::FullHash{this->with_checksum() ? make_array_view(fhash) : bytes_view{"", 0}},
-            write_in_buf);
-
-        if (buf_pos)
-        {
-            this->out_crypto_transport.send(cbuf, buf_pos);
-        }
-
-        return fsize != ~uint64_t{} ? 0 : -1;
+        this->fdx_capture->close_tfl(tfl.tfl_file, tfl.original_filename);
+        return 0;
     }
 
     int cancel_tfl(ScytaleTflWriterHandler& tfl)
     {
-        return tfl.out_crypto_transport.cancel() ? 0 : -1;
+        this->fdx_capture->cancel_tfl(tfl.tfl_file);
+        return 0;
     }
 
     void close()
     {
         HashArray qhash;
         HashArray fhash;
-        this->out_crypto_transport.close(qhash, fhash);
+        this->fdx_capture->close(qhash, fhash);
         hash_to_hashhex(qhash, this->qhashhex);
         hash_to_hashhex(fhash, this->fhashhex);
-
-        this->prefix.clear();
-        this->hash_prefix.clear();
-        this->pos_filename = 0;
+        this->fdx_capture.reset();
     }
 
 private:
-    bool with_checksum() const noexcept
-    {
-        return this->cctxw.cctx.get_with_checksum();
-    }
+    std::optional<FdxCapture> fdx_capture;
 
-    uint64_t idx = 0;
-    std::string prefix;
-    std::string hash_prefix;
-    std::size_t pos_filename = 0;
-    int groupid = 0;
-    Fstat fstat;
     ScytaleRandomWrapper random_wrapper;
-
     CryptoContextWrapper cctxw;
-
-    OutCryptoTransport out_crypto_transport;
+    Fstat fstat;
 
 public:
     ScytaleErrorContext error_ctx;
@@ -944,7 +820,7 @@ int scytale_tfl_writer_write(
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW_R(handle->out_crypto_transport.send(buffer, len),
+    CHECK_NOTHROW_R(handle->tfl_file.trans.send(buffer, len),
         -1, handle->fdx.error_ctx, ERR_TRANSPORT_WRITE_FAILED);
     return len;
 }
@@ -1343,7 +1219,7 @@ struct ScytaleMwrm3ReaderHandle
                 case Mwrm3::ParserResult::NeedMoreData: {
                     if (this->remaining_data.size() == this->buffer.size())
                     {
-                        str_assign(this->message_error, "Data too large"_av);
+                        this->message_error = "Data too large";
                         return nullptr;
                     }
 
