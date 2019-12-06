@@ -29,6 +29,8 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
+#include "utils/log.hpp"
+
 #include <cassert>
 #include <chrono>
 #include <exception>
@@ -3051,11 +3053,10 @@ struct SessionReactor
     int signal = 0;
     void set_next_event(/*BackEvent_t*/int signal)
     {
-        // LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
+        LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
         assert(!this->signal || this->signal == signal);
         this->signal = signal;
         // assert(is not already set)
-        // TODO unimplemented
     }
 };
 
