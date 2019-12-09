@@ -1461,7 +1461,7 @@ bool RdpNegociation::get_license(InStream & stream)
                                     }
                                     else {
                                         this->lic_layer_license_size = license_size;
-                                        LOG(LOG_ERR, "Rdp: LicenseSize=%u", license_size);
+                                        LOG(LOG_INFO, "Rdp: LicenseSize=%u", license_size);
                                         break;
                                     }
                                 }
