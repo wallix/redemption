@@ -64,7 +64,7 @@ public:
                         LOG(LOG_ERR, "FileSystemLicenseStore::get_license: license file truncated (2) : expected %u, got %zu", license_size, number_of_bytes_read);
                     }
                     else {
-                        LOG(LOG_ERR, "FileSystemLicenseStore::get_license: LicenseSize=%u", license_size);
+                        LOG(LOG_INFO, "FileSystemLicenseStore::get_license: LicenseSize=%u", license_size);
 
                         return bytes_view { out.data(), license_size };
                     }
