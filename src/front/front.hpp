@@ -2453,7 +2453,7 @@ public:
         }
     }
 
-    void virtual_channel_slowpath_activate(uint8_t channel_id, InStream & stream, Callback & cb)
+    void virtual_channel_slowpath_activate(uint8_t channel_id, InStream & stream)
     {
         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
             "Front::incoming: channel_data channelId=%u", channel_id);
@@ -2488,7 +2488,7 @@ public:
             "Front::incoming: sec_flags=%x", sec.flags);
 
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-            this->virtual_channel_slowpath_activate(mcs.channelId, sec.payload, cb);
+            this->virtual_channel_slowpath_activate(mcs.channelId, sec.payload);
         }
         else {
             this->global_channel_slowpath_activate(sec.payload, cb);
