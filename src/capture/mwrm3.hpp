@@ -425,12 +425,15 @@ namespace Mwrm3
             template<class... Values>
             struct Group : Values...
             {
+                // https://bugs.llvm.org/show_bug.cgi?id=44256
+                #ifndef CLANG_TIDY
                 // TODO u16bytes or u8bytes should be the last element
-
                 static_assert(
                     (... && (Values::Reader::size > 0))
                  || (... && (Values::Reader::size == 0))
                 );
+                #endif
+
                 static constexpr unsigned size = (... + Values::Reader::size);
 
                 bool read(InStream& stream) noexcept
