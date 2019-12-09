@@ -153,28 +153,6 @@ class Session
 
     static const time_t select_timeout_tv_sec = 3;
 
-
-    void invoke_close_box(Error const& e, BackEvent_t & signal, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, Front & front, bool & run_session)
-    {
-        const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
-
-        auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
-        ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
-
-        signal = BackEvent_t(session_reactor.signal);
-        mm.invoke_close_box(
-            auth_error_message,
-            signal, authentifier, authentifier);
-        session_reactor.signal = signal;
-
-        ini.set<cfg::globals::enable_close_box>(enable_close_box);
-
-        if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-            run_session = false;
-        }
-    }
-
-
     int check_exception(Error const& e, Inifile& ini)
     {
         if ((e.id == ERR_SESSION_PROBE_LAUNCH) 
@@ -214,37 +192,33 @@ class Session
 
     void start_acl(std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, BackEvent_t signal, Fstat & fstat)
     {
-        if (!acl) {
-            if (!mm.last_module) {
-                // authentifier never opened or closed by me (close box)
-                try {
-                    // now is authentifier start time
-                    acl = std::make_unique<Acl>(
-                        ini, Session::acl_connect(ini.get<cfg::globals::authfile>(), (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0)), now.tv_sec, cctx, rnd, fstat
-                    );
-                    const auto sck = acl->auth_trans.sck;
-                    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
-                    authentifier.set_acl_serial(&acl->acl_serial);
-                    session_reactor.set_next_event(BACK_EVENT_NEXT);
-                }
-                catch (...) {
-                    signal = BackEvent_t(session_reactor.signal);
-                    session_reactor.signal = 0;
-                    mm.invoke_close_box("No authentifier available", signal, authentifier, authentifier);
-                    if (!session_reactor.signal || signal) {
-                        session_reactor.signal = signal;
-                    }
-                }
+        // authentifier never opened or closed by me (close box)
+        try {
+            // now is authentifier start time
+            acl = std::make_unique<Acl>(
+                ini, Session::acl_connect(ini.get<cfg::globals::authfile>(), (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0)), now.tv_sec, cctx, rnd, fstat
+            );
+            const auto sck = acl->auth_trans.sck;
+            fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+            authentifier.set_acl_serial(&acl->acl_serial);
+            session_reactor.set_next_event(BACK_EVENT_NEXT);
+        }
+        catch (...) {
+            signal = BackEvent_t(session_reactor.signal);
+            session_reactor.signal = 0;
+            mm.invoke_close_box("No authentifier available", signal, authentifier, authentifier);
+            if (!session_reactor.signal || signal) {
+                session_reactor.signal = signal;
             }
         }
     }
 
-
-    void front_starting(bool & run_session, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
+    bool front_starting(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
     {
+        bool run_session = true;
         SessionReactor::EnableGraphics enable_graphics{false};
 
-        if (!acl) {
+        if (!acl && !mm.last_module) {
             this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
         }
 
@@ -261,7 +235,22 @@ class Session
                 }
                 else {
                     LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                    const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                    auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                    signal = BackEvent_t(session_reactor.signal);
+                    mm.invoke_close_box(
+                        auth_error_message,
+                        signal, authentifier, authentifier);
+                    session_reactor.signal = signal;
+
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        return false;
+                    }
                 }
             break;
             case 2:
@@ -271,7 +260,22 @@ class Session
                 }
                 else {
                     LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                    const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                    auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                    signal = BackEvent_t(session_reactor.signal);
+                    mm.invoke_close_box(
+                        auth_error_message,
+                        signal, authentifier, authentifier);
+                    session_reactor.signal = signal;
+
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        return false;
+                    }
                 }
             break;
             case 1:
@@ -279,7 +283,21 @@ class Session
             break;
             default:
                 LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                signal = BackEvent_t(session_reactor.signal);
+                mm.invoke_close_box(
+                    auth_error_message,
+                    signal, authentifier, authentifier);
+                session_reactor.signal = signal;
+
+                ini.set<cfg::globals::enable_close_box>(enable_close_box);
+                if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                    return false;
+                }
             break;
             }
         }
@@ -318,20 +336,18 @@ class Session
                     (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
                     LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                 }
-                run_session = false;
+                return false;
             }
         } catch (...) {
             LOG(LOG_ERR, "Proxy data processing raised unknown error");
-            run_session = false;
+            return false;
         }
-
-        if (run_session == false){
-            return;
-        }
+        return run_session;
     }
 
-    void front_up_and_running(bool & run_session, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier, Fstat & fstat)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier)
     {
+        bool run_session = true;
         SessionReactor::EnableGraphics enable_graphics{true};
         try {
             session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
@@ -346,7 +362,22 @@ class Session
                 }
                 else {
                     LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                    const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                    auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                    signal = BackEvent_t(session_reactor.signal);
+                    mm.invoke_close_box(
+                        auth_error_message,
+                        signal, authentifier, authentifier);
+                    session_reactor.signal = signal;
+
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        return false;
+                    }
                 }
             break;
             case 2:
@@ -356,7 +387,22 @@ class Session
                 }
                 else {
                     LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                    const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                    auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                    signal = BackEvent_t(session_reactor.signal);
+                    mm.invoke_close_box(
+                        auth_error_message,
+                        signal, authentifier, authentifier);
+                    session_reactor.signal = signal;
+
+                    ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        return false;
+                    }
                 }
             break;
             case 1:
@@ -364,7 +410,22 @@ class Session
             break;
             default:
                 LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                signal = BackEvent_t(session_reactor.signal);
+                mm.invoke_close_box(
+                    auth_error_message,
+                    signal, authentifier, authentifier);
+                session_reactor.signal = signal;
+
+                ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                    return false;
+                }
             break;
             }
         }
@@ -403,14 +464,16 @@ class Session
                     LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                 }
                 run_session = false;
+                return run_session;
             }
         } catch (...) {
             LOG(LOG_ERR, "Proxy data processing raised unknown error");
             run_session = false;
+            return run_session;
         }
 
         if (run_session == false){
-            return;
+            return run_session;
         }
 
         // acl event
@@ -456,7 +519,22 @@ class Session
                         }
                         else {
                             LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                            this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                            const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                            auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                            ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                            signal = BackEvent_t(session_reactor.signal);
+                            mm.invoke_close_box(
+                                auth_error_message,
+                                signal, authentifier, authentifier);
+                            session_reactor.signal = signal;
+
+                            ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                            if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                                return false;
+                            }
                         }
                     break;
                     case 2:
@@ -466,7 +544,22 @@ class Session
                         }
                         else {
                             LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                            this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                            const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                            auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                            ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                            signal = BackEvent_t(session_reactor.signal);
+                            mm.invoke_close_box(
+                                auth_error_message,
+                                signal, authentifier, authentifier);
+                            session_reactor.signal = signal;
+
+                            ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                            if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                                return false;
+                            }
                         }
                     break;
                     case 1:
@@ -474,9 +567,28 @@ class Session
                     break;
                     default:
                         LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                        this->invoke_close_box(e, signal, ini, mm, session_reactor, authentifier, front, run_session);
+                        const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
+
+                        auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
+                        ini.set<cfg::globals::enable_close_box>(enable_close_box && front.state == Front::UP_AND_RUNNING);
+
+                        signal = BackEvent_t(session_reactor.signal);
+                        mm.invoke_close_box(
+                            auth_error_message,
+                            signal, authentifier, authentifier);
+                        session_reactor.signal = signal;
+
+                        ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                        if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                            return false;
+                        }
                     break;
                     }
+                }
+
+                if (run_session == false){
+                    return run_session;
                 }
 
                 // Incoming data from ACL
@@ -544,6 +656,7 @@ class Session
                 run_session = false;
             }
         }
+        return run_session;
     }
 
 public:
@@ -656,7 +769,7 @@ public:
                 case Front::UP_AND_RUNNING:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    this->front_up_and_running(run_session, front_is_set, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
@@ -665,7 +778,7 @@ public:
                 default:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    this->front_starting(run_session, front_is_set, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
+                    run_session = this->front_starting(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, cctx, rnd, now, start_time, ini, mm, front, authentifier, fstat);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
