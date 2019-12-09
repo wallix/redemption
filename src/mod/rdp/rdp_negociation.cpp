@@ -1319,7 +1319,7 @@ bool RdpNegociation::get_license(InStream & stream)
                         {
                             this->lic_layer_license_size = out.size();
 
-                            LOG(LOG_ERR, "RdpNegociation: LicenseSize=%zu", this->lic_layer_license_size);
+                            LOG(LOG_INFO, "RdpNegociation: LicenseSize=%zu", this->lic_layer_license_size);
 
                             break;
                         }
