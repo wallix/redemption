@@ -54,7 +54,8 @@ public:
     virtual void new_mod(ModuleIndex target_module, AuthApi &, ReportMessageApi &) = 0;
     virtual ModuleIndex next_module() = 0;
     // virtual int get_mod_from_protocol() = 0;
-    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) {
+    virtual void invoke_close_box(bool /*enable_close_box*/, const char * auth_error_message, BackEvent_t & signal, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) {
+    
         (void)auth_error_message;
         (void)signal;
         this->last_module = true;

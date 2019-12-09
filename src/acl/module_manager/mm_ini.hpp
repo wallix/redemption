@@ -55,7 +55,8 @@ public:
 
     void new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) override;
 
-    void invoke_close_box(const char * auth_error_message, BackEvent_t & signal,
+    void invoke_close_box(bool enable_close_box,
+                          const char * auth_error_message, BackEvent_t & signal,
                           AuthApi & authentifier, ReportMessageApi & report_message) override;
 
     ModuleIndex next_module() override;

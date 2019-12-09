@@ -90,7 +90,7 @@ bool KeepAlive::check(time_t now, Inifile & ini)
         // Keep alive timeout
         if (now > this->timeout) {
             LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            // mm.invoke_close_box("Missed keepalive from ACL", signal, now, authentifier);
+            // mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),"Missed keepalive from ACL", signal, now, authentifier);
             return true;
         }
 
@@ -140,7 +140,7 @@ bool Inactivity::check_user_activity(time_t now, bool & has_user_activity)
     if (!has_user_activity) {
         if (now > this->last_activity_time + this->inactivity_timeout) {
             LOG(LOG_INFO, "Session User inactivity : closing");
-            // mm.invoke_close_box("Connection closed on inactivity", signal, now, authentifier);
+            // mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),"Connection closed on inactivity", signal, now, authentifier);
             return true;
         }
     }
@@ -545,7 +545,7 @@ bool AclSerializer::check(
     if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
         LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
         const char * message = TR(trkeys::session_out_time, language(this->ini));
-        mm.invoke_close_box(message, signal, authentifier, report_message);
+        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(), message, signal, authentifier, report_message);
 
         return true;
     }
@@ -556,13 +556,13 @@ bool AclSerializer::check(
         LOG(LOG_INFO, "Close by Rejected message received : %s",
             this->ini.get<cfg::context::rejected>());
         this->ini.set_acl<cfg::context::rejected>("");
-        mm.invoke_close_box(nullptr, signal, authentifier, report_message);
+        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
         return true;
     }
 
     // Keep Alive
     if (this->keepalive.check(now, this->ini)) {
-        mm.invoke_close_box(
+        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),
             TR(trkeys::miss_keepalive, language(this->ini)),
             signal, authentifier, report_message
         );
@@ -571,7 +571,7 @@ bool AclSerializer::check(
 
     // Inactivity management
     if (this->inactivity.check_user_activity(now, has_user_activity)) {
-        mm.invoke_close_box(
+        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),
             TR(trkeys::close_inactivity, language(this->ini)),
             signal, authentifier, report_message
         );
@@ -633,7 +633,7 @@ bool AclSerializer::check(
 
             signal = BACK_EVENT_NONE;
             if (next_state == MODULE_INTERNAL_CLOSE) {
-                mm.invoke_close_box(nullptr, signal, authentifier, report_message);
+                mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
                 return true;
             }
             if (next_state == MODULE_INTERNAL_CLOSE_BACK) {

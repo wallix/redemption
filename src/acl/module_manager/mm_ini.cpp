@@ -61,6 +61,7 @@ void MMIni::new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessa
 }
 
 void MMIni::invoke_close_box(
+    bool enable_close_box,
     const char * auth_error_message, BackEvent_t & signal,
     AuthApi & authentifier, ReportMessageApi & report_message)
 {
@@ -79,7 +80,7 @@ void MMIni::invoke_close_box(
     }
 
     this->remove_mod();
-    if (this->ini.get<cfg::globals::enable_close_box>()) {
+    if (enable_close_box) {
         this->new_mod(MODULE_INTERNAL_CLOSE, authentifier, report_message);
         signal = BACK_EVENT_NONE;
     }
