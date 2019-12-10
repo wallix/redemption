@@ -456,8 +456,10 @@ void ModuleManager::create_mod_rdp(
 
             FdxCapture* get_fdx_capture(ModuleManager& mm)
             {
-                if (!this->fdx_capture)
-                {
+                if (!this->fdx_capture
+                 && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
+                ) {
+                    LOG(LOG_INFO, "Enable clipboard file record");
                     CapturePathsContext capture_paths_ctx(
                         mm.ini.get<cfg::video::record_path>().as_string(),
                         mm.ini.get<cfg::video::hash_path>().as_string(),
