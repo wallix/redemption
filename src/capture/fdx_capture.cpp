@@ -143,7 +143,7 @@ FdxCapture::FdxCapture(
         if (recursive_create_directory(dirname, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
             auto err = errno;
             LOG(LOG_ERR, "FdxCapture: Failed to create directory: \"%s\": %s",
-                path, strerror(err));
+                *path, strerror(err));
             throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
         }
     }
