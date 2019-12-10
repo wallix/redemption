@@ -4,6 +4,8 @@ from ctypes import CFUNCTYPE, POINTER, c_char_p, c_int, c_longlong, c_uint32, c_
 
 pathlib = 'libscytale.so'
 
+lib = ctypes.CDLL(pathlib)
+
 GETHMACKEY = CFUNCTYPE(c_int, c_void_p)
 GETTRACEKEY = CFUNCTYPE(c_int, c_char_p, c_int, c_void_p, c_uint)
 
