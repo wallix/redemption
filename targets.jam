@@ -18,6 +18,7 @@ exe headlessclient :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/capture/agent_data_extractor.o
+  <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -113,6 +114,8 @@ exe rdpproxy :
   <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
+  <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -296,7 +299,9 @@ exe rdpclient :
   <library>png
   <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -330,7 +335,9 @@ exe rdpclient :
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
@@ -591,7 +598,9 @@ test-run tests/acl/test_license_api :
   <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -617,7 +626,9 @@ test-run tests/acl/test_license_api :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -665,6 +676,8 @@ test-run tests/acl/test_module_manager :
   <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
+  <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -987,7 +1000,9 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -1012,7 +1027,9 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -1068,7 +1085,9 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -1093,7 +1112,9 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -1125,7 +1146,9 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -1150,7 +1173,9 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2430,6 +2455,8 @@ test-run tests/core/test_mainloop :
   <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
+  <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -2572,6 +2599,8 @@ test-run tests/core/test_session :
   <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
+  <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -2716,6 +2745,8 @@ test-run tests/front/test_front :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
+  <library>src/capture/fdx_capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
@@ -4026,11 +4057,19 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
 :
   <library>crypto
+  <library>snappy
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/report_error.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4040,11 +4079,19 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_send_and_receive.cpp
 :
   <library>crypto
+  <library>snappy
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/report_error.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel_send_and_receive.hpp
@@ -4174,6 +4221,8 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>snappy
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4182,7 +4231,9 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4215,7 +4266,9 @@ test-run tests/mod/rdp/test_rdp :
   <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -4240,7 +4293,9 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4569,6 +4624,7 @@ test-run tests/server/test_mstsc_client :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
@@ -4630,6 +4686,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
@@ -4691,6 +4748,7 @@ test-run tests/server/test_rdesktop_client :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
+  <library>src/capture/capture_paths_context.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
@@ -5534,6 +5592,7 @@ obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/modu
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
+obj src/capture/capture_paths_context.o : $(REDEMPTION_SRC_PATH)/capture/capture_paths_context.cpp ;
 obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;

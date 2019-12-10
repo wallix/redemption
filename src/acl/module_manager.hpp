@@ -144,6 +144,7 @@ public:
     }
 };
 
+class CryptoContext;
 
 class ModuleManager : public MMIni
 {
@@ -603,8 +604,10 @@ private:
 
     EndSessionWarning end_session_warning;
 
+    CryptoContext& cctx;
+
 public:
-    ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
+    ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, CryptoContext& cctx, Random & gen, TimeObj & timeobj)
         : MMIni(session_reactor, ini)
         , front(front)
         , mod_osd(*this)
@@ -613,8 +616,8 @@ public:
         , rail_client_execute(session_reactor, front, front,
             this->front.client_info.window_list_caps,
             ini.get<cfg::debug::mod_internal>() & 1)
-        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>())
-        )
+        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
+        , cctx(cctx)
     {
         this->mod = &this->no_mod;
     }

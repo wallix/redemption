@@ -22,6 +22,7 @@
   find out the next module to run from context reading
 */
 
+#include "capture/capture_paths_context.hpp"
 #include "acl/module_manager.hpp"
 #include "configs/config.hpp"
 #include "core/channels_authorizations.hpp"
@@ -294,13 +295,13 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.remote_app_params.enable_remote_program
       = ((client_info.remote_program ||
-          (this->ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
-           this->ini.get<cfg::context::is_wabam>())) &&
+          (ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
+           ini.get<cfg::context::is_wabam>())) &&
          rail_is_required);
     mod_rdp_params.remote_app_params.remote_program_enhanced             = client_info.remote_program_enhanced;
     mod_rdp_params.remote_app_params.convert_remoteapp_to_desktop        = (!client_info.remote_program &&
-                                                          this->ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
-                                                          this->ini.get<cfg::context::is_wabam>() &&
+                                                          ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
+                                                          ini.get<cfg::context::is_wabam>() &&
                                                           rail_is_required);
     mod_rdp_params.remote_app_params.use_client_provided_remoteapp       = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
@@ -379,7 +380,7 @@ void ModuleManager::create_mod_rdp(
             rail_client_execute.reset(false);
         }
 
-        struct ModRDPWithMetrics : public DispatchReportMessage, mod_rdp
+        struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
         {
             struct ModMetrics : Metrics
             {
@@ -450,6 +451,33 @@ void ModuleManager::create_mod_rdp(
 
             std::unique_ptr<ModMetrics> metrics;
             std::unique_ptr<FileValidator> file_validator;
+            std::unique_ptr<FdxCapture> fdx_capture;
+            Fstat fstat;
+
+            FdxCapture* get_fdx_capture(ModuleManager& mm)
+            {
+                if (!this->fdx_capture)
+                {
+                    CapturePathsContext capture_paths_ctx(
+                        mm.ini.get<cfg::video::record_path>().as_string(),
+                        mm.ini.get<cfg::video::hash_path>().as_string(),
+                        mm.ini.get<cfg::session_log::log_path>()
+                    );
+                    int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
+                    auto const& session_id = mm.ini.get<cfg::context::session_id>();
+
+                    this->fdx_capture = std::make_unique<FdxCapture>(
+                        capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
+                        session_id, groupid, mm.cctx, mm.gen, this->fstat);
+                }
+
+                return this->fdx_capture.get();
+            }
+
+            ModRdpFactory& get_rdp_factory() noexcept
+            {
+                return static_cast<ModRdpFactory&>(*this);
+            }
 
             explicit ModRDPWithMetrics(
                 Transport & trans,
@@ -475,7 +503,7 @@ void ModuleManager::create_mod_rdp(
                 trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
                 static_cast<DispatchReportMessage&>(*this), license_store, vars,
-                metrics, file_validator_service)
+                metrics, file_validator_service, this->get_rdp_factory())
             {}
         };
 
@@ -503,9 +531,9 @@ void ModuleManager::create_mod_rdp(
                         this->session_reactor, this->front
                     });
                 file_validator->service.send_infos({
-                    "server_ip"_av, this->ini.get<cfg::context::target_host>(),
-                    "client_ip"_av, this->ini.get<cfg::globals::host>(),
-                    "auth_user"_av, this->ini.get<cfg::globals::auth_user>()
+                    "server_ip"_av, ini.get<cfg::context::target_host>(),
+                    "client_ip"_av, ini.get<cfg::globals::host>(),
+                    "auth_user"_av, ini.get<cfg::globals::auth_user>()
                 });
             }
             else {
@@ -592,6 +620,13 @@ void ModuleManager::create_mod_rdp(
                     return ctx.ready();
                 })
             ;
+        }
+
+        if (new_mod) {
+            assert(&ini == &this->ini);
+            new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
+                return mod->get_fdx_capture(*this);
+            };
         }
 
         if (host_mod_in_widget) {

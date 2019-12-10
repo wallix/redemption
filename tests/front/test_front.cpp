@@ -40,6 +40,7 @@
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channel_list.hpp"
 
@@ -223,6 +224,7 @@ RED_AUTO_TEST_CASE(TestFront)
     NullLicenseStore license_store;
     class RDPMetrics * metrics = nullptr;
     const ChannelsAuthorizations channels_authorizations{};
+    ModRdpFactory mod_rdp_factory;
 
     FileValidatorService * file_validator_service = nullptr;
 
@@ -230,7 +232,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     auto mod = new_mod_rdp(
         t, session_reactor, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service);
+        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
     RED_CHECK_EQUAL(front.screen_info().width, 1024);

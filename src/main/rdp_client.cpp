@@ -28,6 +28,7 @@
 #include "front/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 #include "program_options/program_options.hpp"
 #include "transport/recorder_transport.hpp"
@@ -255,6 +256,7 @@ int main(int argc, char** argv)
     const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
     auto run_rdp = [&]{
+        ModRdpFactory mod_rdp_factory;
         return run([&](Transport& trans){
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
@@ -262,7 +264,7 @@ int main(int argc, char** argv)
                 trans, session_reactor, gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, ini, nullptr, nullptr);
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, ini, nullptr, nullptr, mod_rdp_factory);
         });
     };
 

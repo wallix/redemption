@@ -40,6 +40,7 @@
 #include "mod/internal/replay_mod.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 
 #include "transport/crypto_transport.hpp"
@@ -112,6 +113,7 @@ public:
     //  Remote App
     ClientExecute rail_client_execute;
 
+    ModRdpFactory mod_rdp_factory;
     std::unique_ptr<mod_api> unique_mod;
 
     enum : int {
@@ -434,6 +436,7 @@ public:
                   , this->ini
                   , nullptr
                   , nullptr
+                  , this->mod_rdp_factory
                 );
 
                 if (is_remote_app) {

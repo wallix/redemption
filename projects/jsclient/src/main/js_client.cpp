@@ -26,6 +26,7 @@ Author(s): Jonathan Poelen
 #include "core/session_reactor.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
@@ -80,6 +81,7 @@ struct RdpClient
         }
     };
 
+    ModRdpFactory mod_rdp_factory;
     std::unique_ptr<mod_api> mod;
 
     redjs::BrowserTransport browser_trans;
@@ -162,7 +164,7 @@ struct RdpClient
             browser_trans, session_reactor, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,
-            license_store, ini, nullptr, nullptr);
+            license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
     }
 
     void send_first_packet()

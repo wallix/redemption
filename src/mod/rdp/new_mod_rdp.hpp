@@ -40,6 +40,7 @@ class RDPMetrics;
 class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
+class ModRdpFactory;
 
 namespace gdi { class GraphicApi; }
 
@@ -60,5 +61,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
     LicenseApi& license_store,
     ModRdpVariables vars,
     RDPMetrics * metrics,
-    FileValidatorService * file_validator_service
+    FileValidatorService * file_validator_service,
+    ModRdpFactory& mod_rdp_factory
 );
