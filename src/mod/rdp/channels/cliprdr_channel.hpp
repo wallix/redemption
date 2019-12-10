@@ -63,6 +63,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     FileValidatorService * file_validator;
 
     FdxCapture * fdx_capture;
+    bool always_file_record;
 
     enum class Direction : bool
     {
@@ -71,6 +72,12 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     };
 
 public:
+    struct FileRecord
+    {
+        FdxCapture * fdx_capture;
+        bool always_file_record;
+    };
+
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
@@ -78,7 +85,7 @@ public:
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
-        FdxCapture * fdx_capture)
+        FileRecord filre_record)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
@@ -93,7 +100,8 @@ public:
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
     , file_validator(file_validator_service)
-    , fdx_capture(fdx_capture)
+    , fdx_capture(filre_record.fdx_capture)
+    , always_file_record(filre_record.always_file_record)
     {}
 
     ~ClipboardVirtualChannel()
@@ -380,17 +388,18 @@ public:
             }
         };
 
+        using ValidationResult = LocalFileValidatorProtocol::ValidationResult;
+
         while (receive_data()){
+            bool is_accepted = false;
             switch (this->file_validator->last_result_flag()) {
-                case LocalFileValidatorProtocol::ValidationResult::Wait:
+                case ValidationResult::Wait:
                     return;
-                case LocalFileValidatorProtocol::ValidationResult::IsAccepted:
-                    if (!this->params.validator_params.log_if_accepted) {
-                        continue;
-                    }
+                case ValidationResult::IsAccepted:
+                    is_accepted = true;
                     [[fallthrough]];
-                case LocalFileValidatorProtocol::ValidationResult::IsRejected:
-                case LocalFileValidatorProtocol::ValidationResult::Error:
+                case ValidationResult::IsRejected:
+                case ValidationResult::Error:
                     ;
             }
 
@@ -400,17 +409,20 @@ public:
             bool is_client_text = this->clip_data.client_data.remove_text_id(file_validator_id);
             bool is_server_text = not is_client_text
                                && this->clip_data.server_data.remove_text_id(file_validator_id);
+            bool is_text = is_client_text || is_server_text;
 
-            if (is_client_text || is_server_text) {
-                auto str_direction = is_client_text ? "UP"_av : "DOWN"_av;
-                char buf[24];
-                unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
-                    underlying_cast(file_validator_id));
-                this->report_message.log6(LogId::TEXT_VERIFICATION, this->session_reactor.get_current_time(), {
-                    KVLog("direction"_av, str_direction),
-                    KVLog("copy_id"_av, {buf, n}),
-                    KVLog("status"_av, result_content),
-                });
+            if (is_text) {
+                if (!is_accepted || this->params.validator_params.log_if_accepted) {
+                    auto str_direction = is_client_text ? "UP"_av : "DOWN"_av;
+                    char buf[24];
+                    unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
+                        underlying_cast(file_validator_id));
+                    this->report_message.log6(LogId::TEXT_VERIFICATION, this->session_reactor.get_current_time(), {
+                        KVLog("direction"_av, str_direction),
+                        KVLog("copy_id"_av, {buf, n}),
+                        KVLog("status"_av, result_content),
+                    });
+                }
                 continue;
             }
 
@@ -435,17 +447,26 @@ public:
             auto& file_data = file->file_data;
             file_data.file_validator_id = FileValidatorId();
 
-            auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
+            if (!is_accepted || this->params.validator_params.log_if_accepted) {
+                auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
-            this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
-                KVLog("direction"_av, str_direction),
-                KVLog("file_name"_av, file_data.file_name),
-                KVLog("status"_av, result_content),
-            });
+                this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
+                    KVLog("direction"_av, str_direction),
+                    KVLog("file_name"_av, file_data.file_name),
+                    KVLog("status"_av, result_content),
+                });
+            }
 
             if (file->is_wait_validator()) {
                 if (file_data.tfl_file) {
-                    this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                    if (this->always_file_record
+                     || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
+                    ) {
+                        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                    }
+                    else {
+                        this->fdx_capture->cancel_tfl(*file_data.tfl_file);
+                    }
                 }
 
                 if (direction == Direction::FileFromClient) {
@@ -585,7 +606,12 @@ private:
                 }
                 else {
                     if (file_data.tfl_file) {
-                        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                        if (this->always_file_record) {
+                            this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                        }
+                        else {
+                            this->fdx_capture->cancel_tfl(*file_data.tfl_file);
+                        }
                     }
                     side_data.remove_file(file);
                 }

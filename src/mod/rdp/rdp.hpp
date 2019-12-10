@@ -572,7 +572,10 @@ private:
             base_params,
             std::move(cvc_params),
             file_validator_service,
-            this->mod_rdp_factory.get_fdx_capture()
+            ClipboardVirtualChannel::FileRecord{
+                this->mod_rdp_factory.get_fdx_capture(),
+                this->mod_rdp_factory.always_file_record
+            }
         );
     }
 
