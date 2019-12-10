@@ -168,7 +168,7 @@ class Session
         ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
             if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
                 SessionProbeOnLaunchFailure::retry_without_session_probe) {
-                   ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
+                   ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
                    return 1; // retry
             }
             return 2; // warn authentifier if possible before closing
@@ -181,7 +181,7 @@ class Session
             return 1; // retry
         }
         else if (e.id == ERR_RAIL_NOT_ENABLED) {
-            ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+            ini.get_mutable_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
             return 1; // retry
         }
         else if (e.id == ERR_RDP_SERVER_REDIR){

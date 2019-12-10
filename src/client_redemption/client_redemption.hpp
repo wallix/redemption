@@ -424,7 +424,7 @@ public:
                   , *this
                   , *this
                   , this->config.info
-                  , ini.get_ref<cfg::mod_rdp::redir_info>()
+                  , ini.get_mutable_ref<cfg::mod_rdp::redir_info>()
                   , *this->gen
                   , this->timeSystem
                   , channels_authorizations

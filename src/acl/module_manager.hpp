@@ -740,7 +740,7 @@ public:
                 }().c_str(),
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
-                this->ini.get_ref<cfg::context::auth_error_message>(),
+                this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
@@ -1064,7 +1064,7 @@ public:
                 // TODO: shouldn't alls mods have access to sesman authentifier ?
             ));
 
-            this->ini.get_ref<cfg::context::auth_error_message>().clear();
+            this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded");
             this->connected = true;
             break;

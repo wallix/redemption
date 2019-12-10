@@ -681,7 +681,7 @@ bool AclSerializer::check(
         {
             if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
                 this->manager_disconnect_reason = this->ini.get<cfg::context::disconnect_reason>();
-                this->ini.get_ref<cfg::context::disconnect_reason>().clear();
+                this->ini.get_mutable_ref<cfg::context::disconnect_reason>().clear();
 
                 this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
             }
@@ -727,7 +727,7 @@ bool AclSerializer::check(
                     }
                 }
 
-                this->ini.get_ref<cfg::context::auth_command>().clear();
+                this->ini.get_mutable_ref<cfg::context::auth_command>().clear();
             }
         }
     }
@@ -745,7 +745,7 @@ bool AclSerializer::check(
                 // If set, transmit to auth_channel channel
                 mm.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
                 // Erase the context variable
-                this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
+                this->ini.get_mutable_ref<cfg::context::auth_channel_answer>().clear();
             }
         }
 
@@ -759,7 +759,7 @@ bool AclSerializer::check(
                 // If set, transmit to auth_channel channel
                 mm.get_mod()->send_checkout_channel_data(this->ini.get<cfg::context::pm_response>().c_str());
                 // Erase the context variable
-                this->ini.get_ref<cfg::context::pm_response>().clear();
+                this->ini.get_mutable_ref<cfg::context::pm_response>().clear();
             }
         }
 
@@ -767,7 +767,7 @@ bool AclSerializer::check(
             mm.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
                 this->ini.get<cfg::context::rd_shadow_type>().c_str());
 
-            this->ini.get_ref<cfg::context::rd_shadow_type>().clear();
+            this->ini.get_mutable_ref<cfg::context::rd_shadow_type>().clear();
         }
     }
 

@@ -105,8 +105,8 @@ void ModuleManager::create_mod_rdp(
     // BEGIN READ PROXY_OPT
     if (ini.get<cfg::globals::enable_wab_integration>()) {
         ChannelsAuthorizations::update_authorized_channels(
-            ini.get_ref<cfg::mod_rdp::allow_channels>(),
-            ini.get_ref<cfg::mod_rdp::deny_channels>(),
+            ini.get_mutable_ref<cfg::mod_rdp::allow_channels>(),
+            ini.get_mutable_ref<cfg::mod_rdp::deny_channels>(),
             ini.get<cfg::context::proxy_opt>()
         );
     }
@@ -114,7 +114,7 @@ void ModuleManager::create_mod_rdp(
 
 
 
-    ini.get_ref<cfg::context::close_box_extra_message>().clear();
+    ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
     ModRDPParams mod_rdp_params(
         ini.get<cfg::globals::target_user>().c_str()
       , ini.get<cfg::context::target_password>().c_str()
@@ -124,7 +124,7 @@ void ModuleManager::create_mod_rdp(
       , this->load_font()
       , this->load_theme()
       , server_auto_reconnect_packet
-      , ini.get_ref<cfg::context::close_box_extra_message>()
+      , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
       //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
     );
@@ -238,7 +238,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.application_params.target_application_account          = ini.get<cfg::globals::target_application_account>().c_str();
     mod_rdp_params.application_params.target_application_password         = ini.get<cfg::globals::target_application_password>().c_str();
     mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
-    mod_rdp_params.error_message                       = &ini.get_ref<cfg::context::auth_error_message>();
+    mod_rdp_params.error_message                       = &ini.get_mutable_ref<cfg::context::auth_error_message>();
     mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
     mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
 
@@ -579,13 +579,13 @@ void ModuleManager::create_mod_rdp(
             name,
             std::move(client_sck),
             ini.get<cfg::debug::mod_rdp>(),
-            &ini.get_ref<cfg::context::auth_error_message>(),
+            &ini.get_mutable_ref<cfg::context::auth_error_message>(),
             sock_mod_barrier(),
             this->session_reactor,
             drawable,
             front,
             client_info,
-            ini.get_ref<cfg::mod_rdp::redir_info>(),
+            ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
             this->gen,
             this->timeobj,
             ChannelsAuthorizations(
@@ -687,6 +687,6 @@ void ModuleManager::create_mod_rdp(
     }
     this->mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
-    ini.get_ref<cfg::context::auth_error_message>().clear();
+    ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
     this->connected = true;
 }

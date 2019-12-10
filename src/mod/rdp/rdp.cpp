@@ -185,7 +185,7 @@ void mod_rdp::init_negociate_event_(
                 // LOG(LOG_INFO, "cert pem: %s", blob_str);
 
                 this->vars.set_acl<cfg::mod_rdp::server_cert>(blob_str);
-                this->vars.get_ref<cfg::mod_rdp::server_cert_response>() = "";
+                this->vars.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
                 this->vars.ask<cfg::mod_rdp::server_cert_response>();
 
                 private_rdp_negociation->sesman_event = this->session_reactor.create_sesman_event()

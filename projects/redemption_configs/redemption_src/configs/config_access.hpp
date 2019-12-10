@@ -31,11 +31,11 @@ class Inifile;
 namespace vcfg {
 
 enum class accessmode {
-    get      = 1 << 0,
-    set      = 1 << 1,
-    ask      = 1 << 2,
-    is_asked = 1 << 3,
-    get_ref  = 1 << 4,
+    get             = 1 << 0,
+    set             = 1 << 1,
+    ask             = 1 << 2,
+    is_asked        = 1 << 3,
+    get_mutable_ref = 1 << 4,
 };
 
 constexpr inline accessmode operator | (accessmode x, accessmode y) {
@@ -82,9 +82,9 @@ public:
     }
 
     template<class T>
-    [[nodiscard]] typename T::type& get_ref() const noexcept {
-        static_assert(has_access<T>(accessmode::get_ref), "get_ref isn't enabled");
-        return this->ini.template get_ref<T>();
+    [[nodiscard]] typename T::type& get_mutable_ref() const noexcept {
+        static_assert(has_access<T>(accessmode::get_mutable_ref), "get_ref isn't enabled");
+        return this->ini.template get_mutable_ref<T>();
     }
 
     template<class T, class U>
