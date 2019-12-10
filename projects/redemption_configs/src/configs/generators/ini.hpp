@@ -58,7 +58,10 @@ namespace impl
             out << "\n";
         }
         else {
-            out << "min = 0, max = " << e.count() << "\n";
+            out << "min = 0, max = " << ((e.flag == type_enumeration::autoincrement)
+                ? e.count()-1u
+                : (1ull << (e.count()-1u)) - 1
+            ) << "\n";
         }
     }
 
