@@ -269,6 +269,17 @@ array_view_const_char assign_zbuf_from_cfg(
 parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
 ;
 
+template<> struct zstr_buffer_traits<RdpFileRecord> : zstr_buffer_traits<unsigned long> {};
+
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<RdpFileRecord> & buf,
+    cfg_s_type<RdpFileRecord> /*type*/,
+    RdpFileRecord x
+);
+
+parse_error parse(RdpFileRecord & x, spec_type<RdpFileRecord> /*type*/, array_view_const_char value)
+;
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 array_view_const_char assign_zbuf_from_cfg(

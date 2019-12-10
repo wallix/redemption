@@ -549,6 +549,22 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeDisabledFeature e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class RdpFileRecord : unsigned char
+{
+    never = 0,
+    always = 1,
+    on_verification_failure = 2,
+};
+
+inline bool is_valid_enum_value(RdpFileRecord e)
+{ return static_cast<unsigned long>(e) <= 2; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, RdpFileRecord e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
 {

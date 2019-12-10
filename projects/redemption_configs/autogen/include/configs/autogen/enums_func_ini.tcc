@@ -366,6 +366,20 @@ parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisable
 }
 
 array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<RdpFileRecord> & buf,
+    cfg_s_type<RdpFileRecord> /*type*/,
+    RdpFileRecord x
+){
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+parse_error parse(RdpFileRecord & x, spec_type<RdpFileRecord> /*type*/, array_view_const_char value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
+}
+
+array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ColorDepth> & buf,
     cfg_s_type<ColorDepth> /*type*/,
     ColorDepth x

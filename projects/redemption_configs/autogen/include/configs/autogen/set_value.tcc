@@ -1377,6 +1377,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "file_record")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_verification::file_record&>(this->variables).value,
+                ::configs::spec_type<RdpFileRecord>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "log_if_accepted")) {
             ::configs::parse_and_log(
                 context, key,

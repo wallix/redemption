@@ -2834,6 +2834,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// type: RdpFileRecord <br/>
+    /// value = static_cast<type>(0) <br/>
+    struct file_verification::file_record {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "file_verification";
+        static constexpr char const * name = "file_record";
+        using type = RdpFileRecord;
+        using sesman_and_spec_type = RdpFileRecord;
+        using mapped_type = sesman_and_spec_type;
+        type value = static_cast<type>(0);
+    };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:log_if_accepted <br/>
@@ -5410,6 +5422,7 @@ struct file_verification
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
+, cfg::file_verification::file_record
 , cfg::file_verification::log_if_accepted
 { static constexpr bool is_section = true; };
 
