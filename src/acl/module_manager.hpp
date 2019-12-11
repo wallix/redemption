@@ -152,7 +152,7 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     gdi::GraphicApi& graphics;
     ClientInfo const & front_client_info;
     ClientExecute & rail_client_execute;
-    windowing_api* winapi = nullptr;
+    windowing_api* &winapi;
     Inifile & ini;
 
     std::string osd_message;
@@ -165,7 +165,7 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     const Theme & _theme;
 
 public:
-    explicit ModOSD(const ModWrapper & mw, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & front_client_info, const Font & font, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* winapi, Inifile & ini)
+    explicit ModOSD(const ModWrapper & mw, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & front_client_info, const Font & font, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : gdi::ProtectedGraphics(graphics, Rect{})
     , mw(mw)
     , front(front)
@@ -596,7 +596,7 @@ private:
     RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
     Front & front;
     ClientExecute & rail_client_execute;
-    ModOSD mod_osd;
+    ModOSD & mod_osd;
     Random & gen;
     TimeObj & timeobj;
 
@@ -617,25 +617,27 @@ public:
 
 private:
     rdp_api*       rdpapi = nullptr;
-    windowing_api* winapi = nullptr;
 
     SocketTransport * socket_transport = nullptr;
+    windowing_api* &winapi;
 
     EndSessionWarning end_session_warning;
     Font & _font;
     Theme & _theme;
 
 public:
-    ModuleManager(SessionReactor& session_reactor, Front & front, ClientExecute & rail_client_execute, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
-        : ini(ini)
+    ModuleManager(SessionReactor& session_reactor, Front & front, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+        : MMApi(mod_wrapper)
+        , ini(ini)
         , session_reactor(session_reactor)
         , cctx(cctx)
         , front(front)
         , rail_client_execute(rail_client_execute)
-        , mod_osd(this->get_mod_wrapper(), this->front, this->front.get_palette(), this->front, this->front.client_info, _font, _theme, this->rail_client_execute, this->winapi, this->ini)
+        , mod_osd(mod_osd)
         , gen(gen)
         , timeobj(timeobj)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
+        , winapi(winapi)
         , _font(_font)
         , _theme(_theme)
     {

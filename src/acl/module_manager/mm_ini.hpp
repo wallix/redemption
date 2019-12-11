@@ -44,10 +44,12 @@ class MMIni : public MMApi
 protected:
     Inifile& ini;
     SessionReactor& session_reactor;
+    ModWrapper mod_wrapper;
 
 public:
     explicit MMIni(SessionReactor& session_reactor, Inifile & ini_)
-    : ini(ini_)
+    : MMApi(mod_wrapper)
+    , ini(ini_)
     , session_reactor(session_reactor)
     {}
 

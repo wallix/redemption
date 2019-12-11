@@ -69,7 +69,7 @@ struct ModWrapper
 class MMApi
 {
 protected:
-    ModWrapper mw;
+    ModWrapper & mw;
 public:
 
     ModWrapper & get_mod_wrapper() 
@@ -91,7 +91,7 @@ public:
     bool last_module{false};
     bool connected{false};
 
-    MMApi() = default;
+    MMApi(ModWrapper & mod_wrapper) : mw(mod_wrapper) {}
     virtual ~MMApi() = default;
     virtual void remove_mod() = 0;
     virtual void new_mod(ModuleIndex target_module, AuthApi &, ReportMessageApi &) = 0;
