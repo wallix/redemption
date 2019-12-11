@@ -414,7 +414,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             tfl2_hash_content_prefix,
 
             "v3\n"
-            "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+            "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
             "file2.txt0123456789abcdef,000002.tfl"
             "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00\x00"_av
         },
@@ -426,10 +426,10 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             tfl2_hash_content_prefix,
 
             "v3\n"
-            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
             "file2.txt0123456789abcdef,000002.tfl"
             "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00"
-            "\x00\x00\x00\x01\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
+            "\x00\x00\x00\x03\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
             "\xed\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xffɭD\xf9RG\xdc\x7f\xf9\x02"
             "Jyh\xed\xf3\x90\x0c"_av
         },
@@ -443,23 +443,25 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             "WCFM\x01\x00\x00\x00\xf8O\x14.0>"_av,
 
             "WCFM\x01\x00\x00\x00\xb8l\xda\xa6\xf0\xf6""0\x8d\xa8\x16\xa6n\xe0\xc3\xe5\xcc"
-            "\x98v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00\xb9\x8f\x84\xb4x\x17"
-            "#\x92\x99""Er\xf1\xc3\x07""D[\xa2\\\xe1@\x01\xd3\xee""4Q\xee\x16W\xb3rW\xfd\xa5"
-            "?\x16\xe7""f\xce\xf2""8\x85\x89\xae*\xe9\xbe>\xdf'\xb8\xd8\xaa\xd5\xc8\x04\xe0"
-            "\xcd\xab\x8f\x9fI\xeb\xe6z\xb8\x80\xfdR\xfd\n+k\xec\xab\xd3\xc8\x9f\x15\xc7\xaf"
-            "\xb5\xe9oL|\x84\x94\xe5\xef\x07@\xc4\xe7""E6I\x11\xb7G\xaf\x1d\xb0""E\xe4\x96"
-            "\xb2\xe5\x98\xb6""C\xf9\xc9MFCW\x88\x00\x00\x00"_av,
+            "\x98v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00I\x03I\xce\xb2""5r%Hy"
+            "\x07\r(tDA{\x9d\x12\xea""Da!t\xabz\x11\x97\x84\x9b\x0b\xa0""CO\x04\xaa""6\x04"
+            "\xf4""a\xee)B\x12\x90""B=\xb0\xbb""B\x9c\xd5\xdfq\xb2PE\x11|\xe9\xf4\x94\xfe"
+            "\xd0\xff#\xa2\xeb\xc9:B\xe8:r\xf9>\xa7Vk3m\xb3\xdd\x8a\x0b\xe8\x8c\xe1mx\xd9"
+            "E\x88\x92\x83@\xe5\xa2""F\x9c\x17\x0e\x02\xe7\xd8Za\xb1\x92o\xb8""9MFCW\x89"
+            "\x00\x00\x00"_av,
 
             "v3\n"
-            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
             "file2.txt0123456789abcdef,000002.tfl"
-            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00\x00\x01""0"
-            "\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16"
-            "\n\xfeP\xe3\x13\x88\xd4\xf7""0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2["
-            "\xbb""7\x8a\xf9\x03\"\xdd{\x16\n\xfeP\xe3\x13\x88\xd4\xf7"_av
+            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00\x00\x03"
+            "0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{"
+            "\x16\n\xfeP\xe3\x13\x88\xd4\xf7""0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm"
+            "\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16\n\xfeP\xe3\x13\x88\xd4\xf7"_av
         },
     })
     {
+        using Direction = ScytaleOpenTflDirection;
+
         auto count_error = RED_ERROR_COUNT;
 
         WorkingDirectory wd(data.name);
@@ -478,7 +480,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_fdx_writer_open(fdx, wd_record.dirname(), wd_hash.dirname(), 0, sid.data()));
 
-        auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt");
+        auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt", int(Direction::unknown));
         RED_REQUIRE(tfl);
 
         RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
@@ -486,13 +488,13 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_tfl_writer_cancel(tfl));
 
-        tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt");
+        tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt", int(Direction::client_to_server));
         RED_REQUIRE(tfl);
 
         RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
         RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
 
-        RED_TEST(0 == scytale_tfl_writer_close(tfl));
+        RED_TEST(0 == scytale_tfl_writer_close(tfl, nullptr, 0));
 
         auto fname = str_concat(sid, ",000002.tfl"_av);
         auto file2path = wd_fdx_record.add_file(fname);
@@ -561,7 +563,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
 
     std::ofstream(filename.string()) <<
         "v3\n"
-        "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00"
+        "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
         "file2.txt0123456789abcdef,000002.tfl"
         "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00"sv
     ;
@@ -600,19 +602,21 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
     RED_REQUIRE(data);
     RED_TEST(data->type == 4);
     {
-        RED_REQUIRE(data->fmt == "uss"sv);
+        RED_REQUIRE(data->fmt == "uuss"sv);
         auto* raw_data = static_cast<char const*>(data->data);
         RED_REQUIRE(!!raw_data);
         struct D
         {
-            uint64_t a;
-            scytale_bytes_view b;
-            scytale_bytes_view c;
+            uint64_t file_id;
+            uint64_t direction;
+            scytale_bytes_view original_filename;
+            scytale_bytes_view filename;
         };
         D const& d = *reinterpret_cast<D const*>(raw_data);
-        RED_TEST(d.a == 2);
-        RED_TEST(d.b.bytes() == "file2.txt"_av);
-        RED_TEST(d.c.bytes() == "0123456789abcdef,000002.tfl"_av);
+        RED_TEST(d.file_id == 2);
+        RED_TEST(d.direction == int(ScytaleOpenTflDirection::client_to_server));
+        RED_TEST(d.original_filename.bytes() == "file2.txt"_av);
+        RED_TEST(d.filename.bytes() == "0123456789abcdef,000002.tfl"_av);
     }
 
     data = scytale_mwrm3_reader_read_next(mwrm3);
@@ -620,21 +624,23 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
     RED_REQUIRE(data);
     RED_TEST(data->type == 5);
     {
-        RED_REQUIRE(data->fmt == "uuss"sv);
+        RED_REQUIRE(data->fmt == "uuBBB"sv);
         auto* raw_data = static_cast<char const*>(data->data);
         RED_REQUIRE(!!raw_data);
         struct D
         {
-            uint64_t a;
-            uint64_t b;
-            scytale_bytes_view c;
-            scytale_bytes_view d;
+            uint64_t file_id;
+            uint64_t file_size;
+            scytale_bytes_view qhash;
+            scytale_bytes_view fhash;
+            scytale_bytes_view sig;
         };
         D const& d = *reinterpret_cast<D const*>(raw_data);
-        RED_TEST(d.a == 2);
-        RED_TEST(d.b == 7);
-        RED_TEST(d.c.bytes() == ""_av);
-        RED_TEST(d.d.bytes() == ""_av);
+        RED_TEST(d.file_id == 2);
+        RED_TEST(d.file_size == 7);
+        RED_TEST(d.qhash.bytes() == ""_av);
+        RED_TEST(d.fhash.bytes() == ""_av);
+        RED_TEST(d.sig.bytes() == ""_av);
     }
 
     RED_TEST(!scytale_mwrm3_reader_read_next(mwrm3));

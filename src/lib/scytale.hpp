@@ -230,16 +230,27 @@ extern "C"
         ScytaleFdxWriterHandle * handle,
         char const * path, char const * hashpath, int groupid, char const * sid);
 
+    // Mwrm3::Direction
+    enum class ScytaleOpenTflDirection
+    {
+        unknown,
+        client_to_server,
+        server_to_client
+    };
+
+    /// \param direction  ScytaleOpenTflDirection
     REDEMPTION_LIB_EXPORT
     ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
-        ScytaleFdxWriterHandle * handle, char const * filename);
+        ScytaleFdxWriterHandle * handle, char const * filename, int direction);
 
     REDEMPTION_LIB_EXPORT
     int scytale_tfl_writer_write(
         ScytaleTflWriterHandler * handle, uint8_t const * buffer, unsigned long len);
 
+    // len should be 32
     REDEMPTION_LIB_EXPORT
-    int scytale_tfl_writer_close(ScytaleTflWriterHandler * handle);
+    int scytale_tfl_writer_close(
+        ScytaleTflWriterHandler * handle, uint8_t const* sig, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
     int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle);
@@ -271,7 +282,7 @@ extern "C"
     struct ScytaleMwrm3ReaderData
     {
         uint32_t type;
-        // 'u': uint64_t  'i': int64_t  's': {char*, uint32_t}
+        // 'u': uint64_t  'i': int64_t  's': {char*, uint32_t}  'B': {uint8_t*, uint32_t}
         char const* fmt;
         void const* data;
     };

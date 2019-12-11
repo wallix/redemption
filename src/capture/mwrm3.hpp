@@ -40,7 +40,7 @@ namespace Mwrm3
         WrmState,
         FdxNew,
         TflNew,
-        TflState,
+        TflInfo,
 
         MwrmHeaderCompatibility = 'v' | '3' << 8,
     };
@@ -52,6 +52,13 @@ namespace Mwrm3
 
     enum class FileSize : uint64_t;
     enum class FileId : uint64_t;
+
+    enum class Direction : uint8_t
+    {
+        Unknown,
+        ClientToServer,
+        ServerToClient,
+    };
 
     template<class F, class FError>
     auto unserialize_type(bytes_view av, F&& f, FError&& ferror)
@@ -90,10 +97,33 @@ namespace Mwrm3
         bytes_view hash;
     };
 
+    struct Sha256Signature
+    {
+        explicit Sha256Signature(bytes_view sig) noexcept
+        : sig(sig)
+        {
+            assert(sig.empty() || sig.size() == 32);
+        }
+
+        bytes_view sig;
+    };
+
     namespace detail
     {
         namespace types
         {
+            struct u8
+            {
+                static constexpr unsigned size = 1;
+
+                safe_int<uint8_t> x;
+
+                void write(OutStream& stream) noexcept
+                {
+                    stream.out_uint8(x);
+                }
+            };
+
             struct u16
             {
                 static constexpr unsigned size = 2;
@@ -183,7 +213,7 @@ namespace Mwrm3
                     return true;
                 }
 
-                uint8_t value() noexcept
+                uint8_t value() const noexcept
                 {
                     return x;
                 }
@@ -201,7 +231,7 @@ namespace Mwrm3
                     return true;
                 }
 
-                uint16_t value() noexcept
+                uint16_t value() const noexcept
                 {
                     return x;
                 }
@@ -219,7 +249,7 @@ namespace Mwrm3
                     return true;
                 }
 
-                uint64_t value() noexcept
+                uint64_t value() const noexcept
                 {
                     return x;
                 }
@@ -228,7 +258,7 @@ namespace Mwrm3
             template<class Reader, class T>
             struct to : Reader
             {
-                T value() noexcept
+                T value() const noexcept
                 {
                     return T(Reader::value());
                 }
@@ -237,6 +267,7 @@ namespace Mwrm3
             using seconds = to<u64, std::chrono::seconds>;
             using file_size = to<u64, FileSize>;
             using file_id = to<u64, FileId>;
+            using direction = to<u8, Direction>;
 
             template<std::size_t n>
             struct static_bytes
@@ -255,7 +286,7 @@ namespace Mwrm3
                     return false;
                 }
 
-                bytes_view value() noexcept
+                bytes_view value() const noexcept
                 {
                     return x;
                 }
@@ -264,24 +295,32 @@ namespace Mwrm3
             // TODO 32 -> constant
             using quick_hash = to<static_bytes<32>, QuickHash>;
             using full_hash = to<static_bytes<32>, FullHash>;
+            using sha256_signature = to<static_bytes<32>, Sha256Signature>;
 
-            template<class Bool, class Bytes>
-            struct optional_bytes
+            template<class Bool, class T>
+            struct optional_value
             {
                 static constexpr unsigned size = 0;
 
                 Bool& b;
-                Bytes x {};
+                T x {};
 
                 bool read(InStream& stream) noexcept
                 {
                     if (b.value())
                     {
-                        if (stream.in_check_rem(Bytes::size))
+                        if constexpr (T::size == 0)
                         {
                             return x.read(stream);
                         }
-                        return false;
+                        else
+                        {
+                            if (stream.in_check_rem(T::size))
+                            {
+                                return x.read(stream);
+                            }
+                            return false;
+                        }
                     }
                     else
                     {
@@ -289,14 +328,34 @@ namespace Mwrm3
                     }
                 }
 
-                auto value() noexcept
+                auto value() const noexcept
                 {
                     return x.value();
                 }
             };
 
-            using optional_quick_hash = optional_bytes<u8, quick_hash>;
-            using optional_full_hash = optional_bytes<u8, full_hash>;
+            template<class TInt>
+            struct mask : TInt
+            {
+                template<int left_shift>
+                struct bit : TInt
+                {
+                    auto value() const noexcept
+                    {
+                        return bool(TInt::value() & (1 << left_shift));
+                    }
+                };
+
+                template<class T, int left_shift>
+                auto optional_for() const noexcept
+                {
+                    return optional_value<bit<left_shift> const, T>{
+                        static_cast<bit<left_shift> const&>(static_cast<TInt const&>(*this))
+                    };
+                }
+            };
+
+            using u8mask = mask<u8>;
 
             struct u8bytes
             {
@@ -316,7 +375,7 @@ namespace Mwrm3
                     return false;
                 }
 
-                bytes_view value() noexcept
+                bytes_view value() const noexcept
                 {
                     return x;
                 }
@@ -340,9 +399,17 @@ namespace Mwrm3
                     return false;
                 }
 
-                bytes_view value() noexcept
+                bytes_view value() const noexcept
                 {
                     return x;
+                }
+            };
+
+            struct u16str_data : u16bytes_data
+            {
+                array_view_const_char value() const noexcept
+                {
+                    return u16bytes_data::value().as_chars();
                 }
             };
 
@@ -360,7 +427,7 @@ namespace Mwrm3
                     return x.read(stream);
                 }
 
-                auto value() noexcept
+                auto value() const noexcept
                 {
                     return no_value();
                 }
@@ -389,6 +456,26 @@ namespace Mwrm3
                 u16 len;
             };
 
+            struct u16str_ref
+            {
+                u16str_ref() = default;
+                u16str_ref(u16str_ref&&) = delete;
+                u16str_ref(u16str_ref const&) = delete;
+
+                shadow_ref<u16> size()
+                {
+                    return {len};
+                }
+
+                u16str_data data()
+                {
+                    return {{len.x, {}}};
+                }
+
+            private:
+                u16 len;
+            };
+
             struct u16bytes
             {
                 static constexpr unsigned size = 2;
@@ -407,9 +494,17 @@ namespace Mwrm3
                     return false;
                 }
 
-                bytes_view value() noexcept
+                bytes_view value() const noexcept
                 {
                     return x;
+                }
+            };
+
+            struct u16str : u16bytes
+            {
+                array_view_const_char value() const noexcept
+                {
+                    return u16bytes::value().as_chars();
                 }
             };
 
@@ -562,6 +657,20 @@ namespace Mwrm3
                 static_cast<x2&>(g2).reader.value()...);
         }
 
+        template<Type type, class F, class... x0, class... x1, class... x2, class... x3>
+        auto unwrapper_group(F& f, bytes_view remaining,
+            readers::Group<x0...>& g0,
+            readers::Group<x1...>& g1,
+            readers::Group<x2...>& g2,
+            readers::Group<x3...>& g3)
+        {
+            return ignore_no_value<type>(f, remaining,
+                static_cast<x0&>(g0).reader.value()...,
+                static_cast<x1&>(g1).reader.value()...,
+                static_cast<x2&>(g2).reader.value()...,
+                static_cast<x3&>(g3).reader.value()...);
+        }
+
         template<Type type, class F, class FError, class... ReaderGroup>
         auto unserialize(bytes_view buf, F&& f, FError&& ferror, ReaderGroup... reader)
         {
@@ -574,25 +683,25 @@ namespace Mwrm3
         }
 
         template<Type type>
-        struct serialize_bytes_view
+        struct serialize_str_view
         {
             template<class F>
-            auto operator()(bytes_view bytes, F&& f) const noexcept
+            auto operator()(array_view_const_char chars, F&& f) const noexcept
             {
                 return f(type, Buffer{
                     type,
-                    detail::types::u16_bytes_size{bytes}
-                }.bytes(), bytes);
+                    detail::types::u16_bytes_size{chars}
+                }.bytes(), bytes_view(chars));
             }
         };
 
         template<Type type>
-        struct unserialize_bytes_view
+        struct unserialize_str_view
         {
             template<class F, class FError>
             auto operator()(bytes_view buf, F&& f, FError&& ferror) const noexcept
             {
-                return unserialize<type>(buf, f, ferror, readers::group(readers::u16bytes()));
+                return unserialize<type>(buf, f, ferror, readers::group(readers::u16str()));
             }
         };
     }
@@ -619,8 +728,8 @@ namespace Mwrm3
         return (buf.size() > 0) ? f(type, buf.drop_front(1)) : ferror();
     }
 
-    inline constexpr auto serialize_wrm_new = detail::serialize_bytes_view<Type::WrmNew>{};
-    inline constexpr auto unserialize_wrm_new = detail::unserialize_bytes_view<Type::WrmNew>{};
+    inline constexpr auto serialize_wrm_new = detail::serialize_str_view<Type::WrmNew>{};
+    inline constexpr auto unserialize_wrm_new = detail::unserialize_str_view<Type::WrmNew>{};
 
     template<class F>
     auto serialize_wrm_stat(
@@ -634,7 +743,10 @@ namespace Mwrm3
                 Type::WrmState,
                 file_size,
                 duration,
-                detail::types::u8_unsafe{quick_hash.hash.empty() ? '\0' : '\1'},
+                detail::types::u8_unsafe{
+                    ((quick_hash.hash.empty() ? 0 : 1) << 0)
+                  | ((full_hash.hash.empty() ? 0 : 1) << 1)
+                },
             }.bytes(),
             quick_hash.hash,
             full_hash.hash);
@@ -644,21 +756,21 @@ namespace Mwrm3
     auto unserialize_wrm_stat(bytes_view buf, F&& f, FError&& ferror)
     {
         using namespace detail::readers;
-        u8 has_hashs;
+        u8mask m;
         return detail::unserialize<Type::WrmState>(buf, f, ferror,
-            group(file_size(), seconds(), shadow_ref{has_hashs}),
-            group(optional_quick_hash{has_hashs}),
-            group(optional_full_hash{has_hashs})
+            group(file_size(), seconds(), shadow_ref{m}),
+            group(m.optional_for<quick_hash, 0>()),
+            group(m.optional_for<full_hash, 1>())
         );
     }
 
-    inline constexpr auto serialize_fdx_new = detail::serialize_bytes_view<Type::FdxNew>{};
-    inline constexpr auto unserialize_fdx_new = detail::unserialize_bytes_view<Type::FdxNew>{};
+    inline constexpr auto serialize_fdx_new = detail::serialize_str_view<Type::FdxNew>{};
+    inline constexpr auto unserialize_fdx_new = detail::unserialize_str_view<Type::FdxNew>{};
 
     template<class F>
     auto serialize_tfl_new(
-        FileId idx, bytes_view original_filename, bytes_view reference_filename,
-        F&& f)
+        FileId idx, Direction direction,
+        bytes_view original_filename, bytes_view reference_filename, F&& f)
     {
         assert(reference_filename.size() <= 255);
         return f(Type::TflNew,
@@ -667,6 +779,7 @@ namespace Mwrm3
                 detail::types::u64{idx},
                 detail::types::u16_bytes_size{original_filename},
                 detail::types::u16_bytes_size{reference_filename},
+                detail::types::u8{direction},
             }.bytes(),
             original_filename,
             reference_filename);
@@ -676,13 +789,14 @@ namespace Mwrm3
     auto unserialize_tfl_new(bytes_view buf, F&& f, FError&& ferror)
     {
         using namespace detail::readers;
-        u16bytes_ref original_filename;
-        u16bytes_ref reference_filename;
+        u16str_ref original_filename;
+        u16str_ref reference_filename;
         return detail::unserialize<Type::TflNew>(buf, f, ferror,
             group(
                 file_id(),
                 original_filename.size(),
                 reference_filename.size(),
+                direction(),
                 original_filename.data(),
                 reference_filename.data()
             )
@@ -690,29 +804,37 @@ namespace Mwrm3
     }
 
     template<class F>
-    auto serialize_tfl_stat(FileId idx, FileSize file_size, QuickHash quick_hash, FullHash full_hash, F&& f)
+    auto serialize_tfl_info(
+        FileId idx, FileSize file_size, QuickHash quick_hash, FullHash full_hash,
+        Sha256Signature signature, F&& f)
     {
         assert(quick_hash.hash.size() == full_hash.hash.size());
-        return f(Type::TflState,
+        return f(Type::TflInfo,
             detail::Buffer{
-                Type::TflState,
+                Type::TflInfo,
                 detail::types::u64{idx},
                 file_size,
-                detail::types::u8_unsafe{quick_hash.hash.empty() ? '\0' : '\1'},
+                detail::types::u8_unsafe{
+                    ((quick_hash.hash.empty() ? 0 : 1) << 0)
+                  | ((full_hash.hash.empty() ? 0 : 1) << 1)
+                  | ((signature.sig.empty() ? 0 : 1) << 2)
+                },
             }.bytes(),
             quick_hash.hash,
-            full_hash.hash);
+            full_hash.hash,
+            signature.sig);
     }
 
     template<class F, class FError>
-    auto unserialize_tfl_stat(bytes_view buf, F&& f, FError&& ferror)
+    auto unserialize_tfl_info(bytes_view buf, F&& f, FError&& ferror)
     {
         using namespace detail::readers;
-        u8 has_hashs;
-        return detail::unserialize<Type::TflState>(buf, f, ferror,
-            group(file_id(), file_size(), shadow_ref{has_hashs}),
-            group(optional_quick_hash{has_hashs}),
-            group(optional_full_hash{has_hashs})
+        u8mask m;
+        return detail::unserialize<Type::TflInfo>(buf, f, ferror,
+            group(file_id(), file_size(), shadow_ref{m}),
+            group(m.optional_for<quick_hash, 0>()),
+            group(m.optional_for<full_hash, 1>()),
+            group(m.optional_for<sha256_signature, 2>())
         );
     }
 
@@ -732,7 +854,7 @@ namespace Mwrm3
     f(WrmState, unserialize_wrm_stat) \
     f(FdxNew, unserialize_fdx_new)    \
     f(TflNew, unserialize_tfl_new)    \
-    f(TflState, unserialize_tfl_stat) \
+    f(TflInfo, unserialize_tfl_info) \
     f(MwrmHeaderCompatibility, unserialize_mwrm_header_compatibility)
 
 #define CALL(v, f) f(av, f_ok, error_caller(integral_type<Type::v>()))

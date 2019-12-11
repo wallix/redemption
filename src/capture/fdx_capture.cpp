@@ -152,18 +152,19 @@ FdxCapture::FdxCapture(
     this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
 }
 
-FdxCapture::TflFile::TflFile(FdxCapture const& fdx)
+FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
 : file_id(fdx.name_generator.get_current_id())
 , trans(fdx.cctx, fdx.rnd, fdx.fstat, fdx.report_error)
+, direction(direction)
 {
     open_crypto_transport(this->trans, fdx.name_generator, fdx.groupid);
 }
 
-FdxCapture::TflFile FdxCapture::new_tfl()
+FdxCapture::TflFile FdxCapture::new_tfl(Mwrm3::Direction direction)
 {
     this->name_generator.next_tfl();
 
-    return TflFile{*this};
+    return TflFile{*this, direction};
 }
 
 void FdxCapture::cancel_tfl(FdxCapture::TflFile& tfl)
@@ -171,7 +172,8 @@ void FdxCapture::cancel_tfl(FdxCapture::TflFile& tfl)
     tfl.trans.cancel();
 }
 
-void FdxCapture::close_tfl(FdxCapture::TflFile& tfl, std::string_view original_filename)
+void FdxCapture::close_tfl(
+    FdxCapture::TflFile& tfl, std::string_view original_filename, Mwrm3::Sha256Signature sig)
 {
     OutCryptoTransport::HashArray qhash;
     OutCryptoTransport::HashArray fhash;
@@ -198,12 +200,13 @@ void FdxCapture::close_tfl(FdxCapture::TflFile& tfl, std::string_view original_f
         - this->name_generator.get_current_filename().size();
 
     Mwrm3::serialize_tfl_new(
-        tfl.file_id, original_filename, std::string_view(filename + dirname_len), write_in_buf);
-    Mwrm3::serialize_tfl_stat(
+        tfl.file_id, tfl.direction, original_filename,
+        std::string_view(filename + dirname_len), write_in_buf);
+    Mwrm3::serialize_tfl_info(
         tfl.file_id, Mwrm3::FileSize(stat.st_size),
         Mwrm3::QuickHash{with_checksum ? make_array_view(qhash) : bytes_view{"", 0}},
         Mwrm3::FullHash{with_checksum ? make_array_view(fhash) : bytes_view{"", 0}},
-        write_in_buf);
+        sig, write_in_buf);
 
     this->out_crypto_transport.send(out.get_bytes());
 }

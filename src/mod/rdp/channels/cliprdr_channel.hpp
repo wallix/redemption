@@ -116,7 +116,9 @@ public:
                     if (file_data.tfl_file) {
                         auto& tfl_file = *file_data.tfl_file;
                         if (tfl_file.trans.is_open()) {
-                            this->fdx_capture->close_tfl(tfl_file, file_data.file_name);
+                            this->fdx_capture->close_tfl(tfl_file, file_data.file_name,
+                                // TODO
+                                Mwrm3::Sha256Signature{""_av});
                         }
                     }
                 }
@@ -463,7 +465,9 @@ public:
                     if (this->always_file_record
                      || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
                     ) {
-                        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
+                            // TODO
+                            Mwrm3::Sha256Signature{""_av});
                     }
                     else {
                         this->fdx_capture->cancel_tfl(*file_data.tfl_file);
@@ -605,7 +609,9 @@ private:
                 else {
                     if (file_data.tfl_file) {
                         if (this->always_file_record || file_data.on_failure) {
-                            this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                            this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
+                                // TODO
+                                Mwrm3::Sha256Signature{""_av});
                         }
                         else {
                             this->fdx_capture->cancel_tfl(*file_data.tfl_file);
@@ -725,7 +731,10 @@ private:
                     file_validator_id,
                     this->fdx_capture
                         ? std::unique_ptr<FdxCapture::TflFile>(new FdxCapture::TflFile(
-                            this->fdx_capture->new_tfl()))
+                            this->fdx_capture->new_tfl(direction == Direction::FileFromServer
+                                ? Mwrm3::Direction::ServerToClient
+                                : Mwrm3::Direction::ClientToServer
+                        )))
                         : std::unique_ptr<FdxCapture::TflFile>(),
                     desc.file_name, desc.file_size,
                     file_contents_request_pdu.cbRequested());

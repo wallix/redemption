@@ -88,11 +88,12 @@ struct FdxCapture
     class TflFile
     {
         friend FdxCapture;
-        TflFile(FdxCapture const& fdx);
+        TflFile(FdxCapture const& fdx, Mwrm3::Direction direction);
 
     public:
         FileId file_id;
         OutCryptoTransport trans;
+        Mwrm3::Direction direction;
     };
 
 
@@ -102,10 +103,10 @@ struct FdxCapture
         CryptoContext& cctx, Random& rnd, Fstat& fstat,
         ReportError report_error = ReportError());
 
-    TflFile new_tfl();
+    TflFile new_tfl(Mwrm3::Direction direction);
 
     void cancel_tfl(TflFile& tfl);
-    void close_tfl(TflFile& tfl, std::string_view original_filename);
+    void close_tfl(TflFile& tfl, std::string_view original_filename, Mwrm3::Sha256Signature sig);
 
     void close(OutCryptoTransport::HashArray & qhash, OutCryptoTransport::HashArray & fhash);
 

@@ -724,10 +724,10 @@ struct ScytaleFdxWriterHandle
             this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat);
     }
 
-    ScytaleTflWriterHandler * open_tfl(char const* filename)
+    ScytaleTflWriterHandler * open_tfl(char const* filename, int direction)
     {
         auto* tfl = new(std::nothrow) ScytaleTflWriterHandler{ /*NOLINT*/
-            this->fdx_capture->new_tfl(),
+            this->fdx_capture->new_tfl(checked_int{direction}),
             filename,
             *this,
         };
@@ -740,9 +740,10 @@ struct ScytaleFdxWriterHandle
         return tfl;
     }
 
-    int close_tfl(ScytaleTflWriterHandler& tfl)
+    int close_tfl(ScytaleTflWriterHandler& tfl, bytes_view sig)
     {
-        this->fdx_capture->close_tfl(tfl.tfl_file, tfl.original_filename);
+        this->fdx_capture->close_tfl(tfl.tfl_file, tfl.original_filename,
+            Mwrm3::Sha256Signature{sig});
         return 0;
     }
 
@@ -807,11 +808,11 @@ int scytale_fdx_writer_open(
 }
 
 ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
-    ScytaleFdxWriterHandle * handle, char const * filename)
+    ScytaleFdxWriterHandle * handle, char const * filename, int direction)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, nullptr);
-    CHECK_NOTHROW_R(return handle->open_tfl(filename),
+    CHECK_NOTHROW_R(return handle->open_tfl(filename, direction),
         nullptr, handle->error_ctx, ERR_TRANSPORT_OPEN_FAILED);
 }
 
@@ -825,12 +826,12 @@ int scytale_tfl_writer_write(
     return len;
 }
 
-int scytale_tfl_writer_close(ScytaleTflWriterHandler * handle)
+int scytale_tfl_writer_close(ScytaleTflWriterHandler * handle, uint8_t const* sig, unsigned long len)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     std::unique_ptr<ScytaleTflWriterHandler> auto_delete{handle};
-    CHECK_NOTHROW_R(return handle->fdx.close_tfl(*handle),
+    CHECK_NOTHROW_R(return handle->fdx.close_tfl(*handle, bytes_view{sig, len}),
         -1, handle->fdx.error_ctx, ERR_TRANSPORT_WRITE_FAILED);
 }
 
@@ -887,10 +888,20 @@ namespace
         uint32_t size;
     };
 
+    struct scytale_str_view
+    {
+        char const* ptr;
+        uint32_t size;
+    };
+
     template<class T>
     constexpr char char_type_fmt()
     {
         if constexpr (std::is_same_v<T, scytale_bytes_view>)
+        {
+            return 'B';
+        }
+        else if constexpr (std::is_same_v<T, scytale_str_view>)
         {
             return 's';
         }
@@ -1106,6 +1117,11 @@ namespace
         return scytale_bytes_view{bytes.data(), checked_int(bytes.size())};
     }
 
+    scytale_str_view scytale_raw_str_view(array_view_const_char chars)
+    {
+        return scytale_str_view{chars.data(), checked_int(chars.size())};
+    }
+
     template<class T>
     auto scytale_raw_integral(T x)
     {
@@ -1130,6 +1146,10 @@ namespace
         {
             return scytale_raw_bytes_view(x);
         }
+        else if constexpr (std::is_same_v<array_view_const_char, T>)
+        {
+            return scytale_raw_str_view(x);
+        }
         else if constexpr (std::is_same_v<Mwrm3::QuickHash, T>)
         {
             return scytale_raw_bytes_view(x.hash);
@@ -1137,6 +1157,10 @@ namespace
         else if constexpr (std::is_same_v<Mwrm3::FullHash, T>)
         {
             return scytale_raw_bytes_view(x.hash);
+        }
+        else if constexpr (std::is_same_v<Mwrm3::Sha256Signature, T>)
+        {
+            return scytale_raw_bytes_view(x.sig);
         }
         else if constexpr (std::is_integral_v<T>)
         {
