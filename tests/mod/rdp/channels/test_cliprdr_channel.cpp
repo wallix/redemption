@@ -544,7 +544,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_REQUIRE(report_message.messages.size() == 1);
     RED_CHECK_SMEM(report_message.messages[0],
-        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=<unknown>(0) size=596"_av);
+        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=FileGroupDescriptorW(49262) size=596"_av);
     RED_CHECK(buf_trans.buf.size() == 0);
 
     {
