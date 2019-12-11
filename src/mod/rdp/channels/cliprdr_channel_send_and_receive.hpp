@@ -86,6 +86,8 @@ struct ClipboardSideData
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
 
             SslSha256_Delayed sha256;
+
+            bool on_failure = false;
         };
 
         FileData file_data;

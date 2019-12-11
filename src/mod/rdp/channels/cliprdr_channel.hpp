@@ -445,6 +445,7 @@ public:
             }
 
             auto& file_data = file->file_data;
+            file_data.on_failure = !is_accepted;
             file_data.file_validator_id = FileValidatorId();
 
             if (!is_accepted || this->params.validator_params.log_if_accepted) {
@@ -467,6 +468,7 @@ public:
                     else {
                         this->fdx_capture->cancel_tfl(*file_data.tfl_file);
                     }
+                    file_data.tfl_file.reset();
                 }
 
                 if (direction == Direction::FileFromClient) {
@@ -597,21 +599,18 @@ private:
             if ((flags & CHANNELS::CHANNEL_FLAG_LAST) && file_data.file_offset == file_data.file_size) {
                 this->log_file_info(file_data, from_remote_session);
 
-                if (file_data.tfl_file) {
-                    file_data.tfl_file->trans.send(data_fragment);
-                }
-
                 if (bool(file_data.file_validator_id)) {
                     this->file_validator->send_eof(file_data.file_validator_id);
                 }
                 else {
                     if (file_data.tfl_file) {
-                        if (this->always_file_record) {
+                        if (this->always_file_record || file_data.on_failure) {
                             this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
                         }
                         else {
                             this->fdx_capture->cancel_tfl(*file_data.tfl_file);
                         }
+                        file_data.tfl_file.reset();
                     }
                     side_data.remove_file(file);
                 }

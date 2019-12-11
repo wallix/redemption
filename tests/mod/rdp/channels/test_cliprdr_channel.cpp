@@ -20,8 +20,12 @@
 
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/fake_stat.hpp"
+#include "test_only/lcg_random.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "core/RDP/clipboard.hpp"
 
@@ -370,290 +374,385 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         }
     };
 
-    SessionReactor session_reactor;
-    timeval time_test;
-    time_test.tv_sec = 12345;
-    time_test.tv_usec = 54321;
-    session_reactor.set_current_time(time_test);
-
-    ReportMessage report_message;
-    BufTransport buf_trans;
-    FileValidatorService file_validator_service(buf_trans);
-
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
-
-    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.validator_params.down_target_name = "down";
-    clipboard_virtual_channel_params.validator_params.up_target_name = "up";
-    clipboard_virtual_channel_params.validator_params.log_if_accepted = true;
-
-    TestResponseSender to_client_sender;
-    TestResponseSender to_server_sender;
-
-    ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, session_reactor,
-        base_params, clipboard_virtual_channel_params, &file_validator_service, {nullptr, false});
-
-    std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-    auto process_server_message = [&](bytes_view av){
-        auto flags
-          = CHANNELS::CHANNEL_FLAG_FIRST
-          | CHANNELS::CHANNEL_FLAG_LAST
-          | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-        clipboard_virtual_channel.process_server_message(
-            av.size(), flags, av, out_asynchronous_task);
+    struct D
+    {
+        bool with_fdx_capture;
+        bool always_file_record;
     };
 
-    auto process_client_message = [&](bytes_view av){
-        auto flags
-          = CHANNELS::CHANNEL_FLAG_FIRST
-          | CHANNELS::CHANNEL_FLAG_LAST
-          | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-        clipboard_virtual_channel.process_client_message(av.size(), flags, av);
-    };
+    using namespace std::string_view_literals;
 
-    const auto use_long_format = Cliprdr::IsLongFormat(true);
-    const auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
-    const auto file_group_id = 49262;
+    static constexpr auto sid = "my_session_id"sv;
 
-    RED_CHECK(report_message.messages.size() == 0);
-    RED_CHECK(buf_trans.buf.size() == 0);
-
+    RED_TEST_CONTEXT_DATA(D const& d, "with fdx: " << d.with_fdx_capture << "  always_file_record: " << d.always_file_record, {
+        D{false, true},
+        D{true, false},
+        D{true, true}
+    })
     {
-        using namespace RDPECLIP;
-        Buffer buf;
-        auto av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
-            out.out_uint16_le(CB_CAPSTYPE_GENERAL);
-            out.out_clear_bytes(2);
-            GeneralCapabilitySet{CB_CAPS_VERSION_1, CB_USE_LONG_FORMAT_NAMES}.emit(out);
-        });
+        struct DataTest
+        {
+            DataTest(char const* name)
+            : wd(name)
+            {}
 
-        process_client_message(av);
-        process_server_message(av);
+            WorkingDirectory wd;
+            WorkingDirectory::SubDirectory record_path = wd.create_subdirectory("record");
+            WorkingDirectory::SubDirectory hash_path = wd.create_subdirectory("hash");
+            WorkingDirectory::SubDirectory fdx_record_path = record_path.create_subdirectory(sid);
+            WorkingDirectory::SubDirectory fdx_hash_path = hash_path.create_subdirectory(sid);
+            CryptoContext cctx;
+            LCGRandom rnd;
+            FakeFstat fstat;
+            FdxCapture fdx = FdxCapture{
+                record_path.dirname().string(),
+                hash_path.dirname().string(),
+                sid, -1, cctx, rnd, fstat};
+        };
+
+        auto fdx_ctx = [&]{
+            if (d.with_fdx_capture) {
+                return std::make_unique<DataTest>(d.always_file_record
+                    ? "FileRecord=always"
+                    : "FileRecord=on_failure");
+            }
+            return std::unique_ptr<DataTest>();
+        }();
+
+        {
+            SessionReactor session_reactor;
+            timeval time_test;
+            time_test.tv_sec = 12345;
+            time_test.tv_usec = 54321;
+            session_reactor.set_current_time(time_test);
+
+            ReportMessage report_message;
+            BufTransport buf_trans;
+            FileValidatorService file_validator_service(buf_trans);
+
+            BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+
+            ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+            clipboard_virtual_channel_params.clipboard_down_authorized = true;
+            clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+            clipboard_virtual_channel_params.clipboard_file_authorized = true;
+            clipboard_virtual_channel_params.validator_params.down_target_name = "down";
+            clipboard_virtual_channel_params.validator_params.up_target_name = "up";
+            clipboard_virtual_channel_params.validator_params.log_if_accepted = true;
+
+            TestResponseSender to_client_sender;
+            TestResponseSender to_server_sender;
+
+            ClipboardVirtualChannel clipboard_virtual_channel(
+                &to_client_sender, &to_server_sender, session_reactor,
+                base_params, clipboard_virtual_channel_params, &file_validator_service,
+                ClipboardVirtualChannel::FileRecord{
+                    fdx_ctx ? &fdx_ctx->fdx : nullptr,
+                    d.always_file_record
+                }
+            );
+
+            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+            auto process_server_message = [&](bytes_view av){
+                auto flags
+                = CHANNELS::CHANNEL_FLAG_FIRST
+                | CHANNELS::CHANNEL_FLAG_LAST
+                | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+                clipboard_virtual_channel.process_server_message(
+                    av.size(), flags, av, out_asynchronous_task);
+            };
+
+            auto process_client_message = [&](bytes_view av){
+                auto flags
+                = CHANNELS::CHANNEL_FLAG_FIRST
+                | CHANNELS::CHANNEL_FLAG_LAST
+                | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+                clipboard_virtual_channel.process_client_message(av.size(), flags, av);
+            };
+
+            const auto use_long_format = Cliprdr::IsLongFormat(true);
+            const auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
+            const auto file_group_id = 49262;
+
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            {
+                using namespace RDPECLIP;
+                Buffer buf;
+                auto av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
+                    out.out_uint16_le(CB_CAPSTYPE_GENERAL);
+                    out.out_clear_bytes(2);
+                    GeneralCapabilitySet{CB_CAPS_VERSION_1, CB_USE_LONG_FORMAT_NAMES}.emit(out);
+                });
+
+                process_client_message(av);
+                process_server_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 1);
+            RED_REQUIRE(to_server_sender.total_in_stream == 1);
+            RED_CHECK_MEM(to_client_sender.bytes(0), to_server_sender.bytes(0));
+            RED_CHECK_MEM(to_client_sender.bytes(0),
+                "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" //................ !
+                "\x01\x00\x00\x00\x02\x00\x00\x00" //........
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            {
+                StaticOutStream<1600> out;
+                Cliprdr::format_list_serialize_with_header(
+                    out,
+                    Cliprdr::IsLongFormat(use_long_format),
+                    std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
+
+                process_client_message(out.get_bytes());
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 1);
+            RED_REQUIRE(to_server_sender.total_in_stream == 2);
+            RED_CHECK_MEM(to_server_sender.bytes(1),
+                "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
+                "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
+                "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
+                "\x72\x00\x57\x00\x00\x00" //r.W... !
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            // skip format list response
+
+            {
+                Buffer buf;
+                auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+                    out.out_uint32_le(file_group_id);
+                });
+                process_server_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_server_sender.total_in_stream == 2);
+            RED_CHECK_MEM(to_client_sender.bytes(1),
+                "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 0);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            {
+                using namespace Cliprdr;
+                Buffer buf;
+                auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
+                    out.out_uint32_le(1);    // count item
+                    out.out_uint32_le(0);    // flags
+                    out.out_clear_bytes(32); // reserved1
+                    out.out_uint32_le(0);    // attributes
+                    out.out_clear_bytes(16); // reserved2
+                    out.out_uint64_le(0);    // lastWriteTime
+                    out.out_uint32_le(0);    // file size high
+                    out.out_uint32_le(12);   // file size low
+                    auto filename = "abc"_utf16_le;
+                    out.out_copy_bytes(filename);
+                    out.out_clear_bytes(520u - filename.size());
+                });
+                process_client_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 2);
+            RED_REQUIRE(to_server_sender.total_in_stream == 3);
+            RED_CHECK_MEM(to_server_sender.bytes(2),
+                "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x0c\x00\x00\x00\x61\x00\x62\x00\x63\x00\x00\x00\x00\x00\x00\x00" //....a.b.c....... !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
+                ""_av);
+            RED_REQUIRE(report_message.messages.size() == 1);
+            RED_CHECK_SMEM(report_message.messages[0],
+                "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=FileGroupDescriptorW(49262) size=596"_av);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            {
+                using namespace RDPECLIP;
+                Buffer buf;
+                auto av = buf.build(CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, [&](OutStream& out){
+                    FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 0, 0, 12, 0, false).emit(out);
+                    out.out_uint32_le(file_group_id);
+                });
+                process_server_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_server_sender.total_in_stream == 3);
+            RED_CHECK_MEM(to_client_sender.bytes(2),
+                "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00" //................ !
+                "\x6e\xc0\x00\x00" //n...
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 1);
+            RED_CHECK_SMEM(buf_trans.buf,
+                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b""filename\x00\x03""abc"
+                ""_av);
+
+            buf_trans.buf.clear();
+            StaticOutStream<256> out;
+            auto status = "ok"_av;
+
+            using namespace LocalFileValidatorProtocol;
+            FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
+            FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
+                checked_int(status.size())}.emit(out);
+            out.out_copy_bytes(status);
+            auto av = out.get_bytes().as_chars();
+
+            buf_trans.buf.assign(av.data(), av.size());
+            clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+            buf_trans.buf.clear();
+
+            RED_REQUIRE(report_message.messages.size() == 2);
+            RED_CHECK_SMEM(report_message.messages[1],
+                "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av);
+
+            // file content
+
+            {
+                using namespace Cliprdr;
+                Buffer buf;
+                auto av = buf.build(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
+                    out.out_uint32_le(0);
+                    out.out_copy_bytes("data_abcdefg"_av);
+                });
+                process_client_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_server_sender.total_in_stream == 4);
+            RED_CHECK_MEM(to_server_sender.bytes(3),
+                "\t\x00\x01\x00\x10\x00\x00\x00\x00\x00\x00\x00""data_abcdefg"
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 3);
+            RED_CHECK_SMEM(report_message.messages[2],
+                "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=abc size=12"
+                " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            if (fdx_ctx && d.always_file_record) {
+                auto basename = str_concat(sid, ",000001.tfl");
+                auto tfl_path = fdx_ctx->fdx_record_path.add_file(basename);
+                (void)fdx_ctx->fdx_hash_path.add_file(basename);
+                std::string file_content = RED_CHECK_GET_FILE_CONTENTS(tfl_path);
+                RED_CHECK(file_content == "data_abcdefg"sv);
+            }
+
+            // check TEXT_VALIDATION
+
+            {
+                StaticOutStream<1600> out;
+                Cliprdr::format_list_serialize_with_header(
+                    out,
+                    Cliprdr::IsLongFormat(use_long_format),
+                    std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr}});
+
+                process_client_message(out.get_bytes());
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 3);
+            RED_REQUIRE(to_server_sender.total_in_stream == 5);
+            RED_CHECK_MEM(to_server_sender.bytes(4),
+                "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 3);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            // skip format list response
+
+            {
+                Buffer buf;
+                auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+                    out.out_uint32_le(RDPECLIP::CF_UNICODETEXT);
+                });
+                process_server_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 4);
+            RED_REQUIRE(to_server_sender.total_in_stream == 5);
+            RED_CHECK_MEM(to_client_sender.bytes(3),
+                "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
+                ""_av);
+            RED_CHECK(report_message.messages.size() == 3);
+            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+            {
+                using namespace Cliprdr;
+                Buffer buf;
+                auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
+                    out.out_copy_bytes("a\0b\0c\0"_av);
+                });
+                process_client_message(av);
+            }
+            RED_REQUIRE(to_client_sender.total_in_stream == 4);
+            RED_REQUIRE(to_server_sender.total_in_stream == 6);
+            RED_CHECK_MEM(to_server_sender.bytes(5),
+                "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av);
+            RED_REQUIRE(report_message.messages.size() == 4);
+            RED_CHECK_SMEM(report_message.messages[3],
+                "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av);
+            RED_CHECK_SMEM(buf_trans.buf,
+                "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up\x00\x01\x00\x13microsoft_locale_id\x00\x01"
+                "0\x01\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av);
+
+            buf_trans.buf.clear();
+
+            out.rewind();
+            FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
+            FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(2),
+                checked_int(status.size())}.emit(out);
+            out.out_copy_bytes(status);
+            av = out.get_bytes().as_chars();
+            buf_trans.buf.assign(av.data(), av.size());
+
+            clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+            RED_REQUIRE(report_message.messages.size() == 5);
+            RED_CHECK_SMEM(report_message.messages[4],
+                "TEXT_VERIFICATION direction=UP copy_id=2 status=ok"_av);
+        }
+
+        if (fdx_ctx) {
+            auto basename = str_concat(sid, ".fdx");
+            (void)fdx_ctx->fdx_record_path.add_file(basename);
+            (void)fdx_ctx->fdx_hash_path.add_file(basename);
+
+            OutCryptoTransport::HashArray qhash;
+            OutCryptoTransport::HashArray fhash;
+            fdx_ctx->fdx.close(qhash, fhash);
+
+            RED_CHECK_WORKSPACE(fdx_ctx->wd);
+        }
     }
-    RED_REQUIRE(to_client_sender.total_in_stream == 1);
-    RED_REQUIRE(to_server_sender.total_in_stream == 1);
-    RED_CHECK_MEM(to_client_sender.bytes(0), to_server_sender.bytes(0));
-    RED_CHECK_MEM(to_client_sender.bytes(0),
-        "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" //................ !
-        "\x01\x00\x00\x00\x02\x00\x00\x00" //........
-        ""_av);
-    RED_CHECK(report_message.messages.size() == 0);
-    RED_CHECK(buf_trans.buf.size() == 0);
-
-    {
-        StaticOutStream<1600> out;
-        Cliprdr::format_list_serialize_with_header(
-            out,
-            Cliprdr::IsLongFormat(use_long_format),
-            std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-
-        process_client_message(out.get_bytes());
-    }
-    RED_REQUIRE(to_client_sender.total_in_stream == 1);
-    RED_REQUIRE(to_server_sender.total_in_stream == 2);
-    RED_CHECK_MEM(to_server_sender.bytes(1),
-        "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
-        "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
-        "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
-        "\x72\x00\x57\x00\x00\x00" //r.W... !
-        ""_av);
-    RED_CHECK(report_message.messages.size() == 0);
-    RED_CHECK(buf_trans.buf.size() == 0);
-
-    // skip format list response
-
-    {
-        Buffer buf;
-        auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
-            out.out_uint32_le(file_group_id);
-        });
-        process_server_message(av);
-    }
-    RED_REQUIRE(to_client_sender.total_in_stream == 2);
-    RED_REQUIRE(to_server_sender.total_in_stream == 2);
-    RED_CHECK_MEM(to_client_sender.bytes(1),
-        "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
-        ""_av);
-    RED_CHECK(report_message.messages.size() == 0);
-    RED_CHECK(buf_trans.buf.size() == 0);
-
-    {
-        using namespace Cliprdr;
-        Buffer buf;
-        auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
-            out.out_uint32_le(1);    // count item
-            out.out_uint32_le(0);    // flags
-            out.out_clear_bytes(32); // reserved1
-            out.out_uint32_le(0);    // attributes
-            out.out_clear_bytes(16); // reserved2
-            out.out_uint64_le(0);    // lastWriteTime
-            out.out_uint32_le(0);    // file size high
-            out.out_uint32_le(12);   // file size low
-            auto filename = "abc"_utf16_le;
-            out.out_copy_bytes(filename);
-            out.out_clear_bytes(520u - filename.size());
-        });
-        process_client_message(av);
-    }
-    RED_REQUIRE(to_client_sender.total_in_stream == 2);
-    RED_REQUIRE(to_server_sender.total_in_stream == 3);
-    RED_CHECK_MEM(to_server_sender.bytes(2),
-        "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x0c\x00\x00\x00\x61\x00\x62\x00\x63\x00\x00\x00\x00\x00\x00\x00" //....a.b.c....... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
-        ""_av);
-    RED_REQUIRE(report_message.messages.size() == 1);
-    RED_CHECK_SMEM(report_message.messages[0],
-        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=FileGroupDescriptorW(49262) size=596"_av);
-    RED_CHECK(buf_trans.buf.size() == 0);
-
-    {
-        using namespace RDPECLIP;
-        Buffer buf;
-        auto av = buf.build(CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, [&](OutStream& out){
-            FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 0, 0, 12, 0, false).emit(out);
-            out.out_uint32_le(file_group_id);
-        });
-        process_server_message(av);
-    }
-    RED_REQUIRE(to_client_sender.total_in_stream == 3);
-    RED_REQUIRE(to_server_sender.total_in_stream == 3);
-    RED_CHECK_MEM(to_client_sender.bytes(2),
-        "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00" //................ !
-        "\x6e\xc0\x00\x00" //n...
-        ""_av);
-    RED_CHECK(report_message.messages.size() == 1);
-    RED_CHECK_SMEM(buf_trans.buf,
-        "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b""filename\x00\x03""abc"
-        ""_av);
-
-    buf_trans.buf.clear();
-    StaticOutStream<256> out;
-    auto status = "ok"_av;
-
-    using namespace LocalFileValidatorProtocol;
-    FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
-    FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
-        checked_int(status.size())}.emit(out);
-    out.out_copy_bytes(status);
-    auto av = out.get_bytes().as_chars();
-    buf_trans.buf.assign(av.data(), av.size());
-
-    clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-    RED_REQUIRE(report_message.messages.size() == 2);
-    RED_CHECK_SMEM(report_message.messages[1],
-        "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av);
-
-    // check TEXT_VALIDATION
-
-    buf_trans.buf.clear();
-
-    {
-        StaticOutStream<1600> out;
-        Cliprdr::format_list_serialize_with_header(
-            out,
-            Cliprdr::IsLongFormat(use_long_format),
-            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr}});
-
-        process_client_message(out.get_bytes());
-    }
-    RED_REQUIRE(to_client_sender.total_in_stream == 3);
-    RED_REQUIRE(to_server_sender.total_in_stream == 4);
-    RED_CHECK_MEM(to_server_sender.bytes(3),
-        "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
-        ""_av);
-    RED_CHECK(report_message.messages.size() == 2);
-    RED_CHECK(buf_trans.buf.size() == 0);
-
-    // skip format list response
-
-    {
-        Buffer buf;
-        auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
-            out.out_uint32_le(RDPECLIP::CF_UNICODETEXT);
-        });
-        process_server_message(av);
-    }
-    RED_REQUIRE(to_client_sender.total_in_stream == 4);
-    RED_REQUIRE(to_server_sender.total_in_stream == 4);
-    RED_CHECK_MEM(to_client_sender.bytes(3),
-        "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
-        ""_av);
-    RED_CHECK(report_message.messages.size() == 2);
-    RED_CHECK(buf_trans.buf.size() == 0);
-
-    {
-        using namespace Cliprdr;
-        Buffer buf;
-        auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
-            out.out_copy_bytes("a\0b\0c\0"_av);
-        });
-        process_client_message(av);
-    }
-    RED_REQUIRE(to_client_sender.total_in_stream == 4);
-    RED_REQUIRE(to_server_sender.total_in_stream == 5);
-    RED_CHECK_MEM(to_server_sender.bytes(4),
-        "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av);
-    RED_REQUIRE(report_message.messages.size() == 3);
-    RED_CHECK_SMEM(report_message.messages[2],
-        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av);
-    RED_CHECK_SMEM(buf_trans.buf,
-        "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up\x00\x01\x00\x13microsoft_locale_id\x00\x01"
-        "0\x01\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av);
-
-    buf_trans.buf.clear();
-
-    out.rewind();
-    FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
-    FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(2),
-        checked_int(status.size())}.emit(out);
-    out.out_copy_bytes(status);
-    av = out.get_bytes().as_chars();
-    buf_trans.buf.assign(av.data(), av.size());
-
-    clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-    RED_REQUIRE(report_message.messages.size() == 4);
-    RED_CHECK_SMEM(report_message.messages[3],
-        "TEXT_VERIFICATION direction=UP copy_id=2 status=ok"_av);
 }
