@@ -437,6 +437,7 @@ class ModuleManager : public MMApi
 {
     Inifile& ini;
     SessionReactor& session_reactor;
+    CryptoContext & cctx;
 
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
 
@@ -625,9 +626,10 @@ private:
     Theme & _theme;
 
 public:
-    ModuleManager(SessionReactor& session_reactor, Front & front, Font & _font, Theme & _theme, Inifile & ini, Random & gen, TimeObj & timeobj)
+    ModuleManager(SessionReactor& session_reactor, Front & front, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : ini(ini)
         , session_reactor(session_reactor)
+        , cctx(cctx)
         , front(front)
         , rail_client_execute(session_reactor, front, front,
             this->front.client_info.window_list_caps,
@@ -757,7 +759,7 @@ public:
                 }().c_str(),
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
-                this->ini.get_ref<cfg::context::auth_error_message>(),
+                this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
@@ -1082,7 +1084,7 @@ public:
             );
             this->set_mod(new_xup_mod);
 
-            this->ini.get_ref<cfg::context::auth_error_message>().clear();
+            this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded");
             this->connected = true;
             break;

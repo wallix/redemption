@@ -31,5 +31,5 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::context::auth_notify_rail_exec_flags,       vcfg::accessmode::set>,
     vcfg::var<cfg::context::auth_notify_rail_exec_exe_or_file, vcfg::accessmode::set>,
     vcfg::var<cfg::mod_rdp::server_cert,                   vcfg::accessmode::set>,
-    vcfg::var<cfg::mod_rdp::server_cert_response,          vcfg::accessmode::ask | vcfg::accessmode::get | vcfg::accessmode::get_ref>
+    vcfg::var<cfg::mod_rdp::server_cert_response,          vcfg::accessmode::ask | vcfg::accessmode::get | vcfg::accessmode::get_mutable_ref>
 >;

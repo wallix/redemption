@@ -214,7 +214,7 @@ RdpNegociation::RdpNegociation(
         )
     , nego(
         mod_rdp_params.enable_tls, mod_rdp_params.target_user,
-        mod_rdp_params.enable_nla, info.console_session,
+        mod_rdp_params.enable_nla, info.restricted_admin_mode,
         mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, timeobj,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
         tls_client_params,
@@ -867,7 +867,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 if (this->console_session) {
                     cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
                     cs_cluster.redirectedSessionID = 0;
-                    LOG(LOG_INFO, "Redirection of Console (SessionId=0)");
+                    LOG(LOG_INFO, "Requires session (Console) for administration");
                 }
             }
             if (bool(this->verbose & RDPVerbose::security)) {

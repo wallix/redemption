@@ -4,7 +4,7 @@
 
 namespace cfg {
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct globals::capture_chunk {
         static constexpr bool is_sesman_to_proxy = true;
@@ -20,7 +20,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: nla_login <br/>
     /// value{} <br/>
     struct globals::nla_auth_user {
@@ -37,7 +37,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: login <br/>
     /// value{} <br/>
     struct globals::auth_user {
@@ -54,7 +54,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: ip_client <br/>
     /// value{} <br/>
     struct globals::host {
@@ -71,7 +71,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: ip_target <br/>
     /// value{} <br/>
     struct globals::target {
@@ -88,7 +88,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct globals::target_device {
         static constexpr bool is_sesman_to_proxy = true;
@@ -104,7 +104,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct globals::device_id {
         static constexpr bool is_sesman_to_proxy = true;
@@ -120,7 +120,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct globals::primary_user_id {
         static constexpr bool is_sesman_to_proxy = true;
@@ -136,7 +136,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: target_login <br/>
     /// value{} <br/>
     struct globals::target_user {
@@ -153,7 +153,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct globals::target_application {
         static constexpr bool is_sesman_to_proxy = true;
@@ -169,7 +169,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct globals::target_application_account {
         static constexpr bool is_sesman_to_proxy = true;
@@ -185,7 +185,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct globals::target_application_password {
         static constexpr bool is_sesman_to_proxy = true;
@@ -347,7 +347,7 @@ namespace cfg {
         type value{600};
     };
     /// type: TraceType <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value = static_cast<type>(1) <br/>
     struct globals::trace_type {
         static constexpr bool is_sesman_to_proxy = true;
@@ -401,7 +401,7 @@ namespace cfg {
         type value = "inquisition";
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct globals::is_rec {
         static constexpr bool is_sesman_to_proxy = true;
@@ -417,7 +417,7 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// sesman::name: rec_path <br/>
     /// value{} <br/>
     struct globals::movie_path {
@@ -533,7 +533,7 @@ namespace cfg {
         type value{true};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{true} <br/>
     struct globals::unicode_keyboard_event_support {
         static constexpr bool is_sesman_to_proxy = true;
@@ -549,7 +549,7 @@ namespace cfg {
         type value{true};
     };
     /// type: std::chrono::milliseconds <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{1000} <br/>
     struct globals::mod_recv_timeout {
         static constexpr bool is_sesman_to_proxy = true;
@@ -653,7 +653,7 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// sesman::name: session_log_path <br/>
     /// value{} <br/>
     struct session_log::log_path {
@@ -701,7 +701,7 @@ namespace cfg {
     };
 
     /// type: unsigned int <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{0} <br/>
     struct client::keyboard_layout {
         static constexpr bool is_sesman_to_proxy = false;
@@ -899,7 +899,7 @@ namespace cfg {
     };
     /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct client::disable_tsk_switch_shortcuts {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1368,7 +1368,7 @@ namespace cfg {
     };
     /// Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority. <br/>
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value = "*" <br/>
     struct mod_rdp::allow_channels {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1385,7 +1385,7 @@ namespace cfg {
     };
     /// Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority. <br/>
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::deny_channels {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1463,7 +1463,7 @@ namespace cfg {
     };
     /// Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block. <br/>
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// sesman::name: rdp_bogus_sc_net_size <br/>
     /// value{true} <br/>
     struct mod_rdp::bogus_sc_net_size {
@@ -1480,7 +1480,7 @@ namespace cfg {
         type value{true};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::proxy_managed_drives {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1496,7 +1496,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct mod_rdp::ignore_auth_channel {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1538,7 +1538,7 @@ namespace cfg {
         type value = "";
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::alternate_shell {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1554,7 +1554,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::shell_arguments {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1570,7 +1570,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::shell_working_directory {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2320,7 +2320,7 @@ namespace cfg {
         type value{true};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{true} <br/>
     struct mod_rdp::enable_rdpdr_data_analysis {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2430,7 +2430,7 @@ namespace cfg {
         type value{false};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::enable_server_cert_external_validation {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2446,7 +2446,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::server_cert {
         static constexpr bool is_sesman_to_proxy = false;
@@ -2463,7 +2463,7 @@ namespace cfg {
     };
     /// empty string for wait, 'Ok' or error message <br/>
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_rdp::server_cert_response {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2537,7 +2537,7 @@ namespace cfg {
 
     /// Enable or disable the clipboard from client (client to server). <br/>
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_vnc::clipboard_up {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2554,7 +2554,7 @@ namespace cfg {
     };
     /// Enable or disable the clipboard from server (server to client). <br/>
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct mod_vnc::clipboard_down {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2589,7 +2589,7 @@ namespace cfg {
     };
     /// VNC server clipboard data encoding type. <br/>
     /// type: ClipboardEncodingType <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// sesman::name: vnc_server_clipboard_encoding_type <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_vnc::server_clipboard_encoding_type {
@@ -2606,7 +2606,7 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// type: VncBogusClipboardInfiniteLoop <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// sesman::name: vnc_bogus_clipboard_infinite_loop <br/>
     /// value = static_cast<type>(0) <br/>
     struct mod_vnc::bogus_clipboard_infinite_loop {
@@ -2834,6 +2834,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// type: RdpFileRecord <br/>
+    /// value = static_cast<type>(0) <br/>
+    struct file_verification::file_record {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "file_verification";
+        static constexpr char const * name = "file_record";
+        using type = RdpFileRecord;
+        using sesman_and_spec_type = RdpFileRecord;
+        using mapped_type = sesman_and_spec_type;
+        type value = static_cast<type>(0);
+    };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:log_if_accepted <br/>
@@ -3025,7 +3037,7 @@ namespace cfg {
     };
     /// 0 - replay once, 1 - loop replay <br/>
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct mod_replay::replay_on_loop {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3194,7 +3206,7 @@ namespace cfg {
         type value = "/tmp/";
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value = app_path(AppPath::Hash).to_string() <br/>
     struct video::hash_path {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3210,7 +3222,7 @@ namespace cfg {
         type value = app_path(AppPath::Hash).to_string();
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value = app_path(AppPath::RecordTmp).to_string() <br/>
     struct video::record_tmp_path {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3226,7 +3238,7 @@ namespace cfg {
         type value = app_path(AppPath::RecordTmp).to_string();
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value = app_path(AppPath::Record).to_string() <br/>
     struct video::record_path {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3287,7 +3299,7 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct video::rt_display {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3417,7 +3429,7 @@ namespace cfg {
     };
 
     /// type: std::array<unsigned char, 32> <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
     struct crypto::key0 {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3433,7 +3445,7 @@ namespace cfg {
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
     /// type: std::array<unsigned char, 32> <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
     struct crypto::key1 {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3731,7 +3743,7 @@ namespace cfg {
     };
 
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{true} <br/>
     struct remote_program::allow_resize_hosted_desktop {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3748,7 +3760,7 @@ namespace cfg {
     };
 
     /// type: Language <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value = static_cast<type>(0) <br/>
     struct translation::language {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3764,7 +3776,7 @@ namespace cfg {
         type value = static_cast<type>(0);
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct translation::password_en {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3780,7 +3792,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct translation::password_fr {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3811,7 +3823,7 @@ namespace cfg {
 
     /// Proxy session log id <br/>
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::psid {
         static constexpr bool is_sesman_to_proxy = false;
@@ -3827,7 +3839,7 @@ namespace cfg {
         type value{};
     };
     /// type: ColorDepth <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: bpp <br/>
     /// value = static_cast<type>(24) <br/>
     struct context::opt_bpp {
@@ -3844,7 +3856,7 @@ namespace cfg {
         type value = static_cast<type>(24);
     };
     /// type: uint16_t <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: height <br/>
     /// value{600} <br/>
     struct context::opt_height {
@@ -3861,7 +3873,7 @@ namespace cfg {
         type value{600};
     };
     /// type: uint16_t <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// sesman::name: width <br/>
     /// value{800} <br/>
     struct context::opt_width {
@@ -3889,7 +3901,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct context::selector {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3905,7 +3917,7 @@ namespace cfg {
         type value{false};
     };
     /// type: unsigned int <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{1} <br/>
     struct context::selector_current_page {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3921,7 +3933,7 @@ namespace cfg {
         type value{1};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::selector_device_filter {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3937,7 +3949,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::selector_group_filter {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3953,7 +3965,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::selector_proto_filter {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3969,7 +3981,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{0} <br/>
     struct context::selector_lines_per_page {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3985,7 +3997,7 @@ namespace cfg {
         type value{0};
     };
     /// type: unsigned int <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{1} <br/>
     struct context::selector_number_of_pages {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4001,7 +4013,7 @@ namespace cfg {
         type value{1};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::target_password {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4017,7 +4029,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::target_host {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4033,7 +4045,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::target_str {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4049,7 +4061,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::target_service {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4065,7 +4077,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{3389} <br/>
     struct context::target_port {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4081,7 +4093,7 @@ namespace cfg {
         type value{3389};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// sesman::name: proto_dest <br/>
     /// value = "RDP" <br/>
     struct context::target_protocol {
@@ -4098,7 +4110,7 @@ namespace cfg {
         type value = "RDP";
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::password {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4114,7 +4126,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::nla_password_hash {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4130,7 +4142,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::reporting {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4146,7 +4158,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_channel_answer {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4162,7 +4174,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::auth_channel_target {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4178,7 +4190,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4194,7 +4206,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::accept_message {
         static constexpr bool is_sesman_to_proxy = false;
@@ -4210,7 +4222,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::display_message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4226,7 +4238,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::rejected {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4242,7 +4254,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{false} <br/>
     struct context::authenticated {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4258,7 +4270,7 @@ namespace cfg {
         type value{false};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct context::keepalive {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4274,7 +4286,7 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::session_id {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4290,7 +4302,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// sesman::name: timeclose <br/>
     /// value{0} <br/>
     struct context::end_date_cnx {
@@ -4307,7 +4319,7 @@ namespace cfg {
         type value{0};
     };
     /// type: RdpModeConsole <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value = static_cast<type>(0) <br/>
     struct context::mode_console {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4323,7 +4335,7 @@ namespace cfg {
         type value = static_cast<type>(0);
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::real_target_device {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4339,7 +4351,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::authentication_challenge {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4355,7 +4367,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::ticket {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4371,7 +4383,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::comment {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4387,7 +4399,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::duration {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4403,7 +4415,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{0} <br/>
     struct context::duration_max {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4419,7 +4431,7 @@ namespace cfg {
         type value{0};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::waitinforeturn {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4435,7 +4447,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct context::showform {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4451,7 +4463,7 @@ namespace cfg {
         type value{false};
     };
     /// type: unsigned int <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{0} <br/>
     struct context::formflag {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4467,7 +4479,7 @@ namespace cfg {
         type value{0};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value = "login" <br/>
     struct context::module {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4483,7 +4495,7 @@ namespace cfg {
         type value = "login";
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct context::forcemodule {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4499,7 +4511,7 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::proxy_opt {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4515,7 +4527,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::pattern_kill {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4531,7 +4543,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::pattern_notify {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4547,7 +4559,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::opt_message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4563,7 +4575,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::login_message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4655,7 +4667,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::disconnect_reason {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4671,7 +4683,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{false} <br/>
     struct context::disconnect_reason_ack {
         static constexpr bool is_sesman_to_proxy = false;
@@ -4698,7 +4710,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{false} <br/>
     struct context::recording_started {
         static constexpr bool is_sesman_to_proxy = false;
@@ -4714,7 +4726,7 @@ namespace cfg {
         type value{false};
     };
     /// type: bool <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{false} <br/>
     struct context::rt_ready {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4741,7 +4753,7 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4757,7 +4769,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::auth_notify {
         static constexpr bool is_sesman_to_proxy = false;
@@ -4773,7 +4785,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::auth_notify_rail_exec_flags {
         static constexpr bool is_sesman_to_proxy = false;
@@ -4789,7 +4801,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::auth_notify_rail_exec_exe_or_file {
         static constexpr bool is_sesman_to_proxy = false;
@@ -4805,7 +4817,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_exec_result {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4821,7 +4833,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_flags {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4837,7 +4849,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_original_exe_or_file {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4853,7 +4865,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_exe_or_file {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4869,7 +4881,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_working_dir {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4885,7 +4897,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_arguments {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4901,7 +4913,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_account {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4917,7 +4929,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::auth_command_rail_exec_password {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4969,7 +4981,7 @@ namespace cfg {
         type value{true};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::session_probe_launch_error_message {
         static constexpr bool is_sesman_to_proxy = false;
@@ -4996,7 +5008,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{false} <br/>
     struct context::is_wabam {
         static constexpr bool is_sesman_to_proxy = true;
@@ -5012,7 +5024,7 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::pm_response {
         static constexpr bool is_sesman_to_proxy = true;
@@ -5028,7 +5040,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::pm_request {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5044,7 +5056,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::native_session_id {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5060,7 +5072,7 @@ namespace cfg {
         type value{};
     };
     /// type: bool <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{false} <br/>
     struct context::rd_shadow_available {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5076,7 +5088,7 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
-    /// sesman <-> proxy <br/>
+    /// sesman ⇔ proxy <br/>
     /// value{} <br/>
     struct context::rd_shadow_userdata {
         static constexpr bool is_sesman_to_proxy = true;
@@ -5092,7 +5104,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman -> proxy <br/>
+    /// sesman ⇒ proxy <br/>
     /// value{} <br/>
     struct context::rd_shadow_type {
         static constexpr bool is_sesman_to_proxy = true;
@@ -5108,7 +5120,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::rd_shadow_invitation_error_code {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5124,7 +5136,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::rd_shadow_invitation_error_message {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5140,7 +5152,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::rd_shadow_invitation_id {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5156,7 +5168,7 @@ namespace cfg {
         type value{};
     };
     /// type: std::string <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::rd_shadow_invitation_addr {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5172,7 +5184,7 @@ namespace cfg {
         type value{};
     };
     /// type: unsigned int <br/>
-    /// sesman <- proxy <br/>
+    /// sesman ⇐ proxy <br/>
     /// value{} <br/>
     struct context::rd_shadow_invitation_port {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5410,6 +5422,7 @@ struct file_verification
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
+, cfg::file_verification::file_record
 , cfg::file_verification::log_if_accepted
 { static constexpr bool is_section = true; };
 

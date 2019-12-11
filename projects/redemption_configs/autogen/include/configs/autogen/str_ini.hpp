@@ -57,7 +57,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #close_timeout = 600
 
 # Session record options.
-# min = 0, max = 3
+# min = 0, max = 2
 #   0: No encryption (faster).
 #   1: No encryption, with checksum.
 #   2: Encryption enabled.
@@ -157,7 +157,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #log_path = 
 
 # Keyboard Input Masking Level:
-# min = 0, max = 4
+# min = 0, max = 3
 #   0: keyboard input are not masked
 #   1: only passwords are masked
 #   2: passwords and unidentified texts are masked
@@ -243,7 +243,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #disable_tsk_switch_shortcuts = 0
 
 # Specifies the highest compression package support available on the front side
-# min = 0, max = 5
+# min = 0, max = 4
 #   0: The RDP bulk compression is disabled
 #   1: RDP 4.0 bulk compression
 #   2: RDP 5.0 bulk compression
@@ -306,7 +306,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #transform_glyph_to_bitmap = 0
 
-# min = 0, max = 3
+# min = 0, max = 2
 #   0: disabled
 #   1: pause key only
 #   2: all input events
@@ -348,7 +348,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
-# min = 0, max = 5
+# min = 0, max = 4
 #   0: The RDP bulk compression is disabled
 #   1: RDP 4.0 bulk compression
 #   2: RDP 5.0 bulk compression
@@ -478,7 +478,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #session_probe_enable_launch_mask = 1
 
 # Behavior on failure to launch Session Probe.
-# min = 0, max = 3
+# min = 0, max = 2
 #   0: ignore failure and continue.
 #   1: disconnect user.
 #   2: reconnect without Session Probe.
@@ -509,7 +509,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_keepalive_timeout = 5000
 
-# min = 0, max = 3
+# min = 0, max = 2
 #   0: ignore and continue
 #   1: disconnect user
 #   2: freeze connection and wait
@@ -610,7 +610,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
-# min = 0, max = 10
+# min = 0, max = 511
 #   0x000: none
 #   0x001: Java Access Bridge
 #   0x002: MS Active Accessbility
@@ -636,7 +636,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #server_cert_store = 1
 
 # Behavior of certificates check.
-# min = 0, max = 4
+# min = 0, max = 3
 #   0: fails if certificates doesn't match or miss.
 #   1: fails if certificate doesn't match, succeed if no known certificate.
 #   2: succeed if certificates exists (not checked), fails if missing.
@@ -646,7 +646,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #server_cert_check = 1
 
 # Warn if check allow connexion to server.
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
@@ -657,7 +657,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #server_access_allowed_message = 1
 
 # Warn that new server certificate file was created.
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
@@ -668,7 +668,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #server_cert_create_message = 1
 
 # Warn that server certificate file was successfully checked.
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
@@ -679,7 +679,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #server_cert_success_message = 1
 
 # Warn that server certificate file checking failed.
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
@@ -690,7 +690,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #server_cert_failure_message = 1
 
 # Warn that server certificate check raised some internal error.
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: nobody
 #   0x1: message sent to syslog
 #   0x2: User notified (through proxy interface)
@@ -791,7 +791,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #server_clipboard_encoding_type = latin1
 
-# min = 0, max = 3
+# min = 0, max = 2
 #   0: delayed
 #   1: duplicated
 #   2: continued
@@ -862,6 +862,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #clipboard_text_down = 0
+
+# min = 0, max = 2
+#   0: never
+#   1: always
+#   2: on verification failure
+#_advanced
+#file_record = 0
 
 # value: 0 or 1
 #_hidden
@@ -963,7 +970,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #capture_groupid = 33
 
 # Specifies the type of data to be captured:
-# min = 0, max = 5
+# min = 0, max = 15
 #   0x00: none
 #   0x01: png
 #   0x02: wrm
@@ -1012,7 +1019,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: none
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions
@@ -1023,7 +1030,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #disable_keyboard_log = 1
 
 # Disable clipboard log:
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: none
 #   0x1: disable clipboard log in syslog
 #   0x2: disable clipboard log in recorded sessions
@@ -1034,7 +1041,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #disable_clipboard_log = 1
 
 # Disable (redirected) file system log:
-# min = 0, max = 4
+# min = 0, max = 7
 #   0x0: none
 #   0x1: disable (redirected) file system log in syslog
 #   0x2: disable (redirected) file system log in recorded sessions
@@ -1049,14 +1056,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #rt_display = 0
 
 # The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
-# min = 0, max = 2
+# min = 0, max = 1
 #   0: 24-bit
 #   1: 16-bit
 #_advanced
 #wrm_color_depth_selection_strategy = 1
 
 # The compression method of native video capture:
-# min = 0, max = 3
+# min = 0, max = 2
 #   0: no compression
 #   1: gzip
 #   2: snappy
@@ -1084,7 +1091,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #notimestamp = 0
 
-# min = 0, max = 3
+# min = 0, max = 2
 #   0: Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
 #   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
 #   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session

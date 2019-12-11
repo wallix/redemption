@@ -96,13 +96,13 @@ public:
             auto cpp_type = get_type<cpp::type_>(infos);
             auto sesman_type = get_type<sesman::type_>(infos);
 
-            char const* dialog = " <-> ";
+            char const* dialog = " ⇔ ";
 
             if ((properties & sesman_io::rw) == sesman_io::sesman_to_proxy) {
-                dialog = " <- ";
+                dialog = " ⇐ ";
             }
             else if ((properties & sesman_io::rw) == sesman_io::proxy_to_sesman) {
-                dialog = " -> ";
+                dialog = " ⇒ ";
             }
 
             this->out

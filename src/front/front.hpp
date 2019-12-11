@@ -26,6 +26,7 @@
 #pragma once
 
 #include "core/log_id.hpp"
+#include "capture/capture_paths_context.hpp"
 #include "capture/capture.hpp"
 #include "capture/params_from_ini.hpp"
 #include "capture/capture_params.hpp"
@@ -83,7 +84,6 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
-#include "core/date_dir_from_filename.hpp"
 #include "core/error.hpp"
 #include "core/font.hpp"
 #include "core/front_api.hpp"
@@ -921,22 +921,16 @@ public:
         VideoParams video_params = video_params_from_ini(std::chrono::seconds::zero(), ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        std::string record_path = ini.get<cfg::video::record_path>().as_string();
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        std::string hash_path = ini.get<cfg::video::hash_path>().as_string();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-        {
-            DateDirFromFilename d(ini.get<cfg::session_log::log_path>());
-            if (!d.has_date()) {
-                LOG(LOG_WARNING, "Front::can_be_start_capture: failed to extract date");
-            }
+        CapturePathsContext capture_paths_ctx(
+            ini.get<cfg::video::record_path>().as_string(),
+            ini.get<cfg::video::hash_path>().as_string(),
+            ini.get<cfg::session_log::log_path>()
+        );
 
-            hash_path.append(d.date_path().begin(), d.date_path().end());
-            record_path.append(d.date_path().begin(), d.date_path().end());
-        }
-
-        for (auto* s : {&record_path, &hash_path}) {
+        for (auto* s : {&capture_paths_ctx.record_path, &capture_paths_ctx.hash_path}) {
             if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
                 LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", *s);
             }
@@ -1016,7 +1010,7 @@ public:
             this->cctx,
             this->gen,
             this->fstat,
-            hash_path.c_str(),
+            capture_paths_ctx.hash_path.c_str(),
             ini
         );
 
@@ -1024,7 +1018,7 @@ public:
             this->session_reactor.get_current_time(),
             basename,
             record_tmp_path,
-            record_path.c_str(),
+            capture_paths_ctx.record_path.c_str(),
             groupid,
             &this->report_message,
             ini.get<cfg::video::smart_video_cropping>(),
@@ -1281,6 +1275,12 @@ public:
 //                LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
 //                             " %zu bytes remains", x224_stream.get_capacity() - cr_tpdu._header_size);
 //            }
+
+            if (cr_tpdu.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED) {
+                LOG(LOG_INFO, "Front::incoming: Client requires Restricted Administration mode");
+                this->client_info.restricted_admin_mode = true;
+            }
+
             this->clientRequestedProtocols = cr_tpdu.rdp_neg_requestedProtocols;
         }
 
@@ -1501,9 +1501,11 @@ public:
                     {
                         GCC::UserData::CSCluster cs_cluster;
                         cs_cluster.recv(f.payload);
-                        this->client_info.console_session =
-                            (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID))
-                            && (0 == cs_cluster.redirectedSessionID);
+                        if (   (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID))
+                            && (0 == cs_cluster.redirectedSessionID)) {
+                            LOG(LOG_INFO, "Front::incoming: Client requires session (Console) for administration");
+                            this->client_info.console_session = true;
+                        }
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             cs_cluster.log("Front::incoming: Receiving from Client");
                         }

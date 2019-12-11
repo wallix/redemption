@@ -115,7 +115,7 @@ public:
     }
 
     template<class T>
-    typename T::type & get_ref() noexcept {
+    typename T::type & get_mutable_ref() noexcept {
         static_assert(!T::is_proxy_to_sesman, "reference on write variable isn't safe");
         return static_cast<T&>(this->variables).value;
     }

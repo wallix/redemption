@@ -357,14 +357,14 @@ struct CppConfigWriterBase
 
         if ((properties & sesman_io::rw) == sesman_io::sesman_to_proxy) {
             if constexpr (!is_convertible_v<Pack, connection_policy_t>) {
-                this->tab(); this->out() << "/// sesman -> proxy <br/>\n";
+                this->tab(); this->out() << "/// sesman ⇒ proxy <br/>\n";
             }
         }
         else if ((properties & sesman_io::rw) == sesman_io::proxy_to_sesman) {
-            this->tab(); this->out() << "/// sesman <- proxy <br/>\n";
+            this->tab(); this->out() << "/// sesman ⇐ proxy <br/>\n";
         }
         else if ((properties & sesman_io::rw) == sesman_io::rw) {
-            this->tab(); this->out() << "/// sesman <-> proxy <br/>\n";
+            this->tab(); this->out() << "/// sesman ⇔ proxy <br/>\n";
         }
 
         if constexpr (is_convertible_v<Pack, sesman::name>) {

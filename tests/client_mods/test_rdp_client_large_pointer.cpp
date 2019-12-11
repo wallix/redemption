@@ -31,6 +31,7 @@
 #include "core/report_message_api.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
@@ -106,7 +107,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -135,13 +136,14 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     SessionReactor session_reactor;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
+    ModRdpFactory mod_rdp_factory;
 
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
-        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
-        ini, nullptr, nullptr);
+        ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
@@ -211,7 +213,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -240,13 +242,14 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     SessionReactor session_reactor;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
+    ModRdpFactory mod_rdp_factory;
 
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
-        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
-        ini, nullptr, nullptr);
+        ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);

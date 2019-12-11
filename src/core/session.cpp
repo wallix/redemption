@@ -156,20 +156,20 @@ class Session
 
     int check_exception(Error const& e, Inifile& ini)
     {
-        if ((e.id == ERR_SESSION_PROBE_LAUNCH) 
-        ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) 
-        ||  (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) 
-        ||  (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) 
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) 
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) 
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) 
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) 
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) 
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) 
+        if ((e.id == ERR_SESSION_PROBE_LAUNCH)
+        ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
+        ||  (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)
+        ||  (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG)
         ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
             if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
                 SessionProbeOnLaunchFailure::retry_without_session_probe) {
-                   ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
+                   ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
                    return 1; // retry
             }
             return 2; // warn authentifier if possible before closing
@@ -182,7 +182,7 @@ class Session
             return 1; // retry
         }
         else if (e.id == ERR_RAIL_NOT_ENABLED) {
-            ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+            ini.get_mutable_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
             return 1; // retry
         }
         else if (e.id == ERR_RDP_SERVER_REDIR){
@@ -307,7 +307,7 @@ class Session
             if (session_reactor.has_front_event()) {
                 session_reactor.execute_callbacks(mm.get_callback());
             }
-    
+
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
                 while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
@@ -641,7 +641,7 @@ public:
             Theme theme;
             ::load_theme(theme, theme_name);
 
-            ModuleManager mm(session_reactor, front, font, theme, this->ini, rnd, timeobj);
+            ModuleManager mm(session_reactor, front, font, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;

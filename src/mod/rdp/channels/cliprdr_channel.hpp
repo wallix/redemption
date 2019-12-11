@@ -62,6 +62,9 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
 
     FileValidatorService * file_validator;
 
+    FdxCapture * fdx_capture;
+    bool always_file_record;
+
     enum class Direction : bool
     {
         FileFromServer,
@@ -69,13 +72,20 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     };
 
 public:
+    struct FileRecord
+    {
+        FdxCapture * fdx_capture;
+        bool always_file_record;
+    };
+
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
-        FileValidatorService * file_validator_service)
+        FileValidatorService * file_validator_service,
+        FileRecord filre_record)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
@@ -90,7 +100,32 @@ public:
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
     , file_validator(file_validator_service)
+    , fdx_capture(filre_record.fdx_capture)
+    , always_file_record(filre_record.always_file_record)
     {}
+
+    ~ClipboardVirtualChannel()
+    {
+        try {
+            for (ClipboardSideData const* side_data : {
+                &this->clip_data.client_data,
+                &this->clip_data.server_data
+            }) {
+                for (auto& file : side_data->get_file_contents_list()) {
+                    auto& file_data = file.file_data;
+                    if (file_data.tfl_file) {
+                        auto& tfl_file = *file_data.tfl_file;
+                        if (tfl_file.trans.is_open()) {
+                            this->fdx_capture->close_tfl(tfl_file, file_data.file_name);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Error const& err) {
+            LOG(LOG_ERR, "ClipboardVirtualChannel: error on close tfls: %s", err.errmsg());
+        }
+    }
 
     void empty_client_clipboard() {
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
@@ -353,17 +388,18 @@ public:
             }
         };
 
+        using ValidationResult = LocalFileValidatorProtocol::ValidationResult;
+
         while (receive_data()){
+            bool is_accepted = false;
             switch (this->file_validator->last_result_flag()) {
-                case LocalFileValidatorProtocol::ValidationResult::Wait:
+                case ValidationResult::Wait:
                     return;
-                case LocalFileValidatorProtocol::ValidationResult::IsAccepted:
-                    if (!this->params.validator_params.log_if_accepted) {
-                        continue;
-                    }
+                case ValidationResult::IsAccepted:
+                    is_accepted = true;
                     [[fallthrough]];
-                case LocalFileValidatorProtocol::ValidationResult::IsRejected:
-                case LocalFileValidatorProtocol::ValidationResult::Error:
+                case ValidationResult::IsRejected:
+                case ValidationResult::Error:
                     ;
             }
 
@@ -373,17 +409,20 @@ public:
             bool is_client_text = this->clip_data.client_data.remove_text_id(file_validator_id);
             bool is_server_text = not is_client_text
                                && this->clip_data.server_data.remove_text_id(file_validator_id);
+            bool is_text = is_client_text || is_server_text;
 
-            if (is_client_text || is_server_text) {
-                auto str_direction = is_client_text ? "UP"_av : "DOWN"_av;
-                char buf[24];
-                unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
-                    underlying_cast(file_validator_id));
-                this->report_message.log6(LogId::TEXT_VERIFICATION, this->session_reactor.get_current_time(), {
-                    KVLog("direction"_av, str_direction),
-                    KVLog("copy_id"_av, {buf, n}),
-                    KVLog("status"_av, result_content),
-                });
+            if (is_text) {
+                if (!is_accepted || this->params.validator_params.log_if_accepted) {
+                    auto str_direction = is_client_text ? "UP"_av : "DOWN"_av;
+                    char buf[24];
+                    unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
+                        underlying_cast(file_validator_id));
+                    this->report_message.log6(LogId::TEXT_VERIFICATION, this->session_reactor.get_current_time(), {
+                        KVLog("direction"_av, str_direction),
+                        KVLog("copy_id"_av, {buf, n}),
+                        KVLog("status"_av, result_content),
+                    });
+                }
                 continue;
             }
 
@@ -408,15 +447,28 @@ public:
             auto& file_data = file->file_data;
             file_data.file_validator_id = FileValidatorId();
 
-            auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
+            if (!is_accepted || this->params.validator_params.log_if_accepted) {
+                auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
-            this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
-                KVLog("direction"_av, str_direction),
-                KVLog("file_name"_av, file_data.file_name),
-                KVLog("status"_av, result_content),
-            });
+                this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
+                    KVLog("direction"_av, str_direction),
+                    KVLog("file_name"_av, file_data.file_name),
+                    KVLog("status"_av, result_content),
+                });
+            }
 
             if (file->is_wait_validator()) {
+                if (file_data.tfl_file) {
+                    if (this->always_file_record
+                     || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
+                    ) {
+                        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                    }
+                    else {
+                        this->fdx_capture->cancel_tfl(*file_data.tfl_file);
+                    }
+                }
+
                 if (direction == Direction::FileFromClient) {
                     this->clip_data.server_data.remove_file(file);
                 }
@@ -514,15 +566,29 @@ private:
 
         auto* file = side_data.find_file_by_stream_id(from_server.file_contents_stream_id);
 
+        if (!file) {
+            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
+                " Unknowns stream id %u", from_server.file_contents_stream_id);
+            throw Error(ERR_RDP_PROTOCOL);
+        }
+
         if (in_header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
-            if (file && bool(file->file_data.file_validator_id) && file->is_file_range()) {
-                this->file_validator->send_eof(file->file_data.file_validator_id);
-                file->set_wait_validator();
+            if (file->is_file_range()) {
+                auto& file_data = file->file_data;
+
+                if (bool(file_data.file_validator_id)) {
+                    this->file_validator->send_eof(file_data.file_validator_id);
+                    file->set_wait_validator();
+                }
             }
         }
-        else if (file && file->is_file_range()) {
+        else if (file->is_file_range()) {
             auto& file_data = file->file_data;
             auto data_fragment = file->receive_data(chunk.remaining_bytes());
+
+            if (file_data.tfl_file) {
+                file_data.tfl_file->trans.send(data_fragment);
+            }
 
             if (bool(file_data.file_validator_id)) {
                 this->file_validator->send_data(file_data.file_validator_id, data_fragment);
@@ -530,15 +596,28 @@ private:
 
             if ((flags & CHANNELS::CHANNEL_FLAG_LAST) && file_data.file_offset == file_data.file_size) {
                 this->log_file_info(file_data, from_remote_session);
+
+                if (file_data.tfl_file) {
+                    file_data.tfl_file->trans.send(data_fragment);
+                }
+
                 if (bool(file_data.file_validator_id)) {
                     this->file_validator->send_eof(file_data.file_validator_id);
                 }
                 else {
+                    if (file_data.tfl_file) {
+                        if (this->always_file_record) {
+                            this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name);
+                        }
+                        else {
+                            this->fdx_capture->cancel_tfl(*file_data.tfl_file);
+                        }
+                    }
                     side_data.remove_file(file);
                 }
             }
         }
-        else if (file && file->is_file_size()) {
+        else /*if (file->is_file_size())*/ {
             if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
                     " Unsupported partial FILECONTENTS_SIZE packet");
@@ -547,11 +626,6 @@ private:
             check_throw(chunk, 8, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
             this->file_descr_list[safe_int(file->file_group_id)].file_size = chunk.in_uint64_le();
             side_data.remove_file(file);
-        }
-        else {
-            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
-                " Unknowns stream id %u", from_server.file_contents_stream_id);
-            throw Error(ERR_RDP_PROTOCOL);
         }
 
         return true;
@@ -644,11 +718,17 @@ private:
                         "ClipboardVirtualChannel::Validator::open_file");
                     file_validator_id = this->file_validator->open_file(desc.file_name, target_name);
                 }
+
                 side_data.push_file_content_range(
                     stream_id, lindex,
                     file_contents_request_pdu.has_optional_clipDataId(),
                     file_contents_request_pdu.clipDataId(),
-                    file_validator_id, desc.file_name, desc.file_size,
+                    file_validator_id,
+                    this->fdx_capture
+                        ? std::unique_ptr<FdxCapture::TflFile>(new FdxCapture::TflFile(
+                            this->fdx_capture->new_tfl()))
+                        : std::unique_ptr<FdxCapture::TflFile>(),
+                    desc.file_name, desc.file_size,
                     file_contents_request_pdu.cbRequested());
             }
         }
@@ -680,10 +760,6 @@ private:
                     this->verbose,
                     is_from_remote_session ? "client" : "server"
                 );
-
-                if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    this->clip_data.requestedFormatId = 0;
-                }
 
                 this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
             }
@@ -733,6 +809,10 @@ private:
                     }
                 }
             }
+        }
+
+        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            this->clip_data.requestedFormatId = 0;
         }
 
         return true;

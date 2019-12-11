@@ -76,9 +76,7 @@ $(find src/ -name '*.cpp' \
     -a -not -path 'src/keyboard/*' \
     -a -not -path 'src/system/emscripten/*' \
     -a -not -path 'src/utils/crypto/*' \
-    -a -not -path 'src/main/*' \
-    -a -not -name app_path.cpp \
-    -a -not -name log_as_logemasm.cpp) \
+    -a -not -name app_path.cpp) \
 $(find tests/ -name 'test_*.cpp' \
     -a -not -path 'tests/includes/*' \
     -a -not -path 'tests/keyboard/*' \
@@ -101,7 +99,8 @@ $(find tests/ -name 'test_*.cpp' \
 -DREDEMPTION_DECL_LOG_TEST \
 -DBOOST_AUTO_TEST_MAIN \
 -DBOOST_TEST_DYN_LINK \
--DFAST_CHECK=1
+-DFAST_CHECK=1 \
+-DCLANG_TIDY
 
 # highlighting
 # sed "s#`pwd`/##" | colout '(^[pst][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w

@@ -113,6 +113,7 @@ struct FileValidatorService;
 
 #include "mod/mod_api.hpp"
 
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
@@ -342,6 +343,7 @@ public:
         friend class mod_rdp_channels;
     } drive;
 
+    ModRdpFactory& mod_rdp_factory;
 
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
@@ -390,7 +392,8 @@ public:
         ChannelsAuthorizations&& channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, FileValidatorService * file_validator_service)
+        SessionReactor & session_reactor, FileValidatorService * file_validator_service,
+        ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(std::move(channels_authorizations))
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -411,6 +414,7 @@ public:
     , clipboard(mod_rdp_params.clipboard_params)
     , file_system(mod_rdp_params.file_system_params)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
+    , mod_rdp_factory(mod_rdp_factory)
     , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
@@ -567,8 +571,12 @@ private:
             this->session_reactor,
             base_params,
             std::move(cvc_params),
-            file_validator_service
-            );
+            file_validator_service,
+            ClipboardVirtualChannel::FileRecord{
+                this->mod_rdp_factory.get_fdx_capture(),
+                this->mod_rdp_factory.always_file_record
+            }
+        );
     }
 
 
@@ -1937,8 +1945,12 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
       , [[maybe_unused]] FileValidatorService * file_validator_service
+      , ModRdpFactory& mod_rdp_factory
     )
-        : channels(std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor, file_validator_service)
+        : channels(
+            std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
+            report_message, gen, metrics, session_reactor, file_validator_service,
+            mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)

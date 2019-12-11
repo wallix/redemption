@@ -199,6 +199,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("ie_monitoring", "Monitor Internet Explorer event")
       .value("group_membership", "Inspect group membership of user")
     ;
+
+    e.enumeration_list("RdpFileRecord")
+      .value("never")
+      .value("always")
+      .value("on_verification_failure")
+    ;
 }
 
 }

@@ -729,6 +729,12 @@ clipboard_text_up = boolean(default=False)
 #_hidden
 clipboard_text_down = boolean(default=False)
 
+#   0: never
+#   1: always
+#   2: on verification failure
+#_advanced
+file_record = option(0, 1, 2, default=0)
+
 #_hidden
 log_if_accepted = boolean(default=True)
 

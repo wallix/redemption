@@ -30,6 +30,7 @@
 #include "core/report_message_api.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
@@ -92,7 +93,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
                                 , global_font()
                                 , theme
                                 , server_auto_reconnect_packet
-                                , ini.get_ref<cfg::context::close_box_extra_message>()
+                                , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                 , RDPVerbose{}
                                 );
     mod_rdp_params.enable_tls                      = false;
@@ -116,7 +117,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
     NullReportMessage report_message;
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
-        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){
@@ -189,7 +190,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                , RDPVerbose{}
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -219,11 +220,12 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullLicenseStore license_store;
     SessionReactor session_reactor;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
+    ModRdpFactory mod_rdp_factory;
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
-        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
-        nullptr, nullptr);
+        nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
@@ -292,7 +294,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                , RDPVerbose{}
                                );
     mod_rdp_params.enable_tls                      = false;
@@ -316,7 +318,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
     NullReportMessage report_message;
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
-        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){
@@ -379,7 +381,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                , RDPVerbose{}
                                );
     mod_rdp_params.enable_tls                      = false;
@@ -403,7 +405,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     NullReportMessage report_message;
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
-        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){

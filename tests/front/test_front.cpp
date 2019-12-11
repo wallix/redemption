@@ -40,6 +40,7 @@
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_factory.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channel_list.hpp"
 
@@ -195,7 +196,7 @@ RED_AUTO_TEST_CASE(TestFront)
                                 , global_font()
                                 , theme
                                 , server_auto_reconnect_packet
-                                , ini.get_ref<cfg::context::close_box_extra_message>()
+                                , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                 , to_verbose_flags(0)
                                 );
     mod_rdp_params.device_id                       = "device_id";
@@ -223,14 +224,15 @@ RED_AUTO_TEST_CASE(TestFront)
     NullLicenseStore license_store;
     class RDPMetrics * metrics = nullptr;
     const ChannelsAuthorizations channels_authorizations{};
+    ModRdpFactory mod_rdp_factory;
 
     FileValidatorService * file_validator_service = nullptr;
 
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, session_reactor, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service);
+        t, session_reactor, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
     RED_CHECK_EQUAL(front.screen_info().width, 1024);
@@ -356,8 +358,8 @@ RED_AUTO_TEST_CASE(TestFront2)
     //                            , 2
     //                            , ini.get<cfg::font>()
     //                            , ini.get<cfg::theme>()
-    //                            , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-    //                            , ini.get_ref<cfg::context::close_box_extra_message>()
+    //                            , ini.get_mutable_ref<cfg::context::server_auto_reconnect_packet>()
+    //                            , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
     //                            , to_verbose_flags(0)
     //                            );
     // mod_rdp_params.device_id                       = "device_id";
@@ -383,7 +385,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // front.clear_channels();
     //
     // NullAuthentifier authentifier;
-    // auto mod = new_mod_rdp(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
+    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
     //
     // if (verbose > 2){
     //     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -527,8 +529,8 @@ RED_AUTO_TEST_CASE(TestFront3)
                                , 2
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , ini.get_mutable_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -554,7 +556,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     front.clear_channels();
 
     NullAuthentifier authentifier;
-    mod_rdp mod(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    mod_rdp mod(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
 
     if (verbose > 2){

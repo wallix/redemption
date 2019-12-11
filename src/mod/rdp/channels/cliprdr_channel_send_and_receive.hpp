@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "capture/fdx_capture.hpp"
 #include "core/channel_list.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
@@ -59,7 +60,7 @@ struct ClipboardSideData
 
         enum class Status : uint8_t
         {
-            // WithId: file_data with optional clip_data_id
+            // *WithId: file_data with optional clip_data_id
             // WaitContinuation*: file transfered to several packet
             WaitValidator,
             WaitDataWithId,
@@ -81,6 +82,8 @@ struct ClipboardSideData
             uint64_t file_size;
             uint64_t file_offset;
             uint64_t file_size_requested;
+
+            std::unique_ptr<FdxCapture::TflFile> tfl_file;
 
             SslSha256_Delayed sha256;
         };
@@ -235,7 +238,8 @@ public:
 
     void push_file_content_range(
         StreamId stream_id, FileGroupId file_group_id,
-        bool has_clip_data_id, uint32_t clip_data_id, FileValidatorId file_validator_id,
+        bool has_clip_data_id, uint32_t clip_data_id,
+        FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl_file,
         std::string const& filename, uint64_t filesize, uint64_t file_size_requested)
     {
         bool active_lock = (has_clip_data_id && this->has_lock_id(clip_data_id));
@@ -245,7 +249,7 @@ public:
                 : FileContent::Status::WaitData,
             FileContent::FileData{
                 file_validator_id, clip_data_id, active_lock, filename, filesize, 0,
-                std::min(file_size_requested, filesize), {}
+                std::min(file_size_requested, filesize), std::move(tfl_file), {}
             }
         });
         this->file_contents_list.back().file_data.sha256.init();
@@ -309,6 +313,11 @@ public:
             }
         }
         return nullptr;
+    }
+
+    std::vector<FileContent> const& get_file_contents_list() const noexcept
+    {
+        return this->file_contents_list;
     }
 };
 

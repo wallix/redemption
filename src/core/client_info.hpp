@@ -100,6 +100,7 @@ struct ClientInfo
     int brush_cache_code = 0; /* 0 = no cache 1 = 8x8 standard cache
                            2 = arbitrary dimensions */
     bool console_session = false;
+    bool restricted_admin_mode = false;
 
     bool remote_program          = false;
     bool remote_program_enhanced = false;

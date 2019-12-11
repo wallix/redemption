@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, session_reactor,
-            base_params, d.cb_params, ipca_service);
+            base_params, d.cb_params, ipca_service, {nullptr, false});
 
         RED_CHECK_EXCEPTION_ERROR_ID(
             CHECK_CHANNEL(t, clipboard_virtual_channel),
@@ -149,7 +149,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, session_reactor,
-        base_params, clipboard_virtual_channel_params, ipca_service);
+        base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -188,7 +188,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, session_reactor,
-        base_params, clipboard_virtual_channel_params, ipca_service);
+        base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
 // Recv done on channel (28) n bytes
@@ -395,7 +395,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, session_reactor,
-        base_params, clipboard_virtual_channel_params, &file_validator_service);
+        base_params, clipboard_virtual_channel_params, &file_validator_service, {nullptr, false});
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
