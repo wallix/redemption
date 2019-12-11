@@ -641,7 +641,11 @@ public:
             Theme theme;
             ::load_theme(theme, theme_name);
 
-            ModuleManager mm(session_reactor, front, font, theme, this->ini, cctx, rnd, timeobj);
+            ClientExecute rail_client_execute(session_reactor, front, front,
+                                            front.client_info.window_list_caps,
+                                            ini.get<cfg::debug::mod_internal>() & 1);
+
+            ModuleManager mm(session_reactor, front, rail_client_execute, font, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;

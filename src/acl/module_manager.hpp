@@ -595,7 +595,7 @@ public:
 private:
     RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
     Front & front;
-    ClientExecute rail_client_execute;
+    ClientExecute & rail_client_execute;
     ModOSD mod_osd;
     Random & gen;
     TimeObj & timeobj;
@@ -626,14 +626,12 @@ private:
     Theme & _theme;
 
 public:
-    ModuleManager(SessionReactor& session_reactor, Front & front, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+    ModuleManager(SessionReactor& session_reactor, Front & front, ClientExecute & rail_client_execute, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : ini(ini)
         , session_reactor(session_reactor)
         , cctx(cctx)
         , front(front)
-        , rail_client_execute(session_reactor, front, front,
-            this->front.client_info.window_list_caps,
-            ini.get<cfg::debug::mod_internal>() & 1)
+        , rail_client_execute(rail_client_execute)
         , mod_osd(this->get_mod_wrapper(), this->front, this->front.get_palette(), this->front, this->front.client_info, _font, _theme, this->rail_client_execute, this->winapi, this->ini)
         , gen(gen)
         , timeobj(timeobj)
