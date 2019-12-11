@@ -1280,6 +1280,9 @@ public:
                 LOG(LOG_INFO, "Front::incoming: Client requires Restricted Administration mode");
                 this->client_info.restricted_admin_mode = true;
             }
+            else {
+                this->client_info.restricted_admin_mode = false;
+            }
 
             this->clientRequestedProtocols = cr_tpdu.rdp_neg_requestedProtocols;
         }
@@ -1505,6 +1508,9 @@ public:
                             && (0 == cs_cluster.redirectedSessionID)) {
                             LOG(LOG_INFO, "Front::incoming: Client requires session (Console) for administration");
                             this->client_info.console_session = true;
+                        }
+                        else {
+                            this->client_info.console_session = false;
                         }
                         if (bool(this->verbose & Verbose::basic_trace)) {
                             cs_cluster.log("Front::incoming: Receiving from Client");
