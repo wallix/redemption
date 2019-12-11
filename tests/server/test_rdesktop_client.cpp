@@ -72,7 +72,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //listener.run(false);
 
     Inifile ini;
-    ini.set<cfg::debug::front>(511);
+    ini.set<cfg::debug::front>(511 | (1 << 29) | (1 << 30));
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
     ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
