@@ -339,7 +339,7 @@ RdpNegociation::RdpNegociation(
     }
     , nego(
         mod_rdp_params.enable_tls, mod_rdp_params.target_user,
-        mod_rdp_params.enable_nla, info.console_session,
+        mod_rdp_params.enable_nla, info.restricted_admin_mode,
         mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, timeobj,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
@@ -895,7 +895,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
             GCC::UserData::CSCluster cs_cluster;
             {
-                LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
+                LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO, "CS_Cluster: Server Redirection Supported");
                 if (!this->nego.tls){
                     cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
                     cs_cluster.flags |= (2 << 2); // REDIRECTION V3
@@ -912,7 +912,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 if (this->console_session) {
                     cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
                     cs_cluster.redirectedSessionID = 0;
-                    LOG(LOG_INFO, "Redirection of Console (SessionId=0)");
+                    LOG(LOG_INFO, "Requires session (Console) for administration");
                 }
             }
             if (bool(this->verbose & RDPVerbose::security)) {

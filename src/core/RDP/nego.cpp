@@ -478,7 +478,7 @@ RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
 
 void RdpNego::send_negotiation_request(OutTransport trans)
 {
-    LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
+    LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu: ...");
     char cookie[256];
     snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
     char * cookie_or_token = this->lb_info ? this->lb_info : cookie;
@@ -495,10 +495,17 @@ void RdpNego::send_negotiation_request(OutTransport trans)
     StaticOutStream<65536> stream;
     X224::CR_TPDU_Send(stream, cookie_or_token,
                        (this->tls || this->nla) ? (X224::RDP_NEG_REQ) : (X224::RDP_NEG_NONE),
-                       this->restricted_admin_mode ? X224::RESTRICTED_ADMIN_MODE_REQUIRED : 0,
+                       [](bool restricted_admin_mode) -> uint8_t {
+                            if (restricted_admin_mode) {
+                                LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu: Requiring Restricted Administration mode");
+                                return X224::RESTRICTED_ADMIN_MODE_REQUIRED;
+                            }
+
+                            return 0;
+                       }(this->restricted_admin_mode),
                        rdp_neg_requestedProtocols);
     trans.send(stream.get_data(), stream.get_offset());
-    LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
+    LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu: done.");
 }
 
 bool RdpNego::enhanced_rdp_security_is_in_effect() const
