@@ -120,8 +120,8 @@ void ModuleManager::create_mod_rdp(
       , ini.get<cfg::context::target_host>().c_str()
       , "0.0.0.0"   // client ip is silenced
       , key_flags
-      , this->load_font()
-      , this->load_theme()
+      , this->_font
+      , this->_theme
       , server_auto_reconnect_packet
       , ini.get_ref<cfg::context::close_box_extra_message>()
       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
@@ -614,8 +614,8 @@ void ModuleManager::create_mod_rdp(
                 adjusted_client_execute_rect,
                 std::move(new_mod),
                 rail_client_execute,
-                this->load_font(),
-                this->load_theme(),
+                this->_font,
+                this->_theme,
                 client_info.cs_monitor,
                 !ini.get<cfg::globals::is_rec>()
             );
@@ -644,11 +644,11 @@ void ModuleManager::create_mod_rdp(
     if (ini.get<cfg::globals::bogus_refresh_rect>() &&
         ini.get<cfg::globals::allow_using_multiple_monitors>() &&
         (client_info.cs_monitor.monitorCount > 1)) {
-        this->mod->rdp_suppress_display_updates();
-        this->mod->rdp_allow_display_updates(0, 0,
+        this->get_mod_wrapper().mod->rdp_suppress_display_updates();
+        this->get_mod_wrapper().mod->rdp_allow_display_updates(0, 0,
             client_info.screen_info.width, client_info.screen_info.height);
     }
-    this->mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
+    this->get_mod_wrapper().mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
     ini.get_ref<cfg::context::auth_error_message>().clear();
     this->connected = true;

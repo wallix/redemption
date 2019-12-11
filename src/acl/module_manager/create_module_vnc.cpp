@@ -158,8 +158,8 @@ void ModuleManager::create_mod_vnc(
                 adjusted_client_execute_rect,
                 std::move(new_mod),
                 rail_client_execute,
-                this->load_font(),
-                this->load_theme(),
+                this->_font,
+                this->_theme,
                 client_info.cs_monitor,
                 false
             );

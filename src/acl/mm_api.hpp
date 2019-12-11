@@ -23,25 +23,68 @@
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/null/null.hpp"
 
 class rdp_api;
 class AuthApi;
 class ReportMessageApi;
 
-class MMApi
+struct ModWrapper
 {
-protected:
-    mod_api* mod{nullptr};
+    null_mod no_mod;
+    mod_api* mod = &no_mod;
 
-public:
     mod_api* get_mod()
     {
         return this->mod;
     }
 
+    bool has_mod() const {
+        return (this->mod != &this->no_mod);
+    }
+
+    void remove_mod()
+    {
+        delete this->mod;
+        this->mod = &this->no_mod;
+    }
+
+    bool is_up_and_running() const {
+        return this->has_mod() && this->mod->is_up_and_running();
+    }
+
     [[nodiscard]] mod_api const* get_mod() const
     {
         return this->mod;
+    }
+    
+    void set_mod(mod_api* mod)
+    {
+        // TODO: check we are using no_mod, otherwise it is an error
+        this->mod = mod;
+    }
+};
+
+
+class MMApi
+{
+protected:
+    ModWrapper mw;
+public:
+
+    ModWrapper & get_mod_wrapper() 
+    {
+        return mw;
+    }
+
+    mod_api* get_mod()
+    {
+        return this->mw.get_mod();
+    }
+
+    [[nodiscard]] mod_api const* get_mod() const
+    {
+        return this->mw.get_mod();
     }
 
 public:
@@ -64,7 +107,7 @@ public:
         return this->connected;
     }
     virtual bool is_up_and_running() {
-        return this->mod && this->mod->is_up_and_running();
+        return this->mw.is_up_and_running();
     }
     virtual void check_module() {}
 

@@ -41,6 +41,7 @@
 #include "utils/stream.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/log_siem.hpp"
+#include "utils/load_theme.hpp"
 
 #include <array>
 
@@ -190,7 +191,30 @@ class Session
         return 0;
     }
 
-    void start_acl(std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, BackEvent_t signal, Fstat & fstat)
+    void start_acl_activate(std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, BackEvent_t signal, Fstat & fstat)
+    {
+        // authentifier never opened or closed by me (close box)
+        try {
+            // now is authentifier start time
+            acl = std::make_unique<Acl>(
+                ini, Session::acl_connect(ini.get<cfg::globals::authfile>(), (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0)), now.tv_sec, cctx, rnd, fstat
+            );
+            const auto sck = acl->auth_trans.sck;
+            fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+            authentifier.set_acl_serial(&acl->acl_serial);
+            session_reactor.set_next_event(BACK_EVENT_NEXT);
+        }
+        catch (...) {
+            signal = BackEvent_t(session_reactor.signal);
+            session_reactor.signal = 0;
+            mm.invoke_close_box(false,"No authentifier available", signal, authentifier, authentifier);
+            if (!session_reactor.signal || signal) {
+                session_reactor.signal = signal;
+            }
+        }
+    }
+
+    void start_acl_running(std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, BackEvent_t signal, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         try {
@@ -605,7 +629,19 @@ public:
 
         try {
             TimeSystem timeobj;
-            ModuleManager mm(session_reactor, front, this->ini, rnd, timeobj);
+            
+            // load font for internal pages
+            Font font = Font(app_path(AppPath::DefaultFontFile),
+                ini.get<cfg::globals::spark_view_specific_glyph_width>());;
+
+            // load theme for internal pages
+            auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
+            LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
+
+            Theme theme;
+            ::load_theme(theme, theme_name);
+
+            ModuleManager mm(session_reactor, front, font, theme, this->ini, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
@@ -694,7 +730,7 @@ public:
                 case Front::UP_AND_RUNNING:
                 {
                     if (!acl && !mm.last_module) {
-                        this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+                        this->start_acl_running(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, front, authentifier);
@@ -708,7 +744,7 @@ public:
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     SessionReactor::EnableGraphics enable_graphics{false};
                     if (!acl && front.is_in_nla() && !mm.last_module) {
-                        this->start_acl(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+                        this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
                     run_session = this->front_starting(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, ini, mm, front, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {

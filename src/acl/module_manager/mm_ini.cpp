@@ -70,13 +70,11 @@ void MMIni::invoke_close_box(
     if (auth_error_message) {
         this->ini.set<cfg::context::auth_error_message>(auth_error_message);
     }
-    if (this->mod) {
-        try {
-            this->mod->disconnect();
-        }
-        catch (Error const& e) {
-            LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-        }
+    try {
+        this->get_mod_wrapper().mod->disconnect();
+    }
+    catch (Error const& e) {
+        LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
     }
 
     this->remove_mod();
