@@ -171,7 +171,7 @@ public:
     , front(front)
     , palette(palette)
     , graphics(graphics)
-    , front_client_info(front_client_info) 
+    , front_client_info(front_client_info)
     , rail_client_execute(rail_client_execute)
     , winapi(winapi)
     , ini(ini)
@@ -487,7 +487,9 @@ class ModuleManager : public MMApi
 
             Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-            if (this->mm.ini.template get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
+            Inifile const& ini = this->mm.ini;
+
+            if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
                 bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
                 if (this->target_info_is_shown && f12_released) {
                     // LOG(LOG_INFO, "Hide info");
@@ -498,19 +500,19 @@ class ModuleManager : public MMApi
                     // LOG(LOG_INFO, "Show info");
                     std::string msg;
                     msg.reserve(64);
-                    if (this->mm.ini.template get<cfg::client::show_target_user_in_f12_message>()) {
-                        msg  = this->mm.ini.get<cfg::globals::target_user>();
+                    if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
+                        msg  = ini.get<cfg::globals::target_user>();
                         msg += "@";
                     }
-                    msg += this->mm.ini.get<cfg::globals::target_device>();
-                    const uint32_t enddate = this->mm.ini.get<cfg::context::end_date_cnx>();
+                    msg += ini.get<cfg::globals::target_device>();
+                    const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
                     if (enddate) {
                         const auto now = time(nullptr);
                         const auto elapsed_time = enddate - now;
                         // only if "reasonable" time
                         if (elapsed_time < 60*60*24*366L) {
                             msg += "  [";
-                            add_time_before_closing(msg, elapsed_time, Translator(this->mm.ini));
+                            add_time_before_closing(msg, elapsed_time, Translator(ini));
                             msg += ']';
                         }
                     }
@@ -680,7 +682,7 @@ private:
         }
 
         this->clear_osd_message();
-        
+
         this->get_mod_wrapper().set_mod(mod.get());
 
         this->rail_module_host_mod_ptr = nullptr;
@@ -1157,7 +1159,7 @@ public:
         auto & module_cstr = this->ini.get<cfg::context::module>();
         auto module_id = get_module_id(module_cstr);
         LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
-        
+
         if (this->connected && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
             LOG(LOG_INFO, "===========> Connection close asked by admin while connected");
             if (this->ini.get<cfg::context::auth_error_message>().empty()) {
