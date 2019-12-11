@@ -97,7 +97,7 @@
           "name": "cipher_string",
           "type": "string",
           "default": "",
-          "description": "TLSv1.2 additional ciphers supported by client"
+          "description": "TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."
         },
         {
           "name": "show_common_cipher_list",
