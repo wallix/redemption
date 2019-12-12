@@ -228,7 +228,7 @@ extern "C"
         char const * record_path, char const * hash_path, int groupid, char const * sid);
 
     // Mwrm3::Direction
-    enum class ScytaleOpenTflDirection
+    enum class ScytaleOpenTflDirection : uint8_t
     {
         unknown,
         client_to_server,

@@ -131,12 +131,13 @@ pattern     <- (S (function / using / endexpr))+
 function    <- "REDEMPTION_LIB_EXPORT" ws { [^;]+ ';' } -> strfunc
 using       <- "using " {| {id} S '=' S type S ({ '[' [^]]* ']' })? |} -> using S ';'
 typedef     <- "typedef " {| type ws {id} |} -> typedef S ';'
-endexpr     <- comment / forward / class
+endexpr     <- comment / forward / class / enum
 comment     <- comment1 / comment2
 comment1    <- '//' '/'? ' '? { [^%nl]* } -> doc %nl
 comment2    <- '/*' { (!'*/' .)* } -> multidoc '*/'
 forward     <- ('class' / 'struct') ws { id } -> declareclass S ';'
 class       <- {| 'struct' ws { id } S '{' memvars S '}' S ';' |} -> newclass
+enum        <- { 'enum ' [^;]+ ';' %s? } -> multidoc
 memvars     <- {| ( {| S (comment S)* type S {id} S ';' |} )* |}
 
 ]=] .. pcommun
