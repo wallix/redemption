@@ -23,7 +23,7 @@
 
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
-#include "acl/mm_api.hpp"
+#include "acl/module_manager.hpp"
 #include "configs/config.hpp"
 #include "core/log_id.hpp"
 #include "core/date_dir_from_filename.hpp"
@@ -524,7 +524,7 @@ void AclSerializer::close_session_log()
 }
 
 bool AclSerializer::check(
-    AuthApi & authentifier, ReportMessageApi & report_message, MMApi & mm,
+    AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm,
     time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity)
 {
     // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",

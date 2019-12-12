@@ -18,46 +18,102 @@
   Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
 */
 
-int main(){}
-
 //#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
-//#include "acl/authentifier.hpp"
-//#include "acl/module_manager/mm_ini.hpp"
-//#include "core/session_reactor.hpp"
-//#include "utils/genfstat.hpp"
-//#include "test_only/lcg_random.hpp"
-//#include "test_only/transport/test_transport.hpp"
+#include "acl/authentifier.hpp"
+#include "core/session_reactor.hpp"
+#include "utils/genfstat.hpp"
+#include "acl/module_manager.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "test_only/front/fake_front.hpp"
+#include "RAIL/client_execute.hpp"
 
-//inline void init_keys(CryptoContext & cctx)
-//{
-//    cctx.set_master_key(cstr_array_view(
-//        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
-//        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
-//        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-//        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-//    ));
-//    cctx.set_hmac_key(cstr_array_view(
-//         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-//         "\x49\x21\x57\x87\x47\x74\x08\x8a"
-//         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-//         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-//    ));
-//}
+inline void init_keys(CryptoContext & cctx)
+{
+    cctx.set_master_key(cstr_array_view(
+        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+    ));
+    cctx.set_hmac_key(cstr_array_view(
+         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+         "\x49\x21\x57\x87\x47\x74\x08\x8a"
+         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+    ));
+}
+
+int main(int argc, char* argv[]){ return 0;}
+
+// Test Disabled because when called in test 
+// ModuleManager should not try to actually connect to target
+// which is what the current module is actually doing.
+// We shoudl probably provide hime with some connection provider object to avoid that
+
+//TODO: FIX TESTS LATER
 
 //RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 //{
 //    BackEvent_t signal       = BACK_EVENT_NONE;
 //    BackEvent_t front_signal = BACK_EVENT_NONE;
 
+//    LCGRandom rnd1(0);
+//    LCGTime timeobj;
+//    CryptoContext cctx1;
+//    init_keys(cctx1);
+
 //    Inifile ini;
 
 //    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
 //    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
 
+//    ClientInfo info;
+//    info.keylayout             = 0x040C;
+//    info.console_session       = false;
+//    info.brush_cache_code      = 0;
+//    info.screen_info.bpp       = BitsPerPixel{16};
+//    info.screen_info.width     = 1024;
+//    info.screen_info.height    = 768;
+//    info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
+//                                 | PERF_DISABLE_FULLWINDOWDRAG
+//                                 | PERF_DISABLE_MENUANIMATIONS;
+
+//    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+//    info.order_caps.orderSupportExFlags = 0xFFFF;
+
+//    FakeFront front(info.screen_info);
+
+//    // load font for internal pages
+//    Font font = Font(app_path(AppPath::DefaultFontFile),
+//        ini.get<cfg::globals::spark_view_specific_glyph_width>());;
+
+//    // load theme for internal pages
+//    auto & theme_name = ini.get<cfg::internal_mod::theme>();
+//    LOG_IF(ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
+
+//    Theme theme;
+//    ::load_theme(theme, theme_name);
+
 //    SessionReactor session_reactor;
-//    MMIni mm(session_reactor, ini);
+
+//    ClientExecute rail_client_execute(session_reactor, front.gd(), front,
+//                                    info.window_list_caps,
+//                                    ini.get<cfg::debug::mod_internal>() & 1);
+
+//    ModWrapper mod_wrapper;
+
+//    windowing_api* winapi = nullptr;
+//    
+//    BGRPalette palette = BGRPalette::classic_332();
+
+//    ModOSD mod_osd(mod_wrapper, front, palette, front.gd(), info, font, theme, rail_client_execute, winapi, ini);
+
+//    Keymap2 keymap;
+
+//    ModuleManager mm(session_reactor, front, front.gd(), keymap, info, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, ini, cctx1, rnd1, timeobj);
 
 //    auto outdata =
 //        // Time: 10011
@@ -105,13 +161,13 @@ int main(){}
 //    ;
 
 //    Fstat fstat;
-//    LCGRandom rnd(0);
 //    CryptoContext cctx;
 //    init_keys(cctx);
+//    LCGRandom rnd(0);
 
 //    TestTransport acl_trans(indata, outdata);
 //    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, AclSerializer::Verbose::variable);
-//    Authentifier sesman(ini, cctx, Authentifier::Verbose::none);
+//    Authentifier sesman(ini, cctx, Authentifier::Verbose::state);
 //    sesman.set_acl_serial(&acl_serial);
 //    signal = BACK_EVENT_NEXT;
 

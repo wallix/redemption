@@ -37,7 +37,7 @@
 
 
 class Inifile;
-class MMApi;
+class ModuleManager;
 class AuthApi;
 
 
@@ -180,7 +180,7 @@ public:
     void close_session_log();
 
     bool check(
-        AuthApi & authentifier, ReportMessageApi & report_message, MMApi & mm,
+        AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm,
         time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
     );
 

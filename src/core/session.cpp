@@ -651,7 +651,7 @@ public:
             
             ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, font, theme, rail_client_execute, winapi, this->ini);
 
-            ModuleManager mm(session_reactor, front, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, this->ini, cctx, rnd, timeobj);
+            ModuleManager mm(session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;

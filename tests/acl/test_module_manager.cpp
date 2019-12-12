@@ -24,59 +24,59 @@
 
 #include "acl/module_manager.hpp"
 
-RED_AUTO_TEST_CASE(TestModuleManagerNextMod)
-{
-    Inifile ini;
+//RED_AUTO_TEST_CASE(TestModuleManagerNextMod)
+//{
+//    Inifile ini;
 
-    SessionReactor session_reactor;
-    MMIni mm(session_reactor, ini);
+//    SessionReactor session_reactor;
+//    MMIni mm(session_reactor, ini);
 
-    ini.set_acl<cfg::context::module>("login");
+//    ini.set_acl<cfg::context::module>("login");
 
-    int res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_LOGIN);
+//    int res = mm.next_module();
+//    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_LOGIN);
 
-    ini.set_acl<cfg::globals::auth_user>("user");
-    ini.set_acl<cfg::context::password>("securepassword");
+//    ini.set_acl<cfg::globals::auth_user>("user");
+//    ini.set_acl<cfg::context::password>("securepassword");
 
-    ini.set<cfg::context::selector>(true);
-    ini.set<cfg::globals::target_device>("redjenkins-vbox@127::0>.0.1 internal@display_message replay@autotest");
-    ini.set_acl<cfg::globals::target_user>("rdp internal internal");
-    ini.set_acl<cfg::context::module>("selector");
-    res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_SELECTOR);
+//    ini.set<cfg::context::selector>(true);
+//    ini.set<cfg::globals::target_device>("redjenkins-vbox@127::0>.0.1 internal@display_message replay@autotest");
+//    ini.set_acl<cfg::globals::target_user>("rdp internal internal");
+//    ini.set_acl<cfg::context::module>("selector");
+//    res = mm.next_module();
+//    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_SELECTOR);
 
-    ini.ask<cfg::context::password>();
-    ini.set_acl<cfg::context::module>("login");
-    res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_LOGIN);
+//    ini.ask<cfg::context::password>();
+//    ini.set_acl<cfg::context::module>("login");
+//    res = mm.next_module();
+//    RED_CHECK_EQUAL(res, MODULE_INTERNAL_WIDGET_LOGIN);
 
-    ini.set_acl<cfg::globals::auth_user>("user");
-    ini.set_acl<cfg::context::password>("securepassword");
-    ini.set<cfg::globals::target_device>("redjenkins-vbox@127::0>.0.1 internal@display_message replay@autotest");
-    ini.set_acl<cfg::globals::target_user>("rdp internal internal");
-    ini.set<cfg::context::selector>(false);
-    ini.set_acl<cfg::context::module>("confirm");
-    res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE);
+//    ini.set_acl<cfg::globals::auth_user>("user");
+//    ini.set_acl<cfg::context::password>("securepassword");
+//    ini.set<cfg::globals::target_device>("redjenkins-vbox@127::0>.0.1 internal@display_message replay@autotest");
+//    ini.set_acl<cfg::globals::target_user>("rdp internal internal");
+//    ini.set<cfg::context::selector>(false);
+//    ini.set_acl<cfg::context::module>("confirm");
+//    res = mm.next_module();
+//    RED_CHECK_EQUAL(res, MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE);
 
-    ini.set_acl<cfg::context::display_message>("message");
-    ini.set_acl<cfg::context::module>("valid");
-    res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_DIALOG_VALID_MESSAGE);
-    ini.set_acl<cfg::context::accept_message>("message");
+//    ini.set_acl<cfg::context::display_message>("message");
+//    ini.set_acl<cfg::context::module>("valid");
+//    res = mm.next_module();
+//    RED_CHECK_EQUAL(res, MODULE_INTERNAL_DIALOG_VALID_MESSAGE);
+//    ini.set_acl<cfg::context::accept_message>("message");
 
-    ini.set_acl<cfg::context::target_password>("securepassword");
-    ini.set_acl<cfg::context::module>("close");
-    res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_INTERNAL_CLOSE);
+//    ini.set_acl<cfg::context::target_password>("securepassword");
+//    ini.set_acl<cfg::context::module>("close");
+//    res = mm.next_module();
+//    RED_CHECK_EQUAL(res, MODULE_INTERNAL_CLOSE);
 
-    ini.set_acl<cfg::context::authenticated>(true);
-    ini.set<cfg::context::target_protocol>("RDP");
-    ini.set_acl<cfg::context::module>("RDP");
-    res = mm.next_module();
-    RED_CHECK_EQUAL(res, MODULE_RDP);
-}
+//    ini.set_acl<cfg::context::authenticated>(true);
+//    ini.set<cfg::context::target_protocol>("RDP");
+//    ini.set_acl<cfg::context::module>("RDP");
+//    res = mm.next_module();
+//    RED_CHECK_EQUAL(res, MODULE_RDP);
+//}
 
 RED_AUTO_TEST_CASE(TestStrTimeBeforeClosing)
 {

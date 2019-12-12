@@ -26,8 +26,6 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/file_system_license_store.hpp"
-#include "acl/mm_api.hpp"
-#include "acl/module_manager/mm_ini.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "configs/config.hpp"
 #include "core/log_id.hpp"
@@ -68,6 +66,163 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "acl/module_manager/enums.hpp"
+#include "core/back_event_t.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
+
+#include "acl/module_manager/enums.hpp"
+#include "configs/config.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
+#include "core/session_reactor.hpp"
+
+
+//void new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/)
+//{
+//    LOG(LOG_INFO, "new mod %d", target_module);
+//    switch (target_module) {
+//    case MODULE_VNC:
+//    case MODULE_XUP:
+//    case MODULE_RDP:
+//        this->connected = true;
+//        break;
+//    default:
+//        break;
+//    }
+//}
+
+//void MMIni::invoke_close_box(
+//    bool enable_close_box,
+//    const char * auth_error_message, BackEvent_t & signal,
+//    AuthApi & authentifier, ReportMessageApi & report_message)
+//{
+//    LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
+//    this->last_module = true;
+//    if (auth_error_message) {
+//        this->ini.set<cfg::context::auth_error_message>(auth_error_message);
+//    }
+//    try {
+//        this->get_mod_wrapper().mod->disconnect();
+//    }
+//    catch (Error const& e) {
+//        LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
+//    }
+
+//    this->remove_mod();
+//    if (enable_close_box) {
+//        this->new_mod(MODULE_INTERNAL_CLOSE, authentifier, report_message);
+//        signal = BACK_EVENT_NONE;
+//    }
+//    else {
+//        signal = BACK_EVENT_STOP;
+//    }
+//}
+
+
+
+class rdp_api;
+class AuthApi;
+class ReportMessageApi;
+
+struct ModWrapper
+{
+    null_mod no_mod;
+    mod_api* mod = &no_mod;
+
+    mod_api* get_mod()
+    {
+        return this->mod;
+    }
+
+    bool has_mod() const {
+        return (this->mod != &this->no_mod);
+    }
+
+    void remove_mod()
+    {
+        delete this->mod;
+        this->mod = &this->no_mod;
+    }
+
+    bool is_up_and_running() const {
+        return this->has_mod() && this->mod->is_up_and_running();
+    }
+
+    [[nodiscard]] mod_api const* get_mod() const
+    {
+        return this->mod;
+    }
+    
+    void set_mod(mod_api* mod)
+    {
+        // TODO: check we are using no_mod, otherwise it is an error
+        this->mod = mod;
+    }
+};
+
+
+class MMApi
+{
+protected:
+    ModWrapper & mw;
+public:
+
+    ModWrapper & get_mod_wrapper() 
+    {
+        return mw;
+    }
+
+    mod_api* get_mod()
+    {
+        return this->mw.get_mod();
+    }
+
+    [[nodiscard]] mod_api const* get_mod() const
+    {
+        return this->mw.get_mod();
+    }
+
+public:
+    bool last_module{false};
+    bool connected{false};
+
+    MMApi(ModWrapper & mod_wrapper) : mw(mod_wrapper) {}
+    virtual ~MMApi() = default;
+    virtual void remove_mod() = 0;
+    virtual void new_mod(ModuleIndex target_module, AuthApi &, ReportMessageApi &) = 0;
+    virtual ModuleIndex next_module() = 0;
+    // virtual int get_mod_from_protocol() = 0;
+    virtual void invoke_close_box(bool /*enable_close_box*/, const char * auth_error_message, BackEvent_t & signal, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) {
+    
+        (void)auth_error_message;
+        (void)signal;
+        this->last_module = true;
+    }
+    virtual bool is_connected() {
+        return this->connected;
+    }
+    virtual bool is_up_and_running() {
+        return this->mw.is_up_and_running();
+    }
+    virtual void check_module() {}
+
+    [[nodiscard]] virtual rdp_api* get_rdp_api() const { return nullptr; }
+};
+
+static inline Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors)
+{
+    Rect widget_rect(0, 0, width - 1, height - 1);
+    if (monitors.monitorCount) {
+        Rect rect                 = monitors.get_rect();
+        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
+
+        widget_rect.x  = abs(rect.x);
+        widget_rect.y  = abs(rect.y);
+        widget_rect.cx = primary_monitor_rect.cx;
+        widget_rect.cy = primary_monitor_rect.cy;
+    }
+
+    return widget_rect;
+}
 
 inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Translator tr)
 {
@@ -564,7 +719,7 @@ public:
     gdi::GraphicApi & get_graphic_wrapper()
     {
         gdi::GraphicApi& gd = this->mod_osd.get_protected_rect().isempty()
-          ? static_cast<gdi::GraphicApi&>(this->front) : this->mod_osd;
+          ? this->graphics : this->mod_osd;
         if (this->rail_module_host_mod_ptr) {
             return this->rail_module_host_mod_ptr->proxy_gd(gd);
         }
@@ -596,7 +751,10 @@ public:
 
 private:
     RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
-    Front & front;
+    FrontAPI & front;
+    gdi::GraphicApi & graphics;
+    Keymap2 & keymap;
+    ClientInfo & client_info;
     ClientExecute & rail_client_execute;
     ModOSD & mod_osd;
     Random & gen;
@@ -628,12 +786,15 @@ private:
     Theme & _theme;
 
 public:
-    ModuleManager(SessionReactor& session_reactor, Front & front, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+    ModuleManager(SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : MMApi(mod_wrapper)
         , ini(ini)
         , session_reactor(session_reactor)
         , cctx(cctx)
         , front(front)
+        , graphics(graphics)
+        , keymap(keymap)
+        , client_info(client_info)
         , rail_client_execute(rail_client_execute)
         , mod_osd(mod_osd)
         , gen(gen)
@@ -674,11 +835,11 @@ public:
 private:
     void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
     {
-        while (this->front.keymap.nb_char_available()) {
-            this->front.keymap.get_char();
+        while (this->keymap.nb_char_available()) {
+            this->keymap.get_char();
         }
-        while (this->front.keymap.nb_kevent_available()) {
-            this->front.keymap.get_kevent();
+        while (this->keymap.nb_kevent_available()) {
+            this->keymap.get_kevent();
         }
 
         this->clear_osd_message();
@@ -699,7 +860,7 @@ public:
                 get_module_name(target_module), target_module);
         }
 
-        this->rail_client_execute.enable_remote_program(this->front.client_info.remote_program);
+        this->rail_client_execute.enable_remote_program(this->client_info.remote_program);
 
         switch (target_module) {
         case MODULE_INTERNAL_CLOSE:
@@ -739,8 +900,8 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
             this->set_mod(new Bouncer2Mod(
                 this->session_reactor,
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
             ));
             LOG_IF(bool(this->verbose & Verbose::new_mod),
                 LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
@@ -749,8 +910,7 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
             this->set_mod(new ReplayMod(
                 this->session_reactor,
-                this->front,
-                this->front,
+                this->graphics, this->front,
                 [this]{
                     auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()
                                     + this->ini.get<cfg::globals::target_user>();
@@ -759,8 +919,8 @@ public:
                     }
                     return movie_path;
                 }().c_str(),
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
                 this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
@@ -775,8 +935,8 @@ public:
             this->set_mod(new WidgetTestMod(
                 this->session_reactor,
                 this->front,
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
                 this->_font
             ));
             LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
@@ -785,8 +945,8 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
             this->set_mod(new TestCardMod(
                 this->session_reactor,
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
                 this->_font,
                 false
             ));
@@ -801,14 +961,13 @@ public:
             this->set_mod(new SelectorMod(
                 this->ini,
                 this->session_reactor,
-                this->front,
-                this->front,
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
+                this->graphics, this->front,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
                 this->rail_client_execute.adjust_rect(get_widget_rect(
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
-                    this->front.client_info.cs_monitor
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
+                    this->client_info.cs_monitor
                 )),
                 this->rail_client_execute,
                 this->_font,
@@ -830,14 +989,13 @@ public:
             this->set_mod(new FlatWabCloseMod(
                 this->ini,
                 this->session_reactor,
-                this->front,
-                this->front,
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
+                this->graphics, this->front,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
                 this->rail_client_execute.adjust_rect(get_widget_rect(
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
-                    this->front.client_info.cs_monitor
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
+                    this->client_info.cs_monitor
                 )),
                 this->rail_client_execute,
                 this->_font,
@@ -855,14 +1013,13 @@ public:
                 this->set_mod(new InteractiveTargetMod(
                     this->ini,
                     this->session_reactor,
-                    this->front,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
+                    this->graphics, this->front,
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
+                        this->client_info.screen_info.width,
+                        this->client_info.screen_info.height,
+                        this->client_info.cs_monitor
                     )),
                     this->rail_client_execute,
                     this->_font,
@@ -880,14 +1037,13 @@ public:
                 this->set_mod(new FlatDialogMod(
                     this->ini,
                     this->session_reactor,
-                    this->front,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
+                    this->graphics, this->front,
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
+                        this->client_info.screen_info.width,
+                        this->client_info.screen_info.height,
+                        this->client_info.cs_monitor
                     )),
                     caption,
                     message,
@@ -908,14 +1064,13 @@ public:
                 this->set_mod(new FlatDialogMod(
                     this->ini,
                     this->session_reactor,
-                    this->front,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
+                    this->graphics, this->front,
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
+                        this->client_info.screen_info.width,
+                        this->client_info.screen_info.height,
+                        this->client_info.cs_monitor
                     )),
                     caption,
                     message,
@@ -942,14 +1097,13 @@ public:
                 this->set_mod(new FlatDialogMod(
                     this->ini,
                     this->session_reactor,
-                    this->front,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
+                    this->graphics, this->front,
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
+                        this->client_info.screen_info.width,
+                        this->client_info.screen_info.height,
+                        this->client_info.cs_monitor
                     )),
                     caption,
                     message,
@@ -973,14 +1127,13 @@ public:
                 this->set_mod(new FlatWaitMod(
                     this->ini,
                     this->session_reactor,
-                    this->front,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
+                    this->graphics, this->front,
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
+                        this->client_info.screen_info.width,
+                        this->client_info.screen_info.height,
+                        this->client_info.cs_monitor
                     )),
                     caption,
                     message,
@@ -998,14 +1151,13 @@ public:
                 this->set_mod(new TransitionMod(
                     this->ini,
                     this->session_reactor,
-                    this->front,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
+                    this->graphics, this->front,
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
+                        this->client_info.screen_info.width,
+                        this->client_info.screen_info.height,
+                        this->client_info.cs_monitor
                     )),
                     this->rail_client_execute,
                     this->_font,
@@ -1045,14 +1197,13 @@ public:
                 this->session_reactor,
                 username,
                 "", // password
-                this->front,
-                this->front,
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
+                this->graphics, this->front,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
                 this->rail_client_execute.adjust_rect(get_widget_rect(
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
-                    this->front.client_info.cs_monitor
+                    this->client_info.screen_info.width,
+                    this->client_info.screen_info.height,
+                    this->client_info.cs_monitor
                 )),
                 this->rail_client_execute,
                 this->_font,
@@ -1079,8 +1230,8 @@ public:
                 sock_mod_barrier(),
                 this->session_reactor,
                 this->front,
-                this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
                 safe_int(this->ini.get<cfg::context::opt_bpp>())
                 // TODO: shouldn't alls mods have access to sesman authentifier ?
             );
@@ -1095,16 +1246,16 @@ public:
         case MODULE_RDP:
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
-                this->front, this->front, this->front.client_info,
-                this->rail_client_execute, this->front.keymap.key_flags,
+                this->graphics, this->front, this->client_info,
+                this->rail_client_execute, this->keymap.key_flags,
                 this->server_auto_reconnect_packet);
             break;
 
         case MODULE_VNC:
             this->create_mod_vnc(
                 authentifier, report_message, this->ini,
-                this->front, this->front, this->front.client_info,
-                this->rail_client_execute, this->front.keymap.key_flags);
+                this->graphics, this->front, this->client_info,
+                this->rail_client_execute, this->keymap.key_flags);
             break;
 
         default:
