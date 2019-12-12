@@ -111,7 +111,6 @@ exe rdpproxy :
   <library>src/acl/acl_serializer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/capture_paths_context.o
@@ -520,7 +519,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/acl/acl_serializer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/capture_paths_context.o
@@ -661,7 +659,6 @@ test-run tests/acl/test_authentifier :
   <library>src/acl/acl_serializer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/capture_paths_context.o
@@ -869,7 +866,6 @@ test-run tests/acl/test_license_api :
 test-run tests/acl/test_mm_api :
   $(REDEMPTION_TEST_PATH)/acl/test_mm_api.cpp
 :
-  <covfile>src/acl/mm_api.hpp
 ;
 test-run tests/acl/test_module_manager :
   $(REDEMPTION_TEST_PATH)/acl/test_module_manager.cpp
@@ -887,7 +883,6 @@ test-run tests/acl/test_module_manager :
   <library>src/RAIL/client_execute.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/capture_paths_context.o
@@ -2666,7 +2661,6 @@ test-run tests/core/test_mainloop :
   <library>src/acl/acl_serializer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/capture_paths_context.o
@@ -2810,7 +2804,6 @@ test-run tests/core/test_session :
   <library>src/acl/acl_serializer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/capture_paths_context.o
@@ -5804,7 +5797,6 @@ obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/acl_serializer.o : $(REDEMPTION_SRC_PATH)/acl/acl_serializer.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
-obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
 obj src/capture/capture_paths_context.o : $(REDEMPTION_SRC_PATH)/capture/capture_paths_context.cpp ;
@@ -6305,7 +6297,6 @@ alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_authentifier.coverage : tests/acl/test_authentifier.coverage ;
 alias test_dispatch_report_message.coverage : tests/acl/test_dispatch_report_message.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
-alias test_mm_api.coverage : tests/acl/test_mm_api.coverage ;
 alias test_module_manager.coverage : tests/acl/test_module_manager.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
 alias test_capture.coverage : tests/capture/test_capture.coverage ;
