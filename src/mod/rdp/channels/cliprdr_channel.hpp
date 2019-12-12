@@ -107,7 +107,7 @@ public:
     ~ClipboardVirtualChannel()
     {
         try {
-            for (ClipboardSideData const* side_data : {
+            for (ClipboardSideData* side_data : {
                 &this->clip_data.client_data,
                 &this->clip_data.server_data
             }) {
@@ -116,9 +116,11 @@ public:
                     if (file_data.tfl_file) {
                         auto& tfl_file = *file_data.tfl_file;
                         if (tfl_file.trans.is_open()) {
+                            if (!file_data.sig.has_digest()) {
+                                file_data.sig.broken();
+                            }
                             this->fdx_capture->close_tfl(tfl_file, file_data.file_name,
-                                // TODO
-                                Mwrm3::Sha256Signature{""_av});
+                                Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
                         }
                     }
                 }
@@ -465,9 +467,11 @@ public:
                     if (this->always_file_record
                      || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
                     ) {
+                        if (!file_data.sig.has_digest()) {
+                            file_data.sig.broken();
+                        }
                         this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
-                            // TODO
-                            Mwrm3::Sha256Signature{""_av});
+                            Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
                     }
                     else {
                         this->fdx_capture->cancel_tfl(*file_data.tfl_file);
@@ -610,8 +614,7 @@ private:
                     if (file_data.tfl_file) {
                         if (this->always_file_record || file_data.on_failure) {
                             this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
-                                // TODO
-                                Mwrm3::Sha256Signature{""_av});
+                                Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
                         }
                         else {
                             this->fdx_capture->cancel_tfl(*file_data.tfl_file);
@@ -865,10 +868,12 @@ private:
                 : "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION"
             );
 
-        uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
+        if (!file_data.sig.has_digest()) {
+            file_data.sig.broken();
+        }
 
-        file_data.sha256.final(digest);
-
+        static_assert(SslSha256::DIGEST_LENGTH == decltype(file_data.sig)::digest_len);
+        auto& digest = file_data.sig.digest();
         char digest_s[128];
         size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"

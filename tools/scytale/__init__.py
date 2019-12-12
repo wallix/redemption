@@ -275,6 +275,7 @@ lib.scytale_fdx_writer_get_qhashhex.restype = c_char_p
 lib.scytale_fdx_writer_get_fhashhex.argtypes = [c_void_p]
 lib.scytale_fdx_writer_get_fhashhex.restype = c_char_p
 
+# \return 1 if not open, 0 is ok, -1 if error
 # int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle);
 lib.scytale_fdx_writer_close.argtypes = [c_void_p]
 lib.scytale_fdx_writer_close.restype = c_int

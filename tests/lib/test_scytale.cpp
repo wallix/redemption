@@ -436,35 +436,33 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         Data{"encryption", true, true,
 
-            "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6""5\xa4(\xfe\x8b\xed`C\xf8\x13\x18\x0e@_"
-            "PV\xa2\xe6\b\x94\x0f\xd2@\xbf\xe1\xe0\x10\x00\x00\x00\xb0""CA|H\xbb\xb3r\xbeZ"
-            "\xbf\x1e\xfas\x0e\x91MFCW\x07\x00\x00\x00"_av,
+            "WCFM\x01\x00\x00\x00xX\xaeR\xb0\xael\x17hZ\x13\xbd\xa0Sz\xf3X\x12{\xce\x90"
+            "\x8e\xa8\xadH@\x87""1\x80\x1f""E\xb6\x10\x00\x00\x00\xbb\xa3\xde~\xaa\xe7"
+            "b\x96s8\"\x97=\xf6\xf8JMFCW\x07\x00\x00\x00"_av,
 
             "WCFM\x01\x00\x00\x00\xf8O\x14.0>"_av,
 
-            "WCFM\x01\x00\x00\x00\xb8l\xda\xa6\xf0\xf6""0\x8d\xa8\x16\xa6n\xe0\xc3\xe5\xcc"
-            "\x98v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9Pp\x00\x00\x00I\x03I\xce\xb2""5r%Hy"
-            "\x07\r(tDA{\x9d\x12\xea""Da!t\xabz\x11\x97\x84\x9b\x0b\xa0""CO\x04\xaa""6\x04"
-            "\xf4""a\xee)B\x12\x90""B=\xb0\xbb""B\x9c\xd5\xdfq\xb2PE\x11|\xe9\xf4\x94\xfe"
-            "\xd0\xff#\xa2\xeb\xc9:B\xe8:r\xf9>\xa7Vk3m\xb3\xdd\x8a\x0b\xe8\x8c\xe1mx\xd9"
-            "E\x88\x92\x83@\xe5\xa2""F\x9c\x17\x0e\x02\xe7\xd8Za\xb1\x92o\xb8""9MFCW\x89"
-            "\x00\x00\x00"_av,
+            "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6""5\xa4(\xfe\x8b\xed`C\xf8\x13\x18\x0e@_PV"
+            "\xa2\xe6\b\x94\x0f\xd2@\xbf\xe1\xe0p\x00\x00\x00\x8b\xda>\xb9\x05\xfarX\xf6\x1d"
+            "(\x91\xdb\xfe\xfb\xd9\xcbi\t\x9e;\x05\xb2\x9f{\xfc\xb1\xea\xae\x9f\xc7\xda\xe3"
+            "\xa7NQ0\x07""8\xfev\x98)\xccJ \xd6""AM\x07xa\x84Gx\x12""5T\xd0\x9cw{\x9e]q9q"
+            "\xac\xa8\xa0#R1\x1d""1Ie\xdbyK2\xd0\x1fh\xe1\xe0:\xa0\x8c\xbf,w\x01\xcd\xba\xa4"
+            "\x00h\xb1R{2 \xe6""EfQ\x02w\x00\b\xcaMFCW\x89\x00\x00\x00"_av,
 
             "v3\n"
             "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
             "file2.txt0123456789abcdef,000002.tfl"
             "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00\x00\x03"
-            "0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{"
-            "\x16\n\xfeP\xe3\x13\x88\xd4\xf7""0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm"
-            "\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16\n\xfeP\xe3\x13\x88\xd4\xf7"_av
+            "\x85\xee\x12\xe1!(\x99\xf2\x18\xc5\xc0H%~5\xf1\x8f\xfd\x9e\x0b\xe4\xc3\xd0"
+            "\xdd\xb7\x18\x7f\x8e\xc1\xec\xa1`\x85\xee\x12\xe1!(\x99\xf2\x18\xc5\xc0H%~"
+            "5\xf1\x8f\xfd\x9e\x0b\xe4\xc3\xd0\xdd\xb7\x18\x7f\x8e\xc1\xec\xa1`"_av
         },
     })
-    {
+    { WorkingDirectory wd(data.name); RED_TEST_CONTEXT("wd: " << wd.dirname()) {
+
         using Direction = ScytaleOpenTflDirection;
 
         auto count_error = RED_ERROR_COUNT;
-
-        WorkingDirectory wd(data.name);
 
         auto wd_hash = wd.create_subdirectory("hash");
         auto wd_record = wd.create_subdirectory("record");
@@ -506,6 +504,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         RED_CHECK_MEM_FILE_CONTENTS(file2path, data.tfl2_content);
 
         RED_TEST(0 == scytale_fdx_writer_close(fdx));
+        RED_TEST(1 == scytale_fdx_writer_close(fdx)); // double close
 
         RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
 
@@ -526,15 +525,16 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
                 {
                     auto* reader = scytale_reader_new(master_derivator, hmac_fn, trace_fn, 0, 0);
                     RED_REQUIRE(reader);
+                    auto free_reader = finally([&]{ scytale_reader_delete(reader); });
 
                     RED_TEST(0 == scytale_reader_open(reader, filename, derivator));
 
                     auto len = scytale_reader_read(reader, buffer.data(), buffer.size());
+                    RED_REQUIRE(scytale_reader_get_error_message(reader) == "No error"sv);
 
                     RED_TEST(0 == scytale_reader_close(reader));
-                    scytale_reader_delete(reader);
 
-                    return len > 0 ? bytes_view(buffer.data(), std::size_t(len)) : bytes_view{};
+                    return bytes_view(buffer.data(), std::size_t(len));
                 }
                 return bytes_view{};
             };
@@ -543,7 +543,6 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             RED_TEST(content.first(std::min(content.size(), tfl2_hash_content_prefix.size())) == tfl2_hash_content_prefix);
 
             RED_TEST(readall(file2path.c_str(), fname.c_str()) == "abcdefg"_av);
-
             RED_TEST(readall(fdxpath.c_str(), fdx_filename.c_str()) == data.decrypted_fdx_content);
         }
 
@@ -552,7 +551,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         if (count_error != RED_ERROR_COUNT) {
             break;
         }
-    }
+    } }
 }
 
 RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)

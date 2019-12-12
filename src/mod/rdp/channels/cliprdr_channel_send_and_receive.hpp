@@ -85,7 +85,63 @@ struct ClipboardSideData
 
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
 
-            SslSha256_Delayed sha256;
+            struct Sig
+            {
+                Sig()
+                {
+                    this->sha256.init();
+                }
+
+                void update(bytes_view data)
+                {
+                    this->sha256.update(data);
+                }
+
+                void final()
+                {
+                    assert(this->status == Status::Update);
+                    this->sha256.final(this->array);
+                    this->status = Status::Final;
+                }
+
+                void broken()
+                {
+                    assert(this->status == Status::Update);
+                    this->sha256.final(this->array);
+                    this->status = Status::Broken;
+                }
+
+                bool has_digest() const noexcept
+                {
+                    return this->status != Status::Update;
+                }
+
+                static const std::size_t digest_len = SslSha256::DIGEST_LENGTH;
+
+                auto& digest() const noexcept
+                {
+                    assert(this->has_digest());
+                    return this->array;
+                }
+
+                bytes_view digest_as_av() const noexcept
+                {
+                    return make_array_view(this->digest());
+                }
+
+            private:
+                enum class Status : uint8_t {
+                    Update,
+                    Broken,
+                    Final,
+                };
+
+                SslSha256_Delayed sha256;
+                uint8_t array[digest_len];
+                Status status = Status::Update;
+            };
+
+            Sig sig;
 
             bool on_failure = false;
         };
@@ -120,12 +176,13 @@ struct ClipboardSideData
                 data = data.first(this->file_data.file_size_requested);
             }
 
-            this->file_data.sha256.update(data);
+            this->file_data.sig.update(data);
             this->file_data.file_offset += data.size();
             this->file_data.file_size_requested -= data.size();
 
             if (!this->file_data.file_size_requested) {
                 if (this->file_data.file_offset == this->file_data.file_size) {
+                    this->file_data.sig.final();
                     this->status = Status::WaitValidator;
                 }
                 else {
@@ -254,7 +311,6 @@ public:
                 std::min(file_size_requested, filesize), std::move(tfl_file), {}
             }
         });
-        this->file_contents_list.back().file_data.sha256.init();
     }
 
     void remove_file(FileContent* file)
@@ -317,7 +373,7 @@ public:
         return nullptr;
     }
 
-    std::vector<FileContent> const& get_file_contents_list() const noexcept
+    std::vector<FileContent>& get_file_contents_list() noexcept
     {
         return this->file_contents_list;
     }

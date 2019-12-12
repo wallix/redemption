@@ -64,12 +64,13 @@ std::string TflSuffixGenerator::name_at(uint64_t i)
 
 
 FdxNameGenerator::FdxNameGenerator(
-    std::string_view path, std::string_view hashpath, std::string_view sid)
+    std::string_view record_path, std::string_view hash_path, std::string_view sid)
 {
     constexpr array_view_const_char fdx_suffix = ".fdx"_av;
 
-    str_append(this->record_path, path, '/', sid, '/', sid, fdx_suffix);
-    str_append(this->hash_path, hashpath, array_view(this->record_path).drop_front(path.size()));
+    str_append(this->record_path, record_path, '/', sid, '/', sid, fdx_suffix);
+    str_append(this->hash_path, hash_path,
+        array_view(this->record_path).drop_front(record_path.size()));
 
     this->pos_end_record_suffix = this->record_path.size() - fdx_suffix.size();
     this->pos_end_hash_suffix = this->hash_path.size() - fdx_suffix.size();
@@ -120,43 +121,57 @@ FdxCapture::FdxCapture(
 , fstat(fstat)
 , report_error(std::move(report_error))
 , groupid(groupid)
+, fdx_basename_len(this->name_generator.get_current_filename().size())
+, record_fdx_path(this->name_generator.get_current_record_path())
+, hash_fdx_path(this->name_generator.get_current_hash_path())
 {}
 
-void FdxCapture::_open()
+void FdxCapture::_create_dir()
 {
-    if (this->out_crypto_transport) {
+    if (this->fdx_basename_len < 0) {
         return;
     }
 
-    this->out_crypto_transport.emplace(cctx, rnd, fstat, this->report_error);
+    std::string directory;
 
-    auto const filename_len = this->name_generator.get_current_filename().size();
+    for (std::string* path : {&this->record_fdx_path, &this->hash_fdx_path}) {
+        directory.assign(path->begin(), path->begin() + (path->size() - this->fdx_basename_len));
 
-    for (std::string const* path : {
-        &this->name_generator.get_current_record_path(),
-        &this->name_generator.get_current_hash_path()
-    }) {
-        char dirname[4096];
-        auto const dirname_len = path->size() - filename_len - 1u;
-
-        if (dirname_len + 1u >= std::size(dirname)) {
-            LOG(LOG_ERR, "FdxCapture: Failed to create directory: \"%.*s\": name too long",
-                int(dirname_len), path->data());
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
-        }
-
-        memcpy(dirname, path->data(), dirname_len);
-        dirname[dirname_len] = '\0';
-
-        if (recursive_create_directory(dirname, S_IRWXU | S_IRGRP | S_IXGRP, this->groupid) != 0) {
+        if (recursive_create_directory(directory.data(), S_IRWXU | S_IRGRP | S_IXGRP, this->groupid) != 0) {
             auto err = errno;
             LOG(LOG_ERR, "FdxCapture: Failed to create directory: \"%s\": %s",
-                *path, strerror(err));
+                directory, strerror(err));
             throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
         }
     }
 
-    open_crypto_transport(*this->out_crypto_transport, this->name_generator, groupid);
+    // disable _create_dir
+    this->fdx_basename_len = -this->fdx_basename_len;
+}
+
+bool FdxCapture::is_open() const noexcept
+{
+    return bool(this->out_crypto_transport);
+}
+
+void FdxCapture::_open_fdx()
+{
+    if (this->is_open()) {
+        return;
+    }
+
+    this->out_crypto_transport.emplace(this->cctx, this->rnd, this->fstat, this->report_error);
+
+    assert(this->fdx_basename_len < 0);
+    bytes_view derivator = array_view(this->record_fdx_path)
+        .last(-this->fdx_basename_len);
+
+    this->out_crypto_transport->open(
+        this->record_fdx_path.c_str(),
+        this->hash_fdx_path.c_str(),
+        this->groupid,
+        derivator);
+
     this->out_crypto_transport->send(Mwrm3::header_compatibility_packet);
 }
 
@@ -170,7 +185,7 @@ FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
 
 FdxCapture::TflFile FdxCapture::new_tfl(Mwrm3::Direction direction)
 {
-    this->_open();
+    this->_create_dir();
     this->name_generator.next_tfl();
 
     return TflFile{*this, direction};
@@ -184,6 +199,8 @@ void FdxCapture::cancel_tfl(FdxCapture::TflFile& tfl)
 void FdxCapture::close_tfl(
     FdxCapture::TflFile& tfl, std::string_view original_filename, Mwrm3::Sha256Signature sig)
 {
+    this->_open_fdx();
+
     OutCryptoTransport::HashArray qhash;
     OutCryptoTransport::HashArray fhash;
     tfl.trans.close(qhash, fhash);
@@ -222,5 +239,8 @@ void FdxCapture::close_tfl(
 
 void FdxCapture::close(OutCryptoTransport::HashArray& qhash, OutCryptoTransport::HashArray& fhash)
 {
-    this->out_crypto_transport->close(qhash, fhash);
+    if (this->out_crypto_transport) {
+        this->out_crypto_transport->close(qhash, fhash);
+        this->out_crypto_transport.reset();
+    }
 }

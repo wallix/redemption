@@ -748,13 +748,19 @@ struct ScytaleFdxWriterHandle
         return 0;
     }
 
-    void close()
+    int close()
     {
-        HashArray qhash;
-        HashArray fhash;
-        this->fdx_capture.close(qhash, fhash);
-        hash_to_hashhex(qhash, this->qhashhex);
-        hash_to_hashhex(fhash, this->fhashhex);
+        if (this->fdx_capture.is_open())
+        {
+            HashArray qhash;
+            HashArray fhash;
+            this->fdx_capture.close(qhash, fhash);
+            hash_to_hashhex(qhash, this->qhashhex);
+            hash_to_hashhex(fhash, this->fhashhex);
+            return 0;
+        }
+
+        return 1;
     }
 
 private:
@@ -848,8 +854,7 @@ char const * scytale_fdx_writer_get_fhashhex(ScytaleFdxWriterHandle * handle) {
 int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle)
 {
     SCOPED_TRACE;
-    CHECK_NOTHROW(handle->close(), ERR_TRANSPORT_CLOSED);
-    return 0;
+    CHECK_NOTHROW(return handle->close(), ERR_TRANSPORT_CLOSED);
 }
 
 int scytale_fdx_writer_delete(ScytaleFdxWriterHandle * handle)

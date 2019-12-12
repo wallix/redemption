@@ -419,9 +419,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
         auto fdx_ctx = [&]{
             if (d.with_fdx_capture) {
-                return std::make_unique<DataTest>(d.always_file_record
-                    ? "FileRecord=always"
-                    : "FileRecord=on_failure");
+                return std::make_unique<DataTest>(
+                    &"abcdefgh"[d.with_validator * 2 + d.always_file_record]
+                );
             }
             return std::unique_ptr<DataTest>();
         }();
@@ -769,15 +769,28 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             }
         }
 
-        if (fdx_ctx) {
+        if (fdx_ctx && d.always_file_record) {
             auto basename = str_concat(sid, ".fdx");
-            (void)fdx_ctx->fdx_record_path.add_file(basename);
             (void)fdx_ctx->fdx_hash_path.add_file(basename);
+            auto fdx_path = fdx_ctx->fdx_record_path.add_file(basename);
 
             OutCryptoTransport::HashArray qhash;
             OutCryptoTransport::HashArray fhash;
             fdx_ctx->fdx.close(qhash, fhash);
 
+            RED_CHECK_WORKSPACE(fdx_ctx->wd);
+
+            std::string file_content = RED_CHECK_GET_FILE_CONTENTS(fdx_path);
+            bytes_view av = file_content;
+
+            RED_CHECK(av == "v3\n"
+                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x18\x00\x01"
+                "abcmy_session_id,000001.tfl\x05\x00\x01\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\xd1\xb9\xc9\xdb"
+                "E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
+                "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
+        }
+        else if (fdx_ctx) {
             RED_CHECK_WORKSPACE(fdx_ctx->wd);
         }
     }

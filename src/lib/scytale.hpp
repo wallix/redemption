@@ -260,6 +260,7 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * scytale_fdx_writer_get_fhashhex(ScytaleFdxWriterHandle * handle);
 
+    /// \return 1 if not open, 0 is ok, -1 if error
     REDEMPTION_LIB_EXPORT
     int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle);
 
