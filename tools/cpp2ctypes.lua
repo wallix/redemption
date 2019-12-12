@@ -42,7 +42,7 @@ function newc2py(cname, t, isarray)
     end
 
     if not ctype then
-        error("unknown type " .. type .. ' for ' .. cname)
+        error("Unknown type " .. type .. ' for ' .. cname)
     end
 
     typemap[cname] = ctype
@@ -52,7 +52,9 @@ function c2py(t)
     local type = (t[2] and t[1] .. t[2] or t[1])
     local ctype = typemap[type]
     if not ctype then
-        error("unknown type " .. type)
+        io.stderr:write("Unknown type '" .. type ..
+                        "'\nPlease, run with '" .. type .. "=MyPythonType'\n")
+        os.exit(3)
     end
     imported[ctype] = true
     return ctype
@@ -179,4 +181,5 @@ if #prefix_ctypes == 0 then
     print('from ctypes import ' .. table.concat(t, ', '))
     print()
 end
+
 print(table.concat(lines, '\n'))
