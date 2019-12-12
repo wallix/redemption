@@ -71,7 +71,12 @@ defs={
         typemap[name..'*'] = typemap['void*']
     end,
     doc=function(s)
-        lines[#lines+1] = '# ' .. s
+        if s == '@}' and lines[#lines] == '' then
+            lines[#lines] = '# ' .. s
+            lines[#lines+1] = ''
+        else
+            lines[#lines+1] = '# ' .. s
+        end
     end,
     multidoc=function(s)
         lines[#lines+1] = '# ' .. s:gsub('\n ?', '\n# ')
