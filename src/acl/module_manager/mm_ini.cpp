@@ -29,23 +29,6 @@
 #include "core/session_reactor.hpp"
 
 
-Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors)
-{
-    Rect widget_rect(0, 0, width - 1, height - 1);
-    if (monitors.monitorCount) {
-        Rect rect                 = monitors.get_rect();
-        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
-
-        widget_rect.x  = abs(rect.x);
-        widget_rect.y  = abs(rect.y);
-        widget_rect.cx = primary_monitor_rect.cx;
-        widget_rect.cy = primary_monitor_rect.cy;
-    }
-
-    return widget_rect;
-}
-
-
 void MMIni::new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/)
 {
     LOG(LOG_INFO, "new mod %d", target_module);

@@ -113,3 +113,24 @@ public:
 
     [[nodiscard]] virtual rdp_api* get_rdp_api() const { return nullptr; }
 };
+
+#include "configs/config.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
+#include "core/session_reactor.hpp"
+
+static inline Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors)
+{
+    Rect widget_rect(0, 0, width - 1, height - 1);
+    if (monitors.monitorCount) {
+        Rect rect                 = monitors.get_rect();
+        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
+
+        widget_rect.x  = abs(rect.x);
+        widget_rect.y  = abs(rect.y);
+        widget_rect.cx = primary_monitor_rect.cx;
+        widget_rect.cy = primary_monitor_rect.cy;
+    }
+
+    return widget_rect;
+}
+

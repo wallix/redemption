@@ -35,10 +35,6 @@ namespace GCC::UserData
     class CSMonitor;
 }
 
-
-Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors);
-
-
 class MMIni : public MMApi
 {
 protected:
