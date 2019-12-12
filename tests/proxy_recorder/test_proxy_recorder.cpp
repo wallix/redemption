@@ -27,60 +27,59 @@
 #include "proxy_recorder/nla_tee_transport.hpp"
 
 // TODO copy of test_transport::hexdump
-struct xxhexdump
-{
-    bytes_view sig;
-
-    std::size_t size() const
-    {
-        return this->sig.size();
-    }
-
-    uint8_t const * data() const
-    {
-        return this->sig.data();
-    }
-};
-
-std::ostream & operator<<(std::ostream & out, xxhexdump const & x);
-std::ostream & operator<<(std::ostream & out, xxhexdump const & x)
-{
-    char buffer[2048];
-    for (size_t j = 0 ; j < x.size(); j += 16){
-        char * line = buffer;
-        line += std::sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(j));
-        size_t i = 0;
-        for (i = 0; i < 16; i++){
-            if (j+i >= x.size()){ break; }
-            line += std::sprintf(line, "\\x%.2x", static_cast<unsigned>(x.data()[j+i]));
-        }
-        line += std::sprintf(line, "\"");
-        if (i < 16){
-            line += std::sprintf(line, "%s", &
-                "                "
-                "                "
-                "                "
-                "                "
-                [i * 4u]);
-        }
-        line += std::sprintf(line, " // ");
-        for (i = 0; i < 16; i++){
-            if (j+i >= x.size()){ break; }
-            unsigned char tmp = x.data()[j+i];
-            if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
-                tmp = '.';
-            }
-            line += std::sprintf(line, "%c", tmp);
-        }
-
-        if (line != buffer){
-            line[0] = 0;
-            out << buffer << "\n";
-            buffer[0]=0;
-        }
-    }
-    return out;
-}
+// struct xxhexdump
+// {
+//     bytes_view sig;
+//
+//     std::size_t size() const
+//     {
+//         return this->sig.size();
+//     }
+//
+//     uint8_t const * data() const
+//     {
+//         return this->sig.data();
+//     }
+// };
+//
+// static std::ostream & operator<<(std::ostream & out, xxhexdump const & x)
+// {
+//     char buffer[2048];
+//     for (size_t j = 0 ; j < x.size(); j += 16){
+//         char * line = buffer;
+//         line += std::sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(j));
+//         size_t i = 0;
+//         for (i = 0; i < 16; i++){
+//             if (j+i >= x.size()){ break; }
+//             line += std::sprintf(line, "\\x%.2x", static_cast<unsigned>(x.data()[j+i]));
+//         }
+//         line += std::sprintf(line, "\"");
+//         if (i < 16){
+//             line += std::sprintf(line, "%s", &
+//                 "                "
+//                 "                "
+//                 "                "
+//                 "                "
+//                 [i * 4u]);
+//         }
+//         line += std::sprintf(line, " // ");
+//         for (i = 0; i < 16; i++){
+//             if (j+i >= x.size()){ break; }
+//             unsigned char tmp = x.data()[j+i];
+//             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
+//                 tmp = '.';
+//             }
+//             line += std::sprintf(line, "%c", tmp);
+//         }
+//
+//         if (line != buffer){
+//             line[0] = 0;
+//             out << buffer << "\n";
+//             buffer[0]=0;
+//         }
+//     }
+//     return out;
+// }
 
 
 struct ReplayBackTransport : public Transport
@@ -127,11 +126,11 @@ private:
         LOG(LOG_INFO, "sending to back %zu bytes", len);
         if (this->datas[this->index].type == 1 && len == this->datas[this->index].len) {
             if (0 != memcmp(data, this->datas[this->index].data, this->datas[this->index].len)){
-                std::cout << xxhexdump{{data, len}};
-                std::cout << xxhexdump{{datas[index].data, len}};
+                // std::cout << xxhexdump{{data, len}};
+                // std::cout << xxhexdump{{datas[index].data, len}};
             }
             else {
-                std::cout << xxhexdump{{data, len}};
+                // std::cout << xxhexdump{{data, len}};
                 this->index++;
                 return;
             }
@@ -183,7 +182,7 @@ uint8_t data1[0x39] = {
 //};
 
 uint8_t data1_reply[151] = {
-/* 0000 */ 0x30, 0x81, 0x94, 
+/* 0000 */ 0x30, 0x81, 0x94,
                              0xa0, 0x03, 0x02, 0x01, 0x06, // version
                                                            0xa1, 0x81, 0x8c, 0x30, 0x81, 0x89, 0x30, 0x81,  // 0..........0..0.
 /* 0010 */ 0x86, 0xa0, 0x81, 0x83, 0x04, 0x81, 0x80,
@@ -266,11 +265,11 @@ private:
         LOG(LOG_INFO, "sending to front %zu bytes", len);
         if (this->datas[this->index].type == 1 && len == this->datas[this->index].len) {
             if (0 != memcmp(data, this->datas[this->index].data, this->datas[this->index].len)){
-                std::cout << xxhexdump{{data, len}};
-                std::cout << xxhexdump{{datas[index].data, len}};
+                // std::cout << xxhexdump{{data, len}};
+                // std::cout << xxhexdump{{datas[index].data, len}};
             }
             else {
-                std::cout << xxhexdump{{data, len}};
+                // std::cout << xxhexdump{{data, len}};
                 this->index++;
                 return;
             }
