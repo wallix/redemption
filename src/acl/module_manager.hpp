@@ -159,55 +159,6 @@ struct ModWrapper
     }
 };
 
-
-class MMApi
-{
-protected:
-    ModWrapper & mw;
-public:
-
-    ModWrapper & get_mod_wrapper() 
-    {
-        return mw;
-    }
-
-    mod_api* get_mod()
-    {
-        return this->mw.get_mod();
-    }
-
-    [[nodiscard]] mod_api const* get_mod() const
-    {
-        return this->mw.get_mod();
-    }
-
-public:
-    bool last_module{false};
-    bool connected{false};
-
-    MMApi(ModWrapper & mod_wrapper) : mw(mod_wrapper) {}
-    virtual ~MMApi() = default;
-    virtual void remove_mod() = 0;
-    virtual void new_mod(ModuleIndex target_module, AuthApi &, ReportMessageApi &) = 0;
-    virtual ModuleIndex next_module() = 0;
-    // virtual int get_mod_from_protocol() = 0;
-    virtual void invoke_close_box(bool /*enable_close_box*/, const char * auth_error_message, BackEvent_t & signal, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) {
-    
-        (void)auth_error_message;
-        (void)signal;
-        this->last_module = true;
-    }
-    virtual bool is_connected() {
-        return this->connected;
-    }
-    virtual bool is_up_and_running() {
-        return this->mw.is_up_and_running();
-    }
-    virtual void check_module() {}
-
-    [[nodiscard]] virtual rdp_api* get_rdp_api() const { return nullptr; }
-};
-
 static inline Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors)
 {
     Rect widget_rect(0, 0, width - 1, height - 1);
@@ -301,7 +252,7 @@ public:
 
 class ModOSD : public gdi::ProtectedGraphics, public mod_api
 {
-    const ModWrapper & mw;
+    const ModWrapper & mod_wrapper;
     FrontAPI & front;
     BGRPalette const & palette;
     gdi::GraphicApi& graphics;
@@ -320,9 +271,9 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     const Theme & _theme;
 
 public:
-    explicit ModOSD(const ModWrapper & mw, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & front_client_info, const Font & font, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & front_client_info, const Font & font, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : gdi::ProtectedGraphics(graphics, Rect{})
-    , mw(mw)
+    , mod_wrapper(mod_wrapper)
     , front(front)
     , palette(palette)
     , graphics(graphics)
@@ -344,8 +295,8 @@ public:
         this->set_protected_rect(Rect{});
 
         if (this->bogus_refresh_rect_ex) {
-            this->mw.mod->rdp_suppress_display_updates();
-            this->mw.mod->rdp_allow_display_updates(0, 0,
+            this->mod_wrapper.mod->rdp_suppress_display_updates();
+            this->mod_wrapper.mod->rdp_allow_display_updates(0, 0,
                 this->front_client_info.screen_info.width,
                 this->front_client_info.screen_info.height);
         }
@@ -354,7 +305,7 @@ public:
             this->winapi->destroy_auxiliary_window();
         }
 
-        this->mw.mod->rdp_input_invalidate(protected_rect);
+        this->mod_wrapper.mod->rdp_input_invalidate(protected_rect);
     }
 
     [[nodiscard]] const char* get_message() const {
@@ -448,7 +399,7 @@ public:
                 return rect.isempty();
             });
             if (p != e) {
-                this->mw.mod->rdp_input_invalidate2({p, e});
+                this->mod_wrapper.mod->rdp_input_invalidate2({p, e});
                 this->clip = r.intersect(this->get_protected_rect());
             }
             return true;
@@ -462,7 +413,7 @@ public:
         bool ret = false;
         for (Rect const & r : vr) {
             if (!this->try_input_invalidate(r)) {
-                this->mw.mod->rdp_input_invalidate(r);
+                this->mod_wrapper.mod->rdp_input_invalidate(r);
             }
             else {
                 ret = true;
@@ -508,88 +459,117 @@ private:
 
     void refresh_rects(array_view<Rect const> av) override
     {
-        this->mw.mod->rdp_input_invalidate2(av);
+        this->mod_wrapper.mod->rdp_input_invalidate2(av);
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
         if (!this->try_input_scancode(param1, param2, param3, param4, keymap)) {
-            this->mw.mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            this->mod_wrapper.mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
     }
 
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
-        this->mw.mod->rdp_input_unicode(unicode, flag);
+        this->mod_wrapper.mod->rdp_input_unicode(unicode, flag);
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
         if (!this->try_input_mouse(device_flags, x, y, keymap)) {
-            this->mw.mod->rdp_input_mouse(device_flags, x, y, keymap);
+            this->mod_wrapper.mod->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 
     void rdp_input_invalidate(Rect r) override
     {
         if (!this->try_input_invalidate(r)) {
-            this->mw.mod->rdp_input_invalidate(r);
+            this->mod_wrapper.mod->rdp_input_invalidate(r);
         }
     }
 
     void rdp_input_invalidate2(array_view<Rect const> vr) override
     {
         if (!this->try_input_invalidate2(vr)) {
-            this->mw.mod->rdp_input_invalidate2(vr);
+            this->mod_wrapper.mod->rdp_input_invalidate2(vr);
         }
     }
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-    { this->mw.mod->rdp_input_synchronize(time, device_flags, param1, param2); }
+    { this->mod_wrapper.mod->rdp_input_synchronize(time, device_flags, param1, param2); }
 
     void rdp_input_up_and_running() override
-    { this->mw.mod->rdp_input_up_and_running(); }
+    { this->mod_wrapper.mod->rdp_input_up_and_running(); }
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
-    { this->mw.mod->rdp_allow_display_updates(left, top, right, bottom); }
+    { this->mod_wrapper.mod->rdp_allow_display_updates(left, top, right, bottom); }
 
     void rdp_suppress_display_updates() override
-    { this->mw.mod->rdp_suppress_display_updates(); }
+    { this->mod_wrapper.mod->rdp_suppress_display_updates(); }
 
     void refresh(Rect r) override
     {
-        this->mw.mod->refresh(r);
+        this->mod_wrapper.mod->refresh(r);
     }
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
         std::size_t length, uint32_t flags
     ) override
-    { this->mw.mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
+    { this->mod_wrapper.mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
 
     void send_auth_channel_data(const char * data) override
-    { this->mw.mod->send_auth_channel_data(data); }
+    { this->mod_wrapper.mod->send_auth_channel_data(data); }
 
     void send_checkout_channel_data(const char * data) override
-    { this->mw.mod->send_checkout_channel_data(data); }
+    { this->mod_wrapper.mod->send_checkout_channel_data(data); }
 
     [[nodiscard]] bool is_up_and_running() const override
-    { return this->mw.mod->is_up_and_running(); }
+    { return this->mod_wrapper.mod->is_up_and_running(); }
 
     void disconnect() override
-    { this->mw.mod->disconnect(); }
+    { this->mod_wrapper.mod->disconnect(); }
 
     void display_osd_message(std::string const & message) override
-    { this->mw.mod->display_osd_message(message); }
+    { this->mod_wrapper.mod->display_osd_message(message); }
 
     [[nodiscard]] Dimension get_dim() const override
     {
-        return this->mw.mod->get_dim();
+        return this->mod_wrapper.mod->get_dim();
     }
 };
 
 
-class ModuleManager : public MMApi
+class ModuleManager
 {
+    ModWrapper & mod_wrapper;
+public:
+
+    ModWrapper & get_mod_wrapper() 
+    {
+        return mod_wrapper;
+    }
+
+    mod_api* get_mod()
+    {
+        return this->mod_wrapper.get_mod();
+    }
+
+    [[nodiscard]] mod_api const* get_mod() const
+    {
+        return this->mod_wrapper.get_mod();
+    }
+
+public:
+    bool last_module{false};
+    bool connected{false};
+
+    bool is_connected() {
+        return this->connected;
+    }
+    bool is_up_and_running() {
+        return this->mod_wrapper.is_up_and_running();
+    }
+
     Inifile& ini;
     SessionReactor& session_reactor;
     CryptoContext & cctx;
@@ -787,7 +767,7 @@ private:
 
 public:
     ModuleManager(SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
-        : MMApi(mod_wrapper)
+        : mod_wrapper(mod_wrapper)
         , ini(ini)
         , session_reactor(session_reactor)
         , cctx(cctx)
@@ -816,7 +796,7 @@ public:
         return this->socket_transport;
     }
 
-    void remove_mod() override
+    void remove_mod()
     {
         if (this->get_mod_wrapper().has_mod()){
             this->clear_osd_message();
@@ -827,7 +807,7 @@ public:
         }
     }
 
-    ~ModuleManager() override
+    ~ModuleManager()
     {
         this->remove_mod();
     }
@@ -852,7 +832,7 @@ private:
     }
 
 public:
-    void new_mod(ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message) override
+    void new_mod(ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
     {
         if (target_module != MODULE_INTERNAL_TRANSITION) {
             LOG(LOG_INFO, "----------> ACL new_mod <--------");
@@ -1264,7 +1244,7 @@ public:
         }
     }
 
-    [[nodiscard]] rdp_api* get_rdp_api() const override {
+    [[nodiscard]] rdp_api* get_rdp_api() const {
         return this->rdpapi;
     }
 
@@ -1279,7 +1259,7 @@ public:
     void invoke_close_box(
         bool enable_close_box,
         const char * auth_error_message, BackEvent_t & signal,
-        AuthApi & authentifier, ReportMessageApi & report_message) override
+        AuthApi & authentifier, ReportMessageApi & report_message)
     {
         LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
         this->last_module = true;
@@ -1305,7 +1285,7 @@ public:
         }
     }
 
-    ModuleIndex next_module() override
+    ModuleIndex next_module()
     {
         auto & module_cstr = this->ini.get<cfg::context::module>();
         auto module_id = get_module_id(module_cstr);
@@ -1332,7 +1312,7 @@ public:
         return module_id;
     }
 
-    void check_module() override
+    void check_module() 
     {
         if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
             this->session_reactor.set_next_event(BACK_EVENT_NEXT);
