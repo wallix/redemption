@@ -35,8 +35,43 @@ namespace GCC::UserData
     class CSMonitor;
 }
 
-class MMIni : public MMApi
+class MMIni
 {
+public:
+
+    ModWrapper & get_mod_wrapper() 
+    {
+        return mod_wrapper;
+    }
+
+    mod_api* get_mod()
+    {
+        return this->mod_wrapper.get_mod();
+    }
+
+    [[nodiscard]] mod_api const* get_mod() const
+    {
+        return this->mod_wrapper.get_mod();
+    }
+
+public:
+    bool last_module{false};
+    bool connected{false};
+
+    void invoke_close_box(
+        bool enable_close_box,
+        const char * auth_error_message, BackEvent_t & signal,
+        AuthApi & authentifier, ReportMessageApi & report_message);
+
+    bool is_connected() {
+        return this->connected;
+    }
+    bool is_up_and_running() {
+        return this->mod_wrapper.is_up_and_running();
+    }
+
+    [[nodiscard]] rdp_api* get_rdp_api() const { return nullptr; }
+
 protected:
     Inifile& ini;
     SessionReactor& session_reactor;
@@ -44,20 +79,22 @@ protected:
 
 public:
     explicit MMIni(SessionReactor& session_reactor, Inifile & ini_)
-    : MMApi(mod_wrapper)
-    , ini(ini_)
+    : ini(ini_)
     , session_reactor(session_reactor)
     {}
 
-    void remove_mod() override {}
+    void remove_mod() {}
 
-    void new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) override;
+    void new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/);
 
-    void invoke_close_box(bool enable_close_box,
-                          const char * auth_error_message, BackEvent_t & signal,
-                          AuthApi & authentifier, ReportMessageApi & report_message) override;
+    ModuleIndex next_module();
 
-    ModuleIndex next_module() override;
-
-    void check_module() override;
+    void check_module()
+    {
+        if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
+            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+            this->ini.set<cfg::context::forcemodule>(false);
+            // Do not send back the value to sesman.
+        }
+    }
 };

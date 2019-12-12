@@ -97,11 +97,4 @@ ModuleIndex MMIni::next_module()
     return module_id;
 }
 
-void MMIni::check_module()
-{
-    if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
-        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
-        this->ini.set<cfg::context::forcemodule>(false);
-        // Do not send back the value to sesman.
-    }
-}
+
