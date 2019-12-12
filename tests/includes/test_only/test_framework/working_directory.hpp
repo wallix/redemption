@@ -35,18 +35,22 @@ Author(s): Jonathan Poelen
         static void test(WorkingDirectory& wd); }; \
     RED_AUTO_TEST_CASE(name) {                     \
         WorkingDirectory wd;                       \
-        WD_TU_ ## name ::test(wd);                 \
+        RED_TEST_CONTEXT("wd: " << wd.dirname()) { \
+            WD_TU_ ## name ::test(wd);             \
+        }                                          \
         RED_CHECK_WORKSPACE(wd);                   \
     }                                              \
     void WD_TU_ ## name ::test(WorkingDirectory& wd)
 
-#define RED_AUTO_TEST_CASE_WF(name, wf)       \
-    struct WF_TU_ ## name {                   \
-        static void test(WorkingFile& wf); }; \
-    RED_AUTO_TEST_CASE(name) {                \
-        WorkingFile wf(#name);                \
-        WF_TU_ ## name ::test(wf);            \
-    }                                         \
+#define RED_AUTO_TEST_CASE_WF(name, wf)           \
+    struct WF_TU_ ## name {                       \
+        static void test(WorkingFile& wf); };     \
+    RED_AUTO_TEST_CASE(name) {                    \
+        WorkingFile wf(#name);                    \
+        RED_TEST_CONTEXT("wf: " << wf.string()) { \
+            WF_TU_ ## name ::test(wf);            \
+        }                                         \
+    }                                             \
     void WF_TU_ ## name ::test(WorkingFile& wf)
 
 
