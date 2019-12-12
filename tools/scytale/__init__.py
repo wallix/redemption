@@ -236,15 +236,7 @@ lib.scytale_fdx_writer_new.restype = c_void_p
 lib.scytale_fdx_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_int, c_char_p]
 lib.scytale_fdx_writer_new_with_test_random.restype = c_void_p
 
-# Mwrm3::Direction
-# enum class ScytaleOpenTflDirection : uint8_t
-#    {
-#        unknown,
-#        client_to_server,
-#        server_to_client
-#    };
-#
-# \param direction  ScytaleOpenTflDirection
+# \param direction  Mwrm3::Direction
 # ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
 #     ScytaleFdxWriterHandle * handle, char const * filename, int direction);
 lib.scytale_fdx_writer_open_tfl.argtypes = [c_void_p, c_char_p, c_int]
@@ -256,9 +248,11 @@ lib.scytale_tfl_writer_write.argtypes = [c_void_p, c_char_p, c_ulong]
 lib.scytale_tfl_writer_write.restype = c_int
 
 # len should be 32
+# \param transfered_status  Mwrm3::TransferedStatus
 # int scytale_tfl_writer_close(
-#     ScytaleTflWriterHandler * handle, uint8_t const* sig, unsigned long len);
-lib.scytale_tfl_writer_close.argtypes = [c_void_p, c_char_p, c_ulong]
+#     ScytaleTflWriterHandler * handle, int transfered_status,
+#     uint8_t const* sig, unsigned long len);
+lib.scytale_tfl_writer_close.argtypes = [c_void_p, c_int, c_char_p, c_ulong]
 lib.scytale_tfl_writer_close.restype = c_int
 
 # int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle);

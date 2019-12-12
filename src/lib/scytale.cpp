@@ -735,10 +735,10 @@ struct ScytaleFdxWriterHandle
         return tfl;
     }
 
-    int close_tfl(ScytaleTflWriterHandler& tfl, bytes_view sig)
+    int close_tfl(ScytaleTflWriterHandler& tfl, int transfered_status, bytes_view sig)
     {
         this->fdx_capture.close_tfl(tfl.tfl_file, tfl.original_filename,
-            Mwrm3::Sha256Signature{sig});
+            checked_int{transfered_status}, Mwrm3::Sha256Signature{sig});
         return 0;
     }
 
@@ -820,13 +820,16 @@ int scytale_tfl_writer_write(
     return len;
 }
 
-int scytale_tfl_writer_close(ScytaleTflWriterHandler * handle, uint8_t const* sig, unsigned long len)
+int scytale_tfl_writer_close(
+    ScytaleTflWriterHandler * handle, int transfered_status,
+    uint8_t const* sig, unsigned long len)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     std::unique_ptr<ScytaleTflWriterHandler> auto_delete{handle};
-    CHECK_NOTHROW_R(return handle->fdx.close_tfl(*handle, bytes_view{sig, len}),
-        -1, handle->fdx.error_ctx, ERR_TRANSPORT_WRITE_FAILED);
+    CHECK_NOTHROW_R(return handle->fdx.close_tfl(
+        *handle, transfered_status, bytes_view{sig, len}
+    ), -1, handle->fdx.error_ctx, ERR_TRANSPORT_WRITE_FAILED);
 }
 
 int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle)

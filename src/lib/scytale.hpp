@@ -227,15 +227,7 @@ extern "C"
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         char const * record_path, char const * hash_path, int groupid, char const * sid);
 
-    // Mwrm3::Direction
-    enum class ScytaleOpenTflDirection : uint8_t
-    {
-        unknown,
-        client_to_server,
-        server_to_client
-    };
-
-    /// \param direction  ScytaleOpenTflDirection
+    /// \param direction  Mwrm3::Direction
     REDEMPTION_LIB_EXPORT
     ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
         ScytaleFdxWriterHandle * handle, char const * filename, int direction);
@@ -244,10 +236,12 @@ extern "C"
     int scytale_tfl_writer_write(
         ScytaleTflWriterHandler * handle, uint8_t const * buffer, unsigned long len);
 
-    // len should be 32
+    /// len should be 32
+    /// \param transfered_status  Mwrm3::TransferedStatus
     REDEMPTION_LIB_EXPORT
     int scytale_tfl_writer_close(
-        ScytaleTflWriterHandler * handle, uint8_t const* sig, unsigned long len);
+        ScytaleTflWriterHandler * handle, int transfered_status,
+        uint8_t const* sig, unsigned long len);
 
     REDEMPTION_LIB_EXPORT
     int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle);

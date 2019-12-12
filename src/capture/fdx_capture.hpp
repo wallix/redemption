@@ -106,7 +106,9 @@ struct FdxCapture
     TflFile new_tfl(Mwrm3::Direction direction);
 
     void cancel_tfl(TflFile& tfl);
-    void close_tfl(TflFile& tfl, std::string_view original_filename, Mwrm3::Sha256Signature sig);
+    void close_tfl(
+        TflFile& tfl, std::string_view original_filename,
+        Mwrm3::TransferedStatus transfered_status, Mwrm3::Sha256Signature sig);
 
     void close(OutCryptoTransport::HashArray & qhash, OutCryptoTransport::HashArray & fhash);
 

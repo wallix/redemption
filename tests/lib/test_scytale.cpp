@@ -28,6 +28,7 @@
 #include "utils/sugar/finally.hpp"
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
+#include "capture/mwrm3.hpp"
 
 #include <string_view>
 #include <fstream>
@@ -460,8 +461,6 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
     })
     { WorkingDirectory wd(data.name); RED_TEST_CONTEXT("wd: " << wd.dirname()) {
 
-        using Direction = ScytaleOpenTflDirection;
-
         auto count_error = RED_ERROR_COUNT;
 
         auto wd_hash = wd.create_subdirectory("hash");
@@ -476,7 +475,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             data.has_encryption, data.has_checksum, master_derivator, hmac_fn, trace_fn,
             wd_record.dirname(), wd_hash.dirname(), 0, sid.data());
 
-        auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt", int(Direction::unknown));
+        auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt", int(Mwrm3::Direction::Unknown));
         RED_REQUIRE(tfl);
 
         RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
@@ -484,13 +483,13 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_tfl_writer_cancel(tfl));
 
-        tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt", int(Direction::client_to_server));
+        tfl = scytale_fdx_writer_open_tfl(fdx, "file2.txt", int(Mwrm3::Direction::ClientToServer));
         RED_REQUIRE(tfl);
 
         RED_TEST(3 == scytale_tfl_writer_write(tfl, bytes("abc"), 3));
         RED_TEST(4 == scytale_tfl_writer_write(tfl, bytes("defg"), 4));
 
-        RED_TEST(0 == scytale_tfl_writer_close(tfl, nullptr, 0));
+        RED_TEST(0 == scytale_tfl_writer_close(tfl, 0, nullptr, 0));
 
         auto fname = str_concat(sid, ",000002.tfl"_av);
         auto file2path = wd_fdx_record.add_file(fname);
@@ -611,7 +610,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
         };
         D const& d = *reinterpret_cast<D const*>(raw_data);
         RED_TEST(d.file_id == 2);
-        RED_TEST(d.direction == int(ScytaleOpenTflDirection::client_to_server));
+        RED_TEST(d.direction == int(Mwrm3::Direction::ClientToServer));
         RED_TEST(d.original_filename.bytes() == "file2.txt"_av);
         RED_TEST(d.filename.bytes() == "0123456789abcdef,000002.tfl"_av);
     }
@@ -621,13 +620,14 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
     RED_REQUIRE(data);
     RED_TEST(data->type == 5);
     {
-        RED_REQUIRE(data->fmt == "uuBBB"sv);
+        RED_REQUIRE(data->fmt == "uuuBBB"sv);
         auto* raw_data = static_cast<char const*>(data->data);
         RED_REQUIRE(!!raw_data);
         struct D
         {
             uint64_t file_id;
             uint64_t file_size;
+            uint64_t transfered_status;
             scytale_bytes_view qhash;
             scytale_bytes_view fhash;
             scytale_bytes_view sig;
@@ -635,6 +635,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
         D const& d = *reinterpret_cast<D const*>(raw_data);
         RED_TEST(d.file_id == 2);
         RED_TEST(d.file_size == 7);
+        RED_TEST(d.transfered_status == 0);
         RED_TEST(d.qhash.bytes() == ""_av);
         RED_TEST(d.fhash.bytes() == ""_av);
         RED_TEST(d.sig.bytes() == ""_av);

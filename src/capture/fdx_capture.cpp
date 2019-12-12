@@ -197,7 +197,8 @@ void FdxCapture::cancel_tfl(FdxCapture::TflFile& tfl)
 }
 
 void FdxCapture::close_tfl(
-    FdxCapture::TflFile& tfl, std::string_view original_filename, Mwrm3::Sha256Signature sig)
+    FdxCapture::TflFile& tfl, std::string_view original_filename,
+    Mwrm3::TransferedStatus transfered_status, Mwrm3::Sha256Signature sig)
 {
     this->_open_fdx();
 
@@ -229,7 +230,7 @@ void FdxCapture::close_tfl(
         tfl.file_id, tfl.direction, original_filename,
         std::string_view(filename + dirname_len), write_in_buf);
     Mwrm3::serialize_tfl_info(
-        tfl.file_id, Mwrm3::FileSize(stat.st_size),
+        tfl.file_id, Mwrm3::FileSize(stat.st_size), transfered_status,
         Mwrm3::QuickHash{with_checksum ? make_array_view(qhash) : bytes_view{"", 0}},
         Mwrm3::FullHash{with_checksum ? make_array_view(fhash) : bytes_view{"", 0}},
         sig, write_in_buf);

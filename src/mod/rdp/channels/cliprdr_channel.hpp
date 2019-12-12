@@ -114,13 +114,8 @@ public:
                 for (auto& file : side_data->get_file_contents_list()) {
                     auto& file_data = file.file_data;
                     if (file_data.tfl_file) {
-                        auto& tfl_file = *file_data.tfl_file;
-                        if (tfl_file.trans.is_open()) {
-                            if (!file_data.sig.has_digest()) {
-                                file_data.sig.broken();
-                            }
-                            this->fdx_capture->close_tfl(tfl_file, file_data.file_name,
-                                Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
+                        if (file_data.tfl_file->trans.is_open()) {
+                            this->_close_tfl(file_data);
                         }
                     }
                 }
@@ -467,11 +462,7 @@ public:
                     if (this->always_file_record
                      || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
                     ) {
-                        if (!file_data.sig.has_digest()) {
-                            file_data.sig.broken();
-                        }
-                        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
-                            Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
+                        this->_close_tfl(file_data);
                     }
                     else {
                         this->fdx_capture->cancel_tfl(*file_data.tfl_file);
@@ -578,7 +569,7 @@ private:
 
         if (!file) {
             LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
-                " Unknowns stream id %u", from_server.file_contents_stream_id);
+                " Unknown stream id %u", from_server.file_contents_stream_id);
             throw Error(ERR_RDP_PROTOCOL);
         }
 
@@ -614,6 +605,7 @@ private:
                     if (file_data.tfl_file) {
                         if (this->always_file_record || file_data.on_failure) {
                             this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
+                                Mwrm3::TransferedStatus::Completed,
                                 Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
                         }
                         else {
@@ -961,5 +953,17 @@ private:
                     data_to_dump.c_str());
             }
         }
+    }
+
+private:
+    void _close_tfl(ClipboardSideData::FileContent::FileData& file_data)
+    {
+        auto status = Mwrm3::TransferedStatus::Completed;
+        if (!file_data.sig.has_digest()) {
+            file_data.sig.broken();
+            status = Mwrm3::TransferedStatus::Broken;
+        }
+        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
+            status, Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
     }
 };  // class ClipboardVirtualChannel

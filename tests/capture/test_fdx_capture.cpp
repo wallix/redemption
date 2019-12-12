@@ -146,19 +146,19 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
         tfl3.trans.send("qr"sv);
         tfl4.trans.send("stu"sv);
         tfl5.trans.send("vwxyz"sv);
-        fdx_capture.close_tfl(tfl4, "file4", sig1);
+        fdx_capture.close_tfl(tfl4, "file4", Mwrm3::TransferedStatus::Completed, sig1);
         fdx_capture.cancel_tfl(tfl2);
-        fdx_capture.close_tfl(tfl5, "file5", sig2);
-        fdx_capture.close_tfl(tfl1, "file1", sig3);
+        fdx_capture.close_tfl(tfl5, "file5", Mwrm3::TransferedStatus::Broken, sig2);
+        fdx_capture.close_tfl(tfl1, "file1", Mwrm3::TransferedStatus::Unknown, sig3);
         fdx_capture.close_tfl(tfl3, "file1" /*same name than tfl1*/,
-            Mwrm3::Sha256Signature{""_av});
+            Mwrm3::TransferedStatus::Completed, Mwrm3::Sha256Signature{""_av});
     }
 
     {
         FdxCapture::TflFile tfl = fdx_capture.new_tfl(Mwrm3::Direction::ServerToClient);
         RED_TEST(tfl.file_id == Mwrm3::FileId(6));
         tfl.trans.send("abcde"sv);
-        fdx_capture.close_tfl(tfl, "file6", sig2);
+        fdx_capture.close_tfl(tfl, "file6", Mwrm3::TransferedStatus::Broken, sig2);
     }
 
     {
@@ -181,18 +181,18 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     RED_TEST(bytes_view(file_content) ==
         "v3\n\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00\x01"
         "file4my_session_id,000004.tfl\x05\x00\x04\x00\x00\x00\x00\x00\x00"
-        "\x00\x03\x00\x00\x00\x00\x00\x00\x00\x04""abcdefghijabcdefghijabcdefghijab"
+        "\x00\x03\x00\x00\x00\x00\x00\x00\x00\x0c""abcdefghijabcdefghijabcdefghijab"
         "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00\x01"
         "file5my_session_id,000005.tfl\x05\x00\x05\x00\x00\x00\x00\x00\x00\x00"
-        "\x05\x00\x00\x00\x00\x00\x00\x00\x04""ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"
+        "\x05\x00\x00\x00\x00\x00\x00\x00\x14""ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"
         "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00\x01"
         "file1my_session_id,000001.tfl\x05\x00\x01\x00\x00\x00\x00\x00\x00\x00"
         "\x04\x00\x00\x00\x00\x00\x00\x00\x04""01234567890123456789012345678901"
         "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00\x02"
         "file1my_session_id,000003.tfl\x05\x00\x03\x00\x00\x00\x00\x00\x00\x00"
-        "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x06\x00\x00\x00\x00\x00"
+        "\x02\x00\x00\x00\x00\x00\x00\x00\x08\x04\x00\x06\x00\x00\x00\x00\x00"
         "\x00\x00\x05\x00\x18\x00\x02""file6my_session_id,000006.tfl\x05\x00"
-        "\x06\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x04"
+        "\x06\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x14"
         "ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
 
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ".fdx")), str_concat(
@@ -256,7 +256,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
     {
         FdxCapture::TflFile tfl1 = fdx_capture.new_tfl(Mwrm3::Direction::ClientToServer);
         tfl1.trans.send("ijkl"sv);
-        fdx_capture.close_tfl(tfl1, "file1", sig1);
+        fdx_capture.close_tfl(tfl1, "file1", Mwrm3::TransferedStatus::Completed, sig1);
     }
 
     OutCryptoTransport::HashArray qhash {};

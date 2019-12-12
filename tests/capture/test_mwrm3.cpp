@@ -95,13 +95,17 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
             });
 
         CASE(Type::TflInfo, serialize_tfl_info,
-            "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x07"
+            "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x17"
             "01234567890123456789012345678901"
             "abcdefghijabcdefghijabcdefghijab"
             "ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av,
-            [](FileId file_id, FileSize file_size, QuickHash qhash, FullHash fhash, Sha256Signature sig){
+            [](
+                FileId file_id, FileSize file_size, TransferedStatus transfered_status,
+                QuickHash qhash, FullHash fhash, Sha256Signature sig
+            ){
                RED_TEST(file_id == FileId(42));
                RED_TEST(file_size == FileSize(12));
+               RED_TEST(transfered_status == TransferedStatus::Broken);
                RED_TEST(qhash.hash == "01234567890123456789012345678901"_av);
                RED_TEST(fhash.hash == "abcdefghijabcdefghijabcdefghijab"_av);
                RED_TEST(sig.sig == "ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
@@ -146,9 +150,13 @@ RED_AUTO_TEST_CASE(mwrm3_parser)
         });
 
     PARSE_TEST(Type::TflInfo,
-        [](FileId file_id, FileSize file_size, QuickHash qhash, FullHash fhash, Sha256Signature sig){
+        [](
+            FileId file_id, FileSize file_size, TransferedStatus transfered_status,
+            QuickHash qhash, FullHash fhash, Sha256Signature sig
+        ){
             RED_TEST(file_id == FileId(4));
             RED_TEST(file_size == FileSize(3));
+            RED_TEST(transfered_status == TransferedStatus::Unknown);
             RED_TEST(qhash.hash.empty());
             RED_TEST(fhash.hash.empty());
             RED_TEST(sig.sig.empty());

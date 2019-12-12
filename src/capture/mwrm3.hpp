@@ -60,6 +60,13 @@ namespace Mwrm3
         ServerToClient,
     };
 
+    enum class TransferedStatus : uint8_t
+    {
+        Unknown,
+        Completed,
+        Broken,
+    };
+
     template<class F, class FError>
     auto unserialize_type(bytes_view av, F&& f, FError&& ferror)
     {
@@ -357,6 +364,29 @@ namespace Mwrm3
 
             using u8mask = mask<u8>;
 
+            template<int m, int left_shift, class T, class ValueType>
+            struct bits_from
+            {
+                static constexpr unsigned size = 0;
+
+                T& x;
+
+                constexpr bool read(InStream& /*in*/)
+                {
+                    return true;
+                }
+
+                auto value() const noexcept
+                {
+                    if constexpr (left_shift > 0) {
+                        return ValueType((x.value() & m) >> left_shift);
+                    }
+                    else {
+                        return ValueType((x.value() & m) << left_shift);
+                    }
+                }
+            };
+
             struct u8bytes
             {
                 static constexpr unsigned size = 1;
@@ -520,15 +550,6 @@ namespace Mwrm3
             template<class... Values>
             struct Group : Values...
             {
-                // https://bugs.llvm.org/show_bug.cgi?id=44256
-                #ifndef CLANG_TIDY
-                // TODO u16bytes or u8bytes should be the last element
-                static_assert(
-                    (... && (Values::Reader::size > 0))
-                 || (... && (Values::Reader::size == 0))
-                );
-                #endif
-
                 static constexpr unsigned size = (... + Values::Reader::size);
 
                 bool read(InStream& stream) noexcept
@@ -805,7 +826,7 @@ namespace Mwrm3
 
     template<class F>
     auto serialize_tfl_info(
-        FileId idx, FileSize file_size, QuickHash quick_hash, FullHash full_hash,
+        FileId idx, FileSize file_size, TransferedStatus transfered_status, QuickHash quick_hash, FullHash full_hash,
         Sha256Signature signature, F&& f)
     {
         assert(quick_hash.hash.size() == full_hash.hash.size());
@@ -818,6 +839,7 @@ namespace Mwrm3
                     ((quick_hash.hash.empty() ? 0 : 1) << 0)
                   | ((full_hash.hash.empty() ? 0 : 1) << 1)
                   | ((signature.sig.empty() ? 0 : 1) << 2)
+                  | ((safe_cast<uint8_t>(transfered_status) & 0b11) << 3)
                 },
             }.bytes(),
             quick_hash.hash,
@@ -831,7 +853,8 @@ namespace Mwrm3
         using namespace detail::readers;
         u8mask m;
         return detail::unserialize<Type::TflInfo>(buf, f, ferror,
-            group(file_id(), file_size(), shadow_ref{m}),
+            group(file_id(), file_size(), shadow_ref{m},
+                bits_from<0b11000, 3, u8mask, TransferedStatus>{m}),
             group(m.optional_for<quick_hash, 0>()),
             group(m.optional_for<full_hash, 1>()),
             group(m.optional_for<sha256_signature, 2>())
