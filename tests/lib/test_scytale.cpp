@@ -475,10 +475,8 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         auto wd_fdx_hash = wd_hash.create_subdirectory(sid);
 
         auto* fdx = scytale_fdx_writer_new_with_test_random(
-            data.has_encryption, data.has_checksum, master_derivator, hmac_fn, trace_fn);
-        RED_REQUIRE(fdx);
-
-        RED_TEST(0 == scytale_fdx_writer_open(fdx, wd_record.dirname(), wd_hash.dirname(), 0, sid.data()));
+            data.has_encryption, data.has_checksum, master_derivator, hmac_fn, trace_fn,
+            wd_record.dirname(), wd_hash.dirname(), 0, sid.data());
 
         auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt", int(Direction::unknown));
         RED_REQUIRE(tfl);

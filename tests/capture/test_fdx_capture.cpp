@@ -74,6 +74,26 @@ RED_AUTO_TEST_CASE(fdx_name_generator)
 #undef MY_SID
 }
 
+RED_AUTO_TEST_CASE_WD(fdx_capture_not_fdx, wd)
+{
+    (void)wd;
+
+    using namespace std::string_view_literals;
+
+    auto record_path = wd.create_subdirectory("record");
+    auto hash_path = wd.create_subdirectory("hash");
+    auto sid = "my_session_id"sv;
+
+    CryptoContext cctx;
+    LCGRandom rnd;
+    Fstat fstat;
+
+    FdxCapture fdx_capture(
+        record_path.dirname().string(),
+        hash_path.dirname().string(),
+        sid, -1, cctx, rnd, fstat);
+}
+
 RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
 {
     using namespace std::string_view_literals;

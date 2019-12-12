@@ -35,7 +35,6 @@
 #include "main/version.hpp"
 
 #include <type_traits>
-#include <optional>
 #include <memory>
 
 #define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
@@ -334,11 +333,13 @@ ScytaleWriterHandle * scytale_writer_new_with_test_random(
     ));
 }
 
-int scytale_writer_open(ScytaleWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
+int scytale_writer_open(
+    ScytaleWriterHandle * handle, char const * record_path, char const * hash_path, int groupid)
+{
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    CHECK_NOTHROW(handle->out_crypto_transport.open(path, hashpath, groupid/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
+    CHECK_NOTHROW(handle->out_crypto_transport.open(record_path, hash_path, groupid/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
@@ -707,27 +708,21 @@ struct ScytaleFdxWriterHandle
     ScytaleFdxWriterHandle(
         int with_encryption, int with_checksum, const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        ScytaleRandomWrapper::RandomType random_type)
+        ScytaleRandomWrapper::RandomType random_type,
+        char const * record_path, char const * hash_path, int groupid, char const * sid)
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
+    , fdx_capture(record_path, hash_path, sid, groupid,
+        this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat)
     {
         this->qhashhex[0] = 0;
         this->fhashhex[0] = 0;
     }
 
-    void open(std::string_view record_path, std::string_view hash_path, int groupid, std::string_view sid)
-    {
-        assert(!bool(this->fdx_capture));
-
-        this->fdx_capture.emplace(
-            record_path, hash_path, sid, groupid,
-            this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat);
-    }
-
     ScytaleTflWriterHandler * open_tfl(char const* filename, int direction)
     {
         auto* tfl = new(std::nothrow) ScytaleTflWriterHandler{ /*NOLINT*/
-            this->fdx_capture->new_tfl(checked_int{direction}),
+            this->fdx_capture.new_tfl(checked_int{direction}),
             filename,
             *this,
         };
@@ -742,14 +737,14 @@ struct ScytaleFdxWriterHandle
 
     int close_tfl(ScytaleTflWriterHandler& tfl, bytes_view sig)
     {
-        this->fdx_capture->close_tfl(tfl.tfl_file, tfl.original_filename,
+        this->fdx_capture.close_tfl(tfl.tfl_file, tfl.original_filename,
             Mwrm3::Sha256Signature{sig});
         return 0;
     }
 
     int cancel_tfl(ScytaleTflWriterHandler& tfl)
     {
-        this->fdx_capture->cancel_tfl(tfl.tfl_file);
+        this->fdx_capture.cancel_tfl(tfl.tfl_file);
         return 0;
     }
 
@@ -757,18 +752,17 @@ struct ScytaleFdxWriterHandle
     {
         HashArray qhash;
         HashArray fhash;
-        this->fdx_capture->close(qhash, fhash);
+        this->fdx_capture.close(qhash, fhash);
         hash_to_hashhex(qhash, this->qhashhex);
         hash_to_hashhex(fhash, this->fhashhex);
-        this->fdx_capture.reset();
     }
 
 private:
-    std::optional<FdxCapture> fdx_capture;
-
     ScytaleRandomWrapper random_wrapper;
     CryptoContextWrapper cctxw;
     Fstat fstat;
+
+    FdxCapture fdx_capture;
 
 public:
     ScytaleErrorContext error_ctx;
@@ -779,32 +773,26 @@ public:
 
 ScytaleFdxWriterHandle * scytale_fdx_writer_new(
     int with_encryption, int with_checksum, char const* master_derivator,
-    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        char const * record_path, char const * hash_path, int groupid, char const * sid)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
         with_encryption, with_checksum, master_derivator,
-        hmac_fn, trace_fn, ScytaleRandomWrapper::UDEV));
+        hmac_fn, trace_fn, ScytaleRandomWrapper::UDEV,
+        record_path, hash_path, groupid, sid));
 }
 
 ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
     int with_encryption, int with_checksum, char const* master_derivator,
-    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        char const * record_path, char const * hash_path, int groupid, char const * sid)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
         with_encryption, with_checksum, master_derivator,
-        hmac_fn, trace_fn, ScytaleRandomWrapper::LCG));
-}
-
-int scytale_fdx_writer_open(
-    ScytaleFdxWriterHandle * handle,
-    char const * path, char const * hashpath, int groupid, char const * sid)
-{
-    SCOPED_TRACE;
-    CHECK_HANDLE(handle);
-    CHECK_NOTHROW(handle->open(path, hashpath, groupid, sid), ERR_TRANSPORT_OPEN_FAILED);
-    return 0;
+        hmac_fn, trace_fn, ScytaleRandomWrapper::LCG,
+        record_path, hash_path, groupid, sid));
 }
 
 ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(

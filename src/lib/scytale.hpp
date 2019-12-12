@@ -59,7 +59,7 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     int scytale_writer_open(
         ScytaleWriterHandle * handle,
-        char const * path, char const * hashpath, int groupid);
+        char const * record_path, char const * hash_path, int groupid);
 
     REDEMPTION_LIB_EXPORT
     int scytale_writer_write(
@@ -218,17 +218,14 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new(
         int with_encryption, int with_checksum, char const* master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        char const * record_path, char const * hash_path, int groupid, char const * sid);
 
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
         int with_encryption, int with_checksum, char const* master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
-
-    REDEMPTION_LIB_EXPORT
-    int scytale_fdx_writer_open(
-        ScytaleFdxWriterHandle * handle,
-        char const * path, char const * hashpath, int groupid, char const * sid);
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        char const * record_path, char const * hash_path, int groupid, char const * sid);
 
     // Mwrm3::Direction
     enum class ScytaleOpenTflDirection

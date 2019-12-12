@@ -118,10 +118,18 @@ FdxCapture::FdxCapture(
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)
-, report_error(report_error)
+, report_error(std::move(report_error))
 , groupid(groupid)
-, out_crypto_transport(cctx, rnd, fstat, std::move(report_error))
+{}
+
+void FdxCapture::_open()
 {
+    if (this->out_crypto_transport) {
+        return;
+    }
+
+    this->out_crypto_transport.emplace(cctx, rnd, fstat, this->report_error);
+
     auto const filename_len = this->name_generator.get_current_filename().size();
 
     for (std::string const* path : {
@@ -140,7 +148,7 @@ FdxCapture::FdxCapture(
         memcpy(dirname, path->data(), dirname_len);
         dirname[dirname_len] = '\0';
 
-        if (recursive_create_directory(dirname, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+        if (recursive_create_directory(dirname, S_IRWXU | S_IRGRP | S_IXGRP, this->groupid) != 0) {
             auto err = errno;
             LOG(LOG_ERR, "FdxCapture: Failed to create directory: \"%s\": %s",
                 *path, strerror(err));
@@ -148,8 +156,8 @@ FdxCapture::FdxCapture(
         }
     }
 
-    open_crypto_transport(this->out_crypto_transport, this->name_generator, groupid);
-    this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
+    open_crypto_transport(*this->out_crypto_transport, this->name_generator, groupid);
+    this->out_crypto_transport->send(Mwrm3::header_compatibility_packet);
 }
 
 FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
@@ -162,6 +170,7 @@ FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
 
 FdxCapture::TflFile FdxCapture::new_tfl(Mwrm3::Direction direction)
 {
+    this->_open();
     this->name_generator.next_tfl();
 
     return TflFile{*this, direction};
@@ -208,10 +217,10 @@ void FdxCapture::close_tfl(
         Mwrm3::FullHash{with_checksum ? make_array_view(fhash) : bytes_view{"", 0}},
         sig, write_in_buf);
 
-    this->out_crypto_transport.send(out.get_bytes());
+    this->out_crypto_transport->send(out.get_bytes());
 }
 
 void FdxCapture::close(OutCryptoTransport::HashArray& qhash, OutCryptoTransport::HashArray& fhash)
 {
-    this->out_crypto_transport.close(qhash, fhash);
+    this->out_crypto_transport->close(qhash, fhash);
 }

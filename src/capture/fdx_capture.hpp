@@ -24,11 +24,11 @@
 #include "capture/mwrm3.hpp"
 
 #include <vector>
+#include <optional>
 #include <string>
 #include <string_view>
 
 #include <cstdint>
-
 
 
 struct TflSuffixGenerator
@@ -113,6 +113,8 @@ struct FdxCapture
 private:
     friend TflFile;
 
+    void _open();
+
     FdxNameGenerator name_generator;
 
     CryptoContext& cctx;
@@ -121,5 +123,5 @@ private:
     ReportError report_error;
     int groupid;
 
-    OutCryptoTransport out_crypto_transport;
+    std::optional<OutCryptoTransport> out_crypto_transport;
 };
