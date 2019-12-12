@@ -308,6 +308,9 @@ namespace redemption_unit_test__
                     ++p;
                 }
                 else {
+                    if (n == 1 && !is_printable_ascii(*p)) {
+                        ++count_invalid;
+                    }
                     p += n;
                 }
             });
