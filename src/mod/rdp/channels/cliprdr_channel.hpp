@@ -569,6 +569,10 @@ private:
     {
         (void)total_length;
 
+        if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)) {
+            return true;
+        }
+
         InStream chunk_serie = chunk.clone();
 
         ClientFormatDataResponseReceive receiver(
@@ -583,77 +587,73 @@ private:
         );
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            // TODO code duplicated with process_server_format_data_response_pdu
 
-            if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
+            std::string format_name = this->format_name_inventory[requestedFormatId];
+            if (format_name.empty()) {
+                format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
+            }
 
-                // TODO code duplicated with process_server_format_data_response_pdu
+            bool const log_current_activity = (
+                    (!this->param_log_only_relevant_clipboard_activities) ||
+                    (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
+                     strcasecmp("FileGroupDescriptorW", format_name.c_str()))
+                );
 
-                std::string format_name = this->format_name_inventory[requestedFormatId];
-                if (format_name.empty()) {
-                    format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
-                }
+            format_name += "(";
+            format_name += std::to_string(this->requestedFormatId);
+            format_name += ")";
 
-                bool const log_current_activity = (
-                        (!this->param_log_only_relevant_clipboard_activities) ||
-                        (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
-                         strcasecmp("FileGroupDescriptorW", format_name.c_str()))
-                    );
+            char const* type = (receiver.data_to_dump.empty() ?
+                "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" :
+                "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX");
 
-                format_name += "(";
-                format_name += std::to_string(this->requestedFormatId);
-                format_name += ")";
+            auto const size_str = std::to_string(in_header.dataLen());
 
-                char const* type = (receiver.data_to_dump.empty() ?
-                    "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" :
-                    "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX");
-
-                auto const size_str = std::to_string(in_header.dataLen());
-
-                std::string info;
+            std::string info;
+            ::key_qvalue_pairs(
+                    info,
+                    {
+                        { "type", type },
+                        { "format", format_name },
+                        { "size", size_str }
+                    }
+                );
+            if (!receiver.data_to_dump.empty()) {
                 ::key_qvalue_pairs(
                         info,
                         {
-                            { "type", type },
-                            { "format", format_name },
-                            { "size", size_str }
+                            { "partial_data", receiver.data_to_dump }
                         }
                     );
+            }
+
+            ArcsightLogInfo arc_info;
+            arc_info.name = std::string(type);
+            arc_info.ApplicationProtocol = "rdp";
+            arc_info.message = info;
+            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+            if (!this->param_dont_log_data_into_meta && log_current_activity) {
+                this->report_message.log6(info, arc_info, tvtime());
+            }
+
+            if (!this->param_dont_log_data_into_syslog && log_current_activity) {
+                LOG(LOG_INFO, "%s", info);
+            }
+
+            if (!this->param_dont_log_data_into_wrm) {
+                std::string message(type);
+                message += "=";
+                message += format_name;
+                message += "\x01";
+                message += size_str;
                 if (!receiver.data_to_dump.empty()) {
-                    ::key_qvalue_pairs(
-                            info,
-                            {
-                                { "partial_data", receiver.data_to_dump }
-                            }
-                        );
-                }
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = std::string(type);
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.message = info;
-                arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
-
-                if (!this->param_dont_log_data_into_meta && log_current_activity) {
-                    this->report_message.log6(info, arc_info, tvtime());
-                }
-
-                if (!this->param_dont_log_data_into_syslog && log_current_activity) {
-                    LOG(LOG_INFO, "%s", info);
-                }
-
-                if (!this->param_dont_log_data_into_wrm) {
-                    std::string message(type);
-                    message += "=";
-                    message += format_name;
                     message += "\x01";
-                    message += size_str;
-                    if (!receiver.data_to_dump.empty()) {
-                        message += "\x01";
-                        message += receiver.data_to_dump;
-                    }
-
-                    this->front.session_update(message);
+                    message += receiver.data_to_dump;
                 }
+
+                this->front.session_update(message);
             }
         }   // if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
 
@@ -979,7 +979,7 @@ public:
                 return RDPECLIP::get_msgType_name(message_type);
             }
         }(message_type));
-        LOG(LOG_INFO, "ClipboardVirtualChannel::process_client_message: %s (%s:%s)",
+        LOG(LOG_INFO, "ClipboardVirtualChannel::log_client_message_type: %s (%s:%s)",
             message_type_str,
             (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? "FIRST" : "",
             (flags & CHANNELS::CHANNEL_FLAG_LAST) ? "LAST" : "");
@@ -1070,6 +1070,10 @@ public:
 
                     if (this->client_dataLen >= 4) {
                         this->client_streamId = chunk.in_uint32_le();
+                    }
+
+                    if (!(header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)) {
+                        break;
                     }
                 }
 
@@ -1355,128 +1359,129 @@ public:
     {
         (void)total_length;
 
+        if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)) {
+            return true;
+        }
+
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             const auto saved_chunk_p = chunk.get_current();
 
-            if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
+            constexpr size_t const max_length_of_data_to_dump = 256;
+                      std::string  data_to_dump;
 
-                constexpr size_t const max_length_of_data_to_dump = 256;
-                          std::string  data_to_dump;
-
-                switch (this->requestedFormatId) {
-    /*
-                    case RDPECLIP::CF_TEXT:
-                    {
-                        const size_t length_of_data_to_dump = std::min(
-                            chunk.in_remain(),
-                            max_length_of_data_to_dump);
-                        const std::string data_to_dump(::char_ptr_cast(
-                            chunk.get_current()), length_of_data_to_dump);
-                        LOG(LOG_INFO, "%s", data_to_dump);
-                    }
-                    break;
-    */
-
-                    case RDPECLIP::CF_UNICODETEXT:
-                    {
-                        assert(!(chunk.in_remain() & 1));
-
-                        const size_t length_of_data_to_dump = std::min(
-                            chunk.in_remain(), max_length_of_data_to_dump * 2);
-
-                        constexpr size_t size_of_utf8_string =
-                            max_length_of_data_to_dump *
-                                maximum_length_of_utf8_character_in_bytes;
-
-                        uint8_t utf8_string[size_of_utf8_string + 1] {};
-                        const size_t length_of_utf8_string = ::UTF16toUTF8(
-                            chunk.get_current(), length_of_data_to_dump / 2,
-                            utf8_string, size_of_utf8_string);
-                        data_to_dump.assign(
-                            ::char_ptr_cast(utf8_string),
-                            ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
-                             length_of_utf8_string - 1 :
-                             length_of_utf8_string));
-                    }
-                    break;
-
-                    case RDPECLIP::CF_LOCALE:
-                    {
-                        const uint32_t locale_identifier = chunk.in_uint32_le();
-
-                        data_to_dump = std::to_string(locale_identifier);
-                    }
-                    break;
+            switch (this->requestedFormatId) {
+/*
+                case RDPECLIP::CF_TEXT:
+                {
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(),
+                        max_length_of_data_to_dump);
+                    const std::string data_to_dump(::char_ptr_cast(
+                        chunk.get_current()), length_of_data_to_dump);
+                    LOG(LOG_INFO, "%s", data_to_dump);
                 }
+                break;
+*/
 
-                // TODO code duplicated with process_client_format_data_response_pdu
+                case RDPECLIP::CF_UNICODETEXT:
+                {
+                    assert(!(chunk.in_remain() & 1));
 
-                char const* type = (data_to_dump.empty() ?
-                    "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION" :
-                    "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX");
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(), max_length_of_data_to_dump * 2);
 
-                std::string format_name = this->format_name_inventory[requestedFormatId];
-                if (format_name.empty()) {
-                    format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
+                    constexpr size_t size_of_utf8_string =
+                        max_length_of_data_to_dump *
+                            maximum_length_of_utf8_character_in_bytes;
+
+                    uint8_t utf8_string[size_of_utf8_string + 1] {};
+                    const size_t length_of_utf8_string = ::UTF16toUTF8(
+                        chunk.get_current(), length_of_data_to_dump / 2,
+                        utf8_string, size_of_utf8_string);
+                    data_to_dump.assign(
+                        ::char_ptr_cast(utf8_string),
+                        ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
+                         length_of_utf8_string - 1 :
+                         length_of_utf8_string));
                 }
+                break;
 
-                bool const log_current_activity = (
-                        (!this->param_log_only_relevant_clipboard_activities) ||
-                        (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
-                         strcasecmp("FileGroupDescriptorW", format_name.c_str()))
-                    );
+                case RDPECLIP::CF_LOCALE:
+                {
+                    const uint32_t locale_identifier = chunk.in_uint32_le();
 
-                format_name += "(";
-                format_name += std::to_string(this->requestedFormatId);
-                format_name += ")";
+                    data_to_dump = std::to_string(locale_identifier);
+                }
+                break;
+            }
 
-                auto const size_str = std::to_string(in_header.dataLen());
+            // TODO code duplicated with process_client_format_data_response_pdu
 
-                std::string info;
+            char const* type = (data_to_dump.empty() ?
+                "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION" :
+                "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX");
+
+            std::string format_name = this->format_name_inventory[requestedFormatId];
+            if (format_name.empty()) {
+                format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
+            }
+
+            bool const log_current_activity = (
+                    (!this->param_log_only_relevant_clipboard_activities) ||
+                    (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
+                     strcasecmp("FileGroupDescriptorW", format_name.c_str()))
+                );
+
+            format_name += "(";
+            format_name += std::to_string(this->requestedFormatId);
+            format_name += ")";
+
+            auto const size_str = std::to_string(in_header.dataLen());
+
+            std::string info;
+            ::key_qvalue_pairs(
+                    info,
+                    {
+                        { "type", type },
+                        { "format", format_name },
+                        { "size", size_str }
+                    }
+                );
+            if (!data_to_dump.empty()) {
                 ::key_qvalue_pairs(
                         info,
                         {
-                            { "type", type },
-                            { "format", format_name },
-                            { "size", size_str }
+                            { "partial_data", data_to_dump }
                         }
                     );
+            }
+
+            ArcsightLogInfo arc_info;
+            arc_info.name = std::string(type);
+            arc_info.ApplicationProtocol = "rdp";
+            arc_info.message = info;
+            arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+            if (!this->param_dont_log_data_into_meta && log_current_activity) {
+                this->report_message.log6(info, arc_info, tvtime());
+            }
+
+            if (!this->param_dont_log_data_into_syslog && log_current_activity) {
+                LOG(LOG_INFO, "%s", info);
+            }
+
+            if (!this->param_dont_log_data_into_wrm) {
+                std::string message(type);
+                message += "=";
+                message += format_name;
+                message += "\x01";
+                message += size_str;
                 if (!data_to_dump.empty()) {
-                    ::key_qvalue_pairs(
-                            info,
-                            {
-                                { "partial_data", data_to_dump }
-                            }
-                        );
-                }
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = std::string(type);
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.message = info;
-                arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
-
-                if (!this->param_dont_log_data_into_meta && log_current_activity) {
-                    this->report_message.log6(info, arc_info, tvtime());
-                }
-
-                if (!this->param_dont_log_data_into_syslog && log_current_activity) {
-                    LOG(LOG_INFO, "%s", info);
-                }
-
-                if (!this->param_dont_log_data_into_wrm) {
-                    std::string message(type);
-                    message += "=";
-                    message += format_name;
                     message += "\x01";
-                    message += size_str;
-                    if (!data_to_dump.empty()) {
-                        message += "\x01";
-                        message += data_to_dump;
-                    }
-
-                    this->front.session_update(message);
+                    message += data_to_dump;
                 }
+
+                this->front.session_update(message);
             }
 
             chunk.rewind(saved_chunk_p - chunk.get_data());
@@ -1882,6 +1887,10 @@ public:
 
                     if (this->server_dataLen >= 4 /* streamId(4) */) {
                         this->server_streamId = chunk.in_uint32_le();
+                    }
+
+                    if (!(header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)) {
+                        break;
                     }
                 }
 
