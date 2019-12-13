@@ -75,50 +75,6 @@
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/session_reactor.hpp"
 
-
-//void new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/)
-//{
-//    LOG(LOG_INFO, "new mod %d", target_module);
-//    switch (target_module) {
-//    case MODULE_VNC:
-//    case MODULE_XUP:
-//    case MODULE_RDP:
-//        this->connected = true;
-//        break;
-//    default:
-//        break;
-//    }
-//}
-
-//void MMIni::invoke_close_box(
-//    bool enable_close_box,
-//    const char * auth_error_message, BackEvent_t & signal,
-//    AuthApi & authentifier, ReportMessageApi & report_message)
-//{
-//    LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
-//    this->last_module = true;
-//    if (auth_error_message) {
-//        this->ini.set<cfg::context::auth_error_message>(auth_error_message);
-//    }
-//    try {
-//        this->get_mod_wrapper().mod->disconnect();
-//    }
-//    catch (Error const& e) {
-//        LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-//    }
-
-//    this->remove_mod();
-//    if (enable_close_box) {
-//        this->new_mod(MODULE_INTERNAL_CLOSE, authentifier, report_message);
-//        signal = BACK_EVENT_NONE;
-//    }
-//    else {
-//        signal = BACK_EVENT_STOP;
-//    }
-//}
-
-
-
 class rdp_api;
 class AuthApi;
 class ReportMessageApi;
@@ -256,7 +212,7 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     FrontAPI & front;
     BGRPalette const & palette;
     gdi::GraphicApi& graphics;
-    ClientInfo const & front_client_info;
+    ClientInfo const & client_info;
     ClientExecute & rail_client_execute;
     windowing_api* &winapi;
     Inifile & ini;
@@ -271,13 +227,13 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     const Theme & _theme;
 
 public:
-    explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & front_client_info, const Font & font, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & font, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : gdi::ProtectedGraphics(graphics, Rect{})
     , mod_wrapper(mod_wrapper)
     , front(front)
     , palette(palette)
     , graphics(graphics)
-    , front_client_info(front_client_info)
+    , client_info(client_info)
     , rail_client_execute(rail_client_execute)
     , winapi(winapi)
     , ini(ini)
@@ -297,8 +253,8 @@ public:
         if (this->bogus_refresh_rect_ex) {
             this->mod_wrapper.mod->rdp_suppress_display_updates();
             this->mod_wrapper.mod->rdp_allow_display_updates(0, 0,
-                this->front_client_info.screen_info.width,
-                this->front_client_info.screen_info.height);
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height);
         }
 
         if (this->winapi) {
@@ -318,7 +274,7 @@ public:
         this->is_disable_by_input = is_disable_by_input;
         this->bogus_refresh_rect_ex = (this->ini.get<cfg::globals::bogus_refresh_rect>()
          && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
-         && (this->front_client_info.cs_monitor.monitorCount > 1));
+         && (this->client_info.cs_monitor.monitorCount > 1));
 
         if (is_disable_by_input) {
             str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->ini)));
@@ -327,10 +283,10 @@ public:
         gdi::TextMetrics tm(this->_font, this->osd_message.c_str());
         int w = tm.width + padw * 2;
         int h = tm.height + padh * 2;
-        this->color = color_encode(BGRColor(BLACK), this->front_client_info.screen_info.bpp);
-        this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->front_client_info.screen_info.bpp);
+        this->color = color_encode(BGRColor(BLACK), this->client_info.screen_info.bpp);
+        this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->client_info.screen_info.bpp);
 
-        if (this->front_client_info.remote_program &&
+        if (this->client_info.remote_program &&
             (this->winapi == static_cast<windowing_api*>(&this->rail_client_execute))) {
 
             Rect current_work_area_rect = this->rail_client_execute.get_current_work_area_rect();
@@ -341,7 +297,7 @@ public:
                 0, w, h);
         }
         else {
-            this->clip = Rect(this->front_client_info.screen_info.width < w ? 0 : (this->front_client_info.screen_info.width - w) / 2, 0, w, h);
+            this->clip = Rect(this->client_info.screen_info.width < w ? 0 : (this->client_info.screen_info.width - w) / 2, 0, w, h);
         }
 
         this->set_protected_rect(this->clip);
@@ -429,7 +385,7 @@ private:
             return ;
         }
 
-        auto const color_ctx = gdi::ColorCtx::from_bpp(this->front_client_info.screen_info.bpp, this->palette);
+        auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->palette);
 
         drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 
@@ -877,18 +833,22 @@ public:
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
+        {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
-            this->set_mod(new Bouncer2Mod(
+            auto new_mod = new Bouncer2Mod(
                 this->session_reactor,
                 this->client_info.screen_info.width,
                 this->client_info.screen_info.height
-            ));
+            );
+            this->set_mod(new_mod);
             LOG_IF(bool(this->verbose & Verbose::new_mod),
                 LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
-            break;
+        }
+        break;
         case MODULE_INTERNAL_TEST:
+        {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
-            this->set_mod(new ReplayMod(
+            auto new_mod = new ReplayMod(
                 this->session_reactor,
                 this->graphics, this->front,
                 [this]{
@@ -906,39 +866,48 @@ public:
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
-            ));
+            );
+            this->set_mod(new_mod);
             LOG_IF(bool(this->verbose & Verbose::new_mod),
                 LOG_INFO, "ModuleManager::internal module 'test' ready");
-            break;
+        }
+        break;
         case MODULE_INTERNAL_WIDGETTEST:
+        {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-            this->set_mod(new WidgetTestMod(
+            auto new_mod = new WidgetTestMod(
                 this->session_reactor,
                 this->front,
                 this->client_info.screen_info.width,
                 this->client_info.screen_info.height,
                 this->_font
-            ));
+            );
+            this->set_mod(new_mod);
             LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
-            break;
+        }
+        break;
         case MODULE_INTERNAL_CARD:
+        {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
-            this->set_mod(new TestCardMod(
+            auto new_mod = new TestCardMod(
                 this->session_reactor,
                 this->client_info.screen_info.width,
                 this->client_info.screen_info.height,
                 this->_font,
                 false
-            ));
+            ); 
+            this->set_mod(new_mod);
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
-            break;
+        }
+        break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
+        {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
                 report_message.update_inactivity_timeout();
             }
 
-            this->set_mod(new SelectorMod(
+            auto new_mod = new SelectorMod(
                 this->ini,
                 this->session_reactor,
                 this->graphics, this->front,
@@ -952,10 +921,12 @@ public:
                 this->rail_client_execute,
                 this->_font,
                 this->_theme
-            ));
+            );
+            this->set_mod(new_mod);
             LOG_IF(bool(this->verbose & Verbose::new_mod),
                 LOG_INFO, "ModuleManager::internal module 'selector' ready");
-            break;
+        }
+        break;
         case MODULE_INTERNAL_CLOSE:
         case MODULE_INTERNAL_CLOSE_BACK: {
             bool const back_to_selector = (target_module == MODULE_INTERNAL_CLOSE_BACK);
@@ -966,7 +937,7 @@ public:
                 this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
             }
 
-            this->set_mod(new FlatWabCloseMod(
+            auto new_mod = new FlatWabCloseMod(
                 this->ini,
                 this->session_reactor,
                 this->graphics, this->front,
@@ -982,7 +953,8 @@ public:
                 this->_theme,
                 true,
                 back_to_selector
-            ));
+            );
+            this->set_mod(new_mod);
             LOG(LOG_INFO, "ModuleManager::internal module Close%s ready",
                 back_to_selector ? " Back" : "");
             break;
@@ -990,7 +962,7 @@ public:
         case MODULE_INTERNAL_TARGET:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
-                this->set_mod(new InteractiveTargetMod(
+                auto new_mod = new InteractiveTargetMod(
                     this->ini,
                     this->session_reactor,
                     this->graphics, this->front,
@@ -1004,128 +976,132 @@ public:
                     this->rail_client_execute,
                     this->_font,
                     this->_theme
-                ));
+                ); 
+                this->set_mod(new_mod);
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
             break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-            {
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
-                const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * button = TR(trkeys::refused, language(this->ini));
-                const char * caption = "Information";
-                this->set_mod(new FlatDialogMod(
-                    this->ini,
-                    this->session_reactor,
-                    this->graphics, this->front,
+        {
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
+            const char * message = this->ini.get<cfg::context::message>().c_str();
+            const char * button = TR(trkeys::refused, language(this->ini));
+            const char * caption = "Information";
+            auto new_mod = new FlatDialogMod(
+                this->ini,
+                this->session_reactor,
+                this->graphics, this->front,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
+                this->rail_client_execute.adjust_rect(get_widget_rect(
                     this->client_info.screen_info.width,
                     this->client_info.screen_info.height,
-                    this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->client_info.screen_info.width,
-                        this->client_info.screen_info.height,
-                        this->client_info.cs_monitor
-                    )),
-                    caption,
-                    message,
-                    button,
-                    this->rail_client_execute,
-                    this->_font,
-                    this->_theme
-                ));
-                LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
-            }
-            break;
+                    this->client_info.cs_monitor
+                )),
+                caption,
+                message,
+                button,
+                this->rail_client_execute,
+                this->_font,
+                this->_theme
+            );
+            this->set_mod(new_mod);
+            LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
+        }
+        break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-            {
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
-                const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * button = nullptr;
-                const char * caption = "Information";
-                this->set_mod(new FlatDialogMod(
-                    this->ini,
-                    this->session_reactor,
-                    this->graphics, this->front,
+        {
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
+            const char * message = this->ini.get<cfg::context::message>().c_str();
+            const char * button = nullptr;
+            const char * caption = "Information";
+            auto new_mod = new FlatDialogMod(
+                this->ini,
+                this->session_reactor,
+                this->graphics, this->front,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
+                this->rail_client_execute.adjust_rect(get_widget_rect(
                     this->client_info.screen_info.width,
                     this->client_info.screen_info.height,
-                    this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->client_info.screen_info.width,
-                        this->client_info.screen_info.height,
-                        this->client_info.cs_monitor
-                    )),
-                    caption,
-                    message,
-                    button,
-                    this->rail_client_execute,
-                    this->_font,
-                    this->_theme
-                ));
-                LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
-            }
-            break;
+                    this->client_info.cs_monitor
+                )),
+                caption,
+                message,
+                button,
+                this->rail_client_execute,
+                this->_font,
+                this->_theme
+            );
+            this->set_mod(new_mod);
+            LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
+        }
+        break;
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
-            {
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
-                const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * button = nullptr;
-                const char * caption = "Challenge";
-                ChallengeOpt challenge = CHALLENGE_HIDE;
-                if (this->ini.get<cfg::context::authentication_challenge>()) {
-                    challenge = CHALLENGE_ECHO;
-                }
-                this->ini.ask<cfg::context::authentication_challenge>();
-                this->ini.ask<cfg::context::password>();
-                this->set_mod(new FlatDialogMod(
-                    this->ini,
-                    this->session_reactor,
-                    this->graphics, this->front,
+        {
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
+            const char * message = this->ini.get<cfg::context::message>().c_str();
+            const char * button = nullptr;
+            const char * caption = "Challenge";
+            ChallengeOpt challenge = CHALLENGE_HIDE;
+            if (this->ini.get<cfg::context::authentication_challenge>()) {
+                challenge = CHALLENGE_ECHO;
+            }
+            this->ini.ask<cfg::context::authentication_challenge>();
+            this->ini.ask<cfg::context::password>();
+            auto new_mod = new FlatDialogMod(
+                this->ini,
+                this->session_reactor,
+                this->graphics, this->front,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
+                this->rail_client_execute.adjust_rect(get_widget_rect(
                     this->client_info.screen_info.width,
                     this->client_info.screen_info.height,
-                    this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->client_info.screen_info.width,
-                        this->client_info.screen_info.height,
-                        this->client_info.cs_monitor
-                    )),
-                    caption,
-                    message,
-                    button,
-                    this->rail_client_execute,
-                    this->_font,
-                    this->_theme,
-                    challenge
-                ));
-                LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Challenge' ready");
-            }
-
-            break;
+                    this->client_info.cs_monitor
+                )),
+                caption,
+                message,
+                button,
+                this->rail_client_execute,
+                this->_font,
+                this->_theme,
+                challenge
+            );
+            this->set_mod(new_mod);
+            LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Challenge' ready");
+        }
+        break;
         case MODULE_INTERNAL_WAIT_INFO:
-            {
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
-                const char * message = this->ini.get<cfg::context::message>().c_str();
-                const char * caption = TR(trkeys::information, language(this->ini));
-                bool showform = this->ini.get<cfg::context::showform>();
-                uint flag = this->ini.get<cfg::context::formflag>();
-                this->set_mod(new FlatWaitMod(
-                    this->ini,
-                    this->session_reactor,
-                    this->graphics, this->front,
+        {
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
+            const char * message = this->ini.get<cfg::context::message>().c_str();
+            const char * caption = TR(trkeys::information, language(this->ini));
+            bool showform = this->ini.get<cfg::context::showform>();
+            uint flag = this->ini.get<cfg::context::formflag>();
+            auto new_mod = new FlatWaitMod(
+                this->ini,
+                this->session_reactor,
+                this->graphics, this->front,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
+                this->rail_client_execute.adjust_rect(get_widget_rect(
                     this->client_info.screen_info.width,
                     this->client_info.screen_info.height,
-                    this->rail_client_execute.adjust_rect(get_widget_rect(
-                        this->client_info.screen_info.width,
-                        this->client_info.screen_info.height,
-                        this->client_info.cs_monitor
-                    )),
-                    caption,
-                    message,
-                    this->rail_client_execute,
-                    this->_font,
-                    this->_theme,
-                    showform,
-                    flag
-                ));
-                LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
-            }
-            break;
+                    this->client_info.cs_monitor
+                )),
+                caption,
+                message,
+                this->rail_client_execute,
+                this->_font,
+                this->_theme,
+                showform,
+                flag
+            );
+            this->set_mod(new_mod);
+            LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
+        }
+        break;
         case MODULE_INTERNAL_TRANSITION:
             {
                 this->set_mod(new TransitionMod(
