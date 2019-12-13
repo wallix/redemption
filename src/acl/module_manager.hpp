@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "acl/module_manager/mod_factory.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/file_system_license_store.hpp"
 #include "acl/module_manager/enums.hpp"
@@ -497,6 +498,7 @@ private:
 
 class ModuleManager
 {
+    ModFactory & mod_factory;
     ModWrapper & mod_wrapper;
 public:
 
@@ -722,8 +724,9 @@ private:
     Theme & _theme;
 
 public:
-    ModuleManager(SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
-        : mod_wrapper(mod_wrapper)
+    ModuleManager(ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+        : mod_factory(mod_factory)
+        , mod_wrapper(mod_wrapper)
         , ini(ini)
         , session_reactor(session_reactor)
         , cctx(cctx)
@@ -833,17 +836,7 @@ public:
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
-        {
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
-            auto new_mod = new Bouncer2Mod(
-                this->session_reactor,
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            );
-            this->set_mod(new_mod);
-            LOG_IF(bool(this->verbose & Verbose::new_mod),
-                LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
-        }
+            this->set_mod(mod_factory.create_mod_bouncer());
         break;
         case MODULE_INTERNAL_TEST:
         {

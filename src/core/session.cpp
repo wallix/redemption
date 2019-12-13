@@ -18,6 +18,7 @@
    Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
 */
 
+#include "acl/module_manager/mod_factory.hpp"
 #include "core/session.hpp"
 
 #include "acl/authentifier.hpp"
@@ -651,7 +652,8 @@ public:
             
             ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, font, theme, rail_client_execute, winapi, this->ini);
 
-            ModuleManager mm(session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, this->ini, cctx, rnd, timeobj);
+            ModFactory mod_factory(session_reactor, front.client_info);
+            ModuleManager mm(mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
