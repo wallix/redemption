@@ -781,7 +781,7 @@ namespace Mwrm3
                         duration,
                         detail::types::u8_unsafe{
                             ((quick_hash.hash.empty() ? 0 : 1) << 0)
-                        | ((full_hash.hash.empty() ? 0 : 1) << 1)
+                          | ((full_hash.hash.empty() ? 0 : 1) << 1)
                         },
                     }.bytes(),
                     quick_hash.hash,

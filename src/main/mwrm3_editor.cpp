@@ -25,8 +25,9 @@ Author(s): Jonathan Poelen
 
 #include <iostream>
 
-#include <cxxabi.h>
-
+#if REDEMPTION_HAS_INCLUDE(<cxxabi.h>)
+#  include <cxxabi.h>
+#endif
 
 namespace
 {
@@ -161,15 +162,24 @@ struct print_value_impl<T, decltype(void(std::declval<T&>().hash))>
 };
 
 template<class T>
-char const* get_type_name(char* output_buffer, size_t * length, int * status)
+std::string const& get_type_name(char* output_buffer, size_t * length, int * status)
 {
-    char const* s = __cxxabiv1::__cxa_demangle(
-        typeid(T).name(), output_buffer, length, status);
-    return (0 == *status) ? s
-        : (-1 == *status) ? "(demangle error: memory allocation failiure)"
-        : (-2 == *status) ? "(demangle error: not a valid name  )"
-        : (-3 == *status) ? "(demangle error: arguments is invalid)"
-        : "(demangle error)";
+    // TODO use __PRETTY_FUNCTION__
+    static const std::string s = [&](){
+#if REDEMPTION_HAS_INCLUDE(<cxxabi.h>)
+        char const* s = __cxxabiv1::__cxa_demangle(
+            typeid(T).name(), output_buffer, length, status);
+        return (0 == *status) ? s
+            : (-1 == *status) ? "(demangle error: memory allocation failiure)"
+            : (-2 == *status) ? "(demangle error: not a valid name)"
+            : (-3 == *status) ? "(demangle error: arguments is invalid)"
+            : "(demangle error)";
+#else
+        return "(cxxabi.h not found)";
+#endif
+    }();
+
+    return s;
 }
 
 int mwrm_text_viewer(Mwrm3FileReader& file)
