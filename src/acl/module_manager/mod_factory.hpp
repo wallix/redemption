@@ -33,6 +33,7 @@
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
+#include "mod/internal/test_card_mod.hpp"
 
 class ModFactory
 {
@@ -97,6 +98,18 @@ public:
             this->client_info.screen_info.height,
             this->glyphs
         );
+        return new_mod;
+    }
+
+    auto create_test_card_mod() -> mod_api*
+    {
+        auto new_mod = new TestCardMod(
+            this->session_reactor,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->glyphs,
+            false
+        ); 
         return new_mod;
     }
 

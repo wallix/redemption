@@ -42,7 +42,6 @@
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/selector_mod.hpp"
-#include "mod/internal/test_card_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 
 #include "mod/mod_api.hpp"
@@ -842,18 +841,7 @@ public:
             this->set_mod(mod_factory.create_widget_test_mod());
         break;
         case MODULE_INTERNAL_CARD:
-        {
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
-            auto new_mod = new TestCardMod(
-                this->session_reactor,
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height,
-                this->glyphs,
-                false
-            ); 
-            this->set_mod(new_mod);
-            LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
-        }
+            this->set_mod(mod_factory.create_test_card_mod());
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
         {
