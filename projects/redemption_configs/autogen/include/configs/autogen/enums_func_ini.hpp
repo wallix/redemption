@@ -280,6 +280,17 @@ array_view_const_char assign_zbuf_from_cfg(
 parse_error parse(RdpFileRecord & x, spec_type<RdpFileRecord> /*type*/, array_view_const_char value)
 ;
 
+template<> struct zstr_buffer_traits<SessionProbeOnAccountManipulation> : zstr_buffer_traits<unsigned long> {};
+
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SessionProbeOnAccountManipulation> & buf,
+    cfg_s_type<SessionProbeOnAccountManipulation> /*type*/,
+    SessionProbeOnAccountManipulation x
+);
+
+parse_error parse(SessionProbeOnAccountManipulation & x, spec_type<SessionProbeOnAccountManipulation> /*type*/, array_view_const_char value)
+;
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 array_view_const_char assign_zbuf_from_cfg(

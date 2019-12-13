@@ -134,6 +134,11 @@ cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled
     Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 cfg::mod_rdp::session_probe_public_session ⇐ mod_rdp:session_probe_public_session   [bool]
     If enabled, disconnected session can be recovered by a different primary user.
+cfg::mod_rdp::session_probe_on_account_manipulation ⇐ mod_rdp:session_probe_on_account_manipulation   [SessionProbeOnAccountManipulation]
+    For targets running WALLIX BestSafe only.
+      0: User action will be accepted
+      1: (Same thing as 'allow') 
+      2: User action will be rejected
 cfg::mod_rdp::server_cert_store ⇐ mod_rdp:server_cert_store   [bool]
     Keep known server certificates on WAB
 cfg::mod_rdp::server_cert_check ⇐ mod_rdp:server_cert_check   [ServerCertCheck]

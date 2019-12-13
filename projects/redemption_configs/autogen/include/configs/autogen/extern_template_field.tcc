@@ -66,6 +66,7 @@ template class Inifile::Field<cfg::mod_rdp::session_probe_ignore_ui_less_process
 template class Inifile::Field<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_disabled_features>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_public_session>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_on_account_manipulation>;
 template class Inifile::Field<cfg::mod_rdp::server_cert_store>;
 template class Inifile::Field<cfg::mod_rdp::server_cert_check>;
 template class Inifile::Field<cfg::mod_rdp::server_access_allowed_message>;

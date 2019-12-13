@@ -60,6 +60,7 @@ cp_spec = {
     u'mod_rdp:session_probe_childless_window_as_unidentified_input_field': ('childless_window_as_unidentified_input_field', True),
     u'mod_rdp:session_probe_disabled_features': ('disabled_features', 352),
     u'mod_rdp:session_probe_public_session': ('public_session', False),
+    u'mod_rdp:session_probe_on_account_manipulation': ('on_account_manipulation', 0),
     u'context:session_probe_outbound_connection_monitoring_rules': ('outbound_connection_monitoring_rules', u''),
     u'context:session_probe_process_monitoring_rules': ('process_monitoring_rules', u''),
     u'context:session_probe_extra_system_processes': ('extra_system_processes', u''),

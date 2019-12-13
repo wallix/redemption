@@ -209,6 +209,12 @@ disabled_features = integer(min=0, max=511, default=352)
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 
+# For targets running WALLIX BestSafe only.
+#   0: User action will be accepted
+#   1: (Same thing as 'allow') 
+#   2: User action will be rejected
+on_account_manipulation = option(0, 1, 2, default=0)
+
 # Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)
 # (Ex. for backwards compatibility only: 10.1.0.0/16:22)
 # Session Probe must be enabled to use this feature.

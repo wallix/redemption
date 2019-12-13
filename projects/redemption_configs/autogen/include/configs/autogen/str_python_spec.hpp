@@ -530,6 +530,13 @@ session_probe_disabled_features = integer(min=0, max=511, default=352)
 #_hidden
 session_probe_public_session = boolean(default=False)
 
+# For targets running WALLIX BestSafe only.
+#   0: User action will be accepted
+#   1: (Same thing as 'allow') 
+#   2: User action will be rejected
+#_hidden
+session_probe_on_account_manipulation = option(0, 1, 2, default=0)
+
 # Keep known server certificates on WAB
 #_hidden
 server_cert_store = boolean(default=True)

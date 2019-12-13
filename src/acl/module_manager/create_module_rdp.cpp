@@ -199,6 +199,8 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_params.vc_params.session_shadowing_support = ini.get<cfg::mod_rdp::session_shadowing_support>();
 
+    mod_rdp_params.session_probe_params.vc_params.on_account_manipulation   = ini.get<cfg::mod_rdp::session_probe_on_account_manipulation>();
+
     mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
     mod_rdp_params.file_system_params.disable_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
     mod_rdp_params.session_probe_params.vc_params.extra_system_processes =

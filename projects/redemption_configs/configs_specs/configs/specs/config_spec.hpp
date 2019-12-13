@@ -411,6 +411,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
 
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnAccountManipulation>(), "session_probe_on_account_manipulation", connpolicy::name{"on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
+
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 

@@ -565,6 +565,26 @@ operator << (std::basic_ostream<Ch, Tr> & os, RdpFileRecord e)
 { return os << static_cast<unsigned long>(e); }
 
 
+// For targets running WALLIX BestSafe only.
+enum class SessionProbeOnAccountManipulation : unsigned char
+{
+    // User action will be accepted
+    allow = 0,
+    // (Same thing as 'allow') 
+    notify = 1,
+    // User action will be rejected
+    deny = 2,
+};
+
+inline bool is_valid_enum_value(SessionProbeOnAccountManipulation e)
+{ return static_cast<unsigned long>(e) <= 2; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnAccountManipulation e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
 {
