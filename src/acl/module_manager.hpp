@@ -34,14 +34,12 @@
 #include "front/front.hpp"
 #include "gdi/protected_graphics.hpp"
 
-#include "RAIL/client_execute.hpp"
 #include "mod/internal/flat_dialog_mod.hpp"
 #include "mod/internal/flat_login_mod.hpp"
 #include "mod/internal/flat_wab_close_mod.hpp"
 #include "mod/internal/flat_wait_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
-#include "mod/internal/selector_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 
 #include "mod/mod_api.hpp"
@@ -65,11 +63,9 @@
 #include <arpa/inet.h>
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 
 #include "acl/module_manager/enums.hpp"
 #include "configs/config.hpp"
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/session_reactor.hpp"
 
 class rdp_api;
@@ -111,22 +107,6 @@ struct ModWrapper
         this->mod = mod;
     }
 };
-
-static inline Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors)
-{
-    Rect widget_rect(0, 0, width - 1, height - 1);
-    if (monitors.monitorCount) {
-        Rect rect                 = monitors.get_rect();
-        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
-
-        widget_rect.x  = abs(rect.x);
-        widget_rect.y  = abs(rect.y);
-        widget_rect.cx = primary_monitor_rect.cx;
-        widget_rect.cy = primary_monitor_rect.cy;
-    }
-
-    return widget_rect;
-}
 
 inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Translator tr)
 {
@@ -844,31 +824,10 @@ public:
             this->set_mod(mod_factory.create_test_card_mod());
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-        {
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
                 report_message.update_inactivity_timeout();
             }
-
-            auto new_mod = new SelectorMod(
-                this->ini,
-                this->session_reactor,
-                this->graphics, this->front,
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height,
-                this->rail_client_execute.adjust_rect(get_widget_rect(
-                    this->client_info.screen_info.width,
-                    this->client_info.screen_info.height,
-                    this->client_info.cs_monitor
-                )),
-                this->rail_client_execute,
-                this->glyphs,
-                this->_theme
-            );
-            this->set_mod(new_mod);
-            LOG_IF(bool(this->verbose & Verbose::new_mod),
-                LOG_INFO, "ModuleManager::internal module 'selector' ready");
-        }
+            this->set_mod(mod_factory.create_selector_mod());
         break;
         case MODULE_INTERNAL_CLOSE:
         case MODULE_INTERNAL_CLOSE_BACK: {

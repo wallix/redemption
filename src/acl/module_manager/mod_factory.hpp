@@ -23,17 +23,38 @@
 
 #pragma once
 
-#include "core/session_reactor.hpp"
-#include "core/client_info.hpp"
-#include "core/front_api.hpp"  // for FrontAPI
-#include "gdi/graphic_api.hpp" // for GraphicApi
-#include "core/font.hpp"       // for Font
-#include "configs/config.hpp"
+#include "core/session_reactor.hpp" // for SessionReactor
+#include "core/client_info.hpp"     // for ClientInfo
+#include "core/front_api.hpp"       // for FrontAPI
+#include "gdi/graphic_api.hpp"      // for GraphicApi
+#include "core/font.hpp"            // for Font
+#include "configs/config.hpp"       // for Inifile
+#include "RAIL/client_execute.hpp"
 
+// Modules
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "mod/internal/test_card_mod.hpp"
+#include "mod/internal/selector_mod.hpp"
+
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
+
+static inline Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors)
+{
+    Rect widget_rect(0, 0, width - 1, height - 1);
+    if (monitors.monitorCount) {
+        Rect rect                 = monitors.get_rect();
+        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
+
+        widget_rect.x  = abs(rect.x);
+        widget_rect.y  = abs(rect.y);
+        widget_rect.cx = primary_monitor_rect.cx;
+        widget_rect.cy = primary_monitor_rect.cy;
+    }
+
+    return widget_rect;
+}
 
 class ModFactory
 {
@@ -43,15 +64,20 @@ class ModFactory
     gdi::GraphicApi & graphics;
     Inifile & ini;
     Font & glyphs;
+    const Theme & theme;
+    ClientExecute & rail_client_execute;
+    
 
 public:
-    ModFactory(SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs)
+    ModFactory(SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : session_reactor(session_reactor)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
         , ini(ini)
         , glyphs(glyphs)
+        , theme(theme)
+        , rail_client_execute(rail_client_execute)
     {
     }
 
@@ -110,6 +136,26 @@ public:
             this->glyphs,
             false
         ); 
+        return new_mod;
+    }
+
+    auto create_selector_mod() -> mod_api*
+    {
+        auto new_mod = new SelectorMod(
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
+                this->client_info.cs_monitor
+            )),
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        );
         return new_mod;
     }
 
