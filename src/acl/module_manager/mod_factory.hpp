@@ -25,17 +25,28 @@
 
 #include "core/session_reactor.hpp"
 #include "core/client_info.hpp"
+#include "core/front_api.hpp" // for FrontAPI
+#include "gdi/graphic_api.hpp"
+#include "configs/config.hpp"
+
 #include "mod/internal/bouncer2_mod.hpp"
+#include "mod/internal/replay_mod.hpp"
 
 class ModFactory
 {
     SessionReactor & session_reactor;
     ClientInfo & client_info;
+    FrontAPI & front;
+    gdi::GraphicApi & graphics;
+    Inifile & ini;
 
 public:
-    ModFactory(SessionReactor & session_reactor, ClientInfo & client_info)
+    ModFactory(SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini)
         : session_reactor(session_reactor)
         , client_info(client_info)
+        , front(front)
+        , graphics(graphics)
+        , ini(ini)
     {
     }
 
@@ -47,4 +58,30 @@ public:
                             this->client_info.screen_info.height);
         return new_mod;
     }
+
+    auto create_mod_replay() -> mod_api*
+    {
+            auto new_mod = new ReplayMod(
+                this->session_reactor,
+                this->graphics, this->front,
+                [this]{
+                    auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()
+                                    + this->ini.get<cfg::globals::target_user>();
+                    if (movie_path.size() < 5u 
+                    || !std::equal(movie_path.end() - 5u, movie_path.end(), ".mwrm")) {
+                        movie_path += ".mwrm";
+                    }
+                    return movie_path;
+                }().c_str(),
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height,
+                this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
+                !this->ini.get<cfg::mod_replay::on_end_of_data>(),
+                this->ini.get<cfg::mod_replay::replay_on_loop>(),
+                this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+                to_verbose_flags(this->ini.get<cfg::debug::capture>())
+            );
+        return new_mod;
+    }
+
 };

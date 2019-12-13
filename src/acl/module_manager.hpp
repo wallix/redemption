@@ -839,31 +839,7 @@ public:
             this->set_mod(mod_factory.create_mod_bouncer());
         break;
         case MODULE_INTERNAL_TEST:
-        {
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
-            auto new_mod = new ReplayMod(
-                this->session_reactor,
-                this->graphics, this->front,
-                [this]{
-                    auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()
-                                    + this->ini.get<cfg::globals::target_user>();
-                    if (movie_path.size() < 5u || !std::equal(movie_path.end() - 5u, movie_path.end(), ".mwrm")) {
-                        movie_path += ".mwrm";
-                    }
-                    return movie_path;
-                }().c_str(),
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height,
-                this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
-                !this->ini.get<cfg::mod_replay::on_end_of_data>(),
-                this->ini.get<cfg::mod_replay::replay_on_loop>(),
-                this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
-                to_verbose_flags(this->ini.get<cfg::debug::capture>())
-            );
-            this->set_mod(new_mod);
-            LOG_IF(bool(this->verbose & Verbose::new_mod),
-                LOG_INFO, "ModuleManager::internal module 'test' ready");
-        }
+            this->set_mod(mod_factory.create_mod_replay());
         break;
         case MODULE_INTERNAL_WIDGETTEST:
         {
