@@ -43,30 +43,30 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
     {
         case Type::None:
 
-#define CASE(vtype, serializer_fn, buffer, ...)                         \
-    [[fallthrough]]; case vtype:                                        \
-    un##serializer_fn(buffer.drop_front(2) /* ignore type */, [](       \
-        Type type, bytes_view remaining_bytes, auto... xs               \
-    ){                                                                  \
-        RED_TEST(type == vtype);                                        \
-        RED_TEST(remaining_bytes.size() == 0);                          \
-        __VA_ARGS__ (xs...);                                            \
-                                                                        \
-        RED_TEST(serializer_fn(xs..., serialized_to_string) == buffer); \
-    }, [](){                                                            \
-        RED_FAIL("error on un" #serializer_fn);                         \
+#define CASE(serial, buffer, ...)                                          \
+    [[fallthrough]]; case serial.type:                                     \
+    serial.unserialize(buffer.drop_front(2) /* ignore type */, [](         \
+        Type type, bytes_view remaining_bytes, auto... xs                  \
+    ){                                                                     \
+        RED_TEST(type == serial.type);                                     \
+        RED_TEST(remaining_bytes.size() == 0);                             \
+        __VA_ARGS__ (xs...);                                               \
+                                                                           \
+        RED_TEST(serial.serialize(xs..., serialized_to_string) == buffer); \
+    }, [](){                                                               \
+        RED_FAIL("error on " #serial ".unserialize");                      \
     })
 
-        CASE(Type::MwrmHeaderCompatibility, serialize_mwrm_header_compatibility,
+        CASE(mwrm_header_compatibility,
             "v3\n"_av, [](){});
 
-        CASE(Type::WrmNew, serialize_wrm_new,
+        CASE(wrm_new,
             "\x01\x00\x0f\x00my_filename.wrm"_av,
             [](bytes_view filename){
                 RED_TEST(filename == "my_filename.wrm"_av);
             });
 
-        CASE(Type::WrmState, serialize_wrm_stat,
+        CASE(wrm_state,
             "\x02\x00\xdc\x04\x00\x00\x00\x00\x00\x00}\x00\x00\x00\x00\x00\x00\x00\x03"
             "01234567890123456789012345678901"
             "abcdefghijabcdefghijabcdefghijab"_av,
@@ -77,13 +77,13 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
                RED_TEST(fhash.hash == "abcdefghijabcdefghijabcdefghijab"_av);
             });
 
-        CASE(Type::FdxNew, serialize_fdx_new,
+        CASE(fdx_new,
             "\x03\x00\x08\x00xxxx.fdx"_av,
             [](bytes_view filename){
                 RED_TEST(filename == "xxxx.fdx"s);
             });
 
-        CASE(Type::TflNew, serialize_tfl_new,
+        CASE(tfl_new,
             "\x04\x00*\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x10\x00\x01"
             "my_secret_file!"
             "_SID_,000001.tfl"_av,
@@ -94,7 +94,7 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
                RED_TEST(reference_filename == "_SID_,000001.tfl"_av);
             });
 
-        CASE(Type::TflInfo, serialize_tfl_info,
+        CASE(tfl_info,
             "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x17"
             "01234567890123456789012345678901"
             "abcdefghijabcdefghijabcdefghijab"
