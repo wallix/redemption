@@ -146,7 +146,7 @@ exe rdpproxy :
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
@@ -568,7 +568,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
@@ -708,7 +708,7 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
@@ -927,7 +927,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
@@ -2708,7 +2708,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
@@ -2850,7 +2850,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
@@ -3272,8 +3272,8 @@ test-run tests/mod/internal/test_copy_paste :
   <covfile>src/mod/internal/copy_paste.cpp
   <covfile>src/mod/internal/copy_paste.hpp
 ;
-test-run tests/mod/internal/test_flat_dialog_mod :
-  $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_dialog_mod.cpp
+test-run tests/mod/internal/test_dialog_mod :
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_dialog_mod.cpp
 :
   <library>app_path_test.o
   <library>crypto
@@ -3287,7 +3287,7 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3314,8 +3314,8 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/flat_dialog_mod.cpp
-  <covfile>src/mod/internal/flat_dialog_mod.hpp
+  <covfile>src/mod/internal/dialog_mod.cpp
+  <covfile>src/mod/internal/dialog_mod.hpp
 ;
 test-run tests/mod/internal/test_flat_login_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_login_mod.cpp
@@ -5867,7 +5867,7 @@ obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
-obj src/mod/internal/flat_dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_dialog_mod.cpp ;
+obj src/mod/internal/dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/dialog_mod.cpp ;
 obj src/mod/internal/flat_login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_login_mod.cpp ;
 obj src/mod/internal/flat_wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wait_mod.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
@@ -6131,7 +6131,7 @@ alias test_scytale : tests/lib/test_scytale ;
 alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
 alias test_close_mod : tests/mod/internal/test_close_mod ;
 alias test_copy_paste : tests/mod/internal/test_copy_paste ;
-alias test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod ;
+alias test_dialog_mod : tests/mod/internal/test_dialog_mod ;
 alias test_flat_login_mod : tests/mod/internal/test_flat_login_mod ;
 alias test_flat_wait_mod : tests/mod/internal/test_flat_wait_mod ;
 alias test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod ;
@@ -6460,7 +6460,7 @@ alias test_keymapsym.coverage : tests/keyboard/test_keymapsym.coverage ;
 alias test_bouncer2_mod.coverage : tests/mod/internal/test_bouncer2_mod.coverage ;
 alias test_close_mod.coverage : tests/mod/internal/test_close_mod.coverage ;
 alias test_copy_paste.coverage : tests/mod/internal/test_copy_paste.coverage ;
-alias test_flat_dialog_mod.coverage : tests/mod/internal/test_flat_dialog_mod.coverage ;
+alias test_dialog_mod.coverage : tests/mod/internal/test_dialog_mod.coverage ;
 alias test_flat_login_mod.coverage : tests/mod/internal/test_flat_login_mod.coverage ;
 alias test_flat_wait_mod.coverage : tests/mod/internal/test_flat_wait_mod.coverage ;
 alias test_interactive_target_mod.coverage : tests/mod/internal/test_interactive_target_mod.coverage ;
@@ -6852,7 +6852,7 @@ alias tests/mod/internal.norec :
   tests/mod/internal/test_bouncer2_mod
   tests/mod/internal/test_close_mod
   tests/mod/internal/test_copy_paste
-  tests/mod/internal/test_flat_dialog_mod
+  tests/mod/internal/test_dialog_mod
   tests/mod/internal/test_flat_login_mod
   tests/mod/internal/test_flat_wait_mod
   tests/mod/internal/test_interactive_target_mod

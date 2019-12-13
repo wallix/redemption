@@ -39,7 +39,7 @@
 #include "mod/internal/selector_mod.hpp"
 #include "mod/internal/close_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
-#include "mod/internal/flat_dialog_mod.hpp"
+#include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/flat_wait_mod.hpp"
 
 
@@ -199,7 +199,7 @@ public:
         const char * message = this->ini.get<cfg::context::message>().c_str();
         const char * button = TR(trkeys::refused, language(this->ini));
         const char * caption = "Information";
-        auto new_mod = new FlatDialogMod(
+        auto new_mod = new DialogMod(
             this->ini,
             this->session_reactor,
             this->graphics, this->front,
@@ -224,7 +224,7 @@ public:
         const char * message = this->ini.get<cfg::context::message>().c_str();
         const char * button = nullptr;
         const char * caption = "Information";
-        auto new_mod = new FlatDialogMod(
+        auto new_mod = new DialogMod(
             this->ini,
             this->session_reactor,
             this->graphics, this->front,
@@ -255,7 +255,7 @@ public:
         }
         this->ini.ask<cfg::context::authentication_challenge>();
         this->ini.ask<cfg::context::password>();
-        auto new_mod = new FlatDialogMod(
+        auto new_mod = new DialogMod(
             this->ini,
             this->session_reactor,
             this->graphics, this->front,

@@ -19,15 +19,15 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#include "mod/internal/flat_dialog_mod.hpp"
+#include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "core/front_api.hpp"
 #include "configs/config.hpp"
 #include "utils/translation.hpp"
 
 
-FlatDialogMod::FlatDialogMod(
-    FlatDialogModVariables vars, SessionReactor& session_reactor,
+DialogMod::DialogMod(
+    DialogModVariables vars, SessionReactor& session_reactor,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     const char * cancel_text, ClientExecute & rail_client_execute,
@@ -70,12 +70,12 @@ FlatDialogMod::FlatDialogMod(
     }));
 }
 
-FlatDialogMod::~FlatDialogMod()
+DialogMod::~DialogMod()
 {
     this->screen.clear();
 }
 
-void FlatDialogMod::notify(Widget* sender, notify_event_t event)
+void DialogMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     switch (event) {
@@ -91,7 +91,7 @@ void FlatDialogMod::notify(Widget* sender, notify_event_t event)
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-void FlatDialogMod::accepted()
+void DialogMod::accepted()
 {
     if (this->dialog_widget.challenge) {
         this->vars.set_acl<cfg::context::password>(this->dialog_widget.challenge->get_text());
@@ -106,7 +106,7 @@ void FlatDialogMod::accepted()
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-void FlatDialogMod::refused()
+void DialogMod::refused()
 {
     if (!this->dialog_widget.challenge) {
         if (this->dialog_widget.cancel) {
@@ -119,7 +119,7 @@ void FlatDialogMod::refused()
     this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
-void FlatDialogMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
+void DialogMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
     LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
 

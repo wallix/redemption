@@ -28,7 +28,7 @@
 #include "mod/internal/widget/language_button.hpp"
 
 
-using FlatDialogModVariables = vcfg::variables<
+using DialogModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::context::accept_message,             vcfg::accessmode::set>,
     vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
@@ -39,26 +39,26 @@ using FlatDialogModVariables = vcfg::variables<
 >;
 
 
-class FlatDialogMod : public LocallyIntegrableMod, public NotifyApi
+class DialogMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
     FlatDialog dialog_widget;
 
-    FlatDialogModVariables vars;
+    DialogModVariables vars;
     SessionReactor::TimerPtr timeout_timer;
     SessionReactor::GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 
 public:
-    FlatDialogMod(
-        FlatDialogModVariables vars, SessionReactor& session_reactor,
+    DialogMod(
+        DialogModVariables vars, SessionReactor& session_reactor,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme, ChallengeOpt has_challenge = NO_CHALLENGE);
 
-    ~FlatDialogMod() override;
+    ~DialogMod() override;
 
     void notify(Widget* sender, notify_event_t event) override;
 
