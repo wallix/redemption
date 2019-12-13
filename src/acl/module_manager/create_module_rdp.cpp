@@ -122,7 +122,7 @@ void ModuleManager::create_mod_rdp(
       , "0.0.0.0"   // client ip is silenced
       , key_flags
       , this->glyphs
-      , this->_theme
+      , this->theme
       , server_auto_reconnect_packet
       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
@@ -361,10 +361,9 @@ void ModuleManager::create_mod_rdp(
         const char * const name = "RDP Target";
 
         Rect const adjusted_client_execute_rect =
-            rail_client_execute.adjust_rect(get_widget_rect(
+            rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
                     client_info.screen_info.width,
-                    client_info.screen_info.height,
-                    client_info.cs_monitor
+                    client_info.screen_info.height
                 ));
 
         const bool host_mod_in_widget =
@@ -654,7 +653,7 @@ void ModuleManager::create_mod_rdp(
                 std::move(new_mod),
                 rail_client_execute,
                 this->glyphs,
-                this->_theme,
+                this->theme,
                 client_info.cs_monitor,
                 !ini.get<cfg::globals::is_rec>()
             );

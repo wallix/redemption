@@ -37,24 +37,14 @@
 #include "mod/internal/widget_test_mod.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "mod/internal/selector_mod.hpp"
+#include "mod/internal/close_mod.hpp"
+#include "mod/internal/interactive_target_mod.hpp"
+#include "mod/internal/flat_dialog_mod.hpp"
+#include "mod/internal/flat_wait_mod.hpp"
+
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
-
-static inline Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor const & monitors)
-{
-    Rect widget_rect(0, 0, width - 1, height - 1);
-    if (monitors.monitorCount) {
-        Rect rect                 = monitors.get_rect();
-        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
-
-        widget_rect.x  = abs(rect.x);
-        widget_rect.y  = abs(rect.y);
-        widget_rect.cx = primary_monitor_rect.cx;
-        widget_rect.cy = primary_monitor_rect.cy;
-    }
-
-    return widget_rect;
-}
+#include "utils/translation.hpp"
 
 class ModFactory
 {
@@ -147,14 +137,169 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(get_widget_rect(
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
                 this->client_info.screen_info.width,
-                this->client_info.screen_info.height,
-                this->client_info.cs_monitor
+                this->client_info.screen_info.height
             )),
             this->rail_client_execute,
             this->glyphs,
             this->theme
+        );
+        return new_mod;
+    }
+
+    auto create_close_mod(bool back_to_selector) -> mod_api*
+    {
+        std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
+        if (auth_error_message.empty()) {
+            auth_error_message = TR(trkeys::connection_ended, language(this->ini));
+        }
+
+        auto new_mod = new CloseMod(
+            auth_error_message,
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme,
+            true,
+            back_to_selector
+        );
+        return new_mod;
+    }
+
+    auto create_interactive_target_mod() -> mod_api*
+    {
+        auto new_mod = new InteractiveTargetMod(
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        ); 
+        return new_mod;
+    }
+
+    auto create_valid_message_mod() -> mod_api*
+    {
+        const char * message = this->ini.get<cfg::context::message>().c_str();
+        const char * button = TR(trkeys::refused, language(this->ini));
+        const char * caption = "Information";
+        auto new_mod = new FlatDialogMod(
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            caption,
+            message,
+            button,
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        );
+        return new_mod;
+    }
+
+    auto create_display_message_mod() -> mod_api*
+    {
+        const char * message = this->ini.get<cfg::context::message>().c_str();
+        const char * button = nullptr;
+        const char * caption = "Information";
+        auto new_mod = new FlatDialogMod(
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            caption,
+            message,
+            button,
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        );
+        return new_mod;
+    }
+    
+    auto create_dialog_challenge_mod() -> mod_api*
+    {
+        const char * message = this->ini.get<cfg::context::message>().c_str();
+        const char * button = nullptr;
+        const char * caption = "Challenge";
+        ChallengeOpt challenge = CHALLENGE_HIDE;
+        if (this->ini.get<cfg::context::authentication_challenge>()) {
+            challenge = CHALLENGE_ECHO;
+        }
+        this->ini.ask<cfg::context::authentication_challenge>();
+        this->ini.ask<cfg::context::password>();
+        auto new_mod = new FlatDialogMod(
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            caption,
+            message,
+            button,
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme,
+            challenge
+        );
+        return new_mod;
+    }
+
+    auto create_wait_info_mod() -> mod_api*
+    {
+        LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
+        const char * message = this->ini.get<cfg::context::message>().c_str();
+        const char * caption = TR(trkeys::information, language(this->ini));
+        bool showform = this->ini.get<cfg::context::showform>();
+        uint flag = this->ini.get<cfg::context::formflag>();
+        auto new_mod = new FlatWaitMod(
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            caption,
+            message,
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme,
+            showform,
+            flag
         );
         return new_mod;
     }

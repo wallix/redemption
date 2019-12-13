@@ -256,6 +256,23 @@ struct CSMonitor {
 
         return Rect(0, 0, 0, 0);
     }
+    
+    [[nodiscard]] Rect get_widget_rect(uint16_t width, uint16_t height) const
+    {
+        Rect widget_rect(0, 0, width - 1, height - 1);
+        if (this->monitorCount) {
+            Rect rect                 = this->get_rect();
+            Rect primary_monitor_rect = this->get_primary_monitor_rect();
+
+            widget_rect.x  = abs(rect.x);
+            widget_rect.y  = abs(rect.y);
+            widget_rect.cx = primary_monitor_rect.cx;
+            widget_rect.cy = primary_monitor_rect.cy;
+        }
+
+        return widget_rect;
+    }
+
 };
 
 } // namespace UserData

@@ -288,7 +288,6 @@ class Session
                 LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
                 const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
-                auto const enable_close_box  = ini.get<cfg::globals::enable_close_box>();
                 signal = BackEvent_t(session_reactor.signal);
                 mm.invoke_close_box(false, auth_error_message, signal, authentifier, authentifier);
                 session_reactor.signal = signal;

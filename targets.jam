@@ -144,10 +144,10 @@ exe rdpproxy :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -566,10 +566,10 @@ test-run tests/acl/test_acl_serializer :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -706,10 +706,10 @@ test-run tests/acl/test_authentifier :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -925,10 +925,10 @@ test-run tests/acl/test_module_manager :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -2706,10 +2706,10 @@ test-run tests/core/test_mainloop :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -2848,10 +2848,10 @@ test-run tests/core/test_session :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/internal/close_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -3200,6 +3200,47 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <covfile>src/mod/internal/bouncer2_mod.cpp
   <covfile>src/mod/internal/bouncer2_mod.hpp
 ;
+test-run tests/mod/internal/test_close_mod :
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_close_mod.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/close_mod.o
+  <library>src/mod/internal/locally_integrable_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_wab_close.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/widget_rect.o
+  <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/fake_front.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/close_mod.cpp
+  <covfile>src/mod/internal/close_mod.hpp
+;
 test-run tests/mod/internal/test_copy_paste :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_copy_paste.cpp
 :
@@ -3321,47 +3362,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/flat_login_mod.cpp
   <covfile>src/mod/internal/flat_login_mod.hpp
-;
-test-run tests/mod/internal/test_flat_wab_close_mod :
-  $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_wab_close_mod.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/RAIL/client_execute.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/flat_wab_close_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_wab_close.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/flat_wab_close_mod.cpp
-  <covfile>src/mod/internal/flat_wab_close_mod.hpp
 ;
 test-run tests/mod/internal/test_flat_wait_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_wait_mod.cpp
@@ -5865,10 +5865,10 @@ obj src/main/nla_server_cli.o : $(REDEMPTION_SRC_PATH)/main/nla_server_cli.cpp ;
 obj src/main/proxy_recorder_cli.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder_cli.cpp ;
 obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
+obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 obj src/mod/internal/flat_dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_dialog_mod.cpp ;
 obj src/mod/internal/flat_login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_login_mod.cpp ;
-obj src/mod/internal/flat_wab_close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wab_close_mod.cpp ;
 obj src/mod/internal/flat_wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wait_mod.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
 obj src/mod/internal/locally_integrable_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/locally_integrable_mod.cpp ;
@@ -6129,10 +6129,10 @@ alias test_files_validator_api : tests/lib/test_files_validator_api ;
 alias test_iametrics : tests/lib/test_iametrics ;
 alias test_scytale : tests/lib/test_scytale ;
 alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
+alias test_close_mod : tests/mod/internal/test_close_mod ;
 alias test_copy_paste : tests/mod/internal/test_copy_paste ;
 alias test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod ;
 alias test_flat_login_mod : tests/mod/internal/test_flat_login_mod ;
-alias test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod ;
 alias test_flat_wait_mod : tests/mod/internal/test_flat_wait_mod ;
 alias test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod ;
 alias test_replay_mod : tests/mod/internal/test_replay_mod ;
@@ -6458,10 +6458,10 @@ alias test_protected_graphics.coverage : tests/gdi/test_protected_graphics.cover
 alias test_keymap2.coverage : tests/keyboard/test_keymap2.coverage ;
 alias test_keymapsym.coverage : tests/keyboard/test_keymapsym.coverage ;
 alias test_bouncer2_mod.coverage : tests/mod/internal/test_bouncer2_mod.coverage ;
+alias test_close_mod.coverage : tests/mod/internal/test_close_mod.coverage ;
 alias test_copy_paste.coverage : tests/mod/internal/test_copy_paste.coverage ;
 alias test_flat_dialog_mod.coverage : tests/mod/internal/test_flat_dialog_mod.coverage ;
 alias test_flat_login_mod.coverage : tests/mod/internal/test_flat_login_mod.coverage ;
-alias test_flat_wab_close_mod.coverage : tests/mod/internal/test_flat_wab_close_mod.coverage ;
 alias test_flat_wait_mod.coverage : tests/mod/internal/test_flat_wait_mod.coverage ;
 alias test_interactive_target_mod.coverage : tests/mod/internal/test_interactive_target_mod.coverage ;
 alias test_replay_mod.coverage : tests/mod/internal/test_replay_mod.coverage ;
@@ -6850,10 +6850,10 @@ alias tests/lib.norec :
 ;
 alias tests/mod/internal.norec :
   tests/mod/internal/test_bouncer2_mod
+  tests/mod/internal/test_close_mod
   tests/mod/internal/test_copy_paste
   tests/mod/internal/test_flat_dialog_mod
   tests/mod/internal/test_flat_login_mod
-  tests/mod/internal/test_flat_wab_close_mod
   tests/mod/internal/test_flat_wait_mod
   tests/mod/internal/test_interactive_target_mod
   tests/mod/internal/test_replay_mod

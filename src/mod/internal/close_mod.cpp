@@ -19,7 +19,7 @@
  *
  */
 
-#include "mod/internal/flat_wab_close_mod.hpp"
+#include "mod/internal/close_mod.hpp"
 #include "configs/config.hpp"
 #include "core/front_api.hpp"
 #include "gdi/graphic_api.hpp"
@@ -30,7 +30,7 @@ namespace
     {
         char text[255];
 
-        explicit temporary_text(FlatWabCloseModVariables vars)
+        explicit temporary_text(CloseModVariables vars)
         {
             if (vars.get<cfg::context::module>() == "selector") {
                 snprintf(text, sizeof(text), "%s", TR(trkeys::selector, language(vars)).c_str());
@@ -53,8 +53,9 @@ namespace
     };
 } // namespace
 
-FlatWabCloseMod::FlatWabCloseMod(
-    FlatWabCloseModVariables vars, SessionReactor& session_reactor,
+CloseMod::CloseMod(
+    std::string auth_error_message,
+    CloseModVariables vars, SessionReactor& session_reactor,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool showtimer, bool back_selector
@@ -63,7 +64,7 @@ FlatWabCloseMod::FlatWabCloseMod(
         rail_client_execute, theme)
     , close_widget(
         drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this,
-        vars.get<cfg::context::auth_error_message>().c_str(),
+        auth_error_message.c_str(),
         (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
             ? nullptr
             : vars.get<cfg::globals::auth_user>().c_str(),
@@ -110,14 +111,14 @@ FlatWabCloseMod::FlatWabCloseMod(
     }
 }
 
-FlatWabCloseMod::~FlatWabCloseMod()
+CloseMod::~CloseMod()
 {
     this->vars.set<cfg::context::close_box_extra_message>("");
 
     this->screen.clear();
 }
 
-void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
+void CloseMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {

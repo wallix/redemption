@@ -21,7 +21,7 @@
 #include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
-#include "mod/internal/flat_wab_close_mod.hpp"
+#include "mod/internal/close_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
@@ -42,6 +42,6 @@ int main()
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    FlatWabCloseMod d(ini, session_reactor, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme, true);
+    CloseMod d("message", ini, session_reactor, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme, true);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

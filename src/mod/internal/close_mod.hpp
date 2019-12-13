@@ -27,7 +27,7 @@
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_wab_close.hpp"
 
-using FlatWabCloseModVariables = vcfg::variables<
+using CloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,          vcfg::accessmode::get | vcfg::accessmode::is_asked>,
     vcfg::var<cfg::globals::target_device,      vcfg::accessmode::get | vcfg::accessmode::ask | vcfg::accessmode::is_asked>,
     vcfg::var<cfg::globals::target_user,        vcfg::accessmode::get | vcfg::accessmode::ask>,
@@ -35,29 +35,29 @@ using FlatWabCloseModVariables = vcfg::variables<
     vcfg::var<cfg::context::target_protocol,    vcfg::accessmode::ask>,
     vcfg::var<cfg::globals::close_timeout,      vcfg::accessmode::get>,
     vcfg::var<cfg::globals::target_application, vcfg::accessmode::get>,
-    vcfg::var<cfg::context::auth_error_message, vcfg::accessmode::get>,
     vcfg::var<cfg::context::module,             vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,       vcfg::accessmode::get>,
     vcfg::var<cfg::context::close_box_extra_message,
                                                 vcfg::accessmode::get | vcfg::accessmode::set>
 >;
 
-class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
+class CloseMod : public LocallyIntegrableMod, public NotifyApi
 {
     FlatWabClose close_widget;
 
-    FlatWabCloseModVariables vars;
+    CloseModVariables vars;
 
     SessionReactor::TimerPtr timeout_timer;
 
 public:
-    FlatWabCloseMod(
-        FlatWabCloseModVariables vars, SessionReactor& session_reactor,
+    CloseMod(
+        std::string auth_error_message,
+        CloseModVariables vars, SessionReactor& session_reactor,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, bool showtimer = false, bool back_selector = false);
 
-    ~FlatWabCloseMod() override;
+    ~CloseMod() override;
 
     void notify(Widget* sender, notify_event_t event) override;
 

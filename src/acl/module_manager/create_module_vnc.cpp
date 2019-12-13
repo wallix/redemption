@@ -135,10 +135,9 @@ void ModuleManager::create_mod_vnc(
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
             Rect adjusted_client_execute_rect =
-                rail_client_execute.adjust_rect(get_widget_rect(
+                rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
                     client_info.screen_info.width,
-                    client_info.screen_info.height,
-                    client_info.cs_monitor
+                    client_info.screen_info.height
                 ));
 
             std::string target_info = str_concat(
@@ -159,7 +158,7 @@ void ModuleManager::create_mod_vnc(
                 std::move(new_mod),
                 rail_client_execute,
                 this->glyphs,
-                this->_theme,
+                this->theme,
                 client_info.cs_monitor,
                 false
             );
