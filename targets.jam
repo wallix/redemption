@@ -863,10 +863,6 @@ test-run tests/acl/test_license_api :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/license_api.hpp
 ;
-test-run tests/acl/test_mm_api :
-  $(REDEMPTION_TEST_PATH)/acl/test_mm_api.cpp
-:
-;
 test-run tests/acl/test_module_manager :
   $(REDEMPTION_TEST_PATH)/acl/test_module_manager.cpp
 :
@@ -5953,7 +5949,6 @@ alias test_auth_api : tests/acl/test_auth_api ;
 alias test_authentifier : tests/acl/test_authentifier ;
 alias test_dispatch_report_message : tests/acl/test_dispatch_report_message ;
 alias test_license_api : tests/acl/test_license_api ;
-alias test_mm_api : tests/acl/test_mm_api ;
 alias test_module_manager : tests/acl/test_module_manager ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
 alias test_capture : tests/capture/test_capture ;
@@ -6621,7 +6616,6 @@ alias tests/acl.norec :
   tests/acl/test_authentifier
   tests/acl/test_dispatch_report_message
   tests/acl/test_license_api
-  tests/acl/test_mm_api
   tests/acl/test_module_manager
 ;
 alias tests/capture/ocr/locale.norec :
