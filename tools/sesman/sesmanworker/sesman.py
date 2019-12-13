@@ -1316,9 +1316,6 @@ class Sesman():
                 self.send_data({u'rejected': TR(u'start_session_failed')})
 
             if _status:
-                # add "Year-Month-Day" subdirectory to record path
-                date_path = start_time.strftime("%Y-%m-%d")
-                rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
                 self.record_filebase = self.generate_record_filebase(
                     session_id,
                     user,
