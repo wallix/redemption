@@ -121,7 +121,7 @@ void ModuleManager::create_mod_rdp(
       , ini.get<cfg::context::target_host>().c_str()
       , "0.0.0.0"   // client ip is silenced
       , key_flags
-      , this->_font
+      , this->glyphs
       , this->_theme
       , server_auto_reconnect_packet
       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
@@ -653,7 +653,7 @@ void ModuleManager::create_mod_rdp(
                 adjusted_client_execute_rect,
                 std::move(new_mod),
                 rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme,
                 client_info.cs_monitor,
                 !ini.get<cfg::globals::is_rec>()

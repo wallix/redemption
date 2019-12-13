@@ -34,7 +34,6 @@
 #include "front/front.hpp"
 #include "gdi/protected_graphics.hpp"
 
-#include "mod/internal/bouncer2_mod.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/internal/flat_dialog_mod.hpp"
 #include "mod/internal/flat_login_mod.hpp"
@@ -42,10 +41,8 @@
 #include "mod/internal/flat_wait_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
-#include "mod/internal/replay_mod.hpp"
 #include "mod/internal/selector_mod.hpp"
 #include "mod/internal/test_card_mod.hpp"
-#include "mod/internal/widget_test_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 
 #include "mod/mod_api.hpp"
@@ -224,11 +221,11 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     RDPColor background_color;
     bool is_disable_by_input = false;
     bool bogus_refresh_rect_ex;
-    const Font & _font;
+    const Font & glyphs;
     const Theme & _theme;
 
 public:
-    explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & font, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : gdi::ProtectedGraphics(graphics, Rect{})
     , mod_wrapper(mod_wrapper)
     , front(front)
@@ -239,7 +236,7 @@ public:
     , winapi(winapi)
     , ini(ini)
     , bogus_refresh_rect_ex(false)
-    , _font(font)
+    , glyphs(glyphs)
     , _theme(theme)
     {}
 
@@ -281,7 +278,7 @@ public:
             str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->ini)));
         }
 
-        gdi::TextMetrics tm(this->_font, this->osd_message.c_str());
+        gdi::TextMetrics tm(this->glyphs, this->osd_message.c_str());
         int w = tm.width + padw * 2;
         int h = tm.height + padh * 2;
         this->color = color_encode(BGRColor(BLACK), this->client_info.screen_info.bpp);
@@ -405,7 +402,7 @@ private:
         drawable.draw(line_etop, this->clip, color_ctx);
 
         gdi::server_draw_text(
-            drawable, this->_font,
+            drawable, this->glyphs,
             this->get_protected_rect().x + padw, padh,
             this->osd_message.c_str(),
             this->color, this->background_color, color_ctx, this->clip
@@ -720,11 +717,11 @@ private:
     windowing_api* &winapi;
 
     EndSessionWarning end_session_warning;
-    Font & _font;
+    Font & glyphs;
     Theme & _theme;
 
 public:
-    ModuleManager(ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & _font, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+    ModuleManager(ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & glyphs, Theme & _theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : mod_factory(mod_factory)
         , mod_wrapper(mod_wrapper)
         , ini(ini)
@@ -740,7 +737,7 @@ public:
         , timeobj(timeobj)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
         , winapi(winapi)
-        , _font(_font)
+        , glyphs(glyphs)
         , _theme(_theme)
     {
     }
@@ -842,18 +839,7 @@ public:
             this->set_mod(mod_factory.create_mod_replay());
         break;
         case MODULE_INTERNAL_WIDGETTEST:
-        {
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-            auto new_mod = new WidgetTestMod(
-                this->session_reactor,
-                this->front,
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height,
-                this->_font
-            );
-            this->set_mod(new_mod);
-            LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
-        }
+            this->set_mod(mod_factory.create_widget_test_mod());
         break;
         case MODULE_INTERNAL_CARD:
         {
@@ -862,7 +848,7 @@ public:
                 this->session_reactor,
                 this->client_info.screen_info.width,
                 this->client_info.screen_info.height,
-                this->_font,
+                this->glyphs,
                 false
             ); 
             this->set_mod(new_mod);
@@ -888,7 +874,7 @@ public:
                     this->client_info.cs_monitor
                 )),
                 this->rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme
             );
             this->set_mod(new_mod);
@@ -918,7 +904,7 @@ public:
                     this->client_info.cs_monitor
                 )),
                 this->rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme,
                 true,
                 back_to_selector
@@ -943,7 +929,7 @@ public:
                         this->client_info.cs_monitor
                     )),
                     this->rail_client_execute,
-                    this->_font,
+                    this->glyphs,
                     this->_theme
                 ); 
                 this->set_mod(new_mod);
@@ -971,7 +957,7 @@ public:
                 message,
                 button,
                 this->rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme
             );
             this->set_mod(new_mod);
@@ -999,7 +985,7 @@ public:
                 message,
                 button,
                 this->rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme
             );
             this->set_mod(new_mod);
@@ -1033,7 +1019,7 @@ public:
                 message,
                 button,
                 this->rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme,
                 challenge
             );
@@ -1062,7 +1048,7 @@ public:
                 caption,
                 message,
                 this->rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme,
                 showform,
                 flag
@@ -1085,7 +1071,7 @@ public:
                         this->client_info.cs_monitor
                     )),
                     this->rail_client_execute,
-                    this->_font,
+                    this->glyphs,
                     this->_theme
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Transition' loaded");
@@ -1131,7 +1117,7 @@ public:
                     this->client_info.cs_monitor
                 )),
                 this->rail_client_execute,
-                this->_font,
+                this->glyphs,
                 this->_theme
             ));
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");

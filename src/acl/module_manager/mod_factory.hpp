@@ -25,12 +25,14 @@
 
 #include "core/session_reactor.hpp"
 #include "core/client_info.hpp"
-#include "core/front_api.hpp" // for FrontAPI
-#include "gdi/graphic_api.hpp"
+#include "core/front_api.hpp"  // for FrontAPI
+#include "gdi/graphic_api.hpp" // for GraphicApi
+#include "core/font.hpp"       // for Font
 #include "configs/config.hpp"
 
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/replay_mod.hpp"
+#include "mod/internal/widget_test_mod.hpp"
 
 class ModFactory
 {
@@ -39,14 +41,16 @@ class ModFactory
     FrontAPI & front;
     gdi::GraphicApi & graphics;
     Inifile & ini;
+    Font & glyphs;
 
 public:
-    ModFactory(SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini)
+    ModFactory(SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs)
         : session_reactor(session_reactor)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
         , ini(ini)
+        , glyphs(glyphs)
     {
     }
 
@@ -81,6 +85,18 @@ public:
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             );
+        return new_mod;
+    }
+    
+    auto create_widget_test_mod() -> mod_api*
+    {
+        auto new_mod = new WidgetTestMod(
+            this->session_reactor,
+            this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->glyphs
+        );
         return new_mod;
     }
 

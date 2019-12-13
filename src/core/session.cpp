@@ -632,7 +632,7 @@ public:
             TimeSystem timeobj;
             
             // load font for internal pages
-            Font font = Font(app_path(AppPath::DefaultFontFile),
+            Font glyphs = Font(app_path(AppPath::DefaultFontFile),
                 ini.get<cfg::globals::spark_view_specific_glyph_width>());;
 
             // load theme for internal pages
@@ -650,10 +650,10 @@ public:
 
             windowing_api* winapi = nullptr;
             
-            ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, font, theme, rail_client_execute, winapi, this->ini);
+            ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
-            ModFactory mod_factory(session_reactor, front.client_info, front, front, ini);
-            ModuleManager mm(mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, this->ini, cctx, rnd, timeobj);
+            ModFactory mod_factory(session_reactor, front.client_info, front, front, ini, glyphs);
+            ModuleManager mm(mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
