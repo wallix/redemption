@@ -1314,14 +1314,17 @@ class Sesman():
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
-            self.record_filebase = self.generate_record_filebase(
-                session_id,
-                user,
-                uname,
-                start_time
-            )
 
             if _status:
+                # add "Year-Month-Day" subdirectory to record path
+                date_path = start_time.strftime("%Y-%m-%d")
+                rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
+                self.record_filebase = self.generate_record_filebase(
+                    session_id,
+                    user,
+                    uname,
+                    start_time
+                )
                 Logger().info(u"Session will be recorded in %s" % self.record_filebase)
                 try:
                     _status, _error = self.create_record_path_directory()
