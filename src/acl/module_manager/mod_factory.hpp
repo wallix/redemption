@@ -41,6 +41,7 @@
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/wait_mod.hpp"
+#include "mod/internal/transition_mod.hpp"
 
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
@@ -148,8 +149,37 @@ public:
         return new_mod;
     }
 
-    auto create_close_mod(bool back_to_selector) -> mod_api*
+    auto create_close_mod() -> mod_api*
     {
+        bool back_to_selector = false;
+        std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
+        if (auth_error_message.empty()) {
+            auth_error_message = TR(trkeys::connection_ended, language(this->ini));
+        }
+
+        auto new_mod = new CloseMod(
+            auth_error_message,
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme,
+            true,
+            back_to_selector
+        );
+        return new_mod;
+    }
+
+    auto create_close_mod_back_to_selector() -> mod_api*
+    {
+        bool back_to_selector = true;
         std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
         if (auth_error_message.empty()) {
             auth_error_message = TR(trkeys::connection_ended, language(this->ini));
@@ -303,5 +333,24 @@ public:
         );
         return new_mod;
     }
-
+    
+    auto create_transition_mod() -> mod_api *
+    {
+        auto new_mod = new TransitionMod(
+            this->ini,
+            this->session_reactor,
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        );
+        return new_mod;
+    }
+    
 };

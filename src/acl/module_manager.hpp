@@ -36,7 +36,6 @@
 
 #include "mod/internal/login_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
-#include "mod/internal/transition_mod.hpp"
 
 #include "mod/mod_api.hpp"
 #include "mod/null/null.hpp"
@@ -825,10 +824,10 @@ public:
             this->set_mod(mod_factory.create_selector_mod());
         break;
         case MODULE_INTERNAL_CLOSE:
-            this->set_mod(mod_factory.create_close_mod(false));
+            this->set_mod(mod_factory.create_close_mod());
         break;
         case MODULE_INTERNAL_CLOSE_BACK:
-            this->set_mod(mod_factory.create_close_mod(true));
+            this->set_mod(mod_factory.create_close_mod_back_to_selector());
         break;
         case MODULE_INTERNAL_TARGET:
             this->set_mod(mod_factory.create_interactive_target_mod());
@@ -846,24 +845,8 @@ public:
             this->set_mod(mod_factory.create_wait_info_mod());
         break;
         case MODULE_INTERNAL_TRANSITION:
-            {
-                this->set_mod(new TransitionMod(
-                    this->ini,
-                    this->session_reactor,
-                    this->graphics, this->front,
-                    this->client_info.screen_info.width,
-                    this->client_info.screen_info.height,
-                    this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                        this->client_info.screen_info.width,
-                        this->client_info.screen_info.height
-                    )),
-                    this->rail_client_execute,
-                    this->glyphs,
-                    this->theme
-                ));
-                LOG(LOG_INFO, "ModuleManager::internal module 'Transition' loaded");
-            }
-            break;
+            this->set_mod(mod_factory.create_transition_mod());
+        break;
         case MODULE_INTERNAL_WIDGET_LOGIN: {
             char username[255]; // should use string
             username[0] = 0;
