@@ -19,14 +19,14 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#include "mod/internal/flat_wait_mod.hpp"
+#include "mod/internal/wait_mod.hpp"
 #include "RAIL/client_execute.hpp"
 #include "configs/config.hpp"
 #include "core/front_api.hpp"
 
 
-FlatWaitMod::FlatWaitMod(
-    FlatWaitModVariables vars, SessionReactor& session_reactor,
+WaitMod::WaitMod(
+    WaitModVariables vars, SessionReactor& session_reactor,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
@@ -64,12 +64,12 @@ FlatWaitMod::FlatWaitMod(
     }));
 }
 
-FlatWaitMod::~FlatWaitMod()
+WaitMod::~WaitMod()
 {
     this->screen.clear();
 }
 
-void FlatWaitMod::notify(Widget * sender, notify_event_t event)
+void WaitMod::notify(Widget * sender, notify_event_t event)
 {
     switch (event) {
         case NOTIFY_SUBMIT: this->accepted(); break;
@@ -84,7 +84,7 @@ void FlatWaitMod::notify(Widget * sender, notify_event_t event)
     }
 }
 
-void FlatWaitMod::confirm()
+void WaitMod::confirm()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("confirm");
     this->vars.set_acl<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
@@ -94,20 +94,20 @@ void FlatWaitMod::confirm()
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-void FlatWaitMod::accepted()
+void WaitMod::accepted()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
     this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
-void FlatWaitMod::refused()
+void WaitMod::refused()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("exit");
     this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
-void FlatWaitMod::send_to_mod_channel(
+void WaitMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
     LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);

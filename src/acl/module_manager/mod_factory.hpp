@@ -40,7 +40,7 @@
 #include "mod/internal/close_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/dialog_mod.hpp"
-#include "mod/internal/flat_wait_mod.hpp"
+#include "mod/internal/wait_mod.hpp"
 
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
@@ -283,7 +283,7 @@ public:
         const char * caption = TR(trkeys::information, language(this->ini));
         bool showform = this->ini.get<cfg::context::showform>();
         uint flag = this->ini.get<cfg::context::formflag>();
-        auto new_mod = new FlatWaitMod(
+        auto new_mod = new WaitMod(
             this->ini,
             this->session_reactor,
             this->graphics, this->front,

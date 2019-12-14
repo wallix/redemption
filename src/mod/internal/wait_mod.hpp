@@ -31,7 +31,7 @@
 #include "mod/internal/widget/language_button.hpp"
 
 
-using FlatWaitModVariables = vcfg::variables<
+using WaitModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::context::comment,                    vcfg::accessmode::set>,
     vcfg::var<cfg::context::duration,                   vcfg::accessmode::set>,
@@ -43,12 +43,12 @@ using FlatWaitModVariables = vcfg::variables<
 >;
 
 
-class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
+class WaitMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
     FlatWait wait_widget;
 
-    FlatWaitModVariables vars;
+    WaitModVariables vars;
 
     SessionReactor::TimerPtr timeout_timer;
     SessionReactor::GraphicEventPtr started_copy_past_event;
@@ -56,14 +56,14 @@ class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(
-        FlatWaitModVariables vars,
+    WaitMod(
+        WaitModVariables vars,
         SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect, const char * caption,
         const char * message, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, bool showform = false, uint32_t flag = 0);
 
-    ~FlatWaitMod() override;
+    ~WaitMod() override;
 
     void notify(Widget * sender, notify_event_t event) override;
 

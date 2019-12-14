@@ -148,7 +148,6 @@ exe rdpproxy :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
@@ -156,6 +155,7 @@ exe rdpproxy :
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
+  <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -570,7 +570,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
@@ -578,6 +577,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
+  <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -710,7 +710,6 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
@@ -718,6 +717,7 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
+  <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -929,7 +929,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
@@ -937,6 +936,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
+  <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -2710,7 +2710,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
@@ -2718,6 +2717,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
+  <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -2852,7 +2852,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
@@ -2860,6 +2859,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/mod/internal/transition_mod.o
+  <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -3363,45 +3363,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   <covfile>src/mod/internal/flat_login_mod.cpp
   <covfile>src/mod/internal/flat_login_mod.hpp
 ;
-test-run tests/mod/internal/test_flat_wait_mod :
-  $(REDEMPTION_TEST_PATH)/mod/internal/test_flat_wait_mod.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/RAIL/client_execute.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_wait_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_wait.o
-  <library>src/mod/internal/widget/group_box.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/flat_wait_mod.cpp
-  <covfile>src/mod/internal/flat_wait_mod.hpp
-;
 test-run tests/mod/internal/test_interactive_target_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_interactive_target_mod.cpp
 :
@@ -3541,6 +3502,45 @@ test-run tests/mod/internal/test_test_card_mod :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/test_card_mod.cpp
   <covfile>src/mod/internal/test_card_mod.hpp
+;
+test-run tests/mod/internal/test_wait_mod :
+  $(REDEMPTION_TEST_PATH)/mod/internal/test_wait_mod.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/locally_integrable_mod.o
+  <library>src/mod/internal/wait_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_form.o
+  <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/group_box.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/wait_mod.cpp
+  <covfile>src/mod/internal/wait_mod.hpp
 ;
 test-run tests/mod/internal/test_widget_test_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_widget_test_mod.cpp
@@ -5869,7 +5869,6 @@ obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 obj src/mod/internal/dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/dialog_mod.cpp ;
 obj src/mod/internal/flat_login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_login_mod.cpp ;
-obj src/mod/internal/flat_wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wait_mod.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
 obj src/mod/internal/locally_integrable_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/locally_integrable_mod.cpp ;
 obj src/mod/internal/rail_module_host_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/rail_module_host_mod.cpp ;
@@ -5877,6 +5876,7 @@ obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_m
 obj src/mod/internal/selector_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/selector_mod.cpp ;
 obj src/mod/internal/test_card_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/test_card_mod.cpp ;
 obj src/mod/internal/transition_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/transition_mod.cpp ;
+obj src/mod/internal/wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/wait_mod.cpp ;
 obj src/mod/internal/widget/composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp ;
 obj src/mod/internal/widget/edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit.cpp ;
 obj src/mod/internal/widget/edit_valid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit_valid.cpp ;
@@ -6133,11 +6133,11 @@ alias test_close_mod : tests/mod/internal/test_close_mod ;
 alias test_copy_paste : tests/mod/internal/test_copy_paste ;
 alias test_dialog_mod : tests/mod/internal/test_dialog_mod ;
 alias test_flat_login_mod : tests/mod/internal/test_flat_login_mod ;
-alias test_flat_wait_mod : tests/mod/internal/test_flat_wait_mod ;
 alias test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod ;
 alias test_replay_mod : tests/mod/internal/test_replay_mod ;
 alias test_selector_mod : tests/mod/internal/test_selector_mod ;
 alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
+alias test_wait_mod : tests/mod/internal/test_wait_mod ;
 alias test_widget_test_mod : tests/mod/internal/test_widget_test_mod ;
 alias test_composite : tests/mod/internal/widget/test_composite ;
 alias test_edit : tests/mod/internal/widget/test_edit ;
@@ -6462,11 +6462,11 @@ alias test_close_mod.coverage : tests/mod/internal/test_close_mod.coverage ;
 alias test_copy_paste.coverage : tests/mod/internal/test_copy_paste.coverage ;
 alias test_dialog_mod.coverage : tests/mod/internal/test_dialog_mod.coverage ;
 alias test_flat_login_mod.coverage : tests/mod/internal/test_flat_login_mod.coverage ;
-alias test_flat_wait_mod.coverage : tests/mod/internal/test_flat_wait_mod.coverage ;
 alias test_interactive_target_mod.coverage : tests/mod/internal/test_interactive_target_mod.coverage ;
 alias test_replay_mod.coverage : tests/mod/internal/test_replay_mod.coverage ;
 alias test_selector_mod.coverage : tests/mod/internal/test_selector_mod.coverage ;
 alias test_test_card_mod.coverage : tests/mod/internal/test_test_card_mod.coverage ;
+alias test_wait_mod.coverage : tests/mod/internal/test_wait_mod.coverage ;
 alias test_widget_test_mod.coverage : tests/mod/internal/test_widget_test_mod.coverage ;
 alias test_composite.coverage : tests/mod/internal/widget/test_composite.coverage ;
 alias test_edit.coverage : tests/mod/internal/widget/test_edit.coverage ;
@@ -6854,11 +6854,11 @@ alias tests/mod/internal.norec :
   tests/mod/internal/test_copy_paste
   tests/mod/internal/test_dialog_mod
   tests/mod/internal/test_flat_login_mod
-  tests/mod/internal/test_flat_wait_mod
   tests/mod/internal/test_interactive_target_mod
   tests/mod/internal/test_replay_mod
   tests/mod/internal/test_selector_mod
   tests/mod/internal/test_test_card_mod
+  tests/mod/internal/test_wait_mod
   tests/mod/internal/test_widget_test_mod
 ;
 alias tests/mod/internal/widget.norec :

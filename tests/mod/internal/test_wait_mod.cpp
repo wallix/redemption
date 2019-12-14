@@ -20,7 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "mod/internal/flat_wait_mod.hpp"
+#include "mod/internal/wait_mod.hpp"
 
 // TEST missing
 int main(){}
