@@ -34,7 +34,6 @@
 #include "front/front.hpp"
 #include "gdi/protected_graphics.hpp"
 
-#include "mod/internal/login_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 
 #include "mod/mod_api.hpp"
@@ -803,6 +802,12 @@ public:
         }
         this->old_target_module = target_module;
 
+        if ((target_module == MODULE_INTERNAL_WIDGET_SELECTOR)
+        && (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count())) {
+            report_message.update_inactivity_timeout();
+        }
+
+
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
@@ -818,9 +823,6 @@ public:
             this->set_mod(mod_factory.create_test_card_mod());
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-            if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
-                report_message.update_inactivity_timeout();
-            }
             this->set_mod(mod_factory.create_selector_mod());
         break;
         case MODULE_INTERNAL_CLOSE:
@@ -847,51 +849,9 @@ public:
         case MODULE_INTERNAL_TRANSITION:
             this->set_mod(mod_factory.create_transition_mod());
         break;
-        case MODULE_INTERNAL_WIDGET_LOGIN: {
-            char username[255]; // should use string
-            username[0] = 0;
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-            if (!this->ini.is_asked<cfg::globals::auth_user>()){
-                if (this->ini.is_asked<cfg::globals::target_user>()
-                 || this->ini.is_asked<cfg::globals::target_device>()){
-                    utils::strlcpy(
-                        username,
-                        this->ini.get<cfg::globals::auth_user>().c_str(),
-                        sizeof(username));
-                }
-                else {
-                    // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
-                    snprintf( username, sizeof(username), "%s@%s:%s%s%s"
-                            , this->ini.get<cfg::globals::target_user>().c_str()
-                            , this->ini.get<cfg::globals::target_device>().c_str()
-                            , this->ini.get<cfg::context::target_protocol>().c_str()
-                            , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
-                            , this->ini.get<cfg::globals::auth_user>().c_str()
-                            );
-                }
-
-                username[sizeof(username) - 1] = 0;
-            }
-
-            this->set_mod(new LoginMod(
-                this->ini,
-                this->session_reactor,
-                username,
-                "", // password
-                this->graphics, this->front,
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height,
-                this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                    this->client_info.screen_info.width,
-                    this->client_info.screen_info.height
-                )),
-                this->rail_client_execute,
-                this->glyphs,
-                this->theme
-            ));
-            LOG(LOG_INFO, "ModuleManager::internal module Login ready");
-            break;
-        }
+        case MODULE_INTERNAL_WIDGET_LOGIN: 
+            this->set_mod(mod_factory.create_login_mod());
+        break;
 
         case MODULE_XUP: {
             const char * name = "XUP Target";

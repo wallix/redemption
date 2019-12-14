@@ -30,6 +30,7 @@
 #include "core/font.hpp"            // for Font
 #include "configs/config.hpp"       // for Inifile
 #include "RAIL/client_execute.hpp"
+#include "utils/strutils.hpp"
 
 // Modules
 #include "mod/internal/bouncer2_mod.hpp"
@@ -42,7 +43,7 @@
 #include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
-
+#include "mod/internal/login_mod.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
@@ -353,4 +354,49 @@ public:
         return new_mod;
     }
     
+    auto create_login_mod() -> mod_api *    
+    {
+        char username[255]; // should use string
+        username[0] = 0;
+        LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
+        if (!this->ini.is_asked<cfg::globals::auth_user>()){
+            if (this->ini.is_asked<cfg::globals::target_user>()
+             || this->ini.is_asked<cfg::globals::target_device>()){
+                utils::strlcpy(
+                    username,
+                    this->ini.get<cfg::globals::auth_user>().c_str(),
+                    sizeof(username));
+            }
+            else {
+                // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
+                snprintf( username, sizeof(username), "%s@%s:%s%s%s"
+                        , this->ini.get<cfg::globals::target_user>().c_str()
+                        , this->ini.get<cfg::globals::target_device>().c_str()
+                        , this->ini.get<cfg::context::target_protocol>().c_str()
+                        , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
+                        , this->ini.get<cfg::globals::auth_user>().c_str()
+                        );
+            }
+
+            username[sizeof(username) - 1] = 0;
+        }
+
+        auto new_mod = new LoginMod(
+            this->ini,
+            this->session_reactor,
+            username,
+            "", // password
+            this->graphics, this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height
+            )),
+            this->rail_client_execute,
+            this->glyphs,
+            this->theme
+        );
+        return new_mod;
+    }    
 };
