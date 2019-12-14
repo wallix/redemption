@@ -24,7 +24,7 @@
 #include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
-#include "mod/internal/flat_login_mod.hpp"
+#include "mod/internal/login_mod.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     RED_CHECK_NE(ini.get<cfg::globals::auth_user>(), "user");
     RED_CHECK_NE(ini.get<cfg::context::password>(), "pass");
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), client_execute, global_font(), theme);
 
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
 
     ini.set<cfg::globals::authentication_timeout>(std::chrono::seconds(1));
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
 
     session_reactor.execute_timers(SessionReactor::EnableGraphics(false), &gdi::null_gd);

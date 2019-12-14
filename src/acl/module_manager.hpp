@@ -34,7 +34,7 @@
 #include "front/front.hpp"
 #include "gdi/protected_graphics.hpp"
 
-#include "mod/internal/flat_login_mod.hpp"
+#include "mod/internal/login_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 
@@ -890,7 +890,7 @@ public:
                 username[sizeof(username) - 1] = 0;
             }
 
-            this->set_mod(new FlatLoginMod(
+            this->set_mod(new LoginMod(
                 this->ini,
                 this->session_reactor,
                 username,

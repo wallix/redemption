@@ -20,14 +20,14 @@
  */
 
 
-#include "mod/internal/flat_login_mod.hpp"
+#include "mod/internal/login_mod.hpp"
 #include "main/version.hpp"
 #include "configs/config.hpp"
 #include "core/front_api.hpp"
 
 
-FlatLoginMod::FlatLoginMod(
-    FlatLoginModVariables vars, SessionReactor& session_reactor,
+LoginMod::LoginMod(
+    LoginModVariables vars, SessionReactor& session_reactor,
     char const * username, char const * password,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
@@ -82,12 +82,12 @@ FlatLoginMod::FlatLoginMod(
     }));
 }
 
-FlatLoginMod::~FlatLoginMod()
+LoginMod::~LoginMod()
 {
     this->screen.clear();
 }
 
-void FlatLoginMod::notify(Widget* sender, notify_event_t event)
+void LoginMod::notify(Widget* sender, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_SUBMIT: {
@@ -112,7 +112,7 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
     }
 }
 
-void FlatLoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
+void LoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
     LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
 

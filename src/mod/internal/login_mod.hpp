@@ -29,7 +29,7 @@
 #include "mod/internal/widget/language_button.hpp"
 
 
-using FlatLoginModVariables = vcfg::variables<
+using LoginModVariables = vcfg::variables<
     vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
     vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::set>,
     vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask>,
@@ -45,7 +45,7 @@ using FlatLoginModVariables = vcfg::variables<
 >;
 
 
-class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
+class LoginMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
 
@@ -55,18 +55,18 @@ class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
 
     CopyPaste copy_paste;
 
-    FlatLoginModVariables vars;
+    LoginModVariables vars;
 
 public:
-    FlatLoginMod(
-        FlatLoginModVariables vars, SessionReactor& session_reactor,
+    LoginMod(
+        LoginModVariables vars, SessionReactor& session_reactor,
         char const * username, char const * password,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme
     );
 
-    ~FlatLoginMod() override;
+    ~LoginMod() override;
 
     void notify(Widget* sender, notify_event_t event) override;
 
