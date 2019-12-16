@@ -300,6 +300,8 @@ clipboard_text_up = boolean(default=False)
 # File verification on download must be enabled via option Enable down
 clipboard_text_down = boolean(default=False)
 
+file_record = option('never', 'always', 'on_verification_failure', default='never')
+
 #_advanced
 log_if_accepted = boolean(default=True)
 

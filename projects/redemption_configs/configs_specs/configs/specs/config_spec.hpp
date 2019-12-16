@@ -639,7 +639,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server\nFile verification on upload must be enabled via option Enable up"});
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down"});
 
-        W.member(advanced_in_gui, no_sesman, L, type_<RdpFileRecord>(), "file_record", set(RdpFileRecord::never));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<RdpFileRecord>(), "file_record", set(RdpFileRecord::never));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
     });

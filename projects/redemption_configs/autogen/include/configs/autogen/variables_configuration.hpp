@@ -2852,12 +2852,17 @@ namespace cfg {
         type value{};
     };
     /// type: RdpFileRecord <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesman::name: file_verification:file_record <br/>
     /// value = static_cast<type>(0) <br/>
     struct file_verification::file_record {
-        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "file_verification";
         static constexpr char const * name = "file_record";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(91);
         using type = RdpFileRecord;
         using sesman_and_spec_type = RdpFileRecord;
         using mapped_type = sesman_and_spec_type;
@@ -5757,6 +5762,7 @@ using VariablesAclPack = Pack<
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
+, cfg::file_verification::file_record
 , cfg::file_verification::log_if_accepted
 , cfg::mod_replay::replay_on_loop
 , cfg::video::hash_path

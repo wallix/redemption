@@ -871,12 +871,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #clipboard_text_down = 0
 
-# min = 0, max = 2
-#   0: never
-#   1: always
-#   2: on verification failure
-#_advanced
-#file_record = 0
+# values: 'never', 'always', 'on_verification_failure', 
+#_hidden
+#file_record = never
 
 # value: 0 or 1
 #_hidden

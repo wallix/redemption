@@ -269,7 +269,7 @@ array_view_const_char assign_zbuf_from_cfg(
 parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
 ;
 
-template<> struct zstr_buffer_traits<RdpFileRecord> : zstr_buffer_traits<unsigned long> {};
+template<> struct zstr_buffer_traits<RdpFileRecord> : zstr_buffer_traits<void> {};
 
 array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<RdpFileRecord> & buf,
