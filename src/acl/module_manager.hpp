@@ -57,49 +57,12 @@
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 
-#include "acl/module_manager/enums.hpp"
-#include "configs/config.hpp"
 #include "core/session_reactor.hpp"
+#include "acl/mod_wrapper.hpp"
 
 class rdp_api;
 class AuthApi;
 class ReportMessageApi;
-
-struct ModWrapper
-{
-    null_mod no_mod;
-    mod_api* mod = &no_mod;
-
-    mod_api* get_mod()
-    {
-        return this->mod;
-    }
-
-    bool has_mod() const {
-        return (this->mod != &this->no_mod);
-    }
-
-    void remove_mod()
-    {
-        delete this->mod;
-        this->mod = &this->no_mod;
-    }
-
-    bool is_up_and_running() const {
-        return this->has_mod() && this->mod->is_up_and_running();
-    }
-
-    [[nodiscard]] mod_api const* get_mod() const
-    {
-        return this->mod;
-    }
-    
-    void set_mod(mod_api* mod)
-    {
-        // TODO: check we are using no_mod, otherwise it is an error
-        this->mod = mod;
-    }
-};
 
 inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Translator tr)
 {

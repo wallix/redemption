@@ -58,12 +58,13 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include "acl/mod_wrapper.hpp"
+
 namespace
 {
 
 class Session
 {
-
     struct Select
     {
         unsigned max = 0;
