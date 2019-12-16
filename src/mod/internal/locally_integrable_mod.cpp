@@ -205,15 +205,13 @@ void LocallyIntegrableMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk,
     size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->rail_client_execute
-    && front_channel_name == CHANNELS::channel_names::rail) {
-
-        this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
-    }
-    else if (this->rail_enabled && this->rail_client_execute
-    && front_channel_name == CHANNELS::channel_names::drdynvc) {
-
-        this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
+    if (this->rail_enabled && this->rail_client_execute){
+        if (front_channel_name == CHANNELS::channel_names::rail) {
+            this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
+        }
+        else if (front_channel_name == CHANNELS::channel_names::drdynvc) {
+            this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
+        }
     }
 }
 
