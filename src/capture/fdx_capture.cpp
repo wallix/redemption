@@ -228,7 +228,8 @@ void FdxCapture::close_tfl(
 
     Mwrm3::tfl_new.serialize(
         tfl.file_id, Mwrm3::FileSize(stat.st_size), tfl.direction, transfered_status,
-        original_filename, std::string_view(filename + dirname_len),
+        Mwrm3::Filename{original_filename},
+        Mwrm3::TflFilename{std::string_view(filename + dirname_len)},
         Mwrm3::QuickHash{with_checksum ? make_array_view(qhash) : bytes_view{"", 0}},
         Mwrm3::FullHash{with_checksum ? make_array_view(fhash) : bytes_view{"", 0}},
         sig,

@@ -66,6 +66,45 @@ namespace Mwrm3
         Broken,
     };
 
+#define MWRM3_STRONG_VIEW(name, view_type, mem) \
+    struct name                                 \
+    {                                           \
+        explicit name(view_type mem) noexcept   \
+        : mem(mem)                              \
+        {}                                      \
+                                                \
+        view_type mem;                          \
+    }
+
+#define MWRM3_STRONG_OPTIONAL_STATIC_VIEW(name, view_type, mem, len) \
+    struct name                                                      \
+    {                                                                \
+        explicit name(view_type mem) noexcept                        \
+        : mem(mem)                                                   \
+        { assert(mem.empty() || mem.size() == len); }                \
+                                                                     \
+        view_type mem;                                               \
+    }
+
+#define MWRM3_STRONG_STR(name) MWRM3_STRONG_VIEW(name, array_view_const_char, str)
+#define MWRM3_STRONG_BYTES(name) MWRM3_STRONG_VIEW(name, bytes_view, bytes)
+#define MWRM3_STRONG_OPTIONAL_STATIC_BYTES(name, len) \
+    MWRM3_STRONG_OPTIONAL_STATIC_VIEW(name, bytes_view, bytes, len)
+
+    MWRM3_STRONG_STR(Filename);
+    MWRM3_STRONG_STR(TflFilename);
+
+    // TODO 32 -> constante
+    MWRM3_STRONG_OPTIONAL_STATIC_BYTES(QuickHash, 32);
+    MWRM3_STRONG_OPTIONAL_STATIC_BYTES(FullHash, 32);
+    MWRM3_STRONG_OPTIONAL_STATIC_BYTES(Sha256Signature, 32);
+
+#undef MWRM3_STRONG_VIEW
+#undef MWRM3_STRONG_BYTES
+#undef MWRM3_STRONG_STR
+#undef MWRM3_STRONG_OPTIONAL_STATIC_VIEW
+#undef MWRM3_STRONG_OPTIONAL_STATIC_BYTES
+
     template<class F, class FError>
     auto unserialize_type(bytes_view av, F&& f, FError&& ferror)
     {
@@ -78,41 +117,6 @@ namespace Mwrm3
             return ferror();
         }
     }
-
-    // TODO 32 -> constante
-
-    struct QuickHash
-    {
-        explicit QuickHash(bytes_view hash) noexcept
-        : hash(hash)
-        {
-            assert(hash.empty() || hash.size() == 32);
-        }
-
-        bytes_view hash;
-    };
-
-    struct FullHash
-    {
-        explicit FullHash(bytes_view hash) noexcept
-        : hash(hash)
-        {
-            assert(hash.empty() || hash.size() == 32);
-        }
-
-        bytes_view hash;
-    };
-
-    struct Sha256Signature
-    {
-        explicit Sha256Signature(bytes_view sig) noexcept
-        : sig(sig)
-        {
-            assert(sig.empty() || sig.size() == 32);
-        }
-
-        bytes_view sig;
-    };
 
     namespace detail
     {
@@ -440,6 +444,12 @@ namespace Mwrm3
                 {
                     return u16bytes_data::value().as_chars();
                 }
+
+                template<class To>
+                to<u16str_data, To> wrap()
+                {
+                    return {*this};
+                }
             };
 
             class no_value {};
@@ -757,19 +767,19 @@ namespace Mwrm3
             static constexpr Type type = Type::WrmNew;
 
             template<class F>
-            static auto serialize(array_view_const_char filename, F&& f)
+            static auto serialize(Filename filename, F&& f)
             {
                 return f(integral_type<type>(), detail::Buffer{
                     type,
-                    detail::types::u16_bytes_size{filename}
-                }.bytes(), bytes_view(filename));
+                    detail::types::u16_bytes_size{filename.str}
+                }.bytes(), bytes_view(filename.str));
             }
 
             template<class F, class FError>
             static decltype(auto) unserialize(bytes_view buf, F&& f, FError&& ferror)
             {
                 using namespace detail::readers;
-                return detail::unserialize<type>(buf, f, ferror, group(u16str()));
+                return detail::unserialize<type>(buf, f, ferror, group(to<u16str, Filename>()));
             }
         };
     }
@@ -788,19 +798,19 @@ namespace Mwrm3
                 QuickHash quick_hash, FullHash full_hash,
                 F&& f)
             {
-                assert(quick_hash.hash.size() == full_hash.hash.size());
+                assert(quick_hash.bytes.size() == full_hash.bytes.size());
                 return f(integral_type<type>(),
                     detail::Buffer{
                         type,
                         file_size,
                         duration,
                         detail::types::u8_unsafe{
-                            ((quick_hash.hash.empty() ? 0 : 1) << 0)
-                          | ((full_hash.hash.empty() ? 0 : 1) << 1)
+                            ((quick_hash.bytes.empty() ? 0 : 1) << 0)
+                          | ((full_hash.bytes.empty() ? 0 : 1) << 1)
                         },
                     }.bytes(),
-                    quick_hash.hash,
-                    full_hash.hash);
+                    quick_hash.bytes,
+                    full_hash.bytes);
             }
 
             template<class F, class FError>
@@ -826,19 +836,19 @@ namespace Mwrm3
             static constexpr Type type = Type::FdxNew;
 
             template<class F>
-            static auto serialize(array_view_const_char filename, F&& f)
+            static auto serialize(Filename filename, F&& f)
             {
                 return f(integral_type<type>(), detail::Buffer{
                     type,
-                    detail::types::u16_bytes_size{filename}
-                }.bytes(), bytes_view(filename));
+                    detail::types::u16_bytes_size{filename.str}
+                }.bytes(), bytes_view(filename.str));
             }
 
             template<class F, class FError>
             static decltype(auto) unserialize(bytes_view buf, F&& f, FError&& ferror)
             {
                 using namespace detail::readers;
-                return detail::unserialize<type>(buf, f, ferror, group(u16str()));
+                return detail::unserialize<type>(buf, f, ferror, group(to<u16str, Filename>()));
             }
         };
     }
@@ -855,32 +865,32 @@ namespace Mwrm3
             static auto serialize(
                 FileId idx, FileSize file_size,
                 Direction direction, TransferedStatus transfered_status,
-                bytes_view original_filename, bytes_view tfl_filename,
+                Filename original_filename, TflFilename tfl_filename,
                 QuickHash quick_hash, FullHash full_hash,
                 Sha256Signature signature,
                 F&& f)
             {
-                assert(quick_hash.hash.size() == full_hash.hash.size());
+                assert(quick_hash.bytes.size() == full_hash.bytes.size());
                 return f(integral_type<type>(),
                     detail::Buffer{
                         type,
                         detail::types::u64{idx},
                         file_size,
                         detail::types::u8_unsafe{
-                            ((quick_hash.hash.empty() ? 0 : 1) << 0)
-                          | ((full_hash.hash.empty() ? 0 : 1) << 1)
-                          | ((signature.sig.empty() ? 0 : 1) << 2)
+                            ((quick_hash.bytes.empty() ? 0 : 1) << 0)
+                          | ((full_hash.bytes.empty() ? 0 : 1) << 1)
+                          | ((signature.bytes.empty() ? 0 : 1) << 2)
                           | ((safe_cast<uint8_t>(direction) & 0b11) << 3)
                           | ((safe_cast<uint8_t>(transfered_status) & 0b11) << 5)
                         },
-                        detail::types::u16_bytes_size{original_filename},
-                        detail::types::u16_bytes_size{tfl_filename},
+                        detail::types::u16_bytes_size{original_filename.str},
+                        detail::types::u16_bytes_size{tfl_filename.str},
                     }.bytes(),
-                    original_filename,
-                    tfl_filename,
-                    quick_hash.hash,
-                    full_hash.hash,
-                    signature.sig);
+                    bytes_view(original_filename.str),
+                    bytes_view(tfl_filename.str),
+                    quick_hash.bytes,
+                    full_hash.bytes,
+                    signature.bytes);
             }
 
             template<class F, class FError>
@@ -899,9 +909,9 @@ namespace Mwrm3
                         bits_from<0b11'00000, 5, u8mask, TransferedStatus>{m},
                         original_filename.size(),
                         tfl_filename.size(),
-                        original_filename.data()
+                        original_filename.data().wrap<Filename>()
                     ),
-                    group(tfl_filename.data()),
+                    group(tfl_filename.data().wrap<TflFilename>()),
                     group(m.optional_for<quick_hash, 0>()),
                     group(m.optional_for<full_hash, 1>()),
                     group(m.optional_for<sha256_signature, 2>())

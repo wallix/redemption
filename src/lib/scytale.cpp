@@ -1108,16 +1108,6 @@ namespace std
 
 namespace
 {
-    scytale_bytes_view scytale_raw_bytes_view(bytes_view bytes)
-    {
-        return scytale_bytes_view{bytes.data(), checked_int(bytes.size())};
-    }
-
-    scytale_str_view scytale_raw_str_view(array_view_const_char chars)
-    {
-        return scytale_str_view{chars.data(), checked_int(chars.size())};
-    }
-
     template<class T>
     auto scytale_raw_integral(T x)
     {
@@ -1131,6 +1121,39 @@ namespace
         }
     }
 
+    template<class T, class = void>
+    struct scytale_raw_value_impl
+    {
+        static_assert(!std::is_same<T, T>::value, "missing specialization or not a regular type (struct with bytes or str, enum, integral or chrono::seconds)");
+    };
+
+    template<class T>
+    struct scytale_raw_value_impl<T, decltype(void(std::declval<T>().bytes))>
+    {
+        static auto raw(T const& x)
+        {
+            return scytale_bytes_view{x.bytes.data(), checked_int(x.bytes.size())};
+        }
+    };
+
+    template<class T>
+    struct scytale_raw_value_impl<T, decltype(void(std::declval<T>().str))>
+    {
+        static auto raw(T const& x)
+        {
+            return scytale_str_view{x.str.data(), checked_int(x.str.size())};
+        }
+    };
+
+    template<>
+    struct scytale_raw_value_impl<std::chrono::seconds, void>
+    {
+        static auto raw(std::chrono::seconds const& seconds)
+        {
+            return scytale_raw_integral(seconds.count());
+        }
+    };
+
     template<class T>
     auto scytale_raw_value(T const& x)
     {
@@ -1138,34 +1161,13 @@ namespace
         {
             return scytale_raw_integral(std::underlying_type_t<T>(x));
         }
-        else if constexpr (std::is_same_v<bytes_view, T>)
-        {
-            return scytale_raw_bytes_view(x);
-        }
-        else if constexpr (std::is_same_v<array_view_const_char, T>)
-        {
-            return scytale_raw_str_view(x);
-        }
-        else if constexpr (std::is_same_v<Mwrm3::QuickHash, T>)
-        {
-            return scytale_raw_bytes_view(x.hash);
-        }
-        else if constexpr (std::is_same_v<Mwrm3::FullHash, T>)
-        {
-            return scytale_raw_bytes_view(x.hash);
-        }
-        else if constexpr (std::is_same_v<Mwrm3::Sha256Signature, T>)
-        {
-            return scytale_raw_bytes_view(x.sig);
-        }
         else if constexpr (std::is_integral_v<T>)
         {
             return scytale_raw_integral(x);
         }
         else
         {
-            // assume std::chrono::duration
-            return scytale_raw_integral(x.count());
+            return scytale_raw_value_impl<T>::raw(x);
         }
     }
 

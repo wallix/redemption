@@ -270,20 +270,20 @@ void print_value(T const& x)
 }
 
 template<class T>
-struct print_value_impl<T, decltype(void(std::declval<T&>().sig))>
+struct print_value_impl<T, decltype(void(std::declval<T&>().bytes))>
 {
     static void print(T const& x)
     {
-        print_value(x.sig);
+        print_value(x.bytes);
     }
 };
 
 template<class T>
-struct print_value_impl<T, decltype(void(std::declval<T&>().hash))>
+struct print_value_impl<T, decltype(void(std::declval<T&>().str))>
 {
     static void print(T const& x)
     {
-        print_value(x.hash);
+        print_value(x.str);
     }
 };
 
