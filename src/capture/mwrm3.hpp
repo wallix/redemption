@@ -40,7 +40,6 @@ namespace Mwrm3
         WrmState,
         FdxNew,
         TflNew,
-        TflInfo,
 
         MwrmHeaderCompatibility = 'v' | '3' << 8,
     };
@@ -692,6 +691,22 @@ namespace Mwrm3
                 static_cast<x3&>(g3).reader.value()...);
         }
 
+        template<Type type, class F, class... x0, class... x1, class... x2, class... x3, class... x4>
+        auto unwrapper_group(F& f, bytes_view remaining,
+            readers::Group<x0...>& g0,
+            readers::Group<x1...>& g1,
+            readers::Group<x2...>& g2,
+            readers::Group<x3...>& g3,
+            readers::Group<x4...>& g4)
+        {
+            return ignore_no_value<type>(f, remaining,
+                static_cast<x0&>(g0).reader.value()...,
+                static_cast<x1&>(g1).reader.value()...,
+                static_cast<x2&>(g2).reader.value()...,
+                static_cast<x3&>(g3).reader.value()...,
+                static_cast<x4&>(g4).reader.value()...);
+        }
+
         template<Type type, class F, class FError, class... ReaderGroup>
         auto unserialize(bytes_view buf, F&& f, FError&& ferror, ReaderGroup... reader)
         {
@@ -838,54 +853,9 @@ namespace Mwrm3
 
             template<class F>
             static auto serialize(
-                FileId idx, Direction direction,
-                bytes_view original_filename, bytes_view reference_filename,
-                F&& f)
-            {
-                assert(reference_filename.size() <= 255);
-                return f(integral_type<type>(),
-                    detail::Buffer{
-                        type,
-                        detail::types::u64{idx},
-                        detail::types::u16_bytes_size{original_filename},
-                        detail::types::u16_bytes_size{reference_filename},
-                        detail::types::u8{direction},
-                    }.bytes(),
-                    original_filename,
-                    reference_filename);
-            }
-
-            template<class F, class FError>
-            static decltype(auto) unserialize(bytes_view buf, F&& f, FError&& ferror)
-            {
-                using namespace detail::readers;
-                u16str_ref original_filename;
-                u16str_ref reference_filename;
-                return detail::unserialize<type>(buf, f, ferror,
-                    group(
-                        file_id(),
-                        original_filename.size(),
-                        reference_filename.size(),
-                        direction(),
-                        original_filename.data(),
-                        reference_filename.data()
-                    )
-                );
-            }
-        };
-    }
-
-    inline constexpr Mwrm3Serial::TflNew tfl_new {};
-
-    namespace Mwrm3Serial
-    {
-        struct TflInfo
-        {
-            static constexpr Type type = Type::TflInfo;
-
-            template<class F>
-            static auto serialize(
-                FileId idx, FileSize file_size, TransferedStatus transfered_status,
+                FileId idx, FileSize file_size,
+                Direction direction, TransferedStatus transfered_status,
+                bytes_view original_filename, bytes_view tfl_filename,
                 QuickHash quick_hash, FullHash full_hash,
                 Sha256Signature signature,
                 F&& f)
@@ -898,11 +868,16 @@ namespace Mwrm3
                         file_size,
                         detail::types::u8_unsafe{
                             ((quick_hash.hash.empty() ? 0 : 1) << 0)
-                        | ((full_hash.hash.empty() ? 0 : 1) << 1)
-                        | ((signature.sig.empty() ? 0 : 1) << 2)
-                        | ((safe_cast<uint8_t>(transfered_status) & 0b11) << 3)
+                          | ((full_hash.hash.empty() ? 0 : 1) << 1)
+                          | ((signature.sig.empty() ? 0 : 1) << 2)
+                          | ((safe_cast<uint8_t>(direction) & 0b11) << 3)
+                          | ((safe_cast<uint8_t>(transfered_status) & 0b11) << 5)
                         },
+                        detail::types::u16_bytes_size{original_filename},
+                        detail::types::u16_bytes_size{tfl_filename},
                     }.bytes(),
+                    original_filename,
+                    tfl_filename,
                     quick_hash.hash,
                     full_hash.hash,
                     signature.sig);
@@ -912,10 +887,21 @@ namespace Mwrm3
             static decltype(auto) unserialize(bytes_view buf, F&& f, FError&& ferror)
             {
                 using namespace detail::readers;
+                u16str_ref original_filename;
+                u16str_ref tfl_filename;
                 u8mask m;
                 return detail::unserialize<type>(buf, f, ferror,
-                    group(file_id(), file_size(), shadow_ref{m},
-                        bits_from<0b11000, 3, u8mask, TransferedStatus>{m}),
+                    group(
+                        file_id(),
+                        file_size(),
+                        shadow_ref{m},
+                        bits_from<0b11'000, 3, u8mask, Direction>{m},
+                        bits_from<0b11'00000, 5, u8mask, TransferedStatus>{m},
+                        original_filename.size(),
+                        tfl_filename.size(),
+                        original_filename.data()
+                    ),
+                    group(tfl_filename.data()),
                     group(m.optional_for<quick_hash, 0>()),
                     group(m.optional_for<full_hash, 1>()),
                     group(m.optional_for<sha256_signature, 2>())
@@ -924,7 +910,7 @@ namespace Mwrm3
         };
     }
 
-    inline constexpr Mwrm3Serial::TflInfo tfl_info {};
+    inline constexpr Mwrm3Serial::TflNew tfl_new {};
 
 
     template<class F, class FError>
@@ -935,7 +921,6 @@ namespace Mwrm3
     f(wrm_state)   \
     f(fdx_new)     \
     f(tfl_new)     \
-    f(tfl_info)    \
     f(mwrm_header_compatibility)
 
 #define TYPE(S) decltype(f_ok(S)),

@@ -414,10 +414,8 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
             tfl2_hash_content_prefix,
 
-            "v3\n"
-            "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
-            "file2.txt0123456789abcdef,000002.tfl"
-            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\07\x00\x00\x00\x00\x00\x00\x00\x00"_av
+            "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00"
+            "\x00\x00\b\t\x00\x1b\x00""file2.txt0123456789abcdef,000002.tfl"_av
         },
 
         Data{"checksum", false, true,
@@ -426,13 +424,11 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
             tfl2_hash_content_prefix,
 
-            "v3\n"
-            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
-            "file2.txt0123456789abcdef,000002.tfl"
-            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00"
-            "\x00\x00\x00\x03\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh"
-            "\xed\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xffɭD\xf9RG\xdc\x7f\xf9\x02"
-            "Jyh\xed\xf3\x90\x0c"_av
+            "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00"
+            "\x00\x00\x0b\t\x00\x1b\x00""file2.txt0123456789abcdef,000002.tfl\x82"
+            "H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc\x7f\xf9\x02Jyh\xed"
+            "\xf3\x90\x0c\x82H?\xb0\xb6&\rt9\xc2MZ\"/\xff\xc9\xad""D\xf9RG\xdc"
+            "\x7f\xf9\x02Jyh\xed\xf3\x90\x0c"_av
         },
 
         Data{"encryption", true, true,
@@ -443,20 +439,18 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
             "WCFM\x01\x00\x00\x00\xf8O\x14.0>"_av,
 
-            "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6""5\xa4(\xfe\x8b\xed`C\xf8\x13\x18\x0e@_PV"
-            "\xa2\xe6\b\x94\x0f\xd2@\xbf\xe1\xe0p\x00\x00\x00\x8b\xda>\xb9\x05\xfarX\xf6\x1d"
-            "(\x91\xdb\xfe\xfb\xd9\xcbi\t\x9e;\x05\xb2\x9f{\xfc\xb1\xea\xae\x9f\xc7\xda\xe3"
-            "\xa7NQ0\x07""8\xfev\x98)\xccJ \xd6""AM\x07xa\x84Gx\x12""5T\xd0\x9cw{\x9e]q9q"
-            "\xac\xa8\xa0#R1\x1d""1Ie\xdbyK2\xd0\x1fh\xe1\xe0:\xa0\x8c\xbf,w\x01\xcd\xba\xa4"
-            "\x00h\xb1R{2 \xe6""EfQ\x02w\x00\b\xcaMFCW\x89\x00\x00\x00"_av,
+            "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6""5\xa4(\xfe\x8b\xed`C\xf8\x13\x18"
+            "\x0e@_PV\xa2\xe6\b\x94\x0f\xd2@\xbf\xe1\xe0`\x00\x00\x00\xef\xf7rBz\x17"
+            "\x85}\xa9\x80\x14\xe4zk\x83g\xbf\x86""A4I]\xf1""F\x12""C\x9f\xfb\xc7gH"
+            "\x0c""3\xd7\xe9'\xa0""4\xba\x93$,{(3\xc2\xd5/e\xceK\xa9\xd6\xd1\"\xc3\x11"
+            "B1 \xfb/\xf4\x92@t\x98\xe2\xc4)\x06/\xd3\xbc\x1e]d\x94\xcb\xc6\x04\xc8"
+            "d\x05uz\x06&G:\xd8\x82\x04\x9f\x86`MFCW~\x00\x00\x00"_av,
 
-            "v3\n"
-            "\x04\x00\x2\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
-            "file2.txt0123456789abcdef,000002.tfl"
-            "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00\x00\x03"
-            "\x85\xee\x12\xe1!(\x99\xf2\x18\xc5\xc0H%~5\xf1\x8f\xfd\x9e\x0b\xe4\xc3\xd0"
-            "\xdd\xb7\x18\x7f\x8e\xc1\xec\xa1`\x85\xee\x12\xe1!(\x99\xf2\x18\xc5\xc0H%~"
-            "5\xf1\x8f\xfd\x9e\x0b\xe4\xc3\xd0\xdd\xb7\x18\x7f\x8e\xc1\xec\xa1`"_av
+            "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00"
+            "\x00\x0b\t\x00\x1b\x00""file2.txt0123456789abcdef,000002.tfl\x85\xee\x12"
+            "\xe1!(\x99\xf2\x18\xc5\xc0H%~5\xf1\x8f\xfd\x9e\x0b\xe4\xc3\xd0\xdd\xb7"
+            "\x18\x7f\x8e\xc1\xec\xa1`\x85\xee\x12\xe1!(\x99\xf2\x18\xc5\xc0H%~5\xf1"
+            "\x8f\xfd\x9e\x0b\xe4\xc3\xd0\xdd\xb7\x18\x7f\x8e\xc1\xec\xa1`"_av
         },
     })
     { WorkingDirectory wd(data.name); RED_TEST_CONTEXT("wd: " << wd.dirname()) {
@@ -559,9 +553,14 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
 
     std::ofstream(filename.string()) <<
         "v3\n"
-        "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\t\x00\x1b\x00\x01"
-        "file2.txt0123456789abcdef,000002.tfl"
-        "\x05\x00\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00"sv
+        "\x04\x00"
+        "\x04\x00\x00\x00\x00\x00\x00\x00"
+        "\x03\x00\x00\x00\x00\x00\x00\x00"
+        "\x08"
+        "\x05\x00"
+        "\x18\x00"
+        "file4"
+        "my_session_id,000004.tfl"sv
     ;
 
     auto reader = scytale_reader_new("", nullptr, nullptr, 0, 0);
@@ -598,44 +597,28 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
     RED_REQUIRE(data);
     RED_TEST(data->type == 4);
     {
-        RED_REQUIRE(data->fmt == "uuss"sv);
-        auto* raw_data = static_cast<char const*>(data->data);
-        RED_REQUIRE(!!raw_data);
-        struct D
-        {
-            uint64_t file_id;
-            uint64_t direction;
-            scytale_bytes_view original_filename;
-            scytale_bytes_view filename;
-        };
-        D const& d = *reinterpret_cast<D const*>(raw_data);
-        RED_TEST(d.file_id == 2);
-        RED_TEST(d.direction == int(Mwrm3::Direction::ClientToServer));
-        RED_TEST(d.original_filename.bytes() == "file2.txt"_av);
-        RED_TEST(d.filename.bytes() == "0123456789abcdef,000002.tfl"_av);
-    }
-
-    data = scytale_mwrm3_reader_read_next(mwrm3);
-    RED_REQUIRE(scytale_mwrm3_reader_get_error_message(mwrm3) == ""sv);
-    RED_REQUIRE(data);
-    RED_TEST(data->type == 5);
-    {
-        RED_REQUIRE(data->fmt == "uuuBBB"sv);
+        RED_REQUIRE(data->fmt == "uuuussBBB"sv);
         auto* raw_data = static_cast<char const*>(data->data);
         RED_REQUIRE(!!raw_data);
         struct D
         {
             uint64_t file_id;
             uint64_t file_size;
+            uint64_t direction;
             uint64_t transfered_status;
+            scytale_bytes_view original_filename;
+            scytale_bytes_view tfl_filename;
             scytale_bytes_view qhash;
             scytale_bytes_view fhash;
             scytale_bytes_view sig;
         };
         D const& d = *reinterpret_cast<D const*>(raw_data);
-        RED_TEST(d.file_id == 2);
-        RED_TEST(d.file_size == 7);
-        RED_TEST(d.transfered_status == 0);
+        RED_TEST(d.file_id == 4);
+        RED_TEST(d.file_size == 3);
+        RED_TEST(d.direction == int(Mwrm3::Direction::ClientToServer));
+        RED_TEST(d.transfered_status == int(Mwrm3::TransferedStatus::Unknown));
+        RED_TEST(d.original_filename.bytes() == "file4"_av);
+        RED_TEST(d.tfl_filename.bytes() == "my_session_id,000004.tfl"_av);
         RED_TEST(d.qhash.bytes() == ""_av);
         RED_TEST(d.fhash.bytes() == ""_av);
         RED_TEST(d.sig.bytes() == ""_av);

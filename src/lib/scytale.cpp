@@ -1253,7 +1253,12 @@ struct ScytaleMwrm3ReaderHandle
                         this->buffer.data() + this->remaining_data.size(),
                         free_buffer_len);
 
-                    if (r <= 0)
+                    if (r > 0)
+                    {
+                        this->remaining_data = array_view(this->buffer)
+                            .first(r + this->remaining_data.size());
+                    }
+                    else
                     {
                         if (r != 0)
                         {
@@ -1263,8 +1268,6 @@ struct ScytaleMwrm3ReaderHandle
                         return nullptr;
                     }
 
-                    this->remaining_data = array_view(this->buffer)
-                      .first(r + this->remaining_data.size());
                 }
             }
         }
