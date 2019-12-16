@@ -471,13 +471,14 @@ public:
     template<class Mod>
     class ModWithSocket final : private SocketTransport, public Mod
     {
+        ModOSD & mod_osd;
         ModuleManager & mm;
         bool target_info_is_shown = false;
 
     public:
         template<class... Args>
         ModWithSocket(
-            ModuleManager & mm, AuthApi & /*authentifier*/,
+            ModuleManager & mm, ModOSD & mod_osd, AuthApi & /*authentifier*/,
             const char * name, unique_fd sck, uint32_t verbose,
             std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
         : SocketTransport( name, std::move(sck)
@@ -486,6 +487,7 @@ public:
                          , std::chrono::milliseconds(mm.ini.get<cfg::globals::mod_recv_timeout>())
                          , to_verbose_flags(verbose), error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
+        , mod_osd(mod_osd)
         , mm(mm)
         {
             this->mm.socket_transport = this;
@@ -505,7 +507,7 @@ public:
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
             //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
-            if (this->mm.mod_osd.try_input_scancode(param1, param2, param3, param4, keymap)) {
+            if (this->mod_osd.try_input_scancode(param1, param2, param3, param4, keymap)) {
                 this->target_info_is_shown = false;
                 return ;
             }
@@ -549,7 +551,7 @@ public:
 
         void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
         {
-            if (this->mm.mod_osd.try_input_mouse(device_flags, x, y, keymap)) {
+            if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap)) {
                 this->target_info_is_shown = false;
                 return ;
             }
@@ -563,7 +565,7 @@ public:
 
         void rdp_input_invalidate(const Rect r) override
         {
-            if (this->mm.mod_osd.try_input_invalidate(r)) {
+            if (this->mod_osd.try_input_invalidate(r)) {
                 return ;
             }
 
@@ -572,7 +574,7 @@ public:
 
         void rdp_input_invalidate2(array_view<Rect const> vr) override
         {
-            if (this->mm.mod_osd.try_input_invalidate2(vr)) {
+            if (this->mod_osd.try_input_invalidate2(vr)) {
                 return ;
             }
 
@@ -825,6 +827,7 @@ public:
 
             auto new_xup_mod = new ModWithSocket<xup_mod>(
                 *this,
+                this->mod_osd,
                 authentifier,
                 name,
                 std::move(client_sck),

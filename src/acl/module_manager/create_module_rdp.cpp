@@ -574,6 +574,7 @@ void ModuleManager::create_mod_rdp(
 
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
+            this->mod_osd,
             authentifier,
             name,
             std::move(client_sck),
