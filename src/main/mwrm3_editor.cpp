@@ -200,48 +200,56 @@ class enum_names
         };
     }
 
+    template<std::size_t... ints>
+    constexpr static auto _name(E e, std::index_sequence<ints...>)
+    {
+        auto v = +underlying_cast(e);
+        std::string_view sv;
+        ((v == ints ? void(sv = get_enum_name<E, E(ints)>()) : void()), ...);
+        return sv;
+    }
+
 public:
     static constexpr unsigned char size
         = _len(std::make_index_sequence<(sizeof(E) <= sizeof(uint16_t) ? 126 : 0)>());
-    static constexpr std::array<std::string_view, size> names
-        = _names(std::make_index_sequence<size>());
 
-    template<std::size_t... ints>
-     static void _print_names(std::index_sequence<ints...>)
+    static std::string_view name(E e)
     {
-        ((std::cout<< get_enum_name<E, E(ints)>() << " "), ...);
-        if constexpr (size > 0) {
-            std::array a{get_enum_name<E, E(ints)>()...};
-            std::cout << sizeof...(ints);
-            std::cout << "[[[" << a[0] << "]]]";
-            std::cout << "[[[" << get_enum_name<E, E(0)>() << "]]]";
-            std::cout << "[[[" << get_enum_name<E, E(1)>() << "]]]";
+        if constexpr (size > 0)
+        {
+            return _name(e, std::make_index_sequence<size>());
+        }
+        else
+        {
+            (void)e;
+            return {};
         }
     }
 };
 
-template<class E>
-void print_enum(E e)
+template<class T>
+void print_enum_value(T x, std::string_view name)
 {
-    auto v = +underlying_cast(e);
-    std::cout << get_enum_name<E, E(4)>() << "--" << +enum_names<E>::size << "|\n";
-    enum_names<E>::_print_names(std::make_index_sequence<enum_names<E>::size>());
-    if constexpr (bool(enum_names<E>::size))
+    if (not name.empty())
     {
-        if (0 <= v && v < enum_names<E>::size && !enum_names<E>::names[v].empty())
-        {
-            for (auto av : enum_names<E>::names) { std::cout << av << " === \n"; }
-            std::cout << enum_names<E>::names[v] << "(" << +v << ")";
-        }
-        else
-        {
-            std::cout << +v;
-        }
+        std::cout << name << "(" << x << ")";
     }
     else
     {
-        std::cout << +v;
+        std::cout << x;
     }
+}
+
+template<class E, E e>
+void print_enum()
+{
+    print_enum_value(+underlying_cast(e), get_enum_name<Mwrm3::Type, e>());
+}
+
+template<class E>
+void print_enum(E e)
+{
+    print_enum_value(+underlying_cast(e), enum_names<E>::name(e));
 }
 
 template<class T>
@@ -284,11 +292,11 @@ int mwrm_text_viewer(Mwrm3FileReader& file)
     auto remaining_data = file.get_bytes();
     int nb_packet = 0;
 
-    auto print_values = [&](Mwrm3::Type type, bytes_view next_data, auto... xs){
+    auto print_values = [&](auto type, bytes_view next_data, auto... xs){
         ++nb_packet;
         remaining_data = next_data;
 
-        std::cout << "#" << nb_packet << "\nMwrm3::Type: "; print_value(type);
+        std::cout << "#" << nb_packet << "\nMwrm3::Type: "; print_enum<Mwrm3::Type, type.value>();
         ((
             std::cout << "\n" << get_type_name<decltype(xs)>() << ": ",
             print_value(xs)
