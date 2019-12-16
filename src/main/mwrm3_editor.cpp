@@ -83,6 +83,50 @@ private:
     InCryptoTransport& crypto_transport;
 };
 
+
+struct TypeName : std::string_view {};
+
+template<class T>
+constexpr TypeName get_type_name()
+{
+    std::string_view s = __PRETTY_FUNCTION__;
+    s.remove_suffix(1);
+#ifdef __clang__
+    s.remove_prefix(76);
+    return {s};
+#elif defined(__GNUG__)
+    s.remove_prefix(71);
+    return {s};
+#endif
+}
+
+template<class E, E e>
+constexpr TypeName get_enum_name()
+{
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 9)
+    std::string_view s = __PRETTY_FUNCTION__;
+#ifdef __clang__
+    s.remove_prefix(76 + get_type_name<E>().size() + 6);
+    if ('0' <= s[0] && s[0] <= '9')
+    {
+        return {};
+    }
+#elif defined(__GNUG__)
+    s.remove_prefix(71 + get_type_name<E>().size() + 8);
+    if (s[0] == '(')
+    {
+        return {};
+    }
+#endif
+    s.remove_prefix(get_type_name<E>().size() + 2);
+    s.remove_suffix(1);
+    return {s};
+#else
+    return {};
+#endif
+}
+
+
 constexpr inline char const* hexadecimal_string = "0123456789ABCDEF";
 
 void print_value(array_view_const_char chars)
@@ -126,12 +170,86 @@ void print_value(std::chrono::duration<Rep, Period> duration)
 template<class T, class = void>
 struct print_value_impl;
 
+template<class E>
+class enum_names
+{
+    constexpr static std::size_t _len(std::index_sequence<>)
+    {
+        return 0;
+    }
+
+    template<std::size_t... ints>
+    constexpr static std::size_t _len(std::index_sequence<ints...>)
+    {
+        std::string_view names[]{get_enum_name<E, E(ints)>()...};
+        for (auto& name : names)
+        {
+            if (name.empty())
+            {
+                return &name - names;
+            }
+        }
+        return 0;
+    }
+
+    template<std::size_t... ints>
+    constexpr static auto _names(std::index_sequence<ints...>)
+    {
+        return std::array<std::string_view, sizeof...(ints)>{
+            get_enum_name<E, E(ints)>()...
+        };
+    }
+
+public:
+    static constexpr unsigned char size
+        = _len(std::make_index_sequence<(sizeof(E) <= sizeof(uint16_t) ? 126 : 0)>());
+    static constexpr std::array<std::string_view, size> names
+        = _names(std::make_index_sequence<size>());
+
+    template<std::size_t... ints>
+     static void _print_names(std::index_sequence<ints...>)
+    {
+        ((std::cout<< get_enum_name<E, E(ints)>() << " "), ...);
+        if constexpr (size > 0) {
+            std::array a{get_enum_name<E, E(ints)>()...};
+            std::cout << sizeof...(ints);
+            std::cout << "[[[" << a[0] << "]]]";
+            std::cout << "[[[" << get_enum_name<E, E(0)>() << "]]]";
+            std::cout << "[[[" << get_enum_name<E, E(1)>() << "]]]";
+        }
+    }
+};
+
+template<class E>
+void print_enum(E e)
+{
+    auto v = +underlying_cast(e);
+    std::cout << get_enum_name<E, E(4)>() << "--" << +enum_names<E>::size << "|\n";
+    enum_names<E>::_print_names(std::make_index_sequence<enum_names<E>::size>());
+    if constexpr (bool(enum_names<E>::size))
+    {
+        if (0 <= v && v < enum_names<E>::size && !enum_names<E>::names[v].empty())
+        {
+            for (auto av : enum_names<E>::names) { std::cout << av << " === \n"; }
+            std::cout << enum_names<E>::names[v] << "(" << +v << ")";
+        }
+        else
+        {
+            std::cout << +v;
+        }
+    }
+    else
+    {
+        std::cout << +v;
+    }
+}
+
 template<class T>
 void print_value(T const& x)
 {
     if constexpr (std::is_enum_v<T>)
     {
-        std::cout << +underlying_cast(x);
+        print_enum(x);
     }
     else if constexpr (std::is_integral_v<T>)
     {
@@ -161,45 +279,18 @@ struct print_value_impl<T, decltype(void(std::declval<T&>().hash))>
     }
 };
 
-template<class T>
-std::string const& get_type_name(char* output_buffer, size_t * length, int * status)
-{
-    // TODO use __PRETTY_FUNCTION__
-    static const std::string s = [&](){
-#if REDEMPTION_HAS_INCLUDE(<cxxabi.h>)
-        char const* s = __cxxabiv1::__cxa_demangle(
-            typeid(T).name(), output_buffer, length, status);
-        return (0 == *status) ? s
-            : (-1 == *status) ? "(demangle error: memory allocation failiure)"
-            : (-2 == *status) ? "(demangle error: not a valid name)"
-            : (-3 == *status) ? "(demangle error: arguments is invalid)"
-            : "(demangle error)";
-#else
-        return "(cxxabi.h not found)";
-#endif
-    }();
-
-    return s;
-}
-
 int mwrm_text_viewer(Mwrm3FileReader& file)
 {
     auto remaining_data = file.get_bytes();
     int nb_packet = 0;
 
-    char* demangle_output = nullptr;
-    size_t demangle_output_size = 0;
-    int demangle_status = 0;
-    SCOPE_EXIT(free(demangle_output));
-
     auto print_values = [&](Mwrm3::Type type, bytes_view next_data, auto... xs){
         ++nb_packet;
         remaining_data = next_data;
 
-        std::cout << "#" << nb_packet << "\ntype: " << safe_cast<uint16_t>(type);
+        std::cout << "#" << nb_packet << "\nMwrm3::Type: "; print_value(type);
         ((
-            std::cout << "\n" << get_type_name<decltype(xs)>(
-                demangle_output, &demangle_output_size, &demangle_status) << ": ",
+            std::cout << "\n" << get_type_name<decltype(xs)>() << ": ",
             print_value(xs)
         ), ...);
         std::cout << "\n\n";
