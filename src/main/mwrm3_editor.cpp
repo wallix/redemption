@@ -127,49 +127,6 @@ constexpr TypeName get_enum_name()
 }
 
 
-constexpr inline char const* hexadecimal_string = "0123456789ABCDEF";
-
-void print_value(array_view_const_char chars)
-{
-    std::cout.write(chars.data(), chars.size());
-}
-
-void print_value(bytes_view bytes)
-{
-    for (auto byte : bytes)
-    {
-        if (' ' <= byte && byte <= '~')
-        {
-            if (byte == '\\')
-            {
-                std::cout << '\\';
-            }
-
-            std::cout << byte;
-        }
-        else
-        {
-            std::cout << "\\x";
-            std::cout << hexadecimal_string[byte >> 4];
-            std::cout << hexadecimal_string[byte & 0xf];
-        }
-    }
-}
-
-char const* duration_suffix(std::chrono::seconds const&) { return "s"; }
-// char const* duration_suffix(std::chrono::milliseconds const&) { return "ms"; }
-// char const* duration_suffix(std::chrono::nanoseconds const&) { return "ns"; }
-
-template<class Rep, class Period>
-void print_value(std::chrono::duration<Rep, Period> duration)
-{
-    // C++20: std::cout << duration;
-    std::cout << duration.count() << duration_suffix(duration);
-}
-
-template<class T, class = void>
-struct print_value_impl;
-
 template<class E>
 class enum_names
 {
@@ -252,6 +209,12 @@ void print_enum(E e)
     print_enum_value(+underlying_cast(e), enum_names<E>::name(e));
 }
 
+template<class T, class = void>
+struct print_value_impl
+{
+    static_assert(!std::is_same<T, T>::value, "missing specialization or not a regular type (struct with bytes or str, enum or integral)");
+};
+
 template<class T>
 void print_value(T const& x)
 {
@@ -269,25 +232,71 @@ void print_value(T const& x)
     }
 }
 
+
+constexpr inline char const* hexadecimal_string = "0123456789ABCDEF";
+
+void print_bytes(bytes_view bytes)
+{
+    if (bytes.empty())
+    {
+        return ;
+    }
+
+    std::cout << "\\x";
+    for (auto byte : bytes)
+    {
+        std::cout << hexadecimal_string[byte >> 4];
+        std::cout << hexadecimal_string[byte & 0xf];
+    }
+}
+
 template<class T>
 struct print_value_impl<T, decltype(void(std::declval<T&>().bytes))>
 {
     static void print(T const& x)
     {
-        print_value(x.bytes);
+        print_bytes(x.bytes);
     }
 };
+
+
+void print_chars_view(array_view_const_char chars)
+{
+    std::cout.write(chars.data(), chars.size());
+}
 
 template<class T>
 struct print_value_impl<T, decltype(void(std::declval<T&>().str))>
 {
     static void print(T const& x)
     {
-        print_value(x.str);
+        print_chars_view(x.str);
     }
 };
 
-int mwrm_text_viewer(Mwrm3FileReader& file)
+
+template<class Rep, class Period>
+struct print_value_impl<std::chrono::duration<Rep, Period>, void>
+{
+    static void print(std::chrono::duration<Rep, Period> const& duration)
+    {
+        // C++20: std::cout << duration;
+        std::cout << duration.count();
+
+        using Duration = std::chrono::duration<Rep, Period>;
+        if constexpr (std::is_same_v<Duration, std::chrono::seconds>)
+        {
+            std::cout << "s";
+        }
+        else
+        {
+            static_assert(!std::is_same<Duration, Duration>::value, "missing suffix");
+        }
+    }
+};
+
+
+int mwrm3_text_viewer(Mwrm3FileReader& file)
 {
     auto remaining_data = file.get_bytes();
     int nb_packet = 0;
@@ -333,14 +342,298 @@ int mwrm_text_viewer(Mwrm3FileReader& file)
     }
 }
 
+
+// Reader
+
+template<Mwrm3::Type Type, class... xs>
+struct mwrm3_type_info
+{
+    static const Mwrm3::Type mwrm3_type = Type;
+};
+
+template<class... Mwrm3TypeInfo>
+struct integral_mwrm3_type_info_list
+{
+    integral_mwrm3_type_info_list() = default;
+
+    template<class... Us>
+    integral_mwrm3_type_info_list(integral_mwrm3_type_info_list<Us...>) noexcept
+    {}};
+}
+
+template<>
+struct integral_mwrm3_type_info_list<>
+{};
+
+namespace std
+{
+    template<class... xs, class... ys>
+    struct common_type<integral_mwrm3_type_info_list<xs...>, integral_mwrm3_type_info_list<ys...>>
+    {
+        using type = integral_mwrm3_type_info_list<xs..., ys...>;
+    };
+}
+
+namespace
+{
+
+template<class T>
+bool read_choice(T& x)
+{
+    while (!(std::cin >> x))
+    {
+        if (std::cin.eof())
+        {
+            return false;
+        }
+        else if (std::cin.fail())
+        {
+            std::cin.clear();
+            std::cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+    }
+
+    return true;
+}
+
+
+
+template<Mwrm3::Type type, class... Ts>
+void mwrm3_text_writer_print_type(mwrm3_type_info<type, Ts...>)
+{
+    auto name = get_enum_name<Mwrm3::Type, type>();
+    if (not name.empty())
+    {
+        std::cerr << name;
+    }
+    else
+    {
+        std::cerr << "Mwrm3::Type";
+    }
+    std::cerr << "(" << +underlying_cast(type) << ") --";
+    ((std::cerr << "  " << get_type_name<Ts>()), ...);
+    std::cerr << "\n";
+}
+
+template<class T, class>
+struct reader_int
+{
+    T value;
+
+    bool read()
+    {
+        return read_choice(this->value);
+    }
+};
+
+template<class T, class = void>
+struct reader_impl
+{
+    static_assert(!std::is_same<T, T>::value, "missing specialization or not a regular type (struct with bytes or str, enum or integral)");
+};
+
+template<class T>
+auto reader()
+{
+    if constexpr (std::is_enum_v<T>)
+    {
+        auto e = +underlying_cast(T{});
+        return reader_int<decltype(e), T>();
+    }
+    else if constexpr (std::is_integral_v<T>)
+    {
+        return reader_int<decltype(+T{}), T>();
+    }
+    else
+    {
+        return reader_impl<T>();
+    }
+}
+
+template<class T>
+struct reader_impl<T, decltype(void(std::declval<T&>().bytes))>
+{
+    std::string value;
+
+    bool read()
+    {
+        for (;;)
+        {
+            std::cerr << "hexadecimal (" << T::static_size << " bytes)\n";
+
+            if (!read_choice(this->value))
+            {
+                return false;
+            }
+
+            if (T::static_size * 2 == this->value.size() && to_hex())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool to_hex()
+    {
+        auto hex = [](char c){
+            if ('0' <= c && c <= '9') return c - '0';
+            if ('a' <= c && c <= 'f') return 0xa + (c - 'a');
+            if ('A' <= c && c <= 'F') return 0xa + (c - 'A');
+            return -1;
+        };
+
+        for (unsigned i = 0; i < T::static_size; ++i)
+        {
+            int a = hex(value[i*2]);
+            int b = hex(value[i*2+1]);
+            if (a == -1 || b == -1)
+            {
+                return false;
+            }
+            value[i] = (a << 4) | b;
+        }
+
+        value.erase(T::static_size);
+        return true;
+    }
+};
+
+template<class T>
+struct reader_impl<T, decltype(void(std::declval<T&>().str))>
+{
+    std::string value;
+
+    bool read()
+    {
+        return read_choice(this->value);
+    }
+};
+
+template<class Rep, class Period>
+struct reader_impl<std::chrono::duration<Rep, Period>, void>
+{
+    using Duration = std::chrono::duration<Rep, Period>;
+
+    Duration value;
+
+    bool read()
+    {
+        Rep duration;
+        if (read_choice(duration))
+        {
+            value = Duration(duration);
+            return true;
+        }
+        return false;
+    }
+};
+
+struct PrintSerialization
+{
+    template<class... Bytes>
+    void operator()(Mwrm3::Type /*type*/, Bytes... bytes)
+    {
+        ((std::cout.write(bytes.as_chars().data(), bytes.as_chars().size())), ...);
+        std::cout.flush();
+    }
+};
+
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcomma")
+template<Mwrm3::Type type, class... Ts>
+void mwrm3_text_writer_read_data(mwrm3_type_info<type, Ts...> m)
+{
+    mwrm3_text_writer_print_type(m);
+
+    struct Readers : decltype(reader<Ts>())... {};
+    Readers readers;
+
+    bool ok = true;
+    ((ok ? void((
+        void(std::cerr << get_type_name<Ts>() << ": "),
+        void(ok && static_cast<decltype(reader<Ts>())&>(readers).read())
+    )) : void()), ...);
+
+    if (ok)
+    {
+        Mwrm3::serial_for_type(type, [&](auto serial){
+            if constexpr (serial.type == type)
+            {
+                serial.serialize(Ts(static_cast<decltype(reader<Ts>())&>(readers).value)...,
+                    PrintSerialization());
+            }
+        }, [](auto){});
+    }
+}
+REDEMPTION_DIAGNOSTIC_POP
+
+template<class... Mwrm3TypeInfo>
+void mwrm3_text_writer_impl(integral_mwrm3_type_info_list<Mwrm3TypeInfo...>)
+{
+    int nb = 0;
+
+    unsigned i;
+
+    for (;;)
+    {
+        i = 0;
+        ((
+            void(std::cerr << i << ": "),
+            mwrm3_text_writer_print_type(Mwrm3TypeInfo{}),
+            void(++i)
+        ), ...);
+
+        unsigned id = 0;
+        if (!read_choice(id))
+        {
+            break;
+        }
+
+        if (id >= sizeof...(Mwrm3TypeInfo))
+        {
+            continue;
+        }
+
+        std::cerr << "\n#" << nb << "\n";
+        i = 0;
+        ((
+            void(i == id ? void(mwrm3_text_writer_read_data(Mwrm3TypeInfo{})) : void()),
+            void(++i)
+        ), ...);
+    }
+}
+
+void mwrm3_text_writer()
+{
+    auto bind_params = [](auto type, bytes_view /*remaining*/, auto... xs){
+        return integral_mwrm3_type_info_list<mwrm3_type_info<type.value, decltype(xs)...>>();
+    };
+
+    mwrm3_text_writer_impl(Mwrm3::unserialize_packet(
+        Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type){
+            return integral_mwrm3_type_info_list<>();
+        }
+    ));
+}
+
 }
 
 int main(int ac, char** av)
 {
     if (ac != 2)
     {
-        std::cerr << "Usage: mwrm3_editor file.mwrm3\n";
-        return 255;
+        mwrm3_text_writer();
+        return 0;
+    }
+
+    if (av[1][0] == '-' && av[1][1] == 'h')
+    {
+        std::cerr << "Usage: mwrm3_editor [file.mwrm3]\n";
+        std::cerr << "Example:\n";
+        std::cerr << R"(echo -e "1\n1\n1\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | mwrm3_editor | mwrm3_editor /dev/stdin))";
+        std::cerr << "\n";
+        return 1;
     }
 
     CryptoContext cctx;
@@ -349,5 +642,5 @@ int main(int ac, char** av)
     infile.open(av[1]);
 
     Mwrm3FileReader reader{infile};
-    return mwrm_text_viewer(reader);
+    return mwrm3_text_viewer(reader);
 }

@@ -1124,7 +1124,7 @@ namespace
     template<class T, class = void>
     struct scytale_raw_value_impl
     {
-        static_assert(!std::is_same<T, T>::value, "missing specialization or not a regular type (struct with bytes or str, enum, integral or chrono::seconds)");
+        static_assert(!std::is_same<T, T>::value, "missing specialization or not a regular type (struct with bytes or str, enum, integral or std::chrono::duration)");
     };
 
     template<class T>
@@ -1145,12 +1145,12 @@ namespace
         }
     };
 
-    template<>
-    struct scytale_raw_value_impl<std::chrono::seconds, void>
+    template<class Rep, class Period>
+    struct scytale_raw_value_impl<std::chrono::duration<Rep, Period>, void>
     {
-        static auto raw(std::chrono::seconds const& seconds)
+        static auto raw(std::chrono::duration<Rep, Period> const& duration)
         {
-            return scytale_raw_integral(seconds.count());
+            return scytale_raw_integral(duration.count());
         }
     };
 

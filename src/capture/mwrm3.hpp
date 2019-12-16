@@ -79,6 +79,9 @@ namespace Mwrm3
 #define MWRM3_STRONG_OPTIONAL_STATIC_VIEW(name, view_type, mem, len) \
     struct name                                                      \
     {                                                                \
+        static const bool is_optional_value = true;                  \
+        static const std::size_t static_size = len;                  \
+                                                                     \
         explicit name(view_type mem) noexcept                        \
         : mem(mem)                                                   \
         { assert(mem.empty() || mem.size() == len); }                \
