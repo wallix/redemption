@@ -552,7 +552,7 @@ void mwrm3_text_writer_read_data(mwrm3_type_info<type, Ts...> m)
     bool ok = true;
     ((ok ? void((
         void(std::cerr << get_type_name<Ts>() << ": "),
-        void(ok && static_cast<decltype(reader<Ts>())&>(readers).read())
+        void(ok && (ok = static_cast<decltype(reader<Ts>())&>(readers).read()))
     )) : void()), ...);
 
     if (ok)
