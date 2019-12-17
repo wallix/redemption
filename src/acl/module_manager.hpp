@@ -197,6 +197,24 @@ public:
         this->mod_wrapper.mod->rdp_input_invalidate(protected_rect);
     }
 
+    void clear_osd_message()
+    {
+        if (!this->get_protected_rect().isempty()) {
+            this->disable_osd();
+        }
+    }
+
+    void osd_message_fn(std::string message, bool is_disable_by_input)
+    {
+        if (message != this->get_message()) {
+            this->clear_osd_message();
+        }
+        if (!message.empty()) {
+            this->set_message(std::move(message), is_disable_by_input);
+            this->draw_osd_message();
+        }
+    }
+
     [[nodiscard]] const char* get_message() const {
         return this->osd_message.c_str();
     }
@@ -523,7 +541,7 @@ public:
                 bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
                 if (this->target_info_is_shown && f12_released) {
                     // LOG(LOG_INFO, "Hide info");
-                    this->mm.clear_osd_message();
+                    this->mod_osd.clear_osd_message();
                     this->target_info_is_shown = false;
                 }
                 else if (!this->target_info_is_shown && !f12_released) {
@@ -546,7 +564,7 @@ public:
                             msg += ']';
                         }
                     }
-                    this->mm.osd_message(std::move(msg), false);
+                    this->mod_osd.osd_message_fn(std::move(msg), false);
                     this->target_info_is_shown = true;
                 }
             }
@@ -617,7 +635,7 @@ public:
         // from mod_api
         void display_osd_message(std::string const & message) override 
         {
-            this->mm.osd_message(message, true);
+            this->mod_osd.osd_message_fn(message, true);
             //return this->mod.display_osd_message(message);
         }
 
@@ -677,24 +695,6 @@ public:
     Callback & get_callback() noexcept
     {
         return *this->get_mod_wrapper().mod;
-    }
-
-    void clear_osd_message()
-    {
-        if (!this->mod_osd.get_protected_rect().isempty()) {
-            this->mod_osd.disable_osd();
-        }
-    }
-
-    void osd_message(std::string message, bool is_disable_by_input)
-    {
-        if (message != this->mod_osd.get_message()) {
-            this->clear_osd_message();
-        }
-        if (!message.empty()) {
-            this->mod_osd.set_message(std::move(message), is_disable_by_input);
-            this->mod_osd.draw_osd_message();
-        }
     }
 
 private:
@@ -768,7 +768,7 @@ public:
     void remove_mod()
     {
         if (this->get_mod_wrapper().has_mod()){
-            this->clear_osd_message();
+            this->mod_osd.clear_osd_message();
             this->get_mod_wrapper().remove_mod();
             this->rdpapi = nullptr;
             this->winapi = nullptr;
@@ -791,7 +791,7 @@ private:
             this->keymap.get_kevent();
         }
 
-        this->clear_osd_message();
+        this->mod_osd.clear_osd_message();
 
         this->get_mod_wrapper().set_mod(mod.get());
 
@@ -955,7 +955,7 @@ public:
         std::string mes;
         this->end_session_warning.update_osd_state(mes, language(this->ini), start_time, end_time, now);
         if (!mes.empty()) {
-            this->osd_message(std::move(mes), true);
+            this->mod_osd.osd_message_fn(std::move(mes), true);
         }
     }
 
