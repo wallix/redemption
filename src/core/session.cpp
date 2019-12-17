@@ -18,6 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
 */
 
+#include "acl/end_session_warning.hpp"
+
 #include "acl/module_manager/mod_factory.hpp"
 #include "core/session.hpp"
 
@@ -653,7 +655,8 @@ public:
             ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
             ModFactory mod_factory(session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
-            ModuleManager mm(mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, glyphs, theme, this->ini, cctx, rnd, timeobj);
+            EndSessionWarning end_session_warning;
+            ModuleManager mm(end_session_warning, mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
