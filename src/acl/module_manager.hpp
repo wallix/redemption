@@ -452,7 +452,7 @@ class ModuleManager
     ModWrapper & mod_wrapper;
 public:
 
-    ModWrapper & get_mod_wrapper() 
+    ModWrapper & get_mod_wrapper() const
     {
         return mod_wrapper;
     }
@@ -494,6 +494,7 @@ public:
         Mod mod;
     private:
         ModOSD & mod_osd;
+        ModWrapper & mod_wrapper;
         Inifile & ini;
         ModuleManager & mm;
         bool target_info_is_shown = false;
@@ -501,7 +502,7 @@ public:
     public:
         template<class... Args>
         ModWithSocket(
-            ModuleManager & mm, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
+            ModuleManager & mm, ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
             const char * name, unique_fd sck, uint32_t verbose,
             std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
         : socket_transport( name, std::move(sck)
@@ -511,15 +512,16 @@ public:
                          , to_verbose_flags(verbose), error_message)
         , mod(this->socket_transport, std::forward<Args>(mod_args)...)
         , mod_osd(mod_osd)
+        , mod_wrapper(mod_wrapper)
         , ini(ini)
         , mm(mm)
         {
-            this->mm.socket_transport = &this->socket_transport;
+            this->mod_wrapper.set_psocket_transport(&this->socket_transport);
         }
 
         ~ModWithSocket()
         {
-            this->mm.socket_transport = nullptr;
+            this->mod_wrapper.set_psocket_transport(nullptr);
             log_proxy::target_disconnection(
                 this->ini.template get<cfg::context::auth_error_message>().c_str());
         }
@@ -726,7 +728,6 @@ public:
 private:
     rdp_api*       rdpapi = nullptr;
 
-    SocketTransport * socket_transport = nullptr;
     windowing_api* &winapi;
 
     EndSessionWarning end_session_warning;
@@ -753,16 +754,6 @@ public:
         , glyphs(glyphs)
         , theme(theme)
     {
-    }
-
-    [[nodiscard]] bool has_pending_data() const
-    {
-        return this->socket_transport && this->socket_transport->has_pending_data();
-    }
-
-    [[nodiscard]] SocketTransport* get_socket() const noexcept
-    {
-        return this->socket_transport;
     }
 
     void remove_mod()
@@ -903,6 +894,7 @@ public:
 
             auto new_xup_mod = new ModWithSocket<xup_mod>(
                 *this,
+                this->get_mod_wrapper(),
                 this->mod_osd,
                 this->ini,
                 authentifier,

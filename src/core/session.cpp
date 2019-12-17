@@ -907,7 +907,7 @@ private:
         };
 
         if (is_set(sck_no_read.sck_mod)) {
-            mm.get_socket()->send_waiting_data();
+            mm.get_mod_wrapper().get_socket()->send_waiting_data();
         }
 
         if (is_set(sck_no_read.sck_front)) {
@@ -940,13 +940,13 @@ private:
             }
         }
 
-        if (mm.get_socket() && !mm.has_pending_data()) {
-            if (mm.get_socket()->has_waiting_data()) {
-                sck_no_read.sck_mod = mm.get_socket()->sck;
+        if (mm.get_mod_wrapper().get_socket() && !mm.get_mod_wrapper().has_pending_data()) {
+            if (mm.get_mod_wrapper().get_socket()->has_waiting_data()) {
+                sck_no_read.sck_mod = mm.get_mod_wrapper().get_socket()->sck;
                 ioswitch.set_write_sck(sck_no_read.sck_mod);
             }
             else if (sck_no_read.sck_front != INVALID_SOCKET) {
-                sck_no_read.sck_mod = mm.get_socket()->sck;
+                sck_no_read.sck_mod = mm.get_mod_wrapper().get_socket()->sck;
             }
         }
 
@@ -955,7 +955,7 @@ private:
         }
 
         if (front_trans.has_pending_data()
-        || mm.has_pending_data()
+        || mm.get_mod_wrapper().has_pending_data()
         || (acl && acl->auth_trans.has_pending_data())){
             ioswitch.immediate_wakeup(session_reactor.get_current_time());
         }

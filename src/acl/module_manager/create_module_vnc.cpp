@@ -89,6 +89,7 @@ void ModuleManager::create_mod_vnc(
 
         auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
             *this,
+            this->get_mod_wrapper(),
             this->mod_osd,
             this->ini,
             authentifier,
