@@ -1091,14 +1091,6 @@ public:
         return this->rdpapi;
     }
 
-    void update_end_session_warning(time_t start_time, time_t end_time, time_t now) {
-        std::string mes;
-        this->end_session_warning.update_osd_state(mes, language(this->ini), start_time, end_time, now);
-        if (!mes.empty()) {
-            this->mod_osd.osd_message_fn(std::move(mes), true);
-        }
-    }
-
     void invoke_close_box(
         bool enable_close_box,
         const char * auth_error_message, BackEvent_t & signal,

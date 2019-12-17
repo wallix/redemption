@@ -344,7 +344,7 @@ class Session
         return run_session;
     }
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModOSD & mod_osd, Front & front, Authentifier & authentifier)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModOSD & mod_osd, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
     {
         bool run_session = true;
         SessionReactor::EnableGraphics enable_graphics{true};
@@ -557,7 +557,11 @@ class Session
                 if (enable_osd) {
                     const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
                     if (enddate && mm.is_up_and_running()) {
-                        mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now.tv_sec);
+                        std::string mes = end_session_warning.update_osd_state(
+                            language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
+                        if (!mes.empty()) {
+                            mod_osd.osd_message_fn(std::move(mes), true);
+                        }
                     }
                 }
 
@@ -748,7 +752,7 @@ public:
                         this->start_acl_running(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_osd, front, authentifier);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_osd, end_session_warning, front, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }

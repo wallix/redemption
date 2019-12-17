@@ -41,8 +41,8 @@ public:
         this->osd_state = OSD_STATE_NOT_YET_COMPUTED;
     }
 
-    void update_osd_state(std::string& out_msg, Translation::language_t lang, time_t start_time, time_t end_time, time_t now) {
-        out_msg.clear();
+    std::string update_osd_state(Translation::language_t lang, time_t start_time, time_t end_time, time_t now) {
+        std::string out_msg; 
 
         if (this->osd_state == OSD_STATE_NOT_YET_COMPUTED) {
             this->osd_state = (
@@ -63,6 +63,7 @@ public:
 
             ++this->osd_state;
         }
+        return out_msg;
     }
 };
 
