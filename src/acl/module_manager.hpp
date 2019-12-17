@@ -496,13 +496,11 @@ public:
         ModOSD & mod_osd;
         ModWrapper & mod_wrapper;
         Inifile & ini;
-        ModuleManager & mm;
         bool target_info_is_shown = false;
 
     public:
         template<class... Args>
-        ModWithSocket(
-            ModuleManager & mm, ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
+        ModWithSocket(ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
             const char * name, unique_fd sck, uint32_t verbose,
             std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
         : socket_transport( name, std::move(sck)
@@ -514,7 +512,6 @@ public:
         , mod_osd(mod_osd)
         , mod_wrapper(mod_wrapper)
         , ini(ini)
-        , mm(mm)
         {
             this->mod_wrapper.set_psocket_transport(&this->socket_transport);
         }
@@ -893,7 +890,6 @@ public:
                 report_message, trkeys::authentification_x_fail);
 
             auto new_xup_mod = new ModWithSocket<xup_mod>(
-                *this,
                 this->get_mod_wrapper(),
                 this->mod_osd,
                 this->ini,
