@@ -44,12 +44,16 @@
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
+#include "mod/xup/xup.hpp"
+#include "acl/module_manager/create_mod_xup.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
 
 class ModFactory
 {
+    ModWrapper & mod_wrapper;
+    ModOSD & mod_osd;
     SessionReactor & session_reactor;
     ClientInfo & client_info;
     FrontAPI & front;
@@ -61,8 +65,10 @@ class ModFactory
     
 
 public:
-    ModFactory(SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
-        : session_reactor(session_reactor)
+    ModFactory(ModWrapper & mod_wrapper, ModOSD & mod_osd, SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
+        : mod_wrapper(mod_wrapper)
+        , mod_osd(mod_osd)
+        , session_reactor(session_reactor)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
@@ -396,6 +402,27 @@ public:
             this->rail_client_execute,
             this->glyphs,
             this->theme
+        );
+        return new_mod;
+    }    
+    
+    auto create_xup_mod(unique_fd & client_sck) -> mod_api *
+    {
+        const char * name = "XUP Target";
+
+        auto new_mod = new XupModWithSocket(
+            this->mod_wrapper,
+            this->mod_osd,
+            this->ini,
+            name,
+            std::move(client_sck),
+            this->ini.get<cfg::debug::mod_xup>(),
+            nullptr,
+            this->session_reactor,
+            this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height,
+            safe_int(this->ini.get<cfg::context::opt_bpp>())
         );
         return new_mod;
     }    

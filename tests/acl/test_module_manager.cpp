@@ -81,9 +81,7 @@
 RED_AUTO_TEST_CASE(TestStrTimeBeforeClosing)
 {
     auto to_s = [](uint32_t t) {
-        std::string s;
-        add_time_before_closing(s, t, Translator(Translation::EN));
-        return s;
+        return time_before_closing(t, Translator(Translation::EN));
     };
     RED_CHECK_EQ("23 seconds before closing", to_s(23));
     RED_CHECK_EQ("36 minutes, 23 seconds before closing", to_s(23 + 36*60));
