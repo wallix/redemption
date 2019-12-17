@@ -279,6 +279,7 @@ extern "C"
         void const* data;
     };
 
+    // return nullptr if error or truncated file (truncated if reader is No Error + eof())
     REDEMPTION_LIB_EXPORT
     ScytaleMwrm3ReaderData const* scytale_mwrm3_reader_read_next(
         ScytaleMwrm3ReaderHandle * handle);

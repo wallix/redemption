@@ -227,13 +227,13 @@ void FdxCapture::close_tfl(
         - this->name_generator.get_current_filename().size();
 
     Mwrm3::tfl_new.serialize(
-        tfl.file_id, tfl.direction, original_filename,
-        std::string_view(filename + dirname_len), write_in_buf);
-    Mwrm3::tfl_info.serialize(
-        tfl.file_id, Mwrm3::FileSize(stat.st_size), transfered_status,
+        tfl.file_id, Mwrm3::FileSize(stat.st_size), tfl.direction, transfered_status,
+        Mwrm3::Filename{original_filename},
+        Mwrm3::TflFilename{std::string_view(filename + dirname_len)},
         Mwrm3::QuickHash{with_checksum ? make_array_view(qhash) : bytes_view{"", 0}},
         Mwrm3::FullHash{with_checksum ? make_array_view(fhash) : bytes_view{"", 0}},
-        sig, write_in_buf);
+        sig,
+        write_in_buf);
 
     this->out_crypto_transport->send(out.get_bytes());
 }

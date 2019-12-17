@@ -246,7 +246,6 @@ exe mwrm3_editor :
   <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(EXE_DEPENDENCIES)
-  <cxxflags>-frtti
 ;
 exe rdpinichecker :
   src/main/ini_checker.o
@@ -5860,7 +5859,7 @@ obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDE
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
-obj src/main/mwrm3_editor.o : $(REDEMPTION_SRC_PATH)/main/mwrm3_editor.cpp : <cxxflags>-frtti ;
+obj src/main/mwrm3_editor.o : $(REDEMPTION_SRC_PATH)/main/mwrm3_editor.cpp ;
 obj src/main/nla_server_cli.o : $(REDEMPTION_SRC_PATH)/main/nla_server_cli.cpp ;
 obj src/main/proxy_recorder_cli.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder_cli.cpp ;
 obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp ;

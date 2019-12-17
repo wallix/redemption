@@ -56,6 +56,125 @@ namespace redemption_unit_test__
         return pos == a.size() && a.size() == b.size();
     }
 
+    // based on element_compare from boost/test/tools/collection_comparison_op.hpp
+    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern)
+    {
+        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+
+        boost::test_tools::assertion_result ar(true);
+
+        const bool r = pos != a.size() || a.size() != b.size();
+        if (REDEMPTION_UNLIKELY(r))
+        {
+            ar = false;
+
+            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " == "};
+            ar.message() << "\nMismatch at position " << pos;
+
+            if (a.size() != b.size())
+            {
+                ar.message()
+                    << "\nCollections size mismatch: "
+                    << a.size() << " != " << b.size()
+                ;
+            }
+        }
+
+        return ar;
+    }
+
+    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern)
+    {
+        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+
+        boost::test_tools::assertion_result ar(true);
+
+        const bool r = pos == a.size() && a.size() == b.size();
+        if (REDEMPTION_UNLIKELY(r))
+        {
+            ar = false;
+            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " != "};
+        }
+
+        return ar;
+    }
+
+    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern)
+    {
+        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+
+        boost::test_tools::assertion_result ar(true);
+
+        const bool r = (pos == a.size())
+            ? a.size() < b.size()
+            : (pos != b.size() && a[pos] < b[pos]);
+        if (REDEMPTION_UNLIKELY(r))
+        {
+            ar = false;
+            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " >= "};
+            ar.message() << "\nMismatch at position " << pos;
+        }
+
+        return ar;
+    }
+
+    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern)
+    {
+        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+
+        boost::test_tools::assertion_result ar(true);
+
+        const bool r = (pos == a.size())
+            ? a.size() <= b.size()
+            : (pos != b.size() && a[pos] <= b[pos]);
+        if (REDEMPTION_UNLIKELY(r))
+        {
+            ar = false;
+            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " > "};
+            ar.message() << "\nMismatch at position " << pos;
+        }
+
+        return ar;
+    }
+
+    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern)
+    {
+        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+
+        boost::test_tools::assertion_result ar(true);
+
+        const bool r = (pos == a.size())
+            ? a.size() > b.size()
+            : (pos != b.size() && a[pos] > b[pos]);
+        if (REDEMPTION_UNLIKELY(r))
+        {
+            ar = false;
+            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " <= "};
+            ar.message() << "\nMismatch at position " << pos;
+        }
+
+        return ar;
+    }
+
+    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern)
+    {
+        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+
+        boost::test_tools::assertion_result ar(true);
+
+        const bool r = (pos == a.size())
+            ? a.size() >= b.size()
+            : (pos != b.size() && a[pos] >= b[pos]);
+        if (REDEMPTION_UNLIKELY(r))
+        {
+            ar = false;
+            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " < "};
+            ar.message() << "\nMismatch at position " << pos;
+        }
+
+        return ar;
+    }
+
     namespace
     {
         constexpr uint8_t utf8_byte_size_table[] {
