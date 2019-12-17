@@ -18,6 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
 */
 
+#include "acl/end_session_warning.hpp"
+
 #include "acl/module_manager/mod_factory.hpp"
 #include "core/session.hpp"
 
@@ -342,7 +344,7 @@ class Session
         return run_session;
     }
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModOSD & mod_osd, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
     {
         bool run_session = true;
         SessionReactor::EnableGraphics enable_graphics{true};
@@ -461,10 +463,10 @@ class Session
                         Translator tr(language(ini));
                         switch (rt_status) {
                             case Capture::RTDisplayResult::Enabled:
-                                mm.osd_message(tr(trkeys::enable_rt_display).to_string(), true);
+                                mod_osd.osd_message_fn(tr(trkeys::enable_rt_display).to_string(), true);
                                 break;
                             case Capture::RTDisplayResult::Disabled:
-                                mm.osd_message(tr(trkeys::disable_rt_display).to_string(), true);
+                                mod_osd.osd_message_fn(tr(trkeys::disable_rt_display).to_string(), true);
                                 break;
                             case Capture::RTDisplayResult::Unchanged:
                                 break;
@@ -555,7 +557,11 @@ class Session
                 if (enable_osd) {
                     const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
                     if (enddate && mm.is_up_and_running()) {
-                        mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now.tv_sec);
+                        std::string mes = end_session_warning.update_osd_state(
+                            language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
+                        if (!mes.empty()) {
+                            mod_osd.osd_message_fn(std::move(mes), true);
+                        }
                     }
                 }
 
@@ -652,8 +658,9 @@ public:
             
             ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
-            ModFactory mod_factory(session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
-            ModuleManager mm(mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, glyphs, theme, this->ini, cctx, rnd, timeobj);
+            ModFactory mod_factory(mod_wrapper, mod_osd, session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
+            EndSessionWarning end_session_warning;
+            ModuleManager mm(end_session_warning, mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
@@ -745,7 +752,7 @@ public:
                         this->start_acl_running(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, front, authentifier);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_osd, end_session_warning, front, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
@@ -907,7 +914,7 @@ private:
         };
 
         if (is_set(sck_no_read.sck_mod)) {
-            mm.get_socket()->send_waiting_data();
+            mm.get_mod_wrapper().get_socket()->send_waiting_data();
         }
 
         if (is_set(sck_no_read.sck_front)) {
@@ -940,13 +947,13 @@ private:
             }
         }
 
-        if (mm.get_socket() && !mm.has_pending_data()) {
-            if (mm.get_socket()->has_waiting_data()) {
-                sck_no_read.sck_mod = mm.get_socket()->sck;
+        if (mm.get_mod_wrapper().get_socket() && !mm.get_mod_wrapper().has_pending_data()) {
+            if (mm.get_mod_wrapper().get_socket()->has_waiting_data()) {
+                sck_no_read.sck_mod = mm.get_mod_wrapper().get_socket()->sck;
                 ioswitch.set_write_sck(sck_no_read.sck_mod);
             }
             else if (sck_no_read.sck_front != INVALID_SOCKET) {
-                sck_no_read.sck_mod = mm.get_socket()->sck;
+                sck_no_read.sck_mod = mm.get_mod_wrapper().get_socket()->sck;
             }
         }
 
@@ -955,7 +962,7 @@ private:
         }
 
         if (front_trans.has_pending_data()
-        || mm.has_pending_data()
+        || mm.get_mod_wrapper().has_pending_data()
         || (acl && acl->auth_trans.has_pending_data())){
             ioswitch.immediate_wakeup(session_reactor.get_current_time());
         }

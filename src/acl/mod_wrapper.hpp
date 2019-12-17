@@ -22,9 +22,11 @@
 
 #include "mod/null/null.hpp"
 #include "mod/mod_api.hpp"
+#include "transport/socket_transport.hpp"
 
 struct ModWrapper
 {
+    SocketTransport * psocket_transport;
     null_mod no_mod;
     mod_api* mod = &no_mod;
 
@@ -51,11 +53,27 @@ struct ModWrapper
     {
         return this->mod;
     }
-    
+
+    // TODO: merge with set_mod() (use nullptr for not connected sockets)
+    void set_psocket_transport(SocketTransport * psocket_transport)
+    {
+        this->psocket_transport = psocket_transport;
+    }
+
     void set_mod(mod_api* mod)
     {
         // TODO: check we are using no_mod, otherwise it is an error
         this->mod = mod;
+    }
+    
+    [[nodiscard]] bool has_pending_data() const
+    {
+        return this->psocket_transport && this->psocket_transport->has_pending_data();
+    }
+
+    [[nodiscard]] SocketTransport* get_socket() const noexcept
+    {
+        return this->psocket_transport;
     }
 };
 

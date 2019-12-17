@@ -815,6 +815,11 @@ test-run tests/acl/test_dispatch_report_message :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/dispatch_report_message.hpp
 ;
+test-run tests/acl/test_end_session_warning :
+  $(REDEMPTION_TEST_PATH)/acl/test_end_session_warning.cpp
+:
+  <covfile>src/acl/end_session_warning.hpp
+;
 test-run tests/acl/test_license_api :
   $(REDEMPTION_TEST_PATH)/acl/test_license_api.cpp
 :
@@ -5965,6 +5970,7 @@ alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
 alias test_authentifier : tests/acl/test_authentifier ;
 alias test_dispatch_report_message : tests/acl/test_dispatch_report_message ;
+alias test_end_session_warning : tests/acl/test_end_session_warning ;
 alias test_license_api : tests/acl/test_license_api ;
 alias test_module_manager : tests/acl/test_module_manager ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
@@ -6308,6 +6314,7 @@ alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_authentifier.coverage : tests/acl/test_authentifier.coverage ;
 alias test_dispatch_report_message.coverage : tests/acl/test_dispatch_report_message.coverage ;
+alias test_end_session_warning.coverage : tests/acl/test_end_session_warning.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
 alias test_module_manager.coverage : tests/acl/test_module_manager.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
@@ -6632,6 +6639,7 @@ alias tests/acl.norec :
   tests/acl/test_auth_api
   tests/acl/test_authentifier
   tests/acl/test_dispatch_report_message
+  tests/acl/test_end_session_warning
   tests/acl/test_license_api
   tests/acl/test_module_manager
 ;

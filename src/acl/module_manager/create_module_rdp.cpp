@@ -66,6 +66,343 @@ namespace
     }
 }
 
+
+struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
+{
+    struct ModMetrics : Metrics
+    {
+        using Metrics::Metrics;
+
+        RDPMetrics protocol_metrics{*this};
+        SessionReactor::TimerPtr metrics_timer;
+    };
+
+
+    struct FileValidator
+    {
+        struct FileValidatorTransport : FileTransport
+        {
+            using FileTransport::FileTransport;
+
+            size_t do_partial_read(uint8_t * buffer, size_t len) override
+            {
+                size_t r = FileTransport::do_partial_read(buffer, len);
+                if (r == 0) {
+                    LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
+                    throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
+                }
+                return r;
+            }
+        };
+
+        struct CtxError
+        {
+            ReportMessageApi & report_message;
+            std::string up_target_name;
+            std::string down_target_name;
+            SessionReactor& session_reactor;
+            FrontAPI& front;
+        };
+
+        CtxError ctx_error;
+        FileValidatorTransport trans;
+        // TODO wait result (add delay)
+        FileValidatorService service;
+        SessionReactor::TopFdPtr validator_event;
+
+        FileValidator(unique_fd&& fd, CtxError&& ctx_error)
+        : ctx_error(std::move(ctx_error))
+        , trans(std::move(fd), ReportError([this](Error err){
+            file_verification_error(
+                this->ctx_error.front,
+                this->ctx_error.session_reactor,
+                this->ctx_error.report_message,
+                this->ctx_error.up_target_name,
+                this->ctx_error.down_target_name,
+                err.errmsg()
+            );
+            return err;
+        }))
+        , service(this->trans)
+        {}
+
+        ~FileValidator()
+        {
+            try {
+                this->service.send_close_session();
+            }
+            catch (...) {
+            }
+        }
+    };
+
+    std::unique_ptr<ModMetrics> metrics;
+    std::unique_ptr<FileValidator> file_validator;
+    std::unique_ptr<FdxCapture> fdx_capture;
+    Fstat fstat;
+
+    FdxCapture* get_fdx_capture(ModuleManager& mm)
+    {
+        if (!this->fdx_capture
+         && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
+        ) {
+            LOG(LOG_INFO, "Enable clipboard file record");
+            CapturePathsContext capture_paths_ctx(
+                mm.ini.get<cfg::video::record_path>().as_string(),
+                mm.ini.get<cfg::video::hash_path>().as_string(),
+                mm.ini.get<cfg::session_log::log_path>()
+            );
+            int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
+            auto const& session_id = mm.ini.get<cfg::context::session_id>();
+
+            this->fdx_capture = std::make_unique<FdxCapture>(
+                capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
+                session_id, groupid, mm.cctx, mm.gen, this->fstat);
+        }
+
+        return this->fdx_capture.get();
+    }
+
+    ModRdpFactory& get_rdp_factory() noexcept
+    {
+        return static_cast<ModRdpFactory&>(*this);
+    }
+
+    explicit ModRDPWithMetrics(
+        Transport & trans,
+        SessionReactor& session_reactor,
+        gdi::GraphicApi & gd,
+        FrontAPI & front,
+        const ClientInfo & info,
+        RedirectionInfo & redir_info,
+        Random & gen,
+        TimeObj & timeobj,
+        ChannelsAuthorizations channels_authorizations,
+        const ModRDPParams & mod_rdp_params,
+        const TLSClientParams & tls_client_params,
+        AuthApi & authentifier,
+        ReportMessageApi & report_message,
+        LicenseApi & license_store,
+        LogCategoryFlags dont_log_category,
+        ModRdpVariables vars,
+        RDPMetrics * metrics,
+        FileValidatorService * file_validator_service)
+    : DispatchReportMessage(report_message, front, dont_log_category)
+    , mod_rdp(
+        trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
+        channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
+        static_cast<DispatchReportMessage&>(*this), license_store, vars,
+        metrics, file_validator_service, this->get_rdp_factory())
+    {}
+};
+
+class ModRDPWithSocketAndMetrics final : public mod_api
+{
+    SocketTransport socket_transport;
+public:
+    ModRDPWithMetrics mod;
+private:
+    ModOSD & mod_osd;
+    ModWrapper & mod_wrapper;
+    Inifile & ini;
+    bool target_info_is_shown = false;
+
+public:
+    ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
+        const char * name, unique_fd sck, uint32_t verbose
+      , std::string * error_message
+      , SessionReactor& session_reactor
+      , gdi::GraphicApi & gd
+      , FrontAPI & front
+      , const ClientInfo & info
+      , RedirectionInfo & redir_info
+      , Random & gen
+      , TimeObj & timeobj
+      , ChannelsAuthorizations channels_authorizations
+      , const ModRDPParams & mod_rdp_params
+      , const TLSClientParams & tls_client_params
+      , AuthApi & authentifier
+      , ReportMessageApi & report_message
+      , LogCategoryFlags dont_log_category,
+      , LicenseApi & license_store
+      , ModRdpVariables vars
+      , [[maybe_unused]] RDPMetrics * metrics
+      , [[maybe_unused]] FileValidatorService * file_validator_service
+        )
+    : socket_transport( name, std::move(sck)
+                     , ini.get<cfg::context::target_host>().c_str()
+                     , ini.get<cfg::context::target_port>()
+                     , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
+                     , to_verbose_flags(verbose), error_message)
+    , mod(this->socket_transport, session_reactor, gd, front, info, redir_info, gen, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, 
+    dont_log_category, license_store, vars, metrics, file_validator_service)
+    , mod_osd(mod_osd)
+    , mod_wrapper(mod_wrapper)
+    , ini(ini)
+    {
+        this->mod_wrapper.set_psocket_transport(&this->socket_transport);
+    }
+
+    ~ModRDPWithSocketAndMetrics()
+    {
+        this->mod_wrapper.set_psocket_transport(nullptr);
+        log_proxy::target_disconnection(
+            this->ini.template get<cfg::context::auth_error_message>().c_str());
+    }
+
+    // from RdpInput
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+    {
+        //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
+        if (this->mod_osd.try_input_scancode(param1, param2, param3, param4, keymap)) {
+            this->target_info_is_shown = false;
+            return ;
+        }
+
+        this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
+
+        Inifile const& ini = this->ini;
+
+        if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
+            bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
+            if (this->target_info_is_shown && f12_released) {
+                // LOG(LOG_INFO, "Hide info");
+                this->mod_osd.clear_osd_message();
+                this->target_info_is_shown = false;
+            }
+            else if (!this->target_info_is_shown && !f12_released) {
+                // LOG(LOG_INFO, "Show info");
+                std::string msg;
+                msg.reserve(64);
+                if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
+                    msg  = ini.get<cfg::globals::target_user>();
+                    msg += "@";
+                }
+                msg += ini.get<cfg::globals::target_device>();
+                const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+                if (enddate) {
+                    const auto now = time(nullptr);
+                    const auto elapsed_time = enddate - now;
+                    // only if "reasonable" time
+                    if (elapsed_time < 60*60*24*366L) {
+                        msg += "  [";
+                        msg += time_before_closing(elapsed_time, Translator(ini));
+                        msg += ']';
+                    }
+                }
+                this->mod_osd.osd_message_fn(std::move(msg), false);
+                this->target_info_is_shown = true;
+            }
+        }
+    }
+
+    // from RdpInput
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+    {
+        if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap)) {
+            this->target_info_is_shown = false;
+            return ;
+        }
+
+        this->mod.rdp_input_mouse(device_flags, x, y, keymap);
+    }
+
+    // from RdpInput
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
+        this->mod.rdp_input_unicode(unicode, flag);
+    }
+
+    // from RdpInput
+    void rdp_input_invalidate(const Rect r) override
+    {
+        if (this->mod_osd.try_input_invalidate(r)) {
+            return ;
+        }
+
+        this->mod.rdp_input_invalidate(r);
+    }
+
+    // from RdpInput
+    void rdp_input_invalidate2(array_view<Rect const> vr) override
+    {
+        if (this->mod_osd.try_input_invalidate2(vr)) {
+            return ;
+        }
+
+        this->mod.rdp_input_invalidate2(vr);
+    }
+
+    // from RdpInput
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+    {
+        return this->mod.rdp_input_synchronize(time, device_flags, param1, param2);
+    }
+
+    void refresh(Rect clip) override
+    {
+        return this->mod.refresh(clip);
+    }
+
+    // from mod_api
+    [[nodiscard]] bool is_up_and_running() const override { return false; }
+
+    // from mod_api
+    // support auto-reconnection
+    bool is_auto_reconnectable() override {
+        return this->mod.is_auto_reconnectable();
+    }
+
+    // from mod_api
+    void disconnect() override 
+    {
+        return this->mod.disconnect();
+    }
+
+    // from mod_api
+    void display_osd_message(std::string const & message) override 
+    {
+        this->mod_osd.osd_message_fn(message, true);
+        //return this->mod.display_osd_message(message);
+    }
+
+    // from mod_api
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
+    {
+        return this->mod.move_size_widget(left, top, width, height);
+    }
+
+    // from mod_api
+    bool disable_input_event_and_graphics_update(bool disable_input_event, bool disable_graphics_update) override 
+    {
+        return this->mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+    }
+
+    // from mod_api
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) override 
+    {
+        return this->mod.send_input(time, message_type, device_flags, param1, param2);
+    }
+
+    // from mod_api
+    [[nodiscard]] Dimension get_dim() const override 
+    {
+        return this->mod.get_dim();
+    }
+
+    // from mod_api
+    void log_metrics() override 
+    {
+        return this->mod.log_metrics();
+    }
+
+    // from mod_api
+    void DLP_antivirus_check_channels_files() override
+    {
+        return this->mod.DLP_antivirus_check_channels_files(); 
+    }
+};
+
+
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
@@ -379,135 +716,6 @@ void ModuleManager::create_mod_rdp(
             rail_client_execute.reset(false);
         }
 
-        struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
-        {
-            struct ModMetrics : Metrics
-            {
-                using Metrics::Metrics;
-
-                RDPMetrics protocol_metrics{*this};
-                SessionReactor::TimerPtr metrics_timer;
-            };
-
-
-            struct FileValidator
-            {
-                struct FileValidatorTransport : FileTransport
-                {
-                    using FileTransport::FileTransport;
-
-                    size_t do_partial_read(uint8_t * buffer, size_t len) override
-                    {
-                        size_t r = FileTransport::do_partial_read(buffer, len);
-                        if (r == 0) {
-                            LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
-                            throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
-                        }
-                        return r;
-                    }
-                };
-
-                struct CtxError
-                {
-                    ReportMessageApi & report_message;
-                    std::string up_target_name;
-                    std::string down_target_name;
-                    SessionReactor& session_reactor;
-                    FrontAPI& front;
-                };
-
-                CtxError ctx_error;
-                FileValidatorTransport trans;
-                // TODO wait result (add delay)
-                FileValidatorService service;
-                SessionReactor::TopFdPtr validator_event;
-
-                FileValidator(unique_fd&& fd, CtxError&& ctx_error)
-                : ctx_error(std::move(ctx_error))
-                , trans(std::move(fd), ReportError([this](Error err){
-                    file_verification_error(
-                        this->ctx_error.front,
-                        this->ctx_error.session_reactor,
-                        this->ctx_error.report_message,
-                        this->ctx_error.up_target_name,
-                        this->ctx_error.down_target_name,
-                        err.errmsg()
-                    );
-                    return err;
-                }))
-                , service(this->trans)
-                {}
-
-                ~FileValidator()
-                {
-                    try {
-                        this->service.send_close_session();
-                    }
-                    catch (...) {
-                    }
-                }
-            };
-
-            std::unique_ptr<ModMetrics> metrics;
-            std::unique_ptr<FileValidator> file_validator;
-            std::unique_ptr<FdxCapture> fdx_capture;
-            Fstat fstat;
-
-            FdxCapture* get_fdx_capture(ModuleManager& mm)
-            {
-                if (!this->fdx_capture
-                 && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
-                ) {
-                    LOG(LOG_INFO, "Enable clipboard file record");
-                    CapturePathsContext capture_paths_ctx(
-                        mm.ini.get<cfg::video::record_path>().as_string(),
-                        mm.ini.get<cfg::video::hash_path>().as_string(),
-                        mm.ini.get<cfg::session_log::log_path>()
-                    );
-                    int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
-                    auto const& session_id = mm.ini.get<cfg::context::session_id>();
-
-                    this->fdx_capture = std::make_unique<FdxCapture>(
-                        capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
-                        session_id, groupid, mm.cctx, mm.gen, this->fstat);
-                }
-
-                return this->fdx_capture.get();
-            }
-
-            ModRdpFactory& get_rdp_factory() noexcept
-            {
-                return static_cast<ModRdpFactory&>(*this);
-            }
-
-            explicit ModRDPWithMetrics(
-                Transport & trans,
-                SessionReactor& session_reactor,
-                gdi::GraphicApi & gd,
-                FrontAPI & front,
-                const ClientInfo & info,
-                RedirectionInfo & redir_info,
-                Random & gen,
-                TimeObj & timeobj,
-                ChannelsAuthorizations channels_authorizations,
-                const ModRDPParams & mod_rdp_params,
-                const TLSClientParams & tls_client_params,
-                AuthApi & authentifier,
-                ReportMessageApi & report_message,
-                LicenseApi & license_store,
-                LogCategoryFlags dont_log_category,
-                ModRdpVariables vars,
-                RDPMetrics * metrics,
-                FileValidatorService * file_validator_service)
-            : DispatchReportMessage(report_message, front, dont_log_category)
-            , mod_rdp(
-                trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
-                static_cast<DispatchReportMessage&>(*this), license_store, vars,
-                metrics, file_validator_service, this->get_rdp_factory())
-            {}
-        };
-
         bool enable_validator = ini.get<cfg::file_verification::enable_up>() || ini.get<cfg::file_verification::enable_down>();
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
@@ -572,8 +780,8 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::metrics::log_interval>());
         }
 
-        auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
-            *this,
+        auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
+            this->get_mod_wrapper(),
             this->mod_osd,
             this->ini,
             authentifier,
@@ -581,7 +789,6 @@ void ModuleManager::create_mod_rdp(
             std::move(client_sck),
             ini.get<cfg::debug::mod_rdp>(),
             &ini.get_mutable_ref<cfg::context::auth_error_message>(),
-            sock_mod_barrier(),
             this->session_reactor,
             drawable,
             front,
