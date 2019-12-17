@@ -469,41 +469,44 @@ public:
     class sock_mod_barrier {};
 
     template<class Mod>
-    class ModWithSocket final : private SocketTransport, public Mod
+    class ModWithSocket final : public mod_api
     {
+        SocketTransport socket_transport;
+    public:
+        Mod mod;
+    private:
         ModOSD & mod_osd;
+        Inifile & ini;
         ModuleManager & mm;
         bool target_info_is_shown = false;
 
     public:
         template<class... Args>
         ModWithSocket(
-            ModuleManager & mm, ModOSD & mod_osd, AuthApi & /*authentifier*/,
+            ModuleManager & mm, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
             const char * name, unique_fd sck, uint32_t verbose,
             std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
-        : SocketTransport( name, std::move(sck)
-                         , mm.ini.get<cfg::context::target_host>().c_str()
-                         , mm.ini.get<cfg::context::target_port>()
-                         , std::chrono::milliseconds(mm.ini.get<cfg::globals::mod_recv_timeout>())
+        : socket_transport( name, std::move(sck)
+                         , ini.get<cfg::context::target_host>().c_str()
+                         , ini.get<cfg::context::target_port>()
+                         , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                          , to_verbose_flags(verbose), error_message)
-        , Mod(*this, std::forward<Args>(mod_args)...)
+        , mod(this->socket_transport, std::forward<Args>(mod_args)...)
         , mod_osd(mod_osd)
+        , ini(ini)
         , mm(mm)
         {
-            this->mm.socket_transport = this;
+            this->mm.socket_transport = &this->socket_transport;
         }
 
         ~ModWithSocket()
         {
             this->mm.socket_transport = nullptr;
             log_proxy::target_disconnection(
-                this->mm.ini.template get<cfg::context::auth_error_message>().c_str());
+                this->ini.template get<cfg::context::auth_error_message>().c_str());
         }
 
-        void display_osd_message(std::string const & message) override {
-            this->mm.osd_message(message, true);
-        }
-
+        // from RdpInput
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
             //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
@@ -512,9 +515,9 @@ public:
                 return ;
             }
 
-            Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
+            this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-            Inifile const& ini = this->mm.ini;
+            Inifile const& ini = this->ini;
 
             if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
                 bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
@@ -549,6 +552,7 @@ public:
             }
         }
 
+        // from RdpInput
         void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
         {
             if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap)) {
@@ -556,29 +560,101 @@ public:
                 return ;
             }
 
-            Mod::rdp_input_mouse(device_flags, x, y, keymap);
+            this->mod.rdp_input_mouse(device_flags, x, y, keymap);
         }
 
+        // from RdpInput
         void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
-            Mod::rdp_input_unicode(unicode, flag);
+            this->mod.rdp_input_unicode(unicode, flag);
         }
 
+        // from RdpInput
         void rdp_input_invalidate(const Rect r) override
         {
             if (this->mod_osd.try_input_invalidate(r)) {
                 return ;
             }
 
-            Mod::rdp_input_invalidate(r);
+            this->mod.rdp_input_invalidate(r);
         }
 
+        // from RdpInput
         void rdp_input_invalidate2(array_view<Rect const> vr) override
         {
             if (this->mod_osd.try_input_invalidate2(vr)) {
                 return ;
             }
 
-            Mod::rdp_input_invalidate2(vr);
+            this->mod.rdp_input_invalidate2(vr);
+        }
+
+        // from RdpInput
+        void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+        {
+            return this->mod.rdp_input_synchronize(time, device_flags, param1, param2);
+        }
+
+        void refresh(Rect clip) override
+        {
+            return this->mod.refresh(clip);
+        }
+
+        // from mod_api
+        [[nodiscard]] bool is_up_and_running() const override { return false; }
+
+        // from mod_api
+        // support auto-reconnection
+        bool is_auto_reconnectable() override {
+            return this->mod.is_auto_reconnectable();
+        }
+
+        // from mod_api
+        void disconnect() override 
+        {
+            return this->mod.disconnect();
+        }
+
+        // from mod_api
+        void display_osd_message(std::string const & message) override 
+        {
+            this->mm.osd_message(message, true);
+            //return this->mod.display_osd_message(message);
+        }
+
+        // from mod_api
+        void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
+        {
+            return this->mod.move_size_widget(left, top, width, height);
+        }
+
+        // from mod_api
+        bool disable_input_event_and_graphics_update(bool disable_input_event, bool disable_graphics_update) override 
+        {
+            return this->mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+        }
+
+        // from mod_api
+        void send_input(int time, int message_type, int device_flags, int param1, int param2) override 
+        {
+            return this->mod.send_input(time, message_type, device_flags, param1, param2);
+        }
+
+        // from mod_api
+        [[nodiscard]] Dimension get_dim() const override 
+        {
+            return this->mod.get_dim();
+        }
+
+        // from mod_api
+        void log_metrics() override 
+        {
+            return this->mod.log_metrics();
+        }
+
+        // from mod_api
+        void DLP_antivirus_check_channels_files() override
+        {
+            return this->mod.DLP_antivirus_check_channels_files(); 
         }
     };
 
@@ -828,6 +904,7 @@ public:
             auto new_xup_mod = new ModWithSocket<xup_mod>(
                 *this,
                 this->mod_osd,
+                this->ini,
                 authentifier,
                 name,
                 std::move(client_sck),

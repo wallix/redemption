@@ -575,6 +575,7 @@ void ModuleManager::create_mod_rdp(
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
             this->mod_osd,
+            this->ini,
             authentifier,
             name,
             std::move(client_sck),
@@ -603,8 +604,8 @@ void ModuleManager::create_mod_rdp(
         );
 
         if (enable_validator) {
-            new_mod->file_validator = std::move(file_validator);
-            new_mod->file_validator->validator_event = this->session_reactor.create_fd_event(validator_fd)
+            new_mod->mod.file_validator = std::move(file_validator);
+            new_mod->mod.file_validator->validator_event = this->session_reactor.create_fd_event(validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())
@@ -614,10 +615,10 @@ void ModuleManager::create_mod_rdp(
         }
 
         if (enable_metrics) {
-            new_mod->metrics = std::move(metrics);
-            new_mod->metrics->metrics_timer = session_reactor.create_timer()
+            new_mod->mod.metrics = std::move(metrics);
+            new_mod->mod.metrics->metrics_timer = session_reactor.create_timer()
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){
+                .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
                     return ctx.ready();
                 })
@@ -626,10 +627,10 @@ void ModuleManager::create_mod_rdp(
 
         if (new_mod) {
             assert(&ini == &this->ini);
-            new_mod->get_rdp_factory().always_file_record
+            new_mod->mod.get_rdp_factory().always_file_record
               = (ini.get<cfg::file_verification::file_record>() == RdpFileRecord::always);
-            new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
-                return mod->get_fdx_capture(*this);
+            new_mod->mod.get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
+                return mod->mod.get_fdx_capture(*this);
             };
         }
 
@@ -664,8 +665,8 @@ void ModuleManager::create_mod_rdp(
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
-            rdp_api*       rdpapi = new_mod.get();
-            windowing_api* winapi = new_mod->get_windowing_api();
+            rdp_api*       rdpapi = &(new_mod.get()->mod);
+            windowing_api* winapi = new_mod->mod.get_windowing_api();
             this->set_mod(new_mod.release(), rdpapi, winapi);
         }
 

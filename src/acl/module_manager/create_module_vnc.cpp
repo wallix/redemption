@@ -90,6 +90,7 @@ void ModuleManager::create_mod_vnc(
         auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
             *this,
             this->mod_osd,
+            this->ini,
             authentifier,
             name,
             std::move(client_sck),
@@ -122,10 +123,10 @@ void ModuleManager::create_mod_vnc(
         );
 
         if (enable_metrics) {
-            new_mod->metrics = std::move(metrics);
-            new_mod->metrics_timer = session_reactor.create_timer()
+            new_mod->mod.metrics = std::move(metrics);
+            new_mod->mod.metrics_timer = session_reactor.create_timer()
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){
+                .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
                     return ctx.ready();
                 })

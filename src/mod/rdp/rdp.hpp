@@ -5662,6 +5662,7 @@ private:
         }
     }
 
+public:
     bool disable_input_event_and_graphics_update(
         bool disable_input_event, bool disable_graphics_update) override
     {
