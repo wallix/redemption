@@ -470,6 +470,29 @@
           "description": "If enabled, disconnected session can be recovered by a different primary user."
         },
         {
+          "name": "on_account_manipulation",
+          "type": "option",
+          "default": 0,
+          "values": [
+            {
+               "value": 0,
+               "label": "allow",
+               "description": "User action will be accepted"
+            },
+            {
+               "value": 1,
+               "label": "notify",
+               "description": "(Same thing as 'allow') "
+            },
+            {
+               "value": 2,
+               "label": "deny",
+               "description": "User action will be rejected"
+            }
+          ],
+          "description": "For targets running WALLIX BestSafe only."
+        },
+        {
           "name": "outbound_connection_monitoring_rules",
           "type": "string",
           "default": "",
@@ -692,6 +715,29 @@
           "type": "bool",
           "default": false,
           "description": "Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down"
+        },
+        {
+          "name": "file_record",
+          "type": "option",
+          "default": "never",
+          "values": [
+            {
+               "value": "never",
+               "label": "never",
+               "description": ""
+            },
+            {
+               "value": "always",
+               "label": "always",
+               "description": ""
+            },
+            {
+               "value": "on_verification_failure",
+               "label": "on_verification_failure",
+               "description": ""
+            }
+          ],
+          "description": ""
         },
         {
           "name": "log_if_accepted",

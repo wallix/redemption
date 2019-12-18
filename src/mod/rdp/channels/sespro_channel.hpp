@@ -565,6 +565,19 @@ public:
                     }
                 }
 
+                if (this->sespro_params.on_account_manipulation != SessionProbeOnAccountManipulation::allow) {
+                    send_client_message([this](OutStream & out_s) {
+                        out_s.out_copy_bytes("AccountManipulationAction="_av);
+
+                        if (this->sespro_params.on_account_manipulation == SessionProbeOnAccountManipulation::notify) {
+                            out_s.out_copy_bytes("notify"_av);
+                        }
+                        else {
+                            out_s.out_copy_bytes("deny"_av);
+                        }
+                    });
+                }
+
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("ChildlessWindowAsUnidentifiedInputField="_av);
 

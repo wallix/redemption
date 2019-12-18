@@ -204,6 +204,13 @@ inline void config_type_definition(type_enumerations & e)
       .value("never")
       .value("always")
       .value("on_verification_failure")
+      .set_string_parser()
+    ;
+
+    e.enumeration_list("SessionProbeOnAccountManipulation", "For targets running WALLIX BestSafe only.")
+      .value("allow",  "User action will be accepted")
+      .value("notify", "(Same thing as 'allow') ")
+      .value("deny",   "User action will be rejected")
     ;
 }
 

@@ -370,11 +370,34 @@ array_view_const_char assign_zbuf_from_cfg(
     cfg_s_type<RdpFileRecord> /*type*/,
     RdpFileRecord x
 ){
+    (void)buf;    static constexpr array_view_const_char arr[]{
+        cstr_array_view("never"),
+        cstr_array_view("always"),
+        cstr_array_view("on_verification_failure"),
+    };
+    assert(is_valid_enum_value(x));
+    return arr[static_cast<unsigned long>(x)];
+}
+
+parse_error parse(RdpFileRecord & x, spec_type<RdpFileRecord> /*type*/, array_view_const_char value)
+{
+    return parse_enum_str(x, value, {
+        {cstr_array_view("never"), RdpFileRecord::never},
+        {cstr_array_view("always"), RdpFileRecord::always},
+        {cstr_array_view("on_verification_failure"), RdpFileRecord::on_verification_failure},
+    });
+}
+
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SessionProbeOnAccountManipulation> & buf,
+    cfg_s_type<SessionProbeOnAccountManipulation> /*type*/,
+    SessionProbeOnAccountManipulation x
+){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
     return array_view_const_char(buf.get(), sz);
 }
 
-parse_error parse(RdpFileRecord & x, spec_type<RdpFileRecord> /*type*/, array_view_const_char value)
+parse_error parse(SessionProbeOnAccountManipulation & x, spec_type<SessionProbeOnAccountManipulation> /*type*/, array_view_const_char value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }

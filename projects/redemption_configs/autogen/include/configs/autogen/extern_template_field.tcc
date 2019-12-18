@@ -66,6 +66,7 @@ template class Inifile::Field<cfg::mod_rdp::session_probe_ignore_ui_less_process
 template class Inifile::Field<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_disabled_features>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_public_session>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_on_account_manipulation>;
 template class Inifile::Field<cfg::mod_rdp::server_cert_store>;
 template class Inifile::Field<cfg::mod_rdp::server_cert_check>;
 template class Inifile::Field<cfg::mod_rdp::server_access_allowed_message>;
@@ -89,6 +90,7 @@ template class Inifile::Field<cfg::file_verification::enable_up>;
 template class Inifile::Field<cfg::file_verification::enable_down>;
 template class Inifile::Field<cfg::file_verification::clipboard_text_up>;
 template class Inifile::Field<cfg::file_verification::clipboard_text_down>;
+template class Inifile::Field<cfg::file_verification::file_record>;
 template class Inifile::Field<cfg::file_verification::log_if_accepted>;
 template class Inifile::Field<cfg::mod_replay::replay_on_loop>;
 template class Inifile::Field<cfg::video::hash_path>;

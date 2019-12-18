@@ -361,9 +361,11 @@ struct integral_mwrm3_type_info_list
     {}};
 }
 
-template<>
-struct integral_mwrm3_type_info_list<>
-{};
+namespace {
+    template<>
+    struct integral_mwrm3_type_info_list<>
+    {};
+}
 
 namespace std
 {
