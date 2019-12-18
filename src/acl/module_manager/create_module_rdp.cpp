@@ -67,8 +67,10 @@ namespace
 }
 
 
-struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
+struct ModRDPWithMetrics : public ModRdpFactory, mod_rdp
 {
+    DispatchReportMessage dispatcher;
+
     struct ModMetrics : Metrics
     {
         using Metrics::Metrics;
@@ -187,12 +189,12 @@ struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
         ModRdpVariables vars,
         RDPMetrics * metrics,
         FileValidatorService * file_validator_service)
-    : DispatchReportMessage(report_message, front, dont_log_category)
-    , mod_rdp(
+    : mod_rdp(
         trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
-        static_cast<DispatchReportMessage&>(*this), license_store, vars,
+        this->dispatcher, license_store, vars,
         metrics, file_validator_service, this->get_rdp_factory())
+    , dispatcher(report_message, front, dont_log_category)
     {}
 };
 
