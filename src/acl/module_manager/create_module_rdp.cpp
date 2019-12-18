@@ -155,23 +155,23 @@ public:
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
 
-    FdxCapture* get_fdx_capture(Random & gen, ModuleManager& mm)
+    FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
     {
         if (!this->fdx_capture
-         && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
+         && ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
         ) {
             LOG(LOG_INFO, "Enable clipboard file record");
             CapturePathsContext capture_paths_ctx(
-                mm.ini.get<cfg::video::record_path>().as_string(),
-                mm.ini.get<cfg::video::hash_path>().as_string(),
-                mm.ini.get<cfg::session_log::log_path>()
+                ini.get<cfg::video::record_path>().as_string(),
+                ini.get<cfg::video::hash_path>().as_string(),
+                ini.get<cfg::session_log::log_path>()
             );
-            int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
-            auto const& session_id = mm.ini.get<cfg::context::session_id>();
+            int  const groupid = ini.get<cfg::video::capture_groupid>();
+            auto const& session_id = ini.get<cfg::context::session_id>();
 
             this->fdx_capture = std::make_unique<FdxCapture>(
                 capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
-                session_id, groupid, mm.cctx, gen, this->fstat);
+                session_id, groupid, cctx, gen, this->fstat);
         }
 
         return this->fdx_capture.get();
@@ -850,7 +850,7 @@ void ModuleManager::create_mod_rdp(
             new_mod->get_rdp_factory().always_file_record
               = (ini.get<cfg::file_verification::file_record>() == RdpFileRecord::always);
             new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
-                return mod->get_fdx_capture(this->gen, *this);
+                return mod->get_fdx_capture(this->gen, this->ini, this->cctx);
             };
         }
 
