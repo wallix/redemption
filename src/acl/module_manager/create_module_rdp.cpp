@@ -141,7 +141,7 @@ struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
 
-    FdxCapture* get_fdx_capture(ModuleManager& mm)
+    FdxCapture* get_fdx_capture(Random & gen, ModuleManager& mm)
     {
         if (!this->fdx_capture
          && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
@@ -157,7 +157,7 @@ struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
 
             this->fdx_capture = std::make_unique<FdxCapture>(
                 capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
-                session_id, groupid, mm.cctx, mm.gen, this->fstat);
+                session_id, groupid, mm.cctx, gen, this->fstat);
         }
 
         return this->fdx_capture.get();
@@ -223,7 +223,7 @@ public:
       , const TLSClientParams & tls_client_params
       , AuthApi & authentifier
       , ReportMessageApi & report_message
-      , LogCategoryFlags dont_log_category,
+      , LogCategoryFlags dont_log_category
       , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
@@ -234,8 +234,10 @@ public:
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
-    , mod(this->socket_transport, session_reactor, gd, front, info, redir_info, gen, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, 
-    dont_log_category, license_store, vars, metrics, file_validator_service)
+    , mod(this->socket_transport, session_reactor, gd, front, info, redir_info, gen, timeobj
+        , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
+        , report_message, license_store, dont_log_category
+        , vars, metrics, file_validator_service)
     , mod_osd(mod_osd)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
@@ -803,8 +805,8 @@ void ModuleManager::create_mod_rdp(
             tls_client_params,
             authentifier,
             report_message,
-            file_system_license_store,
             dont_log_category,
+            file_system_license_store,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
             enable_validator ? &file_validator->service : nullptr
@@ -837,7 +839,7 @@ void ModuleManager::create_mod_rdp(
             new_mod->mod.get_rdp_factory().always_file_record
               = (ini.get<cfg::file_verification::file_record>() == RdpFileRecord::always);
             new_mod->mod.get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
-                return mod->mod.get_fdx_capture(*this);
+                return mod->mod.get_fdx_capture(this->gen, *this);
             };
         }
 
