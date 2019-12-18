@@ -67,18 +67,10 @@ namespace
 }
 
 
-//struct ModRDPWithMetrics : public mod_rdp
-//{
-
-//};
-
 class ModRDPWithSocketAndMetrics final : public mod_api
 {
     SocketTransport socket_transport;
 public:
-
-//    ModRDPWithMetrics mod;
-
     ModRdpFactory rdp_factory;
     DispatchReportMessage dispatcher;
     mod_rdp mod;
@@ -182,34 +174,6 @@ public:
         return this->rdp_factory;
     }
 
-//    explicit ModRDPWithMetrics(
-//        Transport & trans,
-//        SessionReactor& session_reactor,
-//        gdi::GraphicApi & gd,
-//        FrontAPI & front,
-//        const ClientInfo & info,
-//        RedirectionInfo & redir_info,
-//        Random & gen,
-//        TimeObj & timeobj,
-//        ChannelsAuthorizations channels_authorizations,
-//        const ModRDPParams & mod_rdp_params,
-//        const TLSClientParams & tls_client_params,
-//        AuthApi & authentifier,
-
-//        ReportMessageApi & report_message,
-//        LicenseApi & license_store,
-//        LogCategoryFlags dont_log_category,
-//        ModRdpVariables vars,
-//        RDPMetrics * metrics,
-//        FileValidatorService * file_validator_service)
-//    : mod_rdp(
-//        trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
-//        channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
-//        this->dispatcher, license_store, vars,
-//        metrics, file_validator_service, this->get_rdp_factory())
-//    , dispatcher(report_message, front, dont_log_category)
-//    {}
-        
 private:
     ModOSD & mod_osd;
     ModWrapper & mod_wrapper;
@@ -217,7 +181,7 @@ private:
     bool target_info_is_shown = false;
 
 public:
-    ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
+    ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini,
         const char * name, unique_fd sck, uint32_t verbose
       , std::string * error_message
       , SessionReactor& session_reactor
@@ -797,7 +761,6 @@ void ModuleManager::create_mod_rdp(
             this->get_mod_wrapper(),
             this->mod_osd,
             this->ini,
-            authentifier,
             name,
             std::move(client_sck),
             ini.get<cfg::debug::mod_rdp>(),
