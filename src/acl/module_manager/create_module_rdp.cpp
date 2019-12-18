@@ -67,9 +67,21 @@ namespace
 }
 
 
-struct ModRDPWithMetrics : public ModRdpFactory, mod_rdp
+//struct ModRDPWithMetrics : public mod_rdp
+//{
+
+//};
+
+class ModRDPWithSocketAndMetrics final : public mod_api
 {
+    SocketTransport socket_transport;
+public:
+
+//    ModRDPWithMetrics mod;
+
+    ModRdpFactory rdp_factory;
     DispatchReportMessage dispatcher;
+    mod_rdp mod;
 
     struct ModMetrics : Metrics
     {
@@ -90,7 +102,7 @@ struct ModRDPWithMetrics : public ModRdpFactory, mod_rdp
             {
                 size_t r = FileTransport::do_partial_read(buffer, len);
                 if (r == 0) {
-                    LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
+                    LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithSocketAndMetrics::FileValidator::do_partial_read: No data read!");
                     throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
                 }
                 return r;
@@ -167,42 +179,37 @@ struct ModRDPWithMetrics : public ModRdpFactory, mod_rdp
 
     ModRdpFactory& get_rdp_factory() noexcept
     {
-        return static_cast<ModRdpFactory&>(*this);
+        return this->rdp_factory;
     }
 
-    explicit ModRDPWithMetrics(
-        Transport & trans,
-        SessionReactor& session_reactor,
-        gdi::GraphicApi & gd,
-        FrontAPI & front,
-        const ClientInfo & info,
-        RedirectionInfo & redir_info,
-        Random & gen,
-        TimeObj & timeobj,
-        ChannelsAuthorizations channels_authorizations,
-        const ModRDPParams & mod_rdp_params,
-        const TLSClientParams & tls_client_params,
-        AuthApi & authentifier,
-        ReportMessageApi & report_message,
-        LicenseApi & license_store,
-        LogCategoryFlags dont_log_category,
-        ModRdpVariables vars,
-        RDPMetrics * metrics,
-        FileValidatorService * file_validator_service)
-    : mod_rdp(
-        trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
-        this->dispatcher, license_store, vars,
-        metrics, file_validator_service, this->get_rdp_factory())
-    , dispatcher(report_message, front, dont_log_category)
-    {}
-};
+//    explicit ModRDPWithMetrics(
+//        Transport & trans,
+//        SessionReactor& session_reactor,
+//        gdi::GraphicApi & gd,
+//        FrontAPI & front,
+//        const ClientInfo & info,
+//        RedirectionInfo & redir_info,
+//        Random & gen,
+//        TimeObj & timeobj,
+//        ChannelsAuthorizations channels_authorizations,
+//        const ModRDPParams & mod_rdp_params,
+//        const TLSClientParams & tls_client_params,
+//        AuthApi & authentifier,
 
-class ModRDPWithSocketAndMetrics final : public mod_api
-{
-    SocketTransport socket_transport;
-public:
-    ModRDPWithMetrics mod;
+//        ReportMessageApi & report_message,
+//        LicenseApi & license_store,
+//        LogCategoryFlags dont_log_category,
+//        ModRdpVariables vars,
+//        RDPMetrics * metrics,
+//        FileValidatorService * file_validator_service)
+//    : mod_rdp(
+//        trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
+//        channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
+//        this->dispatcher, license_store, vars,
+//        metrics, file_validator_service, this->get_rdp_factory())
+//    , dispatcher(report_message, front, dont_log_category)
+//    {}
+        
 private:
     ModOSD & mod_osd;
     ModWrapper & mod_wrapper;
@@ -236,10 +243,12 @@ public:
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
+                     
+    , dispatcher(report_message, front, dont_log_category)
     , mod(this->socket_transport, session_reactor, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
-        , report_message, license_store, dont_log_category
-        , vars, metrics, file_validator_service)
+        , this->dispatcher /*report_message*/, license_store
+        , vars, metrics, file_validator_service, this->get_rdp_factory())
     , mod_osd(mod_osd)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
@@ -724,8 +733,8 @@ void ModuleManager::create_mod_rdp(
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
-        std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
-        std::unique_ptr<ModRDPWithMetrics::FileValidator> file_validator;
+        std::unique_ptr<ModRDPWithSocketAndMetrics::ModMetrics> metrics;
+        std::unique_ptr<ModRDPWithSocketAndMetrics::FileValidator> file_validator;
         int validator_fd = -1;
 
         if (enable_validator) {
@@ -735,9 +744,9 @@ void ModuleManager::create_mod_rdp(
             if (ufd) {
                 validator_fd = ufd.fd();
                 fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
-                file_validator = std::make_unique<ModRDPWithMetrics::FileValidator>(
+                file_validator = std::make_unique<ModRDPWithSocketAndMetrics::FileValidator>(
                     std::move(ufd),
-                    ModRDPWithMetrics::FileValidator::CtxError{
+                    ModRDPWithSocketAndMetrics::FileValidator::CtxError{
                         report_message,
                         mod_rdp_params.validator_params.up_target_name,
                         mod_rdp_params.validator_params.down_target_name,
@@ -762,7 +771,7 @@ void ModuleManager::create_mod_rdp(
         }
 
         if (enable_metrics) {
-            metrics = std::make_unique<ModRDPWithMetrics::ModMetrics>(
+            metrics = std::make_unique<ModRDPWithSocketAndMetrics::ModMetrics>(
                 ini.get<cfg::metrics::log_dir_path>().as_string(),
                 ini.get<cfg::context::session_id>(),
                 hmac_user(
@@ -815,8 +824,8 @@ void ModuleManager::create_mod_rdp(
         );
 
         if (enable_validator) {
-            new_mod->mod.file_validator = std::move(file_validator);
-            new_mod->mod.file_validator->validator_event = this->session_reactor.create_fd_event(validator_fd)
+            new_mod->file_validator = std::move(file_validator);
+            new_mod->file_validator->validator_event = this->session_reactor.create_fd_event(validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())
@@ -826,10 +835,10 @@ void ModuleManager::create_mod_rdp(
         }
 
         if (enable_metrics) {
-            new_mod->mod.metrics = std::move(metrics);
-            new_mod->mod.metrics->metrics_timer = session_reactor.create_timer()
+            new_mod->metrics = std::move(metrics);
+            new_mod->metrics->metrics_timer = session_reactor.create_timer()
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
+                .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
                     return ctx.ready();
                 })
@@ -838,10 +847,10 @@ void ModuleManager::create_mod_rdp(
 
         if (new_mod) {
             assert(&ini == &this->ini);
-            new_mod->mod.get_rdp_factory().always_file_record
+            new_mod->get_rdp_factory().always_file_record
               = (ini.get<cfg::file_verification::file_record>() == RdpFileRecord::always);
-            new_mod->mod.get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
-                return mod->mod.get_fdx_capture(this->gen, *this);
+            new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
+                return mod->get_fdx_capture(this->gen, *this);
             };
         }
 
