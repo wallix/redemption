@@ -229,61 +229,6 @@ private:
                 }
             }
 
-            void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-                Bitmap new_bmp(this->capture_bpp, bmp);
-
-                size_t const serializer_max_data_block_size = this->get_max_data_block_size();
-
-                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * underlying_cast(new_bmp.bpp())) > serializer_max_data_block_size) { /*NOLINT*/
-                    const uint16_t max_image_width
-                      = std::min<uint16_t>(
-                            ((serializer_max_data_block_size / nb_bytes_per_pixel(new_bmp.bpp())) & ~3),
-                            new_bmp.cx()
-                        );
-                    const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(new_bmp.bpp()));
-
-                    contiguous_sub_rect_f(
-                        CxCy{new_bmp.cx(), new_bmp.cy()},
-                        SubCxCy{max_image_width, max_image_height},
-                        [&](Rect subrect){
-                            Bitmap sub_image(new_bmp, subrect);
-
-                            StaticOutStream<65535> bmp_stream;
-                            sub_image.compress(this->capture_bpp, bmp_stream);
-
-                            RDPBitmapData sub_image_data = bitmap_data;
-
-                            sub_image_data.dest_left += subrect.x;
-                            sub_image_data.dest_top  += subrect.y;
-
-                            sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + subrect.cx - 1, bitmap_data.dest_right);
-                            sub_image_data.dest_bottom = sub_image_data.dest_top + subrect.cy - 1;
-
-                            sub_image_data.width = subrect.cx;
-                            sub_image_data.height = subrect.cy;
-
-                            sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
-                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
-                            sub_image_data.bitmap_length = bmp_stream.get_offset();
-
-                            GraphicsUpdatePDU::draw(sub_image_data, sub_image);
-                        }
-                    );
-                }
-                else {
-                    StaticOutStream<65535> bmp_stream;
-                    new_bmp.compress(this->capture_bpp, bmp_stream);
-
-                    RDPBitmapData target_bitmap_data = bitmap_data;
-
-                    target_bitmap_data.bits_per_pixel = safe_int(new_bmp.bpp());
-                    target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
-                    target_bitmap_data.bitmap_length = bmp_stream.get_offset();
-
-                    GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
-                }
-            }
-
             void set_palette(const BGRPalette& /*unused*/) override {
             }
 
@@ -4640,7 +4585,58 @@ protected:
             this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
         }
         else {
-            this->graphics_update->draw(bitmap_data, bmp);
+            Bitmap new_bmp(this->client_info.screen_info.bpp, bmp);
+
+            size_t const serializer_max_data_block_size = this->orders.graphics_update_pdu().get_max_data_block_size();
+
+            if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * underlying_cast(new_bmp.bpp())) > serializer_max_data_block_size) { /*NOLINT*/
+                const uint16_t max_image_width
+                  = std::min<uint16_t>(
+                        ((serializer_max_data_block_size / nb_bytes_per_pixel(new_bmp.bpp())) & ~3),
+                        new_bmp.cx()
+                    );
+                const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(new_bmp.bpp()));
+
+                contiguous_sub_rect_f(
+                    CxCy{new_bmp.cx(), new_bmp.cy()},
+                    SubCxCy{max_image_width, max_image_height},
+                    [&](Rect subrect){
+                        Bitmap sub_image(new_bmp, subrect);
+
+                        StaticOutStream<65535> bmp_stream;
+                        sub_image.compress(bmp.bpp(), bmp_stream);
+
+                        RDPBitmapData sub_image_data = bitmap_data;
+
+                        sub_image_data.dest_left += subrect.x;
+                        sub_image_data.dest_top  += subrect.y;
+
+                        sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + subrect.cx - 1, bitmap_data.dest_right);
+                        sub_image_data.dest_bottom = sub_image_data.dest_top + subrect.cy - 1;
+
+                        sub_image_data.width = subrect.cx;
+                        sub_image_data.height = subrect.cy;
+
+                        sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
+                        sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                        sub_image_data.bitmap_length = bmp_stream.get_offset();
+
+                        this->graphics_update->draw(sub_image_data, sub_image);
+                    }
+                );
+            }
+            else {
+                StaticOutStream<65535> bmp_stream;
+                new_bmp.compress(bmp.bpp(), bmp_stream);
+
+                RDPBitmapData target_bitmap_data = bitmap_data;
+
+                target_bitmap_data.bits_per_pixel = safe_int(new_bmp.bpp());
+                target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                target_bitmap_data.bitmap_length = bmp_stream.get_offset();
+
+                this->graphics_update->draw(target_bitmap_data, new_bmp);
+            }
         }
     }
 

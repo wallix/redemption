@@ -630,6 +630,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_public_session = 0
 
+# For targets running WALLIX BestSafe only.
+# min = 0, max = 2
+#   0: User action will be accepted
+#   1: (Same thing as 'allow') 
+#   2: User action will be rejected
+#_hidden
+#session_probe_on_account_manipulation = 0
+
 # Keep known server certificates on WAB
 # value: 0 or 1
 #_hidden
@@ -863,12 +871,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #clipboard_text_down = 0
 
-# min = 0, max = 2
-#   0: never
-#   1: always
-#   2: on verification failure
-#_advanced
-#file_record = 0
+# values: 'never', 'always', 'on_verification_failure', 
+#_hidden
+#file_record = never
 
 # value: 0 or 1
 #_hidden

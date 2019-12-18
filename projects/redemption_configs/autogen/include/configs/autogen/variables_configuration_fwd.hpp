@@ -162,6 +162,7 @@ namespace cfg {
         struct session_probe_childless_window_as_unidentified_input_field;
         struct session_probe_disabled_features;
         struct session_probe_public_session;
+        struct session_probe_on_account_manipulation;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;

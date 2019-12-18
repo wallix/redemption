@@ -162,6 +162,8 @@ struct SessionProbeVirtualChannelParams
     bool session_shadowing_support = true;
 
     explicit SessionProbeVirtualChannelParams() = default;
+
+    SessionProbeOnAccountManipulation on_account_manipulation = SessionProbeOnAccountManipulation::allow;
 };
 
 

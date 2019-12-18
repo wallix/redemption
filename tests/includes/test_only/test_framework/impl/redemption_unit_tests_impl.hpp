@@ -265,8 +265,6 @@ constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
 
 namespace redemption_unit_test__
 {
-    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
-
     struct Put2Mem
     {
         size_t & pos;
@@ -278,39 +276,14 @@ namespace redemption_unit_test__
         friend std::ostream & operator<<(std::ostream & out, Put2Mem const & x);
     };
 
-    // based on element_compare from boost/test/tools/collection_comparison_op.hpp
-    template <class OP>
-    boost::test_tools::assertion_result
-    bytes_compare(bytes_view a, bytes_view b, OP op, char pattern, char const* revert)
-    {
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end(), op).first - a.begin();
-        boost::test_tools::assertion_result ar(true);
+    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
 
-        if (pos != a.size() || a.size() != b.size())
-        {
-            ar = false;
-
-            ar.message() << "[" << Put2Mem{pos, a, b, pattern, revert};
-            ar.message() << "\nMismatch at position " << pos;
-
-            if (a.size() != b.size())
-            {
-                ar.message()
-                    << "\nCollections size mismatch: "
-                    << a.size() << " != " << b.size()
-                ;
-            }
-        }
-
-        return ar;
-    }
-
-    struct u8_EQ { bool operator()(uint8_t a, uint8_t b) { return a == b; } };
-    struct u8_NE { bool operator()(uint8_t a, uint8_t b) { return a != b; } };
-    struct u8_LT { bool operator()(uint8_t a, uint8_t b) { return a < b; } };
-    struct u8_LE { bool operator()(uint8_t a, uint8_t b) { return a <= b; } };
-    struct u8_GT { bool operator()(uint8_t a, uint8_t b) { return a > b; } };
-    struct u8_GE { bool operator()(uint8_t a, uint8_t b) { return a >= b; } };
+    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern);
+    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern);
+    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern);
+    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern);
+    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern);
+    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern);
 
 
     template<class T> struct is_bytes_view : std::false_type {};
@@ -476,8 +449,7 @@ struct name<T, U, std::enable_if_t<                                       \
     static assertion_result                                               \
     eval( bytes_view lhs, bytes_view rhs )                                \
     {                                                                     \
-        return ::redemption_unit_test__::bytes_compare(lhs, rhs,          \
-            ::redemption_unit_test__::u8_##name(), 'a', revert());        \
+        return ::redemption_unit_test__::bytes_##name(lhs, rhs, 'a');     \
     }                                                                     \
                                                                           \
     template<class PrevExprType>                                          \
@@ -507,8 +479,7 @@ struct name<T, U, std::enable_if_t<                                       \
         if constexpr (std::is_convertible_v<T, bytes_view>                \
                    && std::is_convertible_v<U, bytes_view>)               \
         {                                                                 \
-            return ::redemption_unit_test__::bytes_compare(lhs, rhs,      \
-                ::redemption_unit_test__::u8_##name(), 'a', revert());    \
+            return ::redemption_unit_test__::bytes_##name(lhs, rhs, 'a'); \
         }                                                                 \
         else                                                              \
         {                                                                 \

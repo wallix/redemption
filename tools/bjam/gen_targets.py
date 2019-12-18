@@ -53,7 +53,6 @@ inc_test_dep = Dep(cxxflags=[
 
 src_requirements = dict((
     ('src/lib/scytale.cpp', inc_test_dep),
-    ('src/main/mwrm3_editor.cpp', Dep(cxxflags=['<cxxflags>-frtti'])),
     ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
     # otherwise std::bad_alloc or mmap error
     ('tests/front/test_front.cpp', Dep(linkflags=['<noopstacktrace>on'])),

@@ -62,8 +62,8 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
 
         CASE(wrm_new,
             "\x01\x00\x0f\x00my_filename.wrm"_av,
-            [](bytes_view filename){
-                RED_TEST(filename == "my_filename.wrm"_av);
+            [](Filename filename){
+                RED_TEST(filename.str == "my_filename.wrm"_av);
             });
 
         CASE(wrm_state,
@@ -73,42 +73,43 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
             [](FileSize file_size, std::chrono::seconds seconds, QuickHash qhash, FullHash fhash){
                RED_TEST(file_size == FileSize(1244));
                RED_TEST(seconds == 125s);
-               RED_TEST(qhash.hash == "01234567890123456789012345678901"_av);
-               RED_TEST(fhash.hash == "abcdefghijabcdefghijabcdefghijab"_av);
+               RED_TEST(qhash.bytes == "01234567890123456789012345678901"_av);
+               RED_TEST(fhash.bytes == "abcdefghijabcdefghijabcdefghijab"_av);
             });
 
         CASE(fdx_new,
             "\x03\x00\x08\x00xxxx.fdx"_av,
-            [](bytes_view filename){
-                RED_TEST(filename == "xxxx.fdx"s);
+            [](Filename filename){
+                RED_TEST(filename.str == "xxxx.fdx"s);
             });
 
         CASE(tfl_new,
-            "\x04\x00*\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x10\x00\x01"
+            "\x04\x00"
+            "\x2a\x00\x00\x00\x00\x00\x00\x00"
+            "\x0c\x00\x00\x00\x00\x00\x00\x00"
+            "\x4f"
+            "\x0f\x00"
+            "\x10\x00"
             "my_secret_file!"
-            "_SID_,000001.tfl"_av,
-            [](FileId file_id, Direction direction, bytes_view original_filename, bytes_view reference_filename){
-               RED_TEST(file_id == FileId(42));
-               RED_TEST(direction == Direction::ClientToServer);
-               RED_TEST(original_filename == "my_secret_file!"s);
-               RED_TEST(reference_filename == "_SID_,000001.tfl"_av);
-            });
-
-        CASE(tfl_info,
-            "\x05\x00*\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x17"
+            "_SID_,000001.tfl"
             "01234567890123456789012345678901"
             "abcdefghijabcdefghijabcdefghijab"
             "ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av,
             [](
-                FileId file_id, FileSize file_size, TransferedStatus transfered_status,
+                FileId file_id, FileSize file_size,
+                Direction direction, TransferedStatus transfered_status,
+                Filename original_filename, TflFilename tfl_filename,
                 QuickHash qhash, FullHash fhash, Sha256Signature sig
             ){
                RED_TEST(file_id == FileId(42));
                RED_TEST(file_size == FileSize(12));
+               RED_TEST(direction == Direction::ClientToServer);
                RED_TEST(transfered_status == TransferedStatus::Broken);
-               RED_TEST(qhash.hash == "01234567890123456789012345678901"_av);
-               RED_TEST(fhash.hash == "abcdefghijabcdefghijabcdefghijab"_av);
-               RED_TEST(sig.sig == "ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
+               RED_TEST(original_filename.str == "my_secret_file!"_av);
+               RED_TEST(tfl_filename.str == "_SID_,000001.tfl"_av);
+               RED_TEST(qhash.bytes == "01234567890123456789012345678901"_av);
+               RED_TEST(fhash.bytes == "abcdefghijabcdefghijabcdefghijab"_av);
+               RED_TEST(sig.bytes == "ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
             });
     }
 
@@ -119,9 +120,15 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
 RED_AUTO_TEST_CASE(mwrm3_parser)
 {
     auto data =
-        "v3\n\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x05\x00\x18\x00\x01""file"
-        "4my_session_id,000004.tfl\x05\x00\x04\x00\x00\x00\x00\x00\x00\x00"
-        "\x03\x00\x00\x00\x00\x00\x00\x00\x00"_av;
+        "v3\n"
+        "\x04\x00"
+        "\x04\x00\x00\x00\x00\x00\x00\x00"
+        "\x03\x00\x00\x00\x00\x00\x00\x00"
+        "\x08"
+        "\x05\x00"
+        "\x18\x00"
+        "file4"
+        "my_session_id,000004.tfl"_av;
 
     bytes_view remaining = data.first(33);
 
@@ -142,24 +149,21 @@ RED_AUTO_TEST_CASE(mwrm3_parser)
     remaining = data.drop_front(remaining.data() - byte_ptr(data.data()));
 
     PARSE_TEST(Type::TflNew,
-        [](FileId file_id, Direction direction, bytes_view original_filename, bytes_view tfl_filename){
-            RED_TEST(file_id == FileId(4));
-            RED_TEST(direction == Direction::ClientToServer);
-            RED_TEST(original_filename == "file4"sv);
-            RED_TEST(tfl_filename == "my_session_id,000004.tfl"sv);
-        });
-
-    PARSE_TEST(Type::TflInfo,
         [](
-            FileId file_id, FileSize file_size, TransferedStatus transfered_status,
+            FileId file_id, FileSize file_size,
+            Direction direction, TransferedStatus transfered_status,
+            Filename original_filename, TflFilename tfl_filename,
             QuickHash qhash, FullHash fhash, Sha256Signature sig
         ){
             RED_TEST(file_id == FileId(4));
             RED_TEST(file_size == FileSize(3));
             RED_TEST(transfered_status == TransferedStatus::Unknown);
-            RED_TEST(qhash.hash.empty());
-            RED_TEST(fhash.hash.empty());
-            RED_TEST(sig.sig.empty());
+            RED_TEST(direction == Direction::ClientToServer);
+            RED_TEST(original_filename.str == "file4"sv);
+            RED_TEST(tfl_filename.str == "my_session_id,000004.tfl"sv);
+            RED_TEST(qhash.bytes.empty());
+            RED_TEST(fhash.bytes.empty());
+            RED_TEST(sig.bytes.empty());
         });
 
     RED_REQUIRE(remaining.size() == 0);
