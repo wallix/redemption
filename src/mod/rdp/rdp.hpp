@@ -308,7 +308,7 @@ public:
         FileSystemDriveManager file_system_drive_manager;
 
         Drive(
-            ModRDPParams::ApplicationParams const& application_params,
+            ApplicationParams const& application_params,
             ModRDPParams::DriveParams const& drive_params,
             RDPVerbose verbose)
         : use_application_driver(
@@ -1159,7 +1159,7 @@ public:
 
     static void replace_shell_arguments(
         std::string & text_with_tags,
-        ModRDPParams::ApplicationParams const& application_params
+        ApplicationParams const& application_params
     ){
         mod_rdp_channels::replace(text_with_tags, "${APPID}", application_params.target_application);
         mod_rdp_channels::replace(text_with_tags, "${USER}", application_params.target_application_account);
@@ -1167,7 +1167,7 @@ public:
     }
 
     static std::string get_shell_arguments(
-        ModRDPParams::ApplicationParams const& application_params)
+       ApplicationParams const& application_params)
     {
         std::string shell_arguments = application_params.shell_arguments;
         replace_shell_arguments(shell_arguments, application_params);
@@ -1187,7 +1187,7 @@ public:
 
     void init_remote_program_with_session_probe(
         const ModRDPParams::RemoteAppParams & remote_app_params,
-        const ModRDPParams::ApplicationParams & application_params,
+        const ApplicationParams & application_params,
         const ModRdpSessionProbeParams & session_probe_params,
         char const* session_probe_window_title)
     {
@@ -1266,7 +1266,7 @@ public:
 
     void init_remote_program_without_session_probe(
         const ModRDPParams::RemoteAppParams & remote_app_params,
-        const ModRDPParams::ApplicationParams & application_params)
+        const ApplicationParams & application_params)
     {
         if (application_params.target_application && *application_params.target_application) {
             this->remote_app.client_execute.exe_or_file = application_params.alternate_shell;
@@ -1285,7 +1285,7 @@ public:
     void init_no_remote_program_with_session_probe(
         mod_api & mod_rdp,
         const ClientInfo & info,
-        const ModRDPParams::ApplicationParams & application_params,
+        const ApplicationParams & application_params,
         const ModRdpSessionProbeParams & session_probe_params,
         char (&program)[512],
         char (&directory)[512])
@@ -1404,7 +1404,7 @@ public:
 
     void init_no_remote_program_no_session_probe(
                 const ClientInfo & info,
-                const ModRDPParams::ApplicationParams & application_params,
+                const ApplicationParams & application_params,
                 char (&program)[512],
                 char (&directory)[512])
     {

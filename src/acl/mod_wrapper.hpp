@@ -23,6 +23,7 @@
 #include "mod/null/null.hpp"
 #include "mod/mod_api.hpp"
 #include "transport/socket_transport.hpp"
+#include "acl/mod_wrapper.hpp"
 
 struct ModWrapper
 {

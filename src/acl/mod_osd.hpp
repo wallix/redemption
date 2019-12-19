@@ -55,11 +55,187 @@
 #include "core/back_event_t.hpp"
 
 #include "core/session_reactor.hpp"
-#include "acl/mod_wrapper.hpp"
 
-class ModOSD : public gdi::ProtectedGraphics, public mod_api
+class ModWrapper;
+
+class ModOSD : public gdi::GraphicApi
 {
-    const ModWrapper & mod_wrapper;
+public:
+    const ModWrapper * mod_wrapper;
+
+private:
+    Rect protected_rect;
+    gdi::GraphicApi & drawable;
+
+public:
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override { }
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override { }
+
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->draw_impl(cmd); }
+
+    void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
+    void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
+
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
+        this->get_graphic_proxy().set_pointer(cache_idx, cursor, mode);
+    }
+
+    void set_palette(BGRPalette const & palette) override {
+        this->get_graphic_proxy().set_palette(palette);
+    }
+
+    void sync() override {
+        this->get_graphic_proxy().sync();
+    }
+
+    void set_row(std::size_t rownum, bytes_view data) override {
+        this->get_graphic_proxy().set_row(rownum, data);
+    }
+
+    void begin_update() override {
+        this->get_graphic_proxy().begin_update();
+    }
+
+    void end_update() override {
+        this->get_graphic_proxy().end_update();
+    }
+
+protected:
+    template<class... Ts>
+    void draw_impl(Ts const & ... args) {
+        this->get_graphic_proxy().draw(args...);
+    }
+
+public:
+
+    [[nodiscard]] Rect get_protected_rect() const
+    { return this->protected_rect; }
+
+    void set_protected_rect(Rect const rect)
+    { this->protected_rect = rect; }
+
+
+private:
+    [[nodiscard]] gdi::GraphicApi & get_graphic_proxy() const
+    { return this->drawable; }
+
+    template<class Command>
+    void draw_impl(Command const & cmd)
+    { this->drawable.draw(cmd); }
+
+    template<class Command, class... Args>
+    void draw_impl(Command const & cmd, Rect clip, Args const &... args)
+    {
+        auto const & rect = clip_from_cmd(cmd).intersect(clip);
+        if (this->protected_rect.contains(rect) || rect.isempty()) {
+            //nada
+        }
+        else if (rect.has_intersection(this->protected_rect)) {
+            this->drawable.begin_update();
+            // TODO used multi orders
+            for (const Rect & subrect : gdi::subrect4(rect, this->protected_rect)) {
+                if (!subrect.isempty()) {
+                    this->drawable.draw(cmd, subrect, args...);
+                }
+            }
+            this->drawable.end_update();
+        }
+        else {
+            this->drawable.draw(cmd, clip, args...);
+        }
+    }
+
+    void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
+    {
+        Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
+                    , bitmap_data.dest_right - bitmap_data.dest_left + 1
+                    , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
+
+        if (rectBmp.has_intersection(this->protected_rect)) {
+            this->drawable.begin_update();
+            for (const Rect & subrect : gdi::subrect4(rectBmp, this->protected_rect)) {
+                if (!subrect.isempty()) {
+                    Bitmap sub_bmp(bmp, Rect(subrect.x - rectBmp.x, subrect.y - rectBmp.y, subrect.cx, subrect.cy));
+
+                    RDPBitmapData sub_bmp_data = bitmap_data;
+
+                    sub_bmp_data.dest_left = subrect.x;
+                    sub_bmp_data.dest_top = subrect.y;
+                    sub_bmp_data.dest_right = std::min<uint16_t>(sub_bmp_data.dest_left + subrect.cx - 1, bitmap_data.dest_right);
+                    sub_bmp_data.dest_bottom = sub_bmp_data.dest_top + subrect.cy - 1;
+
+                    sub_bmp_data.width = sub_bmp.cx();
+                    sub_bmp_data.height = sub_bmp.cy();
+                    sub_bmp_data.bits_per_pixel = safe_int(sub_bmp.bpp());
+                    sub_bmp_data.flags = 0;
+
+                    sub_bmp_data.bitmap_length = sub_bmp.bmp_size();
+
+                    this->drawable.draw(sub_bmp_data, sub_bmp);
+                }
+            }
+            this->drawable.end_update();
+        }
+        else {
+            this->drawable.draw(bitmap_data, bmp);
+        }
+    }
+
+    void draw_impl(const RDPScrBlt & cmd, const Rect clip)
+    {
+        const Rect drect = cmd.rect.intersect(clip);
+        const int deltax = cmd.srcx - cmd.rect.x;
+        const int deltay = cmd.srcy - cmd.rect.y;
+        const int srcx = drect.x + deltax;
+        const int srcy = drect.y + deltay;
+        const Rect srect(srcx, srcy, drect.cx, drect.cy);
+
+        const bool has_dest_intersec_fg = drect.has_intersection(this->protected_rect);
+        const bool has_src_intersec_fg = srect.has_intersection(this->protected_rect);
+
+        if (!has_dest_intersec_fg && !has_src_intersec_fg) {
+            this->drawable.draw(cmd, clip);
+        }
+        else {
+            this->drawable.begin_update();
+            gdi::subrect4_t rects = gdi::subrect4(drect, this->protected_rect);
+            auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
+            auto av = make_array_view(rects.begin(), e);
+            this->refresh_rects(av);
+            this->drawable.end_update();
+        }
+    }
+
+// end protected_graphics
+
     FrontAPI & front;
     BGRPalette const & palette;
     gdi::GraphicApi& graphics;
@@ -78,9 +254,9 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     const Theme & theme;
 
 public:
-    explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
-    : gdi::ProtectedGraphics(graphics, Rect{})
-    , mod_wrapper(mod_wrapper)
+    explicit ModOSD(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    : protected_rect(Rect{})
+    , drawable(graphics)
     , front(front)
     , palette(palette)
     , graphics(graphics)
@@ -95,15 +271,15 @@ public:
 
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
 
-    void disable_osd()
+    void disable_osd(const ModWrapper & mod_wrapper)
     {
         this->is_disable_by_input = false;
         auto const protected_rect = this->get_protected_rect();
         this->set_protected_rect(Rect{});
 
         if (this->bogus_refresh_rect_ex) {
-            this->mod_wrapper.mod->rdp_suppress_display_updates();
-            this->mod_wrapper.mod->rdp_allow_display_updates(0, 0,
+            mod_wrapper.mod->rdp_suppress_display_updates();
+            mod_wrapper.mod->rdp_allow_display_updates(0, 0,
                 this->client_info.screen_info.width,
                 this->client_info.screen_info.height);
         }
@@ -112,20 +288,20 @@ public:
             this->winapi->destroy_auxiliary_window();
         }
 
-        this->mod_wrapper.mod->rdp_input_invalidate(protected_rect);
+        mod_wrapper.mod->rdp_input_invalidate(protected_rect);
     }
 
-    void clear_osd_message()
+    void clear_osd_message(const ModWrapper & mod_wrapper)
     {
         if (!this->get_protected_rect().isempty()) {
-            this->disable_osd();
+            this->disable_osd(mod_wrapper);
         }
     }
 
-    void osd_message_fn(std::string message, bool is_disable_by_input)
+    void osd_message_fn(std::string message, bool is_disable_by_input, const ModWrapper & mod_wrapper)
     {
         if (message != this->get_message()) {
-            this->clear_osd_message();
+            this->clear_osd_message(mod_wrapper);
         }
         if (!message.empty()) {
             this->set_message(std::move(message), is_disable_by_input);
@@ -186,7 +362,7 @@ public:
         this->graphics.end_update();
     }
 
-    bool try_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
+    bool try_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap, const ModWrapper & mod_wrapper)
     {
         (void)param1;
         (void)param2;
@@ -198,24 +374,24 @@ public:
          && keymap->top_kevent() == Keymap2::KEVENT_INSERT
         ) {
             keymap->get_kevent();
-            this->disable_osd();
+            this->disable_osd(mod_wrapper);
             return true;
         }
         return false;
     }
 
-    bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
+    bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/, const ModWrapper & mod_wrapper)
     {
         if (this->is_disable_by_input
          && this->get_protected_rect().contains_pt(x, y)
          && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-            this->disable_osd();
+            this->disable_osd(mod_wrapper);
             return true;
         }
         return false;
     }
 
-    bool try_input_invalidate(const Rect r)
+    bool try_input_invalidate(const Rect r, const ModWrapper & mod_wrapper)
     {
         if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
             auto rects = gdi::subrect4(r, this->get_protected_rect());
@@ -224,7 +400,7 @@ public:
                 return rect.isempty();
             });
             if (p != e) {
-                this->mod_wrapper.mod->rdp_input_invalidate2({p, e});
+                mod_wrapper.mod->rdp_input_invalidate2({p, e});
                 this->clip = r.intersect(this->get_protected_rect());
             }
             return true;
@@ -232,13 +408,13 @@ public:
         return false;
     }
 
-    bool try_input_invalidate2(array_view<Rect const> vr)
+    bool try_input_invalidate2(array_view<Rect const> vr, const ModWrapper & mod_wrapper)
     {
         // TODO PERF multi opaque rect
         bool ret = false;
         for (Rect const & r : vr) {
-            if (!this->try_input_invalidate(r)) {
-                this->mod_wrapper.mod->rdp_input_invalidate(r);
+            if (!this->try_input_invalidate(r, mod_wrapper)) {
+                mod_wrapper.mod->rdp_input_invalidate(r);
             }
             else {
                 ret = true;
@@ -282,84 +458,87 @@ private:
         this->clip = Rect();
     }
 
-    void refresh_rects(array_view<Rect const> av) override
+protected:
+//    virtual void refresh_rects(array_view<Rect const>) = 0;
+    void refresh_rects(array_view<Rect const> av)
     {
-        this->mod_wrapper.mod->rdp_input_invalidate2(av);
+        this->mod_wrapper->mod->rdp_input_invalidate2(av);
     }
-
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+public:
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap, const ModWrapper & mod_wrapper)
     {
-        if (!this->try_input_scancode(param1, param2, param3, param4, keymap)) {
-            this->mod_wrapper.mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        if (!this->try_input_scancode(param1, param2, param3, param4, keymap, mod_wrapper)) {
+            mod_wrapper.mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
-        this->mod_wrapper.mod->rdp_input_unicode(unicode, flag);
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag, const ModWrapper & mod_wrapper)
+    {
+        mod_wrapper.mod->rdp_input_unicode(unicode, flag);
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap, const ModWrapper & mod_wrapper)
     {
-        if (!this->try_input_mouse(device_flags, x, y, keymap)) {
-            this->mod_wrapper.mod->rdp_input_mouse(device_flags, x, y, keymap);
+        if (!this->try_input_mouse(device_flags, x, y, keymap, mod_wrapper)) {
+            mod_wrapper.mod->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 
-    void rdp_input_invalidate(Rect r) override
+    void rdp_input_invalidate(Rect r, const ModWrapper & mod_wrapper)
     {
-        if (!this->try_input_invalidate(r)) {
-            this->mod_wrapper.mod->rdp_input_invalidate(r);
+        if (!this->try_input_invalidate(r, mod_wrapper)) {
+            mod_wrapper.mod->rdp_input_invalidate(r);
         }
     }
 
-    void rdp_input_invalidate2(array_view<Rect const> vr) override
+    void rdp_input_invalidate2(array_view<Rect const> vr, const ModWrapper & mod_wrapper)
     {
-        if (!this->try_input_invalidate2(vr)) {
-            this->mod_wrapper.mod->rdp_input_invalidate2(vr);
+        if (!this->try_input_invalidate2(vr, mod_wrapper)) {
+            mod_wrapper.mod->rdp_input_invalidate2(vr);
         }
     }
 
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-    { this->mod_wrapper.mod->rdp_input_synchronize(time, device_flags, param1, param2); }
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2, const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->rdp_input_synchronize(time, device_flags, param1, param2); }
 
-    void rdp_input_up_and_running() override
-    { this->mod_wrapper.mod->rdp_input_up_and_running(); }
+    void rdp_input_up_and_running(const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->rdp_input_up_and_running(); }
 
-    void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
-    { this->mod_wrapper.mod->rdp_allow_display_updates(left, top, right, bottom); }
+    void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom, const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->rdp_allow_display_updates(left, top, right, bottom); }
 
-    void rdp_suppress_display_updates() override
-    { this->mod_wrapper.mod->rdp_suppress_display_updates(); }
+    void rdp_suppress_display_updates(const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->rdp_suppress_display_updates(); }
 
-    void refresh(Rect r) override
+    void refresh(Rect r, const ModWrapper & mod_wrapper)
     {
-        this->mod_wrapper.mod->refresh(r);
+        mod_wrapper.mod->refresh(r);
     }
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
-        std::size_t length, uint32_t flags
-    ) override
-    { this->mod_wrapper.mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
+        std::size_t length, uint32_t flags, const ModWrapper & mod_wrapper
+    )
+    { mod_wrapper.mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
 
-    void send_auth_channel_data(const char * data) override
-    { this->mod_wrapper.mod->send_auth_channel_data(data); }
+    void send_auth_channel_data(const char * data, const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->send_auth_channel_data(data); }
 
-    void send_checkout_channel_data(const char * data) override
-    { this->mod_wrapper.mod->send_checkout_channel_data(data); }
+    void send_checkout_channel_data(const char * data, const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->send_checkout_channel_data(data); }
 
-    [[nodiscard]] bool is_up_and_running() const override
-    { return this->mod_wrapper.mod->is_up_and_running(); }
+    [[nodiscard]] bool is_up_and_running(const ModWrapper & mod_wrapper) const
+    { return mod_wrapper.mod->is_up_and_running(); }
 
-    void disconnect() override
-    { this->mod_wrapper.mod->disconnect(); }
+    void disconnect(const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->disconnect(); }
 
-    void display_osd_message(std::string const & message) override
-    { this->mod_wrapper.mod->display_osd_message(message); }
+    void display_osd_message(std::string const & message, const ModWrapper & mod_wrapper)
+    { mod_wrapper.mod->display_osd_message(message); }
 
-    [[nodiscard]] Dimension get_dim() const override
+    [[nodiscard]] Dimension get_dim(const ModWrapper & mod_wrapper) const
     {
-        return this->mod_wrapper.mod->get_dim();
+        return mod_wrapper.mod->get_dim();
     }
 };
 

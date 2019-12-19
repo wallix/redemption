@@ -344,7 +344,7 @@ class Session
         return run_session;
     }
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModOSD & mod_osd, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModOSD & mod_osd, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
     {
         bool run_session = true;
         SessionReactor::EnableGraphics enable_graphics{true};
@@ -461,15 +461,20 @@ class Session
 
                     if (ini.get<cfg::client::enable_osd_4_eyes>()) {
                         Translator tr(language(ini));
-                        switch (rt_status) {
-                            case Capture::RTDisplayResult::Enabled:
-                                mod_osd.osd_message_fn(tr(trkeys::enable_rt_display).to_string(), true);
-                                break;
-                            case Capture::RTDisplayResult::Disabled:
-                                mod_osd.osd_message_fn(tr(trkeys::disable_rt_display).to_string(), true);
-                                break;
-                            case Capture::RTDisplayResult::Unchanged:
-                                break;
+                        if (rt_status != Capture::RTDisplayResult::Unchanged) {
+                            std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
+                                ?trkeys::enable_rt_display
+                                :trkeys::disable_rt_display
+                                    ).to_string();
+                                
+                            bool is_disable_by_input = true;
+                            if (message != mod_osd.get_message()) {
+                                mod_osd.clear_osd_message(mod_wrapper);
+                            }
+                            if (!message.empty()) {
+                                mod_osd.set_message(std::move(message), is_disable_by_input);
+                                mod_osd.draw_osd_message();
+                            }
                         }
                     }
 
@@ -560,7 +565,12 @@ class Session
                         std::string mes = end_session_warning.update_osd_state(
                             language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
                         if (!mes.empty()) {
-                            mod_osd.osd_message_fn(std::move(mes), true);
+                            bool is_disable_by_input = true;
+                            if (mes != mod_osd.get_message()) {
+                                mod_osd.clear_osd_message(mod_wrapper);
+                            }
+                            mod_osd.set_message(std::move(mes), is_disable_by_input);
+                            mod_osd.draw_osd_message();
                         }
                     }
                 }
@@ -652,11 +662,12 @@ public:
                                             front.client_info.window_list_caps,
                                             ini.get<cfg::debug::mod_internal>() & 1);
 
-            ModWrapper mod_wrapper;
 
             windowing_api* winapi = nullptr;
             
-            ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
+            ModOSD mod_osd(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
+            ModWrapper mod_wrapper;
+            mod_osd.mod_wrapper = &mod_wrapper;
 
             ModFactory mod_factory(mod_wrapper, mod_osd, session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
@@ -752,7 +763,7 @@ public:
                         this->start_acl_running(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_osd, end_session_warning, front, authentifier);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_osd, mod_wrapper, end_session_warning, front, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }

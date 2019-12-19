@@ -34,6 +34,8 @@
 # include "mod/rdp/params/rdp_session_probe_params.hpp"
 #endif
 
+# include "mod/rdp/params/rdp_application_params.hpp"
+
 #include <chrono>
 #include <string>
 #include <cstdint>
@@ -91,22 +93,6 @@ struct ModRDPParams
     CHANNELS::ChannelNameId auth_channel;
 
     CHANNELS::ChannelNameId checkout_channel;
-
-    struct ApplicationParams
-    {
-        const char * primary_user_id = "";
-        const char * target_application = "";
-
-        // Application Bastion
-        const char * alternate_shell = "";
-        const char * shell_arguments = "";
-        const char * shell_working_dir = "";
-
-        bool         use_client_provided_alternate_shell = false;
-
-        const char * target_application_account = "";
-        const char * target_application_password = "";
-    };
 
     ApplicationParams application_params;
 

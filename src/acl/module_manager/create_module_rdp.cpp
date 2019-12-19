@@ -39,6 +39,8 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
+# include "mod/rdp/params/rdp_session_probe_params.hpp"
+# include "mod/rdp/params/rdp_application_params.hpp"
 
 namespace
 {
@@ -94,7 +96,7 @@ public:
             {
                 size_t r = FileTransport::do_partial_read(buffer, len);
                 if (r == 0) {
-                    LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithSocketAndMetrics::FileValidator::do_partial_read: No data read!");
+                    LOG(LOG_ERR, "FileValidator::do_partial_read: No data read!");
                     throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
                 }
                 return r;
@@ -231,7 +233,7 @@ public:
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
         //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
-        if (this->mod_osd.try_input_scancode(param1, param2, param3, param4, keymap)) {
+        if (this->mod_osd.try_input_scancode(param1, param2, param3, param4, keymap, this->mod_wrapper)) {
             this->target_info_is_shown = false;
             return ;
         }
@@ -244,7 +246,7 @@ public:
             bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
             if (this->target_info_is_shown && f12_released) {
                 // LOG(LOG_INFO, "Hide info");
-                this->mod_osd.clear_osd_message();
+                this->mod_osd.clear_osd_message(this->mod_wrapper);
                 this->target_info_is_shown = false;
             }
             else if (!this->target_info_is_shown && !f12_released) {
@@ -267,7 +269,7 @@ public:
                         msg += ']';
                     }
                 }
-                this->mod_osd.osd_message_fn(std::move(msg), false);
+                this->mod_osd.osd_message_fn(std::move(msg), false, this->mod_wrapper);
                 this->target_info_is_shown = true;
             }
         }
@@ -276,7 +278,7 @@ public:
     // from RdpInput
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
-        if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap)) {
+        if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap, this->mod_wrapper)) {
             this->target_info_is_shown = false;
             return ;
         }
@@ -292,7 +294,7 @@ public:
     // from RdpInput
     void rdp_input_invalidate(const Rect r) override
     {
-        if (this->mod_osd.try_input_invalidate(r)) {
+        if (this->mod_osd.try_input_invalidate(r, this->mod_wrapper)) {
             return ;
         }
 
@@ -302,7 +304,7 @@ public:
     // from RdpInput
     void rdp_input_invalidate2(array_view<Rect const> vr) override
     {
-        if (this->mod_osd.try_input_invalidate2(vr)) {
+        if (this->mod_osd.try_input_invalidate2(vr, this->mod_wrapper)) {
             return ;
         }
 
@@ -338,7 +340,7 @@ public:
     // from mod_api
     void display_osd_message(std::string const & message) override 
     {
-        this->mod_osd.osd_message_fn(message, true);
+        this->mod_osd.osd_message_fn(message, true, this->mod_wrapper);
         //return this->mod.display_osd_message(message);
     }
 
@@ -379,15 +381,94 @@ public:
     }
 };
 
+inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
+{
+    ModRdpSessionProbeParams spp;
+    spp.enable_session_probe = ini.get<cfg::mod_rdp::enable_session_probe>();
+    spp.enable_launch_mask = ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>();
+    spp.used_clipboard_based_launcher = ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
+    spp.vc_params.effective_launch_timeout
+        = ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>()
+        ? ((ini.get<cfg::mod_rdp::session_probe_on_launch_failure>()
+                == SessionProbeOnLaunchFailure::disconnect_user)
+            ? ini.get<cfg::mod_rdp::session_probe_launch_timeout>()
+            : ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>())
+        : std::chrono::milliseconds::zero();
+    spp.vc_params.on_launch_failure = ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
+    spp.vc_params.keepalive_timeout = ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
+    spp.vc_params.on_keepalive_timeout  =
+        ini.get<cfg::mod_rdp::session_probe_on_keepalive_timeout>();
+    spp.vc_params.end_disconnected_session =
+        ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
+    spp.customize_executable_name =
+        ini.get<cfg::mod_rdp::session_probe_customize_executable_name>();
+    spp.vc_params.disconnected_application_limit =
+        ini.get<cfg::mod_rdp::session_probe_disconnected_application_limit>();
+    spp.vc_params.disconnected_session_limit =
+        ini.get<cfg::mod_rdp::session_probe_disconnected_session_limit>();
+    spp.vc_params.idle_session_limit =
+        ini.get<cfg::mod_rdp::session_probe_idle_session_limit>();
+    spp.exe_or_file = ini.get<cfg::mod_rdp::session_probe_exe_or_file>();
+    spp.arguments = ini.get<cfg::mod_rdp::session_probe_arguments>();
+    spp.vc_params.launcher_abort_delay =
+        ini.get<cfg::mod_rdp::session_probe_launcher_abort_delay>();
+    spp.clipboard_based_launcher.clipboard_initialization_delay_ms =
+        ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
+    spp.clipboard_based_launcher.start_delay_ms =
+        ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
+    spp.clipboard_based_launcher.long_delay_ms =
+         ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
+    spp.clipboard_based_launcher.short_delay_ms =
+        ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
+    spp.vc_params.ignore_ui_less_processes_during_end_of_session_check =
+        ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
+    spp.vc_params.childless_window_as_unidentified_input_field =
+        ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
+    spp.is_public_session = ini.get<cfg::mod_rdp::session_probe_public_session>();
+    spp.vc_params.session_shadowing_support = ini.get<cfg::mod_rdp::session_shadowing_support>();
+    spp.vc_params.on_account_manipulation =
+        ini.get<cfg::mod_rdp::session_probe_on_account_manipulation>();
+    spp.vc_params.extra_system_processes =
+        ExtraSystemProcesses(
+            ini.get<cfg::context::session_probe_extra_system_processes>().c_str());
+    spp.vc_params.outbound_connection_monitor_rules =
+        OutboundConnectionMonitorRules(
+            ini.get<cfg::context::session_probe_outbound_connection_monitoring_rules>().c_str());
+    spp.vc_params.process_monitor_rules =
+        ProcessMonitorRules(ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str());
+    spp.vc_params.windows_of_these_applications_as_unidentified_input_field = ExtraSystemProcesses(
+        ini.get<cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field>().c_str());
+    spp.vc_params.enable_log = ini.get<cfg::mod_rdp::session_probe_enable_log>();
+    spp.vc_params.enable_log_rotation = ini.get<cfg::mod_rdp::session_probe_enable_log_rotation>();
+    spp.vc_params.allow_multiple_handshake = ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
+    spp.vc_params.enable_crash_dump = ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
+    spp.vc_params.handle_usage_limit = ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
+    spp.vc_params.memory_usage_limit = ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
+    spp.vc_params.disabled_features = ini.get<cfg::mod_rdp::session_probe_disabled_features>();
+    spp.used_to_launch_remote_program = ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
+    spp.fix_too_long_cookie = ini.get<cfg::mod_rdp::experimental_fix_too_long_cookie>();
+    return spp;
+}
 
+inline static ApplicationParams get_rdp_application_params(Inifile & ini)
+{
+    ApplicationParams ap;
+    ap.alternate_shell = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
+    ap.shell_arguments = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
+    ap.shell_working_dir = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+    ap.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
+    ap.target_application_account = ini.get<cfg::globals::target_application_account>().c_str();
+    ap.target_application_password = ini.get<cfg::globals::target_application_password>().c_str();
+    ap.primary_user_id = ini.get<cfg::globals::primary_user_id>().c_str();
+    ap.target_application = ini.get<cfg::globals::target_application>().c_str();
+    return ap;
+}
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
-    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
-
     switch (ini.get<cfg::context::mode_console>()) {
         case RdpModeConsole::force:
             client_info.console_session = true;
@@ -400,21 +481,6 @@ void ModuleManager::create_mod_rdp(
         case RdpModeConsole::allow:
             break;
     }
-    //else {
-    //    // default is "allow", do nothing special
-    //}
-
-    unique_fd client_sck = [this, &report_message]() {
-            try {
-                return this->connect_to_target_host(
-                    report_message, trkeys::authentification_rdp_fail);
-            }
-            catch (...) {
-                this->front.must_be_stop_capture();
-
-                throw;
-            }
-        }();
 
     // BEGIN READ PROXY_OPT
     if (ini.get<cfg::globals::enable_wab_integration>()) {
@@ -443,11 +509,7 @@ void ModuleManager::create_mod_rdp(
 
     SCOPE_EXIT(ini.set<cfg::context::perform_automatic_reconnection>(false));
     mod_rdp_params.perform_automatic_reconnection = ini.get<cfg::context::perform_automatic_reconnection>();
-
-    mod_rdp_params.device_id                           = ini.get<cfg::globals::device_id>().c_str();
-
-    mod_rdp_params.application_params.primary_user_id                     = ini.get<cfg::globals::primary_user_id>().c_str();
-    mod_rdp_params.application_params.target_application                  = ini.get<cfg::globals::target_application>().c_str();
+    mod_rdp_params.device_id = ini.get<cfg::globals::device_id>().c_str();
 
     //mod_rdp_params.enable_tls                          = true;
     TLSClientParams tls_client_params;
@@ -467,118 +529,35 @@ void ModuleManager::create_mod_rdp(
     //mod_rdp_params.enable_new_pointer                  = true;
     mod_rdp_params.enable_glyph_cache                  = ini.get<cfg::globals::glyph_cache>();
 
-// ================== Session Probe Params ===========================    
-    mod_rdp_params.session_probe_params.enable_session_probe                = ini.get<cfg::mod_rdp::enable_session_probe>();
-    mod_rdp_params.session_probe_params.enable_launch_mask    = ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>();
+    mod_rdp_params.clipboard_params.disable_log_syslog =
+        bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
 
-    mod_rdp_params.session_probe_params.used_clipboard_based_launcher
-                                                        = ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
-    mod_rdp_params.session_probe_params.vc_params.effective_launch_timeout
-        = ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>()
-        ? ((ini.get<cfg::mod_rdp::session_probe_on_launch_failure>()
-                == SessionProbeOnLaunchFailure::disconnect_user)
-            ? ini.get<cfg::mod_rdp::session_probe_launch_timeout>()
-            : ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>())
-        : std::chrono::milliseconds::zero();
-    mod_rdp_params.session_probe_params.vc_params.on_launch_failure     = ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
-    mod_rdp_params.session_probe_params.vc_params.keepalive_timeout     = ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
-    mod_rdp_params.session_probe_params.vc_params.on_keepalive_timeout  =
-                                                            ini.get<cfg::mod_rdp::session_probe_on_keepalive_timeout>();
-    mod_rdp_params.session_probe_params.vc_params.end_disconnected_session
-                                                        = ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
-    mod_rdp_params.session_probe_params.customize_executable_name
-                                                        = ini.get<cfg::mod_rdp::session_probe_customize_executable_name>();
-    mod_rdp_params.session_probe_params.vc_params.disconnected_application_limit =
-                                                        ini.get<cfg::mod_rdp::session_probe_disconnected_application_limit>();
-    mod_rdp_params.session_probe_params.vc_params.disconnected_session_limit =
-                                                        ini.get<cfg::mod_rdp::session_probe_disconnected_session_limit>();
-    mod_rdp_params.session_probe_params.vc_params.idle_session_limit    =
-                                                        ini.get<cfg::mod_rdp::session_probe_idle_session_limit>();
-    mod_rdp_params.session_probe_params.exe_or_file           = ini.get<cfg::mod_rdp::session_probe_exe_or_file>();
-    mod_rdp_params.session_probe_params.arguments             = ini.get<cfg::mod_rdp::session_probe_arguments>();
+    mod_rdp_params.session_probe_params = get_session_probe_params(ini);
 
-    mod_rdp_params.session_probe_params.vc_params.launcher_abort_delay                             = ini.get<cfg::mod_rdp::session_probe_launcher_abort_delay>();
+    mod_rdp_params.ignore_auth_channel = ini.get<cfg::mod_rdp::ignore_auth_channel>();
+    mod_rdp_params.auth_channel = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
+    mod_rdp_params.checkout_channel = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
 
-    mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
-    mod_rdp_params.session_probe_params.clipboard_based_launcher.start_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
-    mod_rdp_params.session_probe_params.clipboard_based_launcher.long_delay_ms                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
-    mod_rdp_params.session_probe_params.clipboard_based_launcher.short_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
+    mod_rdp_params.application_params = get_rdp_application_params(ini);
 
-    mod_rdp_params.session_probe_params.vc_params.ignore_ui_less_processes_during_end_of_session_check = ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
-
-    mod_rdp_params.session_probe_params.vc_params.childless_window_as_unidentified_input_field = ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
-
-    mod_rdp_params.session_probe_params.is_public_session        = ini.get<cfg::mod_rdp::session_probe_public_session>();
-
-    mod_rdp_params.session_probe_params.vc_params.session_shadowing_support = ini.get<cfg::mod_rdp::session_shadowing_support>();
-
-    mod_rdp_params.session_probe_params.vc_params.on_account_manipulation   = ini.get<cfg::mod_rdp::session_probe_on_account_manipulation>();
-
-    mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
-    mod_rdp_params.session_probe_params.vc_params.extra_system_processes =
-        ExtraSystemProcesses(
-            ini.get<cfg::context::session_probe_extra_system_processes>().c_str());
-    mod_rdp_params.session_probe_params.vc_params.outbound_connection_monitor_rules =
-        OutboundConnectionMonitorRules(
-            ini.get<cfg::context::session_probe_outbound_connection_monitoring_rules>().c_str());
-    mod_rdp_params.session_probe_params.vc_params.process_monitor_rules             =
-        ProcessMonitorRules(
-            ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str());
-
-    mod_rdp_params.session_probe_params.vc_params.windows_of_these_applications_as_unidentified_input_field =
-        ExtraSystemProcesses(
-            ini.get<cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field>().c_str());
-
-    mod_rdp_params.session_probe_params.vc_params.enable_log            = ini.get<cfg::mod_rdp::session_probe_enable_log>();
-    mod_rdp_params.session_probe_params.vc_params.enable_log_rotation   = ini.get<cfg::mod_rdp::session_probe_enable_log_rotation>();
-
-    mod_rdp_params.session_probe_params.vc_params.allow_multiple_handshake
-                                                        = ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
-
-    mod_rdp_params.session_probe_params.vc_params.enable_crash_dump     = ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
-
-    mod_rdp_params.session_probe_params.vc_params.handle_usage_limit    = ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
-    mod_rdp_params.session_probe_params.vc_params.memory_usage_limit    = ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
-
-    mod_rdp_params.session_probe_params.vc_params.disabled_features =
-        ini.get<cfg::mod_rdp::session_probe_disabled_features>();
-    mod_rdp_params.session_probe_params.used_to_launch_remote_program =
-        ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
-    mod_rdp_params.session_probe_params.fix_too_long_cookie =
-        ini.get<cfg::mod_rdp::experimental_fix_too_long_cookie>();
-// ================== End Session Probe Params ===========================    
-
-    mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
-    mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
-    mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
-    mod_rdp_params.application_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-    mod_rdp_params.application_params.shell_arguments                     = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
-    mod_rdp_params.application_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
-    mod_rdp_params.application_params.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
-    mod_rdp_params.application_params.target_application_account          = ini.get<cfg::globals::target_application_account>().c_str();
-    mod_rdp_params.application_params.target_application_password         = ini.get<cfg::globals::target_application_password>().c_str();
-    mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
-    mod_rdp_params.error_message                       = &ini.get_mutable_ref<cfg::context::auth_error_message>();
-    mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
-    mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
-
-    mod_rdp_params.server_cert_store                   = ini.get<cfg::mod_rdp::server_cert_store>();
-    mod_rdp_params.server_cert_check                   = ini.get<cfg::mod_rdp::server_cert_check>();
-    mod_rdp_params.server_access_allowed_message       = ini.get<cfg::mod_rdp::server_access_allowed_message>();
-    mod_rdp_params.server_cert_create_message          = ini.get<cfg::mod_rdp::server_cert_create_message>();
-    mod_rdp_params.server_cert_success_message         = ini.get<cfg::mod_rdp::server_cert_success_message>();
-    mod_rdp_params.server_cert_failure_message         = ini.get<cfg::mod_rdp::server_cert_failure_message>();
-    mod_rdp_params.server_cert_error_message           = ini.get<cfg::mod_rdp::server_cert_error_message>();
-
+    mod_rdp_params.rdp_compression = ini.get<cfg::mod_rdp::rdp_compression>();
+    mod_rdp_params.error_message = &ini.get_mutable_ref<cfg::context::auth_error_message>();
+    mod_rdp_params.disconnect_on_logon_user_change = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
+    mod_rdp_params.open_session_timeout = ini.get<cfg::mod_rdp::open_session_timeout>();
+    mod_rdp_params.server_cert_store = ini.get<cfg::mod_rdp::server_cert_store>();
+    mod_rdp_params.server_cert_check = ini.get<cfg::mod_rdp::server_cert_check>();
+    mod_rdp_params.server_access_allowed_message = ini.get<cfg::mod_rdp::server_access_allowed_message>();
+    mod_rdp_params.server_cert_create_message = ini.get<cfg::mod_rdp::server_cert_create_message>();
+    mod_rdp_params.server_cert_success_message = ini.get<cfg::mod_rdp::server_cert_success_message>();
+    mod_rdp_params.server_cert_failure_message = ini.get<cfg::mod_rdp::server_cert_failure_message>();
+    mod_rdp_params.server_cert_error_message = ini.get<cfg::mod_rdp::server_cert_error_message>();
     mod_rdp_params.enable_server_cert_external_validation = ini.get<cfg::mod_rdp::enable_server_cert_external_validation>();
-
-    mod_rdp_params.hide_client_name                    = ini.get<cfg::mod_rdp::hide_client_name>();
-
+    mod_rdp_params.hide_client_name = ini.get<cfg::mod_rdp::hide_client_name>();
     mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
-    mod_rdp_params.enable_cache_waiting_list           = ini.get<cfg::mod_rdp::cache_waiting_list>();
-    mod_rdp_params.persist_bitmap_cache_on_disk        = ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>();
-    mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
-    mod_rdp_params.cache_verbose                       = to_verbose_flags(ini.get<cfg::debug::cache>());
+    mod_rdp_params.enable_cache_waiting_list = ini.get<cfg::mod_rdp::cache_waiting_list>();
+    mod_rdp_params.persist_bitmap_cache_on_disk = ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>();
+    mod_rdp_params.password_printing_mode = ini.get<cfg::debug::password>();
+    mod_rdp_params.cache_verbose = to_verbose_flags(ini.get<cfg::debug::cache>());
 
     mod_rdp_params.primary_drawing_orders_support      += parse_primary_drawing_orders(
         ini.get<cfg::mod_rdp::extra_orders>().c_str(),
@@ -596,44 +575,39 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.allow_using_multiple_monitors       = ini.get<cfg::globals::allow_using_multiple_monitors>();
 
     mod_rdp_params.adjust_performance_flags_for_recording
-                                                        = (ini.get<cfg::globals::is_rec>() &&
-                                                            ini.get<cfg::client::auto_adjust_performance_flags>() &&
-                                                            ((ini.get<cfg::video::capture_flags>() &
-                                                            (CaptureFlags::wrm | CaptureFlags::ocr)) !=
-                                                            CaptureFlags::none));
-
-    auto & rap = mod_rdp_params.remote_app_params;
-
-    rap.rail_client_execute = &rail_client_execute;
-    rap.client_execute = rail_client_execute.get_client_execute();
-  
-    bool const rail_is_required = (ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
-        && ((mod_rdp_params.application_params.target_application 
-            && *mod_rdp_params.application_params.target_application)
-         || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
-            && not rap.client_execute.exe_or_file.empty())));
-    
-    rap.should_ignore_first_client_execute = rail_client_execute.should_ignore_first_client_execute();
-    rap.enable_remote_program = ((client_info.remote_program 
-        || (ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() 
-            && ini.get<cfg::context::is_wabam>())) 
+            = (ini.get<cfg::globals::is_rec>() 
+            && ini.get<cfg::client::auto_adjust_performance_flags>() 
+            && ((ini.get<cfg::video::capture_flags>() 
+                & (CaptureFlags::wrm | CaptureFlags::ocr)) != CaptureFlags::none));
+    {
+        auto & rap = mod_rdp_params.remote_app_params;
+        rap.rail_client_execute = &rail_client_execute;
+        rap.client_execute = rail_client_execute.get_client_execute();
+      
+        bool const rail_is_required = (ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
+            && ((mod_rdp_params.application_params.target_application 
+                && *mod_rdp_params.application_params.target_application)
+             || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
+                && not rap.client_execute.exe_or_file.empty())));
+        
+        rap.should_ignore_first_client_execute = rail_client_execute.should_ignore_first_client_execute();
+        rap.enable_remote_program = ((client_info.remote_program 
+            || (ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() 
+                && ini.get<cfg::context::is_wabam>())) 
+                && rail_is_required);
+        rap.remote_program_enhanced = client_info.remote_program_enhanced;
+        rap.convert_remoteapp_to_desktop = (!client_info.remote_program 
+            && ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() 
+            && ini.get<cfg::context::is_wabam>() 
             && rail_is_required);
-    rap.remote_program_enhanced = client_info.remote_program_enhanced;
-    rap.convert_remoteapp_to_desktop = (!client_info.remote_program 
-        && ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() 
-        && ini.get<cfg::context::is_wabam>() 
-        && rail_is_required);
-    rap.use_client_provided_remoteapp = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
-    rap.rail_disconnect_message_delay = ini.get<cfg::context::rail_disconnect_message_delay>();
-    rap.bypass_legal_notice_delay = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay>();
-    rap.bypass_legal_notice_timeout = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout>();
-
-
+        rap.use_client_provided_remoteapp = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
+        rap.rail_disconnect_message_delay = ini.get<cfg::context::rail_disconnect_message_delay>();
+        rap.bypass_legal_notice_delay = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay>();
+        rap.bypass_legal_notice_timeout = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout>();
+    }
 
     mod_rdp_params.clean_up_32_bpp_cursor              = ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
-
     mod_rdp_params.large_pointer_support               = ini.get<cfg::globals::large_pointer_support>();
-
     mod_rdp_params.load_balance_info                   = ini.get<cfg::mod_rdp::load_balance_info>().c_str();
 
     // ======================= File System Params ===================
@@ -767,6 +741,9 @@ void ModuleManager::create_mod_rdp(
         }
         // ================== End Metrics ======================
 
+        unique_fd client_sck = 
+            this->connect_to_target_host(report_message, trkeys::authentification_rdp_fail);
+
         auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
             this->get_mod_wrapper(),
             this->mod_osd,
@@ -782,9 +759,7 @@ void ModuleManager::create_mod_rdp(
             ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
             this->gen,
             this->timeobj,
-            ChannelsAuthorizations(
-                ini.get<cfg::mod_rdp::allow_channels>(),
-                ini.get<cfg::mod_rdp::deny_channels>()),
+            ChannelsAuthorizations(ini.get<cfg::mod_rdp::allow_channels>(),ini.get<cfg::mod_rdp::deny_channels>()),
             mod_rdp_params,
             tls_client_params,
             authentifier,
