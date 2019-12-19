@@ -39,6 +39,8 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
+# include "mod/rdp/params/rdp_session_probe_params.hpp"
+# include "mod/rdp/params/rdp_application_params.hpp"
 
 namespace
 {
@@ -448,7 +450,19 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     return spp;
 }
 
-
+inline static ApplicationParams get_rdp_application_params(Inifile & ini)
+{
+    ApplicationParams ap;
+    ap.alternate_shell = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
+    ap.shell_arguments = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
+    ap.shell_working_dir = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+    ap.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
+    ap.target_application_account = ini.get<cfg::globals::target_application_account>().c_str();
+    ap.target_application_password = ini.get<cfg::globals::target_application_password>().c_str();
+    ap.primary_user_id = ini.get<cfg::globals::primary_user_id>().c_str();
+    ap.target_application = ini.get<cfg::globals::target_application>().c_str();
+    return ap;
+}
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
@@ -467,18 +481,6 @@ void ModuleManager::create_mod_rdp(
         case RdpModeConsole::allow:
             break;
     }
-
-    unique_fd client_sck = [this, &report_message]() {
-            try {
-                return this->connect_to_target_host(
-                    report_message, trkeys::authentification_rdp_fail);
-            }
-            catch (...) {
-                this->front.must_be_stop_capture();
-
-                throw;
-            }
-        }();
 
     // BEGIN READ PROXY_OPT
     if (ini.get<cfg::globals::enable_wab_integration>()) {
@@ -509,9 +511,6 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.perform_automatic_reconnection = ini.get<cfg::context::perform_automatic_reconnection>();
     mod_rdp_params.device_id = ini.get<cfg::globals::device_id>().c_str();
 
-    mod_rdp_params.application_params.primary_user_id = ini.get<cfg::globals::primary_user_id>().c_str();
-    mod_rdp_params.application_params.target_application = ini.get<cfg::globals::target_application>().c_str();
-
     //mod_rdp_params.enable_tls                          = true;
     TLSClientParams tls_client_params;
     tls_client_params.tls_min_level                       = ini.get<cfg::mod_rdp::tls_min_level>();
@@ -538,12 +537,9 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.ignore_auth_channel = ini.get<cfg::mod_rdp::ignore_auth_channel>();
     mod_rdp_params.auth_channel = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
     mod_rdp_params.checkout_channel = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
-    mod_rdp_params.application_params.alternate_shell = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-    mod_rdp_params.application_params.shell_arguments = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
-    mod_rdp_params.application_params.shell_working_dir = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
-    mod_rdp_params.application_params.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
-    mod_rdp_params.application_params.target_application_account = ini.get<cfg::globals::target_application_account>().c_str();
-    mod_rdp_params.application_params.target_application_password = ini.get<cfg::globals::target_application_password>().c_str();
+
+    mod_rdp_params.application_params = get_rdp_application_params(ini);
+
     mod_rdp_params.rdp_compression = ini.get<cfg::mod_rdp::rdp_compression>();
     mod_rdp_params.error_message = &ini.get_mutable_ref<cfg::context::auth_error_message>();
     mod_rdp_params.disconnect_on_logon_user_change = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
@@ -745,6 +741,9 @@ void ModuleManager::create_mod_rdp(
         }
         // ================== End Metrics ======================
 
+        unique_fd client_sck = 
+            this->connect_to_target_host(report_message, trkeys::authentification_rdp_fail);
+
         auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
             this->get_mod_wrapper(),
             this->mod_osd,
@@ -760,9 +759,7 @@ void ModuleManager::create_mod_rdp(
             ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
             this->gen,
             this->timeobj,
-            ChannelsAuthorizations(
-                ini.get<cfg::mod_rdp::allow_channels>(),
-                ini.get<cfg::mod_rdp::deny_channels>()),
+            ChannelsAuthorizations(ini.get<cfg::mod_rdp::allow_channels>(),ini.get<cfg::mod_rdp::deny_channels>()),
             mod_rdp_params,
             tls_client_params,
             authentifier,
