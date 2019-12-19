@@ -662,11 +662,12 @@ public:
                                             front.client_info.window_list_caps,
                                             ini.get<cfg::debug::mod_internal>() & 1);
 
-            ModWrapper mod_wrapper;
 
             windowing_api* winapi = nullptr;
             
-            ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
+            ModOSD mod_osd(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
+            ModWrapper mod_wrapper;
+            mod_osd.mod_wrapper = &mod_wrapper;
 
             ModFactory mod_factory(mod_wrapper, mod_osd, session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;

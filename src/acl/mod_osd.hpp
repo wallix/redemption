@@ -55,12 +55,15 @@
 #include "core/back_event_t.hpp"
 
 #include "core/session_reactor.hpp"
-#include "acl/mod_wrapper.hpp"
+
+class ModWrapper;
 
 class ModOSD : public gdi::GraphicApi
 {
-    const ModWrapper & mod_wrapper;
+public:
+    const ModWrapper * mod_wrapper;
 
+private:
     Rect protected_rect;
     gdi::GraphicApi & drawable;
 
@@ -251,9 +254,8 @@ private:
     const Theme & theme;
 
 public:
-    explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
-    : mod_wrapper(mod_wrapper)
-    , protected_rect(Rect{})
+    explicit ModOSD(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    : protected_rect(Rect{})
     , drawable(graphics)
     , front(front)
     , palette(palette)
@@ -460,7 +462,7 @@ protected:
 //    virtual void refresh_rects(array_view<Rect const>) = 0;
     void refresh_rects(array_view<Rect const> av)
     {
-        this->mod_wrapper.mod->rdp_input_invalidate2(av);
+        this->mod_wrapper->mod->rdp_input_invalidate2(av);
     }
 public:
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap, const ModWrapper & mod_wrapper)
