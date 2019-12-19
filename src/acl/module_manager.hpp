@@ -106,198 +106,6 @@ public:
 
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
 
-    class sock_mod_barrier {};
-
-    template<class Mod>
-    class ModWithSocket final : public mod_api
-    {
-        SocketTransport socket_transport;
-    public:
-        Mod mod;
-    private:
-        ModOSD & mod_osd;
-        ModWrapper & mod_wrapper;
-        Inifile & ini;
-        bool target_info_is_shown = false;
-
-    public:
-        template<class... Args>
-        ModWithSocket(ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini, AuthApi & /*authentifier*/,
-            const char * name, unique_fd sck, uint32_t verbose,
-            std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
-        : socket_transport( name, std::move(sck)
-                         , ini.get<cfg::context::target_host>().c_str()
-                         , ini.get<cfg::context::target_port>()
-                         , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
-                         , to_verbose_flags(verbose), error_message)
-        , mod(this->socket_transport, std::forward<Args>(mod_args)...)
-        , mod_osd(mod_osd)
-        , mod_wrapper(mod_wrapper)
-        , ini(ini)
-        {
-            this->mod_wrapper.set_psocket_transport(&this->socket_transport);
-        }
-
-        ~ModWithSocket()
-        {
-            this->mod_wrapper.set_psocket_transport(nullptr);
-            log_proxy::target_disconnection(
-                this->ini.template get<cfg::context::auth_error_message>().c_str());
-        }
-
-        // from RdpInput
-        void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
-        {
-            //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
-            if (this->mod_osd.try_input_scancode(param1, param2, param3, param4, keymap)) {
-                this->target_info_is_shown = false;
-                return ;
-            }
-
-            this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
-
-            Inifile const& ini = this->ini;
-
-            if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
-                bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
-                if (this->target_info_is_shown && f12_released) {
-                    // LOG(LOG_INFO, "Hide info");
-                    this->mod_osd.clear_osd_message();
-                    this->target_info_is_shown = false;
-                }
-                else if (!this->target_info_is_shown && !f12_released) {
-                    // LOG(LOG_INFO, "Show info");
-                    std::string msg;
-                    msg.reserve(64);
-                    if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
-                        msg  = ini.get<cfg::globals::target_user>();
-                        msg += "@";
-                    }
-                    msg += ini.get<cfg::globals::target_device>();
-                    const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-                    if (enddate) {
-                        const auto now = time(nullptr);
-                        const auto elapsed_time = enddate - now;
-                        // only if "reasonable" time
-                        if (elapsed_time < 60*60*24*366L) {
-                            msg += "  [";
-                            msg += time_before_closing(elapsed_time, Translator(ini));
-                            msg += ']';
-                        }
-                    }
-                    this->mod_osd.osd_message_fn(std::move(msg), false);
-                    this->target_info_is_shown = true;
-                }
-            }
-        }
-
-        // from RdpInput
-        void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
-        {
-            if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap)) {
-                this->target_info_is_shown = false;
-                return ;
-            }
-
-            this->mod.rdp_input_mouse(device_flags, x, y, keymap);
-        }
-
-        // from RdpInput
-        void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
-            this->mod.rdp_input_unicode(unicode, flag);
-        }
-
-        // from RdpInput
-        void rdp_input_invalidate(const Rect r) override
-        {
-            if (this->mod_osd.try_input_invalidate(r)) {
-                return ;
-            }
-
-            this->mod.rdp_input_invalidate(r);
-        }
-
-        // from RdpInput
-        void rdp_input_invalidate2(array_view<Rect const> vr) override
-        {
-            if (this->mod_osd.try_input_invalidate2(vr)) {
-                return ;
-            }
-
-            this->mod.rdp_input_invalidate2(vr);
-        }
-
-        // from RdpInput
-        void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-        {
-            return this->mod.rdp_input_synchronize(time, device_flags, param1, param2);
-        }
-
-        void refresh(Rect clip) override
-        {
-            return this->mod.refresh(clip);
-        }
-
-        // from mod_api
-        [[nodiscard]] bool is_up_and_running() const override { return false; }
-
-        // from mod_api
-        // support auto-reconnection
-        bool is_auto_reconnectable() override {
-            return this->mod.is_auto_reconnectable();
-        }
-
-        // from mod_api
-        void disconnect() override 
-        {
-            return this->mod.disconnect();
-        }
-
-        // from mod_api
-        void display_osd_message(std::string const & message) override 
-        {
-            this->mod_osd.osd_message_fn(message, true);
-            //return this->mod.display_osd_message(message);
-        }
-
-        // from mod_api
-        void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
-        {
-            return this->mod.move_size_widget(left, top, width, height);
-        }
-
-        // from mod_api
-        bool disable_input_event_and_graphics_update(bool disable_input_event, bool disable_graphics_update) override 
-        {
-            return this->mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
-        }
-
-        // from mod_api
-        void send_input(int time, int message_type, int device_flags, int param1, int param2) override 
-        {
-            return this->mod.send_input(time, message_type, device_flags, param1, param2);
-        }
-
-        // from mod_api
-        [[nodiscard]] Dimension get_dim() const override 
-        {
-            return this->mod.get_dim();
-        }
-
-        // from mod_api
-        void log_metrics() override 
-        {
-            return this->mod.log_metrics();
-        }
-
-        // from mod_api
-        void DLP_antivirus_check_channels_files() override
-        {
-            return this->mod.DLP_antivirus_check_channels_files(); 
-        }
-    };
-
-
 public:
     void DLP_antivirus_check_channels_files() {
         this->get_mod_wrapper().mod->DLP_antivirus_check_channels_files();
@@ -379,7 +187,7 @@ public:
     void remove_mod()
     {
         if (this->get_mod_wrapper().has_mod()){
-            this->mod_osd.clear_osd_message();
+            this->mod_osd.clear_osd_message(this->get_mod_wrapper());
             this->get_mod_wrapper().remove_mod();
             this->rdpapi = nullptr;
             this->winapi = nullptr;
@@ -402,8 +210,9 @@ private:
             this->keymap.get_kevent();
         }
 
-        this->mod_osd.clear_osd_message();
+        this->mod_osd.clear_osd_message(this->get_mod_wrapper());
 
+        //TODO: move mod_osd, rdpapi and winapi into ModWrapper
         this->get_mod_wrapper().set_mod(mod.get());
 
         this->rail_module_host_mod_ptr = nullptr;
@@ -463,53 +272,53 @@ public:
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
-            this->set_mod(mod_factory.create_mod_bouncer());
+            this->set_mod(mod_factory.create_mod_bouncer(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TEST:
-            this->set_mod(mod_factory.create_mod_replay());
+            this->set_mod(mod_factory.create_mod_replay(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGETTEST:
-            this->set_mod(mod_factory.create_widget_test_mod());
+            this->set_mod(mod_factory.create_widget_test_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CARD:
-            this->set_mod(mod_factory.create_test_card_mod());
+            this->set_mod(mod_factory.create_test_card_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-            this->set_mod(mod_factory.create_selector_mod());
+            this->set_mod(mod_factory.create_selector_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CLOSE:
-            this->set_mod(mod_factory.create_close_mod());
+            this->set_mod(mod_factory.create_close_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CLOSE_BACK:
-            this->set_mod(mod_factory.create_close_mod_back_to_selector());
+            this->set_mod(mod_factory.create_close_mod_back_to_selector(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TARGET:
-            this->set_mod(mod_factory.create_interactive_target_mod());
+            this->set_mod(mod_factory.create_interactive_target_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-            this->set_mod(mod_factory.create_valid_message_mod());
+            this->set_mod(mod_factory.create_valid_message_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-            this->set_mod(mod_factory.create_display_message_mod());
+            this->set_mod(mod_factory.create_display_message_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
-            this->set_mod(mod_factory.create_dialog_challenge_mod());
+            this->set_mod(mod_factory.create_dialog_challenge_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WAIT_INFO:
-            this->set_mod(mod_factory.create_wait_info_mod());
+            this->set_mod(mod_factory.create_wait_info_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TRANSITION:
-            this->set_mod(mod_factory.create_transition_mod());
+            this->set_mod(mod_factory.create_transition_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGET_LOGIN: 
-            this->set_mod(mod_factory.create_login_mod());
+            this->set_mod(mod_factory.create_login_mod(), nullptr, nullptr);
         break;
 
         case MODULE_XUP: {
             unique_fd client_sck = this->connect_to_target_host(
                     report_message, trkeys::authentification_x_fail);
 
-            this->set_mod(mod_factory.create_xup_mod(client_sck));
+            this->set_mod(mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
 
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             this->connected = true;
