@@ -245,66 +245,9 @@ class Session
         }
     }
 
-    bool front_starting(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, Inifile& ini, ModuleManager & mm, Front & front, Authentifier & authentifier)
+    bool front_starting(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & front_signal, ModuleManager & mm, Front & front)
     {
         bool run_session = true;
-        SessionReactor::EnableGraphics enable_graphics{false};
-        try {
-            session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
-                return mm.get_graphic_wrapper();
-            });
-        } catch (Error const& e) {
-            switch (this->check_exception(e, ini)){
-            case 3:
-                if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                    set_server_redirection_target(ini, authentifier);
-                    session_reactor.signal = BACK_EVENT_RETRY_CURRENT;
-                }
-                else {
-                    LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
-                    signal = BackEvent_t(session_reactor.signal);
-                    mm.invoke_close_box(false, auth_error_message, signal, authentifier, authentifier);
-                    session_reactor.signal = signal;
-                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                        return false;
-                    }
-                }
-            break;
-            case 2:
-                if (acl){
-                    ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-                }
-                else {
-                    LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
-
-                    signal = BackEvent_t(session_reactor.signal);
-                    mm.invoke_close_box(false, auth_error_message, signal, authentifier, authentifier);
-                    session_reactor.signal = signal;
-                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                        return false;
-                    }
-                }
-            break;
-            case 1:
-                session_reactor.signal = BACK_EVENT_RETRY_CURRENT;
-            break;
-            default:
-                LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
-
-                signal = BackEvent_t(session_reactor.signal);
-                mm.invoke_close_box(false, auth_error_message, signal, authentifier, authentifier);
-                session_reactor.signal = signal;
-                if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                    return false;
-                }
-            break;
-            }
-        }
-
         session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
             return io_fd_isset(fd, ioswitch.rfds);
         });
@@ -828,7 +771,7 @@ public:
                     if (!acl && front.is_in_nla() && !mm.last_module) {
                         this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
-                    run_session = this->front_starting(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, ini, mm, front, authentifier);
+                    run_session = this->front_starting(front_is_set, ioswitch, session_reactor, front_signal, mm, front);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
