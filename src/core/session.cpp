@@ -610,9 +610,11 @@ public:
                     }
                 }
 
+                LOG(LOG_INFO, "mod_trans (1)");
                 auto mod_trans = mod_wrapper.get_mod_transport();
                 
                 if (mod_trans && !mod_trans->has_pending_data()) {
+                    LOG(LOG_INFO, "mod_trans don't have pending data (2)");
                     if (mod_trans->has_waiting_data()){
                         sck_no_read.sck_mod = mod_trans->sck;
                         ioswitch.set_write_sck(sck_no_read.sck_mod);
@@ -623,7 +625,17 @@ public:
                 }
 
                 if (acl) {
+                    LOG(LOG_INFO, "read acl (1)");
                     ioswitch.set_read_sck(acl->auth_trans.sck);
+                }
+
+                // We should check we are able to write on acl socket
+                if (front.state == Front::PRIMARY_AUTH_NLA) {
+                    LOG(LOG_INFO, "primary auth nla (1) user=%s", this->ini.get<cfg::globals::nla_auth_user>());
+                    if ((this->ini.is_asked<cfg::context::nla_password_hash>())
+                        && this->ini.get<cfg::client::enable_nla>()) {
+                        acl->acl_serial.send_acl_data();
+                    }
                 }
 
                 if (front_trans.has_pending_data()
@@ -702,6 +714,16 @@ public:
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
                         return io_fd_isset(fd, ioswitch.rfds);
                     });
+
+
+                    // Incoming data from ACL
+                    if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
+                        // authentifier received updated values
+                        acl->acl_serial.receive();
+                        if (!ini.changed_field_size()) {
+                            session_reactor.execute_sesman(ini);
+                        }
+                    }
 
                     // front event
                     try {
