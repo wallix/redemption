@@ -606,9 +606,6 @@ public:
 
                 Select ioswitch(default_timeout);
 
-                SessionReactor::EnableGraphics enable_graphics{front.state == Front::UP_AND_RUNNING};
-                // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
-
                 SckNoRead sck_no_read;
 
                 if (front_trans.has_waiting_data()) {
@@ -647,7 +644,7 @@ public:
 
 
                 session_reactor.for_each_fd(
-                    enable_graphics,
+                    SessionReactor::EnableGraphics{front.state == Front::UP_AND_RUNNING},
                     [&](int fd){
                         if (!sck_no_read.contains(fd)) {
                             ioswitch.set_read_sck(fd);
@@ -658,7 +655,7 @@ public:
                 now = tvtime();
                 session_reactor.set_current_time(now);
                 ioswitch.set_timeout(
-                        session_reactor.get_next_timeout(enable_graphics, ioswitch.get_timeout(now)));
+                        session_reactor.get_next_timeout(SessionReactor::EnableGraphics{front.state == Front::UP_AND_RUNNING}, ioswitch.get_timeout(now)));
 
                 int num = ioswitch.select(now);
 
