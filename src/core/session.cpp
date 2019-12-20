@@ -710,12 +710,17 @@ public:
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
                 SckNoRead sck_no_read;
-                this->set_fds_front(
-                    sck_no_read,
-                    ioswitch, session_reactor, enable_graphics,
-                    front_trans, mod_wrapper.get_mod_transport(),
-                    mod_wrapper.get_mod()->is_up_and_running(),
-                    mm.validator_fd, acl);
+                if (front_trans.has_waiting_data()) {
+                    LOG(LOG_INFO, "front_trans.has_waiting_data()");
+                    ioswitch.set_write_sck(front_trans.sck);
+                    sck_no_read.sck_front = front_trans.sck;
+                }
+                else {
+                    ioswitch.set_read_sck(front_trans.sck);
+                    if (mm.validator_fd > 0) {
+                        ioswitch.set_read_sck(mm.validator_fd);
+                    }
+                }
 
                 this->set_fds_mod(
                     sck_no_read,
