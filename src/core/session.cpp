@@ -245,7 +245,7 @@ class Session
         }
     }
 
-    bool front_starting(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & front_signal, ModuleManager & mm, Front & front)
+    bool front_starting(bool const front_is_set, const Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & front_signal, ModuleManager & mm, Front & front)
     {
         bool run_session = true;
         session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
