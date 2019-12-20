@@ -708,7 +708,6 @@ public:
                 case Front::PRIMARY_AUTH_NLA:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    SessionReactor::EnableGraphics enable_graphics{false};
                     if (!acl && front.is_in_nla() && !mm.last_module) {
                         this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
@@ -761,7 +760,6 @@ public:
                 default:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    SessionReactor::EnableGraphics enable_graphics{false};
                     if (!acl && front.is_in_nla() && !mm.last_module) {
                         this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
