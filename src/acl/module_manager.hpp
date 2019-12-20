@@ -187,7 +187,7 @@ public:
     void remove_mod()
     {
         if (this->get_mod_wrapper().has_mod()){
-            this->mod_osd.clear_osd_message(this->get_mod_wrapper());
+            this->get_mod_wrapper().clear_osd_message();
             this->get_mod_wrapper().remove_mod();
             this->rdpapi = nullptr;
             this->winapi = nullptr;
@@ -210,7 +210,7 @@ private:
             this->keymap.get_kevent();
         }
 
-        this->mod_osd.clear_osd_message(this->get_mod_wrapper());
+        this->get_mod_wrapper().clear_osd_message();
 
         //TODO: move mod_osd, rdpapi and winapi into ModWrapper
         this->get_mod_wrapper().set_mod(mod.get());

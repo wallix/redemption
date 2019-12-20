@@ -66,7 +66,7 @@ public:
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
         //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
-        if (this->mod_osd.try_input_scancode(param1, param2, param3, param4, keymap, this->mod_wrapper)) {
+        if (this->mod_wrapper.try_input_scancode(param1, param2, param3, param4, keymap)) {
             this->target_info_is_shown = false;
             return ;
         }
@@ -79,7 +79,7 @@ public:
             bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
             if (this->target_info_is_shown && f12_released) {
                 // LOG(LOG_INFO, "Hide info");
-                this->mod_osd.clear_osd_message(this->mod_wrapper);
+                this->mod_wrapper.clear_osd_message();
                 this->target_info_is_shown = false;
             }
             else if (!this->target_info_is_shown && !f12_released) {
@@ -102,7 +102,7 @@ public:
                         msg += ']';
                     }
                 }
-                this->mod_osd.osd_message_fn(std::move(msg), false, this->mod_wrapper);
+                this->mod_wrapper.osd_message_fn(std::move(msg), false);
                 this->target_info_is_shown = true;
             }
         }
@@ -111,7 +111,7 @@ public:
     // from RdpInput
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
-        if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap, this->mod_wrapper)) {
+        if (this->mod_wrapper.try_input_mouse(device_flags, x, y, keymap)) {
             this->target_info_is_shown = false;
             return ;
         }
@@ -127,7 +127,7 @@ public:
     // from RdpInput
     void rdp_input_invalidate(const Rect r) override
     {
-        if (this->mod_osd.try_input_invalidate(r, this->mod_wrapper)) {
+        if (this->mod_wrapper.try_input_invalidate(r)) {
             return ;
         }
 
@@ -137,7 +137,7 @@ public:
     // from RdpInput
     void rdp_input_invalidate2(array_view<Rect const> vr) override
     {
-        if (this->mod_osd.try_input_invalidate2(vr, this->mod_wrapper)) {
+        if (this->mod_wrapper.try_input_invalidate2(vr)) {
             return ;
         }
 
@@ -173,7 +173,7 @@ public:
     // from mod_api
     void display_osd_message(std::string const & message) override 
     {
-        this->mod_osd.osd_message_fn(message, true, this->mod_wrapper);
+        this->mod_wrapper.osd_message_fn(message, true);
         //return this->mod.display_osd_message(message);
     }
 

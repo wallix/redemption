@@ -271,43 +271,7 @@ public:
 
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
 
-    void disable_osd(const ModWrapper & mod_wrapper)
-    {
-        this->is_disable_by_input = false;
-        auto const protected_rect = this->get_protected_rect();
-        this->set_protected_rect(Rect{});
 
-        if (this->bogus_refresh_rect_ex) {
-            mod_wrapper.mod->rdp_suppress_display_updates();
-            mod_wrapper.mod->rdp_allow_display_updates(0, 0,
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height);
-        }
-
-        if (this->winapi) {
-            this->winapi->destroy_auxiliary_window();
-        }
-
-        mod_wrapper.mod->rdp_input_invalidate(protected_rect);
-    }
-
-    void clear_osd_message(const ModWrapper & mod_wrapper)
-    {
-        if (!this->get_protected_rect().isempty()) {
-            this->disable_osd(mod_wrapper);
-        }
-    }
-
-    void osd_message_fn(std::string message, bool is_disable_by_input, const ModWrapper & mod_wrapper)
-    {
-        if (message != this->get_message()) {
-            this->clear_osd_message(mod_wrapper);
-        }
-        if (!message.empty()) {
-            this->set_message(std::move(message), is_disable_by_input);
-            this->draw_osd_message();
-        }
-    }
 
     [[nodiscard]] const char* get_message() const {
         return this->osd_message.c_str();
@@ -362,66 +326,6 @@ public:
         this->graphics.end_update();
     }
 
-    bool try_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap, const ModWrapper & mod_wrapper)
-    {
-        (void)param1;
-        (void)param2;
-        (void)param3;
-        (void)param4;
-        if (this->is_disable_by_input
-         && keymap->nb_kevent_available() > 0
-//             && !(param3 & SlowPath::KBDFLAGS_DOWN)
-         && keymap->top_kevent() == Keymap2::KEVENT_INSERT
-        ) {
-            keymap->get_kevent();
-            this->disable_osd(mod_wrapper);
-            return true;
-        }
-        return false;
-    }
-
-    bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/, const ModWrapper & mod_wrapper)
-    {
-        if (this->is_disable_by_input
-         && this->get_protected_rect().contains_pt(x, y)
-         && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-            this->disable_osd(mod_wrapper);
-            return true;
-        }
-        return false;
-    }
-
-    bool try_input_invalidate(const Rect r, const ModWrapper & mod_wrapper)
-    {
-        if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
-            auto rects = gdi::subrect4(r, this->get_protected_rect());
-            auto p = std::begin(rects);
-            auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
-                return rect.isempty();
-            });
-            if (p != e) {
-                mod_wrapper.mod->rdp_input_invalidate2({p, e});
-                this->clip = r.intersect(this->get_protected_rect());
-            }
-            return true;
-        }
-        return false;
-    }
-
-    bool try_input_invalidate2(array_view<Rect const> vr, const ModWrapper & mod_wrapper)
-    {
-        // TODO PERF multi opaque rect
-        bool ret = false;
-        for (Rect const & r : vr) {
-            if (!this->try_input_invalidate(r, mod_wrapper)) {
-                mod_wrapper.mod->rdp_input_invalidate(r);
-            }
-            else {
-                ret = true;
-            }
-        }
-        return ret;
-    }
 
 private:
     void draw_osd_message_impl(gdi::GraphicApi & drawable)
@@ -464,81 +368,6 @@ protected:
     {
         this->mod_wrapper->mod->rdp_input_invalidate2(av);
     }
-public:
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap, const ModWrapper & mod_wrapper)
-    {
-        if (!this->try_input_scancode(param1, param2, param3, param4, keymap, mod_wrapper)) {
-            mod_wrapper.mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-    }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag, const ModWrapper & mod_wrapper)
-    {
-        mod_wrapper.mod->rdp_input_unicode(unicode, flag);
-    }
-
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap, const ModWrapper & mod_wrapper)
-    {
-        if (!this->try_input_mouse(device_flags, x, y, keymap, mod_wrapper)) {
-            mod_wrapper.mod->rdp_input_mouse(device_flags, x, y, keymap);
-        }
-    }
-
-    void rdp_input_invalidate(Rect r, const ModWrapper & mod_wrapper)
-    {
-        if (!this->try_input_invalidate(r, mod_wrapper)) {
-            mod_wrapper.mod->rdp_input_invalidate(r);
-        }
-    }
-
-    void rdp_input_invalidate2(array_view<Rect const> vr, const ModWrapper & mod_wrapper)
-    {
-        if (!this->try_input_invalidate2(vr, mod_wrapper)) {
-            mod_wrapper.mod->rdp_input_invalidate2(vr);
-        }
-    }
-
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2, const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->rdp_input_synchronize(time, device_flags, param1, param2); }
-
-    void rdp_input_up_and_running(const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->rdp_input_up_and_running(); }
-
-    void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom, const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->rdp_allow_display_updates(left, top, right, bottom); }
-
-    void rdp_suppress_display_updates(const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->rdp_suppress_display_updates(); }
-
-    void refresh(Rect r, const ModWrapper & mod_wrapper)
-    {
-        mod_wrapper.mod->refresh(r);
-    }
-
-    void send_to_mod_channel(
-        CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
-        std::size_t length, uint32_t flags, const ModWrapper & mod_wrapper
-    )
-    { mod_wrapper.mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
-
-    void send_auth_channel_data(const char * data, const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->send_auth_channel_data(data); }
-
-    void send_checkout_channel_data(const char * data, const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->send_checkout_channel_data(data); }
-
-    [[nodiscard]] bool is_up_and_running(const ModWrapper & mod_wrapper) const
-    { return mod_wrapper.mod->is_up_and_running(); }
-
-    void disconnect(const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->disconnect(); }
-
-    void display_osd_message(std::string const & message, const ModWrapper & mod_wrapper)
-    { mod_wrapper.mod->display_osd_message(message); }
-
-    [[nodiscard]] Dimension get_dim(const ModWrapper & mod_wrapper) const
-    {
-        return mod_wrapper.mod->get_dim();
-    }
 };
 
