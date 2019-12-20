@@ -96,12 +96,12 @@ public:
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
-        this->mod_wrapper.set_psocket_transport(&this->socket_transport);
+        this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
     ~ModWithSocketAndMetrics()
     {
-        this->mod_wrapper.set_psocket_transport(nullptr);
+        this->mod_wrapper.set_mod_transport(nullptr);
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
     }

@@ -709,11 +709,29 @@ public:
                 SessionReactor::EnableGraphics enable_graphics{front.state == Front::UP_AND_RUNNING};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
-                auto const sck_no_read = this->set_fds(
+                SckNoRead sck_no_read;
+                this->set_fds_front(
+                    sck_no_read,
                     ioswitch, session_reactor, enable_graphics,
-                    front_trans, mod_wrapper.get_socket(),
+                    front_trans, mod_wrapper.get_mod_transport(),
                     mod_wrapper.get_mod()->is_up_and_running(),
                     mm.validator_fd, acl);
+
+                this->set_fds_mod(
+                    sck_no_read,
+                    ioswitch, session_reactor, enable_graphics,
+                    front_trans, mod_wrapper.get_mod_transport(),
+                    mod_wrapper.get_mod()->is_up_and_running(),
+                    mm.validator_fd, acl);
+
+                session_reactor.for_each_fd(
+                    enable_graphics,
+                    [&](int fd){
+                        if (!sck_no_read.contains(fd)) {
+                            ioswitch.set_read_sck(fd);
+                        }
+                    }
+                );
 
                 // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
                 now = tvtime();
@@ -748,7 +766,7 @@ public:
                     continue;
                 }
 
-                this->send_waiting_data(ioswitch, sck_no_read, mod_wrapper.get_socket(), front_trans, acl);
+                this->send_waiting_data(ioswitch, sck_no_read, mod_wrapper.get_mod_transport(), front_trans, acl);
 
                 now = tvtime();
                 session_reactor.set_current_time(now);
@@ -937,7 +955,8 @@ private:
 //         }
     }
 
-    static SckNoRead set_fds(
+    void set_fds_front(
+        SckNoRead & sck_no_read,
         Select& ioswitch,
         SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
         SocketTransport const& front_trans,
@@ -946,22 +965,36 @@ private:
         int validator_fd,
         std::unique_ptr<Acl> const& acl)
     {
-        SckNoRead sck_no_read;
-
         if (front_trans.has_waiting_data()) {
+            LOG(LOG_INFO, "front_trans.has_waiting_data()");
             ioswitch.set_write_sck(front_trans.sck);
             sck_no_read.sck_front = front_trans.sck;
         }
-        else if (mod_up_and_running || !bool(enable_graphics)) {
+        else {
             ioswitch.set_read_sck(front_trans.sck);
-
             if (validator_fd > 0) {
                 ioswitch.set_read_sck(validator_fd);
             }
         }
-
+    }
+    
+    
+    void set_fds_mod(
+        SckNoRead & sck_no_read,
+        Select& ioswitch,
+        SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
+        SocketTransport const& front_trans,
+        SocketTransport const * mod_trans,
+        bool mod_up_and_running,
+        int validator_fd,
+        std::unique_ptr<Acl> const& acl)
+    {
         if (mod_trans && !mod_trans->has_pending_data()) {
-            if (sck_no_read.sck_front != INVALID_SOCKET) {
+            if (mod_trans->has_waiting_data()){
+                sck_no_read.sck_mod = mod_trans->sck;
+                ioswitch.set_write_sck(sck_no_read.sck_mod);
+            }
+            else if (sck_no_read.sck_front != INVALID_SOCKET) {
                 sck_no_read.sck_mod = mod_trans->sck;
             }
         }
@@ -975,17 +1008,6 @@ private:
         || (acl && acl->auth_trans.has_pending_data())){
             ioswitch.immediate_wakeup(session_reactor.get_current_time());
         }
-
-        session_reactor.for_each_fd(
-            enable_graphics,
-            [&](int fd){
-                if (!sck_no_read.contains(fd)) {
-                    ioswitch.set_read_sck(fd);
-                }
-            }
-        );
-
-        return sck_no_read;
     }
 };
 

@@ -366,8 +366,11 @@ protected:
         this->mod->rdp_input_invalidate2(av);
     }
 
+private:
+    SocketTransport * psocket_transport = nullptr;
+
 public:
-    SocketTransport * psocket_transport;
+
     null_mod no_mod;
     mod_api* mod = &no_mod;
 
@@ -395,9 +398,9 @@ public:
         return this->mod;
     }
 
-    // TODO: merge with set_mod() (use nullptr for not connected sockets)
-    void set_psocket_transport(SocketTransport * psocket_transport)
+    void set_mod_transport(SocketTransport * psocket_transport)
     {
+        LOG(LOG_INFO, "set_mod_transport %p", psocket_transport);
         this->psocket_transport = psocket_transport;
     }
 
@@ -407,13 +410,9 @@ public:
         this->mod = mod;
     }
     
-    [[nodiscard]] bool has_pending_data() const
+    [[nodiscard]] SocketTransport* get_mod_transport() const noexcept
     {
-        return this->psocket_transport && this->psocket_transport->has_pending_data();
-    }
-
-    [[nodiscard]] SocketTransport* get_socket() const noexcept
-    {
+        LOG(LOG_INFO, "get_mod_transport %p", psocket_transport);
         return this->psocket_transport;
     }
 
