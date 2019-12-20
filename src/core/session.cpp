@@ -248,46 +248,6 @@ class Session
     bool front_starting(bool const front_is_set, const Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & front_signal, ModuleManager & mm, Front & front)
     {
         bool run_session = true;
-        session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-            return io_fd_isset(fd, ioswitch.rfds);
-        });
-
-        // front event
-        try {
-            if (session_reactor.has_front_event()) {
-                session_reactor.execute_callbacks(mm.get_callback());
-            }
-
-            if (front_is_set) {
-                front.rbuf.load_data(front.trans);
-                while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
-                {
-                    bytes_view tpdu = front.rbuf.current_pdu_buffer();
-                    uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                    front.incoming(tpdu, current_pdu_type, mm.get_callback());
-                }
-            }
-        } catch (Error const& e) {
-            if (ERR_DISCONNECT_BY_USER == e.id) {
-                front_signal = BACK_EVENT_NEXT;
-            }
-            else {
-                if (
-                    // Can be caused by client disconnect.
-                    (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                    // Can be caused by client disconnect.
-                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                    (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                    // Can be caused by wabwatchdog.
-                    (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                    LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                }
-                return false;
-            }
-        } catch (...) {
-            LOG(LOG_ERR, "Proxy data processing raised unknown error");
-            return false;
-        }
         return run_session;
     }
 
@@ -764,6 +724,59 @@ public:
                     }
                 }
                 break;
+                case Front::PRIMARY_AUTH_NLA:
+                {
+                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                    SessionReactor::EnableGraphics enable_graphics{false};
+                    if (!acl && front.is_in_nla() && !mm.last_module) {
+                        this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+                    }
+
+                    session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+                        return io_fd_isset(fd, ioswitch.rfds);
+                    });
+
+                    // front event
+                    try {
+                        if (session_reactor.has_front_event()) {
+                            session_reactor.execute_callbacks(mm.get_callback());
+                        }
+
+                        if (front_is_set) {
+                            front.rbuf.load_data(front.trans);
+                            while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
+                            {
+                                bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                                uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                                front.incoming(tpdu, current_pdu_type, mm.get_callback());
+                            }
+                        }
+                    } catch (Error const& e) {
+                        if (ERR_DISCONNECT_BY_USER == e.id) {
+                            front_signal = BACK_EVENT_NEXT;
+                        }
+                        else {
+                            if (
+                                // Can be caused by client disconnect.
+                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                                // Can be caused by client disconnect.
+                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                                // Can be caused by wabwatchdog.
+                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                            }
+                            run_session = false;
+                        }
+                    } catch (...) {
+                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
+                        run_session = false;
+                    }
+                    if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        run_session = false;
+                    }
+                }
+                break;
                 default:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
@@ -771,11 +784,51 @@ public:
                     if (!acl && front.is_in_nla() && !mm.last_module) {
                         this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
-                    run_session = this->front_starting(front_is_set, ioswitch, session_reactor, front_signal, mm, front);
+                    session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+                        return io_fd_isset(fd, ioswitch.rfds);
+                    });
+
+                    // front event
+                    try {
+                        if (session_reactor.has_front_event()) {
+                            session_reactor.execute_callbacks(mm.get_callback());
+                        }
+
+                        if (front_is_set) {
+                            front.rbuf.load_data(front.trans);
+                            while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
+                            {
+                                bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                                uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                                front.incoming(tpdu, current_pdu_type, mm.get_callback());
+                            }
+                        }
+                    } catch (Error const& e) {
+                        if (ERR_DISCONNECT_BY_USER == e.id) {
+                            front_signal = BACK_EVENT_NEXT;
+                        }
+                        else {
+                            if (
+                                // Can be caused by client disconnect.
+                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                                // Can be caused by client disconnect.
+                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                                // Can be caused by wabwatchdog.
+                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                            }
+                            run_session = false;
+                        }
+                    } catch (...) {
+                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
+                        run_session = false;
+                    }
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
                 }
+                break;
                 }
             }
             if (mm.get_mod()) {
