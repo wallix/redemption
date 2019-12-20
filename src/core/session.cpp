@@ -114,6 +114,10 @@ class Session
             return 0ms;
         }
 
+        bool is_set(int fd){
+            return fd != INVALID_SOCKET && io_fd_isset(fd, this->wfds);
+        };
+
         void set_read_sck(int sck)
         {
             this->max = prepare_fds(sck, this->max, this->rfds);
@@ -723,14 +727,8 @@ public:
                     }
                 }
 
-//                this->set_fds_mod(
-//                    sck_no_read,
-//                    ioswitch, session_reactor, enable_graphics,
-//                    front_trans, mod_wrapper.get_mod_transport(),
-//                    mod_wrapper.get_mod()->is_up_and_running(),
-//                    mm.validator_fd, acl);
-
                 auto mod_trans = mod_wrapper.get_mod_transport();
+                
                 if (mod_trans && !mod_trans->has_pending_data()) {
                     if (mod_trans->has_waiting_data()){
                         sck_no_read.sck_mod = mod_trans->sck;
@@ -794,7 +792,15 @@ public:
                     continue;
                 }
 
-                this->send_waiting_data(ioswitch, sck_no_read, mod_wrapper.get_mod_transport(), front_trans, acl);
+                {
+                    if (ioswitch.is_set(sck_no_read.sck_mod)) {
+                        mod_trans->send_waiting_data();
+                    }
+
+                    if (ioswitch.is_set(sck_no_read.sck_front)) {
+                        front_trans.send_waiting_data();
+                    }
+                }
 
                 now = tvtime();
                 session_reactor.set_current_time(now);
@@ -957,30 +963,6 @@ private:
         }
 
         return client_sck;
-    }
-
-    static void send_waiting_data(
-        Select& ioswitch,
-        SckNoRead const& sck_no_read,
-        SocketTransport* mod_trans,
-        SocketTransport& front_trans,
-        std::unique_ptr<Acl>& /*acl*/)
-    {
-        auto is_set = [&ioswitch](int fd){
-            return fd != INVALID_SOCKET && io_fd_isset(fd, ioswitch.wfds);
-        };
-
-        if (is_set(sck_no_read.sck_mod)) {
-            mod_trans->send_waiting_data();
-        }
-
-        if (is_set(sck_no_read.sck_front)) {
-            front_trans.send_waiting_data();
-        }
-
-//         if (is_set(sck_no_read.sck_acl)) {
-//             acl->auth_trans.send_waiting_data();
-//         }
     }
 };
 
