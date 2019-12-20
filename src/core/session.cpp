@@ -245,18 +245,11 @@ class Session
         }
     }
 
-    bool front_starting(bool const front_is_set, const Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & front_signal, ModuleManager & mm, Front & front)
-    {
-        bool run_session = true;
-        return run_session;
-    }
-
     bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
     {
         bool run_session = true;
-        SessionReactor::EnableGraphics enable_graphics{true};
         try {
-            session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
+            session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mm.get_graphic_wrapper();
             });
         } catch (Error const& e) {
@@ -662,24 +655,12 @@ public:
                     }
                 );
 
-                // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
                 now = tvtime();
                 session_reactor.set_current_time(now);
                 ioswitch.set_timeout(
                         session_reactor.get_next_timeout(enable_graphics, ioswitch.get_timeout(now)));
 
-                // 0 if tv < tv_now : returns immediately
-        //                ioswitch.timeoutastv = to_timeval(
-        //                                        session_reactor.get_next_timeout(enable_graphics, timeout)
-        //                                      - now);
-                // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
-                // session_reactor.timer_events_.info(tv_now);
-
                 int num = ioswitch.select(now);
-
-                // for (unsigned i = 0; i <= max; ++i) {
-                //     LOG(LOG_DEBUG, "fd %u is set %d", i, io_fd_isset(i, rfds));
-                // }
 
                 if (num < 0) {
                     if (errno == EINTR) {
