@@ -317,7 +317,7 @@ class Session
             }
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
-                while (front.rbuf.next(front.is_in_nla()?(TpduBuffer::CREDSSP):(TpduBuffer::PDU)))
+                while (front.rbuf.next(TpduBuffer::PDU))
                 {
                     bytes_view tpdu = front.rbuf.current_pdu_buffer();
                     uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
@@ -585,16 +585,6 @@ public:
 
             bool run_session = true;
 
-            // TODO: we should define some select object to wrap rfds, wfds and timeouts
-            // and hide events inside modules managing sockets (or timers)
-            // this should help in the future to generalise architecture
-            // to multiple simultaneous fronts and mods. It should also simplify
-            // module manager. Complexity of module transition should be hidden behind module
-            // managers
-
-            // fd_set wfds;
-            // io_fd_zero(wfds);
-
             using namespace std::chrono_literals;
 
             timeval now = tvtime();
@@ -705,7 +695,7 @@ public:
                 case Front::PRIMARY_AUTH_NLA:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    if (!acl && front.is_in_nla() && !mm.last_module) {
+                    if (!acl && !mm.last_module) {
                         this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
 
@@ -757,9 +747,6 @@ public:
                 default:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    if (!acl && front.is_in_nla() && !mm.last_module) {
-                        this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
-                    }
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
                         return io_fd_isset(fd, ioswitch.rfds);
                     });

@@ -2617,11 +2617,6 @@ public:
     // TODO: this should be extracted
     TpduBuffer rbuf;
 
-    bool is_in_nla()
-    {
-        return (this->state == PRIMARY_AUTH_NLA);
-    }
-
     void front_nla(Transport & trans, bytes_view data)
     {
         LOG(LOG_INFO, "starting NLA NegoServer");

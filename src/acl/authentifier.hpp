@@ -92,11 +92,11 @@ public:
         LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "auth::~Authentifier");
     }
 
-    void receive() {
-        if (this->acl_serial){
-            this->acl_serial->receive();
-        }
-    }
+//    void receive() {
+//        if (this->acl_serial){
+//            this->acl_serial->receive();
+//        }
+//    }
 
     void set_auth_channel_target(const char * target) override {
         if (this->acl_serial){
