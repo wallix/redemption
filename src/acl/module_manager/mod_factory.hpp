@@ -53,7 +53,6 @@
 class ModFactory
 {
     ModWrapper & mod_wrapper;
-    ModOSD & mod_osd;
     SessionReactor & session_reactor;
     ClientInfo & client_info;
     FrontAPI & front;
@@ -65,9 +64,8 @@ class ModFactory
     
 
 public:
-    ModFactory(ModWrapper & mod_wrapper, ModOSD & mod_osd, SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
+    ModFactory(ModWrapper & mod_wrapper, SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
-        , mod_osd(mod_osd)
         , session_reactor(session_reactor)
         , client_info(client_info)
         , front(front)
@@ -412,7 +410,6 @@ public:
 
         auto new_mod = new XupModWithSocket(
             this->mod_wrapper,
-            this->mod_osd,
             this->ini,
             name,
             std::move(client_sck),

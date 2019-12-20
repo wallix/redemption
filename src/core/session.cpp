@@ -344,7 +344,7 @@ class Session
         return run_session;
     }
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModOSD & mod_osd, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
     {
         bool run_session = true;
         SessionReactor::EnableGraphics enable_graphics{true};
@@ -468,12 +468,12 @@ class Session
                                     ).to_string();
                                 
                             bool is_disable_by_input = true;
-                            if (message != mod_osd.get_message()) {
-                                mod_osd.clear_osd_message(mod_wrapper);
+                            if (message != mod_wrapper.get_message()) {
+                                mod_wrapper.clear_osd_message();
                             }
                             if (!message.empty()) {
-                                mod_osd.set_message(std::move(message), is_disable_by_input);
-                                mod_osd.draw_osd_message();
+                                mod_wrapper.set_message(std::move(message), is_disable_by_input);
+                                mod_wrapper.draw_osd_message();
                             }
                         }
                     }
@@ -566,11 +566,11 @@ class Session
                             language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
                         if (!mes.empty()) {
                             bool is_disable_by_input = true;
-                            if (mes != mod_osd.get_message()) {
-                                mod_osd.clear_osd_message(mod_wrapper);
+                            if (mes != mod_wrapper.get_message()) {
+                                mod_wrapper.clear_osd_message();
                             }
-                            mod_osd.set_message(std::move(mes), is_disable_by_input);
-                            mod_osd.draw_osd_message();
+                            mod_wrapper.set_message(std::move(mes), is_disable_by_input);
+                            mod_wrapper.draw_osd_message();
                         }
                     }
                 }
@@ -665,13 +665,11 @@ public:
 
             windowing_api* winapi = nullptr;
             
-            ModOSD mod_osd(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
-            ModWrapper mod_wrapper;
-            mod_osd.mod_wrapper = &mod_wrapper;
+            ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
-            ModFactory mod_factory(mod_wrapper, mod_osd, session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
+            ModFactory mod_factory(mod_wrapper, session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
-            ModuleManager mm(end_session_warning, mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, glyphs, theme, this->ini, cctx, rnd, timeobj);
+            ModuleManager mm(end_session_warning, mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
@@ -713,7 +711,9 @@ public:
 
                 auto const sck_no_read = this->set_fds(
                     ioswitch, session_reactor, enable_graphics,
-                    front_trans, mm, acl);
+                    front_trans, mod_wrapper.get_socket(),
+                    mod_wrapper.get_mod()->is_up_and_running(),
+                    mm.validator_fd, acl);
 
                 // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
                 now = tvtime();
@@ -748,7 +748,7 @@ public:
                     continue;
                 }
 
-                this->send_waiting_data(ioswitch, sck_no_read, front_trans, mm, acl);
+                this->send_waiting_data(ioswitch, sck_no_read, mod_wrapper.get_socket(), front_trans, acl);
 
                 now = tvtime();
                 session_reactor.set_current_time(now);
@@ -763,7 +763,7 @@ public:
                         this->start_acl_running(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_osd, mod_wrapper, end_session_warning, front, authentifier);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
@@ -916,8 +916,8 @@ private:
     static void send_waiting_data(
         Select& ioswitch,
         SckNoRead const& sck_no_read,
+        SocketTransport* mod_trans,
         SocketTransport& front_trans,
-        ModuleManager& mm,
         std::unique_ptr<Acl>& /*acl*/)
     {
         auto is_set = [&ioswitch](int fd){
@@ -925,7 +925,7 @@ private:
         };
 
         if (is_set(sck_no_read.sck_mod)) {
-            mm.get_mod_wrapper().get_socket()->send_waiting_data();
+            mod_trans->send_waiting_data();
         }
 
         if (is_set(sck_no_read.sck_front)) {
@@ -941,7 +941,9 @@ private:
         Select& ioswitch,
         SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
         SocketTransport const& front_trans,
-        ModuleManager const& mm,
+        SocketTransport const * mod_trans,
+        bool mod_up_and_running,
+        int validator_fd,
         std::unique_ptr<Acl> const& acl)
     {
         SckNoRead sck_no_read;
@@ -950,21 +952,17 @@ private:
             ioswitch.set_write_sck(front_trans.sck);
             sck_no_read.sck_front = front_trans.sck;
         }
-        else if (mm.get_mod()->is_up_and_running() || !bool(enable_graphics)) {
+        else if (mod_up_and_running || !bool(enable_graphics)) {
             ioswitch.set_read_sck(front_trans.sck);
 
-            if (mm.validator_fd > 0) {
-                ioswitch.set_read_sck(mm.validator_fd);
+            if (validator_fd > 0) {
+                ioswitch.set_read_sck(validator_fd);
             }
         }
 
-        if (mm.get_mod_wrapper().get_socket() && !mm.get_mod_wrapper().has_pending_data()) {
-            if (mm.get_mod_wrapper().get_socket()->has_waiting_data()) {
-                sck_no_read.sck_mod = mm.get_mod_wrapper().get_socket()->sck;
-                ioswitch.set_write_sck(sck_no_read.sck_mod);
-            }
-            else if (sck_no_read.sck_front != INVALID_SOCKET) {
-                sck_no_read.sck_mod = mm.get_mod_wrapper().get_socket()->sck;
+        if (mod_trans && !mod_trans->has_pending_data()) {
+            if (sck_no_read.sck_front != INVALID_SOCKET) {
+                sck_no_read.sck_mod = mod_trans->sck;
             }
         }
 
@@ -973,7 +971,7 @@ private:
         }
 
         if (front_trans.has_pending_data()
-        || mm.get_mod_wrapper().has_pending_data()
+        || (mod_trans && mod_trans->has_pending_data())
         || (acl && acl->auth_trans.has_pending_data())){
             ioswitch.immediate_wakeup(session_reactor.get_current_time());
         }

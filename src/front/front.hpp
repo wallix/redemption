@@ -4988,6 +4988,7 @@ public:
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
+        LOG(LOG_INFO, "Input event scancode");
         bool tsk_switch_shortcuts;
 
         struct KeyboardFlags {

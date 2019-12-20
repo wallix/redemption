@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "acl/mod_osd.hpp"
 #include "mod/xup/xup.hpp"
 #include "acl/mod_wrapper.hpp"
 #include "acl/time_before_closing.hpp"
@@ -33,13 +32,12 @@ class XupModWithSocket final : public mod_api
 public:
     xup_mod mod;
 private:
-    ModOSD & mod_osd;
     ModWrapper & mod_wrapper;
     Inifile & ini;
     bool target_info_is_shown = false;
 
 public:
-    XupModWithSocket(ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini,
+    XupModWithSocket(ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, uint32_t verbose, std::string * error_message, 
         SessionReactor& session_reactor, FrontAPI& front, uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp)
     : socket_transport( name, std::move(sck)
@@ -48,7 +46,6 @@ public:
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
     , mod(this->socket_transport, session_reactor, front, front_width, front_height, context_bpp)
-    , mod_osd(mod_osd)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
@@ -65,7 +62,7 @@ public:
     // from RdpInput
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
+        //LOG(LOG_INFO, "mod_wrapper::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
         if (this->mod_wrapper.try_input_scancode(param1, param2, param3, param4, keymap)) {
             this->target_info_is_shown = false;
             return ;

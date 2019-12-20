@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "acl/mod_osd.hpp"
 #include "acl/end_session_warning.hpp"
 
 #include "acl/module_manager/mod_factory.hpp"
@@ -113,8 +112,8 @@ public:
 
     gdi::GraphicApi & get_graphic_wrapper()
     {
-        gdi::GraphicApi& gd = this->mod_osd.get_protected_rect().isempty()
-          ? this->graphics : this->mod_osd;
+        gdi::GraphicApi& gd = this->mod_wrapper.get_protected_rect().isempty()
+          ? this->graphics : this->mod_wrapper;
         if (this->rail_module_host_mod_ptr) {
             return this->rail_module_host_mod_ptr->proxy_gd(gd);
         }
@@ -133,7 +132,6 @@ private:
     Keymap2 & keymap;
     ClientInfo & client_info;
     ClientExecute & rail_client_execute;
-    ModOSD & mod_osd;
     Random & gen;
     TimeObj & timeobj;
 
@@ -162,7 +160,7 @@ private:
     Theme & theme;
 
 public:
-    ModuleManager(EndSessionWarning & end_session_warning, ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+    ModuleManager(EndSessionWarning & end_session_warning, ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : mod_factory(mod_factory)
         , mod_wrapper(mod_wrapper)
         , ini(ini)
@@ -173,7 +171,6 @@ public:
         , keymap(keymap)
         , client_info(client_info)
         , rail_client_execute(rail_client_execute)
-        , mod_osd(mod_osd)
         , gen(gen)
         , timeobj(timeobj)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
@@ -212,7 +209,7 @@ private:
 
         this->get_mod_wrapper().clear_osd_message();
 
-        //TODO: move mod_osd, rdpapi and winapi into ModWrapper
+        //TODO: move rdpapi and winapi into ModWrapper
         this->get_mod_wrapper().set_mod(mod.get());
 
         this->rail_module_host_mod_ptr = nullptr;

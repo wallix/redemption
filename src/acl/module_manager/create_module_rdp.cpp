@@ -177,13 +177,12 @@ public:
     }
 
 private:
-    ModOSD & mod_osd;
     ModWrapper & mod_wrapper;
     Inifile & ini;
     bool target_info_is_shown = false;
 
 public:
-    ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, ModOSD & mod_osd, Inifile & ini,
+    ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, uint32_t verbose
       , std::string * error_message
       , SessionReactor& session_reactor
@@ -215,7 +214,6 @@ public:
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
-    , mod_osd(mod_osd)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
@@ -232,8 +230,8 @@ public:
     // from RdpInput
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
-        if (this->mod_osd.try_input_scancode(param1, param2, param3, param4, keymap, this->mod_wrapper)) {
+        //LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
+        if (this->mod_wrapper.try_input_scancode(param1, param2, param3, param4, keymap)) {
             this->target_info_is_shown = false;
             return ;
         }
@@ -246,7 +244,7 @@ public:
             bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
             if (this->target_info_is_shown && f12_released) {
                 // LOG(LOG_INFO, "Hide info");
-                this->mod_osd.clear_osd_message(this->mod_wrapper);
+                this->mod_wrapper.clear_osd_message();
                 this->target_info_is_shown = false;
             }
             else if (!this->target_info_is_shown && !f12_released) {
@@ -269,7 +267,7 @@ public:
                         msg += ']';
                     }
                 }
-                this->mod_osd.osd_message_fn(std::move(msg), false, this->mod_wrapper);
+                this->mod_wrapper.osd_message_fn(std::move(msg), false);
                 this->target_info_is_shown = true;
             }
         }
@@ -278,7 +276,7 @@ public:
     // from RdpInput
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
-        if (this->mod_osd.try_input_mouse(device_flags, x, y, keymap, this->mod_wrapper)) {
+        if (this->mod_wrapper.try_input_mouse(device_flags, x, y, keymap)) {
             this->target_info_is_shown = false;
             return ;
         }
@@ -294,7 +292,7 @@ public:
     // from RdpInput
     void rdp_input_invalidate(const Rect r) override
     {
-        if (this->mod_osd.try_input_invalidate(r, this->mod_wrapper)) {
+        if (this->mod_wrapper.try_input_invalidate(r)) {
             return ;
         }
 
@@ -304,7 +302,7 @@ public:
     // from RdpInput
     void rdp_input_invalidate2(array_view<Rect const> vr) override
     {
-        if (this->mod_osd.try_input_invalidate2(vr, this->mod_wrapper)) {
+        if (this->mod_wrapper.try_input_invalidate2(vr)) {
             return ;
         }
 
@@ -340,7 +338,7 @@ public:
     // from mod_api
     void display_osd_message(std::string const & message) override 
     {
-        this->mod_osd.osd_message_fn(message, true, this->mod_wrapper);
+        this->mod_wrapper.osd_message_fn(message, true);
         //return this->mod.display_osd_message(message);
     }
 
@@ -745,8 +743,7 @@ void ModuleManager::create_mod_rdp(
             this->connect_to_target_host(report_message, trkeys::authentification_rdp_fail);
 
         auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
-            this->get_mod_wrapper(),
-            this->mod_osd,
+            this->mod_wrapper,
             this->ini,
             name,
             std::move(client_sck),
@@ -852,11 +849,11 @@ void ModuleManager::create_mod_rdp(
     if (ini.get<cfg::globals::bogus_refresh_rect>() &&
         ini.get<cfg::globals::allow_using_multiple_monitors>() &&
         (client_info.cs_monitor.monitorCount > 1)) {
-        this->get_mod_wrapper().mod->rdp_suppress_display_updates();
-        this->get_mod_wrapper().mod->rdp_allow_display_updates(0, 0,
+        this->mod_wrapper.mod->rdp_suppress_display_updates();
+        this->mod_wrapper.mod->rdp_allow_display_updates(0, 0,
             client_info.screen_info.width, client_info.screen_info.height);
     }
-    this->get_mod_wrapper().mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
+    this->mod_wrapper.mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
     ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
     this->connected = true;
