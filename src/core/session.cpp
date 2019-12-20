@@ -710,6 +710,7 @@ public:
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
                 SckNoRead sck_no_read;
+
                 if (front_trans.has_waiting_data()) {
                     LOG(LOG_INFO, "front_trans.has_waiting_data()");
                     ioswitch.set_write_sck(front_trans.sck);
@@ -722,12 +723,34 @@ public:
                     }
                 }
 
-                this->set_fds_mod(
-                    sck_no_read,
-                    ioswitch, session_reactor, enable_graphics,
-                    front_trans, mod_wrapper.get_mod_transport(),
-                    mod_wrapper.get_mod()->is_up_and_running(),
-                    mm.validator_fd, acl);
+//                this->set_fds_mod(
+//                    sck_no_read,
+//                    ioswitch, session_reactor, enable_graphics,
+//                    front_trans, mod_wrapper.get_mod_transport(),
+//                    mod_wrapper.get_mod()->is_up_and_running(),
+//                    mm.validator_fd, acl);
+
+                auto mod_trans = mod_wrapper.get_mod_transport();
+                if (mod_trans && !mod_trans->has_pending_data()) {
+                    if (mod_trans->has_waiting_data()){
+                        sck_no_read.sck_mod = mod_trans->sck;
+                        ioswitch.set_write_sck(sck_no_read.sck_mod);
+                    }
+                    else if (sck_no_read.sck_front != INVALID_SOCKET) {
+                        sck_no_read.sck_mod = mod_trans->sck;
+                    }
+                }
+
+                if (acl) {
+                    ioswitch.set_read_sck(acl->auth_trans.sck);
+                }
+
+                if (front_trans.has_pending_data()
+                || (mod_trans && mod_trans->has_pending_data())
+                || (acl && acl->auth_trans.has_pending_data())){
+                    ioswitch.immediate_wakeup(session_reactor.get_current_time());
+                }
+
 
                 session_reactor.for_each_fd(
                     enable_graphics,
@@ -958,61 +981,6 @@ private:
 //         if (is_set(sck_no_read.sck_acl)) {
 //             acl->auth_trans.send_waiting_data();
 //         }
-    }
-
-    void set_fds_front(
-        SckNoRead & sck_no_read,
-        Select& ioswitch,
-        SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
-        SocketTransport const& front_trans,
-        SocketTransport const * mod_trans,
-        bool mod_up_and_running,
-        int validator_fd,
-        std::unique_ptr<Acl> const& acl)
-    {
-        if (front_trans.has_waiting_data()) {
-            LOG(LOG_INFO, "front_trans.has_waiting_data()");
-            ioswitch.set_write_sck(front_trans.sck);
-            sck_no_read.sck_front = front_trans.sck;
-        }
-        else {
-            ioswitch.set_read_sck(front_trans.sck);
-            if (validator_fd > 0) {
-                ioswitch.set_read_sck(validator_fd);
-            }
-        }
-    }
-    
-    
-    void set_fds_mod(
-        SckNoRead & sck_no_read,
-        Select& ioswitch,
-        SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
-        SocketTransport const& front_trans,
-        SocketTransport const * mod_trans,
-        bool mod_up_and_running,
-        int validator_fd,
-        std::unique_ptr<Acl> const& acl)
-    {
-        if (mod_trans && !mod_trans->has_pending_data()) {
-            if (mod_trans->has_waiting_data()){
-                sck_no_read.sck_mod = mod_trans->sck;
-                ioswitch.set_write_sck(sck_no_read.sck_mod);
-            }
-            else if (sck_no_read.sck_front != INVALID_SOCKET) {
-                sck_no_read.sck_mod = mod_trans->sck;
-            }
-        }
-
-        if (acl) {
-            ioswitch.set_read_sck(acl->auth_trans.sck);
-        }
-
-        if (front_trans.has_pending_data()
-        || (mod_trans && mod_trans->has_pending_data())
-        || (acl && acl->auth_trans.has_pending_data())){
-            ioswitch.immediate_wakeup(session_reactor.get_current_time());
-        }
     }
 };
 
