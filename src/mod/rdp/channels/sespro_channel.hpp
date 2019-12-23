@@ -1243,7 +1243,7 @@ public:
                             {
                                 char message[4096];
 
-                                // rule, app_name, app_cmd_line, dst_addr, dst_port
+                                // rule, app_name, app_cmd_line
                                 snprintf(message, sizeof(message), "%s|%s|%s",
                                     description.c_str(), parameters_[1].c_str(), parameters_[2].c_str());
 
@@ -1269,6 +1269,47 @@ public:
                                     this->mod.display_osd_message(message);
                                 }
                             }
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "ACCOUNT_MANIPULATION_BLOCKED") ||
+                         !::strcasecmp(order_.c_str(), "ACCOUNT_MANIPULATION_DETECTED")) {
+                    bool deny = (!::strcasecmp(order_.c_str(), "ACCOUNT_MANIPULATION_BLOCKED"));
+
+                    if (parameters_.size() == 5) {
+                        this->log6(
+                            deny ? LogId::ACCOUNT_MANIPULATION_BLOCKED : LogId::ACCOUNT_MANIPULATION_DETECTED, {
+                            KVLog("server_name"_av,  parameters_[0]),
+                            KVLog("group_name"_av,   parameters_[1]),
+                            KVLog("account_name"_av, parameters_[2]),
+                            KVLog("app_name"_av,     parameters_[3]),
+                            KVLog("app_cmd_line"_av, parameters_[4]),
+                        });
+
+                        {
+                            char message[4096];
+
+                            // server_name, group_name, account_name, app_name, app_cmd_line
+                            snprintf(message, sizeof(message), "%s|%s|%s|%s|%s",
+                                parameters_[0].c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
+                                parameters_[3].c_str(), parameters_[4].c_str());
+
+                            this->report_message.report(
+                                (deny ? "ACCOUNTMANIPULATION_DENY" : "ACCOUNTMANIPULATION_NOTIFY"),
+                                message);
+                        }
+
+                        if (deny) {
+                            char message[4096];
+
+                            this->tr.fmt(message, sizeof(message),
+                                trkeys::account_manipulation_blocked_security_policies,
+                                parameters_[3].c_str());
+
+                            this->mod.display_osd_message(message);
                         }
                     }
                     else {

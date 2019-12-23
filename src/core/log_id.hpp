@@ -41,6 +41,7 @@ enum class LogCategoryId
     Kbd,
     Protocol,
     count,
+    AccountManipulation
 };
 
 template<>
@@ -112,6 +113,8 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(WEB_NAVIGATION, Web)                                       \
     f(WEB_PRIVACY_IMPACTED, Web)                                 \
     f(WEB_THIRD_PARTY_URL_BLOCKED, Web)                          \
+    f(ACCOUNT_MANIPULATION_BLOCKED, AccountManipulation)         \
+    f(ACCOUNT_MANIPULATION_DETECTED, AccountManipulation)        \
     f(TEXT_VERIFICATION, FileVerification)
 
 
