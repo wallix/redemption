@@ -185,6 +185,10 @@ namespace trkeys
         "The process '%s' was interrupted in accordance with security policies.",
         "Le processus '%s' a été interrompu conformément aux politiques de sécurité."
     );
+    TR_KV_FMT(account_manipulation_blocked_security_policies,
+        "The account manipulation initiated by process '%s' was rejected in accordance with security policies.",
+        "L'édition de compte d'utilisateur effectuée via le processus '%s' a été rejeté conformément aux politiques de sécurité."
+    );
     TR_KV(session_logoff_in_progress,
         "Session logoff in progress.",
         "Fermeture de session en cours."

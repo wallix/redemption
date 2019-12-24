@@ -380,6 +380,9 @@ bool AgentDataExtractor::extract_list(Av data)
             case LogId::SESSION_ESTABLISHED_SUCCESSFULLY:
                 return false;
             // unknown old id (or invalid id in old format)
+            case LogId::ACCOUNT_MANIPULATION_BLOCKED:
+            case LogId::ACCOUNT_MANIPULATION_DETECTED:
+                return line_with_5_var("server_name"_av, "group_name"_av, "account_name"_av, "app_name"_av, "app_cmd_line"_av);
             default:
                 LOG(LOG_WARNING,
                     "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
@@ -459,6 +462,8 @@ bool AgentDataExtractor::relevant_log_id(LogId id) noexcept
         case LogId::NOTIFY_PATTERN_DETECTED:
         case LogId::SESSION_DISCONNECTION:
         case LogId::TEXT_VERIFICATION:
+        case LogId::ACCOUNT_MANIPULATION_BLOCKED:
+        case LogId::ACCOUNT_MANIPULATION_DETECTED:
             ;
     }
     return true;
