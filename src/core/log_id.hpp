@@ -40,8 +40,8 @@ enum class LogCategoryId
     Probe,
     Kbd,
     Protocol,
-    count,
-    AccountManipulation
+    AccountManipulation,
+    count
 };
 
 template<>
