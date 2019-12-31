@@ -925,7 +925,7 @@ public:
         if (this->formAccountConnectionPanel.line_edit_panel._PWDField.text().toStdString() !=  std::string(""))
             return this->formAccountConnectionPanel.line_edit_panel._PWDField.text().toStdString();
 
-        return std::string(" ");
+        return std::string("");
     }
 
     int get_portField() {
