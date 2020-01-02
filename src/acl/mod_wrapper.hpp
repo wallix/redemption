@@ -291,6 +291,11 @@ public:
         return gd;
     }
 
+    Callback & get_callback() noexcept
+    {
+        return *this->get_mod();
+    }
+
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
 
     [[nodiscard]] const char* get_message() const {

@@ -313,7 +313,7 @@ class Session
         // front event
         try {
             if (session_reactor.has_front_event()) {
-                session_reactor.execute_callbacks(mm.get_callback(mod_wrapper));
+                session_reactor.execute_callbacks(mod_wrapper.get_callback());
             }
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
@@ -321,7 +321,7 @@ class Session
                 {
                     bytes_view tpdu = front.rbuf.current_pdu_buffer();
                     uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                    front.incoming(tpdu, current_pdu_type, mm.get_callback(mod_wrapper));
+                    front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
                 }
             }
         } catch (Error const& e) {
@@ -728,7 +728,7 @@ public:
                     // front event
                     try {
                         if (session_reactor.has_front_event()) {
-                            session_reactor.execute_callbacks(mm.get_callback(mod_wrapper));
+                            session_reactor.execute_callbacks(mod_wrapper.get_callback());
                         }
 
                         if (front_is_set) {
@@ -737,7 +737,7 @@ public:
                             {
                                 bytes_view tpdu = front.rbuf.current_pdu_buffer();
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                                front.incoming(tpdu, current_pdu_type, mm.get_callback(mod_wrapper));
+                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
                             }
                         }
                     } catch (Error const& e) {
@@ -776,7 +776,7 @@ public:
                     // front event
                     try {
                         if (session_reactor.has_front_event()) {
-                            session_reactor.execute_callbacks(mm.get_callback(mod_wrapper));
+                            session_reactor.execute_callbacks(mod_wrapper.get_callback());
                         }
 
                         if (front_is_set) {
@@ -785,7 +785,7 @@ public:
                             {
                                 bytes_view tpdu = front.rbuf.current_pdu_buffer();
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                                front.incoming(tpdu, current_pdu_type, mm.get_callback(mod_wrapper));
+                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
                             }
                         }
                     } catch (Error const& e) {

@@ -85,13 +85,6 @@ public:
 
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
 
-public:
-
-    Callback & get_callback(ModWrapper & mod_wrapper) noexcept
-    {
-        return *mod_wrapper.get_mod();
-    }
-
 private:
     FrontAPI & front;
     Keymap2 & keymap;
