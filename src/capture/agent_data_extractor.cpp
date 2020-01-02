@@ -186,6 +186,37 @@ bool AgentDataExtractor::extract_list(Av data)
             }
             return false;
         };
+        auto line_with_6_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5, Av var6) {
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const text = ileft(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
+                    auto const text2 = ileft(remaining, subitem_separator2);
+                    auto const remaining2 = right(remaining, subitem_separator2);
+                    if (auto const subitem_separator3 = find(remaining2, '\x01')) {
+                        auto const text3 = ileft(remaining2, subitem_separator3);
+                        auto const remaining3 = right(remaining2, subitem_separator3);
+                        if (auto const subitem_separator4 = find(remaining3, '\x01')) {
+                            auto const text4 = ileft(remaining3, subitem_separator4);
+                            auto const remaining4 = right(remaining3, subitem_separator4);
+                            if (auto const subitem_separator5 = find(remaining4, '\x01')) {
+                                auto const text5 = ileft(remaining4, subitem_separator5);
+                                auto const text6 = right(remaining4, subitem_separator5);
+                                return kv_list(
+                                    KVLog(var1, text),
+                                    KVLog(var2, text2),
+                                    KVLog(var3, text3),
+                                    KVLog(var4, text4),
+                                    KVLog(var5, text5),
+                                    KVLog(var6, text6)
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        };
         auto line_with_7_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5, Av var6, Av var7) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
                 auto const text = ileft(parameters, subitem_separator);
@@ -382,7 +413,7 @@ bool AgentDataExtractor::extract_list(Av data)
             // unknown old id (or invalid id in old format)
             case LogId::ACCOUNT_MANIPULATION_BLOCKED:
             case LogId::ACCOUNT_MANIPULATION_DETECTED:
-                return line_with_5_var("server_name"_av, "group_name"_av, "account_name"_av, "app_name"_av, "app_cmd_line"_av);
+                return line_with_6_var("operation"_av, "server_name"_av, "group_name"_av, "account_name"_av, "app_name"_av, "app_cmd_line"_av);
             default:
                 LOG(LOG_WARNING,
                     "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
