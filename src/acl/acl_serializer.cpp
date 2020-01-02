@@ -90,7 +90,7 @@ bool KeepAlive::check(time_t now, Inifile & ini)
         // Keep alive timeout
         if (now > this->timeout) {
             LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            // mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),"Missed keepalive from ACL", signal, now, authentifier);
+            // mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),"Missed keepalive from ACL", signal, now, authentifier);
             return true;
         }
 
@@ -140,7 +140,7 @@ bool Inactivity::check_user_activity(time_t now, bool & has_user_activity)
     if (!has_user_activity) {
         if (now > this->last_activity_time + this->inactivity_timeout) {
             LOG(LOG_INFO, "Session User inactivity : closing");
-            // mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),"Connection closed on inactivity", signal, now, authentifier);
+            // mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),"Connection closed on inactivity", signal, now, authentifier);
             return true;
         }
     }
@@ -524,7 +524,7 @@ void AclSerializer::close_session_log()
 }
 
 bool AclSerializer::check(
-    AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm,
+    AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm, ModWrapper & mod_wrapper,
     time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity)
 {
     // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
@@ -545,7 +545,7 @@ bool AclSerializer::check(
     if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
         LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
         const char * message = TR(trkeys::session_out_time, language(this->ini));
-        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(), message, signal, authentifier, report_message);
+        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), message, signal, authentifier, report_message);
 
         return true;
     }
@@ -556,13 +556,13 @@ bool AclSerializer::check(
         LOG(LOG_INFO, "Close by Rejected message received : %s",
             this->ini.get<cfg::context::rejected>());
         this->ini.set_acl<cfg::context::rejected>("");
-        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
+        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
         return true;
     }
 
     // Keep Alive
     if (this->keepalive.check(now, this->ini)) {
-        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),
+        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
             TR(trkeys::miss_keepalive, language(this->ini)),
             signal, authentifier, report_message
         );
@@ -571,7 +571,7 @@ bool AclSerializer::check(
 
     // Inactivity management
     if (this->inactivity.check_user_activity(now, has_user_activity)) {
-        mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(),
+        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
             TR(trkeys::close_inactivity, language(this->ini)),
             signal, authentifier, report_message
         );
@@ -590,8 +590,8 @@ bool AclSerializer::check(
             this->remote_answer = false;
             this->send_acl_data();
             if (signal == BACK_EVENT_NEXT) {
-                mm.remove_mod();
-                mm.new_mod(MODULE_INTERNAL_TRANSITION, authentifier, report_message);
+                mm.remove_mod(mod_wrapper);
+                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION, authentifier, report_message);
             }
         }
         if (signal == BACK_EVENT_REFRESH) {
@@ -633,18 +633,18 @@ bool AclSerializer::check(
 
             signal = BACK_EVENT_NONE;
             if (next_state == MODULE_INTERNAL_CLOSE) {
-                mm.invoke_close_box(ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
+                mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
                 return true;
             }
             if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                 this->keepalive.stop();
             }
-            if (mm.get_mod()) {
-                mm.get_mod()->disconnect();
+            if (mod_wrapper.get_mod()) {
+                mod_wrapper.get_mod()->disconnect();
             }
-            mm.remove_mod();
+            mm.remove_mod(mod_wrapper);
             try {
-                mm.new_mod(next_state, authentifier, report_message);
+                mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
             }
             catch (Error const& e) {
                 if (e.id == ERR_SOCKET_CONNECT_FAILED) {
@@ -697,7 +697,7 @@ bool AclSerializer::check(
                     const char*    account              = this->ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
                     const char*    password             = this->ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
 
-                    rdp_api* rdpapi = mm.get_rdp_api();
+                    rdp_api* rdpapi = mm.get_rdp_api(mod_wrapper);
 
                     if (!exec_result) {
                         //LOG(LOG_INFO,
@@ -743,7 +743,7 @@ bool AclSerializer::check(
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
                 // If set, transmit to auth_channel channel
-                mm.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
+                mod_wrapper.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
                 // Erase the context variable
                 this->ini.get_mutable_ref<cfg::context::auth_channel_answer>().clear();
             }
@@ -757,14 +757,14 @@ bool AclSerializer::check(
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::pm_response>().empty()) {
                 // If set, transmit to auth_channel channel
-                mm.get_mod()->send_checkout_channel_data(this->ini.get<cfg::context::pm_response>().c_str());
+                mod_wrapper.get_mod()->send_checkout_channel_data(this->ini.get<cfg::context::pm_response>().c_str());
                 // Erase the context variable
                 this->ini.get_mutable_ref<cfg::context::pm_response>().clear();
             }
         }
 
         if (!this->ini.get<cfg::context::rd_shadow_type>().empty()) {
-            mm.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
+            mod_wrapper.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
                 this->ini.get<cfg::context::rd_shadow_type>().c_str());
 
             this->ini.get_mutable_ref<cfg::context::rd_shadow_type>().clear();

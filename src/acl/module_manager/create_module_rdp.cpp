@@ -463,7 +463,7 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
 }
 
 
-void ModuleManager::create_mod_rdp(
+void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
@@ -747,7 +747,7 @@ void ModuleManager::create_mod_rdp(
             this->connect_to_target_host(report_message, trkeys::authentification_rdp_fail);
 
         auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
-            this->mod_wrapper,
+            mod_wrapper,
             this->ini,
             name,
             std::move(client_sck),
@@ -829,14 +829,14 @@ void ModuleManager::create_mod_rdp(
                 !ini.get<cfg::globals::is_rec>()
             );
 
-            this->set_mod(host_mod, nullptr, &rail_client_execute);
-            this->rail_module_host_mod_ptr = host_mod;
+            this->set_mod(mod_wrapper, host_mod, nullptr, &rail_client_execute);
+            mod_wrapper.rail_module_host_mod_ptr = host_mod;
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
             rdp_api*       rdpapi = &(new_mod.get()->mod);
             windowing_api* winapi = new_mod->mod.get_windowing_api();
-            this->set_mod(new_mod.release(), rdpapi, winapi);
+            this->set_mod(mod_wrapper, new_mod.release(), rdpapi, winapi);
         }
 
         /* If provided by connection policy, session timeout update */
@@ -853,11 +853,11 @@ void ModuleManager::create_mod_rdp(
     if (ini.get<cfg::globals::bogus_refresh_rect>() &&
         ini.get<cfg::globals::allow_using_multiple_monitors>() &&
         (client_info.cs_monitor.monitorCount > 1)) {
-        this->mod_wrapper.mod->rdp_suppress_display_updates();
-        this->mod_wrapper.mod->rdp_allow_display_updates(0, 0,
+        mod_wrapper.mod->rdp_suppress_display_updates();
+        mod_wrapper.mod->rdp_allow_display_updates(0, 0,
             client_info.screen_info.width, client_info.screen_info.height);
     }
-    this->mod_wrapper.mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
+    mod_wrapper.mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
     ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
     this->connected = true;

@@ -70,23 +70,6 @@ class ReportMessageApi;
 class ModuleManager
 {
     ModFactory & mod_factory;
-    ModWrapper & mod_wrapper;
-public:
-
-    ModWrapper & get_mod_wrapper() const
-    {
-        return mod_wrapper;
-    }
-
-    mod_api* get_mod()
-    {
-        return this->mod_wrapper.get_mod();
-    }
-
-    [[nodiscard]] mod_api const* get_mod() const
-    {
-        return this->mod_wrapper.get_mod();
-    }
 
 public:
     bool last_module{false};
@@ -95,8 +78,8 @@ public:
     bool is_connected() {
         return this->connected;
     }
-    bool is_up_and_running() {
-        return this->mod_wrapper.is_up_and_running();
+    bool is_up_and_running(ModWrapper & mod_wrapper) {
+        return mod_wrapper.is_up_and_running();
     }
 
     Inifile& ini;
@@ -106,27 +89,26 @@ public:
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
 
 public:
-    void DLP_antivirus_check_channels_files() {
-        this->get_mod_wrapper().mod->DLP_antivirus_check_channels_files();
+    void DLP_antivirus_check_channels_files(ModWrapper & mod_wrapper) {
+        mod_wrapper.get_mod()->DLP_antivirus_check_channels_files();
     }
 
-    gdi::GraphicApi & get_graphic_wrapper()
+    gdi::GraphicApi & get_graphic_wrapper(ModWrapper & mod_wrapper)
     {
-        gdi::GraphicApi& gd = this->mod_wrapper.get_protected_rect().isempty()
-          ? this->graphics : this->mod_wrapper;
-        if (this->rail_module_host_mod_ptr) {
-            return this->rail_module_host_mod_ptr->proxy_gd(gd);
+        gdi::GraphicApi& gd = mod_wrapper.get_protected_rect().isempty()
+          ? this->graphics : mod_wrapper;
+        if (mod_wrapper.rail_module_host_mod_ptr) {
+            return mod_wrapper.rail_module_host_mod_ptr->proxy_gd(gd);
         }
         return gd;
     }
 
-    Callback & get_callback() noexcept
+    Callback & get_callback(ModWrapper & mod_wrapper) noexcept
     {
-        return *this->get_mod_wrapper().mod;
+        return *mod_wrapper.get_mod();
     }
 
 private:
-    RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
     Keymap2 & keymap;
@@ -151,7 +133,6 @@ public:
     int validator_fd = -1;
 
 private:
-    rdp_api*       rdpapi = nullptr;
 
     windowing_api* &winapi;
 
@@ -162,7 +143,6 @@ private:
 public:
     ModuleManager(EndSessionWarning & end_session_warning, ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : mod_factory(mod_factory)
-        , mod_wrapper(mod_wrapper)
         , ini(ini)
         , session_reactor(session_reactor)
         , cctx(cctx)
@@ -181,24 +161,24 @@ public:
     {
     }
 
-    void remove_mod()
+    void remove_mod(ModWrapper & mod_wrapper)
     {
-        if (this->get_mod_wrapper().has_mod()){
-            this->get_mod_wrapper().clear_osd_message();
-            this->get_mod_wrapper().remove_mod();
-            this->rdpapi = nullptr;
-            this->winapi = nullptr;
-            this->rail_module_host_mod_ptr = nullptr;
+        if (mod_wrapper.has_mod()){
+            mod_wrapper.clear_osd_message();
+            mod_wrapper.remove_mod();
+            mod_wrapper.rdpapi = nullptr;
+            mod_wrapper.winapi = nullptr;
+            mod_wrapper.rail_module_host_mod_ptr = nullptr;
         }
     }
 
     ~ModuleManager()
     {
-        this->remove_mod();
+//        this->remove_mod(mod_wrapper);
     }
 
 private:
-    void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
+    void set_mod(ModWrapper & mod_wrapper, not_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
     {
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -207,18 +187,18 @@ private:
             this->keymap.get_kevent();
         }
 
-        this->get_mod_wrapper().clear_osd_message();
+        mod_wrapper.clear_osd_message();
 
         //TODO: move rdpapi and winapi into ModWrapper
-        this->get_mod_wrapper().set_mod(mod.get());
+        mod_wrapper.set_mod(mod.get());
 
-        this->rail_module_host_mod_ptr = nullptr;
-        this->rdpapi = rdpapi;
-        this->winapi = winapi;
+        mod_wrapper.rail_module_host_mod_ptr = nullptr;
+        mod_wrapper.rdpapi = rdpapi;
+        mod_wrapper.winapi = winapi;
     }
 
 public:
-    void new_mod(ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
+    void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
     {
         if (target_module != MODULE_INTERNAL_TRANSITION) {
             LOG(LOG_INFO, "----------> ACL new_mod <--------");
@@ -269,53 +249,53 @@ public:
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
-            this->set_mod(mod_factory.create_mod_bouncer(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_mod_bouncer(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TEST:
-            this->set_mod(mod_factory.create_mod_replay(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_mod_replay(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGETTEST:
-            this->set_mod(mod_factory.create_widget_test_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_widget_test_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CARD:
-            this->set_mod(mod_factory.create_test_card_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_test_card_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-            this->set_mod(mod_factory.create_selector_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_selector_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CLOSE:
-            this->set_mod(mod_factory.create_close_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_close_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CLOSE_BACK:
-            this->set_mod(mod_factory.create_close_mod_back_to_selector(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_close_mod_back_to_selector(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TARGET:
-            this->set_mod(mod_factory.create_interactive_target_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_interactive_target_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-            this->set_mod(mod_factory.create_valid_message_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_valid_message_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-            this->set_mod(mod_factory.create_display_message_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_display_message_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
-            this->set_mod(mod_factory.create_dialog_challenge_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_dialog_challenge_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WAIT_INFO:
-            this->set_mod(mod_factory.create_wait_info_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_wait_info_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TRANSITION:
-            this->set_mod(mod_factory.create_transition_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_transition_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGET_LOGIN: 
-            this->set_mod(mod_factory.create_login_mod(), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_login_mod(), nullptr, nullptr);
         break;
 
         case MODULE_XUP: {
             unique_fd client_sck = this->connect_to_target_host(
                     report_message, trkeys::authentification_x_fail);
 
-            this->set_mod(mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
+            this->set_mod(mod_wrapper, mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
 
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             this->connected = true;
@@ -323,7 +303,7 @@ public:
         }
 
         case MODULE_RDP:
-            this->create_mod_rdp(
+            this->create_mod_rdp(mod_wrapper,
                 authentifier, report_message, this->ini,
                 this->graphics, this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags,
@@ -331,7 +311,7 @@ public:
             break;
 
         case MODULE_VNC:
-            this->create_mod_vnc(
+            this->create_mod_vnc(mod_wrapper,
                 authentifier, report_message, this->ini,
                 this->graphics, this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags);
@@ -343,11 +323,11 @@ public:
         }
     }
 
-    [[nodiscard]] rdp_api* get_rdp_api() const {
-        return this->rdpapi;
+    [[nodiscard]] rdp_api* get_rdp_api(ModWrapper & mod_wrapper) const {
+        return mod_wrapper.rdpapi;
     }
 
-    void invoke_close_box(
+    void invoke_close_box(ModWrapper & mod_wrapper,
         bool enable_close_box,
         const char * auth_error_message, BackEvent_t & signal,
         AuthApi & authentifier, ReportMessageApi & report_message)
@@ -357,18 +337,18 @@ public:
         if (auth_error_message) {
             this->ini.set<cfg::context::auth_error_message>(auth_error_message);
         }
-        if (this->get_mod_wrapper().has_mod()) {
+        if (mod_wrapper.has_mod()) {
             try {
-                this->get_mod_wrapper().mod->disconnect();
+                mod_wrapper.mod->disconnect();
             }
             catch (Error const& e) {
                 LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
             }
         }
 
-        this->remove_mod();
+        this->remove_mod(mod_wrapper);
         if (enable_close_box) {
-            this->new_mod(MODULE_INTERNAL_CLOSE, authentifier, report_message);
+            this->new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, report_message);
             signal = BACK_EVENT_NONE;
         }
         else {
@@ -463,13 +443,13 @@ private:
     }
 
 
-    void create_mod_rdp(
+    void create_mod_rdp(ModWrapper & mod_wrapper,
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info,
         ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
         std::array<uint8_t, 28>& server_auto_reconnect_packet);
 
-    void create_mod_vnc(
+    void create_mod_vnc(ModWrapper & mod_wrapper,
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
         ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags);

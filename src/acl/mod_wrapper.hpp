@@ -37,6 +37,7 @@
 
 #include "mod/internal/rail_module_host_mod.hpp"
 
+#include "mod/rdp/rdp_api.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/windowing_api.hpp"
@@ -240,7 +241,11 @@ private:
     gdi::GraphicApi& graphics;
     ClientInfo const & client_info;
     ClientExecute & rail_client_execute;
+    public:
+    rdp_api*       rdpapi = nullptr;
+    RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
     windowing_api* &winapi;
+    private:
     Inifile & ini;
 
     std::string osd_message;
@@ -381,6 +386,18 @@ public:
 
     bool has_mod() const {
         return (this->mod != &this->no_mod);
+    }
+
+    void remove_mod(ModWrapper & mod_wrapper)
+    {
+        if (this->has_mod()){
+            this->clear_osd_message();
+            delete this->mod;
+            this->mod = &this->no_mod;
+            this->rdpapi = nullptr;
+            this->winapi = nullptr;
+            this->rail_module_host_mod_ptr = nullptr;
+        }
     }
 
     void remove_mod()
@@ -568,7 +585,10 @@ public:
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
         std::size_t length, uint32_t flags)
-    { this->mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
+    {
+        LOG(LOG_INFO, ">>>>>>>>++++++++++++ send_to_mod_channel");
+        this->mod->send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
 
     void send_auth_channel_data(const char * data)
     { this->mod->send_auth_channel_data(data); }
