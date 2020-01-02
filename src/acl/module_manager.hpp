@@ -264,7 +264,7 @@ public:
         case MODULE_RDP:
             this->create_mod_rdp(mod_wrapper,
                 authentifier, report_message, this->ini,
-                mod_wrapper.graphics, this->front, this->client_info,
+                mod_wrapper.get_graphics(), this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags,
                 this->server_auto_reconnect_packet);
             break;
@@ -272,7 +272,7 @@ public:
         case MODULE_VNC:
             this->create_mod_vnc(mod_wrapper,
                 authentifier, report_message, this->ini,
-                mod_wrapper.graphics, this->front, this->client_info,
+                mod_wrapper.get_graphics(), this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags);
             break;
 

@@ -25,11 +25,6 @@
 #include <string>
 #include <ctime>
 
-namespace gdi
-{
-    class GraphicApi;
-}
-
 
 class mod_api : public Callback
 {
