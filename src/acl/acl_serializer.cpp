@@ -590,7 +590,7 @@ bool AclSerializer::check(
             this->remote_answer = false;
             this->send_acl_data();
             if (signal == BACK_EVENT_NEXT) {
-                mm.remove_mod(mod_wrapper);
+                mod_wrapper.remove_mod(mod_wrapper);
                 mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION, authentifier, report_message);
             }
         }
@@ -642,7 +642,7 @@ bool AclSerializer::check(
             if (mod_wrapper.get_mod()) {
                 mod_wrapper.get_mod()->disconnect();
             }
-            mm.remove_mod(mod_wrapper);
+            mod_wrapper.remove_mod(mod_wrapper);
             try {
                 mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
             }

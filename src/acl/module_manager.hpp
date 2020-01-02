@@ -161,17 +161,6 @@ public:
     {
     }
 
-    void remove_mod(ModWrapper & mod_wrapper)
-    {
-        if (mod_wrapper.has_mod()){
-            mod_wrapper.clear_osd_message();
-            mod_wrapper.remove_mod();
-            mod_wrapper.rdpapi = nullptr;
-            mod_wrapper.winapi = nullptr;
-            mod_wrapper.rail_module_host_mod_ptr = nullptr;
-        }
-    }
-
     ~ModuleManager()
     {
 //        this->remove_mod(mod_wrapper);
@@ -346,7 +335,7 @@ public:
             }
         }
 
-        this->remove_mod(mod_wrapper);
+        mod_wrapper.remove_mod(mod_wrapper);
         if (enable_close_box) {
             this->new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, report_message);
             signal = BACK_EVENT_NONE;
