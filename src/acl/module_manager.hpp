@@ -160,7 +160,6 @@ public:
 
     ~ModuleManager()
     {
-//        this->remove_mod(mod_wrapper);
     }
 
 private:
@@ -331,7 +330,7 @@ public:
             }
         }
 
-        mod_wrapper.remove_mod(mod_wrapper);
+        mod_wrapper.remove_mod();
         if (enable_close_box) {
             this->new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, report_message);
             signal = BACK_EVENT_NONE;

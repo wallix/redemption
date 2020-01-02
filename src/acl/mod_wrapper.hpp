@@ -274,7 +274,7 @@ public:
     {}
 
     ~ModWrapper(){
-        this->remove_mod(*this);
+        this->remove_mod();
     }
 
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
@@ -392,7 +392,7 @@ public:
         return (this->mod != &this->no_mod);
     }
 
-    void remove_mod(ModWrapper & mod_wrapper)
+    void remove_mod()
     {
         if (this->has_mod()){
             this->clear_osd_message();
@@ -403,12 +403,6 @@ public:
             this->rail_module_host_mod_ptr = nullptr;
         }
     }
-
-//    void remove_mod()
-//    {
-//        delete this->mod;
-//        this->mod = &this->no_mod;
-//    }
 
     bool is_up_and_running() const {
         return this->has_mod() && this->mod->is_up_and_running();
