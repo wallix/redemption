@@ -41,9 +41,7 @@ public:
     [[nodiscard]] bool is_authorized(CHANNELS::ChannelNameId id) const noexcept;
 
     [[nodiscard]] bool rdpdr_type_all_is_authorized() const noexcept;
-
     [[nodiscard]] bool rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept;
-
     [[nodiscard]] bool rdpdr_drive_read_is_authorized() const noexcept;
     [[nodiscard]] bool rdpdr_drive_write_is_authorized() const noexcept;
 
@@ -51,15 +49,11 @@ public:
 
     REDEMPTION_FRIEND_OSTREAM(out, ChannelsAuthorizations const & auth);
 
-    static void update_authorized_channels(
-        std::string & allow, std::string & deny, const std::string & proxy_opt
-    );
-
     [[nodiscard]] bool cliprdr_up_is_authorized() const noexcept;
     [[nodiscard]] bool cliprdr_down_is_authorized() const noexcept;
     [[nodiscard]] bool cliprdr_file_is_authorized() const noexcept;
 
-private:
+public:
     static constexpr std::array<array_view_const_char, 3> cliprde_list()
     {
         return {{
@@ -85,13 +79,11 @@ private:
         }};
     }
 
-    [[nodiscard]] array_view<CHANNELS::ChannelNameId const> rng_allow() const;
-    [[nodiscard]] array_view<CHANNELS::ChannelNameId const> rng_deny() const;
-
     // Boolean structures moved around in other parts of the code
     // could merely be restricted to what we have below
     // See equivalent fields in : core/file_system_virtual_channel_params.hpp
     // and core/clipboard_virtual_channels_params.hpp
+    
 //    struct {
 //        bool up;    // client to server
 //        bool down;  // server to client
@@ -121,3 +113,94 @@ private:
     std::array<bool, decltype(cliprde_list())().size()> cliprdr_restriction_ {{}};
     std::array<bool, decltype(rdpsnd_list())().size()> rdpsnd_restriction_ {{}};
 };
+
+inline static std::pair<std::string,std::string> update_authorized_channels(std::string allow, std::string deny, std::string proxy_opt)
+{
+    auto remove = [](std::string & str, std::string_view pattern) -> bool {
+        bool removed = false;
+        size_t pos = 0;
+        while ((pos = str.find(pattern, pos)) != std::string::npos) {
+            str.erase(pos, pattern.size());
+            removed = true;
+        }
+
+        return removed;
+    };
+
+    std::string expanded_proxy_opt = proxy_opt;
+    while (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
+        expanded_proxy_opt.pop_back();
+    }
+    expanded_proxy_opt += ',';
+    if (remove(expanded_proxy_opt, "RDP_DRIVE,")) {
+        expanded_proxy_opt += "RDP_DRIVE_READ,RDP_DRIVE_WRITE";
+    }
+    if (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
+        expanded_proxy_opt.pop_back();
+    }
+
+    allow += ',';
+    deny += ',';
+
+    struct ref_string {
+        std::string & s;
+        std::string & get() { return this->s; }
+        operator std::string & () { return this->s; }
+    };
+
+    std::array<ref_string, 2> ret{{{allow}, {deny}}};
+
+    for (std::string & s : ret) {
+        remove(s, "cliprdr,");
+        remove(s, "rdpdr,");
+        remove(s, "rdpsnd,");
+        for (auto str : ChannelsAuthorizations::cliprde_list()) {
+            remove(s, {str.data(), str.size()});
+        }
+        for (auto str : ChannelsAuthorizations::rdpdr_list()) {
+            remove(s, {str.data(), str.size()});
+        }
+        for (auto str : ChannelsAuthorizations::rdpsnd_list()) {
+            remove(s, {str.data(), str.size()});
+        }
+        if (!s.empty() && s.back() == ',') {
+            s.pop_back();
+        }
+    }
+
+    constexpr struct {
+        const char * opt;
+        const char * channel;
+    } opts_channels[] {
+        {"RDP_CLIPBOARD_UP",   ",cliprdr_up"          },
+        {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"        },
+        {"RDP_CLIPBOARD_FILE", ",cliprdr_file"        },
+
+        {"RDP_PRINTER",        ",rdpdr_printer"       },
+        {"RDP_COM_PORT",       ",rdpdr_port"          },
+        {"RDP_DRIVE_READ",     ",rdpdr_drive_read"    },
+        {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"   },
+        {"RDP_SMARTCARD",      ",rdpdr_smartcard"     },
+
+        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" }
+    };
+
+    static_assert(
+        decltype(ChannelsAuthorizations::cliprde_list())().size()
+        + decltype(ChannelsAuthorizations::rdpdr_list())().size()
+        + decltype(ChannelsAuthorizations::rdpsnd_list())().size()
+    == std::extent<decltype(opts_channels)>::value
+    , "opts_channels.size() error");
+
+    for (auto & x : opts_channels) {
+        ret[(expanded_proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
+    }
+
+    for (std::string & s : ret) {
+        if (!s.empty() && s.front() == ',') {
+            s.erase(0,1);
+        }
+    }
+    return {allow,deny};
+}
+

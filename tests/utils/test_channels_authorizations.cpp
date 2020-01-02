@@ -200,6 +200,7 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllAll)
     RED_CHECK(!channels_authorizations.rdpdr_drive_write_is_authorized());
 }
 
+
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
 {
     std::string allow;
@@ -207,103 +208,140 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
 
     allow = "cliprdr,drdynvc,cliprdr_down,echo,rdpdr,rdpsnd,blah";
     deny = "rdpdr_port";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "");
+    auto result = update_authorized_channels(allow, deny, "");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "drdynvc,echo,blah");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "cliprdr,drdynvc,cliprdr_down,rdpsnd";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_DRIVE");
+    result = update_authorized_channels(allow, deny, "RDP_DRIVE");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "drdynvc,rdpdr_drive_read,rdpdr_drive_write");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "cliprdr,drdynvc,cliprdr_down,rdpsnd";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_DRIVE_READ");
+    result = update_authorized_channels(allow, deny, "RDP_DRIVE_READ");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "drdynvc,rdpdr_drive_read");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "cliprdr,drdynvc,cliprdr_down,rdpsnd";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_DRIVE_READ, RDP_DRIVE");
+    result = update_authorized_channels(allow, deny, "RDP_DRIVE_READ, RDP_DRIVE");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "drdynvc,rdpdr_drive_read,rdpdr_drive_write");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "cliprdr_down");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_UP");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_UP");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "cliprdr_up,cliprdr_down");
     RED_CHECK_EQUAL(deny, "cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_UP,RDP_CLIPBOARD_FILE");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_UP,RDP_CLIPBOARD_FILE");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "cliprdr_up,cliprdr_down,cliprdr_file");
     RED_CHECK_EQUAL(deny, "rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "*";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "*,cliprdr_down");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "rdpdr_port,tsmf";
     deny = "rdpdr";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_COM_PORT");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_COM_PORT");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "tsmf,cliprdr_down,rdpdr_port");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "*,rdpdr_port,rdpdr_port,tsmf,tsmf";
     deny = "rdpdr,rdpdr,rdpdr";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_DOWN");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "*,tsmf,tsmf,cliprdr_down");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "*";
     deny = "cliprdr";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "*,cliprdr_up,cliprdr_down");
     RED_CHECK_EQUAL(deny, "cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "*";
     deny = "rdpdr";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_PRINTER");
+    result = update_authorized_channels(allow, deny, "RDP_PRINTER");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "*,rdpdr_printer");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "cliprdr,rdpdr";
     deny = "*";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "");
+    result = update_authorized_channels(allow, deny, "");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "");
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "*";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "");
+    result = update_authorized_channels(allow, deny, "");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "*");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "";
     deny = "*";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_PRINTER");
+    result = update_authorized_channels(allow, deny, "RDP_PRINTER");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "rdpdr_printer");
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
 
     allow = "";
     deny = "*";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_AUDIO_OUTPUT");
+    result = update_authorized_channels(allow, deny, "RDP_AUDIO_OUTPUT");
+    allow = result.first;
+    deny = result.second;
     RED_CHECK_EQUAL(allow, "rdpsnd_audio_output");
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard");
 
     allow = "*";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN,RDP_DRIVE");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN,RDP_DRIVE");
+    allow = result.first;
+    deny = result.second;
+
     ChannelsAuthorizations authorization(allow, deny);
 
     RED_CHECK( authorization.cliprdr_up_is_authorized());
@@ -323,10 +361,11 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     RED_CHECK( authorization.rdpdr_drive_write_is_authorized());
     RED_CHECK(!authorization.rdpsnd_audio_output_is_authorized());
 
-
     allow = "*";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "");
+    result = update_authorized_channels(allow, deny, "");
+    allow = result.first;
+    deny = result.second;
     ChannelsAuthorizations authorization1(allow, deny);
 
     RED_CHECK(!authorization1.cliprdr_up_is_authorized());
@@ -349,7 +388,10 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
 
     allow = "*";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_FILE,RDP_COM_PORT,RDP_DRIVE,RDP_PRINTER,RDP_SMARTCARD");
+    result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN,RDP_CLIPBOARD_FILE,RDP_COM_PORT,RDP_DRIVE,RDP_PRINTER,RDP_SMARTCARD");
+    allow = result.first;
+    deny = result.second;
+
     ChannelsAuthorizations authorization2(allow, deny);
 
     RED_CHECK(authorization2.cliprdr_up_is_authorized());
@@ -374,7 +416,10 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels2)
 {
     std::string allow = "*";
     std::string deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_SMARTCARD,RDP_CLIPBOARD_UP");
+    auto result = update_authorized_channels(allow, deny, "RDP_SMARTCARD,RDP_CLIPBOARD_UP");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "*,cliprdr_up,rdpdr_smartcard");
     RED_CHECK_EQUAL(deny, "cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
@@ -407,7 +452,10 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels3)
 
     allow = "*";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP");
+    auto result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "*,cliprdr_up");
     RED_CHECK_EQUAL(deny, "cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
@@ -440,7 +488,10 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels4)
 
     allow = "*";
     deny = "";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_DRIVE_READ,RDP_DRIVE_WRITE");
+    auto result = update_authorized_channels(allow, deny, "RDP_DRIVE_READ,RDP_DRIVE_WRITE");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "*,rdpdr_drive_read,rdpdr_drive_write");
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
@@ -473,7 +524,10 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels5)
 
     allow = "";
     deny = "*";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_DRIVE_READ,RDP_DRIVE_WRITE");
+    auto result = update_authorized_channels(allow, deny, "RDP_DRIVE_READ,RDP_DRIVE_WRITE");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "rdpdr_drive_read,rdpdr_drive_write");
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
@@ -506,7 +560,10 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels6)
 
     allow = "";
     deny = "*";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_FILE,RDP_DRIVE_READ,RDP_DRIVE_WRITE");
+    auto result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_FILE,RDP_DRIVE_READ,RDP_DRIVE_WRITE");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "cliprdr_file,rdpdr_drive_read,rdpdr_drive_write");
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
@@ -539,7 +596,10 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels7)
 
     allow = "";
     deny = "*";
-    ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_FILE,RDP_DRIVE_READ,RDP_DRIVE_WRITE,RDP_AUDIO_OUTPUT");
+    auto result = update_authorized_channels(allow, deny, "RDP_CLIPBOARD_FILE,RDP_DRIVE_READ,RDP_DRIVE_WRITE,RDP_AUDIO_OUTPUT");
+    allow = result.first;
+    deny = result.second;
+
     RED_CHECK_EQUAL(allow, "cliprdr_file,rdpdr_drive_read,rdpdr_drive_write,rdpsnd_audio_output");
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_smartcard");
     ChannelsAuthorizations authorization(allow, deny);

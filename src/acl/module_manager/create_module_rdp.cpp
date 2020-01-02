@@ -461,6 +461,8 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
     ap.target_application = ini.get<cfg::globals::target_application>().c_str();
     return ap;
 }
+
+
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
@@ -481,13 +483,15 @@ void ModuleManager::create_mod_rdp(
     }
 
     // BEGIN READ PROXY_OPT
+    std::string allow = ini.get<cfg::mod_rdp::allow_channels>();
+    std::string deny = ini.get<cfg::mod_rdp::deny_channels>();
+
     if (ini.get<cfg::globals::enable_wab_integration>()) {
-        ChannelsAuthorizations::update_authorized_channels(
-            ini.get_mutable_ref<cfg::mod_rdp::allow_channels>(),
-            ini.get_mutable_ref<cfg::mod_rdp::deny_channels>(),
-            ini.get<cfg::context::proxy_opt>()
-        );
+        auto result = update_authorized_channels(allow, deny, ini.get<cfg::context::proxy_opt>());
+        allow = result.first;
+        deny = result.second;
     }
+    ChannelsAuthorizations channels_authorizations(allow, deny);
     // END READ PROXY_OPT
 
     ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
@@ -756,7 +760,7 @@ void ModuleManager::create_mod_rdp(
             ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
             this->gen,
             this->timeobj,
-            ChannelsAuthorizations(ini.get<cfg::mod_rdp::allow_channels>(),ini.get<cfg::mod_rdp::deny_channels>()),
+            channels_authorizations,
             mod_rdp_params,
             tls_client_params,
             authentifier,
