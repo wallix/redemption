@@ -78,9 +78,6 @@ public:
     bool is_connected() {
         return this->connected;
     }
-    bool is_up_and_running(ModWrapper & mod_wrapper) {
-        return mod_wrapper.is_up_and_running();
-    }
 
     Inifile& ini;
     SessionReactor& session_reactor;
