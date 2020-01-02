@@ -250,7 +250,7 @@ class Session
         bool run_session = true;
         try {
             session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
-                return mm.get_graphic_wrapper(mod_wrapper);
+                return mod_wrapper.get_graphic_wrapper();
             });
         } catch (Error const& e) {
             switch (this->check_exception(e, ini)){
@@ -385,7 +385,7 @@ class Session
                 {
                     if (BACK_EVENT_NONE == session_reactor.signal) {
                         // Process incoming module trafic
-                        auto& gd = mm.get_graphic_wrapper(mod_wrapper);
+                        auto& gd = mod_wrapper.get_graphic_wrapper();
                         session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
                             return io_fd_isset(fd, ioswitch.rfds);
                         }, gd);

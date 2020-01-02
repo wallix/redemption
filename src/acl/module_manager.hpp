@@ -87,16 +87,6 @@ public:
 
 public:
 
-    gdi::GraphicApi & get_graphic_wrapper(ModWrapper & mod_wrapper)
-    {
-        gdi::GraphicApi& gd = mod_wrapper.get_protected_rect().isempty()
-          ? mod_wrapper.graphics : mod_wrapper;
-        if (mod_wrapper.rail_module_host_mod_ptr) {
-            return mod_wrapper.rail_module_host_mod_ptr->proxy_gd(gd);
-        }
-        return gd;
-    }
-
     Callback & get_callback(ModWrapper & mod_wrapper) noexcept
     {
         return *mod_wrapper.get_mod();

@@ -279,6 +279,18 @@ public:
         this->remove_mod();
     }
 
+    // FIXME: we should always be able to use graphic_wrapper directly
+    // finding out the actual internal graphics interface should never be necessary
+    gdi::GraphicApi & get_graphic_wrapper()
+    {
+        gdi::GraphicApi& gd = this->get_protected_rect().isempty()
+          ? this->graphics : *this;
+        if (this->rail_module_host_mod_ptr) {
+            return this->rail_module_host_mod_ptr->proxy_gd(gd);
+        }
+        return gd;
+    }
+
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
 
     [[nodiscard]] const char* get_message() const {
