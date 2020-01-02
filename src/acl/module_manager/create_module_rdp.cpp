@@ -192,7 +192,7 @@ public:
       , RedirectionInfo & redir_info
       , Random & gen
       , TimeObj & timeobj
-      , ChannelsAuthorizations channels_authorizations
+      , const ChannelsAuthorizations channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
       , AuthApi & authentifier

@@ -147,7 +147,7 @@ CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(
 }
 
 RdpNegociation::RdpNegociation(
-    std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
+    const ChannelsAuthorizations channels_authorizations,
     CHANNELS::ChannelDefArray& mod_channel_list,
     const CHANNELS::ChannelNameId auth_channel,
     const CHANNELS::ChannelNameId checkout_channel,

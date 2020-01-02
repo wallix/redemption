@@ -389,12 +389,12 @@ private:
 
 public:
     mod_rdp_channels(
-        ChannelsAuthorizations&& channels_authorizations,
+        const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         SessionReactor & session_reactor, FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
-    : channels_authorizations(std::move(channels_authorizations))
+    : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
     , auth_channel([&]{

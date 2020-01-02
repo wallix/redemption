@@ -31,6 +31,7 @@
 #include "core/RDP/nego.hpp"
 #include "core/channel_names.hpp"
 #include "core/server_notifier_api.hpp"
+#include "core/channels_authorizations.hpp"
 #include "gdi/screen_info.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
@@ -106,7 +107,7 @@ private:
     State state = State::NEGO_INITIATE;
 
     CHANNELS::ChannelDefArray& mod_channel_list;
-    const ChannelsAuthorizations& channels_authorizations;
+    const ChannelsAuthorizations channels_authorizations;
     const CHANNELS::ChannelNameId auth_channel;
     const CHANNELS::ChannelNameId checkout_channel;
 
@@ -178,7 +179,7 @@ private:
 
 public:
     RdpNegociation(
-        std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
+        const ChannelsAuthorizations channels_authorizations,
         CHANNELS::ChannelDefArray& mod_channel_list,
         const CHANNELS::ChannelNameId auth_channel,
         const CHANNELS::ChannelNameId checkout_channel,
