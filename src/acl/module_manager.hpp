@@ -134,8 +134,6 @@ public:
 
 private:
 
-    windowing_api* &winapi;
-
     EndSessionWarning & end_session_warning;
     Font & glyphs;
     Theme & theme;
@@ -154,7 +152,6 @@ public:
         , gen(gen)
         , timeobj(timeobj)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
-        , winapi(winapi)
         , end_session_warning(end_session_warning)
         , glyphs(glyphs)
         , theme(theme)
@@ -178,7 +175,6 @@ private:
 
         mod_wrapper.clear_osd_message();
 
-        //TODO: move rdpapi and winapi into ModWrapper
         mod_wrapper.set_mod(mod.get());
 
         mod_wrapper.rail_module_host_mod_ptr = nullptr;

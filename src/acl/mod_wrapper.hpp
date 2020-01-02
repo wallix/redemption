@@ -273,6 +273,10 @@ public:
     , theme(theme)
     {}
 
+    ~ModWrapper(){
+        this->remove_mod(*this);
+    }
+
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
 
     [[nodiscard]] const char* get_message() const {
@@ -400,11 +404,11 @@ public:
         }
     }
 
-    void remove_mod()
-    {
-        delete this->mod;
-        this->mod = &this->no_mod;
-    }
+//    void remove_mod()
+//    {
+//        delete this->mod;
+//        this->mod = &this->no_mod;
+//    }
 
     bool is_up_and_running() const {
         return this->has_mod() && this->mod->is_up_and_running();
