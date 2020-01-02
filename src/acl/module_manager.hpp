@@ -86,9 +86,6 @@ public:
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
 
 public:
-    void DLP_antivirus_check_channels_files(ModWrapper & mod_wrapper) {
-        mod_wrapper.get_mod()->DLP_antivirus_check_channels_files();
-    }
 
     gdi::GraphicApi & get_graphic_wrapper(ModWrapper & mod_wrapper)
     {
