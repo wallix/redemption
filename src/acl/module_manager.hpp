@@ -298,7 +298,7 @@ public:
         }
         if (mod_wrapper.has_mod()) {
             try {
-                mod_wrapper.mod->disconnect();
+                mod_wrapper.get_mod()->disconnect();
             }
             catch (Error const& e) {
                 LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);

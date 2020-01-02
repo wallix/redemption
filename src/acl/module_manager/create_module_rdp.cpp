@@ -853,11 +853,11 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     if (ini.get<cfg::globals::bogus_refresh_rect>() &&
         ini.get<cfg::globals::allow_using_multiple_monitors>() &&
         (client_info.cs_monitor.monitorCount > 1)) {
-        mod_wrapper.mod->rdp_suppress_display_updates();
-        mod_wrapper.mod->rdp_allow_display_updates(0, 0,
+        mod_wrapper.get_mod()->rdp_suppress_display_updates();
+        mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
             client_info.screen_info.width, client_info.screen_info.height);
     }
-    mod_wrapper.mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
+    mod_wrapper.get_mod()->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
     ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
     this->connected = true;

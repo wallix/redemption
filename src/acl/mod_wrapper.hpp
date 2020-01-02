@@ -400,9 +400,16 @@ private:
 public:
 
     null_mod no_mod;
+private:
     mod_api* mod = &no_mod;
 
+public:
     mod_api* get_mod()
+    {
+        return this->mod;
+    }
+
+    [[nodiscard]] mod_api const* get_mod() const
     {
         return this->mod;
     }
@@ -425,11 +432,6 @@ public:
 
     bool is_up_and_running() const {
         return this->has_mod() && this->mod->is_up_and_running();
-    }
-
-    [[nodiscard]] mod_api const* get_mod() const
-    {
-        return this->mod;
     }
 
     void set_mod_transport(SocketTransport * psocket_transport)
