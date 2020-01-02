@@ -238,7 +238,9 @@ private:
 
     FrontAPI & front;
     BGRPalette const & palette;
+public:
     gdi::GraphicApi& graphics;
+private:
     ClientInfo const & client_info;
     ClientExecute & rail_client_execute;
     public:

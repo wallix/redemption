@@ -90,7 +90,7 @@ public:
     gdi::GraphicApi & get_graphic_wrapper(ModWrapper & mod_wrapper)
     {
         gdi::GraphicApi& gd = mod_wrapper.get_protected_rect().isempty()
-          ? this->graphics : mod_wrapper;
+          ? mod_wrapper.graphics : mod_wrapper;
         if (mod_wrapper.rail_module_host_mod_ptr) {
             return mod_wrapper.rail_module_host_mod_ptr->proxy_gd(gd);
         }
@@ -104,7 +104,6 @@ public:
 
 private:
     FrontAPI & front;
-    gdi::GraphicApi & graphics;
     Keymap2 & keymap;
     ClientInfo & client_info;
     ClientExecute & rail_client_execute;
@@ -133,13 +132,12 @@ private:
     Theme & theme;
 
 public:
-    ModuleManager(EndSessionWarning & end_session_warning, ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+    ModuleManager(EndSessionWarning & end_session_warning, ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : mod_factory(mod_factory)
         , ini(ini)
         , session_reactor(session_reactor)
         , cctx(cctx)
         , front(front)
-        , graphics(graphics)
         , keymap(keymap)
         , client_info(client_info)
         , rail_client_execute(rail_client_execute)
@@ -283,7 +281,7 @@ public:
         case MODULE_RDP:
             this->create_mod_rdp(mod_wrapper,
                 authentifier, report_message, this->ini,
-                this->graphics, this->front, this->client_info,
+                mod_wrapper.graphics, this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags,
                 this->server_auto_reconnect_packet);
             break;
@@ -291,7 +289,7 @@ public:
         case MODULE_VNC:
             this->create_mod_vnc(mod_wrapper,
                 authentifier, report_message, this->ini,
-                this->graphics, this->front, this->client_info,
+                mod_wrapper.graphics, this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags);
             break;
 
