@@ -247,11 +247,8 @@ class Session
 
     BackEvent_t check_acl(ModuleManager & mm, Acl & acl,
         AuthApi & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
-        time_t now, BackEvent_t signal, BackEvent_t & front_signal, bool & has_user_activity)
+        time_t now, BackEvent_t signal, bool & has_user_activity)
     {
-        // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
-        //  static_cast<unsigned>(now), static_cast<unsigned>(signal), static_cast<unsigned>(front_signal));
-
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
@@ -321,17 +318,15 @@ class Session
                 signal = BACK_EVENT_NONE;
             }
         }
-        else if (acl.acl_serial.remote_answer
-        || (signal == BACK_EVENT_RETRY_CURRENT)
-        || (front_signal == BACK_EVENT_NEXT)) {
+        else if (acl.acl_serial.remote_answer || signal == BACK_EVENT_RETRY_CURRENT) {
             acl.acl_serial.remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
             }
-            else if ((signal == BACK_EVENT_NEXT)||(signal == BACK_EVENT_RETRY_CURRENT)
-                    || (front_signal == BACK_EVENT_NEXT)) {
-                if ((signal == BACK_EVENT_NEXT)||(front_signal == BACK_EVENT_NEXT)) {
+            else if ((signal == BACK_EVENT_NEXT)
+                ||(signal == BACK_EVENT_RETRY_CURRENT)) {
+                if (signal == BACK_EVENT_NEXT) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
                 else {
@@ -339,11 +334,8 @@ class Session
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
-                ModuleIndex next_state
-                    = (signal == BACK_EVENT_NEXT || front_signal == BACK_EVENT_NEXT)
-                    ? mm.next_module() : MODULE_RDP;
-
-                front_signal = BACK_EVENT_NONE;
+                ModuleIndex next_state = (signal == BACK_EVENT_NEXT)
+                                       ? mm.next_module() : MODULE_RDP;
 
                 if (next_state == MODULE_TRANSITORY) {
                     acl.acl_serial.remote_answer = false;
@@ -494,7 +486,7 @@ class Session
     }
 
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
         try {
             session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
@@ -593,22 +585,18 @@ class Session
                 }
             }
         } catch (Error const& e) {
-            if (ERR_DISCONNECT_BY_USER == e.id) {
-                front_signal = BACK_EVENT_NEXT;
+            // RemoteApp disconnection initiated by user
+            // ERR_DISCONNECT_BY_USER == e.id
+            if (// Can be caused by client disconnect.
+                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                // Can be caused by client disconnect.
+                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                // Can be caused by wabwatchdog.
+                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
             }
-            else {
-                if (
-                    // Can be caused by client disconnect.
-                    (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                    // Can be caused by client disconnect.
-                    (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                    (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                    // Can be caused by wabwatchdog.
-                    (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                    LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                }
-                return false;
-            }
+            return false;
         } catch (...) {
             LOG(LOG_ERR, "Proxy data processing raised unknown error");
             return false;
@@ -772,7 +760,7 @@ class Session
                             if (!this->last_module) {
                                 signal = this->check_acl(mm, *acl,
                                     authentifier, authentifier, mod_wrapper,
-                                    now.tv_sec, signal, front_signal, front.has_user_activity
+                                    now.tv_sec, signal, front.has_user_activity
                                 );
                             }
                             if (session_reactor.signal == BACK_EVENT_NONE) {
@@ -862,7 +850,6 @@ public:
             ModuleManager mm(end_session_warning, mod_factory, session_reactor, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
-            BackEvent_t front_signal = BACK_EVENT_NONE;
 
             if (ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -988,7 +975,7 @@ public:
                         this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
@@ -1031,22 +1018,17 @@ public:
                             }
                         }
                     } catch (Error const& e) {
-                        if (ERR_DISCONNECT_BY_USER == e.id) {
-                            front_signal = BACK_EVENT_NEXT;
+                        if (
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                            // Can be caused by wabwatchdog.
+                            (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                         }
-                        else {
-                            if (
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                                // Can be caused by wabwatchdog.
-                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                            }
-                            run_session = false;
-                        }
+                        run_session = false;
                     } catch (...) {
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
@@ -1079,22 +1061,19 @@ public:
                             }
                         }
                     } catch (Error const& e) {
-                        if (ERR_DISCONNECT_BY_USER == e.id) {
-                            front_signal = BACK_EVENT_NEXT;
+                        // RemoteApp disconnection initiated by user
+                        // ERR_DISCONNECT_BY_USER == e.id
+                        if (
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                            // Can be caused by wabwatchdog.
+                            (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                         }
-                        else {
-                            if (
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                                // Can be caused by wabwatchdog.
-                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                            }
-                            run_session = false;
-                        }
+                        run_session = false;
                     } catch (...) {
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
