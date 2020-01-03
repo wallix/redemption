@@ -181,11 +181,6 @@ public:
 
     void close_session_log();
 
-//    bool check(
-//        AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm, ModWrapper & mod_wrapper,
-//        time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
-//    );
-
     void in_items();
 
     void incoming();

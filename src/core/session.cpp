@@ -485,7 +485,7 @@ class Session
                                 break;
                             }
                             session_reactor.signal = 0;
-                            run_session = mm.check_acl(acl->acl_serial,
+                            run_session = mm.check_acl(*acl,
                                 authentifier, authentifier, mod_wrapper,
                                 now.tv_sec, signal, front_signal, front.has_user_activity
                             );

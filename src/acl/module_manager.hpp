@@ -159,7 +159,7 @@ private:
 
 public:
 
-    bool check_acl(AclSerializer & acl,
+    bool check_acl(Acl & acl,
         AuthApi & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
         time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity)
     {
@@ -197,7 +197,7 @@ public:
         }
 
         // Keep Alive
-        if (acl.keepalive.check(now, this->ini)) {
+        if (acl.acl_serial.keepalive.check(now, this->ini)) {
             this->invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
                 TR(trkeys::miss_keepalive, language(this->ini)),
                 signal, authentifier, report_message
@@ -206,9 +206,8 @@ public:
         }
 
         // Inactivity management
-//        if (acl.activity_check(now, has_user_activity)){
 
-        if (acl.inactivity.check_user_activity(now, has_user_activity)) {
+        if (acl.acl_serial.inactivity.check_user_activity(now, has_user_activity)) {
             this->invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
                 TR(trkeys::close_inactivity, language(this->ini)),
                 signal, authentifier, report_message
@@ -222,11 +221,11 @@ public:
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc, xup ...) and something changed.
                 // used for authchannel and keepalive.
-                acl.send_acl_data();
+                acl.acl_serial.send_acl_data();
             }
             else if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
-                acl.remote_answer = false;
-                acl.send_acl_data();
+                acl.acl_serial.remote_answer = false;
+                acl.acl_serial.send_acl_data();
                 if (signal == BACK_EVENT_NEXT) {
                     mod_wrapper.remove_mod();
                     this->new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION, authentifier, report_message);
@@ -236,10 +235,10 @@ public:
                 signal = BACK_EVENT_NONE;
             }
         }
-        else if (acl.remote_answer
+        else if (acl.acl_serial.remote_answer
         || (signal == BACK_EVENT_RETRY_CURRENT)
         || (front_signal == BACK_EVENT_NEXT)) {
-            acl.remote_answer = false;
+            acl.acl_serial.remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
@@ -264,7 +263,7 @@ public:
                 front_signal = BACK_EVENT_NONE;
 
                 if (next_state == MODULE_TRANSITORY) {
-                    acl.remote_answer = false;
+                    acl.acl_serial.remote_answer = false;
 
                     return true;
                 }
@@ -275,7 +274,7 @@ public:
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
-                    acl.keepalive.stop();
+                    acl.acl_serial.keepalive.stop();
                 }
                 if (mod_wrapper.get_mod()) {
                     mod_wrapper.get_mod()->disconnect();
@@ -291,11 +290,11 @@ public:
 
                         signal = BACK_EVENT_NEXT;
 
-                        acl.remote_answer = false;
+                        acl.acl_serial.remote_answer = false;
 
                         authentifier.disconnect_target();
 
-                        acl.report("CONNECTION_FAILED",
+                        acl.acl_serial.report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
 
                         return true;
@@ -303,22 +302,22 @@ public:
 
                     if ((e.id == ERR_RDP_SERVER_REDIR) 
                     && this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                        acl.server_redirection_target();
-                        acl.remote_answer = true;
+                        acl.acl_serial.server_redirection_target();
+                        acl.acl_serial.remote_answer = true;
                         signal = BACK_EVENT_NEXT;
                         return true;
                     }
 
                     throw;
                 }
-                if (!acl.keepalive.is_started() && this->connected) {
-                    acl.keepalive.start(now);
+                if (!acl.acl_serial.keepalive.is_started() && this->connected) {
+                    acl.acl_serial.keepalive.start(now);
                 }
             }
             else
             {
                 if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
-                    acl.manager_disconnect_reason = this->ini.get<cfg::context::disconnect_reason>();
+                    acl.acl_serial.manager_disconnect_reason = this->ini.get<cfg::context::disconnect_reason>();
                     this->ini.get_mutable_ref<cfg::context::disconnect_reason>().clear();
 
                     this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
