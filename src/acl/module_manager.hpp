@@ -157,6 +157,31 @@ private:
     }
 
 public:
+
+    void new_mod_internal_close(ModWrapper & mod_wrapper, AuthApi & authentifier, ReportMessageApi & report_message)
+    {
+        LOG(LOG_INFO, "New_mod: target_module=MODULE_INTERNAL_CLOSE");
+        this->rail_client_execute.enable_remote_program(this->client_info.remote_program);
+        log_proxy::set_user("");
+        this->connected = false;
+        if (this->old_target_module != MODULE_INTERNAL_CLOSE) {
+            this->front.must_be_stop_capture();
+            auto is_remote_mod = [](int mod_type){
+                return
+                    (mod_type == MODULE_XUP)
+                 || (mod_type == MODULE_RDP)
+                 || (mod_type == MODULE_VNC);
+            };
+
+            if (is_remote_mod(this->old_target_module)) {
+                authentifier.delete_remote_mod();
+            }
+        }
+        this->old_target_module = MODULE_INTERNAL_CLOSE;
+        this->set_mod(mod_wrapper, mod_factory.create_close_mod(), nullptr, nullptr);
+    }
+
+
     void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
     {
         if (target_module != MODULE_INTERNAL_TRANSITION) {
