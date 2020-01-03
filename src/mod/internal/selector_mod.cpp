@@ -153,7 +153,7 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::context::selector>();
 
     // TODO replace BACK_EVENT_REFRESH by session_reactor.create_graphic_event ?
-    this->session_reactor.set_next_event(BACK_EVENT_REFRESH);
+    this->session_reactor_signal = BACK_EVENT_REFRESH;
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
@@ -163,7 +163,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
-        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+        this->session_reactor_signal = BACK_EVENT_NEXT;
 
         this->sesman_event.reset();
 
@@ -186,7 +186,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 this->vars.ask<cfg::globals::target_device>();
                 this->vars.ask<cfg::context::target_protocol>();
 
-                this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+                this->session_reactor_signal = BACK_EVENT_NEXT;
 
                 this->sesman_event.reset();
             }

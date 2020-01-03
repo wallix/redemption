@@ -111,7 +111,7 @@ void WidgetTestMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ENTER) {
-        this->d->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->session_reactor_signal = BACK_EVENT_STOP;
     }
 }
 

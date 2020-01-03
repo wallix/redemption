@@ -200,7 +200,7 @@ class Session
         return 0;
     }
 
-    void start_acl_activate(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
+    void start_acl_activate(BackEvent_t session_reactor_signal, ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         try {
@@ -211,17 +211,17 @@ class Session
             const auto sck = acl->auth_trans.sck;
             fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
             authentifier.set_acl_serial(&acl->acl_serial);
-            session_reactor.set_next_event(BACK_EVENT_NEXT);
+            session_reactor_signal = BACK_EVENT_NEXT;
         }
         catch (...) {
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
             mod_wrapper.last_disconnect();
             this->last_module = true;
-            session_reactor.signal = BACK_EVENT_STOP;
+            session_reactor_signal = BACK_EVENT_STOP;
         }
     }
 
-    void start_acl_running(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
+    void start_acl_running(BackEvent_t & session_reactor_signal, ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         try {
@@ -232,7 +232,7 @@ class Session
             const auto sck = acl->auth_trans.sck;
             fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
             authentifier.set_acl_serial(&acl->acl_serial);
-            session_reactor.set_next_event(BACK_EVENT_NEXT);
+            session_reactor_signal = BACK_EVENT_NEXT;
         }
         catch (...) {
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
@@ -241,7 +241,7 @@ class Session
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
             this->last_module = true;
-            session_reactor.signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
+            session_reactor_signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
         }
     }
 
@@ -486,22 +486,23 @@ class Session
     }
 
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
+    bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
         try {
             session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
             });
+            session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
         } catch (Error const& e) {
             switch (this->check_exception(e, ini)){
             case 3:
                 if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                     set_server_redirection_target(ini, authentifier);
-                    session_reactor.signal = BACK_EVENT_RETRY_CURRENT;
+                    session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
                 }
                 else {
                     LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    signal = BackEvent_t(session_reactor.signal);
+                    signal = BackEvent_t(session_reactor_signal);
                     this->last_module = true;
 
                     if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
@@ -513,9 +514,9 @@ class Session
                         mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                     }
                     signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                    session_reactor.signal = signal;
+                    session_reactor_signal = signal;
 
-                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                    if (BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                         return false;
                     }
                 }
@@ -527,7 +528,7 @@ class Session
                 }
                 else {
                     LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                    signal = BackEvent_t(session_reactor.signal);
+                    signal = BackEvent_t(session_reactor_signal);
                     this->last_module = true;
                     if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                         this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
@@ -537,18 +538,18 @@ class Session
                         mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                     }
                     signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                    session_reactor.signal = signal;
-                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                    session_reactor_signal = signal;
+                    if (BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                         return false;
                     }
                 }
             break;
             case 1:
-                session_reactor.signal = BACK_EVENT_RETRY_CURRENT;
+                session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
             break;
             default:
                 LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                signal = BackEvent_t(session_reactor.signal);
+                signal = BackEvent_t(session_reactor_signal);
                 this->last_module = true;
                 if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                     this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
@@ -558,8 +559,8 @@ class Session
                     mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                 }
                 signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                session_reactor.signal = signal;
-                if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                session_reactor_signal = signal;
+                if (BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                     return false;
                 }
             break;
@@ -569,11 +570,13 @@ class Session
         session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
             return io_fd_isset(fd, ioswitch.rfds);
         });
+        session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
 
         // front event
         try {
             if (session_reactor.has_front_event()) {
                 session_reactor.execute_callbacks(mod_wrapper.get_callback());
+                session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
             }
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
@@ -583,6 +586,7 @@ class Session
                     uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
                     front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
                 }
+                session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
             }
         } catch (Error const& e) {
             // RemoteApp disconnection initiated by user
@@ -628,17 +632,22 @@ class Session
                         }
                     }
 
-                    mm.check_module();
+                    if (this->ini.get<cfg::context::forcemodule>() && !mm.is_connected()) {
+                        session_reactor_signal = BACK_EVENT_NEXT;
+                        this->ini.set<cfg::context::forcemodule>(false);
+                        // Do not send back the value to sesman.
+                    }
                 }
 
                 try
                 {
-                    if (BACK_EVENT_NONE == session_reactor.signal) {
+                    if (BACK_EVENT_NONE == session_reactor_signal) {
                         // Process incoming module trafic
                         auto& gd = mod_wrapper.get_graphic_wrapper();
                         session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
                             return io_fd_isset(fd, ioswitch.rfds);
                         }, gd);
+                        session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
                     }
                 }
                 catch (Error const & e) {
@@ -646,11 +655,11 @@ class Session
                     case 3:
                         if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                             set_server_redirection_target(ini, authentifier);
-                            session_reactor.signal = BACK_EVENT_RETRY_CURRENT;
+                            session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
                         }
                         else {
                             LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                            signal = BackEvent_t(session_reactor.signal);
+                            signal = BackEvent_t(session_reactor_signal);
                             this->last_module = true;
                             if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                                 this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
@@ -660,9 +669,9 @@ class Session
                                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                             }
                             signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                            session_reactor.signal = signal;
+                            session_reactor_signal = signal;
 
-                            if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                            if (BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                                 return false;
                             }
                         }
@@ -674,7 +683,7 @@ class Session
                         }
                         else {
                             LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                            signal = BackEvent_t(session_reactor.signal);
+                            signal = BackEvent_t(session_reactor_signal);
                             this->last_module = true;
                             if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                                 this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
@@ -684,18 +693,18 @@ class Session
                                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                             }
                             signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                            session_reactor.signal = signal;
-                            if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                            session_reactor_signal = signal;
+                            if (BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                                 return false;
                             }
                         }
                     break;
                     case 1:
-                        session_reactor.signal = BACK_EVENT_RETRY_CURRENT;
+                        session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
                     break;
                     default:
                         LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-                        signal = BackEvent_t(session_reactor.signal);
+                        signal = BackEvent_t(session_reactor_signal);
                         this->last_module = true;
                         if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
@@ -705,8 +714,8 @@ class Session
                             mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                         }
                         signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                        session_reactor.signal = signal;
-                        if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        session_reactor_signal = signal;
+                        if (BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                             return false;
                         }
                     break;
@@ -719,6 +728,8 @@ class Session
                     acl->acl_serial.receive();
                     if (!ini.changed_field_size()) {
                         session_reactor.execute_sesman(ini);
+                        // TODO: check, should not change signal
+                        session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
                     }
                 }
 
@@ -741,16 +752,16 @@ class Session
 
                 if (acl){
                     if (front.state == Front::UP_AND_RUNNING) {
-                        signal = BackEvent_t(session_reactor.signal);
+                        signal = BackEvent_t(session_reactor_signal);
                         int i = 0;
                         do {
                             if (++i == 11) {
                                 LOG(LOG_ERR, "loop event error");
                                 break;
                             }
-                            session_reactor.signal = BACK_EVENT_NONE;
+                            session_reactor_signal = BACK_EVENT_NONE;
                             if (signal == BACK_EVENT_STOP) {
-                                session_reactor.signal = BACK_EVENT_STOP;
+                                session_reactor_signal = BACK_EVENT_STOP;
                                 if (this->last_module) {
                                     authentifier.set_acl_serial(nullptr);
                                     acl.reset();
@@ -763,17 +774,17 @@ class Session
                                     now.tv_sec, signal, front.has_user_activity
                                 );
                             }
-                            if (session_reactor.signal == BACK_EVENT_NONE) {
-                                session_reactor.signal = signal;
+                            if (session_reactor_signal == BACK_EVENT_NONE) {
+                                session_reactor_signal = signal;
                                 break;
                             }
                             if (signal != BACK_EVENT_NONE) {
-                                session_reactor.signal = signal;
+                                session_reactor_signal = signal;
                             }
                             else {
-                                signal = BackEvent_t(session_reactor.signal);
+                                signal = BackEvent_t(session_reactor_signal);
                             }
-                        } while (session_reactor.signal != BACK_EVENT_NONE);
+                        } while (session_reactor_signal != BACK_EVENT_NONE);
                     }
                     if (this->last_module) {
                         authentifier.set_acl_serial(nullptr);
@@ -795,8 +806,8 @@ class Session
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
             this->last_module = true;
-            session_reactor.signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+            session_reactor_signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
+            if (BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                 return false;
             }
         }
@@ -814,6 +825,15 @@ public:
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         SessionReactor session_reactor;
+        BackEvent_t session_reactor_signal = BACK_EVENT_NONE;
+//        void set_next_event(/*BackEvent_t*/int signal)
+//        {
+//            LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
+//            assert(!this->signal || this->signal == signal);
+//            this->signal = signal;
+//            // assert(is not already set)
+//        }
+                
         session_reactor.set_current_time(tvtime());
         Front front(
             session_reactor, front_trans, rnd, ini, cctx, authentifier,
@@ -972,11 +992,12 @@ public:
                 case Front::UP_AND_RUNNING:
                 {
                     if (!acl && !this->last_module) {
-                        this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
+                        this->start_acl_running(session_reactor_signal, mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
-                    if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                    run_session = this->front_up_and_running(session_reactor_signal, front_is_set, ioswitch, session_reactor, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
+                    
+                    if (!acl && BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
                 }
@@ -985,13 +1006,13 @@ public:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     if (!acl && !this->last_module) {
-                        this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
+                        this->start_acl_activate(session_reactor_signal, mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
 
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
                         return io_fd_isset(fd, ioswitch.rfds);
                     });
-
+                    session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
 
                     // Incoming data from ACL
                     if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
@@ -999,6 +1020,8 @@ public:
                         acl->acl_serial.receive();
                         if (!ini.changed_field_size()) {
                             session_reactor.execute_sesman(ini);
+                            // FIXME: check should not change signal
+                            session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
                         }
                     }
 
@@ -1006,6 +1029,7 @@ public:
                     try {
                         if (session_reactor.has_front_event()) {
                             session_reactor.execute_callbacks(mod_wrapper.get_callback());
+                            session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
                         }
 
                         if (front_is_set) {
@@ -1016,6 +1040,7 @@ public:
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
                                 front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
                             }
+                            session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
                         }
                     } catch (Error const& e) {
                         if (
@@ -1033,7 +1058,7 @@ public:
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
                     }
-                    if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                    if (!acl && BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
                 }
@@ -1044,11 +1069,13 @@ public:
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
                         return io_fd_isset(fd, ioswitch.rfds);
                     });
+                    session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
 
                     // front event
                     try {
                         if (session_reactor.has_front_event()) {
                             session_reactor.execute_callbacks(mod_wrapper.get_callback());
+                            session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
                         }
 
                         if (front_is_set) {
@@ -1059,6 +1086,7 @@ public:
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
                                 front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
                             }
+                            session_reactor_signal = BackEvent_t(mod_wrapper.get_mod()->session_reactor_signal);
                         }
                     } catch (Error const& e) {
                         // RemoteApp disconnection initiated by user
@@ -1078,7 +1106,7 @@ public:
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
                     }
-                    if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                    if (!acl && BackEvent_t(session_reactor_signal) == BACK_EVENT_STOP) {
                         run_session = false;
                     }
                 }

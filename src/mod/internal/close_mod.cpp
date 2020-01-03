@@ -127,7 +127,7 @@ CloseMod::CloseMod(
                 this->close_widget.refresh_timeleft((close_timeout - seconds).count());
                 return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
-            ctx.get_reactor().set_next_event(BACK_EVENT_STOP);
+            this->session_reactor_signal = BACK_EVENT_STOP;
             return ctx.terminate();
         });
     }
@@ -144,7 +144,7 @@ void CloseMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {
-        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->session_reactor_signal = BACK_EVENT_STOP;
     }
     else if (NOTIFY_SUBMIT == event) {
         LOG(LOG_INFO, "asking for selector");
@@ -152,7 +152,7 @@ void CloseMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
-        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+        this->session_reactor_signal = BACK_EVENT_NEXT;
     }
 }
 

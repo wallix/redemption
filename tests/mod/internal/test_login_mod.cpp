@@ -79,12 +79,12 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
 
     session_reactor.execute_timers(SessionReactor::EnableGraphics(false), &gdi::null_gd);
-    RED_CHECK_EQUAL(BACK_EVENT_NONE, session_reactor.signal);
+    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.session_reactor_signal);
 
     timeval tv = session_reactor.get_current_time();
     tv.tv_sec += 2;
     session_reactor.set_current_time(tv);
 
     session_reactor.execute_timers(SessionReactor::EnableGraphics(false), &gdi::null_gd);
-    RED_CHECK_EQUAL(BACK_EVENT_STOP, session_reactor.signal);
+    RED_CHECK_EQUAL(BACK_EVENT_STOP, d.session_reactor_signal);
 }

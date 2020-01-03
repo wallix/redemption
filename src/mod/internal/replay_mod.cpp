@@ -360,7 +360,7 @@ void ReplayMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->session_reactor_signal = BACK_EVENT_STOP;
     }
 }
 
@@ -449,7 +449,7 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
                     gd.sync();
 
                     if (!this->wait_for_escape) {
-                        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+                        this->session_reactor_signal = BACK_EVENT_STOP;
                     }
 
                     break;
@@ -460,7 +460,7 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
     catch (Error const & e) {
         if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
             this->auth_error_message = "The recorded file is inaccessible or corrupted!";
-            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+            this->session_reactor_signal = BACK_EVENT_NEXT;
         }
         else {
             throw;

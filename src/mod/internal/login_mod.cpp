@@ -70,8 +70,8 @@ LoginMod::LoginMod(
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         this->timeout_timer = session_reactor.create_timer()
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
-        .on_action([](JLN_TIMER_CTX ctx){
-            ctx.get_reactor().set_next_event(BACK_EVENT_STOP);
+        .on_action([this](JLN_TIMER_CTX ctx){
+            this->session_reactor_signal = BACK_EVENT_STOP;
             return ctx.terminate();
         });
     }
@@ -97,11 +97,11 @@ void LoginMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
         this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
-        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+        this->session_reactor_signal = BACK_EVENT_NEXT;
         break;
     }
     case NOTIFY_CANCEL:
-        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->session_reactor_signal = BACK_EVENT_STOP;
         break;
     case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
         if (this->copy_paste) {

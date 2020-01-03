@@ -322,7 +322,7 @@ void xup_mod::draw_event(gdi::GraphicApi & gd)
         }
     }
     catch(...){
-        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+        this->session_reactor_signal = BACK_EVENT_NEXT;
         this->front.must_be_stop_capture();
     }
 }

@@ -34,6 +34,8 @@ public:
         CLIENT_LOGGED
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
+    
+    int session_reactor_signal = 0;
 
     [[nodiscard]] virtual bool is_up_and_running() const { return false; }
 

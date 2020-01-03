@@ -353,15 +353,6 @@ public:
         return module_id;
     }
 
-    void check_module() 
-    {
-        if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
-            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
-            this->ini.set<cfg::context::forcemodule>(false);
-            // Do not send back the value to sesman.
-        }
-    }
-
 private:
     unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
     {

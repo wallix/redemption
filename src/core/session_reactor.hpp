@@ -3049,15 +3049,6 @@ struct SessionReactor
     {
         return !this->graphic_events_.is_empty() || !this->graphic_fd_events_.is_empty();
     }
-
-    int signal = 0;
-    void set_next_event(/*BackEvent_t*/int signal)
-    {
-        LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
-        assert(!this->signal || this->signal == signal);
-        this->signal = signal;
-        // assert(is not already set)
-    }
 };
 
 namespace jln
