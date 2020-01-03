@@ -214,9 +214,6 @@ class Session
             session_reactor.set_next_event(BACK_EVENT_NEXT);
         }
         catch (...) {
-            signal = BackEvent_t(session_reactor.signal);
-            session_reactor.signal = 0;
-            this->last_module = true;
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
             if (mod_wrapper.has_mod()) {
                 try {
@@ -228,10 +225,9 @@ class Session
             }
 
             mod_wrapper.remove_mod();
-            signal = BACK_EVENT_STOP;
-            if (!session_reactor.signal || signal) {
-                session_reactor.signal = signal;
-            }
+
+            this->last_module = true;
+            session_reactor.signal = BACK_EVENT_STOP;
         }
     }
 
@@ -249,9 +245,6 @@ class Session
             session_reactor.set_next_event(BACK_EVENT_NEXT);
         }
         catch (...) {
-            signal = BackEvent_t(session_reactor.signal);
-            session_reactor.signal = 0;
-            this->last_module = true;
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
             if (mod_wrapper.has_mod()) {
                 try {
@@ -266,30 +259,17 @@ class Session
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
-            signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            if (!session_reactor.signal || signal) {
-                session_reactor.signal = signal;
-            }
+            this->last_module = true;
+            session_reactor.signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
         }
     }
 
-    bool check_acl(ModuleManager & mm, Acl & acl,
+    void check_acl(ModuleManager & mm, Acl & acl,
         AuthApi & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
         time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity)
     {
         // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
         //  static_cast<unsigned>(now), static_cast<unsigned>(signal), static_cast<unsigned>(front_signal));
-        if (signal == BACK_EVENT_STOP) {
-            // here, this->last_module should be false only when we are in login box
-            return false;
-        }
-
-        if (this->last_module) {
-            // at a close box (this->last_module is true),
-            // we are only waiting for a stop signal
-            // and Authentifier should not exist anymore.
-            return true;
-        }
 
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
@@ -311,7 +291,7 @@ class Session
             }
             signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
 
-            return true;
+            return;
         }
 
         // Close by rejeted message received
@@ -335,12 +315,11 @@ class Session
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
             signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            return true;
+            return;
         }
 
         // Keep Alive
         if (acl.keepalive.check(now, this->ini)) {
-            this->last_module = true;
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
             if (mod_wrapper.has_mod()) {
                 try {
@@ -355,8 +334,9 @@ class Session
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
+            this->last_module = true;
             signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            return true;
+            return;
         }
 
         // Inactivity management
@@ -378,7 +358,7 @@ class Session
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
             signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            return true;
+            return;
         }
 
         // Manage module (refresh or next)
@@ -409,16 +389,13 @@ class Session
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
             }
-            else if ((signal == BACK_EVENT_NEXT)
-                    || (signal == BACK_EVENT_RETRY_CURRENT)
+            else if ((signal == BACK_EVENT_NEXT)||(signal == BACK_EVENT_RETRY_CURRENT)
                     || (front_signal == BACK_EVENT_NEXT)) {
-                if ((signal == BACK_EVENT_NEXT)
-                    || (front_signal == BACK_EVENT_NEXT)) {
+                if ((signal == BACK_EVENT_NEXT)||(front_signal == BACK_EVENT_NEXT)) {
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
                 else {
                     assert(signal == BACK_EVENT_RETRY_CURRENT);
-
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
@@ -430,8 +407,7 @@ class Session
 
                 if (next_state == MODULE_TRANSITORY) {
                     acl.acl_serial.remote_answer = false;
-
-                    return true;
+                    return;
                 }
 
                 signal = BACK_EVENT_NONE;
@@ -451,7 +427,7 @@ class Session
                         mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                     }
                     signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                    return true;
+                    return;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     acl.keepalive.stop();
@@ -468,16 +444,14 @@ class Session
                         // TODO : see STRMODULE_TRANSITORY
                         this->ini.set_acl<cfg::context::module>("transitory");
 
-                        signal = BACK_EVENT_NEXT;
-
                         acl.acl_serial.remote_answer = false;
-
                         authentifier.disconnect_target();
 
                         acl.acl_serial.report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
 
-                        return true;
+                        signal = BACK_EVENT_NEXT;
+                        return;
                     }
 
                     if ((e.id == ERR_RDP_SERVER_REDIR) 
@@ -485,7 +459,7 @@ class Session
                         acl.acl_serial.server_redirection_target();
                         acl.acl_serial.remote_answer = true;
                         signal = BACK_EVENT_NEXT;
-                        return true;
+                        return;
                     }
 
                     throw;
@@ -588,7 +562,7 @@ class Session
             }
         }
 
-        return true;
+        return;
     }
 
 
@@ -924,10 +898,19 @@ class Session
                                 break;
                             }
                             session_reactor.signal = 0;
-                            run_session = this->check_acl(mm, *acl,
-                                authentifier, authentifier, mod_wrapper,
-                                now.tv_sec, signal, front_signal, front.has_user_activity
-                            );
+                            if (signal == BACK_EVENT_STOP) {
+                            // here, this->last_module should be false only when we are in login box
+                                run_session = false;
+                            }
+                            else {
+                                run_session = true;
+                                if (!this->last_module) {
+                                    this->check_acl(mm, *acl,
+                                        authentifier, authentifier, mod_wrapper,
+                                        now.tv_sec, signal, front_signal, front.has_user_activity
+                                    );
+                                }
+                            }
                             if (!session_reactor.signal) {
                                 session_reactor.signal = signal;
                                 break;
@@ -953,8 +936,6 @@ class Session
             }
         } catch (Error const& e) {
             LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
-            signal = BackEvent_t(session_reactor.signal);
-            this->last_module = true;
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
             if (mod_wrapper.has_mod()) {
                 try {
@@ -969,8 +950,8 @@ class Session
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
-            signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            session_reactor.signal = signal;
+            this->last_module = true;
+            session_reactor.signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                 run_session = false;
             }
