@@ -230,7 +230,7 @@ public:
     // from RdpInput
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        //LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
+        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
         if (this->mod_wrapper.try_input_scancode(param1, param2, param3, param4, keymap)) {
             this->target_info_is_shown = false;
             return ;
@@ -241,14 +241,15 @@ public:
         Inifile const& ini = this->ini;
 
         if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
+            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: F12");
             bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
             if (this->target_info_is_shown && f12_released) {
-                // LOG(LOG_INFO, "Hide info");
+                LOG(LOG_INFO, "Hide info");
                 this->mod_wrapper.clear_osd_message();
                 this->target_info_is_shown = false;
             }
             else if (!this->target_info_is_shown && !f12_released) {
-                // LOG(LOG_INFO, "Show info");
+                LOG(LOG_INFO, "Show info");
                 std::string msg;
                 msg.reserve(64);
                 if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
