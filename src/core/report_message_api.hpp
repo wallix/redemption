@@ -58,12 +58,6 @@ struct ReportMessageApi : noncopyable
 
     virtual void log6(LogId id, const timeval time, KVList kv_list) = 0;
 
-    // TODO other interface
-    virtual void update_inactivity_timeout() = 0;
-
-    // TODO other interface
-    virtual time_t get_inactivity_timeout() = 0;
-
     virtual ~ReportMessageApi() = default;
 };
 
@@ -80,12 +74,5 @@ struct NullReportMessage : ReportMessageApi
         (void)id;
         (void)time;
         (void)kv_list;
-    }
-
-
-    void update_inactivity_timeout() override { }
-
-    time_t get_inactivity_timeout() override {
-        return static_cast<time_t>(0);
     }
 };

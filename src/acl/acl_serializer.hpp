@@ -141,15 +141,10 @@ public:
 
 private:
     std::string session_type;
-
 public:
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false
-public:
-    KeepAlive keepalive;
-public:
-    Inactivity inactivity;
 
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -171,10 +166,6 @@ public:
 
     void receive();
 
-    time_t get_inactivity_timeout() override;
-
-    void update_inactivity_timeout() override;
-
     void log6(LogId id, const timeval time, KVList kv_list) override;
 
     void start_session_log();
@@ -195,7 +186,15 @@ struct Acl
 {
     SocketTransport auth_trans;
     AclSerializer   acl_serial;
+    KeepAlive keepalive;
+    Inactivity inactivity;
 
     Acl(Inifile & ini, unique_fd client_sck, time_t now,
         CryptoContext & cctx, Random & rnd, Fstat & fstat);
+  
+    time_t get_inactivity_timeout();
+
+    void update_inactivity_timeout();
+
+
 };

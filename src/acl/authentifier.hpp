@@ -136,18 +136,6 @@ public:
         }
     }
 
-    void update_inactivity_timeout() override
-    {
-        if (this->acl_serial){
-            this->acl_serial->update_inactivity_timeout();
-        }
-    }
-
-    time_t get_inactivity_timeout() override
-    {
-        return this->acl_serial ? this->acl_serial->get_inactivity_timeout() : 0;
-    }
-
     void new_remote_mod() override
     {
         if (this->acl_serial){

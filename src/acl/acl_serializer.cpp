@@ -221,12 +221,6 @@ AclSerializer::AclSerializer(
 , session_id{}
 , log_file(cctx, rnd, fstat, report_error_from_reporter(*this))
 , remote_answer(false)
-, keepalive(
-    ini.get<cfg::globals::keepalive_grace_delay>(),
-    to_verbose_flags(ini.get<cfg::debug::auth>()))
-, inactivity(
-    ini.get<cfg::globals::session_timeout>(),
-    acl_start_time, to_verbose_flags(ini.get<cfg::debug::auth>()))
 , verbose(verbose)
 {
     std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
@@ -270,21 +264,6 @@ void AclSerializer::receive()
         else {
             this->ini.set_acl<cfg::context::rejected>(this->manager_disconnect_reason);
             this->manager_disconnect_reason.clear();
-        }
-    }
-}
-
-time_t AclSerializer::get_inactivity_timeout()
-{
-    return this->inactivity.get_inactivity_timeout();
-}
-
-void AclSerializer::update_inactivity_timeout()
-{
-    time_t conn_opts_inactivity_timeout = this->ini.get<cfg::globals::inactivity_timeout>().count();
-    if (conn_opts_inactivity_timeout > 0) {
-        if (this->inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
-            this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
         }
     }
 }
@@ -865,4 +844,26 @@ Acl::Acl(
 , acl_serial(
     ini, now, this->auth_trans, cctx, rnd, fstat,
     to_verbose_flags(ini.get<cfg::debug::auth>()))
+, keepalive(
+    ini.get<cfg::globals::keepalive_grace_delay>(),
+    to_verbose_flags(ini.get<cfg::debug::auth>()))
+, inactivity(
+    ini.get<cfg::globals::session_timeout>(),
+    now, to_verbose_flags(ini.get<cfg::debug::auth>()))
 {}
+
+time_t Acl::get_inactivity_timeout()
+{
+    return this->inactivity.get_inactivity_timeout();
+}
+
+void Acl::update_inactivity_timeout()
+{
+    time_t conn_opts_inactivity_timeout = this->acl_serial.ini.get<cfg::globals::inactivity_timeout>().count();
+    if (conn_opts_inactivity_timeout > 0) {
+        if (this->inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
+            this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
+        }
+    }
+}
+

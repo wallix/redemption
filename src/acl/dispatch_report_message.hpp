@@ -30,8 +30,7 @@ class DispatchReportMessage : public ReportMessageApi
 public:
     using LogCategoryFlags = ::LogCategoryFlags;
 
-    DispatchReportMessage(
-        ReportMessageApi & report_message, FrontAPI& front,
+    DispatchReportMessage(ReportMessageApi & report_message, FrontAPI& front,
         LogCategoryFlags dont_log) noexcept
     : report_message(report_message)
     , front(front)
@@ -52,16 +51,6 @@ public:
         }
 
         this->front.session_update(id, kv_list);
-    }
-
-    void update_inactivity_timeout() override
-    {
-        this->report_message.update_inactivity_timeout();
-    }
-
-    time_t get_inactivity_timeout() override
-    {
-        return this->report_message.get_inactivity_timeout();
     }
 
 private:

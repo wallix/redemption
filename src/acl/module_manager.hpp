@@ -197,7 +197,7 @@ public:
         }
 
         // Keep Alive
-        if (acl.acl_serial.keepalive.check(now, this->ini)) {
+        if (acl.keepalive.check(now, this->ini)) {
             this->invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
                 TR(trkeys::miss_keepalive, language(this->ini)),
                 signal, authentifier, report_message
@@ -207,7 +207,7 @@ public:
 
         // Inactivity management
 
-        if (acl.acl_serial.inactivity.check_user_activity(now, has_user_activity)) {
+        if (acl.inactivity.check_user_activity(now, has_user_activity)) {
             this->invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
                 TR(trkeys::close_inactivity, language(this->ini)),
                 signal, authentifier, report_message
@@ -274,7 +274,7 @@ public:
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
-                    acl.acl_serial.keepalive.stop();
+                    acl.keepalive.stop();
                 }
                 if (mod_wrapper.get_mod()) {
                     mod_wrapper.get_mod()->disconnect();
@@ -310,8 +310,8 @@ public:
 
                     throw;
                 }
-                if (!acl.acl_serial.keepalive.is_started() && this->connected) {
-                    acl.acl_serial.keepalive.start(now);
+                if (!acl.keepalive.is_started() && this->connected) {
+                    acl.keepalive.start(now);
                 }
             }
             else
@@ -411,11 +411,11 @@ public:
         return true;
     }
 
-
+private:
     void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
     {
         if (target_module != MODULE_INTERNAL_TRANSITION) {
-            LOG(LOG_INFO, "----------> ACL new_mod <--------");
+            LOG(LOG_INFO, "----------> new_mod <--------");
             LOG(LOG_INFO, "target_module=%s(%d)",
                 get_module_name(target_module), target_module);
         }
@@ -454,10 +454,10 @@ public:
         }
         this->old_target_module = target_module;
 
-        if ((target_module == MODULE_INTERNAL_WIDGET_SELECTOR)
-        && (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count())) {
-            report_message.update_inactivity_timeout();
-        }
+//        if ((target_module == MODULE_INTERNAL_WIDGET_SELECTOR)
+//        && (acl.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count())) {
+//            acl.update_inactivity_timeout();
+//        }
 
 
         switch (target_module)
@@ -517,12 +517,26 @@ public:
         }
 
         case MODULE_RDP:
+        {
             this->create_mod_rdp(mod_wrapper,
                 authentifier, report_message, this->ini,
                 mod_wrapper.get_graphics(), this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags,
                 this->server_auto_reconnect_packet);
-            break;
+                
+            if (ini.get<cfg::globals::bogus_refresh_rect>() &&
+                ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                (client_info.cs_monitor.monitorCount > 1)) {
+                mod_wrapper.get_mod()->rdp_suppress_display_updates();
+                mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
+                    client_info.screen_info.width, client_info.screen_info.height);
+            }
+            mod_wrapper.get_mod()->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
+            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
+            ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+            this->connected = true;
+        }
+        break;
 
         case MODULE_VNC:
             this->create_mod_vnc(mod_wrapper,
@@ -537,6 +551,7 @@ public:
         }
     }
 
+public:
     [[nodiscard]] rdp_api* get_rdp_api(ModWrapper & mod_wrapper) const {
         return mod_wrapper.rdpapi;
     }
@@ -546,7 +561,6 @@ public:
         const char * auth_error_message, BackEvent_t & signal,
         AuthApi & authentifier, ReportMessageApi & report_message)
     {
-        LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
         this->last_module = true;
         if (auth_error_message) {
             this->ini.set<cfg::context::auth_error_message>(auth_error_message);
