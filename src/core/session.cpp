@@ -215,7 +215,7 @@ class Session
         catch (...) {
             signal = BackEvent_t(session_reactor.signal);
             session_reactor.signal = 0;
-            mm.invoke_close_box(mod_wrapper, false,"No authentifier available", signal, authentifier, authentifier);
+            this->invoke_close_box(mm,mod_wrapper, false,"No authentifier available", signal, authentifier, authentifier);
             if (!session_reactor.signal || signal) {
                 session_reactor.signal = signal;
             }
@@ -238,12 +238,295 @@ class Session
         catch (...) {
             signal = BackEvent_t(session_reactor.signal);
             session_reactor.signal = 0;
-            mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),"No authentifier available", signal, authentifier, authentifier);
+            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box ,"No authentifier available", signal, authentifier, authentifier);
             if (!session_reactor.signal || signal) {
                 session_reactor.signal = signal;
             }
         }
     }
+
+    void invoke_close_box(ModuleManager & mm, ModWrapper & mod_wrapper,
+        bool enable_close_box,
+        const char * auth_error_message, BackEvent_t & signal,
+        AuthApi & authentifier, ReportMessageApi & report_message)
+    {
+        mm.last_module = true;
+        if (auth_error_message) {
+            this->ini.set<cfg::context::auth_error_message>(auth_error_message);
+        }
+        if (mod_wrapper.has_mod()) {
+            try {
+                mod_wrapper.get_mod()->disconnect();
+            }
+            catch (Error const& e) {
+                LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
+            }
+        }
+
+        mod_wrapper.remove_mod();
+        if (enable_close_box) {
+            mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, report_message);
+            signal = BACK_EVENT_NONE;
+        }
+        else {
+            signal = BACK_EVENT_STOP;
+        }
+    }
+
+
+    bool check_acl(ModuleManager & mm, Acl & acl,
+        AuthApi & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
+        time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity)
+    {
+        // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
+        //  static_cast<unsigned>(now), static_cast<unsigned>(signal), static_cast<unsigned>(front_signal));
+        if (signal == BACK_EVENT_STOP) {
+            // here, this->last_module should be false only when we are in login box
+            return false;
+        }
+
+        if (mm.last_module) {
+            // at a close box (this->last_module is true),
+            // we are only waiting for a stop signal
+            // and Authentifier should not exist anymore.
+            return true;
+        }
+
+        const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
+        if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
+            LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+            const char * message = TR(trkeys::session_out_time, language(this->ini));
+            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), message, signal, authentifier, report_message);
+
+            return true;
+        }
+
+        // Close by rejeted message received
+        if (!this->ini.get<cfg::context::rejected>().empty()) {
+            this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
+            LOG(LOG_INFO, "Close by Rejected message received : %s",
+                this->ini.get<cfg::context::rejected>());
+            this->ini.set_acl<cfg::context::rejected>("");
+            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
+            return true;
+        }
+
+        // Keep Alive
+        if (acl.keepalive.check(now, this->ini)) {
+            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
+                TR(trkeys::miss_keepalive, language(this->ini)),
+                signal, authentifier, report_message
+            );
+            return true;
+        }
+
+        // Inactivity management
+
+        if (acl.inactivity.check_user_activity(now, has_user_activity)) {
+            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
+                TR(trkeys::close_inactivity, language(this->ini)),
+                signal, authentifier, report_message
+            );
+            return true;
+        }
+
+        // Manage module (refresh or next)
+        if (this->ini.changed_field_size()) {
+            if (mm.connected) {
+                // send message to acl with changed values when connected to
+                // a module (rdp, vnc, xup ...) and something changed.
+                // used for authchannel and keepalive.
+                acl.acl_serial.send_acl_data();
+            }
+            else if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
+                acl.acl_serial.remote_answer = false;
+                acl.acl_serial.send_acl_data();
+                if (signal == BACK_EVENT_NEXT) {
+                    mod_wrapper.remove_mod();
+                    mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION, authentifier, report_message);
+                }
+            }
+            if (signal == BACK_EVENT_REFRESH) {
+                signal = BACK_EVENT_NONE;
+            }
+        }
+        else if (acl.acl_serial.remote_answer
+        || (signal == BACK_EVENT_RETRY_CURRENT)
+        || (front_signal == BACK_EVENT_NEXT)) {
+            acl.acl_serial.remote_answer = false;
+            if (signal == BACK_EVENT_REFRESH) {
+                LOG(LOG_INFO, "===========> MODULE_REFRESH");
+                signal = BACK_EVENT_NONE;
+            }
+            else if ((signal == BACK_EVENT_NEXT)
+                    || (signal == BACK_EVENT_RETRY_CURRENT)
+                    || (front_signal == BACK_EVENT_NEXT)) {
+                if ((signal == BACK_EVENT_NEXT)
+                    || (front_signal == BACK_EVENT_NEXT)) {
+                    LOG(LOG_INFO, "===========> MODULE_NEXT");
+                }
+                else {
+                    assert(signal == BACK_EVENT_RETRY_CURRENT);
+
+                    LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
+                }
+
+                ModuleIndex next_state
+                    = (signal == BACK_EVENT_NEXT || front_signal == BACK_EVENT_NEXT)
+                    ? mm.next_module() : MODULE_RDP;
+
+                front_signal = BACK_EVENT_NONE;
+
+                if (next_state == MODULE_TRANSITORY) {
+                    acl.acl_serial.remote_answer = false;
+
+                    return true;
+                }
+
+                signal = BACK_EVENT_NONE;
+                if (next_state == MODULE_INTERNAL_CLOSE) {
+                    this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
+                    return true;
+                }
+                if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
+                    acl.keepalive.stop();
+                }
+                if (mod_wrapper.get_mod()) {
+                    mod_wrapper.get_mod()->disconnect();
+                }
+                mod_wrapper.remove_mod();
+                try {
+                    mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
+                }
+                catch (Error const& e) {
+                    if (e.id == ERR_SOCKET_CONNECT_FAILED) {
+                        // TODO : see STRMODULE_TRANSITORY
+                        this->ini.set_acl<cfg::context::module>("transitory");
+
+                        signal = BACK_EVENT_NEXT;
+
+                        acl.acl_serial.remote_answer = false;
+
+                        authentifier.disconnect_target();
+
+                        acl.acl_serial.report("CONNECTION_FAILED",
+                            "Failed to connect to remote TCP host.");
+
+                        return true;
+                    }
+
+                    if ((e.id == ERR_RDP_SERVER_REDIR) 
+                    && mm.ini.get<cfg::mod_rdp::server_redirection_support>()) {
+                        acl.acl_serial.server_redirection_target();
+                        acl.acl_serial.remote_answer = true;
+                        signal = BACK_EVENT_NEXT;
+                        return true;
+                    }
+
+                    throw;
+                }
+                if (!acl.keepalive.is_started() && mm.connected) {
+                    acl.keepalive.start(now);
+                }
+            }
+            else
+            {
+                if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
+                    acl.acl_serial.manager_disconnect_reason = this->ini.get<cfg::context::disconnect_reason>();
+                    this->ini.get_mutable_ref<cfg::context::disconnect_reason>().clear();
+
+                    this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+                }
+                else if (!this->ini.get<cfg::context::auth_command>().empty()) {
+                    if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(),
+                                        "rail_exec")) {
+                        const uint16_t flags                = this->ini.get<cfg::context::auth_command_rail_exec_flags>();
+                        const char*    original_exe_or_file = this->ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
+                        const char*    exe_or_file          = this->ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
+                        const char*    working_dir          = this->ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
+                        const char*    arguments            = this->ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
+                        const uint16_t exec_result          = this->ini.get<cfg::context::auth_command_rail_exec_exec_result>();
+                        const char*    account              = this->ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
+                        const char*    password             = this->ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
+
+                        rdp_api* rdpapi = mm.get_rdp_api(mod_wrapper);
+
+                        if (!exec_result) {
+                            //LOG(LOG_INFO,
+                            //    "RailExec: "
+                            //        "original_exe_or_file=\"%s\" "
+                            //        "exe_or_file=\"%s\" "
+                            //        "working_dir=\"%s\" "
+                            //        "arguments=\"%s\" "
+                            //        "flags=%u",
+                            //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
+
+                            if (rdpapi) {
+                                rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments, account, password);
+                            }
+                        }
+                        else {
+                            //LOG(LOG_INFO,
+                            //    "RailExec: "
+                            //        "exec_result=%u "
+                            //        "original_exe_or_file=\"%s\" "
+                            //        "flags=%u",
+                            //    exec_result, original_exe_or_file, flags);
+
+                            if (rdpapi) {
+                                rdpapi->auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
+                            }
+                        }
+                    }
+
+                    this->ini.get_mutable_ref<cfg::context::auth_command>().clear();
+                }
+            }
+        }
+
+        // LOG(LOG_INFO, "connect=%s check=%s", this->connected?"Y":"N", check()?"Y":"N");
+
+        if (mm.connected) {
+            // AuthCHANNEL CHECK
+            // if an answer has been received, send it to
+            // rdp serveur via mod (should be rdp module)
+            // TODO Check if this->mod is RDP MODULE
+            if (this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
+                // Get sesman answer to AUTHCHANNEL_TARGET
+                if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
+                    // If set, transmit to auth_channel channel
+                    mod_wrapper.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
+                    // Erase the context variable
+                    this->ini.get_mutable_ref<cfg::context::auth_channel_answer>().clear();
+                }
+            }
+
+            // CheckoutCHANNEL CHECK
+            // if an answer has been received, send it to
+            // rdp serveur via mod (should be rdp module)
+            // TODO Check if this->mod is RDP MODULE
+            if (this->ini.get<cfg::mod_rdp::checkout_channel>()[0]) {
+                // Get sesman answer to AUTHCHANNEL_TARGET
+                if (!this->ini.get<cfg::context::pm_response>().empty()) {
+                    // If set, transmit to auth_channel channel
+                    mod_wrapper.get_mod()->send_checkout_channel_data(this->ini.get<cfg::context::pm_response>().c_str());
+                    // Erase the context variable
+                    this->ini.get_mutable_ref<cfg::context::pm_response>().clear();
+                }
+            }
+
+            if (!this->ini.get<cfg::context::rd_shadow_type>().empty()) {
+                mod_wrapper.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
+                    this->ini.get<cfg::context::rd_shadow_type>().c_str());
+
+                this->ini.get_mutable_ref<cfg::context::rd_shadow_type>().clear();
+            }
+        }
+
+        return true;
+    }
+
 
     bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier)
     {
@@ -264,7 +547,7 @@ class Session
                     const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                     signal = BackEvent_t(session_reactor.signal);
-                    mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                    this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
                     session_reactor.signal = signal;
 
                     if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
@@ -282,7 +565,7 @@ class Session
                     const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                     signal = BackEvent_t(session_reactor.signal);
-                    mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                    this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
                     session_reactor.signal = signal;
                     if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         return false;
@@ -297,7 +580,7 @@ class Session
                 const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                 signal = BackEvent_t(session_reactor.signal);
-                mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
                 session_reactor.signal = signal;
                 if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                     return false;
@@ -403,7 +686,7 @@ class Session
                             const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                             signal = BackEvent_t(session_reactor.signal);
-                            mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
                             session_reactor.signal = signal;
 
                             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
@@ -421,7 +704,7 @@ class Session
                             const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                             signal = BackEvent_t(session_reactor.signal);
-                            mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
                             session_reactor.signal = signal;
                             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                                 return false;
@@ -436,7 +719,7 @@ class Session
                         const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                         signal = BackEvent_t(session_reactor.signal);
-                        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                        this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
                         session_reactor.signal = signal;
                         if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                             return false;
@@ -485,7 +768,7 @@ class Session
                                 break;
                             }
                             session_reactor.signal = 0;
-                            run_session = mm.check_acl(*acl,
+                            run_session = this->check_acl(mm, *acl,
                                 authentifier, authentifier, mod_wrapper,
                                 now.tv_sec, signal, front_signal, front.has_user_activity
                             );
@@ -516,7 +799,7 @@ class Session
             LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
             signal = BackEvent_t(session_reactor.signal);
             auto auth_error_message = local_err_msg(e, language(ini));
-            mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
             session_reactor.signal = signal;
             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                 run_session = false;
