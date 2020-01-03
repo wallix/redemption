@@ -457,6 +457,19 @@ struct ModWrapper
     
 public:
 
+    void last_disconnect()
+    {
+        if (this->has_mod()) {
+            try {
+                this->get_mod()->disconnect();
+            }
+            catch (Error const& e) {
+                LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
+            }
+        }
+        this->remove_mod();
+    }
+
     gdi::GraphicApi & get_graphics() 
     {
         return this->gfilter;

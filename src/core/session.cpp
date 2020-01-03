@@ -200,7 +200,7 @@ class Session
         return 0;
     }
 
-    void start_acl_activate(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, BackEvent_t signal, Fstat & fstat)
+    void start_acl_activate(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         try {
@@ -215,23 +215,13 @@ class Session
         }
         catch (...) {
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-            if (mod_wrapper.has_mod()) {
-                try {
-                    mod_wrapper.get_mod()->disconnect();
-                }
-                catch (Error const& e) {
-                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                }
-            }
-
-            mod_wrapper.remove_mod();
-
+            mod_wrapper.last_disconnect();
             this->last_module = true;
             session_reactor.signal = BACK_EVENT_STOP;
         }
     }
 
-    void start_acl_running(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, BackEvent_t signal, Fstat & fstat)
+    void start_acl_running(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         try {
@@ -246,16 +236,7 @@ class Session
         }
         catch (...) {
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-            if (mod_wrapper.has_mod()) {
-                try {
-                    mod_wrapper.get_mod()->disconnect();
-                }
-                catch (Error const& e) {
-                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                }
-            }
-
-            mod_wrapper.remove_mod();
+            mod_wrapper.last_disconnect();
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
@@ -264,9 +245,9 @@ class Session
         }
     }
 
-    void check_acl(ModuleManager & mm, Acl & acl,
+    BackEvent_t check_acl(ModuleManager & mm, Acl & acl,
         AuthApi & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
-        time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity)
+        time_t now, BackEvent_t signal, BackEvent_t & front_signal, bool & has_user_activity)
     {
         // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
         //  static_cast<unsigned>(now), static_cast<unsigned>(signal), static_cast<unsigned>(front_signal));
@@ -276,22 +257,11 @@ class Session
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             this->last_module = true;
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
-            if (mod_wrapper.has_mod()) {
-                try {
-                    mod_wrapper.get_mod()->disconnect();
-                }
-                catch (Error const& e) {
-                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                }
-            }
-
-            mod_wrapper.remove_mod();
+            mod_wrapper.last_disconnect();
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
-            signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-
-            return;
+            return ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
         }
 
         // Close by rejeted message received
@@ -301,42 +271,22 @@ class Session
                 this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
             this->last_module = true;
-            if (mod_wrapper.has_mod()) {
-                try {
-                    mod_wrapper.get_mod()->disconnect();
-                }
-                catch (Error const& e) {
-                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                }
-            }
-
-            mod_wrapper.remove_mod();
+            mod_wrapper.last_disconnect();
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
-            signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            return;
+            return ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
         }
 
         // Keep Alive
         if (acl.keepalive.check(now, this->ini)) {
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
-            if (mod_wrapper.has_mod()) {
-                try {
-                    mod_wrapper.get_mod()->disconnect();
-                }
-                catch (Error const& e) {
-                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                }
-            }
-
-            mod_wrapper.remove_mod();
+            mod_wrapper.last_disconnect();
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
             this->last_module = true;
-            signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            return;
+            return ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
         }
 
         // Inactivity management
@@ -344,21 +294,11 @@ class Session
         if (acl.inactivity.check_user_activity(now, has_user_activity)) {
             this->last_module = true;
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
-            if (mod_wrapper.has_mod()) {
-                try {
-                    mod_wrapper.get_mod()->disconnect();
-                }
-                catch (Error const& e) {
-                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                }
-            }
-
-            mod_wrapper.remove_mod();
+            mod_wrapper.last_disconnect();
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
-            signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-            return;
+            return ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
         }
 
         // Manage module (refresh or next)
@@ -407,27 +347,17 @@ class Session
 
                 if (next_state == MODULE_TRANSITORY) {
                     acl.acl_serial.remote_answer = false;
-                    return;
+                    return signal;
                 }
 
                 signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
                     this->last_module = true;
-                    if (mod_wrapper.has_mod()) {
-                        try {
-                            mod_wrapper.get_mod()->disconnect();
-                        }
-                        catch (Error const& e) {
-                            LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                        }
-                    }
-
-                    mod_wrapper.remove_mod();
+                    mod_wrapper.last_disconnect();
                     if (ini.get<cfg::globals::enable_close_box>()) {
                         mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                     }
-                    signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
-                    return;
+                    return ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     acl.keepalive.stop();
@@ -450,16 +380,14 @@ class Session
                         acl.acl_serial.report("CONNECTION_FAILED",
                             "Failed to connect to remote TCP host.");
 
-                        signal = BACK_EVENT_NEXT;
-                        return;
+                        return BACK_EVENT_NEXT;
                     }
 
                     if ((e.id == ERR_RDP_SERVER_REDIR) 
                     && mm.ini.get<cfg::mod_rdp::server_redirection_support>()) {
                         acl.acl_serial.server_redirection_target();
                         acl.acl_serial.remote_answer = true;
-                        signal = BACK_EVENT_NEXT;
-                        return;
+                        return BACK_EVENT_NEXT;
                     }
 
                     throw;
@@ -562,13 +490,12 @@ class Session
             }
         }
 
-        return;
+        return signal;
     }
 
 
     bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, BackEvent_t & front_signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
-        bool run_session = true;
         try {
             session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
@@ -589,16 +516,7 @@ class Session
                         this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                     }
 
-                    if (mod_wrapper.has_mod()) {
-                        try {
-                            mod_wrapper.get_mod()->disconnect();
-                        }
-                        catch (Error const& e) {
-                            LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                        }
-                    }
-
-                    mod_wrapper.remove_mod();
+                    mod_wrapper.last_disconnect();
                     if (ini.get<cfg::globals::enable_close_box>()) {
                         mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                     }
@@ -622,16 +540,7 @@ class Session
                     if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                         this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                     }
-                    if (mod_wrapper.has_mod()) {
-                        try {
-                            mod_wrapper.get_mod()->disconnect();
-                        }
-                        catch (Error const& e) {
-                            LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                        }
-                    }
-
-                    mod_wrapper.remove_mod();
+                    mod_wrapper.last_disconnect();
                     if (ini.get<cfg::globals::enable_close_box>()) {
                         mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                     }
@@ -652,16 +561,7 @@ class Session
                 if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                     this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                 }
-                if (mod_wrapper.has_mod()) {
-                    try {
-                        mod_wrapper.get_mod()->disconnect();
-                    }
-                    catch (Error const& e) {
-                        LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                    }
-                }
-
-                mod_wrapper.remove_mod();
+                mod_wrapper.last_disconnect();
                 if (ini.get<cfg::globals::enable_close_box>()) {
                     mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                 }
@@ -707,17 +607,11 @@ class Session
                     (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
                     LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                 }
-                run_session = false;
-                return run_session;
+                return false;
             }
         } catch (...) {
             LOG(LOG_ERR, "Proxy data processing raised unknown error");
-            run_session = false;
-            return run_session;
-        }
-
-        if (run_session == false){
-            return run_session;
+            return false;
         }
 
         // acl event
@@ -773,16 +667,7 @@ class Session
                             if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                                 this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                             }
-                            if (mod_wrapper.has_mod()) {
-                                try {
-                                    mod_wrapper.get_mod()->disconnect();
-                                }
-                                catch (Error const& e) {
-                                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                                }
-                            }
-
-                            mod_wrapper.remove_mod();
+                            mod_wrapper.last_disconnect();
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                             }
@@ -806,16 +691,7 @@ class Session
                             if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                                 this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                             }
-                            if (mod_wrapper.has_mod()) {
-                                try {
-                                    mod_wrapper.get_mod()->disconnect();
-                                }
-                                catch (Error const& e) {
-                                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                                }
-                            }
-
-                            mod_wrapper.remove_mod();
+                            mod_wrapper.last_disconnect();
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                             }
@@ -836,16 +712,7 @@ class Session
                         if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                         }
-                        if (mod_wrapper.has_mod()) {
-                            try {
-                                mod_wrapper.get_mod()->disconnect();
-                            }
-                            catch (Error const& e) {
-                                LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                            }
-                        }
-
-                        mod_wrapper.remove_mod();
+                        mod_wrapper.last_disconnect();
                         if (ini.get<cfg::globals::enable_close_box>()) {
                             mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
                         }
@@ -856,10 +723,6 @@ class Session
                         }
                     break;
                     }
-                }
-
-                if (run_session == false){
-                    return run_session;
                 }
 
                 // Incoming data from ACL
@@ -897,66 +760,59 @@ class Session
                                 LOG(LOG_ERR, "loop event error");
                                 break;
                             }
-                            session_reactor.signal = 0;
+                            session_reactor.signal = BACK_EVENT_NONE;
                             if (signal == BACK_EVENT_STOP) {
-                            // here, this->last_module should be false only when we are in login box
-                                run_session = false;
-                            }
-                            else {
-                                run_session = true;
-                                if (!this->last_module) {
-                                    this->check_acl(mm, *acl,
-                                        authentifier, authentifier, mod_wrapper,
-                                        now.tv_sec, signal, front_signal, front.has_user_activity
-                                    );
+                                session_reactor.signal = BACK_EVENT_STOP;
+                                if (this->last_module) {
+                                    authentifier.set_acl_serial(nullptr);
+                                    acl.reset();
                                 }
+                                return false;
                             }
-                            if (!session_reactor.signal) {
+                            if (!this->last_module) {
+                                signal = this->check_acl(mm, *acl,
+                                    authentifier, authentifier, mod_wrapper,
+                                    now.tv_sec, signal, front_signal, front.has_user_activity
+                                );
+                            }
+                            if (session_reactor.signal == BACK_EVENT_NONE) {
                                 session_reactor.signal = signal;
                                 break;
                             }
-
-                            if (signal) {
+                            if (signal != BACK_EVENT_NONE) {
                                 session_reactor.signal = signal;
                             }
                             else {
                                 signal = BackEvent_t(session_reactor.signal);
                             }
-                        } while (session_reactor.signal);
+                        } while (session_reactor.signal != BACK_EVENT_NONE);
                     }
                     if (this->last_module) {
                         authentifier.set_acl_serial(nullptr);
                         acl.reset();
                     }
+                    return true;
                 }
                 else if ((!this->ini.is_asked<cfg::globals::nla_auth_user>())
                 && this->ini.get<cfg::client::enable_nla>()) {
                     acl->acl_serial.send_acl_data();
                 }
             }
+            return true;
         } catch (Error const& e) {
             LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-            if (mod_wrapper.has_mod()) {
-                try {
-                    mod_wrapper.get_mod()->disconnect();
-                }
-                catch (Error const& e) {
-                    LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
-                }
-            }
-
-            mod_wrapper.remove_mod();
+            mod_wrapper.last_disconnect();
             if (ini.get<cfg::globals::enable_close_box>()) {
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
             this->last_module = true;
             session_reactor.signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
-                run_session = false;
+                return false;
             }
         }
-        return run_session;
+        return true;
     }
 
 public:
@@ -1129,7 +985,7 @@ public:
                 case Front::UP_AND_RUNNING:
                 {
                     if (!acl && !this->last_module) {
-                        this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, signal, fstat);
+                        this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
@@ -1142,7 +998,7 @@ public:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     if (!acl && !this->last_module) {
-                        this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, signal, fstat);
+                        this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
 
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
