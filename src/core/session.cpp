@@ -153,6 +153,7 @@ class Session
         }
     };
 
+    bool last_module{false};
 
     Inifile & ini;
 
@@ -255,7 +256,7 @@ class Session
         const char * auth_error_message, BackEvent_t & signal,
         AuthApi & authentifier, ReportMessageApi & report_message)
     {
-        mm.last_module = true;
+        this->last_module = true;
         if (auth_error_message) {
             this->ini.set<cfg::context::auth_error_message>(auth_error_message);
         }
@@ -271,11 +272,8 @@ class Session
         mod_wrapper.remove_mod();
         if (enable_close_box) {
             mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, report_message);
-            signal = BACK_EVENT_NONE;
         }
-        else {
-            signal = BACK_EVENT_STOP;
-        }
+        signal = enable_close_box?BACK_EVENT_NONE:BACK_EVENT_STOP;
     }
 
 
@@ -290,7 +288,7 @@ class Session
             return false;
         }
 
-        if (mm.last_module) {
+        if (this->last_module) {
             // at a close box (this->last_module is true),
             // we are only waiting for a stop signal
             // and Authentifier should not exist anymore.
@@ -813,7 +811,7 @@ class Session
                             }
                         } while (session_reactor.signal);
                     }
-                    if (mm.last_module) {
+                    if (this->last_module) {
                         authentifier.set_acl_serial(nullptr);
                         acl.reset();
                     }
@@ -1008,7 +1006,7 @@ public:
                 switch (front.state) {
                 case Front::UP_AND_RUNNING:
                 {
-                    if (!acl && !mm.last_module) {
+                    if (!acl && !this->last_module) {
                         this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
@@ -1021,7 +1019,7 @@ public:
                 case Front::PRIMARY_AUTH_NLA:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    if (!acl && !mm.last_module) {
+                    if (!acl && !this->last_module) {
                         this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
                     }
 

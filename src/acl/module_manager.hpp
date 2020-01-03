@@ -73,7 +73,6 @@ class ModuleManager
     ModFactory & mod_factory;
 
 public:
-    bool last_module{false};
     bool connected{false};
 
     bool is_connected() {
