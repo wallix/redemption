@@ -35,7 +35,6 @@
 
 #include <ctime>
 
-
 class Inifile;
 class ModuleManager;
 class AuthApi;
@@ -137,16 +136,19 @@ private:
     char session_id[256];
     SessionLogFile log_file;
 
+public:
     std::string manager_disconnect_reason;
 
+private:
     std::string session_type;
 
+public:
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false
-
+public:
     KeepAlive keepalive;
-
+public:
     Inactivity inactivity;
 
 public:
@@ -179,16 +181,18 @@ public:
 
     void close_session_log();
 
-    bool check(
-        AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm, ModWrapper & mod_wrapper,
-        time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
-    );
+//    bool check(
+//        AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm, ModWrapper & mod_wrapper,
+//        time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
+//    );
 
     void in_items();
 
     void incoming();
 
     void send_acl_data();
+    
+    void server_redirection_target();
 };
 
 

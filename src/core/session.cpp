@@ -485,8 +485,8 @@ class Session
                                 break;
                             }
                             session_reactor.signal = 0;
-                            run_session = acl->acl_serial.check(
-                                authentifier, authentifier, mm, mod_wrapper,
+                            run_session = mm.check_acl(acl->acl_serial,
+                                authentifier, authentifier, mod_wrapper,
                                 now.tv_sec, signal, front_signal, front.has_user_activity
                             );
                             if (!session_reactor.signal) {

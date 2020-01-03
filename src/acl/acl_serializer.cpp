@@ -23,12 +23,10 @@
 
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
-#include "acl/module_manager.hpp"
 #include "configs/config.hpp"
 #include "core/log_id.hpp"
 #include "core/date_dir_from_filename.hpp"
 #include "core/report_message_api.hpp"
-#include "core/set_server_redirection_target.hpp"
 #include "main/version.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "std17/charconv.hpp"
@@ -40,6 +38,7 @@
 #include "utils/string_c.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/key_qvalue_pairs.hpp"
+#include "core/set_server_redirection_target.hpp"
 
 #include <string>
 #include <algorithm>
@@ -90,7 +89,6 @@ bool KeepAlive::check(time_t now, Inifile & ini)
         // Keep alive timeout
         if (now > this->timeout) {
             LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            // mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),"Missed keepalive from ACL", signal, now, authentifier);
             return true;
         }
 
@@ -140,7 +138,6 @@ bool Inactivity::check_user_activity(time_t now, bool & has_user_activity)
     if (!has_user_activity) {
         if (now > this->last_activity_time + this->inactivity_timeout) {
             LOG(LOG_INFO, "Session User inactivity : closing");
-            // mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),"Connection closed on inactivity", signal, now, authentifier);
             return true;
         }
     }
@@ -290,6 +287,10 @@ void AclSerializer::update_inactivity_timeout()
             this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
         }
     }
+}
+
+void AclSerializer::server_redirection_target() {
+    set_server_redirection_target(this->ini, *this);
 }
 
 namespace
@@ -521,257 +522,6 @@ void AclSerializer::start_session_log()
 void AclSerializer::close_session_log()
 {
     this->log_file.close();
-}
-
-bool AclSerializer::check(
-    AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm, ModWrapper & mod_wrapper,
-    time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity)
-{
-    // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
-    //  static_cast<unsigned>(now), static_cast<unsigned>(signal), static_cast<unsigned>(front_signal));
-    if (signal == BACK_EVENT_STOP) {
-        // here, mm.last_module should be false only when we are in login box
-        return false;
-    }
-
-    if (mm.last_module) {
-        // at a close box (mm.last_module is true),
-        // we are only waiting for a stop signal
-        // and Authentifier should not exist anymore.
-        return true;
-    }
-
-    const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-    if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
-        LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-        const char * message = TR(trkeys::session_out_time, language(this->ini));
-        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), message, signal, authentifier, report_message);
-
-        return true;
-    }
-
-    // Close by rejeted message received
-    if (!this->ini.get<cfg::context::rejected>().empty()) {
-        this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
-        LOG(LOG_INFO, "Close by Rejected message received : %s",
-            this->ini.get<cfg::context::rejected>());
-        this->ini.set_acl<cfg::context::rejected>("");
-        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
-        return true;
-    }
-
-    // Keep Alive
-    if (this->keepalive.check(now, this->ini)) {
-        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
-            TR(trkeys::miss_keepalive, language(this->ini)),
-            signal, authentifier, report_message
-        );
-        return true;
-    }
-
-    // Inactivity management
-    if (this->inactivity.check_user_activity(now, has_user_activity)) {
-        mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
-            TR(trkeys::close_inactivity, language(this->ini)),
-            signal, authentifier, report_message
-        );
-        return true;
-    }
-
-    // Manage module (refresh or next)
-    if (this->ini.changed_field_size()) {
-        if (mm.connected) {
-            // send message to acl with changed values when connected to
-            // a module (rdp, vnc, xup ...) and something changed.
-            // used for authchannel and keepalive.
-            this->send_acl_data();
-        }
-        else if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
-            this->remote_answer = false;
-            this->send_acl_data();
-            if (signal == BACK_EVENT_NEXT) {
-                mod_wrapper.remove_mod();
-                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION, authentifier, report_message);
-            }
-        }
-        if (signal == BACK_EVENT_REFRESH) {
-            signal = BACK_EVENT_NONE;
-        }
-    }
-    else if (this->remote_answer
-    || (signal == BACK_EVENT_RETRY_CURRENT)
-    || (front_signal == BACK_EVENT_NEXT)) {
-        this->remote_answer = false;
-        if (signal == BACK_EVENT_REFRESH) {
-            LOG(LOG_INFO, "===========> MODULE_REFRESH");
-            signal = BACK_EVENT_NONE;
-        }
-        else if ((signal == BACK_EVENT_NEXT)
-                || (signal == BACK_EVENT_RETRY_CURRENT)
-                || (front_signal == BACK_EVENT_NEXT)) {
-            if ((signal == BACK_EVENT_NEXT)
-                || (front_signal == BACK_EVENT_NEXT)) {
-                LOG(LOG_INFO, "===========> MODULE_NEXT");
-            }
-            else {
-                assert(signal == BACK_EVENT_RETRY_CURRENT);
-
-                LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
-            }
-
-            ModuleIndex next_state
-                = (signal == BACK_EVENT_NEXT || front_signal == BACK_EVENT_NEXT)
-                ? mm.next_module() : MODULE_RDP;
-
-            front_signal = BACK_EVENT_NONE;
-
-            if (next_state == MODULE_TRANSITORY) {
-                this->remote_answer = false;
-
-                return true;
-            }
-
-            signal = BACK_EVENT_NONE;
-            if (next_state == MODULE_INTERNAL_CLOSE) {
-                mm.invoke_close_box(mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
-                return true;
-            }
-            if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
-                this->keepalive.stop();
-            }
-            if (mod_wrapper.get_mod()) {
-                mod_wrapper.get_mod()->disconnect();
-            }
-            mod_wrapper.remove_mod();
-            try {
-                mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
-            }
-            catch (Error const& e) {
-                if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                    // TODO : see STRMODULE_TRANSITORY
-                    this->ini.set_acl<cfg::context::module>("transitory");
-
-                    signal = BACK_EVENT_NEXT;
-
-                    this->remote_answer = false;
-
-                    authentifier.disconnect_target();
-
-                    this->report("CONNECTION_FAILED",
-                        "Failed to connect to remote TCP host.");
-
-                    return true;
-                }
-
-                if ((e.id == ERR_RDP_SERVER_REDIR) &&
-                            this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                    set_server_redirection_target(this->ini, *this);
-                    this->remote_answer = true;
-                    signal = BACK_EVENT_NEXT;
-                    return true;
-                }
-
-                throw;
-            }
-            if (!this->keepalive.is_started() && mm.connected) {
-                this->keepalive.start(now);
-            }
-        }
-        else
-        {
-            if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
-                this->manager_disconnect_reason = this->ini.get<cfg::context::disconnect_reason>();
-                this->ini.get_mutable_ref<cfg::context::disconnect_reason>().clear();
-
-                this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
-            }
-            else if (!this->ini.get<cfg::context::auth_command>().empty()) {
-                if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(),
-                                    "rail_exec")) {
-                    const uint16_t flags                = this->ini.get<cfg::context::auth_command_rail_exec_flags>();
-                    const char*    original_exe_or_file = this->ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
-                    const char*    exe_or_file          = this->ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
-                    const char*    working_dir          = this->ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
-                    const char*    arguments            = this->ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
-                    const uint16_t exec_result          = this->ini.get<cfg::context::auth_command_rail_exec_exec_result>();
-                    const char*    account              = this->ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
-                    const char*    password             = this->ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
-
-                    rdp_api* rdpapi = mm.get_rdp_api(mod_wrapper);
-
-                    if (!exec_result) {
-                        //LOG(LOG_INFO,
-                        //    "RailExec: "
-                        //        "original_exe_or_file=\"%s\" "
-                        //        "exe_or_file=\"%s\" "
-                        //        "working_dir=\"%s\" "
-                        //        "arguments=\"%s\" "
-                        //        "flags=%u",
-                        //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
-
-                        if (rdpapi) {
-                            rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments, account, password);
-                        }
-                    }
-                    else {
-                        //LOG(LOG_INFO,
-                        //    "RailExec: "
-                        //        "exec_result=%u "
-                        //        "original_exe_or_file=\"%s\" "
-                        //        "flags=%u",
-                        //    exec_result, original_exe_or_file, flags);
-
-                        if (rdpapi) {
-                            rdpapi->auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
-                        }
-                    }
-                }
-
-                this->ini.get_mutable_ref<cfg::context::auth_command>().clear();
-            }
-        }
-    }
-
-    // LOG(LOG_INFO, "connect=%s check=%s", this->connected?"Y":"N", check()?"Y":"N");
-
-    if (mm.connected) {
-        // AuthCHANNEL CHECK
-        // if an answer has been received, send it to
-        // rdp serveur via mod (should be rdp module)
-        // TODO Check if this->mod is RDP MODULE
-        if (this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
-            // Get sesman answer to AUTHCHANNEL_TARGET
-            if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
-                // If set, transmit to auth_channel channel
-                mod_wrapper.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
-                // Erase the context variable
-                this->ini.get_mutable_ref<cfg::context::auth_channel_answer>().clear();
-            }
-        }
-
-        // CheckoutCHANNEL CHECK
-        // if an answer has been received, send it to
-        // rdp serveur via mod (should be rdp module)
-        // TODO Check if this->mod is RDP MODULE
-        if (this->ini.get<cfg::mod_rdp::checkout_channel>()[0]) {
-            // Get sesman answer to AUTHCHANNEL_TARGET
-            if (!this->ini.get<cfg::context::pm_response>().empty()) {
-                // If set, transmit to auth_channel channel
-                mod_wrapper.get_mod()->send_checkout_channel_data(this->ini.get<cfg::context::pm_response>().c_str());
-                // Erase the context variable
-                this->ini.get_mutable_ref<cfg::context::pm_response>().clear();
-            }
-        }
-
-        if (!this->ini.get<cfg::context::rd_shadow_type>().empty()) {
-            mod_wrapper.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
-                this->ini.get<cfg::context::rd_shadow_type>().c_str());
-
-            this->ini.get_mutable_ref<cfg::context::rd_shadow_type>().clear();
-        }
-    }
-
-    return true;
 }
 
 namespace
