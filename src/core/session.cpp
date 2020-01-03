@@ -215,7 +215,10 @@ class Session
         catch (...) {
             signal = BackEvent_t(session_reactor.signal);
             session_reactor.signal = 0;
-            this->invoke_close_box(mm,mod_wrapper, false,"No authentifier available", signal, authentifier, authentifier);
+            bool enable_close_box = false;
+            const char * auth_error_message = "No authentifier available";
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box, 
+                                   auth_error_message, signal, authentifier, authentifier);
             if (!session_reactor.signal || signal) {
                 session_reactor.signal = signal;
             }
@@ -239,7 +242,8 @@ class Session
             signal = BackEvent_t(session_reactor.signal);
             session_reactor.signal = 0;
             bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
-            this->invoke_close_box(mm,mod_wrapper, enable_close_box ,"No authentifier available", signal, authentifier, authentifier);
+            const char * auth_error_message = "No authentifier available";
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box ,auth_error_message, signal, authentifier, authentifier);
             if (!session_reactor.signal || signal) {
                 session_reactor.signal = signal;
             }
@@ -296,8 +300,10 @@ class Session
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            const char * message = TR(trkeys::session_out_time, language(this->ini));
-            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), message, signal, authentifier, report_message);
+            const char * auth_error_message = TR(trkeys::session_out_time, language(this->ini));
+            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box, auth_error_message, 
+                                   signal, authentifier, report_message);
 
             return true;
         }
@@ -308,15 +314,20 @@ class Session
             LOG(LOG_INFO, "Close by Rejected message received : %s",
                 this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
-            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
+            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+            const char * auth_error_message = nullptr;
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box, auth_error_message, 
+                                   signal, authentifier, report_message);
             return true;
         }
 
         // Keep Alive
         if (acl.keepalive.check(now, this->ini)) {
-            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
-                TR(trkeys::miss_keepalive, language(this->ini)),
-                signal, authentifier, report_message
+            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+            const char * auth_error_message = TR(trkeys::miss_keepalive, language(this->ini));
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box,
+                                    auth_error_message,
+                                    signal, authentifier, report_message
             );
             return true;
         }
@@ -324,9 +335,11 @@ class Session
         // Inactivity management
 
         if (acl.inactivity.check_user_activity(now, has_user_activity)) {
-            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(),
-                TR(trkeys::close_inactivity, language(this->ini)),
-                signal, authentifier, report_message
+            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+            const char * auth_error_message = TR(trkeys::close_inactivity, language(this->ini));
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box,
+                                    auth_error_message,
+                                    signal, authentifier, report_message
             );
             return true;
         }
@@ -386,7 +399,10 @@ class Session
 
                 signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), nullptr, signal, authentifier, report_message);
+                    bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+                    const char * auth_error_message = nullptr;
+                    this->invoke_close_box(mm,mod_wrapper, enable_close_box, auth_error_message, 
+                                            signal, authentifier, report_message);
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
@@ -545,9 +561,10 @@ class Session
                 else {
                     LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
                     const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
-
                     signal = BackEvent_t(session_reactor.signal);
-                    this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                    bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+                    this->invoke_close_box(mm,mod_wrapper, enable_close_box, auth_error_message, 
+                                            signal, authentifier, authentifier);
                     session_reactor.signal = signal;
 
                     if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
@@ -565,7 +582,9 @@ class Session
                     const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                     signal = BackEvent_t(session_reactor.signal);
-                    this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                    bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+                    this->invoke_close_box(mm,mod_wrapper, enable_close_box, auth_error_message, 
+                                           signal, authentifier, authentifier);
                     session_reactor.signal = signal;
                     if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                         return false;
@@ -578,9 +597,10 @@ class Session
             default:
                 LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
                 const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
-
                 signal = BackEvent_t(session_reactor.signal);
-                this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+                this->invoke_close_box(mm,mod_wrapper, enable_close_box, auth_error_message, 
+                                    signal, authentifier, authentifier);
                 session_reactor.signal = signal;
                 if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                     return false;
@@ -686,7 +706,9 @@ class Session
                             const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                             signal = BackEvent_t(session_reactor.signal);
-                            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+                            this->invoke_close_box(mm,mod_wrapper, enable_close_box, auth_error_message, 
+                                                signal, authentifier, authentifier);
                             session_reactor.signal = signal;
 
                             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
@@ -704,7 +726,10 @@ class Session
                             const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                             signal = BackEvent_t(session_reactor.signal);
-                            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+                            this->invoke_close_box(mm,mod_wrapper, enable_close_box, 
+                                                   auth_error_message, 
+                                                   signal, authentifier, authentifier);
                             session_reactor.signal = signal;
                             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                                 return false;
@@ -719,7 +744,10 @@ class Session
                         const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(ini)));
 
                         signal = BackEvent_t(session_reactor.signal);
-                        this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+                        bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+                        this->invoke_close_box(mm,mod_wrapper, enable_close_box, 
+                                               auth_error_message, 
+                                               signal, authentifier, authentifier);
                         session_reactor.signal = signal;
                         if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                             return false;
@@ -799,7 +827,10 @@ class Session
             LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
             signal = BackEvent_t(session_reactor.signal);
             auto auth_error_message = local_err_msg(e, language(ini));
-            this->invoke_close_box(mm,mod_wrapper, ini.get<cfg::globals::enable_close_box>(), auth_error_message, signal, authentifier, authentifier);
+            bool enable_close_box = ini.get<cfg::globals::enable_close_box>();
+            this->invoke_close_box(mm,mod_wrapper, enable_close_box, 
+                                   auth_error_message, 
+                                   signal, authentifier, authentifier);
             session_reactor.signal = signal;
             if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                 run_session = false;
