@@ -117,8 +117,10 @@ SelectorMod::SelectorMod(
         this->copy_paste.ready(this->front);
     }));
 
+    LOG(LOG_INFO, "Setting sesman event");
     this->sesman_event = session_reactor.create_sesman_event()
     .on_action(jln::always_ready([this](Inifile&){
+        LOG(LOG_INFO, "Executing sesman event on behalf of selector");
         char buffer[16];
 
         this->current_page = this->vars.get<cfg::context::selector_current_page>();
@@ -153,7 +155,7 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::context::selector>();
 
     // TODO replace BACK_EVENT_REFRESH by session_reactor.create_graphic_event ?
-    this->session_reactor_signal = BACK_EVENT_REFRESH;
+    this->set_mod_signal(BACK_EVENT_REFRESH);
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
@@ -163,7 +165,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
-        this->session_reactor_signal = BACK_EVENT_NEXT;
+        this->set_mod_signal(BACK_EVENT_NEXT);
 
         this->sesman_event.reset();
 
@@ -186,7 +188,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 this->vars.ask<cfg::globals::target_device>();
                 this->vars.ask<cfg::context::target_protocol>();
 
-                this->session_reactor_signal = BACK_EVENT_NEXT;
+                this->set_mod_signal(BACK_EVENT_NEXT);
 
                 this->sesman_event.reset();
             }
@@ -352,6 +354,8 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
                             +  this->selector.selector_lines.y_padding_label);
 
     int const selector_lines_per_page = std::min<int>(available_height / line_height, nb_max_row);
+
+    LOG(LOG_INFO, "selector lines per page = %d (%d)", selector_lines_per_page, this->selector_lines_per_page_saved);
     if (this->selector_lines_per_page_saved != selector_lines_per_page) {
         this->selector_lines_per_page_saved = selector_lines_per_page;
         this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);

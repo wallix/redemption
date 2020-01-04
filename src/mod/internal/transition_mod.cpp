@@ -60,7 +60,7 @@ void TransitionMod::rdp_input_scancode(long int /*param1*/, long int /*param2*/,
         switch (keymap->top_kevent()){
         case Keymap2::KEVENT_ESC:
             keymap->get_kevent();
-            this->session_reactor_signal = BACK_EVENT_STOP;
+            this->set_mod_signal(BACK_EVENT_STOP);
             break;
         default:;
         }

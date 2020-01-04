@@ -21,6 +21,8 @@
 #pragma once
 
 #include "core/callback.hpp"
+#include "core/back_event_t.hpp"
+#include "utils/log.hpp"
 
 #include <string>
 #include <ctime>
@@ -35,7 +37,34 @@ public:
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
     
-    int session_reactor_signal = 0;
+    BackEvent_t mod_signal = BACK_EVENT_NONE;
+
+    void set_mod_signal(BackEvent_t signal)
+    {
+        this->mod_signal = signal;
+//        LOG(LOG_INFO, "Setting signal of %p to %s",
+//            this,
+//            this->mod_signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
+//           :this->mod_signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
+//           :this->mod_signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
+//           :this->mod_signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
+//           :this->mod_signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
+//           :"BACK_EVENT_UNKNOWN"); 
+    }
+
+    BackEvent_t get_mod_signal()
+    {
+//        LOG(LOG_INFO, "Reading mod_signal from %p is %s",
+//            this,
+//            this->mod_signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
+//           :this->mod_signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
+//           :this->mod_signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
+//           :this->mod_signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
+//           :this->mod_signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
+//           :"BACK_EVENT_UNKNOWN"); 
+        return this->mod_signal;
+
+    }
 
     [[nodiscard]] virtual bool is_up_and_running() const { return false; }
 

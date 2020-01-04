@@ -2773,13 +2773,13 @@ public:
         break;
 
         case ACTIVATE_AND_PROCESS_DATA:
-            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
+//            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+//                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
             this->activate_and_process_data(tpdu, current_pdu_type, cb);
         break;
         case UP_AND_RUNNING:
-            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                "Front::incoming: UP_AND_RUNNING");
+//            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+//                "Front::incoming: UP_AND_RUNNING");
             this->up_and_running(tpdu, current_pdu_type, cb);
         break;
         }

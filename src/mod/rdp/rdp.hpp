@@ -3242,7 +3242,7 @@ public:
                     }
                 }
 
-                this->session_reactor_signal = BACK_EVENT_NEXT;
+                this->set_mod_signal(BACK_EVENT_NEXT);
 
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
@@ -5773,7 +5773,7 @@ public:
     {
         this->authentifier.disconnect_target();
         this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
-        this->session_reactor_signal = BACK_EVENT_NEXT;
+        this->set_mod_signal(BACK_EVENT_NEXT);
     }
 
     void sespro_launch_process_ended() override {

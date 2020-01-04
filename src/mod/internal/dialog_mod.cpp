@@ -289,7 +289,7 @@ void DialogMod::accepted()
     else {
         this->vars.set_acl<cfg::context::display_message>(true);
     }
-    this->session_reactor_signal = BACK_EVENT_NEXT;
+    this->set_mod_signal(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -303,7 +303,7 @@ void DialogMod::refused()
             this->vars.set_acl<cfg::context::display_message>(false);
         }
     }
-    this->session_reactor_signal = BACK_EVENT_NEXT;
+    this->set_mod_signal(BACK_EVENT_NEXT);
 }
 
 void DialogMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)

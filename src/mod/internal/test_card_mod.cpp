@@ -65,7 +65,7 @@ void TestCardMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->session_reactor_signal = BACK_EVENT_STOP;
+        this->set_mod_signal(BACK_EVENT_STOP);
     }
 }
 
