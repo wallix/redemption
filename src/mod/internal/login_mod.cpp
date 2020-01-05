@@ -67,10 +67,12 @@ LoginMod::LoginMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
+    LOG(LOG_INFO, "set timer()");
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         this->timeout_timer = session_reactor.create_timer()
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
         .on_action([this](JLN_TIMER_CTX ctx){
+            LOG(LOG_INFO, "execute timer()");
             this->set_mod_signal(BACK_EVENT_STOP);
             return ctx.terminate();
         });

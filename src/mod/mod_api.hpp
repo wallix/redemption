@@ -27,7 +27,6 @@
 #include <string>
 #include <ctime>
 
-
 class mod_api : public Callback
 {
 public:
@@ -36,32 +35,45 @@ public:
         CLIENT_LOGGED
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
-    
-    BackEvent_t mod_signal = BACK_EVENT_NONE;
 
+    BackEvent_t mod_signal = BACK_EVENT_NONE;
+    
     void set_mod_signal(BackEvent_t signal)
     {
+        LOG(LOG_INFO, "Previous signal value of %p %p wa %s",
+            this,
+            &this->mod_signal,
+            this->mod_signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
+           :this->mod_signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
+           :this->mod_signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
+           :this->mod_signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
+           :this->mod_signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
+           :"BACK_EVENT_UNKNOWN"); 
+        LOG(LOG_INFO, "Setting signal of %p %p to %s",
+            this, &this->mod_signal,
+            signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
+           :signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
+           :signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
+           :signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
+           :signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
+           :"BACK_EVENT_UNKNOWN"); 
+
+        if (signal != BACK_EVENT_NONE || signal != this->mod_signal){
+            LOG(LOG_INFO, "================================= SIGNAL TROUBLES =====================");
+        }
         this->mod_signal = signal;
-//        LOG(LOG_INFO, "Setting signal of %p to %s",
-//            this,
-//            this->mod_signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
-//           :this->mod_signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
-//           :this->mod_signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
-//           :this->mod_signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
-//           :this->mod_signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
-//           :"BACK_EVENT_UNKNOWN"); 
     }
 
     BackEvent_t get_mod_signal()
     {
-//        LOG(LOG_INFO, "Reading mod_signal from %p is %s",
-//            this,
-//            this->mod_signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
-//           :this->mod_signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
-//           :this->mod_signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
-//           :this->mod_signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
-//           :this->mod_signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
-//           :"BACK_EVENT_UNKNOWN"); 
+        LOG(LOG_INFO, "Reading mod_signal from %p %p is %s",
+            this, &mod_signal,
+            mod_signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
+           :mod_signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
+           :mod_signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
+           :mod_signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
+           :mod_signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
+           :"BACK_EVENT_UNKNOWN"); 
         return this->mod_signal;
 
     }
