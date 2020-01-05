@@ -95,6 +95,7 @@ public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
     SessionReactor& session_reactor;
+    CallbackEventContainer front_events_;
 
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
@@ -294,7 +295,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
+            timeout, this->session_reactor, this->front_events_, SessionReactor::EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));

@@ -156,12 +156,14 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
     SessionReactor session_reactor;
+    CallbackEventContainer front_events_;
+
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        session_reactor, front_trans, gen1, ini , cctx,
+        session_reactor, front_events_, front_trans, gen1, ini , cctx,
         report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 
@@ -169,7 +171,7 @@ RED_AUTO_TEST_CASE(TestFront)
         front.incoming(no_mod);
         RED_CHECK(session_reactor.timer_events_.is_empty());
     }
-    RED_CHECK(session_reactor.front_events_.is_empty());
+    RED_CHECK(front_events_.is_empty());
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
@@ -315,11 +317,13 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
     SessionReactor session_reactor;
+    CallbackEventContainer front_events_;
+
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
 
-    MyFront front( session_reactor, front_trans, gen1, ini
+    MyFront front(session_reactor, front_events_, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 

@@ -37,7 +37,7 @@ public:
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
 
     BackEvent_t mod_signal = BACK_EVENT_NONE;
-    
+
     void set_mod_signal(BackEvent_t signal)
     {
         LOG(LOG_INFO, "Previous signal value of %p %p wa %s",

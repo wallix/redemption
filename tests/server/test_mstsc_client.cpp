@@ -31,6 +31,7 @@
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"
+#include "core/session_reactor.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
 //#include "core/session.hpp"
@@ -101,7 +102,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool mem3blt_support  = false;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    FrontWrapper front(session_reactor, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
+    CallbackEventContainer front_events_;
+    FrontWrapper front(session_reactor, front_events_, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 

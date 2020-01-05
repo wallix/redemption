@@ -553,7 +553,7 @@ class Session
     }
 
 
-    bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
+    bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
         try {
             session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
@@ -571,8 +571,8 @@ class Session
 
         // front event
         try {
-            if (session_reactor.has_front_event()) {
-                session_reactor.execute_callbacks(mod_wrapper.get_callback());
+            if (session_reactor.has_front_event(front_events_)) {
+                session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
             }
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
@@ -740,6 +740,19 @@ class Session
         return true;
     }
 
+
+    struct AclWaitMod : public mod_api
+    {
+        std::string module_name(){return "AclWaitMod";}
+        void rdp_input_mouse(int, int, int, Keymap2 *) override {}
+        void rdp_input_scancode(long, long, long, long, Keymap2 *) override {}
+        void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
+        void rdp_input_invalidate(const Rect) override {}
+        void refresh(const Rect) override {}
+        bool is_up_and_running() const override { return true; }
+    };
+
+
 public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
@@ -751,6 +764,7 @@ public:
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         SessionReactor session_reactor;
+        CallbackEventContainer front_events_;
         BackEvent_t session_reactor_signal = BACK_EVENT_NONE;
 //        void set_next_event(/*BackEvent_t*/int signal)
 //        {
@@ -762,7 +776,7 @@ public:
                 
         session_reactor.set_current_time(tvtime());
         Front front(
-            session_reactor, front_trans, rnd, ini, cctx, authentifier,
+            session_reactor, front_events_, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>(), mem3blt_support
         );
 
@@ -869,7 +883,7 @@ public:
 
 
                 session_reactor.for_each_fd(
-                    SessionReactor::EnableGraphics{front.state == Front::UP_AND_RUNNING},
+                    SessionReactor::EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
                     [&](int fd){
                         if (!sck_no_read.contains(fd)) {
                             ioswitch.set_read_sck(fd);
@@ -880,7 +894,10 @@ public:
                 now = tvtime();
                 session_reactor.set_current_time(now);
                 ioswitch.set_timeout(
-                        session_reactor.get_next_timeout(SessionReactor::EnableGraphics{front.state == Front::UP_AND_RUNNING}, ioswitch.get_timeout(now)));
+                        session_reactor.get_next_timeout(
+                            front_events_,
+                            SessionReactor::EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
+                            ioswitch.get_timeout(now)));
 
                 int num = ioswitch.select(now);
 
@@ -914,15 +931,66 @@ public:
                     this->write_performance_log(now.tv_sec);
                 }
 
+                LOG(LOG_INFO, "SELECT LOOP: %s", front.state_name(), mod_wrapper.module_name());
                 switch (front.state) {
-                case Front::UP_AND_RUNNING:
-                LOG(LOG_INFO, "Front::UP_AND_RUNNING:");
+                default:
+                // Design a State to ensure ACL Start
+//                if (acl){
+//                    ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
+//                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
+//                }
+                {
+                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+
+                    session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+                        return io_fd_isset(fd, ioswitch.rfds);
+                    });
+
+                    // front event
+                    try {
+                        if (session_reactor.has_front_event(front_events_)) {
+                            session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
+                        }
+
+                        if (front_is_set) {
+                            front.rbuf.load_data(front.trans);
+                            while (front.rbuf.next(TpduBuffer::PDU))
+                            {
+                                bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                                uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
+                            }
+                        }
+                    } catch (Error const& e) {
+                        // RemoteApp disconnection initiated by user
+                        // ERR_DISCONNECT_BY_USER == e.id
+                        if (
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
+                            // Can be caused by wabwatchdog.
+                            (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
+                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
+                        }
+                        run_session = false;
+                    } catch (...) {
+                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
+                        run_session = false;
+                    }
+                    if (!acl && session_reactor_signal == BACK_EVENT_STOP) {
+                        run_session = false;
+                    }
+                }
+                break;
+                case Front::FRONT_UP_AND_RUNNING:
                 {
                     if (!acl && !this->last_module) {
                         this->start_acl_running(session_reactor_signal, mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-                    run_session = this->front_up_and_running(session_reactor_signal, front_is_set, ioswitch, session_reactor, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
+                    run_session = this->front_up_and_running(session_reactor_signal, front_is_set, ioswitch, session_reactor, front_events_, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
                     
                     if (!acl && session_reactor_signal == BACK_EVENT_STOP) {
                         run_session = false;
@@ -930,7 +998,6 @@ public:
                 }
                 break;
                 case Front::PRIMARY_AUTH_NLA:
-                LOG(LOG_INFO, "Front::PRIMARY_AUTH_NLA:");
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     if (!acl && !this->last_module) {
@@ -954,8 +1021,8 @@ public:
 
                     // front event
                     try {
-                        if (session_reactor.has_front_event()) {
-                            session_reactor.execute_callbacks(mod_wrapper.get_callback());
+                        if (session_reactor.has_front_event(front_events_)) {
+                            session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
                         }
                         if (front_is_set) {
                             front.rbuf.load_data(front.trans);
@@ -967,58 +1034,6 @@ public:
                             }
                         }
                     } catch (Error const& e) {
-                        if (
-                            // Can be caused by client disconnect.
-                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                            // Can be caused by client disconnect.
-                            (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                            // Can be caused by wabwatchdog.
-                            (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                        }
-                        run_session = false;
-                    } catch (...) {
-                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                        run_session = false;
-                    }
-                    if (!acl && session_reactor_signal == BACK_EVENT_STOP) {
-                        run_session = false;
-                    }
-                }
-                break;
-                default:
-                // Design a State to ensure ACL Start
-//                if (acl){
-//                    ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-//                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-//                }
-                LOG(LOG_INFO, "Front::INITIAL_FRONT_STATE:");
-                {
-                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
-
-                    session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-                        return io_fd_isset(fd, ioswitch.rfds);
-                    });
-
-                    // front event
-                    try {
-                        if (session_reactor.has_front_event()) {
-                            session_reactor.execute_callbacks(mod_wrapper.get_callback());
-                        }
-
-                        if (front_is_set) {
-                            front.rbuf.load_data(front.trans);
-                            while (front.rbuf.next(TpduBuffer::PDU))
-                            {
-                                bytes_view tpdu = front.rbuf.current_pdu_buffer();
-                                uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
-                            }
-                        }
-                    } catch (Error const& e) {
-                        // RemoteApp disconnection initiated by user
-                        // ERR_DISCONNECT_BY_USER == e.id
                         if (
                             // Can be caused by client disconnect.
                             (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&

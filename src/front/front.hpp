@@ -524,8 +524,39 @@ public:
         WAITING_FOR_LOGON_INFO,
         WAITING_FOR_ANSWER_TO_LICENSE,
         ACTIVATE_AND_PROCESS_DATA,
-        UP_AND_RUNNING
+        FRONT_UP_AND_RUNNING
     } state = CONNECTION_INITIATION;
+
+    
+    std::string state_name(){
+        switch (this->state){
+        case CONNECTION_INITIATION:
+            return "Front::CONNECTION_INITIATION";
+        case PRIMARY_AUTH_NLA:
+            return "Front::PRIMARY_AUTH_NLA";
+        case BASIC_SETTINGS_EXCHANGE:
+            return "Front::BASIC_SETTINGS_EXCHANGE";
+        case CHANNEL_ATTACH_USER:
+            return "Front::CHANNEL_ATTACH_USER";
+        case CHANNEL_JOIN_REQUEST:
+            return "Front::CHANNEL_JOIN_REQUEST";
+        case CHANNEL_JOIN_CONFIRM_USER_ID:
+            return "Front::CHANNEL_JOIN_CONFIRM_USER_ID";
+        case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
+            return "Front::CHANNEL_JOIN_CONFIRM_CHECK_USER_ID";
+        case CHANNEL_JOIN_CONFIRM_LOOP:
+            return "Front::CHANNEL_JOIN_CONFIRM_LOOP";
+        case WAITING_FOR_LOGON_INFO:
+            return "Front::WAITING_FOR_LOGON_INFO";
+        case WAITING_FOR_ANSWER_TO_LICENSE:
+            return "Front::WAITING_FOR_ANSWER_TO_LICENSE";
+        case ACTIVATE_AND_PROCESS_DATA:
+            return "Front::ACTIVATE_AND_PROCESS_DATA";
+        case FRONT_UP_AND_RUNNING:
+            return "Front::FRONT_UP_AND_RUNNING";
+        }
+        return "Front::UNKNOWN_STATE";
+    }
 
 private:
     Random & gen;
@@ -566,8 +597,9 @@ private:
     bool is_first_memblt = true;
 
     SessionReactor& session_reactor;
+    CallbackEventContainer & front_events_;
     SessionReactor::TimerPtr handshake_timeout;
-    SessionReactor::CallbackEventPtr incoming_event;
+    CallbackEventPtr incoming_event;
     SessionReactor::TimerPtr capture_timer;
     SessionReactor::TimerPtr flow_control_timer;
 
@@ -624,6 +656,7 @@ public:
 
 public:
     Front( SessionReactor& session_reactor
+         , CallbackEventContainer & front_events_
          , Transport & trans
          , Random & gen
          , Inifile & ini
@@ -651,6 +684,7 @@ public:
     , report_message(report_message)
     , auth_info_sent(false)
     , session_reactor(session_reactor)
+    , front_events_(front_events_)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
              (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
@@ -701,7 +735,7 @@ public:
             this->flow_control_timer = this->session_reactor.create_timer()
             .set_delay(std::chrono::milliseconds(0))
             .on_action([this](auto ctx){
-                if (this->state == UP_AND_RUNNING) {
+                if (this->state == FRONT_UP_AND_RUNNING) {
                     this->send_data_indication_ex_impl(
                         GCC::MCS_GLOBAL_CHANNEL,
                         [&](StreamSize<256>, OutStream & stream) {
@@ -790,7 +824,7 @@ public:
 
             if (this->client_info.remote_program) {
                 this->incoming_event = this->session_reactor
-                .create_callback_event(std::ref(*this))
+                .create_callback_event(this->front_events_, std::ref(*this))
                 .on_action(jln::one_shot([](Callback& cb, Front& front){
                     cb.refresh(Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
                 }));
@@ -1143,7 +1177,7 @@ public:
         else {
             LOG(LOG_WARNING, "Front::end_update: Unbalanced calls to BeginUpdate/EndUpdate methods");
         }
-        if (!(this->state == UP_AND_RUNNING)) {
+        if (!(this->state == FRONT_UP_AND_RUNNING)) {
             LOG(LOG_ERR, "Front::end_update: Front is not up and running.");
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }
@@ -2195,7 +2229,7 @@ public:
 
                     this->mouse_x = me.xPos;
                     this->mouse_y = me.yPos;
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                         this->has_user_activity = true;
                     }
@@ -2220,7 +2254,7 @@ public:
                         "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
                         me.pointerFlags, me.xPos, me.yPos);
 
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         this->has_user_activity = true;
                     }
 
@@ -2245,7 +2279,7 @@ public:
                         static_cast<unsigned int>(se.eventFlags));
 
                     this->keymap.synchronize(se.eventFlags);
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
                         this->has_user_activity = true;
                     }
@@ -2260,7 +2294,7 @@ public:
                         "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
                         uke.unicodeCode);
 
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
                         this->has_user_activity = true;
                     }
@@ -2777,9 +2811,9 @@ public:
 //                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
             this->activate_and_process_data(tpdu, current_pdu_type, cb);
         break;
-        case UP_AND_RUNNING:
+        case FRONT_UP_AND_RUNNING:
 //            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-//                "Front::incoming: UP_AND_RUNNING");
+//                "Front::incoming: FRONT_UP_AND_RUNNING");
             this->up_and_running(tpdu, current_pdu_type, cb);
         break;
         }
@@ -3845,7 +3879,7 @@ private:
 
                             // happens when client gets focus and sends key modifier info
                             this->keymap.synchronize(se.toggleFlags & 0xFFFF);
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
                                 this->has_user_activity = true;
                             }
@@ -3861,7 +3895,7 @@ private:
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 this->has_user_activity = true;
                             }
@@ -3885,7 +3919,7 @@ private:
                             LOG(LOG_WARNING, "Front::process_data: Unexpected Slow-Path INPUT_EVENT_MOUSEX eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
 
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 this->has_user_activity = true;
                             }
 
@@ -3919,7 +3953,7 @@ private:
                                 "Front::process_data: Slow-Path INPUT_EVENT_UNICODE eventTime=%u unicodeCode=0x%04X",
                                 ie.eventTime, uke.unicodeCode);
                             // happens when client gets focus and sends key modifier info
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 cb.rdp_input_unicode(uke.unicodeCode, uke.keyboardFlags);
                                 this->has_user_activity = true;
                             }
@@ -3997,7 +4031,7 @@ private:
                         " left=%d top=%d right=%d bottom=%d cx=%u cy=%u",
                         left, top, right, bottom, rect.cx, rect.cy);
                     // // TODO we should consider adding to API some function to refresh several rects at once
-                    // if (this->state == UP_AND_RUNNING) {
+                    // if (this->state == FRONT_UP_AND_RUNNING) {
                     //     cb.rdp_input_invalidate(rect);
                     // }
                 }
@@ -4135,9 +4169,10 @@ private:
                     this->set_gd(this->orders.graphics_update_pdu());
                 }
 
-                this->state = UP_AND_RUNNING;
+                this->state = FRONT_UP_AND_RUNNING;
                 this->handshake_timeout.reset();
                 cb.rdp_input_up_and_running();
+
                 // TODO we should use accessors to set that, also not sure it's the right place to set it
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
                 this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
@@ -5012,7 +5047,7 @@ private:
                     && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
         }();
 
-        if (this->state == UP_AND_RUNNING) {
+        if (this->state == FRONT_UP_AND_RUNNING) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }

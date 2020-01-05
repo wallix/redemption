@@ -147,6 +147,7 @@ int main(int argc, char** argv)
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
     SessionReactor session_reactor;
+    CallbackEventContainer front_events_;
     TimeSystem system_timeobj;
 
     auto run = [&](auto create_mod){
@@ -176,7 +177,7 @@ int main(int argc, char** argv)
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
         return run_test_client(
-            is_vnc ? "VNC" : "RDP", session_reactor, *mod, gdi::null_gd(),
+            is_vnc ? "VNC" : "RDP", session_reactor, front_events_, *mod, gdi::null_gd(),
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 

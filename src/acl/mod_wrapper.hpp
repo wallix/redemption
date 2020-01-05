@@ -455,6 +455,11 @@ struct ModWrapper
         }
     } gfilter;
     
+    std::string module_name() 
+    {
+        return this->modi->module_name();
+    }
+
 public:
 
     void last_disconnect()

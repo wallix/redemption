@@ -2833,6 +2833,9 @@ namespace gdi
     class GraphicApi;
 }
 
+using CallbackEventContainer = jln::ActionContainer<Callback&>;
+using CallbackEventPtr = CallbackEventContainer::Ptr;
+
 struct SessionReactor
 {
     using TimerContainer = jln::TimerContainer<>;
@@ -2856,15 +2859,11 @@ struct SessionReactor
         return this->graphic_timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
     }
 
-
-    using CallbackEventContainer = jln::ActionContainer<Callback&>;
-    using CallbackEventPtr = CallbackEventContainer::Ptr;
-
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
-    create_callback_event(Args&&... args)
+    create_callback_event(CallbackEventContainer & front_events_, Args&&... args)
     {
-        return this->front_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
+        return front_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
@@ -2911,7 +2910,6 @@ struct SessionReactor
     }
 
 
-    CallbackEventContainer front_events_;
     GraphicEventContainer graphic_events_;
     SesmanEventContainer sesman_events_;
     TimerContainer timer_events_;
@@ -2949,11 +2947,11 @@ struct SessionReactor
 
 
     // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
-    timeval get_next_timeout(EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
+    timeval get_next_timeout(CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
     {
         timeval tv = this->get_current_time() + maxdelay;
         if ((enable_gd && !this->graphic_events_.is_empty())
-         || !this->front_events_.is_empty()) {
+         || !front_events_.is_empty()) {
             return tv;
         }
 
@@ -3024,19 +3022,18 @@ struct SessionReactor
         this->sesman_events_.exec_action(ini);
     }
 
-    [[nodiscard]] bool has_front_event() const noexcept
+    [[nodiscard]] bool has_front_event(CallbackEventContainer & front_events_) const noexcept
     {
-        return !this->front_events_.is_empty();
+        return !front_events_.is_empty();
     }
 
-    void execute_callbacks(Callback& callback)
+    void execute_callbacks(CallbackEventContainer & front_events_, Callback& callback)
     {
-        this->front_events_.exec_action(callback);
+        front_events_.exec_action(callback);
     }
 
     ~SessionReactor()
     {
-        front_events_.clear();
         graphic_events_.clear();
         sesman_events_.clear();
         timer_events_.clear();

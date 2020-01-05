@@ -102,12 +102,12 @@ int FrontWrapper::get_keylayout() const
 
 bool FrontWrapper::is_up_and_running() const
 {
-    return d->front.state == Front::UP_AND_RUNNING;
+    return d->front.state == Front::FRONT_UP_AND_RUNNING;
 }
 
 void FrontWrapper::set_up_and_running()
 {
-    d->front.state = Front::UP_AND_RUNNING;
+    d->front.state = Front::FRONT_UP_AND_RUNNING;
 }
 
 void FrontWrapper::incoming(Callback & cb)
@@ -144,6 +144,7 @@ CHANNELS::ChannelDefArray & FrontWrapper::get_mutable_channel_list()
 
 FrontWrapper::FrontWrapper(
     SessionReactor& session_reactor,
+    CallbackEventContainer & front_events_,
     Transport & trans,
     Random & gen,
     Inifile & ini,
@@ -154,6 +155,7 @@ FrontWrapper::FrontWrapper(
     std::string server_capabilities_filename)
 : d(new D{FrontWrapper::D::MyFront{
     session_reactor,
+    front_events_,
     trans, gen, ini, cctx, report_message,
     fp_support, mem3blt_support, std::move(server_capabilities_filename)
 }})

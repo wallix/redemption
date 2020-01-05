@@ -29,6 +29,7 @@
 
 #include "core/session_reactor.hpp"
 #include "gdi/graphic_api.hpp"
+#include "mod/mod_api.hpp"
 
 RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
@@ -145,6 +146,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
 RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 {
     SessionReactor session_reactor;
+    CallbackEventContainer front_events_;
     using Dt = jln::NotifyDeleteType;
 
     std::string s;
@@ -157,7 +159,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         s += "gd\n";
     }));
 
-    auto callback = session_reactor.create_callback_event(std::ref(s))
+    auto callback = session_reactor.create_callback_event(front_events_, std::ref(s))
     .set_notify_delete([](Dt, std::string& s){
         s += "~callback\n";
     })
@@ -176,10 +178,24 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 
     char dummy;
 
+    struct DummyCb : public mod_api
+    {
+        std::string module_name(){return "AclWaitMod";}
+        void rdp_input_mouse(int, int, int, Keymap2 *) override {}
+        void rdp_input_scancode(long, long, long, long, Keymap2 *) override {}
+        void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
+        void rdp_input_invalidate(const Rect) override {}
+        void refresh(const Rect) override {}
+        bool is_up_and_running() const override { return true; }
+        void rdp_input_up_and_running() override {}
+//        void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain) override {}
+    } dummy_cb;
+
+
     session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy)); /*NOLINT*/
     RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
-    session_reactor.execute_callbacks(*reinterpret_cast<Callback*>(&dummy)); /*NOLINT*/
+    session_reactor.execute_callbacks(front_events_, dummy_cb);
     RED_CHECK_EQ(s, "gd\n~gd\nini\ncallback\n~callback\n");
 
     RED_CHECK(!gd);

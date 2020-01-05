@@ -23,6 +23,7 @@ Author(s): Jonathan Poelen
 #include "core/front_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/image_data_view.hpp"
+#include "core/session_reactor.hpp"
 
 #include <memory>
 #include <string>
@@ -40,6 +41,7 @@ class FrontWrapper : public FrontAPI
 public:
     FrontWrapper(
         SessionReactor& session_reactor,
+        CallbackEventContainer & front_events_,
         Transport & trans,
         Random & gen,
         Inifile & ini,
