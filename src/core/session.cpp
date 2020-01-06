@@ -582,6 +582,38 @@ class Session
         return run_session;
     }
 
+    void rt_display(Inifile & ini, ModuleManager & mm, ModWrapper & mod_wrapper, Front & front)
+    {
+        if (ini.check_from_acl()) {
+            auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
+
+            if (ini.get<cfg::client::enable_osd_4_eyes>()) {
+                Translator tr(language(ini));
+                if (rt_status != Capture::RTDisplayResult::Unchanged) {
+                    std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
+                        ?trkeys::enable_rt_display
+                        :trkeys::disable_rt_display
+                            ).to_string();
+                        
+                    bool is_disable_by_input = true;
+                    if (message != mod_wrapper.get_message()) {
+                        mod_wrapper.clear_osd_message();
+                    }
+                    if (!message.empty()) {
+                        mod_wrapper.set_message(std::move(message), is_disable_by_input);
+                        mod_wrapper.draw_osd_message();
+                    }
+                }
+            }
+
+            if (this->ini.get<cfg::context::forcemodule>() && !mm.is_connected()) {
+//                session_reactor_signal = BACK_EVENT_NEXT;
+                this->ini.set<cfg::context::forcemodule>(false);
+                // Do not send back the value to sesman.
+            }
+        }
+    }
+
 
     bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
@@ -634,34 +666,7 @@ class Session
         // acl event
         try {
             // new value incoming from authentifier
-            if (ini.check_from_acl()) {
-                auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
-
-                if (ini.get<cfg::client::enable_osd_4_eyes>()) {
-                    Translator tr(language(ini));
-                    if (rt_status != Capture::RTDisplayResult::Unchanged) {
-                        std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
-                            ?trkeys::enable_rt_display
-                            :trkeys::disable_rt_display
-                                ).to_string();
-                            
-                        bool is_disable_by_input = true;
-                        if (message != mod_wrapper.get_message()) {
-                            mod_wrapper.clear_osd_message();
-                        }
-                        if (!message.empty()) {
-                            mod_wrapper.set_message(std::move(message), is_disable_by_input);
-                            mod_wrapper.draw_osd_message();
-                        }
-                    }
-                }
-
-                if (this->ini.get<cfg::context::forcemodule>() && !mm.is_connected()) {
-                    session_reactor_signal = BACK_EVENT_NEXT;
-                    this->ini.set<cfg::context::forcemodule>(false);
-                    // Do not send back the value to sesman.
-                }
-            }
+            this->rt_display(ini, mm, mod_wrapper, front);
 
             try
             {
