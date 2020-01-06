@@ -578,7 +578,6 @@ private:
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
     ReportMessageApi & report_message;
-    bool       auth_info_sent;
 
     uint16_t rail_channel_id = 0;
 
@@ -682,7 +681,6 @@ public:
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , server_capabilities_filename(std::move(server_capabilities_filename))
     , report_message(report_message)
-    , auth_info_sent(false)
     , session_reactor(session_reactor)
     , front_events_(front_events_)
     , rdp_keepalive_connection_interval(
@@ -4171,38 +4169,13 @@ private:
 
                 this->state = FRONT_UP_AND_RUNNING;
                 this->handshake_timeout.reset();
-                cb.rdp_input_up_and_running();
 
-                // TODO we should use accessors to set that, also not sure it's the right place to set it
-                this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
-                this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
-                this->ini.set_acl<cfg::context::opt_bpp>(safe_int(this->client_info.screen_info.bpp));
-
-                if (!this->auth_info_sent) {
-                    char         username_a_domain[516];
-                    const char * username;
-                    if (this->client_info.domain[0] &&
-                        !strchr(this->client_info.username, '@') &&
-                        !strchr(this->client_info.username, '\\')) {
-                        snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->client_info.username, this->client_info.domain);
-                        username = username_a_domain;
-                    }
-                    else {
-                        username = this->client_info.username;
-                    }
-
-                    LOG(LOG_INFO, "Front::process_data: asking for selector");
-                    this->ini.set_acl<cfg::globals::auth_user>(username);
-                    this->ini.ask<cfg::context::selector>();
-                    this->ini.ask<cfg::globals::target_user>();
-                    this->ini.ask<cfg::globals::target_device>();
-                    this->ini.ask<cfg::context::target_protocol>();
-                    if (this->client_info.password[0]) {
-                        this->ini.set_acl<cfg::context::password>(this->client_info.password);
-                    }
-
-                    this->auth_info_sent = true;
-                }
+                // TODO: see if we should not rather use a specific callback API for ACL
+                // this is mixed up with RDP input API
+                cb.rdp_input_up_and_running(this->client_info.screen_info,
+                                            this->client_info.username,
+                                            this->client_info.domain,
+                                            this->client_info.password);
 
                 if (BitsPerPixel{8} != this->mod_bpp) {
                     this->send_palette();

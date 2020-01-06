@@ -221,7 +221,7 @@ class Session
         }
     }
 
-    void start_acl_running(BackEvent_t & session_reactor_signal, ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
+    void start_acl_running(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         try {
@@ -232,7 +232,6 @@ class Session
             const auto sck = acl->auth_trans.sck;
             fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
             authentifier.set_acl_serial(&acl->acl_serial);
-            session_reactor_signal = BACK_EVENT_NEXT;
         }
         catch (...) {
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
@@ -241,7 +240,6 @@ class Session
                 mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
             }
             this->last_module = true;
-            session_reactor_signal = ini.get<cfg::globals::enable_close_box>()?BACK_EVENT_NONE:BACK_EVENT_STOP;
         }
     }
 
@@ -553,6 +551,40 @@ class Session
     }
 
 
+    bool front_close_box(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, ModWrapper & mod_wrapper, Front & front)
+    {
+        bool run_session = true;
+        try {
+            session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
+                return mod_wrapper.get_graphic_wrapper();
+            });
+            session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+                return io_fd_isset(fd, ioswitch.rfds);
+            });
+            if (session_reactor.has_front_event(front_events_)) {
+                session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
+            }
+            if (front_is_set) {
+                front.rbuf.load_data(front.trans);
+                while (front.rbuf.next(TpduBuffer::PDU))
+                {
+                    bytes_view tpdu = front.rbuf.current_pdu_buffer();
+                    uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
+                    front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
+                }
+            }
+            BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
+            if ((signal == BACK_EVENT_STOP)||(signal==BACK_EVENT_NEXT)){
+                run_session = false;
+            }
+
+        } catch (Error const& e) {
+            run_session = false;
+        }
+        return run_session;
+    }
+
+
     bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
         try {
@@ -741,15 +773,65 @@ class Session
     }
 
 
-    struct AclWaitMod : public mod_api
+    struct AclWaitFrontUpAndRunningMod : public mod_api
     {
-        std::string module_name(){return "AclWaitMod";}
+        bool auth_info_sent = false;
+        bool front_up_and_running = false;
+        ScreenInfo screen_info;
+        std::string username;
+        std::string domain;
+        std::string password;
+        Inifile & ini;
+
+        AclWaitFrontUpAndRunningMod(Inifile & ini) 
+            : ini(ini)
+        {
+        }
+
+        std::string module_name() override {return "AclWaitMod";}
+
         void rdp_input_mouse(int, int, int, Keymap2 *) override {}
         void rdp_input_scancode(long, long, long, long, Keymap2 *) override {}
         void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
         void rdp_input_invalidate(const Rect) override {}
         void refresh(const Rect) override {}
         bool is_up_and_running() const override { return true; }
+        void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) override {
+            this->screen_info = screen_info;
+            this->username = username;
+            this->domain = domain;
+            this->password = password;
+            this->front_up_and_running = true;
+        }
+
+        void set_acl_screen_info(){
+            // TODO we should use accessors to set that, also not sure it's the right place to set it
+            this->ini.set_acl<cfg::context::opt_width>(this->screen_info.width);
+            this->ini.set_acl<cfg::context::opt_height>(this->screen_info.height);
+            this->ini.set_acl<cfg::context::opt_bpp>(safe_int(screen_info.bpp));
+        }
+
+        void set_acl_auth_info(){
+            if (!this->auth_info_sent) {
+                std::string username = this->username;
+                if (not domain.empty()
+                 && (username.find('@') == std::string::npos)
+                 && (username.find('\\') == std::string::npos)) {
+                    username = username + std::string("@") + domain;
+                }
+
+                LOG(LOG_INFO, "Front asking for selector");
+                this->ini.set_acl<cfg::globals::auth_user>(username);
+                this->ini.ask<cfg::context::selector>();
+                this->ini.ask<cfg::globals::target_user>();
+                this->ini.ask<cfg::globals::target_device>();
+                this->ini.ask<cfg::context::target_protocol>();
+                if (!password.empty()) {
+                    this->ini.set_acl<cfg::context::password>(password);
+                }
+                this->auth_info_sent = true;
+            }
+        }
     };
 
 
@@ -773,12 +855,13 @@ public:
 //            this->signal = signal;
 //            // assert(is not already set)
 //        }
-                
+        
         session_reactor.set_current_time(tvtime());
         Front front(
             session_reactor, front_events_, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>(), mem3blt_support
         );
+        AclWaitFrontUpAndRunningMod acl_cb(ini);
 
         std::unique_ptr<Acl> acl;
 
@@ -931,7 +1014,29 @@ public:
                     this->write_performance_log(now.tv_sec);
                 }
 
-                LOG(LOG_INFO, "SELECT LOOP: %s", front.state_name(), mod_wrapper.module_name());
+                bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                
+                bool acl_is_set = false; //(acl) && io_fd_isset(acl->auth_trans.sck, ioswitch.rfds);
+                if (acl){
+                    if (io_fd_isset(acl->auth_trans.sck, ioswitch.rfds)){
+                        acl_is_set = true;
+                    }
+                }
+                bool mod_is_set = false;
+                if (mod_wrapper.has_mod()) {
+                    if (io_fd_isset(sck_no_read.sck_mod, ioswitch.rfds)){
+                        mod_is_set = true;
+                    }
+                }
+
+                LOG(LOG_INFO, "SELECT LOOP: %s front_data=%s %s acl_data=%s mod=%s [%s]",
+                    front.state_name(),
+                    front_is_set?"yes":"no",
+                    acl?"ACL Connected":"ACL not connected",
+                    acl_is_set?"yes":"no",
+                    mod_is_set?"yes":"no",
+                    mod_wrapper.module_name());
+
                 switch (front.state) {
                 default:
                 // Design a State to ensure ACL Start
@@ -979,17 +1084,31 @@ public:
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
                     }
-                    if (!acl && session_reactor_signal == BACK_EVENT_STOP) {
-                        run_session = false;
-                    }
                 }
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
                 {
                     if (!acl && !this->last_module) {
-                        this->start_acl_running(session_reactor_signal, mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
+                        this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
+                        if (this->last_module && !ini.get<cfg::globals::enable_close_box>()) {
+                            run_session = false;
+                            continue;
+                        }
                     }
+
+                    if (!acl_cb.auth_info_sent){
+                        acl_cb.set_acl_screen_info();
+                        acl_cb.set_acl_auth_info();
+                        session_reactor_signal = BACK_EVENT_NEXT;
+                    }
+
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+
+                    if (this->last_module){
+                        run_session = this->front_close_box(front_is_set, ioswitch, session_reactor, front_events_, mod_wrapper, front);
+                        continue;
+                    }
+
                     run_session = this->front_up_and_running(session_reactor_signal, front_is_set, ioswitch, session_reactor, front_events_, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
                     
                     if (!acl && session_reactor_signal == BACK_EVENT_STOP) {

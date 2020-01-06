@@ -826,8 +826,8 @@ public:
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     { this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2); }
 
-    void rdp_input_up_and_running()
-    { this->get_mod()->rdp_input_up_and_running(); }
+    void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password)
+    { this->get_mod()->rdp_input_up_and_running(screen_info, username, domain, password); }
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
     { this->get_mod()->rdp_allow_display_updates(left, top, right, bottom); }

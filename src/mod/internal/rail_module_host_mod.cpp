@@ -75,11 +75,11 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
     }
 }
 
-void RailModuleHostMod::rdp_input_up_and_running()
+void RailModuleHostMod::rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password)
 {
     mod_api& mod = this->rail_module_host.get_managed_mod();
 
-    mod.rdp_input_up_and_running();
+    mod.rdp_input_up_and_running(screen_info, username, domain, password);
 }
 
 // Callback

@@ -27,6 +27,8 @@
 
 struct null_mod : public mod_api
 {
+    std::string module_name() override {return "Null Mod";}
+
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
         (void)device_flags;
         (void)x;

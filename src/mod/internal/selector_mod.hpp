@@ -78,6 +78,9 @@ public:
         this->screen.clear();
     }
 
+    std::string module_name() override {return "SelectorMod";}
+
+
     void ask_page();
 
     void notify(Widget* widget, notify_event_t event) override;

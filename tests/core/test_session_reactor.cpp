@@ -187,7 +187,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         void rdp_input_invalidate(const Rect) override {}
         void refresh(const Rect) override {}
         bool is_up_and_running() const override { return true; }
-        void rdp_input_up_and_running() override {}
+        void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) override {}
 //        void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain) override {}
     } dummy_cb;
 

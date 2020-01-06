@@ -161,6 +161,8 @@ public:
 
     ~DialogMod() override;
 
+    std::string module_name() override {return "DialogMod";}
+
     void notify(Widget* sender, notify_event_t event) override;
 
     [[nodiscard]] bool is_up_and_running() const override

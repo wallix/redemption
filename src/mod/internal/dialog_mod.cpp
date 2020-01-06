@@ -35,8 +35,8 @@ DialogMod::DialogMod(
     const char * cancel_text, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, ChallengeOpt has_challenge
 )
-    : front_width(front_width)
-    , front_height(front_height)
+    : front_width(width)
+    , front_height(height)
     , front(front)
     , screen(drawable, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)

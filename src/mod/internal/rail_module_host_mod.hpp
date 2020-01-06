@@ -53,6 +53,8 @@ public:
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
     }
 
+    std::string module_name() override {return "RailModuleHostMod";}
+
     void notify(Widget* /*sender*/, notify_event_t /*event*/) override
     {}
 
@@ -70,7 +72,7 @@ public:
         (void)param2;
     }
 
-    void rdp_input_up_and_running() override;
+    void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) override;
 
     // Callback
 
