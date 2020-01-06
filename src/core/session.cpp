@@ -614,6 +614,51 @@ class Session
         }
     }
 
+    bool module_sequencing(BackEvent_t & session_reactor_signal, ModuleManager & mm, std::unique_ptr<Acl> & acl,
+        Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
+        timeval now, Front & front)
+    {
+        BackEvent_t signal = session_reactor_signal;
+        int i = 0;
+        do {
+            if (++i == 11) {
+                LOG(LOG_ERR, "loop event error");
+                break;
+            }
+            session_reactor_signal = BACK_EVENT_NONE;
+            if (signal == BACK_EVENT_STOP) {
+                session_reactor_signal = BACK_EVENT_STOP;
+                if (this->last_module) {
+                    authentifier.set_acl_serial(nullptr);
+                    acl.reset();
+                }
+                return false;
+            }
+            if (!this->last_module) {
+                signal = this->check_acl(session_reactor_signal, mm, *acl,
+                    authentifier, authentifier, mod_wrapper,
+                    now.tv_sec, signal, front.has_user_activity
+                );
+            }
+            if (session_reactor_signal == BACK_EVENT_NONE) {
+                session_reactor_signal = signal;
+                break;
+            }
+            if (signal != BACK_EVENT_NONE) {
+                session_reactor_signal = signal;
+            }
+            else {
+                signal = session_reactor_signal;
+            }
+        } while (session_reactor_signal != BACK_EVENT_NONE);
+
+        if (this->last_module) {
+            authentifier.set_acl_serial(nullptr);
+            acl.reset();
+        }
+        return true;
+    }
+
 
     bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
@@ -668,20 +713,12 @@ class Session
             // new value incoming from authentifier
             this->rt_display(ini, mm, mod_wrapper, front);
 
-            try
-            {
-                if (BACK_EVENT_NONE == session_reactor_signal) {
-                    // Process incoming module trafic
-                    auto& gd = mod_wrapper.get_graphic_wrapper();
-                    session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
-                        return io_fd_isset(fd, ioswitch.rfds);
-                    }, gd);
-                }
-            }
-            catch (Error const & e) {
-                if (false == end_session_exception(e, mm, mod_wrapper, session_reactor_signal, authentifier, report_message, ini)) {
-                    return false;
-                }
+            if (BACK_EVENT_NONE == session_reactor_signal) {
+                // Process incoming module trafic
+                auto& gd = mod_wrapper.get_graphic_wrapper();
+                session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
+                    return io_fd_isset(fd, ioswitch.rfds);
+                }, gd);
             }
 
             // Incoming data from ACL
@@ -720,45 +757,8 @@ class Session
                 return true;
             }
 
-            signal = session_reactor_signal;
-            int i = 0;
-            do {
-                if (++i == 11) {
-                    LOG(LOG_ERR, "loop event error");
-                    break;
-                }
-                session_reactor_signal = BACK_EVENT_NONE;
-                if (signal == BACK_EVENT_STOP) {
-                    session_reactor_signal = BACK_EVENT_STOP;
-                    if (this->last_module) {
-                        authentifier.set_acl_serial(nullptr);
-                        acl.reset();
-                    }
-                    return false;
-                }
-                if (!this->last_module) {
-                    signal = this->check_acl(session_reactor_signal, mm, *acl,
-                        authentifier, authentifier, mod_wrapper,
-                        now.tv_sec, signal, front.has_user_activity
-                    );
-                }
-                if (session_reactor_signal == BACK_EVENT_NONE) {
-                    session_reactor_signal = signal;
-                    break;
-                }
-                if (signal != BACK_EVENT_NONE) {
-                    session_reactor_signal = signal;
-                }
-                else {
-                    signal = session_reactor_signal;
-                }
-            } while (session_reactor_signal != BACK_EVENT_NONE);
+            return this->module_sequencing(session_reactor_signal, mm, acl, authentifier, report_message, mod_wrapper, now, front);
 
-            if (this->last_module) {
-                authentifier.set_acl_serial(nullptr);
-                acl.reset();
-            }
-            return true;
         } catch (Error const& e) {
             LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
