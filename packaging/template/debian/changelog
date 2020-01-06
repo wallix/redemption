@@ -1,3 +1,24 @@
+redemption (7.4.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * [SP][BS] Detect and block user account manipulation.
+  * Fix issue 'RDP session crashs with error (asked size (XXXXX) + HEADER_SIZE (106) = XXXXX) > image batch capacity (16384)'.
+  * [SP] Fix issue 'Latest Microsoft Windows 10 Update may cause Session Probe to crash'.
+  * [SP][BS] Detect & block outbound connection establishments.
+  * [SP][BS] Detect & block launches of processes.
+  * Fix issue 'Option /admin of MSTSC not working'.
+  * [Approval] Fix issue 'Button "back to selector" displayed when only one target is available'.
+  * Fix issue 'RDP Session disconnected during a Copy/Paste'.
+  * Fix issue 'Cannot use session recording after termination of an unrecorded session'.
+  * Provide mechanism to disable individually each supported Primary Drawing Order.
+  * Fix issue 'Remmina/FreeRDP crash when showing non-standard size (mouse) pointer'.
+  * Log socket errors in '/var/log/syslog'.
+  * Change default path in rdpcert '/var/wab/etc/rdp/'.
+  * [SP] Fix issue 'Cannot use hostnames in outbound connection monitoring rules'.
+  * Fix issue 'Unable to see the pointer in a VNC connection'.
+  * Selector's columns smart resizing.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 06 Jan 2020 16:36:49 +0200
+
 redemption (7.4.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Scytale: fdx and tfl files support (writer only)
