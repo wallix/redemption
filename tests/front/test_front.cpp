@@ -157,6 +157,8 @@ RED_AUTO_TEST_CASE(TestFront)
 
     SessionReactor session_reactor;
     CallbackEventContainer front_events_;
+    SesmanEventContainer sesman_events_;
+
 
     NullReportMessage report_message;
 
@@ -233,7 +235,7 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, session_reactor, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        t, session_reactor, sesman_events_, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
 
     // incoming connexion data

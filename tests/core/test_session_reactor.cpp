@@ -146,6 +146,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
 RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 {
     SessionReactor session_reactor;
+    SesmanEventContainer sesman_events_;
     CallbackEventContainer front_events_;
     using Dt = jln::NotifyDeleteType;
 
@@ -167,7 +168,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         s += "callback\n";
     }));
 
-    auto ini = session_reactor.create_sesman_event(std::ref(s))
+    auto ini = session_reactor.create_sesman_event(sesman_events_, std::ref(s))
     .on_action([](JLN_ACTION_CTX ctx, Inifile&, std::string& s){
         s += "ini\n";
         return ctx.terminate();
@@ -192,7 +193,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     } dummy_cb;
 
 
-    session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy)); /*NOLINT*/
+    session_reactor.execute_sesman(sesman_events_, *reinterpret_cast<Inifile*>(&dummy)); /*NOLINT*/
     RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
     session_reactor.execute_callbacks(front_events_, dummy_cb);

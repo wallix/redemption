@@ -63,7 +63,7 @@ namespace
         SessionReactor::GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
 #ifndef __EMSCRIPTEN__
-        SessionReactor::SesmanEventPtr sesman_event;
+        SesmanEventPtr sesman_event;
         CertificateResult result = CertificateResult::wait;
 #endif
 
@@ -188,7 +188,7 @@ void mod_rdp::init_negociate_event_(
                 this->vars.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
                 this->vars.ask<cfg::mod_rdp::server_cert_response>();
 
-                private_rdp_negociation->sesman_event = this->session_reactor.create_sesman_event()
+                private_rdp_negociation->sesman_event = this->session_reactor.create_sesman_event(this->sesman_events_)
                 .on_action([&result, &private_rdp_negociation, this](auto ctx, Inifile& ini){
                     auto const& message = ini.get<cfg::mod_rdp::server_cert_response>();
                     if (message.empty()) {

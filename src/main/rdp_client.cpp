@@ -147,6 +147,7 @@ int main(int argc, char** argv)
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
     SessionReactor session_reactor;
+    SesmanEventContainer sesman_events_;
     CallbackEventContainer front_events_;
     TimeSystem system_timeobj;
 
@@ -262,7 +263,7 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, session_reactor, gdi::null_gd(), front, client_info, redir_info,
+                trans, session_reactor, sesman_events_ ,gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, ini, nullptr, nullptr, mod_rdp_factory);

@@ -119,13 +119,14 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    SesmanEventContainer sesman_events_;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, session_reactor, sesman_events_, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
         nullptr, nullptr, mod_rdp_factory);
@@ -224,13 +225,15 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    SesmanEventContainer sesman_events_;
+
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, session_reactor, sesman_events_, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
         nullptr, nullptr, mod_rdp_factory);

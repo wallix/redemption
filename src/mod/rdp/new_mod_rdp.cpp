@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     SessionReactor& session_reactor,
+    SesmanEventContainer & sesman_events_,
     gdi::GraphicApi& gd,
     FrontAPI& front,
     const ClientInfo& info,
@@ -44,7 +45,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
 )
 {
     return std::make_unique<mod_rdp>(
-        trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
+        trans, session_reactor, sesman_events_, gd, front, info, redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, vars, metrics, file_validator_service, mod_rdp_factory);
 }

@@ -95,6 +95,7 @@ public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
     SessionReactor& session_reactor;
+    SesmanEventContainer & sesman_events_;
     CallbackEventContainer front_events_;
 
     std::unique_ptr<Transport> _socket_in_recorder;
@@ -236,11 +237,13 @@ public:
 
 public:
     ClientRedemption(SessionReactor & session_reactor,
+                     SesmanEventContainer & sesman_events_,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
         , _callback(this)
         , session_reactor(session_reactor)
+        , sesman_events_(sesman_events_)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(session_reactor, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
@@ -422,6 +425,7 @@ public:
                 this->unique_mod = new_mod_rdp(
                     *this->socket
                   , session_reactor
+                  , sesman_events_
                   , *this
                   , *this
                   , this->config.info

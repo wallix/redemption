@@ -200,7 +200,7 @@ class Session
         return 0;
     }
 
-    void start_acl_activate(BackEvent_t & session_reactor_signal, ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
+    void start_acl_activate(ModWrapper & mod_wrapper, std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, ModuleManager & mm, SessionReactor & session_reactor, Authentifier & authentifier, ReportMessageApi & report_message, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         try {
@@ -211,13 +211,11 @@ class Session
             const auto sck = acl->auth_trans.sck;
             fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
             authentifier.set_acl_serial(&acl->acl_serial);
-            session_reactor_signal = BACK_EVENT_NEXT;
         }
         catch (...) {
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
             mod_wrapper.last_disconnect();
             this->last_module = true;
-            session_reactor_signal = BACK_EVENT_STOP;
         }
     }
 
@@ -585,7 +583,7 @@ class Session
     }
 
 
-    bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
+    bool front_up_and_running(BackEvent_t & session_reactor_signal, bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, BackEvent_t & signal, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
         try {
             session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
@@ -688,7 +686,7 @@ class Session
                 acl->acl_serial.receive();
                 if (!ini.changed_field_size()) {
                     LOG(LOG_INFO, "sesman event");
-                    session_reactor.execute_sesman(ini);
+                    session_reactor.execute_sesman(sesman_events_, ini);
                 }
             }
 
@@ -847,6 +845,7 @@ public:
 
         SessionReactor session_reactor;
         CallbackEventContainer front_events_;
+        SesmanEventContainer sesman_events_;
         BackEvent_t session_reactor_signal = BACK_EVENT_NONE;
 //        void set_next_event(/*BackEvent_t*/int signal)
 //        {
@@ -888,9 +887,9 @@ public:
             
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
-            ModFactory mod_factory(mod_wrapper, session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
+            ModFactory mod_factory(mod_wrapper, session_reactor, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
-            ModuleManager mm(end_session_warning, mod_factory, session_reactor, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
+            ModuleManager mm(end_session_warning, mod_factory, session_reactor, sesman_events_, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
 
@@ -1109,7 +1108,7 @@ public:
                         continue;
                     }
 
-                    run_session = this->front_up_and_running(session_reactor_signal, front_is_set, ioswitch, session_reactor, front_events_, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
+                    run_session = this->front_up_and_running(session_reactor_signal, front_is_set, ioswitch, session_reactor, front_events_, sesman_events_, signal, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
                     
                     if (!acl && session_reactor_signal == BACK_EVENT_STOP) {
                         run_session = false;
@@ -1120,7 +1119,7 @@ public:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     if (!acl && !this->last_module) {
-                        this->start_acl_activate(session_reactor_signal, mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
+                        this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
 
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
@@ -1134,7 +1133,7 @@ public:
                         acl->acl_serial.receive();
                         if (!ini.changed_field_size()) {
                             LOG(LOG_INFO, "sesman event");
-                            session_reactor.execute_sesman(ini);
+                            session_reactor.execute_sesman(sesman_events_, ini);
                         }
                     }
 

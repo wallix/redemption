@@ -23,6 +23,7 @@ Author(s): Jonathan Poelen
 #include "mod/mod_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/channels_authorizations.hpp"
+#include "core/session_reactor.hpp"
 
 #include <memory>
 
@@ -47,6 +48,7 @@ namespace gdi { class GraphicApi; }
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     SessionReactor& session_reactor,
+    SesmanEventContainer & sesman_events_,
     gdi::GraphicApi& gd,
     FrontAPI& front,
     const ClientInfo& info,

@@ -54,6 +54,7 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
+    SesmanEventContainer & sesman_events_;
     ClientInfo & client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
@@ -64,9 +65,10 @@ class ModFactory
     
 
 public:
-    ModFactory(ModWrapper & mod_wrapper, SessionReactor & session_reactor, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
+    ModFactory(ModWrapper & mod_wrapper, SessionReactor & session_reactor, SesmanEventContainer & sesman_events_, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
+        , sesman_events_(sesman_events_)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
@@ -140,6 +142,7 @@ public:
         auto new_mod = new SelectorMod(
             this->ini,
             this->session_reactor,
+            this->sesman_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,

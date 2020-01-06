@@ -2835,6 +2835,8 @@ namespace gdi
 
 using CallbackEventContainer = jln::ActionContainer<Callback&>;
 using CallbackEventPtr = CallbackEventContainer::Ptr;
+using SesmanEventContainer = jln::ActionContainer<Inifile&>;
+using SesmanEventPtr = SesmanEventContainer::Ptr;
 
 struct SessionReactor
 {
@@ -2877,14 +2879,11 @@ struct SessionReactor
         return this->graphic_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
-    using SesmanEventContainer = jln::ActionContainer<Inifile&>;
-    using SesmanEventPtr = SesmanEventContainer::Ptr;
-
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
-    create_sesman_event(Args&&... args)
+    create_sesman_event(SesmanEventContainer & sesman_events_, Args&&... args)
     {
-        return this->sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
+        return sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
@@ -2911,7 +2910,6 @@ struct SessionReactor
 
 
     GraphicEventContainer graphic_events_;
-    SesmanEventContainer sesman_events_;
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     TopFdContainer fd_events_;
@@ -3017,9 +3015,9 @@ struct SessionReactor
         this->fd_events_.exec_action(is_set);
     }
 
-    void execute_sesman(Inifile& ini)
+    void execute_sesman(SesmanEventContainer & sesman_events_, Inifile& ini)
     {
-        this->sesman_events_.exec_action(ini);
+        sesman_events_.exec_action(ini);
     }
 
     [[nodiscard]] bool has_front_event(CallbackEventContainer & front_events_) const noexcept
@@ -3035,7 +3033,7 @@ struct SessionReactor
     ~SessionReactor()
     {
         graphic_events_.clear();
-        sesman_events_.clear();
+//        sesman_events_.clear();
         timer_events_.clear();
         graphic_timer_events_.clear();
         fd_events_.clear();

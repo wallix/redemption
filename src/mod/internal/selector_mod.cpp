@@ -53,6 +53,7 @@ namespace
 
 SelectorMod::SelectorMod(
     SelectorModVariables vars, SessionReactor& session_reactor,
+    SesmanEventContainer & sesman_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
@@ -96,6 +97,8 @@ SelectorMod::SelectorMod(
     , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
+    , session_reactor(session_reactor)
+    , sesman_events_(sesman_events_)
 {
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     this->screen.add_widget(&this->selector);
@@ -118,7 +121,7 @@ SelectorMod::SelectorMod(
     }));
 
     LOG(LOG_INFO, "Setting sesman event");
-    this->sesman_event = session_reactor.create_sesman_event()
+    this->sesman_event = session_reactor.create_sesman_event(sesman_events_)
     .on_action(jln::always_ready([this](Inifile&){
         LOG(LOG_INFO, "Executing sesman event on behalf of selector");
         char buffer[16];

@@ -1865,6 +1865,7 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     SessionReactor& session_reactor;
+    SesmanEventContainer & sesman_events_;
     SessionReactor::GraphicFdPtr fd_event;
 
 #ifndef __EMSCRIPTEN__
@@ -1930,6 +1931,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
+      , SesmanEventContainer & sesman_events_
       , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info
@@ -1994,6 +1996,7 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
+        , sesman_events_(sesman_events_)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
