@@ -335,6 +335,7 @@ class Session
                     LOG(LOG_INFO, "check_acl is INTERNAL CLOSE BACK signal=%s", signal_name(signal)); 
                     acl->keepalive.stop();
                 }
+                mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
             }
             return true;
             case BACK_EVENT_RETRY_CURRENT:

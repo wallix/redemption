@@ -186,6 +186,9 @@ public:
 
     void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
     {
+        LOG(LOG_INFO, "New_mod: target_module=%s (was %s)", 
+                get_module_name(target_module), get_module_name(this->old_target_module));
+
         if (target_module != MODULE_INTERNAL_TRANSITION) {
             LOG(LOG_INFO, "----------> new_mod <--------");
             LOG(LOG_INFO, "target_module=%s(%d)",

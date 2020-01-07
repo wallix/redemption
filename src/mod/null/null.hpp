@@ -27,32 +27,16 @@
 
 struct null_mod : public mod_api
 {
+    null_mod() 
+    {
+        this->set_mod_signal(BACK_EVENT_NEXT);
+    }
     std::string module_name() override {return "Null Mod";}
-
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
-        (void)device_flags;
-        (void)x;
-        (void)y;
-    }
-
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * /*keymap*/) override {
-        (void)param1;
-        (void)param2;
-        (void)param3;
-        (void)param4;
-    }
-
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
-        (void)time;
-        (void)device_flags;
-        (void)param1;
-        (void)param2;
-    }
-
-    void rdp_input_invalidate(const Rect /*r*/) override {}
-
-    void refresh(const Rect /*clip*/) override {}
-
-    [[nodiscard]] bool is_up_and_running() const override { return true; }
+    void rdp_input_mouse(int,int,int,Keymap2 *) override {}
+    void rdp_input_scancode(long,long,long,long,Keymap2 *) override {}
+    void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
+    void rdp_input_invalidate(const Rect) override {}
+    void refresh(const Rect) override {}
+    bool is_up_and_running() const override { return true; }
 };
 

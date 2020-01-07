@@ -54,6 +54,8 @@ public:
 
     ~TransitionMod() override;
 
+    std::string module_name() override {return "Transition Mod";}
+
     [[nodiscard]] bool is_up_and_running() const override { return true; }
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
