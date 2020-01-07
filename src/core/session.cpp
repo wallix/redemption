@@ -114,8 +114,12 @@ class Session
             return 0ms;
         }
 
-        bool is_set(int fd){
+        bool is_set_for_writing(int fd){
             return fd != INVALID_SOCKET && io_fd_isset(fd, this->wfds);
+        };
+
+        bool is_set_for_reading(int fd){
+            return fd != INVALID_SOCKET && io_fd_isset(fd, this->rfds);
         };
 
         void set_read_sck(int sck)
@@ -569,7 +573,7 @@ class Session
                 return mod_wrapper.get_graphic_wrapper();
             });
             session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-                return io_fd_isset(fd, ioswitch.rfds);
+                return ioswitch.is_set_for_reading(fd);
             });
             if (session_reactor.has_front_event(front_events_)) {
                 session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
@@ -711,7 +715,7 @@ class Session
 
         LOG(LOG_INFO, "front_up_and_running 2 execute_events");
         session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-            return io_fd_isset(fd, ioswitch.rfds);
+            return ioswitch.is_set_for_reading(fd);
         });
 
         // front event
@@ -770,13 +774,13 @@ class Session
                 // Process incoming module trafic
                 auto& gd = mod_wrapper.get_graphic_wrapper();
                 session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
-                    return io_fd_isset(fd, ioswitch.rfds);
+                    return ioswitch.is_set_for_reading(fd);
                 }, gd);
             }
 
             // Incoming data from ACL
             LOG(LOG_INFO, "check acl pending");
-            if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
+            if (acl && (acl->auth_trans.has_pending_data() || ioswitch.is_set_for_reading(acl->auth_trans.sck))) {
                 // authentifier received updated values
                 LOG(LOG_INFO, "acl pending");
                 acl->acl_serial.receive();
@@ -1002,7 +1006,7 @@ public:
 
                 LOG(LOG_INFO, "acl check");
                 if (acl) {
-//                    LOG(LOG_INFO, "read acl (1)");
+                    LOG(LOG_INFO, "read acl (1)");
                     ioswitch.set_read_sck(acl->auth_trans.sck);
                 }
 
@@ -1015,6 +1019,7 @@ public:
 //                    }
 //                }
 
+                LOG(LOG_INFO, "front_trans check pending data");
                 if (front_trans.has_pending_data()
                 || (mod_trans && mod_trans->has_pending_data())
                 || (acl && acl->auth_trans.has_pending_data())){
@@ -1022,6 +1027,7 @@ public:
                 }
 
 
+                LOG(LOG_INFO, "for each fd");
                 session_reactor.for_each_fd(
                     SessionReactor::EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
                     [&](int fd){
@@ -1039,6 +1045,7 @@ public:
                             SessionReactor::EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
                             ioswitch.get_timeout(now)));
 
+                LOG(LOG_INFO, "select");
                 int num = ioswitch.select(now);
 
                 if (num < 0) {
@@ -1056,11 +1063,13 @@ public:
                 }
 
                 {
-                    if (ioswitch.is_set(sck_no_read.sck_mod)) {
+                    LOG(LOG_INFO, "send mod data waiting to be sent");
+                    if (ioswitch.is_set_for_writing(sck_no_read.sck_mod)) {
                         mod_trans->send_waiting_data();
                     }
 
-                    if (ioswitch.is_set(sck_no_read.sck_front)) {
+                    LOG(LOG_INFO, "send front data waiting to be sent");
+                    if (ioswitch.is_set_for_writing(sck_no_read.sck_front)) {
                         front_trans.send_waiting_data();
                     }
                 }
@@ -1071,17 +1080,22 @@ public:
                     this->write_performance_log(now.tv_sec);
                 }
 
-                bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                LOG(LOG_INFO, "front is set flag");
+                bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
                 
-                bool acl_is_set = false; //(acl) && io_fd_isset(acl->auth_trans.sck, ioswitch.rfds);
+                LOG(LOG_INFO, "acl is set flag");
+                bool acl_is_set = false; //(acl) && ioswitch.is_set_for_reading(acl->auth_trans.sck);
                 if (acl){
-                    if (io_fd_isset(acl->auth_trans.sck, ioswitch.rfds)){
+                    if (ioswitch.is_set_for_reading(acl->auth_trans.sck)){
                         acl_is_set = true;
                     }
                 }
+
+                LOG(LOG_INFO, "mod is set flag");
                 bool mod_is_set = false;
                 if (mod_wrapper.has_mod()) {
-                    if (io_fd_isset(sck_no_read.sck_mod, ioswitch.rfds)){
+                    LOG(LOG_INFO, "mod is set flag ?");
+                    if (ioswitch.is_set_for_reading(sck_no_read.sck_mod)){
                         mod_is_set = true;
                     }
                 }
@@ -1102,10 +1116,10 @@ public:
 //                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
 //                }
                 {
-                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                    bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
 
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-                        return io_fd_isset(fd, ioswitch.rfds);
+                        return ioswitch.is_set_for_reading(fd);
                     });
 
                     // front event
@@ -1159,7 +1173,7 @@ public:
                         session_reactor_signal = BACK_EVENT_NEXT;
                     }
 
-                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                    bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
 
                     if (this->last_module){
                         run_session = this->front_close_box(front_is_set, ioswitch, session_reactor, front_events_, mod_wrapper, front);
@@ -1177,17 +1191,17 @@ public:
                 break;
                 case Front::PRIMARY_AUTH_NLA:
                 {
-                    bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
+                    bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
                     if (!acl && !this->last_module) {
                         this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                     }
 
                     session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-                        return io_fd_isset(fd, ioswitch.rfds);
+                        return ioswitch.is_set_for_reading(fd);
                     });
 
                     // Incoming data from ACL
-                    if (acl && (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds))) {
+                    if (acl && (acl->auth_trans.has_pending_data() || ioswitch.is_set_for_reading(acl->auth_trans.sck))) {
                         LOG(LOG_INFO, "ACL pending");
                         // authentifier received updated values
                         acl->acl_serial.receive();
