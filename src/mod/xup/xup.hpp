@@ -44,6 +44,8 @@ public:
         Transport& t, SessionReactor& session_reactor, FrontAPI& front,
         uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp);
 
+    std::string module_name() override {return "Xup Mod";}
+
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override;
 
     void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap) override;

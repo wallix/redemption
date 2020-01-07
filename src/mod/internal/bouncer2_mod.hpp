@@ -53,6 +53,8 @@ public:
          SessionReactor& session_reactor,
          uint16_t width, uint16_t height);
 
+    std::string module_name() override {return "Bouncer2 Mod";}
+
     void rdp_input_invalidate(Rect /*rect*/) override
     {
         this->draw_green_carpet = true;

@@ -82,7 +82,7 @@ public:
         this->screen.clear();
     }
 
-    std::string module_name() override {return "SelectorMod";}
+    std::string module_name() override {return "Selector Mod";}
 
 
     void ask_page();

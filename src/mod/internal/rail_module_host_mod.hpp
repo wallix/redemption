@@ -53,7 +53,7 @@ public:
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
     }
 
-    std::string module_name() override {return "RailModuleHostMod";}
+    std::string module_name() override {return "Rail Module Host Mod";}
 
     void notify(Widget* /*sender*/, notify_event_t /*event*/) override
     {}

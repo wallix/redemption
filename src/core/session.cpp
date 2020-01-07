@@ -451,9 +451,11 @@ class Session
         ||  (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG)
         ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
             if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
-                SessionProbeOnLaunchFailure::retry_without_session_probe) {
-                   ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
-//                session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
+                    SessionProbeOnLaunchFailure::retry_without_session_probe) 
+            {
+                LOG(LOG_INFO, "====> Retry without session probe");
+                ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
+                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
                 return true;
             }
             LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
@@ -463,35 +465,38 @@ class Session
             return this->close_box(mm, acl, authentifier, report_message, mod_wrapper, this->ini);
         }
         else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
-//            session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
+            LOG(LOG_INFO, "====> Retry SESSION_PROBE_DISCONNECTION_RECONNECTION");
+            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
             return true;
         }
         else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+            LOG(LOG_INFO, "====> Retry AUTOMATIC_RECONNECTION_REQUIRED");
             ini.set<cfg::context::perform_automatic_reconnection>(true);
-//            session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
+            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
             return true;
         }
         else if (e.id == ERR_RAIL_NOT_ENABLED) {
+            LOG(LOG_INFO, "====> Retry witout Native remoteapp capability");
             ini.get_mutable_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
-//            session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
+            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
             return true;
         }
         else if (e.id == ERR_RDP_SERVER_REDIR){
             if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
+                LOG(LOG_INFO, "====> Retry Server redirection");
                 set_server_redirection_target(ini, authentifier);
-//                session_reactor_signal = BACK_EVENT_RETRY_CURRENT;
+                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
                 return true;
             }
             else {
-                LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
-
+                LOG(LOG_ERR, "Start Session Failed on forbidden redirection = %s", e.errmsg());
                 if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                     this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                 }
                 return this->close_box(mm, acl, authentifier, report_message, mod_wrapper, this->ini);  
             }
         }
-        LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
+        LOG(LOG_ERR, "Start Session Failed = %s", e.errmsg());
         if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
         }

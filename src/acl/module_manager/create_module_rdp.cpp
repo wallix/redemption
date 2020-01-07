@@ -221,6 +221,8 @@ public:
         this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
+    std::string module_name() override {return "RDP Mod With Socket And Metrics";}
+
     ~ModRDPWithSocketAndMetrics()
     {
         this->mod_wrapper.set_mod_transport(nullptr);

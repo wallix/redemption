@@ -38,6 +38,8 @@ public:
 
     ~LocallyIntegrableMod() override;
 
+    std::string module_name() override {return "Locally Integrable Mod";}
+
     [[nodiscard]] Font const & font() const
     {
         return this->screen.font;

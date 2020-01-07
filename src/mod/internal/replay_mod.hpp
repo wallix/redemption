@@ -95,6 +95,8 @@ public:
 
     ~ReplayMod() override;
 
+    std::string module_name() override {return "Replay Mod";}
+
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
         gdi::CaptureApi * capture_ptr,

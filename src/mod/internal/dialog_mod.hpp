@@ -42,6 +42,7 @@ using DialogModVariables = vcfg::variables<
 class DialogMod : public mod_api, public NotifyApi
 {
     public:
+    
     [[nodiscard]] Font const & font() const
     {
         return this->screen.font;

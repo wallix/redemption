@@ -329,6 +329,8 @@ public:
         });
     } // Constructor
 
+    std::string module_name() override {return "VNC Mod";}
+
     template<std::size_t MaxLen>
     class MessageCtx
     {

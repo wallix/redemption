@@ -49,6 +49,8 @@ public:
         uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true);
 
+    std::string module_name() override {return "Test Card Mod";}
+
     void rdp_input_invalidate(Rect /*rect*/) override
     {}
 

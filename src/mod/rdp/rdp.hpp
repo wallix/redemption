@@ -2138,6 +2138,8 @@ public:
         }
     }
 
+    std::string module_name() override {return "RDP Mod";}
+
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);

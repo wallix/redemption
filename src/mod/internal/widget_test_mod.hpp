@@ -35,6 +35,8 @@ public:
 
     ~WidgetTestMod() override;
 
+    std::string module_name() override {return "Widget Test Mod";}
+
     void rdp_input_invalidate(Rect /*rect*/) override;
 
     void rdp_input_mouse(int /*device_flags*/, int x, int y, Keymap2 * /*keymap*/) override;
