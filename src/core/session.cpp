@@ -342,6 +342,8 @@ class Session
             {
                 LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
                 ModuleIndex next_state = MODULE_RDP;
+                mod_wrapper.remove_mod();
+                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION, authentifier, report_message);
                 mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
             }
             return true;
@@ -596,21 +598,23 @@ class Session
 
     bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
     {
-        LOG(LOG_INFO, "front_up_and_running 1 execute_timers");
+        LOG(LOG_INFO, "front_up_and_running : execute_timers");
         try {
             session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
             });
+
+            LOG(LOG_INFO, "front_up_and_running : execute_events");
+            session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+                return ioswitch.is_set_for_reading(fd);
+            });
+
         } catch (Error const& e) {
             if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, report_message, ini)) {
                 return false;
             }
         }
 
-        LOG(LOG_INFO, "front_up_and_running 2 execute_events");
-        session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
-            return ioswitch.is_set_for_reading(fd);
-        });
 
         // front event
         try {
