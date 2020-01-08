@@ -3015,20 +3015,11 @@ struct SessionReactor
         this->fd_events_.exec_action(is_set);
     }
 
-    void execute_sesman(SesmanEventContainer & sesman_events_, Inifile& ini)
-    {
-        sesman_events_.exec_action(ini);
-    }
-
-    [[nodiscard]] bool has_front_event(CallbackEventContainer & front_events_) const noexcept
-    {
-        return !front_events_.is_empty();
-    }
-
     ~SessionReactor()
     {
         graphic_events_.clear();
 //        sesman_events_.clear();
+//        front_events_.clear();
         timer_events_.clear();
         graphic_timer_events_.clear();
         fd_events_.clear();

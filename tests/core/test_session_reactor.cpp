@@ -193,7 +193,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     } dummy_cb;
 
 
-    session_reactor.execute_sesman(sesman_events_, *reinterpret_cast<Inifile*>(&dummy)); /*NOLINT*/
+    sesman_events_.exec_action(*reinterpret_cast<Inifile*>(&dummy));
     RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
     front_events_.exec_action(dummy_cb);

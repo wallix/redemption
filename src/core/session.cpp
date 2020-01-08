@@ -516,7 +516,7 @@ class Session
             session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
                 return ioswitch.is_set_for_reading(fd);
             });
-            if (session_reactor.has_front_event(front_events_)) {
+            if (!front_events_.is_empty()) {
                 front_events_.exec_action(mod_wrapper.get_callback());
             }
             if (front_is_set) {
@@ -618,8 +618,8 @@ class Session
 
         // front event
         try {
-            if (session_reactor.has_front_event(front_events_)) {
-                LOG(LOG_INFO, "front_up_and_running 3 has_front_events");
+            if (!front_events_.is_empty()) {
+                LOG(LOG_INFO, "front_up_and_running:  has_front_events");
                 front_events_.exec_action(mod_wrapper.get_callback());
             }
             if (front_is_set) {
@@ -683,7 +683,7 @@ class Session
                 LOG(LOG_INFO, "data received from acl");
                 if (!ini.changed_field_size()) {
                     LOG(LOG_INFO, "sesman event");
-                    session_reactor.execute_sesman(sesman_events_, ini);
+                    sesman_events_.exec_action(ini);
                 }
             }
 
@@ -1009,7 +1009,7 @@ public:
 
                     // front event
                     try {
-                        if (session_reactor.has_front_event(front_events_)) {
+                        if (!front_events_.is_empty()) {
                             front_events_.exec_action(mod_wrapper.get_callback());
                         }
 
@@ -1086,13 +1086,13 @@ public:
                         acl->acl_serial.receive();
                         if (!ini.changed_field_size()) {
                             LOG(LOG_INFO, "sesman event");
-                            session_reactor.execute_sesman(sesman_events_, ini);
+                            sesman_events_.exec_action(ini);;
                         }
                     }
 
                     // front event
                     try {
-                        if (session_reactor.has_front_event(front_events_)) {
+                        if (!front_events_.is_empty()) {
                             front_events_.exec_action(mod_wrapper.get_callback());
                         }
                         if (front_is_set) {
