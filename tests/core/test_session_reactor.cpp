@@ -181,15 +181,14 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 
     struct DummyCb : public mod_api
     {
-        std::string module_name(){return "AclWaitMod";}
+        std::string module_name() override {return "AclWaitMod";}
         void rdp_input_mouse(int, int, int, Keymap2 *) override {}
         void rdp_input_scancode(long, long, long, long, Keymap2 *) override {}
         void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
         void rdp_input_invalidate(const Rect) override {}
         void refresh(const Rect) override {}
         bool is_up_and_running() const override { return true; }
-        void rdp_input_up_and_running(ScreenInfo & screen_info) override {}
-//        void rdp_input_up_and_running(ScreenInfo & screen_info) override {}
+        void rdp_input_up_and_running(ScreenInfo & /*screen_info*/) override {}
     } dummy_cb;
 
 

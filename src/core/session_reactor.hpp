@@ -2977,19 +2977,6 @@ struct SessionReactor
         return tv;
     }
 
-    template<class F>
-    void for_each_fd(EnableGraphics enable_gd, F f)
-    {
-        auto g = [&f](int fd, auto& /*top*/){
-            assert(fd != -1);
-            f(fd);
-        };
-        this->fd_events_.for_each(g);
-        if (enable_gd) {
-            this->graphic_fd_events_.for_each(g);
-        }
-    }
-
     template<class GetGd>
     void execute_timers(EnableGraphics enable_gd, GetGd get_gd)
     {

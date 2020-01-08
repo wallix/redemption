@@ -44,13 +44,15 @@ inline ExecuteEventsResult execute_events(
     fd_set   rfds;
     io_fd_zero(rfds);
 
-    session_reactor.for_each_fd(
-        enable_graphics,
-        [&](int fd){
-            io_fd_set(fd, rfds);
-            max = std::max(max, unsigned(fd));
-        }
-    );
+    auto g = [&rfds,&max](int fd, auto& /*top*/){
+        assert(fd != -1);
+        io_fd_set(fd, rfds);
+        max = std::max(max, unsigned(fd));
+    };
+    session_reactor.fd_events_.for_each(g);
+    if (enable_graphics) {
+        session_reactor.graphic_fd_events_.for_each(g);
+    }
 
     session_reactor.set_current_time(tvtime());
     timeval timeoutastv = to_timeval(

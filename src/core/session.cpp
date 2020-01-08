@@ -851,15 +851,16 @@ public:
                 }
 
 
-                LOG(LOG_INFO, "for each fd");
-                session_reactor.for_each_fd(
-                    SessionReactor::EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
-                    [&](int fd){
-                        if (!sck_no_read.contains(fd)) {
-                            ioswitch.set_read_sck(fd);
-                        }
+                auto g = [&sck_no_read, &ioswitch](int fd, auto& /*top*/){
+                    assert(fd != -1);
+                    if (!sck_no_read.contains(fd)) {
+                        ioswitch.set_read_sck(fd);
                     }
-                );
+                };
+                session_reactor.fd_events_.for_each(g);
+                if (front.state == Front::FRONT_UP_AND_RUNNING) {
+                    session_reactor.graphic_fd_events_.for_each(g);
+                }
 
                 now = tvtime();
                 session_reactor.set_current_time(now);
