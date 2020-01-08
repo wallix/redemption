@@ -196,7 +196,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     session_reactor.execute_sesman(sesman_events_, *reinterpret_cast<Inifile*>(&dummy)); /*NOLINT*/
     RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
-    session_reactor.execute_callbacks(front_events_, dummy_cb);
+    front_events_.exec_action(dummy_cb);
     RED_CHECK_EQ(s, "gd\n~gd\nini\ncallback\n~callback\n");
 
     RED_CHECK(!gd);

@@ -3025,11 +3025,6 @@ struct SessionReactor
         return !front_events_.is_empty();
     }
 
-    void execute_callbacks(CallbackEventContainer & front_events_, Callback& callback)
-    {
-        front_events_.exec_action(callback);
-    }
-
     ~SessionReactor()
     {
         graphic_events_.clear();

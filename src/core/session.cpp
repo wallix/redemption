@@ -517,7 +517,7 @@ class Session
                 return ioswitch.is_set_for_reading(fd);
             });
             if (session_reactor.has_front_event(front_events_)) {
-                session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
+                front_events_.exec_action(mod_wrapper.get_callback());
             }
             if (front_is_set) {
                 front.rbuf.load_data(front.trans);
@@ -618,10 +618,9 @@ class Session
 
         // front event
         try {
-            LOG(LOG_INFO, "front_up_and_running 3 has_front_events");
             if (session_reactor.has_front_event(front_events_)) {
-                LOG(LOG_INFO, "front_up_and_running 3 execute_callbacks");
-                session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
+                LOG(LOG_INFO, "front_up_and_running 3 has_front_events");
+                front_events_.exec_action(mod_wrapper.get_callback());
             }
             if (front_is_set) {
                 LOG(LOG_INFO, "front_up_and_running front is set");
@@ -1011,7 +1010,7 @@ public:
                     // front event
                     try {
                         if (session_reactor.has_front_event(front_events_)) {
-                            session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
+                            front_events_.exec_action(mod_wrapper.get_callback());
                         }
 
                         if (front_is_set) {
@@ -1094,7 +1093,7 @@ public:
                     // front event
                     try {
                         if (session_reactor.has_front_event(front_events_)) {
-                            session_reactor.execute_callbacks(front_events_, mod_wrapper.get_callback());
+                            front_events_.exec_action(mod_wrapper.get_callback());
                         }
                         if (front_is_set) {
                             front.rbuf.load_data(front.trans);

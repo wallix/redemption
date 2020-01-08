@@ -70,7 +70,7 @@ inline ExecuteEventsResult execute_events(
     session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& { return front; });
 
     if (num) {
-        session_reactor.execute_callbacks(front_events_, callback);
+        front_events_.exec_action(callback);
         auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
         session_reactor.execute_graphics(fd_isset, front);
         return ExecuteEventsResult::Success;
