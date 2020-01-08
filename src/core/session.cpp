@@ -143,21 +143,6 @@ class Session
         }
     };
 
-    struct [[nodiscard]] SckNoRead
-    {
-        int sck_front = INVALID_SOCKET;
-        int sck_mod = INVALID_SOCKET;
-        // int sck_acl = INVALID_SOCKET;
-
-        [[nodiscard]] bool contains(int fd) const noexcept
-        {
-            return sck_front == fd
-                || sck_mod == fd
-                // || sck_acl == fd
-            ;
-        }
-    };
-
     bool last_module{false};
 
     Inifile & ini;
@@ -798,13 +783,14 @@ public:
 
                 Select ioswitch(default_timeout);
 
-                SckNoRead sck_no_read;
+                int sck_no_read_sck_front = INVALID_SOCKET;
+                int sck_no_read_sck_mod = INVALID_SOCKET;
 
                 LOG(LOG_INFO, "front_trans.has_waiting_data()");
                 if (front_trans.has_waiting_data()) {
                     LOG(LOG_INFO, "front_trans.has_waiting_data()");
                     ioswitch.set_write_sck(front_trans.sck);
-                    sck_no_read.sck_front = front_trans.sck;
+                    sck_no_read_sck_front = front_trans.sck;
                 }
                 else {
                     ioswitch.set_read_sck(front_trans.sck);
@@ -820,11 +806,11 @@ public:
                 if (mod_trans && !mod_trans->has_pending_data()) {
                     LOG(LOG_INFO, "mod_trans don't have pending data (2)");
                     if (mod_trans->has_waiting_data()){
-                        sck_no_read.sck_mod = mod_trans->sck;
-                        ioswitch.set_write_sck(sck_no_read.sck_mod);
+                        sck_no_read_sck_mod = mod_trans->sck;
+                        ioswitch.set_write_sck(sck_no_read_sck_mod);
                     }
-                    else if (sck_no_read.sck_front != INVALID_SOCKET) {
-                        sck_no_read.sck_mod = mod_trans->sck;
+                    else if (sck_no_read_sck_front != INVALID_SOCKET) {
+                        sck_no_read_sck_mod = mod_trans->sck;
                     }
                 }
 
@@ -851,9 +837,10 @@ public:
                 }
 
 
-                auto g = [&sck_no_read, &ioswitch](int fd, auto& /*top*/){
+                auto g = [sck_no_read_sck_front,sck_no_read_sck_mod,&ioswitch](int fd, auto& /*top*/){
                     assert(fd != -1);
-                    if (!sck_no_read.contains(fd)) {
+                    if ((sck_no_read_sck_front != fd)
+                    &&  (sck_no_read_sck_mod != fd)) {
                         ioswitch.set_read_sck(fd);
                     }
                 };
@@ -889,12 +876,12 @@ public:
 
                 {
                     LOG(LOG_INFO, "send mod data waiting to be sent");
-                    if (ioswitch.is_set_for_writing(sck_no_read.sck_mod)) {
+                    if (ioswitch.is_set_for_writing(sck_no_read_sck_mod)) {
                         mod_trans->send_waiting_data();
                     }
 
                     LOG(LOG_INFO, "send front data waiting to be sent");
-                    if (ioswitch.is_set_for_writing(sck_no_read.sck_front)) {
+                    if (ioswitch.is_set_for_writing(sck_no_read_sck_front)) {
                         front_trans.send_waiting_data();
                     }
                 }
@@ -920,7 +907,7 @@ public:
                 bool mod_is_set = false;
                 if (mod_wrapper.has_mod()) {
                     LOG(LOG_INFO, "mod is set flag ?");
-                    if (ioswitch.is_set_for_reading(sck_no_read.sck_mod)){
+                    if (ioswitch.is_set_for_reading(sck_no_read_sck_mod)){
                         mod_is_set = true;
                     }
                 }

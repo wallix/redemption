@@ -3470,7 +3470,7 @@ private:
 
     // Front calls this member function when it became up and running.
 public:
-    void rdp_input_up_and_running(ScreenInfo & screen_info) override {
+    void rdp_input_up_and_running(ScreenInfo & /*screen_info*/) override {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
             this->state = DO_INITIAL_CLEAR_SCREEN;
