@@ -4172,6 +4172,7 @@ private:
 
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API
+                LOG(LOG_INFO, "RDP INPUT UP AND RUNNING ==================");
                 cb.rdp_input_up_and_running(this->client_info.screen_info,
                                             this->client_info.username,
                                             this->client_info.domain,

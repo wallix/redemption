@@ -564,7 +564,6 @@ class Session
             }
 
             if (this->ini.get<cfg::context::forcemodule>() && !mm.is_connected()) {
-//                session_reactor_signal = BACK_EVENT_NEXT;
                 this->ini.set<cfg::context::forcemodule>(false);
                 // Do not send back the value to sesman.
             }
@@ -739,6 +738,8 @@ class Session
         void refresh(const Rect) override {}
         bool is_up_and_running() const override { return true; }
         void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) override {
+            LOG(LOG_INFO, "rdp_input_up_and_running: auth_user=%s domain=%s", username, domain);
+        
             this->screen_info = screen_info;
             this->username = username;
             this->domain = domain;
@@ -762,7 +763,7 @@ class Session
                     username = username + std::string("@") + domain;
                 }
 
-                LOG(LOG_INFO, "Front asking for selector");
+                LOG(LOG_INFO, "set_acl_auth_info: auth_user=%s", username);
                 this->ini.set_acl<cfg::globals::auth_user>(username);
                 this->ini.ask<cfg::context::selector>();
                 this->ini.ask<cfg::globals::target_user>();
@@ -790,7 +791,6 @@ public:
         SessionReactor session_reactor;
         CallbackEventContainer front_events_;
         SesmanEventContainer sesman_events_;
-        BackEvent_t session_reactor_signal = BACK_EVENT_NONE;
 //        void set_next_event(/*BackEvent_t*/int signal)
 //        {
 //            LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
@@ -1010,7 +1010,7 @@ public:
                     // front event
                     try {
                         if (!front_events_.is_empty()) {
-                            front_events_.exec_action(mod_wrapper.get_callback());
+                            front_events_.exec_action(acl_cb);
                         }
 
                         if (front_is_set) {
@@ -1019,7 +1019,7 @@ public:
                             {
                                 bytes_view tpdu = front.rbuf.current_pdu_buffer();
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
+                                front.incoming(tpdu, current_pdu_type, acl_cb);
                             }
                         }
                     } catch (Error const& e) {
@@ -1045,6 +1045,7 @@ public:
                 case Front::FRONT_UP_AND_RUNNING:
                 {
                     if (!acl && !this->last_module) {
+                        LOG(LOG_INFO, "start_acl_running");
                         this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, authentifier, fstat);
                         if (this->last_module && !ini.get<cfg::globals::enable_close_box>()) {
                             run_session = false;
@@ -1053,9 +1054,14 @@ public:
                     }
 
                     if (!acl_cb.auth_info_sent){
+                        LOG(LOG_INFO, "Sending ACL auth_info");
                         acl_cb.set_acl_screen_info();
                         acl_cb.set_acl_auth_info();
-                        session_reactor_signal = BACK_EVENT_NEXT;
+                        if (this->ini.changed_field_size()) {
+                            LOG(LOG_INFO, "ACL Data to send");                            
+                            acl->acl_serial.send_acl_data();
+                            continue;
+                        }
                     }
 
                     bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
@@ -1120,7 +1126,7 @@ public:
                         LOG(LOG_ERR, "Proxy data processing raised unknown error");
                         run_session = false;
                     }
-                    if (!acl && session_reactor_signal == BACK_EVENT_STOP) {
+                    if (!acl) {
                         run_session = false;
                     }
                 }
