@@ -635,20 +635,12 @@ class Session
             return false;
         }
         
-        auto signal_name = [](BackEvent_t sig) {
-            return 
-            sig == BACK_EVENT_NONE?"BACK_EVENT_NONE"
-           :sig == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
-           :sig == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
-           :sig == BACK_EVENT_STOP?"BACK_EVENT_STOP"
-           :sig == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
-           :"BACK_EVENT_UNKNOWN";
-        };
-        
         // acl event
         try {
+            try {
+
             // new value incoming from authentifier
-            LOG(LOG_INFO, "rt_display()");
+            LOG(LOG_INFO, "--------------------- rt_display()");
             this->rt_display(ini, mm, mod_wrapper, front);
 
             if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
@@ -659,38 +651,45 @@ class Session
                 }, gd);
             }
 
-            // Incoming data from ACL
-            LOG(LOG_INFO, "check acl pending");
-            if (acl && (acl->auth_trans.has_pending_data() || ioswitch.is_set_for_reading(acl->auth_trans.sck))) {
-                // authentifier received updated values
-                LOG(LOG_INFO, "acl pending");
-                acl->acl_serial.receive();
-                LOG(LOG_INFO, "data received from acl");
-                if (!ini.changed_field_size()) {
-                    LOG(LOG_INFO, "sesman event");
-                    sesman_events_.exec_action(ini);
-                }
-            }
-
-            const bool enable_osd = ini.get<cfg::globals::enable_osd>();
-            if (enable_osd) {
-                const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-                if (enddate && mod_wrapper.is_up_and_running()) {
-                    std::string mes = end_session_warning.update_osd_state(
-                        language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
-                    if (!mes.empty()) {
-                        bool is_disable_by_input = true;
-                        if (mes != mod_wrapper.get_message()) {
-                            mod_wrapper.clear_osd_message();
-                        }
-                        mod_wrapper.set_message(std::move(mes), is_disable_by_input);
-                        mod_wrapper.draw_osd_message();
+                // Incoming data from ACL
+                LOG(LOG_INFO, "-------------------------- check acl pending");
+                if (acl && (acl->auth_trans.has_pending_data() || ioswitch.is_set_for_reading(acl->auth_trans.sck))) {
+                    // authentifier received updated values
+                    LOG(LOG_INFO, "acl pending");
+                    acl->acl_serial.receive();
+                    LOG(LOG_INFO, "data received from acl");
+                    if (!ini.changed_field_size()) {
+                        LOG(LOG_INFO, "sesman event");
+                        sesman_events_.exec_action(ini);
                     }
                 }
+
+                LOG(LOG_INFO, "-------------------------- enable OSD");
+                const bool enable_osd = ini.get<cfg::globals::enable_osd>();
+                if (enable_osd) {
+                    const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+                    if (enddate && mod_wrapper.is_up_and_running()) {
+                        std::string mes = end_session_warning.update_osd_state(
+                            language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
+                        if (!mes.empty()) {
+                            bool is_disable_by_input = true;
+                            if (mes != mod_wrapper.get_message()) {
+                                mod_wrapper.clear_osd_message();
+                            }
+                            mod_wrapper.set_message(std::move(mes), is_disable_by_input);
+                            mod_wrapper.draw_osd_message();
+                        }
+                    }
+                }
+
+                LOG(LOG_INFO, "-------------------------- module sequencing");
+                return this->module_sequencing(mm, acl, authentifier, report_message, mod_wrapper, now, front);
+            } catch (Error const& e) {
+                LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
+                if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, report_message, ini)) {
+                    return false;
+                }
             }
-
-            return this->module_sequencing(mm, acl, authentifier, report_message, mod_wrapper, now, front);
-
         } catch (Error const& e) {
             LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
