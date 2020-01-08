@@ -43,6 +43,7 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channel_list.hpp"
+#include "acl/sesman.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
@@ -158,6 +159,7 @@ RED_AUTO_TEST_CASE(TestFront)
     SessionReactor session_reactor;
     CallbackEventContainer front_events_;
     SesmanEventContainer sesman_events_;
+    SesmanInterface sesman(ini);
 
 
     NullReportMessage report_message;
@@ -170,7 +172,7 @@ RED_AUTO_TEST_CASE(TestFront)
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {
-        front.incoming(no_mod);
+        front.incoming(no_mod, sesman);
         RED_CHECK(session_reactor.timer_events_.is_empty());
     }
     RED_CHECK(front_events_.is_empty());
@@ -439,6 +441,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
     uint32_t verbose = 3;
+    SesmanInterface & sesman;
 
     Inifile ini;
     ini.set<cfg::debug::front>(verbose);
@@ -504,7 +507,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     bool is_set = front.get_event().is_set();
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod, now);
+        front.incoming(no_mod, sesman);
 
         front.get_event().reset_trigger_time();
         RED_CHECK(!front.get_event().is_waked_up_by_time());

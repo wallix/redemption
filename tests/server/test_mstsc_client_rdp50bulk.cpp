@@ -105,9 +105,10 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     FrontWrapper front(session_reactor, front_events_, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
+    SesmanInterface sesman(ini);
 
     while (!front.is_up_and_running()) {
-        front.incoming(no_mod);
+        front.incoming(no_mod, sesman);
     }
 
     //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

@@ -107,11 +107,10 @@ struct RdpInput : private noncopyable
         }
     }
     // Client calls this member function when it became up and running.
-    virtual void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
+    virtual void rdp_input_up_and_running(ScreenInfo & ) { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
 
-    virtual void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
-    { (void)left; (void)top; (void)right; (void)bottom; }
-
+    virtual void rdp_allow_display_updates(uint16_t /*left*/, uint16_t /*top*/, uint16_t /*right*/, uint16_t /*bottom*/)
+    {}
     virtual void rdp_suppress_display_updates() {}
 
     virtual void refresh(Rect clip) = 0;

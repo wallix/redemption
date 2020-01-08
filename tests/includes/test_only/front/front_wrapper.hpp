@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 #include "gdi/graphic_api.hpp"
 #include "utils/image_data_view.hpp"
 #include "core/session_reactor.hpp"
+#include "acl/sesman.hpp"
 
 #include <memory>
 #include <string>
@@ -81,7 +82,7 @@ public:
 
     bool is_up_and_running() const;
     void set_up_and_running();
-    void incoming(Callback & cb);
+    void incoming(Callback & cb, SesmanInterface & sesman);
     void set_ignore_rdesktop_bogus_clip(bool set);
     ScreenInfo const& screen_info() const;
 

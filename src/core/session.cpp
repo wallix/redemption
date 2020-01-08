@@ -25,6 +25,7 @@
 
 #include "acl/authentifier.hpp"
 #include "acl/module_manager.hpp"
+#include "acl/sesman.hpp"
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
 #include "core/session_reactor.hpp"
@@ -506,7 +507,7 @@ class Session
     }
 
 
-    bool front_close_box(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, ModWrapper & mod_wrapper, Front & front)
+    bool front_close_box(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, ModWrapper & mod_wrapper, Front & front, SesmanInterface & acl_cb)
     {
         bool run_session = true;
         try {
@@ -525,7 +526,7 @@ class Session
                 {
                     bytes_view tpdu = front.rbuf.current_pdu_buffer();
                     uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                    front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
+                    front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback(), acl_cb);
                 }
             }
             BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
@@ -595,7 +596,7 @@ class Session
         return true;
     }
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message, SesmanInterface & acl_cb)
     {
         LOG(LOG_INFO, "front_up_and_running : execute_timers");
         try {
@@ -628,7 +629,7 @@ class Session
                 {
                     bytes_view tpdu = front.rbuf.current_pdu_buffer();
                     uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                    front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
+                    front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback(), acl_cb);
                 }
             }
         } catch (Error const& e) {
@@ -714,68 +715,6 @@ class Session
     }
 
 
-    struct AclWaitFrontUpAndRunningMod : public mod_api
-    {
-        bool auth_info_sent = false;
-        bool front_up_and_running = false;
-        ScreenInfo screen_info;
-        std::string username;
-        std::string domain;
-        std::string password;
-        Inifile & ini;
-
-        AclWaitFrontUpAndRunningMod(Inifile & ini) 
-            : ini(ini)
-        {
-        }
-
-        std::string module_name() override {return "AclWaitMod";}
-
-        void rdp_input_mouse(int, int, int, Keymap2 *) override {}
-        void rdp_input_scancode(long, long, long, long, Keymap2 *) override {}
-        void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
-        void rdp_input_invalidate(const Rect) override {}
-        void refresh(const Rect) override {}
-        bool is_up_and_running() const override { return true; }
-        void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) override {
-            LOG(LOG_INFO, "rdp_input_up_and_running: auth_user=%s domain=%s", username, domain);
-        
-            this->screen_info = screen_info;
-            this->username = username;
-            this->domain = domain;
-            this->password = password;
-            this->front_up_and_running = true;
-        }
-
-        void set_acl_screen_info(){
-            // TODO we should use accessors to set that, also not sure it's the right place to set it
-            this->ini.set_acl<cfg::context::opt_width>(this->screen_info.width);
-            this->ini.set_acl<cfg::context::opt_height>(this->screen_info.height);
-            this->ini.set_acl<cfg::context::opt_bpp>(safe_int(screen_info.bpp));
-        }
-
-        void set_acl_auth_info(){
-            if (!this->auth_info_sent) {
-                std::string username = this->username;
-                if (not domain.empty()
-                 && (username.find('@') == std::string::npos)
-                 && (username.find('\\') == std::string::npos)) {
-                    username = username + std::string("@") + domain;
-                }
-
-                LOG(LOG_INFO, "set_acl_auth_info: auth_user=%s", username);
-                this->ini.set_acl<cfg::globals::auth_user>(username);
-                this->ini.ask<cfg::context::selector>();
-                this->ini.ask<cfg::globals::target_user>();
-                this->ini.ask<cfg::globals::target_device>();
-                this->ini.ask<cfg::context::target_protocol>();
-                if (!password.empty()) {
-                    this->ini.set_acl<cfg::context::password>(password);
-                }
-                this->auth_info_sent = true;
-            }
-        }
-    };
 
 
 public:
@@ -804,7 +743,7 @@ public:
             session_reactor, front_events_, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>(), mem3blt_support
         );
-        AclWaitFrontUpAndRunningMod acl_cb(ini);
+        SesmanInterface acl_cb(ini);
 
         std::unique_ptr<Acl> acl;
 
@@ -1010,7 +949,7 @@ public:
                     // front event
                     try {
                         if (!front_events_.is_empty()) {
-                            front_events_.exec_action(acl_cb);
+                            front_events_.exec_action(mod_wrapper.get_callback());
                         }
 
                         if (front_is_set) {
@@ -1019,7 +958,7 @@ public:
                             {
                                 bytes_view tpdu = front.rbuf.current_pdu_buffer();
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                                front.incoming(tpdu, current_pdu_type, acl_cb);
+                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback(), acl_cb);
                             }
                         }
                     } catch (Error const& e) {
@@ -1067,11 +1006,11 @@ public:
                     bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
 
                     if (this->last_module){
-                        run_session = this->front_close_box(front_is_set, ioswitch, session_reactor, front_events_, mod_wrapper, front);
+                        run_session = this->front_close_box(front_is_set, ioswitch, session_reactor, front_events_, mod_wrapper, front, acl_cb);
                         continue;
                     }
 
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, front_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, front_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier, acl_cb);
                 }
                 break;
                 case Front::PRIMARY_AUTH_NLA:
@@ -1107,7 +1046,7 @@ public:
                             {
                                 bytes_view tpdu = front.rbuf.current_pdu_buffer();
                                 uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
+                                front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback(), acl_cb);
                             }
                         }
                     } catch (Error const& e) {

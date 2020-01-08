@@ -110,14 +110,14 @@ void FrontWrapper::set_up_and_running()
     d->front.state = Front::FRONT_UP_AND_RUNNING;
 }
 
-void FrontWrapper::incoming(Callback & cb)
+void FrontWrapper::incoming(Callback & cb, SesmanInterface & sesman)
 {
     d->front.rbuf.load_data(d->front.trans);
     while (d->front.rbuf.next(TpduBuffer::PDU))
     {
         bytes_view tpdu = d->front.rbuf.current_pdu_buffer();
         uint8_t current_pdu_type = d->front.rbuf.current_pdu_get_type();
-        d->front.incoming(tpdu, current_pdu_type, cb);
+        d->front.incoming(tpdu, current_pdu_type, cb, sesman);
     }
 }
 

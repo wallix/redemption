@@ -124,9 +124,9 @@ void WidgetModuleHost::ModuleHolder::rdp_input_synchronize(
         param1, param2);
 }
 
-void WidgetModuleHost::ModuleHolder::rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password)
+void WidgetModuleHost::ModuleHolder::rdp_input_up_and_running(ScreenInfo & screen_info)
 {
-    this->managed_mod->rdp_input_up_and_running(screen_info, username, domain, password);
+    this->managed_mod->rdp_input_up_and_running(screen_info);
 }
 
 void WidgetModuleHost::ModuleHolder::refresh(Rect r)

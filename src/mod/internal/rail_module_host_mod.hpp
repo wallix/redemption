@@ -72,7 +72,7 @@ public:
         (void)param2;
     }
 
-    void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) override;
+    void rdp_input_up_and_running(ScreenInfo & screen_info) override;
 
     // Callback
 

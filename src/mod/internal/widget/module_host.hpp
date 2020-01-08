@@ -168,7 +168,7 @@ private:
         void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
                                    int16_t param1, int16_t param2) override;
 
-        void rdp_input_up_and_running(ScreenInfo & screen_info, std::string username, std::string domain, std::string password) override;
+        void rdp_input_up_and_running(ScreenInfo & screen_info) override;
 
         void refresh(Rect r) override;
 

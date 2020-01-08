@@ -114,8 +114,7 @@
 
 #include "system/tls_context.hpp"
 #include "proxy_recorder/nego_server.hpp"
-
-
+#include "acl/sesman.hpp"
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 
@@ -2372,7 +2371,7 @@ public:
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
-    void global_channel_slowpath_activate(InStream & stream, Callback & cb)
+    void global_channel_slowpath_activate(InStream & stream, Callback & cb, SesmanInterface & sesman)
     {
         ShareControl_Recv sctrl(stream);
 
@@ -2412,7 +2411,7 @@ public:
             // when fonts have been received
             // we will not exit this loop until we are in this state.
             //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-            this->process_data(sctrl.payload, cb);
+            this->process_data(sctrl.payload, cb, sesman);
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: Received DATAPDU done");
 
@@ -2447,7 +2446,7 @@ public:
         stream.in_skip_bytes(stream.in_remain());
     }
 
-    void process_data_tpdu_activate(bytes_view tpdu, Callback & cb)
+    void process_data_tpdu_activate(bytes_view tpdu, Callback & cb, SesmanInterface & sesman)
     {
         InStream new_x224_stream(tpdu);
         X224::DT_TPDU_Recv x224(new_x224_stream);
@@ -2476,7 +2475,7 @@ public:
             this->virtual_channel_slowpath_activate(mcs.channelId, sec.payload);
         }
         else {
-            this->global_channel_slowpath_activate(sec.payload, cb);
+            this->global_channel_slowpath_activate(sec.payload, cb, sesman);
         }
 
         if (!sec.payload.check_end())
@@ -2489,7 +2488,7 @@ public:
     }
 
 
-    void global_channel_slowpath_running(InStream & stream, Callback & cb)
+    void global_channel_slowpath_running(InStream & stream, Callback & cb, SesmanInterface & sesman)
     {
         ShareControl_Recv sctrl(stream);
         switch (sctrl.pduType) {
@@ -2508,7 +2507,7 @@ public:
             // when fonts have been received
             // we will not exit this loop until we are in this state.
             //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-            this->process_data(sctrl.payload, cb);
+            this->process_data(sctrl.payload, cb, sesman);
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: Received DATAPDU done");
 
@@ -2534,7 +2533,7 @@ public:
         }
     }
 
-    void process_data_tpdu_running(bytes_view tpdu, Callback & cb)
+    void process_data_tpdu_running(bytes_view tpdu, Callback & cb, SesmanInterface & sesman)
     {
         InStream new_x224_stream(tpdu);
         X224::DT_TPDU_Recv x224(new_x224_stream);
@@ -2596,7 +2595,7 @@ public:
             sec.payload.in_skip_bytes(chunk_size);
         }
         else {
-            this->global_channel_slowpath_running(sec.payload, cb);
+            this->global_channel_slowpath_running(sec.payload, cb, sesman);
         }
 
         if (!sec.payload.check_end())
@@ -2608,7 +2607,7 @@ public:
         }
     }
 
-    void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
+    void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb, SesmanInterface & sesman)
     {
         // fastpath
         if (current_pdu_type == Extractors::FASTPATH) {
@@ -2623,11 +2622,11 @@ public:
                 LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
-            this->process_data_tpdu_activate(tpdu, cb);
+            this->process_data_tpdu_activate(tpdu, cb, sesman);
         }
     }
 
-    void up_and_running(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
+    void up_and_running(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb, SesmanInterface & sesman)
     {
         // fastpath
         if (current_pdu_type == Extractors::FASTPATH) {
@@ -2641,7 +2640,7 @@ public:
                 LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
-            this->process_data_tpdu_running(tpdu, cb);
+            this->process_data_tpdu_running(tpdu, cb, sesman);
         }
     }
 
@@ -2714,7 +2713,7 @@ public:
         }
     }
 
-    void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb) /*NOLINT*/
+    void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb, SesmanInterface & sesman) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
@@ -2807,12 +2806,12 @@ public:
         case ACTIVATE_AND_PROCESS_DATA:
 //            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
 //                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
-            this->activate_and_process_data(tpdu, current_pdu_type, cb);
+            this->activate_and_process_data(tpdu, current_pdu_type, cb, sesman);
         break;
         case FRONT_UP_AND_RUNNING:
 //            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
 //                "Front::incoming: FRONT_UP_AND_RUNNING");
-            this->up_and_running(tpdu, current_pdu_type, cb);
+            this->up_and_running(tpdu, current_pdu_type, cb, sesman);
         break;
         }
     }
@@ -3802,7 +3801,7 @@ private:
     }
 
     /* PDUTYPE_DATAPDU */
-    void process_data(InStream & stream, Callback & cb)
+    void process_data(InStream & stream, Callback & cb, SesmanInterface & sesman)
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO, "Front::process_data");
         ShareData_Recv sdata_in(stream, nullptr);
@@ -4173,10 +4172,9 @@ private:
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API
                 LOG(LOG_INFO, "RDP INPUT UP AND RUNNING ==================");
-                cb.rdp_input_up_and_running(this->client_info.screen_info,
-                                            this->client_info.username,
-                                            this->client_info.domain,
-                                            this->client_info.password);
+                cb.rdp_input_up_and_running(this->client_info.screen_info);
+                sesman.set_screen_info(this->client_info.screen_info);
+                sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
 
                 if (BitsPerPixel{8} != this->mod_bpp) {
                     this->send_palette();
