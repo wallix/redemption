@@ -596,10 +596,10 @@ private:
 
     SessionReactor& session_reactor;
     CallbackEventContainer & front_events_;
-    SessionReactor::TimerPtr handshake_timeout;
+    TimerPtr handshake_timeout;
     CallbackEventPtr incoming_event;
-    SessionReactor::TimerPtr capture_timer;
-    SessionReactor::TimerPtr flow_control_timer;
+    TimerPtr capture_timer;
+    TimerPtr flow_control_timer;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;

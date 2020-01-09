@@ -53,7 +53,7 @@ public:
     CopyPaste copy_paste;
 
     InteractiveTargetModVariables vars;
-    SessionReactor::GraphicEventPtr started_copy_past_event;
+    GraphicEventPtr started_copy_past_event;
 
 public:
     InteractiveTargetMod(

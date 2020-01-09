@@ -81,7 +81,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     for (int i = 0; i < 100 && !session_reactor.fd_events_.is_empty(); ++i) {
         session_reactor.execute_events(fd_is_set);
     }
-    session_reactor.execute_timers(graphic_timer_events_, SessionReactor::EnableGraphics{false}, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, EnableGraphics{false}, &gdi::null_gd);
     RED_CHECK(session_reactor.fd_events_.is_empty());
     RED_CHECK(!run_task);
 }
@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     for (int i = 0; i < 100 && !session_reactor.timer_events_.is_empty(); ++i) {
         session_reactor.execute_timers(
             graphic_timer_events_,
-            SessionReactor::EnableGraphics{false},
+            EnableGraphics{false},
             []()->gdi::GraphicApi&{return gdi::null_gd(); });
         session_reactor.set_current_time(timeout);
         ++timeout.tv_sec;

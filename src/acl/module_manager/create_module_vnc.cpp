@@ -42,7 +42,7 @@ struct ModVNCWithMetrics : public mod_vnc
     };
 
     std::unique_ptr<ModMetrics> metrics;
-    SessionReactor::TimerPtr metrics_timer;
+    TimerPtr metrics_timer;
     using mod_vnc::mod_vnc;
 };
 

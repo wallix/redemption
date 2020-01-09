@@ -160,7 +160,7 @@ private:
 
 public:
 
-    void new_mod_internal_close(ModWrapper & mod_wrapper, AuthApi & authentifier, ReportMessageApi & report_message)
+    void new_mod_internal_close(ModWrapper & mod_wrapper, AuthApi & authentifier)
     {
         LOG(LOG_INFO, "New_mod: target_module=MODULE_INTERNAL_CLOSE");
         this->rail_client_execute.enable_remote_program(this->client_info.remote_program);

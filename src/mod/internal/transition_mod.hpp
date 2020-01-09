@@ -37,8 +37,8 @@ using TransitionModVariables = vcfg::variables<
 class TransitionMod : public LocallyIntegrableMod
 {
 
-    SessionReactor::TimerPtr timeout_timer;
-    SessionReactor::GraphicEventPtr started_copy_past_event;
+    TimerPtr timeout_timer;
+    GraphicEventPtr started_copy_past_event;
 
     WidgetTooltip ttmessage;
 

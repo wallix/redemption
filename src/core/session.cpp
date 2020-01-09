@@ -188,7 +188,7 @@ class Session
             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
             mod_wrapper.last_disconnect();
             if (ini.get<cfg::globals::enable_close_box>()) {
-                mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
+                mm.new_mod_internal_close(mod_wrapper, authentifier);
             }
             this->last_module = true;
         }
@@ -201,7 +201,7 @@ class Session
         authentifier.set_acl_serial(nullptr);
         acl.reset();
         if (ini.get<cfg::globals::enable_close_box>()) {
-            mm.new_mod_internal_close(mod_wrapper, authentifier, report_message);
+            mm.new_mod_internal_close(mod_wrapper, authentifier);
             return true;
         }
         return false;
@@ -496,7 +496,7 @@ class Session
     {
         bool run_session = true;
         try {
-            session_reactor.execute_timers(graphic_timer_events_, SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
+            session_reactor.execute_timers(graphic_timer_events_, EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
             });
             session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
@@ -585,7 +585,7 @@ class Session
     {
         LOG(LOG_INFO, "front_up_and_running : execute_timers");
         try {
-            session_reactor.execute_timers(graphic_timer_events_, SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
+            session_reactor.execute_timers(graphic_timer_events_, EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
             });
 
@@ -717,7 +717,7 @@ public:
         GraphicTimerContainer graphic_timer_events_;
 //        void set_next_event(/*BackEvent_t*/int signal)
 //        {
-//            LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
+//            LOG(LOG_DEBUG, "set_next_event %d", signal);
 //            assert(!this->signal || this->signal == signal);
 //            this->signal = signal;
 //            // assert(is not already set)
@@ -855,7 +855,7 @@ public:
                         session_reactor.get_next_timeout(
                             graphic_timer_events_,
                             front_events_,
-                            SessionReactor::EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
+                            EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
                             ioswitch.get_timeout(now)));
 
                 LOG(LOG_INFO, "select");

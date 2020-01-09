@@ -1866,10 +1866,10 @@ class mod_rdp : public mod_api, public rdp_api
 
     SessionReactor& session_reactor;
     SesmanEventContainer & sesman_events_;
-    SessionReactor::GraphicFdPtr fd_event;
+    GraphicFdPtr fd_event;
 
 #ifndef __EMSCRIPTEN__
-    SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
+    TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
 #endif
 
     bool deactivation_reactivation_in_progress = false;

@@ -123,7 +123,7 @@ private:
 
     DCState dc_state;
 
-    SessionReactor::TimerPtr first_click_down_timer;
+    TimerPtr first_click_down_timer;
 
     const bool rail_enabled;
 
@@ -142,5 +142,5 @@ protected:
     SessionReactor& session_reactor;
 
 private:
-    SessionReactor::GraphicEventPtr graphic_event;
+    GraphicEventPtr graphic_event;
 };

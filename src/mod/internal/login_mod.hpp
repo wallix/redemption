@@ -50,8 +50,8 @@ class LoginMod : public LocallyIntegrableMod, public NotifyApi
     LanguageButton language_button;
 
     FlatLogin login;
-    SessionReactor::TimerPtr timeout_timer;
-    SessionReactor::GraphicEventPtr started_copy_past_event;
+    TimerPtr timeout_timer;
+    GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 

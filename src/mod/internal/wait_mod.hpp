@@ -50,8 +50,8 @@ class WaitMod : public LocallyIntegrableMod, public NotifyApi
 
     WaitModVariables vars;
 
-    SessionReactor::TimerPtr timeout_timer;
-    SessionReactor::GraphicEventPtr started_copy_past_event;
+    TimerPtr timeout_timer;
+    GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 

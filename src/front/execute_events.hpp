@@ -38,7 +38,7 @@ inline ExecuteEventsResult execute_events(
     std::chrono::milliseconds timeout, SessionReactor& session_reactor,
     GraphicTimerContainer & graphic_timer_events_,
     CallbackEventContainer & front_events_,
-    SessionReactor::EnableGraphics enable_graphics,
+    EnableGraphics enable_graphics,
     Callback& callback, gdi::GraphicApi& front)
 {
     unsigned max = 0;

@@ -60,7 +60,7 @@ namespace
     struct PrivateRdpNegociation
     {
         RdpNegociation rdp_negociation;
-        SessionReactor::GraphicEventPtr graphic_event;
+        GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
 #ifndef __EMSCRIPTEN__
         SesmanEventPtr sesman_event;

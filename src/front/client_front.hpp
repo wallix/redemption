@@ -98,7 +98,7 @@ inline int run_connection_test(
 
         switch (execute_events(
             timeout, session_reactor, graphic_timer_events_, front_events_,
-            SessionReactor::EnableGraphics{true}, mod, gd
+            EnableGraphics{true}, mod, gd
         )) {
             case ExecuteEventsResult::Error:
                 LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
@@ -142,7 +142,7 @@ inline int wait_for_screenshot(
 
         switch (execute_events(
             timeout, session_reactor, graphic_timer_events_, front_events_,
-            SessionReactor::EnableGraphics{true}, callback, gd
+            EnableGraphics{true}, callback, gd
         )) {
             case ExecuteEventsResult::Error:
                 LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);

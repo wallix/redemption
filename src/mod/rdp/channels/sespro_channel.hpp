@@ -109,8 +109,8 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     SessionReactor& session_reactor;
-    SessionReactor::TimerPtr session_probe_timer;
-    SessionReactor::GraphicEventPtr freeze_mod_screen;
+    TimerPtr session_probe_timer;
+    GraphicEventPtr freeze_mod_screen;
 
     bool launch_aborted = false;
 

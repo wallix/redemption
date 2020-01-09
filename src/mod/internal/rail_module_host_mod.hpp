@@ -104,7 +104,7 @@ private:
 
     bool can_resize_hosted_desktop = false;
 
-    SessionReactor::TimerPtr disconnection_reconnection_timer; // Window resize
+    TimerPtr disconnection_reconnection_timer; // Window resize
 
     ClientExecute& rail_client_execute;
 };

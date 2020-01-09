@@ -104,8 +104,8 @@ std::ref(s))
         s += "timer4\n";
     }));
 
-    SessionReactor::EnableGraphics enable_gd{true};
-    SessionReactor::EnableGraphics disable_gd{false};
+    EnableGraphics enable_gd{true};
+    EnableGraphics disable_gd{false};
 
     session_reactor.execute_timers(graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "");
@@ -217,7 +217,7 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     int const fd1 = ufd.fd();
     RED_REQUIRE_GT(fd1, 0);
 
-    SessionReactor::TopFdPtr fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
+    TopFdPtr fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
     .on_action([](JLN_TOP_CTX ctx, std::string& s){
         s += "fd1\n";
         return ctx.next();
@@ -228,7 +228,7 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     .set_timeout({})
     .on_timeout([](JLN_TOP_TIMER_CTX ctx, std::string&){ return ctx.ready(); });
 
-    SessionReactor::GraphicFdPtr fd_gd_event = session_reactor.create_graphic_fd_event(fd1)
+    GraphicFdPtr fd_gd_event = session_reactor.create_graphic_fd_event(fd1)
     .on_action([&s](JLN_TOP_CTX ctx, gdi::GraphicApi&){
         s += "fd2\n";
         return ctx.next();
@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         };
     };
 
-    SessionReactor::GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
+    GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
     .on_action(jln::sequencer(
         trace("a"_s),
         trace("b"_s),
@@ -336,7 +336,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
 
     struct S
     {
-        SessionReactor::GraphicEventPtr gd_ptr;
+        GraphicEventPtr gd_ptr;
 
         void foo(SessionReactor& session_reactor, F f)
         {

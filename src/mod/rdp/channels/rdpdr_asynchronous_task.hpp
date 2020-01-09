@@ -91,7 +91,7 @@ class RdpdrDriveReadTask final : public AsynchronousTask
 
     VirtualChannelDataSender & to_server_sender;
 
-    SessionReactor::TopFdPtr fdobject;
+    TopFdPtr fdobject;
 
     const RDPVerbose verbose;
 
@@ -210,7 +210,7 @@ class RdpdrSendDriveIOResponseTask final : public AsynchronousTask
 
     VirtualChannelDataSender & to_server_sender;
 
-    SessionReactor::TimerPtr timer_ptr;
+    TimerPtr timer_ptr;
 
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
@@ -284,7 +284,7 @@ class RdpdrSendClientMessageTask final : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    SessionReactor::TimerPtr timer_ptr;
+    TimerPtr timer_ptr;
 
 public:
     RdpdrSendClientMessageTask(

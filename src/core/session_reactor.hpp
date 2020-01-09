@@ -2839,13 +2839,36 @@ using SesmanEventContainer = jln::ActionContainer<Inifile&>;
 using SesmanEventPtr = SesmanEventContainer::Ptr;
 using GraphicTimerContainer = jln::TimerContainer<gdi::GraphicApi&>;
 using GraphicTimerPtr = GraphicTimerContainer::Ptr;
-//    GraphicTimerContainer graphic_timer_events_;
-// GraphicTimerContainer & graphic_timer_events_
+using TimerContainer = jln::TimerContainer<>;
+using TimerPtr = TimerContainer::Ptr;
+using GraphicEventContainer = jln::ActionContainer<gdi::GraphicApi&>;
+using GraphicEventPtr = GraphicEventContainer::Ptr;
+using TopFdContainer = jln::TopContainer<>;
+using TopFdPtr = TopFdContainer::Ptr;
+using GraphicFdContainer = jln::TopContainer<gdi::GraphicApi&>;
+using GraphicFdPtr = GraphicFdContainer::Ptr;
+
+struct EnableGraphics
+{
+    explicit EnableGraphics(bool enable) noexcept
+      : enable(enable)
+    {}
+
+    explicit operator bool () const noexcept
+    {
+        return this->enable;
+    }
+
+    const bool enable;
+};
+
 
 struct SessionReactor
 {
-    using TimerContainer = jln::TimerContainer<>;
-    using TimerPtr = TimerContainer::Ptr;
+    GraphicEventContainer graphic_events_;
+    TimerContainer timer_events_;
+    TopFdContainer fd_events_;
+    GraphicFdContainer graphic_fd_events_;
 
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
@@ -2870,9 +2893,6 @@ struct SessionReactor
     }
 
 
-    using GraphicEventContainer = jln::ActionContainer<gdi::GraphicApi&>;
-    using GraphicEventPtr = GraphicEventContainer::Ptr;
-
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
     create_graphic_event(Args&&... args)
@@ -2887,20 +2907,12 @@ struct SessionReactor
         return sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
-
-    using TopFdContainer = jln::TopContainer<>;
-    using TopFdPtr = TopFdContainer::Ptr;
-
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TopExecutorBuilder_Concept)
     create_fd_event(int fd, Args&&... args)
     {
         return this->fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
     }
-
-
-    using GraphicFdContainer = jln::TopContainer<gdi::GraphicApi&>;
-    using GraphicFdPtr = GraphicFdContainer::Ptr;
 
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TopExecutorBuilder_Concept)
@@ -2909,11 +2921,6 @@ struct SessionReactor
         return this->graphic_fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
     }
 
-
-    GraphicEventContainer graphic_events_;
-    TimerContainer timer_events_;
-    TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
 
     timeval current_time {};
 
@@ -2928,21 +2935,6 @@ struct SessionReactor
         //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
         return this->current_time;
     }
-
-    struct EnableGraphics
-    {
-        explicit EnableGraphics(bool enable) noexcept
-          : enable(enable)
-        {}
-
-        explicit operator bool () const noexcept
-        {
-            return this->enable;
-        }
-
-        const bool enable;
-    };
-
 
     // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
     timeval get_next_timeout(GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */

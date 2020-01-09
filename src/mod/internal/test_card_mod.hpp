@@ -39,7 +39,7 @@ class TestCardMod : public mod_api
     bool unit_test;
 
     SessionReactor& session_reactor;
-    SessionReactor::GraphicEventPtr gd_event;
+    GraphicEventPtr gd_event;
 
     [[nodiscard]] Rect get_screen_rect() const;
 

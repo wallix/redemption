@@ -454,6 +454,8 @@ struct ModWrapper
             }
         }
     } gfilter;
+
+    FrontAPI & front;
     
     std::string module_name() 
     {
@@ -486,8 +488,6 @@ public:
     void set_protected_rect(Rect const rect)
     { this->gfilter.protected_rect = rect; }
 
-    FrontAPI & front;
-
 private:
     ClientInfo const & client_info;
     ClientExecute & rail_client_execute;
@@ -509,8 +509,8 @@ private:
 
 public:
     explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
-    : front(front)
-    , gfilter(graphics, palette, Rect{})
+    : gfilter(graphics, palette, Rect{})
+    , front(front)
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
     , winapi(winapi)

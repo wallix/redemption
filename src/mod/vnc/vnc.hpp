@@ -227,8 +227,8 @@ private:
     Zdecompressor<> zd;
 
     SessionReactor& session_reactor;
-    SessionReactor::GraphicFdPtr fd_event;
-    SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
+    GraphicFdPtr fd_event;
+    GraphicEventPtr wait_client_up_and_running_event;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;

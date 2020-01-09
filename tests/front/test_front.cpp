@@ -340,7 +340,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     RED_CHECK_EXCEPTION_ERROR_ID(
         session_reactor.execute_timers(
             graphic_timer_events_,
-            SessionReactor::EnableGraphics{false},
+            EnableGraphics{false},
             [&]{ return std::ref(front.gd()); }),
         ERR_RDP_HANDSHAKE_TIMEOUT);
 

@@ -59,7 +59,7 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
     int number_page;
 
     SelectorModVariables vars;
-    SessionReactor::GraphicEventPtr started_copy_past_event;
+    GraphicEventPtr started_copy_past_event;
     SesmanEventPtr sesman_event;
 
     CopyPaste copy_paste;

@@ -82,7 +82,7 @@ public:
         using Metrics::Metrics;
 
         RDPMetrics protocol_metrics{*this};
-        SessionReactor::TimerPtr metrics_timer;
+        TimerPtr metrics_timer;
     };
 
 
@@ -116,7 +116,7 @@ public:
         FileValidatorTransport trans;
         // TODO wait result (add delay)
         FileValidatorService service;
-        SessionReactor::TopFdPtr validator_event;
+        TopFdPtr validator_event;
 
         FileValidator(unique_fd&& fd, CtxError&& ctx_error)
         : ctx_error(std::move(ctx_error))

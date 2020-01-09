@@ -301,7 +301,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, this->graphic_timer_events_, this->front_events_, SessionReactor::EnableGraphics{true},
+            timeout, this->session_reactor, this->graphic_timer_events_, this->front_events_, EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
@@ -988,7 +988,7 @@ public:
         try {
             auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
             if (is_timeout) {
-                this->session_reactor.execute_timers(this->graphic_timer_events_, SessionReactor::EnableGraphics{true}, get_gd);
+                this->session_reactor.execute_timers(this->graphic_timer_events_, EnableGraphics{true}, get_gd);
             } else {
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;

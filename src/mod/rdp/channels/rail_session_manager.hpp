@@ -95,7 +95,7 @@ class RemoteProgramsSessionManager final
 
     SessionReactor& session_reactor;
 
-    SessionReactor::TimerPtr waiting_screen_event;
+    TimerPtr waiting_screen_event;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }

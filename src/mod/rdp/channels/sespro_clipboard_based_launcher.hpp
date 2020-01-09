@@ -59,7 +59,7 @@ public:
 
     bool format_data_requested = false;
 
-    SessionReactor::TimerPtr event;
+    TimerPtr event;
 
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;

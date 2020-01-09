@@ -36,7 +36,7 @@ inline void execute_negociate_mod(
 {
     session_reactor.execute_timers(
         graphic_timer_events_,
-        SessionReactor::EnableGraphics{true},
+        EnableGraphics{true},
         [&]()->gdi::GraphicApi&{ return gd; });
     int n = 0;
     int const limit = 1000;
