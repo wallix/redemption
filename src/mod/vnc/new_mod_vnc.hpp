@@ -22,6 +22,8 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "core/session_reactor.hpp"
+
 
 #include <memory>
 
@@ -35,6 +37,7 @@ class VNCMetrics;
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
     SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
     const char* username,
     const char* password,
     FrontAPI& front,

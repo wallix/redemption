@@ -206,7 +206,7 @@ void mod_rdp::init_negociate_event_(
                     }
 
                     private_rdp_negociation->graphic_event
-                    = this->session_reactor.create_graphic_event()
+                    = this->session_reactor.create_graphic_event(this->graphic_events_)
                     .on_action(jln::one_shot([this, &private_rdp_negociation](gdi::GraphicApi&) {
                         RdpNegociation& rdp_negociation = private_rdp_negociation->rdp_negociation;
 
@@ -214,7 +214,7 @@ void mod_rdp::init_negociate_event_(
                         if (is_finish) {
                             this->negociation_result = rdp_negociation.get_result();
                             if (this->buf.remaining()) {
-                                private_rdp_negociation->graphic_event = this->session_reactor.create_graphic_event()
+                                private_rdp_negociation->graphic_event = this->session_reactor.create_graphic_event(this->graphic_events_)
                                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                                     this->draw_event_impl(gd);
                                 }));
@@ -230,6 +230,10 @@ void mod_rdp::init_negociate_event_(
         }
 #endif
 
+        // TODO: check why we have this ctx here instead of direct access to reactor through this
+        // if it's an underlying lifetime issue the have a potential problem
+        // (but as lifetime of reactor and containers is session wide, we should not
+        // have any problem if using a pointer)
         rdp_negociation.start_negociation();
 
         return ctx.replace_action([this](
@@ -249,7 +253,7 @@ void mod_rdp::init_negociate_event_(
 
             this->negociation_result = private_rdp_negociation->rdp_negociation.get_result();
             if (this->buf.remaining()) {
-                private_rdp_negociation->graphic_event = ctx.get_reactor().create_graphic_event()
+                private_rdp_negociation->graphic_event = ctx.get_reactor().create_graphic_event(this->graphic_events_)
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                     this->draw_event_impl(gd);
                 }));

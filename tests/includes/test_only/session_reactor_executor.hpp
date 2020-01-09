@@ -26,13 +26,13 @@ Author(s): Jonathan Poelen
 #include "mod/mod_api.hpp"
 
 inline void execute_graphics_event(
-    SessionReactor& session_reactor, gdi::GraphicApi& gd)
+    SessionReactor& session_reactor, GraphicEventContainer & graphic_events_, gdi::GraphicApi& gd)
 {
-    session_reactor.execute_graphics([](int /*fd*/, auto& /*e*/){ return true; }, gd);
+    session_reactor.execute_graphics(graphic_events_, [](int /*fd*/, auto& /*e*/){ return true; }, gd);
 }
 
 inline void execute_negociate_mod(
-    SessionReactor& session_reactor, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
+    SessionReactor& session_reactor, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
 {
     session_reactor.execute_timers(
         graphic_timer_events_,
@@ -41,21 +41,21 @@ inline void execute_negociate_mod(
     int n = 0;
     int const limit = 1000;
     while (!mod.is_up_and_running()
-        && session_reactor.has_graphics_event()
+        && session_reactor.has_graphics_event(graphic_events_)
         && ++n < limit
     ) {
-        execute_graphics_event(session_reactor, gd);
+        execute_graphics_event(session_reactor, graphic_events_, gd);
     }
     RED_REQUIRE_LT(n, limit);
 }
 
-inline void execute_mod(SessionReactor& session_reactor, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd, int n)
+inline void execute_mod(SessionReactor& session_reactor, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd, int n)
 {
-    execute_negociate_mod(session_reactor, graphic_timer_events_, mod, gd);
+    execute_negociate_mod(session_reactor, graphic_events_, graphic_timer_events_, mod, gd);
     int count = 0;
-    for (; count < n && session_reactor.has_graphics_event(); ++count) {
+    for (; count < n && session_reactor.has_graphics_event(graphic_events_); ++count) {
         // LOG(LOG_INFO, "===================> count = %u", count);
-        execute_graphics_event(session_reactor, gd);
+        execute_graphics_event(session_reactor, graphic_events_, gd);
     }
     RED_CHECK_EQ(count, n);
 }

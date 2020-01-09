@@ -67,11 +67,13 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
     int selector_lines_per_page_saved = 0;
 
     SessionReactor & session_reactor;
+    GraphicEventContainer& graphic_events_;  
     SesmanEventContainer & sesman_events_;
 
 public:
     SelectorMod(
         SelectorModVariables vars, SessionReactor& session_reactor,
+        GraphicEventContainer& graphic_events_,
         SesmanEventContainer & sesman_events_,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,

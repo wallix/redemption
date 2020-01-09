@@ -383,7 +383,7 @@ private:
     const RDPVerbose verbose;
 
     SessionReactor & session_reactor;
-
+    GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
 
@@ -392,7 +392,8 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, FileValidatorService * file_validator_service,
+        SessionReactor & session_reactor, GraphicEventContainer & graphic_events_,
+        FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
@@ -418,6 +419,7 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
+    , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     {}
@@ -784,6 +786,7 @@ public:
 #ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->session_reactor,
+            this->graphic_events_,
             this->session_probe_to_server_sender.get(),
             front,
             mod,
@@ -1865,6 +1868,7 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     SessionReactor& session_reactor;
+    GraphicEventContainer & graphic_events_;
     SesmanEventContainer & sesman_events_;
     GraphicFdPtr fd_event;
 
@@ -1931,6 +1935,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
+      , GraphicEventContainer & graphic_events_
       , SesmanEventContainer & sesman_events_
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -1951,7 +1956,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, session_reactor, file_validator_service,
+            report_message, gen, metrics, session_reactor, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -1996,6 +2001,7 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
+        , graphic_events_(graphic_events_)
         , sesman_events_(sesman_events_)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)

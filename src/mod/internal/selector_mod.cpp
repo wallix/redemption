@@ -52,13 +52,15 @@ namespace
 } // namespace
 
 SelectorMod::SelectorMod(
-    SelectorModVariables vars, SessionReactor& session_reactor,
+    SelectorModVariables vars,
+    SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
     SesmanEventContainer & sesman_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
+    : LocallyIntegrableMod(session_reactor, graphic_events_, drawable, front, width, height, font,
         rail_client_execute, theme)
 
     , language_button(
@@ -98,6 +100,7 @@ SelectorMod::SelectorMod(
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , session_reactor(session_reactor)
+    , graphic_events_(graphic_events_)
     , sesman_events_(sesman_events_)
 {
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
@@ -115,7 +118,7 @@ SelectorMod::SelectorMod(
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
 
-    this->started_copy_past_event = session_reactor.create_graphic_event()
+    this->started_copy_past_event = session_reactor.create_graphic_event(this->graphic_events_)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

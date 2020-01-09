@@ -36,6 +36,7 @@
 
 TestCardMod::TestCardMod(
     SessionReactor& session_reactor,
+    GraphicEventContainer & graphic_events_,
     uint16_t width, uint16_t height,
     Font const & font, bool unit_test)
 : front_width(width)
@@ -43,7 +44,8 @@ TestCardMod::TestCardMod(
 , font(font)
 , unit_test(unit_test)
 , session_reactor(session_reactor)
-, gd_event(session_reactor.create_graphic_event(std::ref(*this))
+, graphic_events_(graphic_events_)
+, gd_event(session_reactor.create_graphic_event(graphic_events_, std::ref(*this))
     .on_action(jln::one_shot([](gdi::GraphicApi& gd, TestCardMod& mod){
         mod.draw_event(gd);
     })))

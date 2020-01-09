@@ -29,7 +29,9 @@
 
 
 DialogMod::DialogMod(
-    DialogModVariables vars, SessionReactor& session_reactor,
+    DialogModVariables vars,
+    SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     const char * cancel_text, ClientExecute & rail_client_execute,
@@ -45,6 +47,7 @@ DialogMod::DialogMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , session_reactor(session_reactor)
+    , graphic_events_(graphic_events_)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
@@ -58,7 +61,7 @@ DialogMod::DialogMod(
 {
     this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
-        this->graphic_event = session_reactor.create_graphic_event()
+        this->graphic_event = this->session_reactor.create_graphic_event(this->graphic_events_)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(
@@ -80,7 +83,7 @@ DialogMod::DialogMod(
     }
 
     if (vars.get<cfg::debug::pass_dialog_box>()) {
-        this->timeout_timer = session_reactor.create_timer()
+        this->timeout_timer = this->session_reactor.create_timer()
         .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
         .on_action([this](JLN_TIMER_CTX ctx){
             this->accepted();
@@ -88,7 +91,7 @@ DialogMod::DialogMod(
         });
     }
 
-    this->started_copy_past_event = session_reactor.create_graphic_event()
+    this->started_copy_past_event = this->session_reactor.create_graphic_event(this->graphic_events_)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

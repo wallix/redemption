@@ -23,7 +23,10 @@
 #include "RAIL/client_execute.hpp"
 
 LocallyIntegrableMod::LocallyIntegrableMod(
-    SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
+    SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
+    gdi::GraphicApi & drawable,
+    FrontAPI & front,
     uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & rail_client_execute,
     Theme const & theme)
@@ -37,10 +40,11 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 , rail_enabled(rail_client_execute.is_rail_enabled())
 , current_mouse_owner(MouseOwner::WidgetModule)
 , session_reactor(session_reactor)
+, graphic_events_(graphic_events_)
 {
     this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
-        this->graphic_event = session_reactor.create_graphic_event()
+        this->graphic_event = session_reactor.create_graphic_event(graphic_events_)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(

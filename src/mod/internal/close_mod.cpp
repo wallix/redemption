@@ -57,7 +57,9 @@ namespace
 
 CloseMod::CloseMod(
     std::string auth_error_message,
-    CloseModVariables vars, SessionReactor& session_reactor,
+    CloseModVariables vars, 
+    SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool showtimer, bool back_selector)
@@ -84,10 +86,11 @@ CloseMod::CloseMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , session_reactor(session_reactor)
+    , graphic_events_(graphic_events_)
 {
     this->screen.set_wh(this->front_width, this->front_height);
     if (this->rail_enabled) {
-        this->graphic_event = session_reactor.create_graphic_event()
+        this->graphic_event = session_reactor.create_graphic_event(graphic_events_)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(

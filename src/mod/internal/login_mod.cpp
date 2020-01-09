@@ -27,13 +27,15 @@
 
 
 LoginMod::LoginMod(
-    LoginModVariables vars, SessionReactor& session_reactor,
+    LoginModVariables vars,
+    SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
     char const * username, char const * password,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font, rail_client_execute, theme)
+    : LocallyIntegrableMod(session_reactor, graphic_events_, drawable, front, width, height, font, rail_client_execute, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
@@ -78,7 +80,7 @@ LoginMod::LoginMod(
         });
     }
 
-    this->started_copy_past_event = session_reactor.create_graphic_event()
+    this->started_copy_past_event = session_reactor.create_graphic_event(graphic_events_)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

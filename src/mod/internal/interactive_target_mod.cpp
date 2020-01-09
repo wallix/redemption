@@ -28,10 +28,12 @@
 
 InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
-    SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
+    SessionReactor& session_reactor, 
+    GraphicEventContainer& graphic_events_,
+    gdi::GraphicApi & drawable, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme)
-    : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
+    : LocallyIntegrableMod(session_reactor, graphic_events_, drawable, front, width, height, font,
         rail_client_execute, theme)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
@@ -69,7 +71,7 @@ InteractiveTargetMod::InteractiveTargetMod(
     }
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->started_copy_past_event = session_reactor.create_graphic_event()
+    this->started_copy_past_event = session_reactor.create_graphic_event(graphic_events_)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

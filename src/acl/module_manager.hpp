@@ -81,6 +81,7 @@ public:
 
     Inifile& ini;
     SessionReactor& session_reactor;
+    GraphicEventContainer& graphic_events_;
     SesmanEventContainer & sesman_events_;
     CryptoContext & cctx;
 
@@ -116,10 +117,16 @@ private:
     Theme & theme;
 
 public:
-    ModuleManager(EndSessionWarning & end_session_warning, ModFactory & mod_factory, SessionReactor& session_reactor, SesmanEventContainer & sesman_events_, FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+    ModuleManager(EndSessionWarning & end_session_warning,
+                  ModFactory & mod_factory,
+                  SessionReactor& session_reactor, 
+                  GraphicEventContainer& graphic_events_,
+                  SesmanEventContainer & sesman_events_,
+                  FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : mod_factory(mod_factory)
         , ini(ini)
         , session_reactor(session_reactor)
+        , graphic_events_(graphic_events_)
         , sesman_events_(sesman_events_)
         , cctx(cctx)
         , front(front)

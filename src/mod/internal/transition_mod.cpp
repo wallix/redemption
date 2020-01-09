@@ -26,12 +26,14 @@
 #include "core/front_api.hpp"
 
 TransitionMod::TransitionMod(
-    TransitionModVariables vars, SessionReactor& session_reactor,
+    TransitionModVariables vars,
+    SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, drawable, front, width, height,
+    : LocallyIntegrableMod(session_reactor, graphic_events_, drawable, front, width, height,
                            font, rail_client_execute, theme)
     , ttmessage(drawable, this->screen, nullptr,
                 TR(trkeys::wait_msg, language(vars)),

@@ -87,7 +87,12 @@ public:
 #include "mod/mod_api.hpp"
 
 inline int run_connection_test(
-    char const * type, SessionReactor& session_reactor, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, mod_api& mod, gdi::GraphicApi& gd)
+    char const * type,
+    SessionReactor& session_reactor,
+    GraphicEventContainer & graphic_events_,
+    GraphicTimerContainer & graphic_timer_events_,
+    CallbackEventContainer & front_events_,
+    mod_api& mod, gdi::GraphicApi& gd)
 {
     int       timeout_counter = 0;
     int const timeout_counter_max = 3;
@@ -97,7 +102,9 @@ inline int run_connection_test(
         LOG(LOG_INFO, "run_connection_test");
 
         switch (execute_events(
-            timeout, session_reactor, graphic_timer_events_, front_events_,
+            timeout, session_reactor, 
+            graphic_events_,
+            graphic_timer_events_, front_events_,
             EnableGraphics{true}, mod, gd
         )) {
             case ExecuteEventsResult::Error:
@@ -124,8 +131,12 @@ inline int run_connection_test(
 
 // return 0 : do screenshot, don't do screenshot an error occurred
 inline int wait_for_screenshot(
-    char const* type, SessionReactor& session_reactor, GraphicTimerContainer & graphic_timer_events_,
- CallbackEventContainer & front_events_, Callback& callback, gdi::GraphicApi & gd,
+    char const* type,
+        SessionReactor& session_reactor,
+        GraphicEventContainer & graphic_events_,        
+        GraphicTimerContainer & graphic_timer_events_,
+        CallbackEventContainer & front_events_,
+        Callback& callback, gdi::GraphicApi & gd,
     std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time)
 {
     auto const time_start = ustime();
@@ -141,7 +152,7 @@ inline int wait_for_screenshot(
         std::chrono::milliseconds timeout = std::min(max_time - elapsed, inactivity_time);
 
         switch (execute_events(
-            timeout, session_reactor, graphic_timer_events_, front_events_,
+            timeout, session_reactor, graphic_events_, graphic_timer_events_, front_events_,
             EnableGraphics{true}, callback, gd
         )) {
             case ExecuteEventsResult::Error:
@@ -160,12 +171,17 @@ inline int wait_for_screenshot(
 }
 
 inline int run_test_client(
-    char const* type, SessionReactor& session_reactor, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, mod_api& mod, gdi::GraphicApi& gd,
+    char const* type,
+        SessionReactor& session_reactor,
+        GraphicEventContainer & graphic_events_,
+        GraphicTimerContainer & graphic_timer_events_,
+        CallbackEventContainer & front_events_,
+        mod_api& mod, gdi::GraphicApi& gd,
     std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
     std::string const& screen_output)
 {
     try {
-        if (int err = run_connection_test(type, session_reactor, graphic_timer_events_, front_events_, mod, gd)) {
+        if (int err = run_connection_test(type, session_reactor, graphic_events_, graphic_timer_events_, front_events_, mod, gd)) {
             return err;
         }
 
@@ -182,7 +198,7 @@ inline int run_test_client(
         Dimension dim = mod.get_dim();
         RDPDrawable gd(dim.w, dim.h);
 
-        if (int err = wait_for_screenshot(type, session_reactor, graphic_timer_events_, front_events_, mod, gd, inactivity_time, max_time)) {
+        if (int err = wait_for_screenshot(type, session_reactor, graphic_events_, graphic_timer_events_, front_events_, mod, gd, inactivity_time, max_time)) {
             return err;
         }
 

@@ -140,6 +140,7 @@ private:
 
 protected:
     SessionReactor& session_reactor;
+    GraphicEventContainer& graphic_events_;
 
 private:
     GraphicEventPtr graphic_event;
@@ -154,7 +155,9 @@ private:
 
 public:
     DialogMod(
-        DialogModVariables vars, SessionReactor& session_reactor,
+        DialogModVariables vars,
+        SessionReactor& session_reactor,
+        GraphicEventContainer& graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, ClientExecute & rail_client_execute,

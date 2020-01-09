@@ -52,7 +52,9 @@ class CloseMod : public mod_api, public NotifyApi
 public:
     CloseMod(
         std::string auth_error_message,
-        CloseModVariables vars, SessionReactor& session_reactor,
+        CloseModVariables vars,
+        SessionReactor& session_reactor,
+        GraphicEventContainer& graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, bool showtimer = false, bool back_selector = false);
@@ -172,7 +174,8 @@ private:
 
 protected:
     SessionReactor& session_reactor;
-
+    GraphicEventContainer& graphic_events_;
+    
 private:
     GraphicEventPtr graphic_event;
 

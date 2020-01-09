@@ -186,6 +186,7 @@ public:
         const char * name, unique_fd sck, uint32_t verbose
       , std::string * error_message
       , SessionReactor& session_reactor
+      , GraphicEventContainer & graphic_events_
       , SesmanEventContainer & sesman_events_
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -211,7 +212,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
                      
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, session_reactor, sesman_events_, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, session_reactor, graphic_events_, sesman_events_, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -233,7 +234,7 @@ public:
     // from RdpInput
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
+        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", unsigned(param1), unsigned(param3), this);
         if (this->mod_wrapper.try_input_scancode(param1, param2, param3, param4, keymap)) {
             this->target_info_is_shown = false;
             return ;
@@ -758,6 +759,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
             ini.get<cfg::debug::mod_rdp>(),
             &ini.get_mutable_ref<cfg::context::auth_error_message>(),
             this->session_reactor,
+            this->graphic_events_,
             this->sesman_events_,
             drawable,
             front,
@@ -821,6 +823,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
             auto* host_mod = new RailModuleHostMod(
                 ini,
                 this->session_reactor,
+                this->graphic_events_,
                 drawable,
                 front,
                 client_info.screen_info.width,

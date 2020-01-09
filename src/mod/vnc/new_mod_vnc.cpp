@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
     SessionReactor& session_reactor,
+    GraphicEventContainer & graphic_events_,
     const char* username,
     const char* password,
     FrontAPI& front,
@@ -45,7 +46,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
 )
 {
     return std::make_unique<mod_vnc>(
-        t, session_reactor, username, password, front,
+        t, session_reactor, graphic_events_, username, password, front,
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_apple, send_alt_ksym,

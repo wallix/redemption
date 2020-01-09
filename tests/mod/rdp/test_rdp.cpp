@@ -219,12 +219,13 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
     SesmanEventContainer sesman_events_;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
 
-    auto mod = new_mod_rdp(t, session_reactor, sesman_events_, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, session_reactor, graphic_events_, sesman_events_, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
         nullptr, nullptr, mod_rdp_factory);
@@ -233,9 +234,9 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
     // Comment the code block below to generate testing data.
-    execute_negociate_mod(session_reactor, graphic_timer_events_, *mod, front.gd());
+    execute_negociate_mod(session_reactor, graphic_events_, graphic_timer_events_, *mod, front.gd());
     for (int count = 0; count < 38; ++count) {
-        execute_graphics_event(session_reactor, front.gd());
+        execute_graphics_event(session_reactor, graphic_events_, front.gd());
     }
 
     //session_reactor.execute_timers(

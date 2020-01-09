@@ -102,6 +102,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool mem3blt_support  = false;
     NullReportMessage report_message;
     SessionReactor session_reactor;
+    GraphicEventContainer graphic_events_;
     CallbackEventContainer front_events_;
     FrontWrapper front(session_reactor, front_events_, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
     front.set_ignore_rdesktop_bogus_clip(true);
@@ -115,7 +116,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.is_up_and_running());
-    TestCardMod mod(session_reactor, front.screen_info().width, front.screen_info().height, global_font());
+    TestCardMod mod(session_reactor, graphic_events_, front.screen_info().width, front.screen_info().height, global_font());
     mod.draw_event(front);
 
     // Uncomment the code block below to generate testing data.

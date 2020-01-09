@@ -60,6 +60,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     using Ptr = jln::SharedPtr;
     using Dt = jln::NotifyDeleteType;
     SessionReactor session_reactor;
+    GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
 
 
@@ -149,13 +150,14 @@ std::ref(s))
 RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 {
     SessionReactor session_reactor;
+    GraphicEventContainer graphic_events_;
     SesmanEventContainer sesman_events_;
     CallbackEventContainer front_events_;
     using Dt = jln::NotifyDeleteType;
 
     std::string s;
 
-    auto gd = session_reactor.create_graphic_event(std::ref(s))
+    auto gd = session_reactor.create_graphic_event(graphic_events_, std::ref(s))
     .set_notify_delete([](Dt, std::string& s){
         s += "~gd\n";
     })
@@ -177,7 +179,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         return ctx.terminate();
     });
 
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "gd\n~gd\n");
 
     char dummy;
@@ -210,6 +212,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
 {
     SessionReactor session_reactor;
+    GraphicEventContainer graphic_events_;
 
     std::string s;
 
@@ -239,7 +242,7 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     .set_timeout({})
     .on_timeout([](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){ return ctx.ready(); });
 
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "fd2\n~fd2\n");
 
     session_reactor.execute_events(fd_is_set);
@@ -249,6 +252,7 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
 RED_AUTO_TEST_CASE(TestSessionReactorSequence)
 {
     SessionReactor session_reactor;
+    GraphicEventContainer graphic_events_;
 
     std::string s;
 
@@ -265,7 +269,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         };
     };
 
-    GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
+    GraphicEventPtr event = session_reactor.create_graphic_event(graphic_events_, std::ref(s))
     .on_action(jln::sequencer(
         trace("a"_s),
         trace("b"_s),
@@ -273,16 +277,16 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         trace("d"_s)
     ));
 
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "a");
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "ab");
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "abc");
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK(!event);
     RED_CHECK_EQ(s, "abcd");
     s.clear();
@@ -294,7 +298,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         };
     };
 
-    event = session_reactor.create_graphic_event(std::ref(s))
+    event = session_reactor.create_graphic_event(graphic_events_, std::ref(s))
     .on_action(jln::sequencer(
         "a"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.next(); }),
         "b"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.at("d"_s).ready(); }),
@@ -306,16 +310,16 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         "e"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.terminate(); })
     ));
 
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "a");
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "ab");
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_,fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "abd");
-    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    session_reactor.execute_graphics(graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK(!event);
     RED_CHECK_EQ(s, "abdce");
 }
@@ -338,9 +342,9 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
     {
         GraphicEventPtr gd_ptr;
 
-        void foo(SessionReactor& session_reactor, F f)
+        void foo(SessionReactor& session_reactor, GraphicEventContainer & graphic_events_, F f)
         {
-            this->gd_ptr = session_reactor.create_graphic_event(std::ref(*this), f)
+            this->gd_ptr = session_reactor.create_graphic_event(graphic_events_, std::ref(*this), f)
             .set_notify_delete([](jln::NotifyDeleteType d, S& self, F f){ f(self, d); })
             .on_action([](JLN_ACTION_CTX ctx, gdi::GraphicApi&, S&, F){
                 return ctx.terminate();
@@ -349,14 +353,15 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
     };
 
     SessionReactor session_reactor;
+    GraphicEventContainer graphic_events_;
 
     v.emplace_back(std::make_unique<S>());
-    v.back()->foo(session_reactor, f);
+    v.back()->foo(session_reactor, graphic_events_, f);
     RED_CHECK_EQ(v.size(), 1);
     v.clear();
 
     v.emplace_back(std::make_unique<S>());
-    v.back()->foo(session_reactor, f);
-    session_reactor.execute_graphics([]([[maybe_unused]] auto&&... xs){return false;}, gdi::null_gd());
+    v.back()->foo(session_reactor, graphic_events_, f);
+    session_reactor.execute_graphics(graphic_events_, []([[maybe_unused]] auto&&... xs){return false;}, gdi::null_gd());
     RED_CHECK_EQ(v.size(), 0);
 }

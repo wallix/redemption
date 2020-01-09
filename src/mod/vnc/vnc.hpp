@@ -227,6 +227,7 @@ private:
     Zdecompressor<> zd;
 
     SessionReactor& session_reactor;
+    GraphicEventContainer & graphic_events_;
     GraphicFdPtr fd_event;
     GraphicEventPtr wait_client_up_and_running_event;
 
@@ -257,6 +258,7 @@ private:
 public:
     mod_vnc( Transport & t
            , SessionReactor& session_reactor
+           , GraphicEventContainer & graphic_events_
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -292,6 +294,7 @@ public:
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
+    , graphic_events_(graphic_events_)
     #ifndef __EMSCRIPTEN__
     , metrics(metrics)
     #endif
@@ -3474,7 +3477,7 @@ public:
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
             this->state = DO_INITIAL_CLEAR_SCREEN;
-            this->wait_client_up_and_running_event = this->session_reactor.create_graphic_event()
+            this->wait_client_up_and_running_event = this->session_reactor.create_graphic_event(this->graphic_events_)
             .on_action([this](auto ctx, gdi::GraphicApi & drawable){
                 this->initial_clear_screen(drawable);
                 return ctx.terminate();

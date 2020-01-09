@@ -109,6 +109,7 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     SessionReactor& session_reactor;
+    GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
     GraphicEventPtr freeze_mod_screen;
 
@@ -159,6 +160,7 @@ public:
 
     explicit SessionProbeVirtualChannel(
         SessionReactor& session_reactor,
+        GraphicEventContainer & graphic_events_,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         mod_api& mod,
@@ -185,6 +187,7 @@ public:
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , session_reactor(session_reactor)
+    , graphic_events_(graphic_events_)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
@@ -354,7 +357,7 @@ private:
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
                         this->freeze_mod_screen = this->session_reactor
-                        .create_graphic_event(mod.get_dim())
+                        .create_graphic_event(this->graphic_events_, mod.get_dim())
                         .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
                             gdi_freeze_screen(drawable, dim);
                         }));

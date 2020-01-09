@@ -58,7 +58,9 @@ public:
 public:
     InteractiveTargetMod(
         InteractiveTargetModVariables vars,
-        SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
+        SessionReactor& session_reactor,
+        GraphicEventContainer& graphic_events_,
+        gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect,
         ClientExecute & rail_client_execute, Font const& font, Theme const& theme);
 

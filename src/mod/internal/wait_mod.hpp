@@ -58,7 +58,9 @@ class WaitMod : public LocallyIntegrableMod, public NotifyApi
 public:
     WaitMod(
         WaitModVariables vars,
-        SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
+        SessionReactor& session_reactor,
+        GraphicEventContainer & graphic_events_,
+        gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect, const char * caption,
         const char * message, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, bool showform = false, uint32_t flag = 0);

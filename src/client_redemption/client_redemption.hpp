@@ -95,6 +95,7 @@ public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
     SessionReactor& session_reactor;
+    GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
     SesmanEventContainer & sesman_events_;
     CallbackEventContainer front_events_;
@@ -238,6 +239,7 @@ public:
 
 public:
     ClientRedemption(SessionReactor & session_reactor,
+                     GraphicEventContainer & graphic_events_,
                      GraphicTimerContainer & graphic_timer_events_,
                      SesmanEventContainer & sesman_events_,
                      ClientRedemptionConfig & config)
@@ -245,6 +247,7 @@ public:
         , client_sck(-1)
         , _callback(this)
         , session_reactor(session_reactor)
+        , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
         , sesman_events_(sesman_events_)
         , close_box_extra_message_ref("Close")
@@ -301,7 +304,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, this->graphic_timer_events_, this->front_events_, EnableGraphics{true},
+            timeout, this->session_reactor, this->graphic_events_, this->graphic_timer_events_, this->front_events_, EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
@@ -427,8 +430,9 @@ public:
 
                 this->unique_mod = new_mod_rdp(
                     *this->socket
-                  , session_reactor
-                  , sesman_events_
+                  , this->session_reactor
+                  , this->graphic_events_
+                  , this->sesman_events_
                   , *this
                   , *this
                   , this->config.info
@@ -462,6 +466,7 @@ public:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
                   , this->session_reactor
+                  , this->graphic_events_
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()
                   , *this
@@ -994,7 +999,7 @@ public:
                     return true /*this->socket->get_fd() == fd*/;
                 };
                 this->session_reactor.execute_events(is_mod_fd);
-                this->session_reactor.execute_graphics(is_mod_fd, get_gd());
+                this->session_reactor.execute_graphics(graphic_events_, is_mod_fd, get_gd());
             }
         } catch (const Error & e) {
 

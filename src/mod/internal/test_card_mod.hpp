@@ -39,6 +39,7 @@ class TestCardMod : public mod_api
     bool unit_test;
 
     SessionReactor& session_reactor;
+    GraphicEventContainer & graphic_events_;
     GraphicEventPtr gd_event;
 
     [[nodiscard]] Rect get_screen_rect() const;
@@ -46,6 +47,7 @@ class TestCardMod : public mod_api
 public:
     TestCardMod(
         SessionReactor& session_reactor,
+        GraphicEventContainer & graphic_events_,
         uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true);
 

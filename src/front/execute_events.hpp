@@ -36,6 +36,7 @@ enum class ExecuteEventsResult
 
 inline ExecuteEventsResult execute_events(
     std::chrono::milliseconds timeout, SessionReactor& session_reactor,
+    GraphicEventContainer & graphic_events_,
     GraphicTimerContainer & graphic_timer_events_,
     CallbackEventContainer & front_events_,
     EnableGraphics enable_graphics,
@@ -57,7 +58,7 @@ inline ExecuteEventsResult execute_events(
 
     session_reactor.set_current_time(tvtime());
     timeval timeoutastv = to_timeval(
-                            session_reactor.get_next_timeout(graphic_timer_events_, front_events_, enable_graphics, timeout)
+                            session_reactor.get_next_timeout(graphic_events_, graphic_timer_events_, front_events_, enable_graphics, timeout)
                           - session_reactor.get_current_time());
 
     int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
@@ -75,7 +76,7 @@ inline ExecuteEventsResult execute_events(
     if (num) {
         front_events_.exec_action(callback);
         auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
-        session_reactor.execute_graphics(fd_isset, front);
+        session_reactor.execute_graphics(graphic_events_, fd_isset, front);
         return ExecuteEventsResult::Success;
     }
 

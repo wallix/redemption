@@ -27,11 +27,12 @@
 RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
     SessionReactor& session_reactor,
+    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
     const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
-: LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
+: LocallyIntegrableMod(session_reactor, graphic_events_, drawable, front, width, height, font,
     rail_client_execute, theme)
 , rail_module_host(drawable, widget_rect.x, widget_rect.y,
                    widget_rect.cx, widget_rect.cy,

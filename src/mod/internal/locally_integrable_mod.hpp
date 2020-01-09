@@ -31,6 +31,7 @@ class LocallyIntegrableMod : public mod_api
 {
 public:
     LocallyIntegrableMod(SessionReactor& session_reactor,
+                         GraphicEventContainer& graphic_events_,
                          gdi::GraphicApi & drawable, FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & rail_client_execute,
@@ -140,6 +141,7 @@ private:
 
 protected:
     SessionReactor& session_reactor;
+    GraphicEventContainer& graphic_events_;
 
 private:
     GraphicEventPtr graphic_event;
