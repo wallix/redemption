@@ -60,6 +60,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     using Ptr = jln::SharedPtr;
     using Dt = jln::NotifyDeleteType;
     SessionReactor session_reactor;
+    GraphicTimerContainer graphic_timer_events_;
+
 
     session_reactor.set_current_time(timeval{10, 222});
     RED_CHECK_EQ(session_reactor.get_current_time().tv_sec, 10);
@@ -95,7 +97,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
         return c++ == 'd' ? ctx.terminate() : ctx.ready();
     });
 
-    Ptr timer4 = session_reactor.create_graphic_timer(std::ref(s))
+    Ptr timer4 = session_reactor.create_graphic_timer(graphic_timer_events_,
+std::ref(s))
     .set_time({16, 0})
     .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
         s += "timer4\n";
@@ -104,29 +107,29 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     SessionReactor::EnableGraphics enable_gd{true};
     SessionReactor::EnableGraphics disable_gd{false};
 
-    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "");
 
     // set_current_time + execute_timers, to simulate times flying
     session_reactor.set_current_time({11, 222});
-    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
 
     session_reactor.set_current_time({13, 0});
-    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
 
     session_reactor.set_current_time({14, 0});
-    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\n");
     RED_CHECK(bool(timer2));
 
     session_reactor.set_current_time({15, 0});
-    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\n");
     RED_CHECK(bool(timer2));
 
@@ -135,11 +138,11 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
     session_reactor.set_current_time({16, 0});
-    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
     session_reactor.set_current_time({16, 0});
-    session_reactor.execute_timers(enable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(graphic_timer_events_, enable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\ntimer4\n");
 }
 

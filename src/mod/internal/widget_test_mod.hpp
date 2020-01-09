@@ -30,6 +30,7 @@ class WidgetTestMod : public mod_api
 {
 public:
     WidgetTestMod(SessionReactor& session_reactor,
+        GraphicTimerContainer & graphic_timer_events_,
         FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font);
 

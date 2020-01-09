@@ -185,7 +185,7 @@
 
 //    virtual ~GraphicApi() = default;
 
-//    virtual void set_palette(BGRPalette   const & /*unused*/) {}
+//    virtual void set_*(BGRPalette   const & /*unused*/) {}
 
 //    virtual void draw(RDP::FrameMarker    const & cmd) = 0;
 //    virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
@@ -309,9 +309,9 @@ struct ModWrapper
 {
     struct GraphicFilter : public gdi::GraphicApi
     {
-        Rect protected_rect;
         gdi::GraphicApi & sink;
         BGRPalette const & palette;
+        Rect protected_rect;
         Callback * mod;
 
         GraphicFilter(gdi::GraphicApi & sink, const BGRPalette & palette, Rect rect) 
@@ -339,7 +339,7 @@ struct ModWrapper
                                                                                   override { this->draw_impl(cmd, clip, color_ctx, bmp); }
         void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) 
                                                                             override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
-        void draw(RDPNineGrid const &  cmd, Rect clip, gdi::ColorCtx  color_ctx, Bitmap const &  bmp) 
+        void draw(RDPNineGrid const &  /*cmd*/, Rect /*clip*/, gdi::ColorCtx  /*color_ctx*/, Bitmap const &  /*bmp*/) 
                                                                                   override { }
         void draw(RDPSetSurfaceCommand const & cmd) override { this->sink.draw(cmd); }
         void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override { this->sink.draw(cmd, content); }

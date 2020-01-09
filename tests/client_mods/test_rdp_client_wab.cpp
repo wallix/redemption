@@ -117,6 +117,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    GraphicTimerContainer graphic_timer_events_;
     SesmanEventContainer sesman_events_;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -132,7 +133,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(session_reactor, *mod, front.gd(), 8);
+    execute_mod(session_reactor, graphic_timer_events_, *mod, front.gd(), 8);
 
     RED_CHECK_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");

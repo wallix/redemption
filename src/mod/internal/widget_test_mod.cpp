@@ -37,11 +37,11 @@
 // Pimpl
 struct WidgetTestMod::WidgetTestModPrivate
 {
-    WidgetTestModPrivate(SessionReactor& session_reactor, WidgetTestMod& /*mod*/)
+    WidgetTestModPrivate(SessionReactor& session_reactor, GraphicTimerContainer & graphic_timer_events_, WidgetTestMod& /*mod*/)
       : session_reactor(session_reactor)
     {
         LOG(LOG_DEBUG, "WidgetTestModPrivate");
-        this->timer = this->session_reactor.create_graphic_timer()
+        this->timer = this->session_reactor.create_graphic_timer(graphic_timer_events_)
         .set_delay(std::chrono::seconds(0))
         .on_action([](auto ctx, gdi::GraphicApi& gd){
             update_lock update_lock{gd};
@@ -86,14 +86,15 @@ struct WidgetTestMod::WidgetTestModPrivate
     }
 
     SessionReactor& session_reactor;
-    SessionReactor::GraphicTimerPtr timer;
+    GraphicTimerPtr timer;
 };
 
 WidgetTestMod::WidgetTestMod(
     SessionReactor& session_reactor,
+    GraphicTimerContainer & graphic_timer_events_,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & /*font*/)
-: d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
+: d(std::make_unique<WidgetTestModPrivate>(session_reactor, graphic_timer_events_, *this))
 {
     front.server_resize({width, height, BitsPerPixel{8}});
 }

@@ -29,12 +29,13 @@
 
 Bouncer2Mod::Bouncer2Mod(
     SessionReactor& session_reactor,
+    GraphicTimerContainer & graphic_timer_events_,
     uint16_t width, uint16_t height)
 : front_width(width)
 , front_height(height)
 , dancing_rect(0,0,100,100)
 , session_reactor(session_reactor)
-, timer(session_reactor.create_graphic_timer()
+, timer(session_reactor.create_graphic_timer(graphic_timer_events_)
     .set_delay(std::chrono::milliseconds(33))
     .on_action(jln::always_ready([this](gdi::GraphicApi& gd){
         this->draw_event(gd);

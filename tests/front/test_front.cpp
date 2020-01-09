@@ -157,6 +157,7 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
     SessionReactor session_reactor;
+    GraphicTimerContainer graphic_timer_events_;
     CallbackEventContainer front_events_;
     SesmanEventContainer sesman_events_;
     SesmanInterface sesman(ini);
@@ -250,7 +251,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     RED_TEST_PASSPOINT();
 
-    execute_mod(session_reactor, *mod, front, 38);
+    execute_mod(session_reactor, graphic_timer_events_, *mod, front, 38);
 
 //    front.dump_png("trace_w2008_");
 }
@@ -321,6 +322,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
     SessionReactor session_reactor;
+    GraphicTimerContainer graphic_timer_events_;
     CallbackEventContainer front_events_;
 
     NullReportMessage report_message;
@@ -337,6 +339,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     session_reactor.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
     RED_CHECK_EXCEPTION_ERROR_ID(
         session_reactor.execute_timers(
+            graphic_timer_events_,
             SessionReactor::EnableGraphics{false},
             [&]{ return std::ref(front.gd()); }),
         ERR_RDP_HANDSHAKE_TIMEOUT);

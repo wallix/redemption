@@ -95,6 +95,7 @@ public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
     SessionReactor& session_reactor;
+    GraphicTimerContainer & graphic_timer_events_;
     SesmanEventContainer & sesman_events_;
     CallbackEventContainer front_events_;
 
@@ -237,12 +238,14 @@ public:
 
 public:
     ClientRedemption(SessionReactor & session_reactor,
+                     GraphicTimerContainer & graphic_timer_events_,
                      SesmanEventContainer & sesman_events_,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
         , _callback(this)
         , session_reactor(session_reactor)
+        , graphic_timer_events_(graphic_timer_events_)
         , sesman_events_(sesman_events_)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(session_reactor, *this, *this, this->config.info.window_list_caps, false)
@@ -298,7 +301,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, this->front_events_, SessionReactor::EnableGraphics{true},
+            timeout, this->session_reactor, this->graphic_timer_events_, this->front_events_, SessionReactor::EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
@@ -731,6 +734,7 @@ public:
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->session_reactor
+              , this->graphic_timer_events_
               , *this
               , *this
               , this->config._movie_full_path.c_str()
@@ -984,7 +988,7 @@ public:
         try {
             auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
             if (is_timeout) {
-                this->session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
+                this->session_reactor.execute_timers(this->graphic_timer_events_, SessionReactor::EnableGraphics{true}, get_gd);
             } else {
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;
@@ -1182,7 +1186,7 @@ public:
     void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override
     {}
 
-    void draw(RDPSetSurfaceCommand const & cmd) override {
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
         //TODO: this->draw_impl(no_log{}, cmd);
     }
 

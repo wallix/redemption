@@ -2837,6 +2837,10 @@ using CallbackEventContainer = jln::ActionContainer<Callback&>;
 using CallbackEventPtr = CallbackEventContainer::Ptr;
 using SesmanEventContainer = jln::ActionContainer<Inifile&>;
 using SesmanEventPtr = SesmanEventContainer::Ptr;
+using GraphicTimerContainer = jln::TimerContainer<gdi::GraphicApi&>;
+using GraphicTimerPtr = GraphicTimerContainer::Ptr;
+//    GraphicTimerContainer graphic_timer_events_;
+// GraphicTimerContainer & graphic_timer_events_
 
 struct SessionReactor
 {
@@ -2851,14 +2855,11 @@ struct SessionReactor
     }
 
 
-    using GraphicTimerContainer = jln::TimerContainer<gdi::GraphicApi&>;
-    using GraphicTimerPtr = GraphicTimerContainer::Ptr;
-
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
-    create_graphic_timer(Args&&... args)
+    create_graphic_timer(GraphicTimerContainer & graphic_timer_events_, Args&&... args)
     {
-        return this->graphic_timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
+        return graphic_timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
     }
 
     template<class... Args>
@@ -2911,7 +2912,6 @@ struct SessionReactor
 
     GraphicEventContainer graphic_events_;
     TimerContainer timer_events_;
-    GraphicTimerContainer graphic_timer_events_;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
 
@@ -2945,7 +2945,7 @@ struct SessionReactor
 
 
     // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
-    timeval get_next_timeout(CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
+    timeval get_next_timeout(GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
     {
         timeval tv = this->get_current_time() + maxdelay;
         if ((enable_gd && !this->graphic_events_.is_empty())
@@ -2970,7 +2970,7 @@ struct SessionReactor
         this->timer_events_.for_each(timer_update_tv);
         this->fd_events_.for_each(top_update_tv);
         if (enable_gd) {
-            this->graphic_timer_events_.for_each(timer_update_tv);
+            graphic_timer_events_.for_each(timer_update_tv);
             this->graphic_fd_events_.for_each(top_update_tv);
         }
 
@@ -2978,13 +2978,13 @@ struct SessionReactor
     }
 
     template<class GetGd>
-    void execute_timers(EnableGraphics enable_gd, GetGd get_gd)
+    void execute_timers(GraphicTimerContainer & graphic_timer_events_, EnableGraphics enable_gd, GetGd get_gd)
     {
         auto const end_tv = this->get_current_time();
         this->timer_events_.exec_timer(end_tv);
         this->fd_events_.exec_timeout(end_tv);
         if (enable_gd) {
-            this->graphic_timer_events_.exec_timer(end_tv, get_gd());
+            graphic_timer_events_.exec_timer(end_tv, get_gd());
             this->graphic_fd_events_.exec_timeout(end_tv, get_gd());
         }
     }
@@ -3008,7 +3008,7 @@ struct SessionReactor
 //        sesman_events_.clear();
 //        front_events_.clear();
         timer_events_.clear();
-        graphic_timer_events_.clear();
+//        graphic_timer_events_.clear();
         fd_events_.clear();
         graphic_fd_events_.clear();
     }

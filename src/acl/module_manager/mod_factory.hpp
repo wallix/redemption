@@ -54,6 +54,7 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
+    GraphicTimerContainer & graphic_timer_events_;
     SesmanEventContainer & sesman_events_;
     ClientInfo & client_info;
     FrontAPI & front;
@@ -65,9 +66,10 @@ class ModFactory
     
 
 public:
-    ModFactory(ModWrapper & mod_wrapper, SessionReactor & session_reactor, SesmanEventContainer & sesman_events_, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
+    ModFactory(ModWrapper & mod_wrapper, SessionReactor & session_reactor, GraphicTimerContainer & graphic_timer_events_, SesmanEventContainer & sesman_events_, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
+        , graphic_timer_events_(graphic_timer_events_)
         , sesman_events_(sesman_events_)
         , client_info(client_info)
         , front(front)
@@ -83,6 +85,7 @@ public:
     {
         auto new_mod = new Bouncer2Mod(
                             this->session_reactor,
+                            this->graphic_timer_events_,
                             this->client_info.screen_info.width,
                             this->client_info.screen_info.height);
         return new_mod;
@@ -92,6 +95,7 @@ public:
     {
             auto new_mod = new ReplayMod(
                 this->session_reactor,
+                this->graphic_timer_events_,
                 this->graphics, this->front,
                 [this]{
                     auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()
@@ -117,6 +121,7 @@ public:
     {
         auto new_mod = new WidgetTestMod(
             this->session_reactor,
+            this->graphic_timer_events_,
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,

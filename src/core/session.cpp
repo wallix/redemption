@@ -492,11 +492,11 @@ class Session
     }
 
 
-    bool front_close_box(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, ModWrapper & mod_wrapper, Front & front, SesmanInterface & acl_cb)
+    bool front_close_box(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, ModWrapper & mod_wrapper, Front & front, SesmanInterface & acl_cb)
     {
         bool run_session = true;
         try {
-            session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
+            session_reactor.execute_timers(graphic_timer_events_, SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
             });
             session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
@@ -581,11 +581,11 @@ class Session
         return true;
     }
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message, SesmanInterface & acl_cb)
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch, SessionReactor& session_reactor, GraphicTimerContainer graphic_timer_events_, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, ReportMessageApi & report_message, SesmanInterface & acl_cb)
     {
         LOG(LOG_INFO, "front_up_and_running : execute_timers");
         try {
-            session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
+            session_reactor.execute_timers(graphic_timer_events_, SessionReactor::EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
             });
 
@@ -714,6 +714,7 @@ public:
         SessionReactor session_reactor;
         CallbackEventContainer front_events_;
         SesmanEventContainer sesman_events_;
+        GraphicTimerContainer graphic_timer_events_;
 //        void set_next_event(/*BackEvent_t*/int signal)
 //        {
 //            LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
@@ -754,7 +755,7 @@ public:
             
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
-            ModFactory mod_factory(mod_wrapper, session_reactor, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
+            ModFactory mod_factory(mod_wrapper, session_reactor, graphic_timer_events_, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
             ModuleManager mm(end_session_warning, mod_factory, session_reactor, sesman_events_, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
@@ -852,6 +853,7 @@ public:
                 session_reactor.set_current_time(now);
                 ioswitch.set_timeout(
                         session_reactor.get_next_timeout(
+                            graphic_timer_events_,
                             front_events_,
                             SessionReactor::EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
                             ioswitch.get_timeout(now)));
@@ -993,11 +995,11 @@ public:
                     bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
 
                     if (this->last_module){
-                        run_session = this->front_close_box(front_is_set, ioswitch, session_reactor, front_events_, mod_wrapper, front, acl_cb);
+                        run_session = this->front_close_box(front_is_set, ioswitch, session_reactor, graphic_timer_events_, front_events_, mod_wrapper, front, acl_cb);
                         continue;
                     }
 
-                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, front_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier, acl_cb);
+                    run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, graphic_timer_events_, front_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, authentifier, acl_cb);
                 }
                 break;
                 case Front::PRIMARY_AUTH_NLA:

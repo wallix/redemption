@@ -73,9 +73,9 @@ private:
     ClientHeadlessSocket headless_socket;
 
 public:
-    ClientRedemptionHeadless(SessionReactor & session_reactor, SesmanEventContainer & sesman_events_,
+    ClientRedemptionHeadless(SessionReactor & session_reactor, GraphicTimerContainer & graphic_timer_events_, SesmanEventContainer & sesman_events_,
                              ClientRedemptionConfig & config)
-        :ClientRedemption(session_reactor, sesman_events_, config)
+        :ClientRedemption(session_reactor, graphic_timer_events_, sesman_events_, config)
         , headless_socket(session_reactor, this)
     {
         this->cmd_launch_conn();
@@ -117,6 +117,7 @@ int main(int argc, char const** argv)
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
     SessionReactor session_reactor;
+    GraphicTimerContainer graphic_timer_events_;
     SesmanEventContainer sesman_events_;
 
     RDPVerbose verbose = to_verbose_flags(0x0);      //to_verbose_flags(0x0);
@@ -141,7 +142,7 @@ int main(int argc, char const** argv)
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
 
-    ClientRedemptionHeadless client(session_reactor, sesman_events_, config);
+    ClientRedemptionHeadless client(session_reactor, graphic_timer_events_, sesman_events_, config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

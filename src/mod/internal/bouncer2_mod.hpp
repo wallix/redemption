@@ -44,13 +44,14 @@ class Bouncer2Mod : public mod_api
     int mouse_y = 0;
 
     SessionReactor& session_reactor;
-    SessionReactor::GraphicTimerPtr timer;
+    GraphicTimerPtr timer;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     Bouncer2Mod(
          SessionReactor& session_reactor,
+         GraphicTimerContainer & graphic_timer_events_,
          uint16_t width, uint16_t height);
 
     std::string module_name() override {return "Bouncer2 Mod";}

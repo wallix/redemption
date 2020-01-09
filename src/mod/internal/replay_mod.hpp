@@ -55,12 +55,13 @@ class ReplayMod : public mod_api
     bool replay_on_loop;
     bool play_video_with_corrupted_bitmap;
     SessionReactor& session_reactor;
-    SessionReactor::GraphicTimerPtr timer;
+    GraphicTimerPtr timer;
 
 public:
     using Verbose = FileToGraphic::Verbose;
 
     ReplayMod( SessionReactor& session_reactor
+             , GraphicTimerContainer & graphic_timer_events_
              , gdi::GraphicApi & drawable
              , FrontAPI & front
              , const char * replay_path
@@ -72,13 +73,14 @@ public:
              , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture)
     : ReplayMod(
-        session_reactor, drawable, front, replay_path, width, height, auth_error_message,
+        session_reactor, graphic_timer_events_, drawable, front, replay_path, width, height, auth_error_message,
         wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop,
         play_video_with_corrupted_bitmap, debug_capture)
     {
     }
 
     ReplayMod( SessionReactor& session_reactor
+             , GraphicTimerContainer & graphic_timer_events_
              , gdi::GraphicApi & drawable
              , FrontAPI & front
              , const char * replay_path

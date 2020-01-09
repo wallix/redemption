@@ -119,6 +119,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    GraphicTimerContainer graphic_timer_events_;
     SesmanEventContainer sesman_events_;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -136,7 +137,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     t.disable_remaining_error();
 
-    execute_mod(session_reactor, *mod, front.gd(), 70);
+    execute_mod(session_reactor, graphic_timer_events_, *mod, front.gd(), 70);
 
     // t.disable_remaining_error();
     //front.dump_png("trace_w2008_tls_");
@@ -225,6 +226,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    GraphicTimerContainer graphic_timer_events_;
     SesmanEventContainer sesman_events_;
 
 
@@ -243,7 +245,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     t.disable_remaining_error();
 
-    execute_mod(session_reactor, *mod, front.gd(), 40);
+    execute_mod(session_reactor, graphic_timer_events_, *mod, front.gd(), 40);
 
     // t.disable_remaining_error();
 //    front.dump_png("trace_w2008_tls_");
