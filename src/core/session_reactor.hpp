@@ -2866,15 +2866,15 @@ struct EnableGraphics
 struct SessionReactor
 {
 //    GraphicEventContainer graphic_events_;
-    TimerContainer timer_events_;
+//    TimerContainer timer_events_;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
 
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
-    create_timer(Args&&... args)
+    create_timer(TimerContainer& timer_events_, Args&&... args)
     {
-        return this->timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
+        return timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
@@ -2937,7 +2937,7 @@ struct SessionReactor
     }
 
     // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
-    timeval get_next_timeout(GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
+    timeval get_next_timeout(TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
     {
         timeval tv = this->get_current_time() + maxdelay;
         if ((enable_gd && !graphic_events_.is_empty())
@@ -2959,7 +2959,7 @@ struct SessionReactor
             update_tv(timer.tv);
         };
 
-        this->timer_events_.for_each(timer_update_tv);
+        timer_events_.for_each(timer_update_tv);
         this->fd_events_.for_each(top_update_tv);
         if (enable_gd) {
             graphic_timer_events_.for_each(timer_update_tv);
@@ -2970,10 +2970,10 @@ struct SessionReactor
     }
 
     template<class GetGd>
-    void execute_timers(GraphicTimerContainer & graphic_timer_events_, EnableGraphics enable_gd, GetGd get_gd)
+    void execute_timers(TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, EnableGraphics enable_gd, GetGd get_gd)
     {
         auto const end_tv = this->get_current_time();
-        this->timer_events_.exec_timer(end_tv);
+        timer_events_.exec_timer(end_tv);
         this->fd_events_.exec_timeout(end_tv);
         if (enable_gd) {
             graphic_timer_events_.exec_timer(end_tv, get_gd());
@@ -2999,7 +2999,7 @@ struct SessionReactor
 //        graphic_events_.clear();
 //        sesman_events_.clear();
 //        front_events_.clear();
-        timer_events_.clear();
+//        timer_events_.clear();
 //        graphic_timer_events_.clear();
         fd_events_.clear();
         graphic_fd_events_.clear();

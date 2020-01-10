@@ -33,8 +33,9 @@ int main()
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
+    TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(session_reactor, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -43,6 +44,6 @@ int main()
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    CloseMod d("message", ini, session_reactor, graphic_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme, true);
+    CloseMod d("message", ini, session_reactor, timer_events_, graphic_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme, true);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

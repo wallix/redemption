@@ -69,9 +69,10 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     bool run_task = true;
     SessionReactor session_reactor;
+    TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     rdpdr_drive_read_task.configure_event(
-        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        session_reactor, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
 
@@ -81,7 +82,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     for (int i = 0; i < 100 && !session_reactor.fd_events_.is_empty(); ++i) {
         session_reactor.execute_events(fd_is_set);
     }
-    session_reactor.execute_timers(graphic_timer_events_, EnableGraphics{false}, &gdi::null_gd);
+    session_reactor.execute_timers(timer_events_, graphic_timer_events_, EnableGraphics{false}, &gdi::null_gd);
     RED_CHECK(session_reactor.fd_events_.is_empty());
     RED_CHECK(!run_task);
 }
@@ -106,24 +107,26 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     bool run_task = true;
     SessionReactor session_reactor;
+    TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     rdpdr_send_drive_io_response_task.configure_event(
-        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        session_reactor, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
     RED_CHECK(session_reactor.fd_events_.is_empty());
 
-    RED_CHECK(!session_reactor.timer_events_.is_empty());
+    RED_CHECK(!timer_events_.is_empty());
 
     timeval timeout = session_reactor.get_current_time();
-    for (int i = 0; i < 100 && !session_reactor.timer_events_.is_empty(); ++i) {
+    for (int i = 0; i < 100 && !timer_events_.is_empty(); ++i) {
         session_reactor.execute_timers(
+            timer_events_,
             graphic_timer_events_,
             EnableGraphics{false},
             []()->gdi::GraphicApi&{return gdi::null_gd(); });
         session_reactor.set_current_time(timeout);
         ++timeout.tv_sec;
     }
-    RED_CHECK(session_reactor.timer_events_.is_empty());
+    RED_CHECK(timer_events_.is_empty());
     RED_CHECK(!run_task);
 }

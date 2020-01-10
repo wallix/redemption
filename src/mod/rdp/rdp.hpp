@@ -150,15 +150,15 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(SessionReactor& session_reactor)
-        : session_reactor(session_reactor)
+    explicit AsynchronousTaskContainer(SessionReactor& session_reactor, TimerContainer& timer_events_)
+        : session_reactor(session_reactor), timer_events_(timer_events_)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
+            this->tasks.front()->configure_event(this->session_reactor, this->timer_events_, {this, remover()});
         }
     }
 
@@ -166,18 +166,19 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
+            this->tasks.front()->configure_event(this->session_reactor, this->timer_events_, {this, remover()});
         }
     }
 
     std::deque<std::unique_ptr<AsynchronousTask>> tasks;
 public:
     SessionReactor& session_reactor;
+    TimerContainer& timer_events_;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(SessionReactor&)
+    explicit AsynchronousTaskContainer(SessionReactor&, TimerContainer&)
     {}
 };
 #endif
@@ -383,6 +384,7 @@ private:
     const RDPVerbose verbose;
 
     SessionReactor & session_reactor;
+    TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
@@ -392,7 +394,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, GraphicEventContainer & graphic_events_,
+        SessionReactor & session_reactor, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
@@ -419,6 +421,7 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
@@ -478,7 +481,7 @@ public:
             }
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-                this->session_reactor, gd, mod_rdp, mod_rdp_params.lang,
+                this->session_reactor, this->timer_events_, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, authentifier,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
@@ -727,6 +730,7 @@ private:
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.session_reactor,
+                asynchronous_tasks.timer_events_,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
                 this->drive.file_system_drive_manager,
@@ -786,6 +790,7 @@ public:
 #ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->session_probe_to_server_sender.get(),
             front,
@@ -1385,7 +1390,8 @@ public:
         else if (used_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
-                    session_reactor,
+                    this->session_reactor,
+                    this->timer_events_,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
                     this->verbose);
@@ -1868,6 +1874,7 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     SessionReactor& session_reactor;
+    TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     SesmanEventContainer & sesman_events_;
     GraphicFdPtr fd_event;
@@ -1935,6 +1942,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
+      , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
       , SesmanEventContainer & sesman_events_
       , gdi::GraphicApi & gd
@@ -1956,7 +1964,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, session_reactor, graphic_events_, file_validator_service,
+            report_message, gen, metrics, session_reactor, timer_events_, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -2001,10 +2009,11 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
+        , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman_events_(sesman_events_)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(session_reactor)
+        , asynchronous_tasks(session_reactor, timer_events_)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
@@ -4869,7 +4878,7 @@ public:
                         this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_legalnotice = this->session_reactor.create_timer()
+                        this->remoteapp_one_shot_bypass_window_legalnotice = this->session_reactor.create_timer(this->timer_events_)
                         .on_action(jln::sequencer(
                             [this](JLN_TIMER_CTX ctx) {
                                 LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");

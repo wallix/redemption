@@ -32,9 +32,10 @@ inline void execute_graphics_event(
 }
 
 inline void execute_negociate_mod(
-    SessionReactor& session_reactor, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
+    SessionReactor& session_reactor, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
 {
     session_reactor.execute_timers(
+        timer_events_,
         graphic_timer_events_,
         EnableGraphics{true},
         [&]()->gdi::GraphicApi&{ return gd; });
@@ -49,9 +50,9 @@ inline void execute_negociate_mod(
     RED_REQUIRE_LT(n, limit);
 }
 
-inline void execute_mod(SessionReactor& session_reactor, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd, int n)
+inline void execute_mod(SessionReactor& session_reactor, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd, int n)
 {
-    execute_negociate_mod(session_reactor, graphic_events_, graphic_timer_events_, mod, gd);
+    execute_negociate_mod(session_reactor, timer_events_, graphic_events_, graphic_timer_events_, mod, gd);
     int count = 0;
     for (; count < n && session_reactor.has_graphics_event(graphic_events_); ++count) {
         // LOG(LOG_INFO, "===================> count = %u", count);

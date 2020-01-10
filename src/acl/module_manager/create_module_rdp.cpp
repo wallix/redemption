@@ -109,6 +109,7 @@ public:
             std::string up_target_name;
             std::string down_target_name;
             SessionReactor& session_reactor;
+            TimerContainer& timer_events_;
             FrontAPI& front;
         };
 
@@ -186,6 +187,7 @@ public:
         const char * name, unique_fd sck, uint32_t verbose
       , std::string * error_message
       , SessionReactor& session_reactor
+      , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
       , SesmanEventContainer & sesman_events_
       , gdi::GraphicApi & gd
@@ -212,7 +214,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
                      
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, session_reactor, graphic_events_, sesman_events_, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, session_reactor, timer_events_, graphic_events_, sesman_events_, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -697,7 +699,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                         report_message,
                         mod_rdp_params.validator_params.up_target_name,
                         mod_rdp_params.validator_params.down_target_name,
-                        this->session_reactor, this->front
+                        this->session_reactor, this->timer_events_, this->front
                     });
                 file_validator->service.send_infos({
                     "server_ip"_av, ini.get<cfg::context::target_host>(),
@@ -759,6 +761,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
             ini.get<cfg::debug::mod_rdp>(),
             &ini.get_mutable_ref<cfg::context::auth_error_message>(),
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->sesman_events_,
             drawable,
@@ -792,7 +795,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
 
         if (enable_metrics) {
             new_mod->metrics = std::move(metrics);
-            new_mod->metrics->metrics_timer = session_reactor.create_timer()
+            new_mod->metrics->metrics_timer = session_reactor.create_timer(timer_events_)
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
                 .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
@@ -823,6 +826,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
             auto* host_mod = new RailModuleHostMod(
                 ini,
                 this->session_reactor,
+                this->timer_events_,
                 this->graphic_events_,
                 drawable,
                 front,

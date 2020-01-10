@@ -52,7 +52,9 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
 ClientExecute::ClientExecute(
-    SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
+    SessionReactor& session_reactor,
+    TimerContainer& timer_events_,
+    gdi::GraphicApi & drawable, FrontAPI & front,
     WindowListCaps const & window_list_caps, bool verbose)
 : front_(front)
 , drawable_(drawable)
@@ -61,6 +63,7 @@ ClientExecute::ClientExecute(
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , verbose(verbose)
 , session_reactor(session_reactor)
+, timer_events_(timer_events_)
 {
 }
 
@@ -750,7 +753,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     this->button_1_down = this->pressed_mouse_button;
 
                     this->button_1_down_timer = this->session_reactor
-                    .create_timer()
+                    .create_timer(this->timer_events_)
                     .set_delay(std::chrono::milliseconds(400))
                     .on_action(jln::one_shot([this]{
                         assert(bool(*this));

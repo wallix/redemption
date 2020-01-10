@@ -29,13 +29,14 @@
 LoginMod::LoginMod(
     LoginModVariables vars,
     SessionReactor& session_reactor,
+    TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
     char const * username, char const * password,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, graphic_events_, drawable, front, width, height, font, rail_client_execute, theme)
+    : LocallyIntegrableMod(session_reactor, timer_events_, graphic_events_, drawable, front, width, height, font, rail_client_execute, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
@@ -71,7 +72,7 @@ LoginMod::LoginMod(
 
     LOG(LOG_INFO, "set timer()");
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
-        this->timeout_timer = session_reactor.create_timer()
+        this->timeout_timer = session_reactor.create_timer(timer_events_)
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
         .on_action([this](JLN_TIMER_CTX ctx){
             LOG(LOG_INFO, "execute timer()");

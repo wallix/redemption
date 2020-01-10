@@ -31,6 +31,7 @@
 DialogMod::DialogMod(
     DialogModVariables vars,
     SessionReactor& session_reactor,
+    TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
@@ -47,6 +48,7 @@ DialogMod::DialogMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
@@ -83,7 +85,7 @@ DialogMod::DialogMod(
     }
 
     if (vars.get<cfg::debug::pass_dialog_box>()) {
-        this->timeout_timer = this->session_reactor.create_timer()
+        this->timeout_timer = this->session_reactor.create_timer(this->timer_events_)
         .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
         .on_action([this](JLN_TIMER_CTX ctx){
             this->accepted();
@@ -133,7 +135,7 @@ void DialogMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            this->first_click_down_timer = this->session_reactor.create_timer()
+                            this->first_click_down_timer = this->session_reactor.create_timer(this->timer_events_)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;

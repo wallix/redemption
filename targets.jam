@@ -4171,7 +4171,10 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
+  <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
@@ -5343,6 +5346,9 @@ test-run tests/utils/sugar/test_update_lock :
 test-run tests/utils/test_asynchronous_task_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/asynchronous_task_manager.hpp
 ;
 test-run tests/utils/test_base64 :

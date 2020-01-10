@@ -227,6 +227,7 @@ private:
     Zdecompressor<> zd;
 
     SessionReactor& session_reactor;
+    TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicFdPtr fd_event;
     GraphicEventPtr wait_client_up_and_running_event;
@@ -258,6 +259,7 @@ private:
 public:
     mod_vnc( Transport & t
            , SessionReactor& session_reactor
+           , TimerContainer & timer_events_
            , GraphicEventContainer & graphic_events_
            , const char * username
            , const char * password
@@ -294,6 +296,7 @@ public:
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     #ifndef __EMSCRIPTEN__
     , metrics(metrics)

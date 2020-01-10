@@ -829,6 +829,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     }
 
     SessionReactor& session_reactor;
+    TimerContainer& timer_events_;
 
     TimerPtr initialization_timeout_event;
 
@@ -847,6 +848,7 @@ public:
 
     FileSystemVirtualChannel(
         SessionReactor& session_reactor,
+        TimerContainer timer_events_,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,
@@ -883,6 +885,7 @@ public:
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           base_params.verbose)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
     {}
@@ -1966,7 +1969,7 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            this->initialization_timeout_event = this->session_reactor.create_timer(this)
+            this->initialization_timeout_event = this->session_reactor.create_timer(this->timer_events_, this)
             .set_delay(this->initialization_timeout)
             .on_action(jln::one_shot<&FileSystemVirtualChannel::process_event>());
             return true;

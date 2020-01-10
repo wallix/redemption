@@ -74,6 +74,7 @@ public:
     bool    delay_wainting_clipboard_response = false;
 
     SessionReactor& session_reactor;
+    TimerContainer& timer_events_;
 
     const RDPVerbose verbose;
 
@@ -89,6 +90,7 @@ public:
 public:
     SessionProbeClipboardBasedLauncher(
         SessionReactor& session_reactor,
+        TimerContainer& timer_events_,
         mod_api& mod,
         const char* alternate_shell,
         Params params,
@@ -97,6 +99,7 @@ public:
     , mod(mod)
     , alternate_shell(alternate_shell)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     , verbose(verbose)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));
@@ -136,7 +139,7 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            this->event = this->session_reactor.create_timer()
+            this->event = this->session_reactor.create_timer(this->timer_events_)
             .set_delay(this->params.clipboard_initialization_delay_ms)
             .on_action(jln::one_shot([&]{ this->on_event(); }));
         }
@@ -375,7 +378,7 @@ public:
             };
         };
 
-        this->event = this->session_reactor.create_timer(std::ref(*this))
+        this->event = this->session_reactor.create_timer(this->timer_events_, std::ref(*this))
         .set_delay(this->params.short_delay_ms)
         .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
@@ -468,7 +471,7 @@ public:
             };
         };
 
-        this->event = this->session_reactor.create_timer(std::ref(*this))
+        this->event = this->session_reactor.create_timer(this->timer_events_, std::ref(*this))
         .set_delay(this->params.short_delay_ms)
         .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),

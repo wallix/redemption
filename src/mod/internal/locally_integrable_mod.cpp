@@ -24,6 +24,7 @@
 
 LocallyIntegrableMod::LocallyIntegrableMod(
     SessionReactor& session_reactor,
+    TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable,
     FrontAPI & front,
@@ -40,6 +41,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 , rail_enabled(rail_client_execute.is_rail_enabled())
 , current_mouse_owner(MouseOwner::WidgetModule)
 , session_reactor(session_reactor)
+, timer_events_(timer_events_)
 , graphic_events_(graphic_events_)
 {
     this->screen.set_wh(front_width, front_height);
@@ -97,7 +99,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            this->first_click_down_timer = this->session_reactor.create_timer()
+                            this->first_click_down_timer = this->session_reactor.create_timer(timer_events_)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;

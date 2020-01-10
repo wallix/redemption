@@ -94,6 +94,7 @@ class RemoteProgramsSessionManager final
     std::chrono::milliseconds rail_disconnect_message_delay {};
 
     SessionReactor& session_reactor;
+    TimerContainer& timer_events_;
 
     TimerPtr waiting_screen_event;
 
@@ -137,6 +138,7 @@ public:
 
     explicit RemoteProgramsSessionManager(
         SessionReactor& session_reactor,
+        TimerContainer& timer_events_,
         gdi::GraphicApi& front, mod_api& mod, Translation::language_t lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
         char const * session_probe_window_title,
@@ -154,6 +156,7 @@ public:
     , rail_client_execute(rail_client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     {}
 
     void begin_update() override
@@ -464,7 +467,7 @@ public:
 
             this->currently_without_window = true;
 
-            this->waiting_screen_event = this->session_reactor.create_timer()
+            this->waiting_screen_event = this->session_reactor.create_timer(this->timer_events_)
             .set_delay(this->rail_disconnect_message_delay)
             // this->process_event()
             .on_action(jln::one_shot([this]{

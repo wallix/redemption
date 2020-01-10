@@ -113,7 +113,7 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
+    void configure_event(SessionReactor& session_reactor, TimerContainer& /*timer_events_*/, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
         this->fdobject = session_reactor.create_fd_event(
@@ -227,11 +227,11 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
+    void configure_event(SessionReactor& session_reactor, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(
+        this->timer_ptr = session_reactor.create_timer(timer_events_, 
             std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
@@ -305,11 +305,11 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
+    void configure_event(SessionReactor& session_reactor, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(
+        this->timer_ptr = session_reactor.create_timer(timer_events_,
             std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))

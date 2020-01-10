@@ -21,7 +21,7 @@
 
 #pragma once
 
-class SessionReactor;
+#include "core/session_reactor.hpp"
 
 class AsynchronousTask {
 public:
@@ -64,6 +64,6 @@ public:
         ptr_function  f = [](void* /*unused*/, AsynchronousTask& /*unused*/) noexcept {};
     };
 
-    virtual void configure_event(SessionReactor&, TerminateEventNotifier) = 0;
+    virtual void configure_event(SessionReactor&, TimerContainer&, TerminateEventNotifier) = 0;
 };
 

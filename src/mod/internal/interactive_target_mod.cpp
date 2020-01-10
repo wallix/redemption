@@ -29,11 +29,12 @@
 InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
     SessionReactor& session_reactor, 
+    TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme)
-    : LocallyIntegrableMod(session_reactor, graphic_events_, drawable, front, width, height, font,
+    : LocallyIntegrableMod(session_reactor, timer_events_, graphic_events_, drawable, front, width, height, font,
         rail_client_execute, theme)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())

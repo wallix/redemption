@@ -109,6 +109,7 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     SessionReactor& session_reactor;
+    TimerContainer timer_events_;
     GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
     GraphicEventPtr freeze_mod_screen;
@@ -160,6 +161,7 @@ public:
 
     explicit SessionProbeVirtualChannel(
         SessionReactor& session_reactor,
+        TimerContainer timer_events_,
         GraphicEventContainer & graphic_events_,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
@@ -187,6 +189,7 @@ public:
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
@@ -217,7 +220,7 @@ public:
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
 
             if (!this->session_probe_launch_timeout_timer_started) {
-                this->session_probe_timer = this->session_reactor.create_timer()
+                this->session_probe_timer = this->session_reactor.create_timer(this->timer_events_)
                 .set_delay(this->sespro_params.effective_launch_timeout)
                 .on_action([this](JLN_TIMER_CTX ctx){
                     this->process_event_launch();
@@ -232,7 +235,7 @@ public:
     {
         this->launch_aborted = true;
 
-        this->session_probe_timer = this->session_reactor.create_timer()
+        this->session_probe_timer = this->session_reactor.create_timer(this->timer_events_)
         .set_delay(this->sespro_params.launcher_abort_delay)
         .on_action(jln::one_shot([this](){
             this->process_event_launch();
@@ -535,7 +538,7 @@ public:
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
 
-                    this->session_probe_timer = this->session_reactor.create_timer()
+                    this->session_probe_timer = this->session_reactor.create_timer(this->timer_events_)
                     .set_delay(this->sespro_params.keepalive_timeout)
                     .on_action([this](auto ctx){
                         this->process_event_ready();

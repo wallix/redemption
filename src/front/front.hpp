@@ -595,6 +595,7 @@ private:
     bool is_first_memblt = true;
 
     SessionReactor& session_reactor;
+    TimerContainer& timer_events_;
     CallbackEventContainer & front_events_;
     TimerPtr handshake_timeout;
     CallbackEventPtr incoming_event;
@@ -654,6 +655,7 @@ public:
 
 public:
     Front( SessionReactor& session_reactor
+         , TimerContainer& timer_events_
          , CallbackEventContainer & front_events_
          , Transport & trans
          , Random & gen
@@ -681,6 +683,7 @@ public:
     , server_capabilities_filename(std::move(server_capabilities_filename))
     , report_message(report_message)
     , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
     , front_events_(front_events_)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
@@ -688,7 +691,7 @@ public:
           )
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            this->handshake_timeout = session_reactor.create_timer()
+            this->handshake_timeout = this->session_reactor.create_timer(this->timer_events_)
             .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
             .on_action([](JLN_TIMER_CTX ctx){
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
@@ -729,7 +732,7 @@ public:
         }
 
         if (this->rdp_keepalive_connection_interval.count()) {
-            this->flow_control_timer = this->session_reactor.create_timer()
+            this->flow_control_timer = this->session_reactor.create_timer(this->timer_events_)
             .set_delay(std::chrono::milliseconds(0))
             .on_action([this](auto ctx){
                 if (this->state == FRONT_UP_AND_RUNNING) {
@@ -1026,7 +1029,7 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        this->capture_timer = this->session_reactor.create_timer()
+        this->capture_timer = this->session_reactor.create_timer(this->timer_events_)
         .set_delay(std::chrono::milliseconds(0))
         .on_action([this](auto ctx){
             auto const capture_ms = this->capture->periodic_snapshot(

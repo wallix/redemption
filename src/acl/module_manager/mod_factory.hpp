@@ -54,6 +54,7 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
+    TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
     SesmanEventContainer & sesman_events_;
@@ -69,10 +70,14 @@ class ModFactory
 public:
     ModFactory(ModWrapper & mod_wrapper, 
                SessionReactor & session_reactor, 
+               TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,
-               GraphicTimerContainer & graphic_timer_events_, SesmanEventContainer & sesman_events_, ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
+               GraphicTimerContainer & graphic_timer_events_,
+               SesmanEventContainer & sesman_events_,
+               ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
+        , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
         , sesman_events_(sesman_events_)
@@ -153,6 +158,7 @@ public:
         auto new_mod = new SelectorMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->sesman_events_,
             this->graphics, this->front,
@@ -181,6 +187,7 @@ public:
             auth_error_message,
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -210,6 +217,7 @@ public:
             auth_error_message,
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -232,6 +240,7 @@ public:
         auto new_mod = new InteractiveTargetMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -255,6 +264,7 @@ public:
         auto new_mod = new DialogMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -281,6 +291,7 @@ public:
         auto new_mod = new DialogMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -313,6 +324,7 @@ public:
         auto new_mod = new DialogMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -342,6 +354,7 @@ public:
         auto new_mod = new WaitMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -366,6 +379,7 @@ public:
         auto new_mod = new TransitionMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -411,6 +425,7 @@ public:
         auto new_mod = new LoginMod(
             this->ini,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             username,
             "", // password

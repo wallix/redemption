@@ -42,6 +42,7 @@ class FrontWrapper : public FrontAPI
 public:
     FrontWrapper(
         SessionReactor& session_reactor,
+        TimerContainer& timer_events_,
         CallbackEventContainer & front_events_,
         Transport & trans,
         Random & gen,

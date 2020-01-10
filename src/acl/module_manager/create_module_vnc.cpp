@@ -63,6 +63,7 @@ public:
         const char * name, unique_fd sck, uint32_t verbose,
         std::string * error_message, 
         SessionReactor& session_reactor,
+        TimerContainer& timer_events_,
         GraphicEventContainer& graphic_events_,
         const char* username,
         const char* password,
@@ -89,7 +90,7 @@ public:
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
-    , mod(this->socket_transport, session_reactor, graphic_events_, username, password, front, front_width, front_height,
+    , mod(this->socket_transport, session_reactor, timer_events_, graphic_events_, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings, 
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported, 
@@ -309,6 +310,7 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
             ini.get<cfg::debug::mod_vnc>(),
             nullptr,
             this->session_reactor,
+            this->timer_events_,
             this->graphic_events_,
             ini.get<cfg::globals::target_user>().c_str(),
             ini.get<cfg::context::target_password>().c_str(),
@@ -336,7 +338,7 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
 
         if (enable_metrics) {
             new_mod->mod.metrics = std::move(metrics);
-            new_mod->mod.metrics_timer = session_reactor.create_timer()
+            new_mod->mod.metrics_timer = session_reactor.create_timer(timer_events_)
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
                 .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
@@ -364,6 +366,7 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
             auto* host_mod = new RailModuleHostMod(
                 ini,
                 this->session_reactor,
+                this->timer_events_,
                 this->graphic_events_,
                 drawable,
                 front,

@@ -59,6 +59,7 @@ public:
     WaitMod(
         WaitModVariables vars,
         SessionReactor& session_reactor,
+        TimerContainer& timer_events_,
         GraphicEventContainer & graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect, const char * caption,
