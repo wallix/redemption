@@ -37,6 +37,7 @@ class VNCMetrics;
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
     SessionReactor& session_reactor,
+    GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,
     GraphicEventContainer& graphic_events_,
     const char* username,

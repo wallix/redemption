@@ -74,12 +74,13 @@ private:
 
 public:
     ClientRedemptionHeadless(SessionReactor & session_reactor, 
+                             GraphicFdContainer& graphic_fd_events_,
                              TimerContainer& timer_events_,
                              GraphicEventContainer & graphic_events_,
                              GraphicTimerContainer & graphic_timer_events_,
                              SesmanEventContainer & sesman_events_,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(session_reactor, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, config)
+        : ClientRedemption(session_reactor, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, config)
         , headless_socket(session_reactor, this)
     {
         this->cmd_launch_conn();
@@ -121,6 +122,7 @@ int main(int argc, char const** argv)
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
     SessionReactor session_reactor;
+    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
@@ -148,7 +150,7 @@ int main(int argc, char const** argv)
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
 
-    ClientRedemptionHeadless client(session_reactor, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, config);
+    ClientRedemptionHeadless client(session_reactor, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

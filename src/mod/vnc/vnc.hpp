@@ -227,6 +227,7 @@ private:
     Zdecompressor<> zd;
 
     SessionReactor& session_reactor;
+    GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicFdPtr fd_event;
@@ -259,6 +260,7 @@ private:
 public:
     mod_vnc( Transport & t
            , SessionReactor& session_reactor
+           , GraphicFdContainer & graphic_fd_events_
            , TimerContainer & timer_events_
            , GraphicEventContainer & graphic_events_
            , const char * username
@@ -296,6 +298,7 @@ public:
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
+    , graphic_fd_events_(graphic_fd_events_)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     #ifndef __EMSCRIPTEN__
@@ -317,7 +320,7 @@ public:
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
         this->fd_event = session_reactor
-        .create_graphic_fd_event(this->t.get_fd())
+        .create_graphic_fd_event(graphic_fd_events_, this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
         .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){

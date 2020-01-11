@@ -147,6 +147,7 @@ int main(int argc, char** argv)
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
     SessionReactor session_reactor;
+    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
@@ -181,7 +182,7 @@ int main(int argc, char** argv)
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
         return run_test_client(
-            is_vnc ? "VNC" : "RDP", session_reactor, timer_events_, graphic_events_, graphic_timer_events_, front_events_, *mod, gdi::null_gd(),
+            is_vnc ? "VNC" : "RDP", session_reactor, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front_events_, *mod, gdi::null_gd(),
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
@@ -202,6 +203,7 @@ int main(int argc, char** argv)
             return new_mod_vnc(
                 trans
               , session_reactor
+              , graphic_fd_events_
               , timer_events_
               , graphic_events_
               , username.c_str()
@@ -268,7 +270,12 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, session_reactor, timer_events_, graphic_events_, sesman_events_ ,gdi::null_gd(), front, client_info, redir_info,
+                trans, session_reactor,
+                graphic_fd_events_,
+                timer_events_,
+                graphic_events_,
+                sesman_events_ ,
+                gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, ini, nullptr, nullptr, mod_rdp_factory);

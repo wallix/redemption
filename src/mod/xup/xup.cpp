@@ -84,13 +84,16 @@ namespace
 
 
 xup_mod::xup_mod(
-    Transport & t, SessionReactor& session_reactor, FrontAPI & front,
+    Transport & t, SessionReactor& session_reactor, 
+    GraphicFdContainer & graphic_fd_events_,
+    FrontAPI & front,
     uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp)
 : front(front)
 , bpp(context_bpp)
 , t(t)
 , rop(0xCC)
 , session_reactor(session_reactor)
+, graphic_fd_events_(graphic_fd_events_)
 {
     StaticOutStream<256> stream;
     stream.out_skip_bytes(4);
@@ -106,7 +109,7 @@ xup_mod::xup_mod(
     this->t.send(stream.get_bytes());
 
     this->fd_event = session_reactor
-    .create_graphic_fd_event(this->t.get_fd())
+    .create_graphic_fd_event(graphic_fd_events_, this->t.get_fd())
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(jln::propagate_exit())
     .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){

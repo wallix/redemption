@@ -48,6 +48,7 @@ namespace gdi { class GraphicApi; }
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     SessionReactor& session_reactor,
+    GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
     GraphicEventContainer & graphic_events_,
     SesmanEventContainer & sesman_events_,

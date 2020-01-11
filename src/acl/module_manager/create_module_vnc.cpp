@@ -63,6 +63,7 @@ public:
         const char * name, unique_fd sck, uint32_t verbose,
         std::string * error_message, 
         SessionReactor& session_reactor,
+        GraphicFdContainer & graphic_fd_events_,
         TimerContainer& timer_events_,
         GraphicEventContainer& graphic_events_,
         const char* username,
@@ -90,7 +91,7 @@ public:
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
-    , mod(this->socket_transport, session_reactor, timer_events_, graphic_events_, username, password, front, front_width, front_height,
+    , mod(this->socket_transport, session_reactor, graphic_fd_events_, timer_events_, graphic_events_, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings, 
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported, 
@@ -310,6 +311,7 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
             ini.get<cfg::debug::mod_vnc>(),
             nullptr,
             this->session_reactor,
+            this->graphic_fd_events_,
             this->timer_events_,
             this->graphic_events_,
             ini.get<cfg::globals::target_user>().c_str(),

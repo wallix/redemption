@@ -384,6 +384,7 @@ private:
     const RDPVerbose verbose;
 
     SessionReactor & session_reactor;
+    GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
@@ -394,7 +395,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        SessionReactor & session_reactor, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
@@ -421,6 +422,7 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
+    , graphic_fd_events_(graphic_fd_events_)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
@@ -1874,6 +1876,7 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     SessionReactor& session_reactor;
+    GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     SesmanEventContainer & sesman_events_;
@@ -1942,6 +1945,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
+      , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
       , SesmanEventContainer & sesman_events_
@@ -1964,7 +1968,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, session_reactor, timer_events_, graphic_events_, file_validator_service,
+            report_message, gen, metrics, session_reactor, graphic_fd_events_, timer_events_, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -2009,6 +2013,7 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
+        , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman_events_(sesman_events_)

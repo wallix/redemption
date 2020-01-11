@@ -54,6 +54,7 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
+    GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
@@ -70,6 +71,7 @@ class ModFactory
 public:
     ModFactory(ModWrapper & mod_wrapper, 
                SessionReactor & session_reactor, 
+               GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,
                GraphicTimerContainer & graphic_timer_events_,
@@ -77,6 +79,7 @@ public:
                ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
+        , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
@@ -455,6 +458,7 @@ public:
             this->ini.get<cfg::debug::mod_xup>(),
             nullptr,
             this->session_reactor,
+            this->graphic_fd_events_,
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,

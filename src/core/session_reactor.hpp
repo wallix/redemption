@@ -2868,7 +2868,7 @@ struct SessionReactor
 //    GraphicEventContainer graphic_events_;
 //    TimerContainer timer_events_;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
+//    GraphicFdContainer graphic_fd_events_;
 
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
@@ -2916,9 +2916,9 @@ struct SessionReactor
 
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TopExecutorBuilder_Concept)
-    create_graphic_fd_event(int fd, Args&&... args)
+    create_graphic_fd_event(GraphicFdContainer& graphic_fd_events_, int fd, Args&&... args)
     {
-        return this->graphic_fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
+        return graphic_fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
     }
 
 
@@ -2937,7 +2937,7 @@ struct SessionReactor
     }
 
     // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
-    timeval get_next_timeout(TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
+    timeval get_next_timeout(GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
     {
         timeval tv = this->get_current_time() + maxdelay;
         if ((enable_gd && !graphic_events_.is_empty())
@@ -2963,29 +2963,29 @@ struct SessionReactor
         this->fd_events_.for_each(top_update_tv);
         if (enable_gd) {
             graphic_timer_events_.for_each(timer_update_tv);
-            this->graphic_fd_events_.for_each(top_update_tv);
+            graphic_fd_events_.for_each(top_update_tv);
         }
 
         return tv;
     }
 
     template<class GetGd>
-    void execute_timers(TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, EnableGraphics enable_gd, GetGd get_gd)
+    void execute_timers(GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, EnableGraphics enable_gd, GetGd get_gd)
     {
         auto const end_tv = this->get_current_time();
         timer_events_.exec_timer(end_tv);
         this->fd_events_.exec_timeout(end_tv);
         if (enable_gd) {
             graphic_timer_events_.exec_timer(end_tv, get_gd());
-            this->graphic_fd_events_.exec_timeout(end_tv, get_gd());
+            graphic_fd_events_.exec_timeout(end_tv, get_gd());
         }
     }
 
     template<class IsSetElem>
-    void execute_graphics(GraphicEventContainer & graphic_events_, IsSetElem is_set, gdi::GraphicApi& gd)
+    void execute_graphics(GraphicFdContainer& graphic_fd_events_, GraphicEventContainer & graphic_events_, IsSetElem is_set, gdi::GraphicApi& gd)
     {
         graphic_events_.exec_action(gd);
-        this->graphic_fd_events_.exec_action(is_set, gd);
+        graphic_fd_events_.exec_action(is_set, gd);
     }
 
     template<class IsSetElem>
@@ -3002,12 +3002,12 @@ struct SessionReactor
 //        timer_events_.clear();
 //        graphic_timer_events_.clear();
         fd_events_.clear();
-        graphic_fd_events_.clear();
+//        graphic_fd_events_.clear();
     }
 
-    [[nodiscard]] bool has_graphics_event(GraphicEventContainer & graphic_events_) const noexcept
+    [[nodiscard]] bool has_graphics_event(GraphicFdContainer& graphic_fd_events_, GraphicEventContainer & graphic_events_) const noexcept
     {
-        return !graphic_events_.is_empty() || !this->graphic_fd_events_.is_empty();
+        return !graphic_events_.is_empty() || !graphic_fd_events_.is_empty();
     }
 };
 

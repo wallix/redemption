@@ -134,6 +134,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
@@ -144,7 +145,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, session_reactor, timer_events_, graphic_events_, sesman_events_, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, session_reactor, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
         ini, nullptr, nullptr, mod_rdp_factory);
@@ -152,7 +153,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(session_reactor, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 72);
+    execute_mod(session_reactor, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
 }
@@ -244,6 +245,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     SessionReactor session_reactor;
+    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
@@ -255,7 +257,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, session_reactor, timer_events_, graphic_events_, sesman_events_, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, session_reactor, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_,
+        front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
         ini, nullptr, nullptr, mod_rdp_factory);
@@ -263,7 +266,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(session_reactor, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 72);
+    execute_mod(session_reactor, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_enabled_");
 }
