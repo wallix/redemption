@@ -113,10 +113,10 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(SessionReactor& session_reactor, TimerContainer& /*timer_events_*/, TerminateEventNotifier terminate_notifier) override
+    void configure_event(SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& /*timer_events_*/, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
-        this->fdobject = session_reactor.create_fd_event(
+        this->fdobject = session_reactor.create_fd_event(fd_events_,
             this->file_descriptor, std::ref(*this), terminate_notifier)
         .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
             if (self.run()) {
@@ -227,7 +227,7 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
+    void configure_event(SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
@@ -305,7 +305,7 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
+    void configure_event(SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event

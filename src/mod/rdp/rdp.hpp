@@ -135,7 +135,7 @@ struct FileValidatorService;
 
 
 #ifndef __EMSCRIPTEN__
-// TODO: AsynchronousTaskContainer ne serait pas une classe d'usage général qui mériterait son propre fichier ?
+// TODO: isn't AsynchronousTaskContainer is general purpose class that should have it's own file ?
 struct AsynchronousTaskContainer
 {
 private:
@@ -150,15 +150,15 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(SessionReactor& session_reactor, TimerContainer& timer_events_)
-        : session_reactor(session_reactor), timer_events_(timer_events_)
+    explicit AsynchronousTaskContainer(SessionReactor& session_reactor, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_)
+        : session_reactor(session_reactor), fd_events_(fd_events_), graphic_fd_events_(graphic_fd_events_), timer_events_(timer_events_)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->session_reactor, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
@@ -166,19 +166,21 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->session_reactor, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
     std::deque<std::unique_ptr<AsynchronousTask>> tasks;
 public:
     SessionReactor& session_reactor;
+    TopFdContainer& fd_events_;
+    GraphicFdContainer& graphic_fd_events_;
     TimerContainer& timer_events_;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(SessionReactor&, TimerContainer&)
+    explicit AsynchronousTaskContainer(SessionReactor&, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer&)
     {}
 };
 #endif
@@ -384,6 +386,7 @@ private:
     const RDPVerbose verbose;
 
     SessionReactor & session_reactor;
+    TopFdContainer & fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -395,7 +398,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        SessionReactor & session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
@@ -422,6 +425,7 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
+    , fd_events_(fd_events_)
     , graphic_fd_events_(graphic_fd_events_)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
@@ -1876,6 +1880,7 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     SessionReactor& session_reactor;
+    TopFdContainer& fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -1945,6 +1950,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
+      , TopFdContainer & fd_events_
       , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
@@ -1968,7 +1974,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, session_reactor, graphic_fd_events_, timer_events_, graphic_events_, file_validator_service,
+            report_message, gen, metrics, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -2013,12 +2019,13 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
+        , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman_events_(sesman_events_)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(session_reactor, timer_events_)
+        , asynchronous_tasks(session_reactor, fd_events_, graphic_fd_events_, timer_events_)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)

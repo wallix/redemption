@@ -187,6 +187,7 @@ public:
         const char * name, unique_fd sck, uint32_t verbose
       , std::string * error_message
       , SessionReactor& session_reactor
+      , TopFdContainer & fd_events_
       , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
@@ -215,7 +216,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
                      
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, session_reactor, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -762,6 +763,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
             ini.get<cfg::debug::mod_rdp>(),
             &ini.get_mutable_ref<cfg::context::auth_error_message>(),
             this->session_reactor,
+            this->fd_events_,
             this->graphic_fd_events_,
             this->timer_events_,
             this->graphic_events_,
@@ -786,7 +788,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
 
         if (enable_validator) {
             new_mod->file_validator = std::move(file_validator);
-            new_mod->file_validator->validator_event = this->session_reactor.create_fd_event(validator_fd)
+            new_mod->file_validator->validator_event = this->session_reactor.create_fd_event(this->fd_events_, validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())

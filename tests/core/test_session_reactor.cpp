@@ -60,6 +60,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     using Ptr = jln::SharedPtr;
     using Dt = jln::NotifyDeleteType;
     SessionReactor session_reactor;
+    TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
@@ -110,29 +111,29 @@ std::ref(s))
     EnableGraphics enable_gd{true};
     EnableGraphics disable_gd{false};
 
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "");
 
     // set_current_time + execute_timers, to simulate times flying
     session_reactor.set_current_time({11, 222});
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
 
     session_reactor.set_current_time({13, 0});
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
 
     session_reactor.set_current_time({14, 0});
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\n");
     RED_CHECK(bool(timer2));
 
     session_reactor.set_current_time({15, 0});
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\n");
     RED_CHECK(bool(timer2));
 
@@ -141,17 +142,18 @@ std::ref(s))
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
     session_reactor.set_current_time({16, 0});
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
     session_reactor.set_current_time({16, 0});
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, enable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, enable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\ntimer4\n");
 }
 
 RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 {
     SessionReactor session_reactor;
+    TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     GraphicEventContainer graphic_events_;
     SesmanEventContainer sesman_events_;
@@ -215,6 +217,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
 {
     SessionReactor session_reactor;
+    TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     GraphicEventContainer graphic_events_;
 
@@ -224,7 +227,7 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     int const fd1 = ufd.fd();
     RED_REQUIRE_GT(fd1, 0);
 
-    TopFdPtr fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
+    TopFdPtr fd_event = session_reactor.create_fd_event(fd_events_, fd1, std::ref(s))
     .on_action([](JLN_TOP_CTX ctx, std::string& s){
         s += "fd1\n";
         return ctx.next();
@@ -249,13 +252,14 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "fd2\n~fd2\n");
 
-    session_reactor.execute_events(fd_is_set);
+    session_reactor.execute_events(fd_events_, fd_is_set);
     RED_CHECK_EQ(s, "fd2\n~fd2\nfd1\n~fd1\n");
 }
 
 RED_AUTO_TEST_CASE(TestSessionReactorSequence)
 {
     SessionReactor session_reactor;
+    TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     GraphicEventContainer graphic_events_;
 
@@ -358,6 +362,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
     };
 
     SessionReactor session_reactor;
+    TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     GraphicEventContainer graphic_events_;
 

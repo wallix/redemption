@@ -37,6 +37,7 @@ enum class ExecuteEventsResult
 inline ExecuteEventsResult execute_events(
     std::chrono::milliseconds timeout,
     SessionReactor& session_reactor,
+    TopFdContainer& fd_events_,
     GraphicFdContainer& graphic_fd_events_,
     TimerContainer& timer_events_,
     GraphicEventContainer & graphic_events_,
@@ -54,14 +55,14 @@ inline ExecuteEventsResult execute_events(
         io_fd_set(fd, rfds);
         max = std::max(max, unsigned(fd));
     };
-    session_reactor.fd_events_.for_each(g);
+    fd_events_.for_each(g);
     if (enable_graphics) {
         graphic_fd_events_.for_each(g);
     }
 
     session_reactor.set_current_time(tvtime());
     timeval timeoutastv = to_timeval(
-                            session_reactor.get_next_timeout(graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front_events_, enable_graphics, timeout)
+                            session_reactor.get_next_timeout(fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front_events_, enable_graphics, timeout)
                           - session_reactor.get_current_time());
 
     int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
@@ -74,7 +75,7 @@ inline ExecuteEventsResult execute_events(
     }
 
     session_reactor.set_current_time(tvtime());
-    session_reactor.execute_timers(graphic_fd_events_, timer_events_, graphic_timer_events_, enable_graphics, [&]() -> gdi::GraphicApi& { return front; });
+    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, enable_graphics, [&]() -> gdi::GraphicApi& { return front; });
 
     if (num) {
         front_events_.exec_action(callback);

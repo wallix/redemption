@@ -54,6 +54,7 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
+    TopFdContainer fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -70,7 +71,8 @@ class ModFactory
 
 public:
     ModFactory(ModWrapper & mod_wrapper, 
-               SessionReactor & session_reactor, 
+               SessionReactor & session_reactor,
+               TopFdContainer fd_events_,
                GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,
@@ -79,6 +81,7 @@ public:
                ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
+        , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)

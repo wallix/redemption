@@ -95,6 +95,7 @@ public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
     SessionReactor& session_reactor;
+    TopFdContainer& fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -241,6 +242,7 @@ public:
 
 public:
     ClientRedemption(SessionReactor & session_reactor,
+                     TopFdContainer& fd_events_,
                      GraphicFdContainer& graphic_fd_events_,
                      TimerContainer & timer_events_,
                      GraphicEventContainer & graphic_events_,
@@ -251,6 +253,7 @@ public:
         , client_sck(-1)
         , _callback(this)
         , session_reactor(session_reactor)
+        , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
@@ -310,7 +313,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, this->graphic_fd_events_, this->timer_events_, this->graphic_events_, this->graphic_timer_events_, this->front_events_, EnableGraphics{true},
+            timeout, this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_, this->graphic_timer_events_, this->front_events_, EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
@@ -437,6 +440,7 @@ public:
                 this->unique_mod = new_mod_rdp(
                     *this->socket
                   , this->session_reactor
+                  , this->fd_events_
                   , this->graphic_fd_events_
                   , this->timer_events_
                   , this->graphic_events_
@@ -474,6 +478,7 @@ public:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
                   , this->session_reactor
+                  , this->fd_events_
                   , this->graphic_fd_events_
                   , this->timer_events_
                   , this->graphic_events_
@@ -1003,12 +1008,12 @@ public:
         try {
             auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
             if (is_timeout) {
-                this->session_reactor.execute_timers(this->graphic_fd_events_, this->timer_events_, this->graphic_timer_events_, EnableGraphics{true}, get_gd);
+                this->session_reactor.execute_timers(this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_timer_events_, EnableGraphics{true}, get_gd);
             } else {
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;
                 };
-                this->session_reactor.execute_events(is_mod_fd);
+                this->session_reactor.execute_events(this->fd_events_, is_mod_fd);
                 this->session_reactor.execute_graphics(this->graphic_fd_events_, graphic_events_, is_mod_fd, get_gd());
             }
         } catch (const Error & e) {

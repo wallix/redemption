@@ -81,6 +81,7 @@ public:
 
     Inifile& ini;
     SessionReactor& session_reactor;
+    TopFdContainer& fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer& graphic_events_;
@@ -122,6 +123,7 @@ public:
     ModuleManager(EndSessionWarning & end_session_warning,
                   ModFactory & mod_factory,
                   SessionReactor& session_reactor,
+                  TopFdContainer& fd_events_,
                   GraphicFdContainer & graphic_fd_events_,
                   TimerContainer& timer_events_,
                   GraphicEventContainer& graphic_events_,
@@ -130,6 +132,7 @@ public:
         : mod_factory(mod_factory)
         , ini(ini)
         , session_reactor(session_reactor)
+        , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
