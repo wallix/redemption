@@ -505,9 +505,9 @@ class Session
                                            EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
                 return mod_wrapper.get_graphic_wrapper();
             });
-            session_reactor.execute_events(fd_events_, [&ioswitch](int fd, auto& /*e*/){
-                return ioswitch.is_set_for_reading(fd);
-            });
+
+            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
+                                    {return ioswitch.is_set_for_reading(fd);});
             if (!front_events_.is_empty()) {
                 front_events_.exec_action(mod_wrapper.get_callback());
             }
@@ -601,10 +601,9 @@ class Session
                 return mod_wrapper.get_graphic_wrapper();
             });
 
-            LOG(LOG_INFO, "front_up_and_running : execute_events");
-            session_reactor.execute_events(fd_events_, [&ioswitch](int fd, auto& /*e*/){
-                return ioswitch.is_set_for_reading(fd);
-            });
+            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
+                                return ioswitch.is_set_for_reading(fd);
+                                });
 
         } catch (Error const& e) {
             if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini)) {
@@ -952,7 +951,7 @@ public:
                 {
                     bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
 
-                    session_reactor.execute_events(fd_events_, [&ioswitch](int fd, auto& /*e*/){
+                    fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                         return ioswitch.is_set_for_reading(fd);
                     });
 
@@ -1030,7 +1029,7 @@ public:
                         this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, authentifier, fstat);
                     }
 
-                    session_reactor.execute_events(fd_events_, [&ioswitch](int fd, auto& /*e*/){
+                    fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                         return ioswitch.is_set_for_reading(fd);
                     });
 

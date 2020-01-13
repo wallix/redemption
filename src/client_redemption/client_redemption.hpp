@@ -1013,7 +1013,7 @@ public:
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;
                 };
-                this->session_reactor.execute_events(this->fd_events_, is_mod_fd);
+                this->fd_events_.exec_action(is_mod_fd);
                 this->session_reactor.execute_graphics(this->graphic_fd_events_, graphic_events_, is_mod_fd, get_gd());
             }
         } catch (const Error & e) {

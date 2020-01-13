@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     RED_CHECK(run_task);
     auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
     for (int i = 0; i < 100 && !fd_events_.is_empty(); ++i) {
-        session_reactor.execute_events(fd_events_, fd_is_set);
+        fd_events_.exec_action(fd_is_set);
     }
     session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, EnableGraphics{false}, &gdi::null_gd);
     RED_CHECK(fd_events_.is_empty());

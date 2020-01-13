@@ -252,7 +252,7 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "fd2\n~fd2\n");
 
-    session_reactor.execute_events(fd_events_, fd_is_set);
+    fd_events_.exec_action(fd_is_set);
     RED_CHECK_EQ(s, "fd2\n~fd2\nfd1\n~fd1\n");
 }
 

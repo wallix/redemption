@@ -2988,12 +2988,6 @@ struct SessionReactor
         graphic_fd_events_.exec_action(is_set, gd);
     }
 
-    template<class IsSetElem>
-    void execute_events(TopFdContainer & fd_events_, IsSetElem is_set)
-    {
-        fd_events_.exec_action(is_set);
-    }
-
     ~SessionReactor()
     {
 //        graphic_events_.clear();
@@ -3005,10 +2999,6 @@ struct SessionReactor
 //        graphic_fd_events_.clear();
     }
 
-    [[nodiscard]] bool has_graphics_event(GraphicFdContainer& graphic_fd_events_, GraphicEventContainer & graphic_events_) const noexcept
-    {
-        return !graphic_events_.is_empty() || !graphic_fd_events_.is_empty();
-    }
 };
 
 namespace jln

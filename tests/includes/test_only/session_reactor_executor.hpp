@@ -44,8 +44,8 @@ inline void execute_negociate_mod(
     int n = 0;
     int const limit = 1000;
     while (!mod.is_up_and_running()
-        && session_reactor.has_graphics_event(graphic_fd_events_, graphic_events_)
-        && ++n < limit
+        && (!graphic_events_.is_empty() || !graphic_fd_events_.is_empty())
+        && (++n < limit)
     ) {
         execute_graphics_event(session_reactor, graphic_fd_events_, graphic_events_, gd);
     }
@@ -56,7 +56,7 @@ inline void execute_mod(SessionReactor& session_reactor, TopFdContainer & fd_eve
 {
     execute_negociate_mod(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, mod, gd);
     int count = 0;
-    for (; count < n && session_reactor.has_graphics_event(graphic_fd_events_, graphic_events_); ++count) {
+    for (; count < n && (!graphic_events_.is_empty() || !graphic_fd_events_.is_empty()); ++count) {
         // LOG(LOG_INFO, "===================> count = %u", count);
         execute_graphics_event(session_reactor, graphic_fd_events_, graphic_events_, gd);
     }
