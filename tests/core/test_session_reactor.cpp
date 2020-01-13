@@ -184,7 +184,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         return ctx.terminate();
     });
 
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "gd\n~gd\n");
 
     char dummy;
@@ -249,7 +250,8 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     .set_timeout({})
     .on_timeout([](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){ return ctx.ready(); });
 
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "fd2\n~fd2\n");
 
     fd_events_.exec_action(fd_is_set);
@@ -286,16 +288,20 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         trace("d"_s)
     ));
 
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "a");
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "ab");
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "abc");
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(!event);
     RED_CHECK_EQ(s, "abcd");
     s.clear();
@@ -319,16 +325,20 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         "e"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.terminate(); })
     ));
 
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "a");
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "ab");
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_,fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "abd");
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_is_set, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK(!event);
     RED_CHECK_EQ(s, "abdce");
 }
@@ -373,6 +383,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
 
     v.emplace_back(std::make_unique<S>());
     v.back()->foo(session_reactor, graphic_events_, f);
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, []([[maybe_unused]] auto&&... xs){return false;}, gdi::null_gd());
+    graphic_events_.exec_action(gdi::null_gd());
+    graphic_fd_events_.exec_action([]([[maybe_unused]] auto&&... xs){return false;}, gdi::null_gd());
     RED_CHECK_EQ(v.size(), 0);
 }

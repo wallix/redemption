@@ -282,7 +282,9 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                 [&]()->gdi::GraphicApi&{ return front.gd(); });
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
-                execute_graphics_event(session_reactor, front.gd());
+                auto is_fd_set = [](int /*fd*/, auto& /*e*/){ return true; };
+                graphic_events_.exec_action(gd);
+                graphic_fd_events_.exec_action(is_fd_set, front.gd());
                 LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
                 if (!already_redirected) {
                     return true;
@@ -507,7 +509,9 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                 [&]()->gdi::GraphicApi&{ return front.gd(); });
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
-                execute_graphics_event(session_reactor, front.gd());
+                auto is_fd_set = [](int /*fd*/, auto& /*e*/){ return true; };
+                graphic_events_.exec_action(gd);
+                graphic_fd_events_.exec_action(is_fd_set, front.gd());
                 LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
                 if (!already_redirected) {
                     return true;

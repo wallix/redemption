@@ -129,7 +129,9 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
     execute_negociate_mod(session_reactor, *mod, front);
     for (int count = 0; count < 25; ++count) {
         LOG(LOG_INFO, "===================> count = %d", count);
-        execute_graphics_event(session_reactor, front);
+        auto fd_is_set = [](int fd, auto& e){ return true; };
+        graphic_events_.exec_action(front);
+        graphic_fd_events_.exec_action(fd_is_set, front);
     }
 
     // front.dump_png("trace_xp_");
@@ -239,7 +241,9 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     // Comment the code block below to generate testing data.
     execute_negociate_mod(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd());
     for (int count = 0; count < 38; ++count) {
-        execute_graphics_event(session_reactor, graphic_fd_events_, graphic_events_, front.gd());
+        auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+        graphic_events_.exec_action(front.gd());
+        graphic_fd_events_.exec_action(fd_is_set, front.gd());
     }
 
     //session_reactor.execute_timers(
@@ -247,7 +251,9 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //    [&]()->gdi::GraphicApi&{ return front.gd(); });
     //unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
     //    (void)sck;
-    //    execute_graphics_event(session_reactor, front.gd());
+    //    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+    //    graphic_events_.exec_action(front.gd());
+    //    graphic_fd_events_.exec_action(fd_is_set, front.gd());
     //    LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
     //    return !mod->is_up_and_running();
     //});
@@ -336,7 +342,9 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
     execute_negociate_mod(session_reactor, *mod, front);
     for (int count = 0; count < 25; ++count) {
         LOG(LOG_INFO, "===================> count = %d", count);
-        execute_graphics_event(session_reactor, front);
+        auto fd_is_set = [](int fd, auto& e){ return true; };
+        graphic_events_.exec_action(front);
+        graphic_fd_events_.exec_action(fd_is_set, front);
     }
 
     // front.dump_png("trace_w2003_");
@@ -423,7 +431,9 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     execute_negociate_mod(session_reactor, *mod, front);
     for (int count = 0; count < 25; ++count) {
         LOG(LOG_INFO, "===================> count = %d", count);
-        execute_graphics_event(session_reactor, front);
+        auto fd_is_set = [](int fd, auto& e){ return true; };
+        graphic_events_.exec_action(front);
+        graphic_fd_events_.exec_action(fd_is_set, front);
     }
 
     // front.dump_png("trace_w2000_");

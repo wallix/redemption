@@ -80,7 +80,8 @@ inline ExecuteEventsResult execute_events(
     if (num) {
         front_events_.exec_action(callback);
         auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
-        session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, fd_isset, front);
+        graphic_events_.exec_action(front);
+        graphic_fd_events_.exec_action(fd_isset, front);
         return ExecuteEventsResult::Success;
     }
 

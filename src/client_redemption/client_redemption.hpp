@@ -1014,7 +1014,8 @@ public:
                     return true /*this->socket->get_fd() == fd*/;
                 };
                 this->fd_events_.exec_action(is_mod_fd);
-                this->session_reactor.execute_graphics(this->graphic_fd_events_, graphic_events_, is_mod_fd, get_gd());
+                this->graphic_events_.exec_action(get_gd());
+                this->graphic_fd_events_.exec_action(is_mod_fd, get_gd());
             }
         } catch (const Error & e) {
 

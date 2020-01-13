@@ -25,12 +25,6 @@ Author(s): Jonathan Poelen
 #include "mod/mod_api.hpp"
 #include "mod/mod_api.hpp"
 
-inline void execute_graphics_event(
-    SessionReactor& session_reactor, GraphicFdContainer & graphic_fd_events_, GraphicEventContainer & graphic_events_, gdi::GraphicApi& gd)
-{
-    session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, [](int /*fd*/, auto& /*e*/){ return true; }, gd);
-}
-
 inline void execute_negociate_mod(
     SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
 {
@@ -47,7 +41,9 @@ inline void execute_negociate_mod(
         && (!graphic_events_.is_empty() || !graphic_fd_events_.is_empty())
         && (++n < limit)
     ) {
-        execute_graphics_event(session_reactor, graphic_fd_events_, graphic_events_, gd);
+        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+        graphic_events_.exec_action(gd);
+        graphic_fd_events_.exec_action(is_set, gd);
     }
     RED_REQUIRE_LT(n, limit);
 }
@@ -58,7 +54,9 @@ inline void execute_mod(SessionReactor& session_reactor, TopFdContainer & fd_eve
     int count = 0;
     for (; count < n && (!graphic_events_.is_empty() || !graphic_fd_events_.is_empty()); ++count) {
         // LOG(LOG_INFO, "===================> count = %u", count);
-        execute_graphics_event(session_reactor, graphic_fd_events_, graphic_events_, gd);
+        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+        graphic_events_.exec_action(gd);
+        graphic_fd_events_.exec_action(is_set, gd);
     }
     RED_CHECK_EQ(count, n);
 }

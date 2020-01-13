@@ -2981,13 +2981,6 @@ struct SessionReactor
         }
     }
 
-    template<class IsSetElem>
-    void execute_graphics(GraphicFdContainer& graphic_fd_events_, GraphicEventContainer & graphic_events_, IsSetElem is_set, gdi::GraphicApi& gd)
-    {
-        graphic_events_.exec_action(gd);
-        graphic_fd_events_.exec_action(is_set, gd);
-    }
-
     ~SessionReactor()
     {
 //        graphic_events_.clear();

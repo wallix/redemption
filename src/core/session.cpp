@@ -650,17 +650,18 @@ class Session
         try {
             try {
 
-            // new value incoming from authentifier
-            LOG(LOG_INFO, "--------------------- rt_display()");
-            this->rt_display(ini, mm, mod_wrapper, front);
+                // new value incoming from authentifier
+                LOG(LOG_INFO, "--------------------- rt_display()");
+                this->rt_display(ini, mm, mod_wrapper, front);
 
-            if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
-                // Process incoming module trafic
-                auto& gd = mod_wrapper.get_graphic_wrapper();
-                session_reactor.execute_graphics(graphic_fd_events_, graphic_events_, [&ioswitch](int fd, auto& /*e*/){
-                    return ioswitch.is_set_for_reading(fd);
-                }, gd);
-            }
+                if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
+                    // Process incoming module trafic
+                    auto& gd = mod_wrapper.get_graphic_wrapper();
+                    graphic_events_.exec_action(gd);
+                    graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
+                        return ioswitch.is_set_for_reading(fd);
+                    }, gd);
+                }
 
                 // Incoming data from ACL
                 LOG(LOG_INFO, "-------------------------- check acl pending");
