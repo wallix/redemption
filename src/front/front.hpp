@@ -825,8 +825,8 @@ public:
             }
 
             if (this->client_info.remote_program) {
-                this->incoming_event = this->session_reactor
-                .create_callback_event(this->front_events_, std::ref(*this))
+                this->incoming_event = this->front_events_
+                .create_action_executor(this->session_reactor, std::ref(*this))
                 .on_action(jln::one_shot([](Callback& cb, Front& front){
                     cb.refresh(Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
                 }));

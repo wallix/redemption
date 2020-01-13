@@ -174,7 +174,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         s += "gd\n";
     }));
 
-    auto callback = session_reactor.create_callback_event(front_events_, std::ref(s))
+    auto callback = front_events_
+    .create_action_executor(session_reactor, std::ref(s))
     .set_notify_delete([](Dt, std::string& s){
         s += "~callback\n";
     })
