@@ -78,13 +78,14 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::str
     tls_client_params.tls_min_level = 0;
     tls_client_params.tls_max_level = 0;
     tls_client_params.show_common_cipher_list = false;
+    nla_password += '\0';
     // tls_client_params.cipher_string;
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
         this->back_nla_tee_trans, this->timeobj,
         this->host, nla_username.c_str(),
-        nla_password.empty() ? "\0" : nla_password.c_str(),
+        nla_password.c_str(),
         enable_kerberos, tls_client_params, this->verbosity > 8);
 
     // equivalent to nego_client->send_negotiation_request()
@@ -103,12 +104,12 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::str
 void ProxyRecorder::front_nla(Transport & frontConn)
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
-    
+
     TpduBuffer & buffer = this->frontBuffer;
     std::vector<uint8_t> result;
     credssp::State st = credssp::State::Cont;
     while ((this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD
-                || buffer.next(TpduBuffer::CREDSSP)) 
+                || buffer.next(TpduBuffer::CREDSSP))
             && credssp::State::Cont == st) {
         if (this->nego_server->credssp.ntlm_state == NTLM_STATE_WAIT_PASSWORD){
             result << this->nego_server->credssp.authenticate_next({});
@@ -118,7 +119,7 @@ void ProxyRecorder::front_nla(Transport & frontConn)
         }
         st = this->nego_server->credssp.state;
     }
-        
+
     frontConn.send(result);
 
     switch (st) {
