@@ -183,7 +183,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         s += "callback\n";
     }));
 
-    auto ini = session_reactor.create_sesman_event(sesman_events_, std::ref(s))
+    auto ini = sesman_events_
+    .create_action_executor(session_reactor, std::ref(s))
     .on_action([](JLN_ACTION_CTX ctx, Inifile&, std::string& s){
         s += "ini\n";
         return ctx.terminate();

@@ -131,8 +131,8 @@ void mod_rdp::init_negociate_event_(
         return er.to_result();
     };
 
-    this->fd_event = this->session_reactor
-    .create_graphic_fd_event(this->graphic_fd_events_, this->trans.get_fd(), std::make_unique<PrivateRdpNegociation>(
+    this->fd_event = this->graphic_fd_events_
+    .create_top_executor(this->session_reactor, this->trans.get_fd(), std::make_unique<PrivateRdpNegociation>(
         open_session_timeout, program, directory,
         this->channels.channels_authorizations, this->channels.mod_channel_list,
         this->channels.auth_channel, this->channels.checkout_channel,
@@ -188,7 +188,8 @@ void mod_rdp::init_negociate_event_(
                 this->vars.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
                 this->vars.ask<cfg::mod_rdp::server_cert_response>();
 
-                private_rdp_negociation->sesman_event = this->session_reactor.create_sesman_event(this->sesman_events_)
+                private_rdp_negociation->sesman_event = this->sesman_events_
+                .create_action_executor(this->session_reactor)
                 .on_action([&result, &private_rdp_negociation, this](auto ctx, Inifile& ini){
                     auto const& message = ini.get<cfg::mod_rdp::server_cert_response>();
                     if (message.empty()) {

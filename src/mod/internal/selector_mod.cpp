@@ -127,7 +127,8 @@ SelectorMod::SelectorMod(
     }));
 
     LOG(LOG_INFO, "Setting sesman event");
-    this->sesman_event = session_reactor.create_sesman_event(sesman_events_)
+    this->sesman_event = sesman_events_
+    .create_action_executor(session_reactor)
     .on_action(jln::always_ready([this](Inifile&){
         LOG(LOG_INFO, "Executing sesman event on behalf of selector");
         char buffer[16];
