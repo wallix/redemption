@@ -92,6 +92,13 @@ struct RdpClient
     gdi::GraphicApi& gd;
     JsReportMessage report_message;
     SessionReactor session_reactor;
+    TopFdContainer fd_events;
+    GraphicFdContainer graphic_fd_events;
+    TimerContainer timer_events;
+    GraphicEventContainer graphic_events;
+    GraphicTimerContainer graphic_timer_events;
+    SesmanEventContainer sesman_events;
+    CallbackEventContainer front_events;
 
     Inifile ini;
 
@@ -161,7 +168,9 @@ struct RdpClient
         const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
         this->mod = new_mod_rdp(
-            browser_trans, session_reactor, gd, front, client_info,
+            browser_trans, session_reactor,
+            fd_events, graphic_fd_events, timer_events, graphic_events, sesman_events,
+            gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
@@ -169,9 +178,7 @@ struct RdpClient
 
     void send_first_packet()
     {
-        session_reactor.execute_timers(
-            SessionReactor::EnableGraphics{true},
-            [&]() -> gdi::GraphicApi& { return gd; });
+        graphic_fd_events.exec_timeout(session_reactor.get_current_time(), this->gd);
     }
 
     bytes_view get_sending_data_view() const
@@ -187,12 +194,12 @@ struct RdpClient
     void add_receiving_data(std::string data)
     {
         browser_trans.add_in_buffer(std::move(data));
-        // browser_trans.out_buffers.insert(browser_trans.out_buffers.end(), data.begin(), data.end());
-        session_reactor.execute_callbacks(*mod);
+        front_events.exec_action(*mod);
+        graphic_events.exec_action(gd);
         auto fd_isset = [fd_trans = browser_trans.get_fd()](int fd, auto& /*e*/){
             return fd == fd_trans;
         };
-        session_reactor.execute_graphics(fd_isset, gd);
+        graphic_fd_events.exec_action(fd_isset, gd);
     }
 
     void rdp_input_scancode(uint16_t key, uint16_t flag)

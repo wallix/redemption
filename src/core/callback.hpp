@@ -31,6 +31,8 @@
 #include "utils/rect.hpp"
 #include "gdi/screen_info.hpp"
 
+#include <string>
+
 class InStream;
 struct Keymap2;
 
