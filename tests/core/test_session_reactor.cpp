@@ -104,12 +104,13 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
         return c++ == 'd' ? ctx.terminate() : ctx.ready();
     });
 
-    Ptr timer4 = session_reactor.create_graphic_timer(graphic_timer_events_,
-std::ref(s))
-    .set_time({16, 0})
-    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
-        s += "timer4\n";
-    }));
+    Ptr timer4 = graphic_timer_events_
+        .create_timer_executor(session_reactor,
+    std::ref(s))
+        .set_time({16, 0})
+        .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+            s += "timer4\n";
+        }));
 
     EnableGraphics enable_gd{true};
     EnableGraphics disable_gd{false};

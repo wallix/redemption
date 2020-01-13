@@ -2866,27 +2866,11 @@ struct EnableGraphics
 struct SessionReactor
 {
     template<class... Args>
-    REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
-    create_timer(TimerContainer& timer_events_, Args&&... args)
-    {
-        return timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
-    }
-
-
-    template<class... Args>
-    REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
-    create_graphic_timer(GraphicTimerContainer & graphic_timer_events_, Args&&... args)
-    {
-        return graphic_timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
-    }
-
-    template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
     create_callback_event(CallbackEventContainer & front_events_, Args&&... args)
     {
         return front_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
-
 
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)

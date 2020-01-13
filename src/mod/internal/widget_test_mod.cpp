@@ -41,9 +41,10 @@ struct WidgetTestMod::WidgetTestModPrivate
       : session_reactor(session_reactor)
     {
         LOG(LOG_DEBUG, "WidgetTestModPrivate");
-        this->timer = this->session_reactor.create_graphic_timer(graphic_timer_events_)
-        .set_delay(std::chrono::seconds(0))
-        .on_action([](auto ctx, gdi::GraphicApi& gd){
+        this->timer = graphic_timer_events_
+            .create_timer_executor(session_reactor)
+            .set_delay(std::chrono::seconds(0))
+            .on_action([](auto ctx, gdi::GraphicApi& gd){
             update_lock update_lock{gd};
             int y = 10;
             for (auto s : {

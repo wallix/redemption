@@ -294,7 +294,7 @@ ReplayMod::ReplayMod(
         this->front_height = this->internal_reader->reader.info.height;
     }
 
-    this->timer = session_reactor.create_graphic_timer(graphic_timer_events_)
+    this->timer = graphic_timer_events_.create_timer_executor(session_reactor)
     .set_delay(std::chrono::seconds(0))
     .on_action([this](auto ctx, gdi::GraphicApi& gd){
         this->draw_event(gd);

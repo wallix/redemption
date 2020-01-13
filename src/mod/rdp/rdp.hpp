@@ -4890,7 +4890,8 @@ public:
                         this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_legalnotice = this->session_reactor.create_timer(this->timer_events_)
+                        this->remoteapp_one_shot_bypass_window_legalnotice = this->timer_events_
+                        .create_timer_executor(this->session_reactor)
                         .on_action(jln::sequencer(
                             [this](JLN_TIMER_CTX ctx) {
                                 LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
