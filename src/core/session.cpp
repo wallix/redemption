@@ -213,7 +213,7 @@ class Session
         Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
         time_t now, bool & has_user_activity)
     {
-        LOG(LOG_INFO, "check_acl enddate"); 
+        LOG(LOG_INFO, "check_acl enddate");
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Close by enddate reached");
@@ -221,7 +221,7 @@ class Session
             return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
         }
 
-        LOG(LOG_INFO, "check_acl rejected"); 
+        LOG(LOG_INFO, "check_acl rejected");
         // Close by rejeted message received
         if (!this->ini.get<cfg::context::rejected>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
@@ -230,7 +230,7 @@ class Session
             return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
         }
 
-        LOG(LOG_INFO, "check_acl keepalive"); 
+        LOG(LOG_INFO, "check_acl keepalive");
         // Keep Alive
         if (acl->keepalive.check(now, this->ini)) {
             LOG(LOG_INFO, "Close by Missed keepalive");
@@ -238,7 +238,7 @@ class Session
             return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
         }
 
-        LOG(LOG_INFO, "check_acl inactivity"); 
+        LOG(LOG_INFO, "check_acl inactivity");
         // Inactivity management
         if (acl->inactivity.check_user_activity(now, has_user_activity)) {
             LOG(LOG_INFO, "Close by user Inactivity");
@@ -249,7 +249,7 @@ class Session
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
 
         auto signal_name = [](BackEvent_t sig) {
-            return 
+            return
             sig == BACK_EVENT_NONE?"BACK_EVENT_NONE"
            :sig == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
            :sig == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
@@ -257,14 +257,14 @@ class Session
            :sig == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
            :"BACK_EVENT_UNKNOWN";
         };
-        LOG(LOG_INFO, "check_acl mod_signal=%s", signal_name(signal)); 
+        LOG(LOG_INFO, "check_acl mod_signal=%s", signal_name(signal));
 
         if (!acl->keepalive.is_started() && mm.connected) {
             acl->keepalive.start(now);
         }
 
         // There are modified fields to send to sesman
-        LOG(LOG_INFO, "check_acl data to send to sesman"); 
+        LOG(LOG_INFO, "check_acl data to send to sesman");
         if (this->ini.changed_field_size()) {
             if (mm.connected) {
                 // send message to acl with changed values when connected to
@@ -295,7 +295,7 @@ class Session
             return true;
         }
         if (acl->acl_serial.remote_answer || signal == BACK_EVENT_RETRY_CURRENT) {
-            LOG(LOG_INFO, "check_acl remote_answer signal=%s", signal_name(signal)); 
+            LOG(LOG_INFO, "check_acl remote_answer signal=%s", signal_name(signal));
             acl->acl_serial.remote_answer = false;
             switch (signal){
             default:
@@ -312,17 +312,17 @@ class Session
                 LOG(LOG_INFO, "Remote Answer, current module ask NEXT");
                 ModuleIndex next_state = mm.next_module();
                 if (next_state == MODULE_TRANSITORY) {
-                    LOG(LOG_INFO, "check_acl TRANSITORY signal=%s", signal_name(signal)); 
+                    LOG(LOG_INFO, "check_acl TRANSITORY signal=%s", signal_name(signal));
                     acl->acl_serial.remote_answer = false;
                     mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NEXT);
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    LOG(LOG_INFO, "check_acl is INTERNAL CLOSE signal=%s", signal_name(signal)); 
+                    LOG(LOG_INFO, "check_acl is INTERNAL CLOSE signal=%s", signal_name(signal));
                     return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
-                    LOG(LOG_INFO, "check_acl is INTERNAL CLOSE BACK signal=%s", signal_name(signal)); 
+                    LOG(LOG_INFO, "check_acl is INTERNAL CLOSE BACK signal=%s", signal_name(signal));
                     acl->keepalive.stop();
                 }
                 mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
@@ -442,7 +442,7 @@ class Session
         ||  (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG)
         ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
             if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
-                    SessionProbeOnLaunchFailure::retry_without_session_probe) 
+                    SessionProbeOnLaunchFailure::retry_without_session_probe)
             {
                 LOG(LOG_INFO, "====> Retry without session probe");
                 ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
@@ -484,7 +484,7 @@ class Session
                 if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                     this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                 }
-                return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);  
+                return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
             }
         }
         LOG(LOG_ERR, "Start Session Failed = %s", e.errmsg());
@@ -543,7 +543,7 @@ class Session
                         ?trkeys::enable_rt_display
                         :trkeys::disable_rt_display
                             ).to_string();
-                        
+
                     bool is_disable_by_input = true;
                     if (message != mod_wrapper.get_message()) {
                         mod_wrapper.clear_osd_message();
@@ -566,15 +566,15 @@ class Session
         Authentifier & authentifier, ModWrapper & mod_wrapper,
         timeval now, Front & front)
     {
-        LOG(LOG_INFO, "module_sequencing"); 
+        LOG(LOG_INFO, "module_sequencing");
         int i = 0;
         do {
             if (++i == 11) {
-                LOG(LOG_INFO, "module_sequencing: emergency exit"); 
+                LOG(LOG_INFO, "module_sequencing: emergency exit");
                 break;
             }
             if (!this->last_module) {
-                LOG(LOG_INFO, "module_sequencing: not last module"); 
+                LOG(LOG_INFO, "module_sequencing: not last module");
                 bool run_session = this->check_acl(mm, acl,
                     authentifier, authentifier, mod_wrapper,
                     now.tv_sec, front.has_user_activity
@@ -587,7 +587,7 @@ class Session
         return true;
     }
 
-    bool front_up_and_running(bool const front_is_set, Select& ioswitch, 
+    bool front_up_and_running(bool const front_is_set, Select& ioswitch,
                               SessionReactor& session_reactor,
                               TopFdContainer & fd_events_,
                               GraphicFdContainer & graphic_fd_events_,
@@ -646,7 +646,7 @@ class Session
             LOG(LOG_ERR, "Proxy data processing raised unknown error");
             return false;
         }
-        
+
         // acl event
         try {
             try {
@@ -740,7 +740,7 @@ public:
 //            this->signal = signal;
 //            // assert(is not already set)
 //        }
-        
+
         session_reactor.set_current_time(tvtime());
         Front front(
             session_reactor, timer_events_, front_events_, front_trans, rnd, ini, cctx, authentifier,
@@ -752,7 +752,7 @@ public:
 
         try {
             TimeSystem timeobj;
-            
+
             // load font for internal pages
             Font glyphs = Font(app_path(AppPath::DefaultFontFile),
                 ini.get<cfg::globals::spark_view_specific_glyph_width>());;
@@ -770,7 +770,7 @@ public:
 
 
             windowing_api* winapi = nullptr;
-            
+
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
             ModFactory mod_factory(mod_wrapper, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
@@ -804,9 +804,9 @@ public:
                 int sck_no_read_sck_front = INVALID_SOCKET;
                 int sck_no_read_sck_mod = INVALID_SOCKET;
 
-                LOG(LOG_INFO, "front_trans.has_waiting_data()");
+                LOG(LOG_INFO, "check front_trans.has_waiting_data()");
                 if (front_trans.has_waiting_data()) {
-                    LOG(LOG_INFO, "front_trans.has_waiting_data()");
+                    LOG(LOG_INFO, "front_trans don't have waiting data (1)");
                     ioswitch.set_write_sck(front_trans.sck);
                     sck_no_read_sck_front = front_trans.sck;
                 }
@@ -917,7 +917,7 @@ public:
 
                 LOG(LOG_INFO, "front is set flag");
                 bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
-                
+
                 LOG(LOG_INFO, "acl is set flag");
                 bool acl_is_set = false; //(acl) && ioswitch.is_set_for_reading(acl->auth_trans.sck);
                 if (acl){
@@ -1008,7 +1008,7 @@ public:
                         acl_cb.set_acl_screen_info();
                         acl_cb.set_acl_auth_info();
                         if (this->ini.changed_field_size()) {
-                            LOG(LOG_INFO, "ACL Data to send");                            
+                            LOG(LOG_INFO, "ACL Data to send");
                             acl->acl_serial.send_acl_data();
                             continue;
                         }
@@ -1084,7 +1084,7 @@ public:
                 } // switch
                 LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");
             } // loop
-            
+
             if (mod_wrapper.get_mod()) {
                 mod_wrapper.get_mod()->disconnect();
             }
