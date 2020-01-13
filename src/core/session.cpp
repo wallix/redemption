@@ -499,13 +499,13 @@ class Session
     {
         bool run_session = true;
         try {
-            session_reactor.execute_timers(fd_events_, graphic_fd_events_,
-                                           timer_events_,
-                                           graphic_timer_events_,
-                                           EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
-                return mod_wrapper.get_graphic_wrapper();
-            });
-
+            auto const end_tv = session_reactor.get_current_time();
+            timer_events_.exec_timer(end_tv);
+            fd_events_.exec_timeout(end_tv);
+            if (EnableGraphics{true}) {
+                graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
+                graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
+            }
             fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
                                     {return ioswitch.is_set_for_reading(fd);});
             if (!front_events_.is_empty()) {
@@ -595,16 +595,17 @@ class Session
                               GraphicEventContainer& graphic_events_,
                               GraphicTimerContainer graphic_timer_events_, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & acl_cb)
     {
-        LOG(LOG_INFO, "front_up_and_running : execute_timers");
         try {
-            session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, EnableGraphics{true}, [&]() -> gdi::GraphicApi& {
-                return mod_wrapper.get_graphic_wrapper();
-            });
-
+            auto const end_tv = session_reactor.get_current_time();
+            timer_events_.exec_timer(end_tv);
+            fd_events_.exec_timeout(end_tv);
+            if (EnableGraphics{true}) {
+                graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
+                graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
+            }
             fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                                 return ioswitch.is_set_for_reading(fd);
                                 });
-
         } catch (Error const& e) {
             if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini)) {
                 return false;
