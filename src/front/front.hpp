@@ -691,7 +691,8 @@ public:
           )
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            this->handshake_timeout = this->session_reactor.create_timer(this->timer_events_)
+            this->handshake_timeout = this->timer_events_
+            .create_timer_executor(this->session_reactor)
             .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
             .on_action([](JLN_TIMER_CTX ctx){
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
@@ -732,7 +733,8 @@ public:
         }
 
         if (this->rdp_keepalive_connection_interval.count()) {
-            this->flow_control_timer = this->session_reactor.create_timer(this->timer_events_)
+            this->flow_control_timer = this->timer_events_
+            .create_timer_executor(this->session_reactor)
             .set_delay(std::chrono::milliseconds(0))
             .on_action([this](auto ctx){
                 if (this->state == FRONT_UP_AND_RUNNING) {
@@ -1029,7 +1031,8 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        this->capture_timer = this->session_reactor.create_timer(this->timer_events_)
+        this->capture_timer = this->timer_events_
+        .create_timer_executor(this->session_reactor)
         .set_delay(std::chrono::milliseconds(0))
         .on_action([this](auto ctx){
             auto const capture_ms = this->capture->periodic_snapshot(

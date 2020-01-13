@@ -231,7 +231,8 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(timer_events_, 
+        this->timer_ptr = timer_events_
+        .create_timer_executor(session_reactor, 
             std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
@@ -309,7 +310,8 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(timer_events_,
+        this->timer_ptr = timer_events_
+        .create_timer_executor(session_reactor,
             std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))

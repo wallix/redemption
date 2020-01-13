@@ -340,7 +340,7 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
 
         if (enable_metrics) {
             new_mod->mod.metrics = std::move(metrics);
-            new_mod->mod.metrics_timer = session_reactor.create_timer(timer_events_)
+            new_mod->mod.metrics_timer = timer_events_.create_timer_executor(session_reactor)
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
                 .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());

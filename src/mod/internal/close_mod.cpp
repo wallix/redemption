@@ -122,7 +122,8 @@ CloseMod::CloseMod(
             delay = vars.get<cfg::globals::close_timeout>();
             start_timer = delay;
         }
-        this->timeout_timer = session_reactor.create_timer(timer_events_, start_timer)
+        this->timeout_timer = timer_events_
+        .create_timer_executor(session_reactor, start_timer)
         .set_delay(delay)
         .on_action([this](JLN_TIMER_CTX ctx, std::chrono::seconds& seconds){
             // TODO milliseconds += ctx.time() - previous_time
@@ -198,7 +199,8 @@ void CloseMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            this->first_click_down_timer = this->session_reactor.create_timer(this->timer_events_)
+                            this->first_click_down_timer = this->timer_events_
+                            .create_timer_executor(this->session_reactor)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;

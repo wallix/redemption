@@ -2865,11 +2865,6 @@ struct EnableGraphics
 
 struct SessionReactor
 {
-//    GraphicEventContainer graphic_events_;
-//    TimerContainer timer_events_;
-//    TopFdContainer fd_events_;
-//    GraphicFdContainer graphic_fd_events_;
-
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
     create_timer(TimerContainer& timer_events_, Args&&... args)

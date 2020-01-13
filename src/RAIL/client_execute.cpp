@@ -752,8 +752,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                     this->button_1_down = this->pressed_mouse_button;
 
-                    this->button_1_down_timer = this->session_reactor
-                    .create_timer(this->timer_events_)
+                    this->button_1_down_timer = this->timer_events_
+                    .create_timer_executor(this->session_reactor)
                     .set_delay(std::chrono::milliseconds(400))
                     .on_action(jln::one_shot([this]{
                         assert(bool(*this));

@@ -134,10 +134,10 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
             this->disconnection_reconnection_timer->set_delay(std::chrono::seconds(1));
         }
         else {
-            this->disconnection_reconnection_timer = this->session_reactor
-            .create_timer(this->timer_events_, std::ref(*this))
-            .set_delay(std::chrono::seconds(1))
-            .on_action([](auto ctx, RailModuleHostMod& self){
+            this->disconnection_reconnection_timer = this->timer_events_
+                .create_timer_executor(session_reactor, std::ref(*this))
+                .set_delay(std::chrono::seconds(1))
+                .on_action([](auto ctx, RailModuleHostMod& self){
                 if (self.rail_module_host.get_managed_mod().is_auto_reconnectable()) {
                     throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
                 }

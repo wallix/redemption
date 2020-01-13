@@ -85,7 +85,8 @@ DialogMod::DialogMod(
     }
 
     if (vars.get<cfg::debug::pass_dialog_box>()) {
-        this->timeout_timer = this->session_reactor.create_timer(this->timer_events_)
+        this->timeout_timer = this->timer_events_
+        .create_timer_executor(this->session_reactor)
         .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
         .on_action([this](JLN_TIMER_CTX ctx){
             this->accepted();
@@ -135,7 +136,8 @@ void DialogMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            this->first_click_down_timer = this->session_reactor.create_timer(this->timer_events_)
+                            this->first_click_down_timer = this->timer_events_
+                            .create_timer_executor(this->session_reactor)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;

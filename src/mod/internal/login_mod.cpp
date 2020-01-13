@@ -72,7 +72,8 @@ LoginMod::LoginMod(
 
     LOG(LOG_INFO, "set timer()");
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
-        this->timeout_timer = session_reactor.create_timer(timer_events_)
+        this->timeout_timer = timer_events_
+        .create_timer_executor(session_reactor)
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
         .on_action([this](JLN_TIMER_CTX ctx){
             LOG(LOG_INFO, "execute timer()");

@@ -220,12 +220,13 @@ public:
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
 
             if (!this->session_probe_launch_timeout_timer_started) {
-                this->session_probe_timer = this->session_reactor.create_timer(this->timer_events_)
-                .set_delay(this->sespro_params.effective_launch_timeout)
-                .on_action([this](JLN_TIMER_CTX ctx){
-                    this->process_event_launch();
-                    return ctx.ready_to(this->sespro_params.effective_launch_timeout);
-                });
+                this->session_probe_timer = this->timer_events_
+                    .create_timer_executor(this->session_reactor)
+                    .set_delay(this->sespro_params.effective_launch_timeout)
+                    .on_action([this](JLN_TIMER_CTX ctx){
+                        this->process_event_launch();
+                        return ctx.ready_to(this->sespro_params.effective_launch_timeout);
+                    });
                 this->session_probe_launch_timeout_timer_started = true;
             }
         }
@@ -235,11 +236,12 @@ public:
     {
         this->launch_aborted = true;
 
-        this->session_probe_timer = this->session_reactor.create_timer(this->timer_events_)
-        .set_delay(this->sespro_params.launcher_abort_delay)
-        .on_action(jln::one_shot([this](){
-            this->process_event_launch();
-        }));
+        this->session_probe_timer = this->timer_events_
+            .create_timer_executor(this->session_reactor)
+            .set_delay(this->sespro_params.launcher_abort_delay)
+            .on_action(jln::one_shot([this](){
+                this->process_event_launch();
+            }));
     }
 
     void give_additional_launch_time() {
@@ -538,12 +540,13 @@ public:
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
 
-                    this->session_probe_timer = this->session_reactor.create_timer(this->timer_events_)
-                    .set_delay(this->sespro_params.keepalive_timeout)
-                    .on_action([this](auto ctx){
-                        this->process_event_ready();
-                        return ctx.ready_to(this->sespro_params.keepalive_timeout);
-                    });
+                    this->session_probe_timer = this->timer_events_
+                        .create_timer_executor(this->session_reactor)
+                        .set_delay(this->sespro_params.keepalive_timeout)
+                        .on_action([this](auto ctx){
+                            this->process_event_ready();
+                            return ctx.ready_to(this->sespro_params.keepalive_timeout);
+                        });
                 }
 
                 send_client_message([](OutStream & out_s) {

@@ -139,7 +139,8 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            this->event = this->session_reactor.create_timer(this->timer_events_)
+            this->event = this->timer_events_
+            .create_timer_executor(this->session_reactor)
             .set_delay(this->params.clipboard_initialization_delay_ms)
             .on_action(jln::one_shot([&]{ this->on_event(); }));
         }
@@ -378,18 +379,19 @@ public:
             };
         };
 
-        this->event = this->session_reactor.create_timer(this->timer_events_, std::ref(*this))
-        .set_delay(this->params.short_delay_ms)
-        .on_action(jln::sequencer(
-            "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
-            "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
-            "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
-                                                                SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
-            "Ctrl (down)"_f     (send_scancode(value<29>, value<0>,                           value<true>,  value<true> )),
-            "c (down)"_f        (send_scancode(value<46>, value<0>,                           value<false>, value<true> )),
-            "c (up)"_f          (send_scancode(value<46>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
+        this->event = this->timer_events_
+            .create_timer_executor(this->session_reactor, std::ref(*this))
+            .set_delay(this->params.short_delay_ms)
+            .on_action(jln::sequencer(
+                "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
+                "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
+                "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
+                "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
+                                                                    SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
+                "Ctrl (down)"_f     (send_scancode(value<29>, value<0>,                           value<true>,  value<true> )),
+                "c (down)"_f        (send_scancode(value<46>, value<0>,                           value<false>, value<true> )),
+                "c (up)"_f          (send_scancode(value<46>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
+                "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
 
             "Wait"_f            ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
                 if (time(nullptr) < self.delay_end_time) {
@@ -471,7 +473,8 @@ public:
             };
         };
 
-        this->event = this->session_reactor.create_timer(this->timer_events_, std::ref(*this))
+        this->event = this->timer_events_
+        .create_timer_executor(this->session_reactor, std::ref(*this))
         .set_delay(this->params.short_delay_ms)
         .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),

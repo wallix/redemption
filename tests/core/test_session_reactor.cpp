@@ -73,7 +73,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
 
     std::string s;
 
-    Ptr timer1 = session_reactor.create_timer(timer_events_, std::ref(s))
+    Ptr timer1 = timer_events_
+    .create_timer_executor(session_reactor, std::ref(s))
     .set_notify_delete([](Dt, std::string& s){
         s += "d1\n";
     })
@@ -82,7 +83,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
         s += "timer1\n";
     }));
 
-    Ptr timer2 = session_reactor.create_timer(timer_events_, std::ref(s))
+    Ptr timer2 = timer_events_
+    .create_timer_executor(session_reactor, std::ref(s))
     .set_notify_delete([](Dt, std::string& s){
         s += "d2\n";
     })
@@ -91,7 +93,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
         s += "timer2\n";
     }));
 
-    Ptr timer3 = session_reactor.create_timer(timer_events_, std::ref(s), 'a')
+    Ptr timer3 = timer_events_
+    .create_timer_executor(session_reactor, std::ref(s), 'a')
     .set_notify_delete([](Dt, std::string& s, char){
         s += "d3\n";
     })

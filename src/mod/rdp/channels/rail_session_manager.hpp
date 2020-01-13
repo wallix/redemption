@@ -467,7 +467,8 @@ public:
 
             this->currently_without_window = true;
 
-            this->waiting_screen_event = this->session_reactor.create_timer(this->timer_events_)
+            this->waiting_screen_event = this->timer_events_
+            .create_timer_executor(this->session_reactor)
             .set_delay(this->rail_disconnect_message_delay)
             // this->process_event()
             .on_action(jln::one_shot([this]{

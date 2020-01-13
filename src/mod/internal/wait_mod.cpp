@@ -55,7 +55,8 @@ WaitMod::WaitMod(
     this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->timeout_timer = session_reactor.create_timer(timer_events_)
+    this->timeout_timer = timer_events_
+    .create_timer_executor(session_reactor)
     .set_delay(std::chrono::seconds(600))
     .on_action(jln::one_shot([this]{
         this->refused();
