@@ -1965,8 +1965,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         recorder.input_filename = "";
         recorder.infile_extension = ".mwrm";
         if (not input.basename.empty()) {
-            recorder.input_basename = input.basename.c_str();
-            recorder.input_filename = input.basename.c_str();
+            recorder.input_basename = input.basename;
+            recorder.input_filename = input.basename;
             recorder.infile_extension = (strlen(input.extension.c_str()) > 0)?input.extension.c_str():".mwrm";
             recorder.input_filename += recorder.infile_extension;
         }

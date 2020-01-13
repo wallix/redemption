@@ -25,7 +25,7 @@
 #pragma once
 
 #include "utils/log.hpp"
-#include <string>
+#include <string_view>
 
 enum ModuleIndex : int
 {
@@ -54,10 +54,10 @@ enum ModuleIndex : int
     MODULE_UNKNOWN
 };
 
-inline ModuleIndex get_internal_module_id_from_target(const std::string & target_name)
+inline ModuleIndex get_internal_module_id_from_target(std::string_view target_name)
 {
     struct {
-        std::string name;
+        std::string_view name;
         ModuleIndex id;
     } names_id[5] = {
             {"bouncer2",           MODULE_INTERNAL_BOUNCER2},
@@ -77,10 +77,10 @@ inline ModuleIndex get_internal_module_id_from_target(const std::string & target
 }
 
 
-inline ModuleIndex get_module_id(const std::string & module_name)
+inline ModuleIndex get_module_id(std::string_view module_name)
 {
     struct {
-        std::string name;
+        std::string_view name;
         ModuleIndex id;
     } names_id[20] = {
             {"login",              MODULE_INTERNAL_WIDGET_LOGIN},
@@ -107,7 +107,7 @@ inline ModuleIndex get_module_id(const std::string & module_name)
 
     ModuleIndex mi = MODULE_UNKNOWN;
     for (auto f: names_id){
-        LOG(LOG_INFO, "%s %s ", f.name, module_name);
+        LOG(LOG_INFO, "%s %.*s ", f.name.data(), int(module_name.size()), module_name.data());
         if (f.name == module_name){
             mi = f.id;
             break;

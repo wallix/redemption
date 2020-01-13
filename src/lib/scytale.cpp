@@ -987,7 +987,7 @@ namespace
             typename storage_params::storage_type storage;
             typename recursive_storage_union<others...>::type next;
 
-            type() noexcept {}
+            type() = default;
         };
     };
 
@@ -1027,16 +1027,16 @@ namespace
                         typename storage_params::storage_type storage;
                         typename recursive_storage_union<others...>::type next;
 
-                        type3() noexcept {}
+                        type3() = default;
                     } next;
 
-                    type2() noexcept {}
+                    type2() = default;
                 } next;
 
-                type1() noexcept {}
+                type1() = default;
             } next;
 
-            type() noexcept {}
+            type() = default;
         };
     };
 

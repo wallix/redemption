@@ -56,7 +56,7 @@ void RDPDiskConfig::add_drive(const std::string & name, rdpdr::RDPDR_DTYP type)
     }
     char final_name[8] = {0};
     for (size_t i = 0; i < size; i++) {
-        final_name[i] = tmp.data()[i];
+        final_name[i] = tmp[i];
     }
     this->device_list.emplace_back(final_name, type);
 }

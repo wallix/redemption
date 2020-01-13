@@ -513,7 +513,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         {
             std::array<uint8_t, 1024> buffer;
 
-            auto readall = [&](char const* filename, char const* derivator){
+            auto readall = [&](char const* filename, char const* derivator) -> bytes_view {
                 RED_TEST_CONTEXT("filename: " << filename << "\n    derivator: " << derivator)
                 {
                     auto* reader = scytale_reader_new(master_derivator, hmac_fn, trace_fn, 0, 0);
@@ -529,7 +529,6 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
                     return bytes_view(buffer.data(), std::size_t(len));
                 }
-                return bytes_view{};
             };
 
             auto content = readall(file2hash.c_str(), fname.c_str());

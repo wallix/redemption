@@ -111,14 +111,7 @@ namespace Mwrm3
     template<class F, class FError>
     auto unserialize_type(bytes_view av, F&& f, FError&& ferror)
     {
-        if (av.size() >= 2)
-        {
-            return f(av.drop_front(2));
-        }
-        else
-        {
-            return ferror();
-        }
+        return (av.size() >= 2) ? f(av.drop_front(2)) : ferror();
     }
 
     namespace detail
@@ -756,7 +749,7 @@ namespace Mwrm3
             {
                 using namespace detail::readers;
                 /* ignore newline compatibility character */
-                return (buf.size() > 0) ? f(integral_type<type>(), buf.drop_front(1)) : ferror();
+                return not buf.empty() ? f(integral_type<type>(), buf.drop_front(1)) : ferror();
             }
         };
     }

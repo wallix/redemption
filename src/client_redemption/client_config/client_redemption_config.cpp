@@ -797,27 +797,19 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                     config.info.screen_info.bpp = checked_int(std::stoi(info));
                 } else
                 if (tag == "width") {
-                    config.rdp_width     = std::stoi(info);
+                    config.rdp_width = std::stoi(info);
                 } else
                 if (tag == "height") {
-                    config.rdp_height     = std::stoi(info);
+                    config.rdp_height = std::stoi(info);
                 } else
                 if (tag == "monitorCount") {
                     config.info.cs_monitor.monitorCount = std::stoi(info);
                 } else
                 if (tag == "span") {
-                    if (std::stoi(info)) {
-                        config.is_spanning = true;
-                    } else {
-                        config.is_spanning = false;
-                    }
+                    config.is_spanning = bool(std::stoi(info));
                 } else
                 if (tag == "record") {
-                    if (std::stoi(info)) {
-                        config.is_recording = true;
-                    } else {
-                        config.is_recording = false;
-                    }
+                    config.is_recording = bool(std::stoi(info));
                 } else
                 if (tag == "tls") {
                     config.modRDPParamsData.enable_tls = bool(std::stoi(info));
@@ -853,10 +845,10 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                     config.modRDPParamsData.enable_shared_virtual_disk = bool(std::stoi(info));
                 } else
                 if (tag == "share-dir") {
-                    config.SHARE_DIR                 = info;
+                    config.SHARE_DIR = info;
                 } else
                 if (tag == "remote-exe") {
-                    config.rDPRemoteAppConfig.full_cmd_line                = info;
+                    config.rDPRemoteAppConfig.full_cmd_line = info;
                     auto arfs_pos(info.find(' '));
                     if (arfs_pos == 0) {
                         config.rDPRemoteAppConfig.source_of_ExeOrFile = info;
@@ -868,7 +860,7 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                     }
                 } else
                 if (tag == "remote-dir") {
-                    config.rDPRemoteAppConfig.source_of_WorkingDir                = info;
+                    config.rDPRemoteAppConfig.source_of_WorkingDir = info;
                 } else
                 if (tag == "rdp5_performanceflags") {
                     config.info.rdp5_performanceflags = std::stoi(info);

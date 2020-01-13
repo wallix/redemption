@@ -234,9 +234,8 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             OutReservedStreamHelper packetFragment = data_common.get_sub_stream(startAt, fragmentSize);
 
             StaticOutReservedStreamHelper<1024, 65536-1024> data_common_compressed;
-            OutReservedStreamHelper * fragmentPayload = &data_common;
+            OutReservedStreamHelper * fragmentPayload = &packetFragment;
 
-            fragmentPayload = &packetFragment;
             if (compression_support) {
                 uint16_t compressed_data_size;
 

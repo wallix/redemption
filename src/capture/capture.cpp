@@ -278,7 +278,7 @@ bool update_enable_probe(bool& enable_probe, LogId id, KVList kv_list)
         return false;
     }
 
-    if (id == LogId::PROBE_STATUS && kv_list.size() >= 1) {
+    if (id == LogId::PROBE_STATUS && not kv_list.empty()) {
         enable_probe = ranges_equal("Ready"_av, kv_list[0].value);
         return true;
     }
@@ -910,7 +910,7 @@ bool is_logable_kvlist(LogId id, KVList kv_list, MetaParams meta_params)
                     case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION:
                     case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX:
                     case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX:
-                        if (kv_list.size() >= 1
+                        if (not kv_list.empty()
                          && (is("Preferred DropEffect("_av)
                           || is("FileGroupDescriptorW("_av))
                         ) {

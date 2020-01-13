@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         ;
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
+        std::chrono::duration<unsigned int, std::ratio<1, 100> > wrm_frame_interval = std::chrono::seconds{1};
         std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
 
         const int groupid = 0; // www-data
@@ -494,7 +494,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         ;
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
+        std::chrono::duration<unsigned int, std::ratio<1, 100> > wrm_frame_interval = std::chrono::seconds{1};
         std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
 
         const int groupid = 0; // www-data
@@ -633,7 +633,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0);
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
+        std::chrono::duration<unsigned int, std::ratio<1, 100> > wrm_frame_interval = std::chrono::seconds{1};
         std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
 
         const int groupid = 0; // www-data

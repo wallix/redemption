@@ -56,9 +56,9 @@ public:
         uint8_t hash[MD_HASH::DIGEST_LENGTH];
     };
 
-    const HASH qhash(const char * pathname);
+    HASH qhash(const char * pathname);
 
-    const HASH fhash(const char * pathname);
+    HASH fhash(const char * pathname);
 
     void open(const char * const pathname, bytes_view derivator);
 

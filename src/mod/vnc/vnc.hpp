@@ -1810,7 +1810,7 @@ private:
 
         case WAIT_SECURITY_RESULT: {
         	uint32_t status;
-        	bool haveReason = 0;
+        	bool haveReason = false;
         	std::string reason;
         	size_t skipLen;
         	InStream s(this->server_data_buf.av());

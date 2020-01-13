@@ -90,9 +90,9 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
         { 50, 20 }, { 150, 30 }, { 50, 20 }, { 50, 30 }
     };
 
-    uint16_t row_height[line_number]                = { 0 };
-    uint16_t column_width[column_number]            = { 0 };
-    bool     column_width_is_optimal[column_number] = { 0 };
+    uint16_t row_height[line_number] {};
+    uint16_t column_width[column_number] {};
+    bool     column_width_is_optimal[column_number] {};
 
     compute_format(wgrid, column_width_strategies, -1, row_height, column_width, column_width_is_optimal);
     apply_format(wgrid, row_height, column_width);

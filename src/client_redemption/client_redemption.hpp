@@ -205,25 +205,25 @@ public:
         struct WRMOrderStat {
             unsigned int count = 0;
             unsigned long pixels = 0;
-        } wrmOrderStat[COUNT_FIELD];
+        } wrmOrderStats[COUNT_FIELD];
 
         void add_wrm_order_stat(uint8_t index, unsigned long pixels) {
-            this->wrmOrderStat[index].count++;
-            this->wrmOrderStat[index].pixels += pixels;
+            this->wrmOrderStats[index].count++;
+            this->wrmOrderStats[index].pixels += pixels;
         }
 
         unsigned int get_count(uint8_t index) {
-            return this->wrmOrderStat[index].count;
+            return this->wrmOrderStats[index].count;
         }
 
         unsigned long get_pixels(uint8_t index) {
-            return this->wrmOrderStat[index].pixels;
+            return this->wrmOrderStats[index].pixels;
         }
 
         void reset() {
-            for (int i = 0; i < COUNT_FIELD; i++) {
-                this->wrmOrderStat[i].count = 0;
-                this->wrmOrderStat[i].pixels = 0;
+            for (WRMOrderStat& stat : this->wrmOrderStats) {
+                stat.count = 0;
+                stat.pixels = 0;
             }
         }
     } wrmGraphicStat;
@@ -702,7 +702,7 @@ public:
             , *this->gen
             , this->fstat
             , hash_path.c_str()
-            , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
+            , std::chrono::duration<unsigned int, std::ratio<1, 100> >{60}
             , std::chrono::seconds(600) /* break_interval */
             , WrmCompressionAlgorithm::no_compression
             , 0
@@ -1177,7 +1177,7 @@ public:
     void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override
     {}
 
-    void draw(RDPSetSurfaceCommand const & cmd) override {
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
         //TODO: this->draw_impl(no_log{}, cmd);
     }
 

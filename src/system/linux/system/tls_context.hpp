@@ -173,7 +173,7 @@ public:
 
         // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
         // "DEFAULT@SEC_LEVEL=1"
-        if (tls_client_params.cipher_string.size() > 0) { // if parameter is not defined, use system default
+        if (not tls_client_params.cipher_string.empty()) { // if parameter is not defined, use system default
             LOG(LOG_INFO, "TLS Client cipher list: %s", tls_client_params.cipher_string.c_str());
             SSL_CTX_set_cipher_list(ctx, tls_client_params.cipher_string.c_str());
             SSL_CTX_set_security_level(ctx, 1);
@@ -193,9 +193,7 @@ public:
 
         if (tls_client_params.show_common_cipher_list){
             int priority = 0;
-            while(1){
-                 const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
-                 if (not cipher_name) { break; }
+            while (const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority)) {
                  priority++;
                  LOG(LOG_INFO, "TLSContext::Client cipher %d: %s", priority, cipher_name);
             }
@@ -655,9 +653,7 @@ public:
 
         if (show_common_cipher_list){
             int priority = 0;
-            while(1){
-                 const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
-                 if (not cipher_name) { break; }
+            while(const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority)) {
                  priority++;
                  LOG(LOG_INFO, "TLSContext::Server cipher %d: %s", priority, cipher_name);
             }

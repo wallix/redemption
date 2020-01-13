@@ -111,7 +111,7 @@ bool InCryptoTransport::is_open() const
     return this->fd != -1;
 }
 
-const InCryptoTransport::HASH InCryptoTransport::qhash(const char * pathname)
+InCryptoTransport::HASH InCryptoTransport::qhash(const char * pathname)
 {
     SslHMAC_Sha256 hm4k(make_array_view(this->cctx.get_hmac_key()));
 
@@ -141,7 +141,7 @@ const InCryptoTransport::HASH InCryptoTransport::qhash(const char * pathname)
     return qhash;
 }
 
-const InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
+InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
 {
     SslHMAC_Sha256 hm(make_array_view(this->cctx.get_hmac_key()));
 

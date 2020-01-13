@@ -63,10 +63,10 @@ public:
         EX_COMPRESSED_BITMAP_HEADER_PRESENT = 0x1
     };
 
-    typedef enum {
+    enum SetSurfaceCodec {
         SETSURFACE_CODEC_UNKNOWN,
         SETSURFACE_CODEC_REMOTEFX
-    } SetSurfaceCodec;
+    };
 
     void recv(InStream & stream) {
         // 2.2.9.2.1 Set Surface Bits Command (TS_SURFCMD_SET_SURF_BITS)

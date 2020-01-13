@@ -41,6 +41,7 @@ struct Codec
     char const* name;
     char const* options;
 };
+[[maybe_unused]]
 constexpr Codec flv{"flv", "flags=+qscale b=30000"};
 
 int hmac_fn(uint8_t * buffer)

@@ -183,11 +183,11 @@ private:
     template<class T>
     struct Field : FieldBase
     {
-        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) final;
+        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) override final;
 
         /// \return array_view_const_char::data() guarantee with null terminal
         array_view_const_char
-        to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const final;
+        to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const override final;
     };
 
 public:
