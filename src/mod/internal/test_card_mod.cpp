@@ -45,7 +45,7 @@ TestCardMod::TestCardMod(
 , unit_test(unit_test)
 , session_reactor(session_reactor)
 , graphic_events_(graphic_events_)
-, gd_event(session_reactor.create_graphic_event(graphic_events_, std::ref(*this))
+, gd_event(graphic_events_.create_action_executor(session_reactor, std::ref(*this))
     .on_action(jln::one_shot([](gdi::GraphicApi& gd, TestCardMod& mod){
         mod.draw_event(gd);
     })))

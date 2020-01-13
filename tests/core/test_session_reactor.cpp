@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 
     std::string s;
 
-    auto gd = session_reactor.create_graphic_event(graphic_events_, std::ref(s))
+    auto gd = graphic_events_.create_action_executor(session_reactor, std::ref(s))
     .set_notify_delete([](Dt, std::string& s){
         s += "~gd\n";
     })
@@ -244,7 +244,8 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     .set_timeout({})
     .on_timeout([](JLN_TOP_TIMER_CTX ctx, std::string&){ return ctx.ready(); });
 
-    GraphicFdPtr fd_gd_event = session_reactor.create_graphic_fd_event(graphic_fd_events_, fd1)
+    GraphicFdPtr fd_gd_event = graphic_fd_events_
+    .create_top_executor(session_reactor, fd1)
     .on_action([&s](JLN_TOP_CTX ctx, gdi::GraphicApi&){
         s += "fd2\n";
         return ctx.next();
@@ -285,7 +286,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         };
     };
 
-    GraphicEventPtr event = session_reactor.create_graphic_event(graphic_events_, std::ref(s))
+    GraphicEventPtr event = graphic_events_.create_action_executor(session_reactor, std::ref(s))
     .on_action(jln::sequencer(
         trace("a"_s),
         trace("b"_s),
@@ -318,7 +319,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
         };
     };
 
-    event = session_reactor.create_graphic_event(graphic_events_, std::ref(s))
+    event = graphic_events_.create_action_executor(session_reactor, std::ref(s))
     .on_action(jln::sequencer(
         "a"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.next(); }),
         "b"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.at("d"_s).ready(); }),
@@ -368,7 +369,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
 
         void foo(SessionReactor& session_reactor, GraphicEventContainer & graphic_events_, F f)
         {
-            this->gd_ptr = session_reactor.create_graphic_event(graphic_events_, std::ref(*this), f)
+            this->gd_ptr = graphic_events_.create_action_executor(session_reactor, std::ref(*this), f)
             .set_notify_delete([](jln::NotifyDeleteType d, S& self, F f){ f(self, d); })
             .on_action([](JLN_ACTION_CTX ctx, gdi::GraphicApi&, S&, F){
                 return ctx.terminate();

@@ -92,7 +92,8 @@ CloseMod::CloseMod(
 {
     this->screen.set_wh(this->front_width, this->front_height);
     if (this->rail_enabled) {
-        this->graphic_event = session_reactor.create_graphic_event(graphic_events_)
+        this->graphic_event = graphic_events_
+        .create_action_executor(session_reactor)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(

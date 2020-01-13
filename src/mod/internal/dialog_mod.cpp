@@ -63,7 +63,8 @@ DialogMod::DialogMod(
 {
     this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
-        this->graphic_event = this->session_reactor.create_graphic_event(this->graphic_events_)
+        this->graphic_event = this->graphic_events_
+        .create_action_executor(this->session_reactor)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(
@@ -94,7 +95,8 @@ DialogMod::DialogMod(
         });
     }
 
-    this->started_copy_past_event = this->session_reactor.create_graphic_event(this->graphic_events_)
+    this->started_copy_past_event = this->graphic_events_
+    .create_action_executor(this->session_reactor)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

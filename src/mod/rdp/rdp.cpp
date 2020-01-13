@@ -206,7 +206,8 @@ void mod_rdp::init_negociate_event_(
                     }
 
                     private_rdp_negociation->graphic_event
-                    = this->session_reactor.create_graphic_event(this->graphic_events_)
+                    = this->graphic_events_
+                    .create_action_executor(this->session_reactor)
                     .on_action(jln::one_shot([this, &private_rdp_negociation](gdi::GraphicApi&) {
                         RdpNegociation& rdp_negociation = private_rdp_negociation->rdp_negociation;
 
@@ -214,7 +215,8 @@ void mod_rdp::init_negociate_event_(
                         if (is_finish) {
                             this->negociation_result = rdp_negociation.get_result();
                             if (this->buf.remaining()) {
-                                private_rdp_negociation->graphic_event = this->session_reactor.create_graphic_event(this->graphic_events_)
+                                private_rdp_negociation->graphic_event = this->graphic_events_
+                                .create_action_executor(this->session_reactor)
                                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                                     this->draw_event_impl(gd);
                                 }));
@@ -253,7 +255,8 @@ void mod_rdp::init_negociate_event_(
 
             this->negociation_result = private_rdp_negociation->rdp_negociation.get_result();
             if (this->buf.remaining()) {
-                private_rdp_negociation->graphic_event = ctx.get_reactor().create_graphic_event(this->graphic_events_)
+                private_rdp_negociation->graphic_event = this->graphic_events_
+                .create_action_executor(ctx.get_reactor())
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                     this->draw_event_impl(gd);
                 }));

@@ -2867,13 +2867,6 @@ struct SessionReactor
 {
     template<class... Args>
     REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
-    create_graphic_event(GraphicEventContainer & graphic_events_, Args&&... args)
-    {
-        return graphic_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
-    }
-
-    template<class... Args>
-    REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
     create_sesman_event(SesmanEventContainer & sesman_events_, Args&&... args)
     {
         return sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);

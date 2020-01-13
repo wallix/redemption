@@ -62,7 +62,8 @@ WaitMod::WaitMod(
         this->refused();
     }));
 
-    this->started_copy_past_event = session_reactor.create_graphic_event(graphic_events_)
+    this->started_copy_past_event = graphic_events_
+    .create_action_executor(session_reactor)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

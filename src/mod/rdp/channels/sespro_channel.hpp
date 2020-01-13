@@ -361,8 +361,8 @@ private:
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
-                        this->freeze_mod_screen = this->session_reactor
-                        .create_graphic_event(this->graphic_events_, mod.get_dim())
+                        this->freeze_mod_screen = this->graphic_events_
+                        .create_action_executor(this->session_reactor, mod.get_dim())
                         .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
                             gdi_freeze_screen(drawable, dim);
                         }));
