@@ -55,14 +55,14 @@ public:
                      , verbose) {}
 
 protected:
-    virtual void flush_orders() override {}
-    virtual void flush_bitmaps() override {}
+    void flush_orders() override {}
+    void flush_bitmaps() override {}
 
-    virtual void send_pointer(int cache_idx, const Pointer & cursor) override {
+    void send_pointer(int cache_idx, const Pointer & cursor) override {
         (void)cache_idx;
         (void)cursor;
     }
-    virtual void cached_pointer_update(int cache_idx) override {
+    void cached_pointer_update(int cache_idx) override {
         (void)cache_idx;
     }
 };

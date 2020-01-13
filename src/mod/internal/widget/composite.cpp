@@ -257,16 +257,11 @@ void WidgetParent::add_widget(Widget * w)
 void WidgetParent::remove_widget(Widget * w)
 {
     if (this->current_focus == w) {
-        Widget * future_focus_w;
-        if ((future_focus_w = this->get_next_focus(w)) != nullptr) {
-            this->current_focus = future_focus_w;
+        Widget * future_focus_w = this->get_next_focus(w);
+        if (not future_focus_w) {
+            future_focus_w = this->get_previous_focus(w);
         }
-        else if ((future_focus_w = this->get_previous_focus(w)) != nullptr) {
-            this->current_focus = future_focus_w;
-        }
-        else {
-            this->current_focus = nullptr;
-        }
+        this->current_focus = future_focus_w;
     }
 
     this->impl->remove(w);

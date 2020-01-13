@@ -143,10 +143,8 @@ RED_AUTO_TEST_CASE(TestAddUsecTimeval)
 
 RED_AUTO_TEST_CASE(TestLessThanTimeVal)
 {
-    timeval before, after;
-    before.tv_sec = 0;
-    before.tv_usec = 0;
-    after = before;
+    timeval before = {0, 0};
+    timeval after = before;
 
     RED_CHECK(not lessthantimeval(before, after));
     RED_CHECK(not lessthantimeval(after, before));

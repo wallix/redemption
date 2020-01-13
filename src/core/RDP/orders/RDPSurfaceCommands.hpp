@@ -174,7 +174,7 @@ public:
         stream.out_copy_bytes(bitmapData, bitmapDataLength);
     }
 
-    void log(int level, const RDPSurfaceContent &/*content*/) const {
+    static void log(int level, const RDPSurfaceContent &/*content*/) {
         LOG(level, "RDPSetSurfaceCommand");
     }
 

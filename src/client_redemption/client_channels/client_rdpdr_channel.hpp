@@ -76,11 +76,11 @@ public:
         uint64_t ActualAvailableAllocationUnits = 0;
     };
 
-    unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
+    static unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
         return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
     }
 
-    long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
+    static long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
         return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
     }
 

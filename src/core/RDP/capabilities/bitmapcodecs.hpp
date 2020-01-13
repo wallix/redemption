@@ -315,7 +315,8 @@ struct NSCodecCaps
         this->colorLossLevel = stream.in_uint8();
     }
 
-    [[nodiscard]] size_t computeSize() const
+    [[nodiscard]]
+    static size_t computeSize()
     {
         return 3;
     }
@@ -412,7 +413,8 @@ struct RFXICap
         out.out_uint8(this->entropyBits);
     }
 
-    [[nodiscard]] size_t computeSize() const {
+    [[nodiscard]]
+    static size_t computeSize() {
         return 8;
     }
 };
@@ -581,9 +583,9 @@ struct BitmapCodec
 
     struct RFXNoCaps
     {
-        void emit(OutStream & /*out*/) const {}
-        void recv(InStream & /*stream*/, uint16_t /*len*/) {}
-        [[nodiscard]] size_t computeSize() const { return 0; }
+        static void emit(OutStream & /*out*/) {}
+        static void recv(InStream & /*stream*/, uint16_t /*len*/) {}
+        [[nodiscard]] static size_t computeSize() { return 0; }
     };
 
     struct CodecProperties

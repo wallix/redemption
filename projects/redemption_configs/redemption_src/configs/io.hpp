@@ -54,7 +54,7 @@ template<>
 struct zstr_buffer<0>
 {
     static constexpr std::size_t size() { return 0; }
-    char * get() { return nullptr; }
+    static char * get() { return nullptr; }
 };
 
 namespace detail

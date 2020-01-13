@@ -307,25 +307,25 @@ enum {
     , RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU = 0x0040
 //  RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT Indicates that the client supports
 //     0x0080                            network characteristics detection using
-//                                       the structures and PDUs described in 
-//                                       section 2.2.14.    
+//                                       the structures and PDUs described in
+//                                       section 2.2.14.
     , RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT = 0x0080
 //  RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL Indicates that the client supports the
-//                                       Graphics Pipeline Extension Protocol 
+//                                       Graphics Pipeline Extension Protocol
 //                                       described in [MS-RDPEGFX] sections 1, 2, and 3.
     , RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL = 0x0100
-//  RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE Indicates that the client supports 
+//  RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE Indicates that the client supports
 //                                      Dynamic DST. Dynamic DST information is
-//                                      provided by the client in the 
-//                                      cbDynamicDSTTimeZoneKeyName, 
-//                                      dynamicDSTTimeZoneKeyName and 
-//                                      dynamicDaylightTimeDisabled fields of 
+//                                      provided by the client in the
+//                                      cbDynamicDSTTimeZoneKeyName,
+//                                      dynamicDSTTimeZoneKeyName and
+//                                      dynamicDaylightTimeDisabled fields of
 //                                      the Extended Info Packet (section 2.2.1.11.1.1.1).
     , RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE  = 0x0200
 //  RNS_UD_CS_SUPPORT_HEARTBEAT_PDU     Indicates that the client supports the
 //                                      Heartbeat PDU (section 2.2.16.1).
     , RNS_UD_CS_SUPPORT_HEARTBEAT_PDU      = 0x0400
-//   
+//
 };
 
 // If this field is present, all of the preceding fields MUST also be
@@ -406,13 +406,13 @@ enum {
 // |                               | (section 5.4.5.2)                            |
 // +-------------------------------+----------------------------------------------+
 
-// desktopPhysicalWidth (4 bytes): A 32-bit, unsigned integer. The requested 
+// desktopPhysicalWidth (4 bytes): A 32-bit, unsigned integer. The requested
 //   physical width of the desktop, in millimeters (mm). This value MUST be
-//   ignored if it is less than 10 mm or greater than 10,000 mm or 
-//   desktopPhysicalHeight is less than 10 mm or greater than 10,000 mm. 
-//   If this field is present, then the serverSelectedProtocol and 
-//   desktopPhysicalHeight fields MUST also be present. If this field is not 
-//   present, all of the subsequent fields MUST NOT be present. If the 
+//   ignored if it is less than 10 mm or greater than 10,000 mm or
+//   desktopPhysicalHeight is less than 10 mm or greater than 10,000 mm.
+//   If this field is present, then the serverSelectedProtocol and
+//   desktopPhysicalHeight fields MUST also be present. If this field is not
+//   present, all of the subsequent fields MUST NOT be present. If the
 //   desktopPhysicalHeight field is not present, this field MUST be ignored.
 
 // desktopPhysicalHeight (4 bytes): A 32-bit, unsigned integer. The requested
@@ -422,8 +422,8 @@ enum {
 //   then the desktopPhysicalWidth field MUST also be present. If this field is
 //   not present, all of the subsequent fields MUST NOT be present.
 
-// desktopOrientation (2 bytes): A 16-bit, unsigned integer. The requested 
-//   orientation of the desktop, in degrees. 
+// desktopOrientation (2 bytes): A 16-bit, unsigned integer. The requested
+//   orientation of the desktop, in degrees.
 
 enum {
       ORIENTATION_LANDSCAPE         = 0   // The desktop is not rotated
@@ -436,19 +436,19 @@ enum {
 // the desktopPhysicalHeight field MUST also be present. If this field is not
 // present, all of the subsequent fields MUST NOT be present.
 
-// desktopScaleFactor (4 bytes): A 32-bit, unsigned integer. The requested 
+// desktopScaleFactor (4 bytes): A 32-bit, unsigned integer. The requested
 //   desktop scale factor. This value MUST be ignored if it is less than 100% or
 //   greater than 500% or deviceScaleFactor is not 100%, 140%, or 180%. If this
 //   field is present, then the desktopOrientation and deviceScaleFactor fields
 //   MUST also be present. If this field is not present, all of the subsequent
 //   fields MUST NOT be present. If the deviceScaleFactor field is not present,
-//   this field MUST be ignored. 
-//   desktop scale factor: The scale factor (as a percentage) applied to 
+//   this field MUST be ignored.
+//   desktop scale factor: The scale factor (as a percentage) applied to
 //   Windows Desktop Applications.
 
 // deviceScaleFactor (4 bytes): A 32-bit, unsigned integer. The requested device
 //   scale factor. This value MUST be ignored if it is not set to 100%, 140%, or
-//   180% or desktopScaleFactor is less than 100% or greater than 500%. If this 
+//   180% or desktopScaleFactor is less than 100% or greater than 500%. If this
 //   field is present, then the desktopScaleFactor field MUST also be present.<7>
 //   device scale factor: The scale factor (as a percentage) applied to Windows
 //   Store Apps running on Windows 8.1. This value must be calculated such that
@@ -569,7 +569,7 @@ struct CSCore {
 
     void emit(OutStream & stream, uint16_t limit) const
     {
-        if (limit != this->length || limit < 132){ 
+        if (limit != this->length || limit < 132){
             LOG(LOG_ERR, "CSCore::emit short or inconsistant length (%u, %u)", this->length, limit);
             throw Error(ERR_GCC);
         }
@@ -601,18 +601,18 @@ struct CSCore {
 
 private:
     // Length is provided two times: here and in constructor
-    // this is to ensure consistency and that we are really sending the 
+    // this is to ensure consistency and that we are really sending the
     // optional fields we are willing to send
     void emit_optional(OutStream & stream, uint16_t limit) const
     {
-        if (limit != this->length || limit < 132 
-        || (limit != 134 && limit != 136 && limit != 140 && limit != 142 
-         && limit != 144 && limit != 146 && limit != 210 && limit != 211 
-         && limit != 212 && limit != 216 && limit != 220 && limit != 224 
+        if (limit != this->length || limit < 132
+        || (limit != 134 && limit != 136 && limit != 140 && limit != 142
+         && limit != 144 && limit != 146 && limit != 210 && limit != 211
+         && limit != 212 && limit != 216 && limit != 220 && limit != 224
          && limit != 226 && limit != 230 && limit != 234)) {
             LOG(LOG_ERR, "CSCore::emit inconsistant length=(%u, %u) for optional parameters", this->length, limit);
             throw Error(ERR_GCC);
-        } 
+        }
         stream.out_uint16_le(this->postBeta2ColorDepth);
         if (this->length == 134) { return; }
 
@@ -659,7 +659,7 @@ private:
         if (this->length == 234) { return; }
     }
 
-    [[nodiscard]] const char *connectionTypeString(uint8_t type) const {
+    [[nodiscard]] static const char *connectionTypeString(uint8_t type) {
         static const char *types[] = {
             "<unknown>", "MODEM", "BROADBAND_LOW",
             "SATELLITE", "BROADBAND_HIGH", "WAN", "LAN"
@@ -681,13 +681,13 @@ public:
             return;
         }
         size_t l = this->length;
-        if (l != 132 && l != 134 && l != 136 && l != 140 
-         && l != 142 && l != 144 && l != 146 && l != 210 
-         && l != 211 && l != 212 && l != 216 && l != 220 
+        if (l != 132 && l != 134 && l != 136 && l != 140
+         && l != 142 && l != 144 && l != 146 && l != 210
+         && l != 211 && l != 212 && l != 216 && l != 220
          && l != 224 && l != 226 && l != 230 && l != 234) {
             LOG(LOG_ERR, "CSCore User Data has inconsistant length=%d for optional parameters", this->length);
             throw Error(ERR_GCC);
-        } 
+        }
 
         LOG(LOG_INFO, "cs_core::length [%04x]", this->length);
         LOG(LOG_INFO, "cs_core::version [%04x] %s", this->version,
