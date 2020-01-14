@@ -2249,12 +2249,12 @@ namespace jln
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Timer = TimerExecutorWithValues<Tuple, Ts...>;
-            using TimerData = SharedData<Timer>;
-            using InitCtx = InitContext<TimerData, Tuple>;
+            using LocalTimerData = SharedData<Timer>;
+            using InitCtx = InitContext<LocalTimerData, Tuple>;
             return detail::TimerExecutorBuilder<InitCtx>{
                 InitCtx{
-                    std::unique_ptr<TimerData, SharedDataDeleter>(
-                        new TimerData{reactor, static_cast<Us&&>(xs)...}),
+                    std::unique_ptr<LocalTimerData, SharedDataDeleter>(
+                        new LocalTimerData{reactor, static_cast<Us&&>(xs)...}),
                     *this}
             };
         }
@@ -2912,8 +2912,31 @@ struct SessionReactor
         return tv;
     }
 
+//        auto get_gd = &gdi::null_gd;
+//        auto const end_tv = session_reactor.get_current_time();
+//        this->timer_events_.exec_timer(end_tv);
+//        this->fd_events_.exec_timeout(end_tv);
+//        if (disable_gd) {
+//            this->graphic_timer_events_.exec_timer(end_tv, get_gd());
+//            this->graphic_fd_events_.exec_timeout(end_tv, get_gd());
+
+
+//    auto const end_tv = session_reaction.get_current_time();
+//    timer_events_.exec_timer(end_tv);
+//    fd_events_.exec_timeout(end_tv);
+//    if (enable_gd) {
+//        graphic_timer_events_.exec_timer(end_tv, get_gd());
+//        graphic_fd_events_.exec_timeout(end_tv, get_gd());
+//    }
+
+
     template<class GetGd>
-    void execute_timers(TopFdContainer & fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, EnableGraphics enable_gd, GetGd get_gd)
+    void execute_timers(TopFdContainer & fd_events_,
+                        GraphicFdContainer& graphic_fd_events_,
+                        TimerContainer& timer_events_,
+                        GraphicTimerContainer & graphic_timer_events_,
+                        EnableGraphics enable_gd,
+                        GetGd get_gd)
     {
         auto const end_tv = this->get_current_time();
         timer_events_.exec_timer(end_tv);

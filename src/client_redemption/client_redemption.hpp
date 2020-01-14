@@ -1006,16 +1006,19 @@ public:
     void callback(bool is_timeout) override {
 
         try {
-            auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
             if (is_timeout) {
-                this->session_reactor.execute_timers(this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_timer_events_, EnableGraphics{true}, get_gd);
+                auto const end_tv = session_reactor.get_current_time();
+                this->timer_events_.exec_timer(end_tv);
+                this->fd_events_.exec_timeout(end_tv);
+                this->graphic_timer_events_.exec_timer(end_tv, *this);
+                this->graphic_fd_events_.exec_timeout(end_tv, *this);
             } else {
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;
                 };
                 this->fd_events_.exec_action(is_mod_fd);
-                this->graphic_events_.exec_action(get_gd());
-                this->graphic_fd_events_.exec_action(is_mod_fd, get_gd());
+                this->graphic_events_.exec_action(*this);
+                this->graphic_fd_events_.exec_action(is_mod_fd, *this);
             }
         } catch (const Error & e) {
 

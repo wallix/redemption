@@ -86,13 +86,14 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
     LoginMod d(ini, session_reactor, timer_events_, graphic_events_, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
 
-    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, EnableGraphics(false), &gdi::null_gd);
+    timeval tv = session_reactor.get_current_time();
+    timer_events_.exec_timer(tv);
+    fd_events_.exec_timeout(tv);
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_mod_signal());
 
-    timeval tv = session_reactor.get_current_time();
     tv.tv_sec += 2;
     session_reactor.set_current_time(tv);
-
-    session_reactor.execute_timers(fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, EnableGraphics(false), &gdi::null_gd);
+    timer_events_.exec_timer(tv);
+    fd_events_.exec_timeout(tv);
     RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_mod_signal());
 }

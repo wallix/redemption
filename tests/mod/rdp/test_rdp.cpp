@@ -246,9 +246,13 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
         graphic_fd_events_.exec_action(fd_is_set, front.gd());
     }
 
-    //session_reactor.execute_timers(
-    //    SessionReactor::EnableGraphics{true},
-    //    [&]()->gdi::GraphicApi&{ return front.gd(); });
+   
+//    auto const end_tv = session_reactor.get_current_time();
+//    timer_events_.exec_timer(end_tv);
+//    fd_events_.exec_timeout(end_tv);
+//    graphic_timer_events_.exec_timer(end_tv, front.gd());
+//    graphic_fd_events_.exec_timeout(end_tv, front.gd());
+
     //unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
     //    (void)sck;
     //    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };

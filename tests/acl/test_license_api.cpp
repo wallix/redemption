@@ -277,9 +277,12 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
 #ifdef GENERATE_TESTING_DATA
             // Uncomment the code block below to generate testing data.
-            session_reactor.execute_timers(
-                EnableGraphics{true},
-                [&]()->gdi::GraphicApi&{ return front.gd(); });
+            auto const end_tv = session_reactor.get_current_time();
+            timer_events_.exec_timer(end_tv);
+            fd_events_.exec_timeout(end_tv);
+            graphic_timer_events_.exec_timer(end_tv, front.gd());
+            graphic_fd_events_.exec_timeout(end_tv, front.gd());
+
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
                 auto is_fd_set = [](int /*fd*/, auto& /*e*/){ return true; };
@@ -503,10 +506,12 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
 #ifdef GENERATE_TESTING_DATA
             // Uncomment the code block below to generate testing data.
-            session_reactor.execute_timers(
-                graphic_timer_events_,
-                EnableGraphics{true},
-                [&]()->gdi::GraphicApi&{ return front.gd(); });
+            auto const end_tv = this->get_current_time();
+            timer_events_.exec_timer(end_tv);
+            fd_events_.exec_timeout(end_tv);
+            graphic_timer_events_.exec_timer(end_tv, front.gd());
+            graphic_fd_events_.exec_timeout(end_tv, front.gd());
+
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
                 auto is_fd_set = [](int /*fd*/, auto& /*e*/){ return true; };
