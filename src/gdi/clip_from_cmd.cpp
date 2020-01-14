@@ -78,10 +78,10 @@ Rect clip_from_cmd(RDPLineTo const & cmd) {
 namespace {
     template<class RngDeltaPoint>
     Rect clip_from_delta_list(int16_t minx, int16_t miny, const RngDeltaPoint & delta_points) {
-        int16_t maxx, maxy, previousx, previousy;
-
-        maxx = previousx = minx;
-        maxy = previousy = miny;
+        int16_t maxx = minx;
+        int16_t maxy = miny;
+        int16_t previousx = minx;
+        int16_t previousy = miny;
 
         for (auto & delta_point : delta_points) {
             previousx += delta_point.xDelta;

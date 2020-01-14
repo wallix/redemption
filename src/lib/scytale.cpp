@@ -937,7 +937,7 @@ namespace
         {
             using type = tuple<tuple_elem<ints, Ts>...>;
         };
-    }
+    } // namespace detail
 
     // compatibility C layout
     template<class... xs>
@@ -1095,7 +1095,7 @@ namespace
 
         union_type u;
     };
-}
+} // anonymous namespace
 
 namespace std
 {
@@ -1187,7 +1187,7 @@ namespace
         });
     }
     REDEMPTION_DIAGNOSTIC_POP
-}
+} // anonymous namespace
 
 extern "C"
 {
@@ -1212,7 +1212,7 @@ struct ScytaleMwrm3ReaderHandle
 
             this->raw_data.type = safe_int{type.value};
             this->raw_data.fmt = StorageParams::fmt::c_str();
-            this->raw_data.data = new(&union_element.storage)
+            this->raw_data.data = new(&union_element.storage) /*NOLINT*/
                 typename StorageParams::storage_type{{scytale_raw_value(xs)}...};
 
             this->remaining_data = remaining_data;

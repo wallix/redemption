@@ -42,7 +42,7 @@ namespace detail
         constexpr C a[]{cs...};
         return utf16_le_literal<((ints&1) ? '\0' : a[ints/2])...>::av();
     }
-}
+} // namespace detail
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")

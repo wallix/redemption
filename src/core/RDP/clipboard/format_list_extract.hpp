@@ -58,7 +58,7 @@ namespace Cliprdr
         {
             return static_cast<T&&>(x);
         }
-    }
+    } // anonymous detail
 
     // [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
     // ===========================================================

@@ -217,7 +217,7 @@ namespace
     std::string_view strv;
     int ints[3]{};
     Range rng;
-}
+} // anonymous namespace
 
 static_assert(not check_cstr_array_view_call(cstr, 1));
 static_assert(check_cstr_array_view_call("abc", 1));

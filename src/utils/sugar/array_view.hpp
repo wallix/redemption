@@ -55,7 +55,7 @@ namespace detail
 
     template<class T, class R>
     struct filter_dangerous_implicit_array_view<T&, R> : filter_dangerous_implicit_array_view<T, R> {};
-}
+} // namespace detail
 
 template<class T>
 struct array_view

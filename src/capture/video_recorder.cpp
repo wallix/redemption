@@ -67,7 +67,7 @@ namespace
         *ptr = nullptr;
     }
 #endif
-}
+} // anonymous namespace
 
 struct video_recorder::D
 {

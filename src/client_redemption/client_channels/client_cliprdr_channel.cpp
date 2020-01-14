@@ -48,7 +48,7 @@ namespace
     {
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(text_html, "text/html")
     }
-}
+} // anonymous namespace
 
 enum class ClientCLIPRDRChannel::CustomFormatName
 {

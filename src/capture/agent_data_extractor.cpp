@@ -85,7 +85,7 @@ namespace
 
         return pairs;
     }();
-}
+} // anonymous namespace
 
 bool AgentDataExtractor::extract_list(Av data)
 {

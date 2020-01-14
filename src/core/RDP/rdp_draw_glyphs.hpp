@@ -265,7 +265,7 @@ namespace detail
             fc_data++;
         }
     }
-}
+} // namespace detail
 
 template<class SetPoint>
 void rdp_draw_glyphs(

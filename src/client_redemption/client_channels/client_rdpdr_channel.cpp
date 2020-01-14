@@ -1168,12 +1168,9 @@ void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdp
         }
             break;
 
-        case rdpdr::FileAllocationInformation :
-            deviceIOResponse.emit(out_stream);
-            cdsir.emit(out_stream);
-            break;
-
+        case rdpdr::FileAllocationInformation:
         case rdpdr::FileEndOfFileInformation:
+        case rdpdr::FileBasicInformation:
             deviceIOResponse.emit(out_stream);
             cdsir.emit(out_stream);
             break;
@@ -1197,15 +1194,9 @@ void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdp
         }
             break;
 
-        case rdpdr::FileBasicInformation:
-        {
-            deviceIOResponse.emit(out_stream);
-            cdsir.emit(out_stream);
-        }
-            break;
-
-        default:  LOG(LOG_WARNING, "SERVER >> RDPDR: unknown FsInformationClass = 0x%x", sdsir.FsInformationClass());
-
+        default:
+            LOG(LOG_WARNING, "SERVER >> RDPDR: unknown FsInformationClass = 0x%x",
+                sdsir.FsInformationClass());
             break;
     }
 

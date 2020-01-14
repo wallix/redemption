@@ -128,9 +128,10 @@ enum class LogId : unsigned
 inline bool is_valid_log_id(unsigned id)
 {
     switch (id) {
-#define f(x, cat) case unsigned(LogId::x): return true;
+#define f(x, cat) case unsigned(LogId::x):
     X_LOG_ID(f)
 #undef f
+        return true;
     }
     return false;
 }
@@ -151,4 +152,4 @@ namespace detail
         #undef f
     };
     REDEMPTION_DIAGNOSTIC_POP
-}
+} // namespace detail

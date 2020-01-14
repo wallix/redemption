@@ -235,7 +235,7 @@ namespace
     {
         return str.c_str();
     }
-}
+} // anonymous namespace
 
 template<class T, class... Ts>
 void FlatForm::set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs)

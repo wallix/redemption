@@ -359,7 +359,7 @@ struct integral_mwrm3_type_info_list
     template<class... Us>
     integral_mwrm3_type_info_list(integral_mwrm3_type_info_list<Us...> /*infos*/) noexcept
     {}};
-}
+} // anonymous namespace
 
 namespace {
     template<>
@@ -617,7 +617,7 @@ void mwrm3_text_writer()
     ));
 }
 
-}
+} // anonymous namespace
 
 int main(int ac, char** av)
 {

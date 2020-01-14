@@ -107,7 +107,7 @@ namespace
     {
         return {const_cast<char*>(av.data()), av.size()}; /*NOLINT*/
     }
-}
+} // anonymous namespace
 
 struct Metrics::Impl
 {

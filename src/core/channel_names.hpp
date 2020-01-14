@@ -111,7 +111,7 @@ namespace channel_names
     DEF_NAME(rail_ri);
     DEF_NAME(sespro);
     DEF_NAME(wabdiag);
-}
+} // namespace channel_names
 #undef DEF_NAME
 
 namespace CHANNELS {
