@@ -530,7 +530,10 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
                     return bytes_view(buffer.data(), std::size_t(len));
                 }
 
+                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code-return")
                 return bytes_view{}; /*NOLINT*/
+                REDEMPTION_DIAGNOSTIC_POP
             };
 
             auto content = readall(file2hash.c_str(), fname.c_str());
@@ -600,7 +603,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
     {
         RED_REQUIRE(data->fmt == "uuuussBBB"sv);
         auto* raw_data = static_cast<char const*>(data->data);
-        RED_REQUIRE(!!raw_data);
+        RED_REQUIRE(raw_data);
         struct D
         {
             uint64_t file_id;

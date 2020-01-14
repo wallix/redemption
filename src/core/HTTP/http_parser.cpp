@@ -34,7 +34,8 @@ enum HttpParserState
 };
 
 /** @brief internal data for a HTTP parser */
-struct HttpParserImpl {
+struct HttpParser::HttpParserImpl
+{
 	std::string buffer;
 	HttpParserState state = HTTP_WAITING_FIRST_LINE;
 	uint64_t bodyLength = 0;

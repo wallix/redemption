@@ -340,12 +340,11 @@ static std::pair<int, char const*> encode_frame(
             }
             break;
         }
-        else {
-            av_packet_rescale_ts(pkt, codec_ctx->time_base, video_st->time_base);
-            pkt->stream_index = video_st->index;
-            /* Write the compressed frame to the media file. */
-            errnum = av_interleaved_write_frame(oc, pkt);
-        }
+
+        av_packet_rescale_ts(pkt, codec_ctx->time_base, video_st->time_base);
+        pkt->stream_index = video_st->index;
+        /* Write the compressed frame to the media file. */
+        errnum = av_interleaved_write_frame(oc, pkt);
         // av_packet_unref(&this->d->pkt);
     }
 

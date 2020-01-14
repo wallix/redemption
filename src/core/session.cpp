@@ -629,7 +629,7 @@ public:
 
         try {
             TimeSystem timeobj;
-            
+
             // load font for internal pages
             Font glyphs = Font(app_path(AppPath::DefaultFontFile),
                 ini.get<cfg::globals::spark_view_specific_glyph_width>());;
@@ -648,7 +648,7 @@ public:
             ModWrapper mod_wrapper;
 
             windowing_api* winapi = nullptr;
-            
+
             ModOSD mod_osd(mod_wrapper, front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
             ModFactory mod_factory(session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
@@ -1003,7 +1003,7 @@ void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random&
     session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
         WsTransport::UseTls(true), WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
-            ini.get<cfg::client::ssl_cipher_list>().c_str(),
+            ini.get<cfg::client::ssl_cipher_list>(),
             ini.get<cfg::client::tls_min_level>(),
             ini.get<cfg::client::tls_max_level>(),
             ini.get<cfg::client::show_common_cipher_list>(),

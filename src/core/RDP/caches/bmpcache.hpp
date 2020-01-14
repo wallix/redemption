@@ -248,6 +248,16 @@ private:
             return this->last - this->first;
         }
 
+        array_view<T> view() noexcept
+        {
+            return {first, last};
+        }
+
+        array_view<const T> view() const noexcept
+        {
+            return {first, last};
+        }
+
         void clear() {
             this->sorted_elements.clear();
             for (T * p = this->first; p != this->last; ++p) {

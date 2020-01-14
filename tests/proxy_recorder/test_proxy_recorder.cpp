@@ -234,9 +234,6 @@ uint8_t data2_reply[1] = {0};
         {1, sizeof(data2_reply), data2_reply}
     };
 
-    ReplayFrontTransport(){}
-    ~ReplayFrontTransport(){}
-
 private:
     Read do_atomic_read(uint8_t * buffer, size_t len) override {
         LOG(LOG_INFO, "reading %zu bytes into buffer", len);
