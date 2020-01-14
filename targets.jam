@@ -52,6 +52,7 @@ exe headlessclient :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -59,6 +60,7 @@ exe headlessclient :
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
+  <library>src/mod/vnc/vnc.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -187,12 +189,14 @@ exe rdpproxy :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -342,6 +346,7 @@ exe rdpclient :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -349,6 +354,7 @@ exe rdpclient :
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
+  <library>src/mod/vnc/vnc.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -608,12 +614,14 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -748,12 +756,14 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -967,12 +977,14 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -2748,12 +2760,14 @@ test-run tests/core/test_mainloop :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -2890,12 +2904,14 @@ test-run tests/core/test_session :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
@@ -4704,12 +4720,14 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/keyboard/keymapsym.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/d3des.o
@@ -4722,6 +4740,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/vnc/vnc.cpp
   <covfile>src/mod/vnc/vnc.hpp
   <define>ZLIB_CONST
 ;
@@ -5823,6 +5842,9 @@ obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/r
 obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : $(FFMPEG_CXXFLAGS) ;
+obj src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
+obj src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
+obj src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpsnd_channel.cpp ;
@@ -5908,6 +5930,7 @@ obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
+obj src/mod/vnc/dsm.o : $(REDEMPTION_SRC_PATH)/mod/vnc/dsm.cpp ;
 obj src/mod/vnc/encoder/copyrect.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/copyrect.cpp ;
 obj src/mod/vnc/encoder/cursor.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/cursor.cpp ;
 obj src/mod/vnc/encoder/hextile.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/hextile.cpp ;
@@ -5915,6 +5938,7 @@ obj src/mod/vnc/encoder/raw.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/raw.cpp ;
 obj src/mod/vnc/encoder/rre.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/rre.cpp ;
 obj src/mod/vnc/encoder/zrle.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/zrle.cpp : <define>ZLIB_CONST ;
 obj src/mod/vnc/new_mod_vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/new_mod_vnc.cpp : <define>ZLIB_CONST ;
+obj src/mod/vnc/vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/vnc.cpp : <define>ZLIB_CONST ;
 obj src/mod/xup/xup.o : $(REDEMPTION_SRC_PATH)/mod/xup/xup.cpp ;
 obj src/proxy_recorder/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/proxy_recorder/proxy_recorder.cpp ;
 obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/system/linux/system/tls_check_certificate.cpp ;

@@ -1,0 +1,18 @@
+Challenge:
+    pluginId                        uint8 
+    nPluginVersionCompatability     uint8
+    
+    nServerIdentificationLength     uint32
+    ServerIdentification            byte[nServerIdentificationLength]
+    
+    dwChallengeFlags                uint32
+    ClientAuthPublicKeyIdentifierLength uint16
+    ClientAuthPublicKeyIdentifier   byte[ClientAuthPublicKeyIdentifierLength]
+    
+    Salt                            uint8[8]
+    IV                              bytes (depends on the kind of key)
+    
+    nPublicKeyLength                uint32
+    publicKey                       byte[nPublicKeyLength]
+    
+    sha1Hash                        uint8[20] sha1(Salt+publicKey)
