@@ -191,7 +191,7 @@ private:
             this->storage.template update<T>();
         }
 
-        T * allocate(size_type /*n*/, std::allocator<void>::const_pointer /*hint*/ = nullptr)
+        T * allocate(size_type /*n*/, std::allocator<void>::const_pointer /*hint*/ = nullptr) /*NOLINT*/
         {
             return static_cast<T*>(this->storage.pop());
         }
@@ -320,7 +320,7 @@ public:
         uint16_t bmp_size;
         bool is_persistent;
 
-        explicit CacheOption(uint16_t entries = 0, uint16_t bmp_size = 0, bool is_persistent = false)
+        explicit CacheOption(uint16_t entries = 0, uint16_t bmp_size = 0, bool is_persistent = false) noexcept /*NOLINT*/
         : entries(entries)
         , bmp_size(bmp_size)
         , is_persistent(is_persistent)
@@ -397,12 +397,12 @@ public:
         const BitsPerPixel bpp,
         uint8_t number_of_cache,
         bool use_waiting_list,
-        CacheOption c0 = CacheOption(),
-        CacheOption c1 = CacheOption(),
-        CacheOption c2 = CacheOption(),
-        CacheOption c3 = CacheOption(),
-        CacheOption c4 = CacheOption(),
-        Verbose verbose = {})
+        CacheOption c0,
+        CacheOption c1,
+        CacheOption c2,
+        CacheOption c3,
+        CacheOption c4,
+        Verbose verbose)
     : owner(owner)
     , bpp(bpp)
     , number_of_cache(number_of_cache)

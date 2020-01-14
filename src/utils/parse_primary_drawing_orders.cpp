@@ -33,11 +33,11 @@ PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, boo
 
     char * end;
     char const * p = orders;
-    for (int order_number = std::strtol(p, &end, 0);
+    for (long order_number = std::strtol(p, &end, 0);
         p != end;
         order_number = std::strtol(p, &end, 0))
     {
-        LOG_IF(bEnableLog, LOG_INFO, "RDP OrderNumber=%d", order_number);
+        LOG_IF(bEnableLog, LOG_INFO, "RDP OrderNumber=%ld", order_number);
 
         switch (order_number)
         {
@@ -133,7 +133,7 @@ PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, boo
             orders_support.set(TS_NEG_ELLIPSE_SC_INDEX);
             break;
         default:
-            LOG(LOG_WARNING, "Unknown RDP %sPrimaryDrawingOrder=%d", extra, order_number);
+            LOG(LOG_WARNING, "Unknown RDP %sPrimaryDrawingOrder=%ld", extra, order_number);
         }
 
         p = end;

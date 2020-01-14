@@ -20,9 +20,11 @@
 
 #pragma once
 
-#include <type_traits>
+#include "utils/sugar/flags.hpp"
 
+#include <type_traits>
 #include <cinttypes>
+
 
 namespace detail
 {
@@ -49,13 +51,17 @@ convert_verbose_flags(E verbose)
 { return {static_cast<uint32_t>(verbose)}; }
 
 
-#define REDEMPTION_VERBOSE_FLAGS_DEC_OPS(Prefix, enum_name)            \
-    enum class enum_name : uint32_t;                                   \
-                                                                       \
+#define REDEMPTION_DECLARE_ENUM_OPS(Prefix, enum_name)                 \
     Prefix enum_name operator | (enum_name x, enum_name y) noexcept    \
-    { return enum_name(uint32_t(x) | uint32_t(y)); }                   \
+    {                                                                  \
+        using int_type = std::underlying_type_t<enum_name>;            \
+        return enum_name(int_type(x) | int_type(y));                   \
+    }                                                                  \
     Prefix enum_name operator & (enum_name x, enum_name y) noexcept    \
-    { return enum_name(uint32_t(x) & uint32_t(y)); }                   \
+    {                                                                  \
+        using int_type = std::underlying_type_t<enum_name>;            \
+        return enum_name(int_type(x) & int_type(y));                   \
+    }                                                                  \
                                                                        \
     Prefix enum_name& operator |= (enum_name& x, enum_name y) noexcept \
     { return x = x | y; }                                              \
@@ -63,7 +69,12 @@ convert_verbose_flags(E verbose)
     { return x = x & y; }                                              \
                                                                        \
     Prefix enum_name operator ~ (enum_name x) noexcept                 \
-    { return enum_name(~uint32_t(x)); }
+    { return enum_name(~std::underlying_type_t<enum_name>(x)); }
+
+
+#define REDEMPTION_VERBOSE_FLAGS_DEC_OPS(Prefix, enum_name) \
+    enum class enum_name : uint32_t;                        \
+    REDEMPTION_DECLARE_ENUM_OPS(Prefix, enum_name)
 
 
 #define REDEMPTION_VERBOSE_FLAGS(visibility, verbose_member_name) \

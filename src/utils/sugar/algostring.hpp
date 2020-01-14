@@ -62,17 +62,17 @@ auto trim(R & r, Pred pred = Pred()) -> range<decltype(r.begin())> {
 
 namespace detail
 {
-    inline array_view_const_char to_string_view_or_char(array_view_const_char av, int) noexcept
+    inline array_view_const_char to_string_view_or_char(array_view_const_char av, int /*dummy*/) noexcept
     {
         return av;
     }
 
-    inline array_view_const_char to_string_view_or_char(char const* s, char) noexcept
+    inline array_view_const_char to_string_view_or_char(char const* s, char /*dummy*/) noexcept
     {
         return {s, ::strlen(s)};
     }
 
-    inline char to_string_view_or_char(char c, int) noexcept
+    inline char to_string_view_or_char(char c, int /*dummy*/) noexcept
     {
         return c;
     }

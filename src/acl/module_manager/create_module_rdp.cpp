@@ -685,7 +685,75 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         bool enable_validator = ini.get<cfg::file_verification::enable_up>() 
             || ini.get<cfg::file_verification::enable_down>();
 
-        std::unique_ptr<ModRDPWithSocketAndMetrics::FileValidator> file_validator;
+            std::unique_ptr<ModMetrics> metrics;
+            std::unique_ptr<FileValidator> file_validator;
+            std::unique_ptr<FdxCapture> fdx_capture;
+            Fstat fstat;
+
+            FdxCapture* get_fdx_capture(ModuleManager& mm)
+            {
+                if (!this->fdx_capture
+                 && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
+                ) {
+                    LOG(LOG_INFO, "Enable clipboard file record");
+                    CapturePathsContext capture_paths_ctx(
+                        mm.ini.get<cfg::video::record_path>().as_string(),
+                        mm.ini.get<cfg::video::hash_path>().as_string(),
+                        mm.ini.get<cfg::session_log::log_path>()
+                    );
+                    int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
+                    auto const& session_id = mm.ini.get<cfg::context::session_id>();
+
+                    this->fdx_capture = std::make_unique<FdxCapture>(
+                        capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
+                        session_id, groupid, mm.cctx, mm.gen, this->fstat,
+                        /* TODO should be a log (siem?)*/
+                        ReportError());
+                }
+
+                return this->fdx_capture.get();
+            }
+
+            ModRdpFactory& get_rdp_factory() noexcept
+            {
+                return static_cast<ModRdpFactory&>(*this);
+            }
+
+            explicit ModRDPWithMetrics(
+                Transport & trans,
+                SessionReactor& session_reactor,
+                gdi::GraphicApi & gd,
+                FrontAPI & front,
+                const ClientInfo & info,
+                RedirectionInfo & redir_info,
+                Random & gen,
+                TimeObj & timeobj,
+                ChannelsAuthorizations channels_authorizations,
+                const ModRDPParams & mod_rdp_params,
+                const TLSClientParams & tls_client_params,
+                AuthApi & authentifier,
+                ReportMessageApi & report_message,
+                LicenseApi & license_store,
+                LogCategoryFlags dont_log_category,
+                ModRdpVariables vars,
+                RDPMetrics * metrics,
+                FileValidatorService * file_validator_service)
+            : DispatchReportMessage(report_message, front, dont_log_category)
+            , mod_rdp(
+                trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
+                static_cast<DispatchReportMessage&>(*this), license_store, vars,
+                metrics, file_validator_service, this->get_rdp_factory())
+            {}
+        };
+
+        bool enable_validator = ini.get<cfg::file_verification::enable_up>() || ini.get<cfg::file_verification::enable_down>();
+        bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
+            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
+
+        std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
+        std::unique_ptr<ModRDPWithMetrics::FileValidator> file_validator;
+
         int validator_fd = -1;
 
         if (enable_validator) {

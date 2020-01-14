@@ -822,7 +822,7 @@ public:
 
 
 
-    virtual void print_wrm_graphic_stat(const std::string &) {
+    virtual void print_wrm_graphic_stat(const std::string & /*movie_path*/) {
 
         for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
             unsigned int to_count = this->wrmGraphicStat.get_count(i);
@@ -878,7 +878,7 @@ public:
         return movie_time_start;
     }
 
-    virtual void instant_replay_client(int begin, int ) {
+    virtual void instant_replay_client(int begin, int /*last_balised*/) {
         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
     }
 

@@ -133,10 +133,11 @@ namespace
 RED_AUTO_TEST_CASE(TestErrCb)
 {
     CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(
-        [](uint8_t*){ visited_cb = true; return -1; });
-    cctx.set_get_trace_key_cb(
-        [](uint8_t const*, int, uint8_t*, unsigned){ visited_cb = true; return -1; });
+
+    auto cb = [](auto... /*dummy*/){ visited_cb = true; return -1; };
+
+    cctx.set_get_hmac_key_cb(cb);
+    cctx.set_get_trace_key_cb(cb);
     cctx.set_master_derivator(cstr_array_view("abc"));
 
     visited_cb = false;

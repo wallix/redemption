@@ -126,11 +126,9 @@ SelectorMod::SelectorMod(
         this->copy_paste.ready(this->front);
     }));
 
-    LOG(LOG_INFO, "Setting sesman event");
     this->sesman_event = sesman_events_
     .create_action_executor(session_reactor)
     .on_action(jln::always_ready([this](Inifile&){
-        LOG(LOG_INFO, "Executing sesman event on behalf of selector");
         char buffer[16];
 
         this->current_page = this->vars.get<cfg::context::selector_current_page>();

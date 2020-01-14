@@ -414,7 +414,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             FdxCapture fdx = FdxCapture{
                 record_path.dirname().string(),
                 hash_path.dirname().string(),
-                sid, -1, cctx, rnd, fstat};
+                sid, -1, cctx, rnd, fstat,
+                ReportError()};
         };
 
         auto fdx_ctx = [&]{

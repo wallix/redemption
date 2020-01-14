@@ -46,7 +46,7 @@ public:
 
     Translator tr;
 
-    int flags;
+    unsigned flags;
     int duration_max;
 
     enum {

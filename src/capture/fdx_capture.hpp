@@ -101,7 +101,7 @@ struct FdxCapture
         std::string_view record_path, std::string_view hash_path,
         std::string_view sid, int groupid,
         CryptoContext& cctx, Random& rnd, Fstat& fstat,
-        ReportError report_error = ReportError());
+        ReportError report_error);
 
     TflFile new_tfl(Mwrm3::Direction direction);
 
