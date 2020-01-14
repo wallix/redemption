@@ -209,8 +209,9 @@ class PatternSearcher
     Utf8KbdData utf8_kbd_data;
 
 public:
-    explicit PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, int verbose = 0) {
-        utils::MatchFinder::configure_regexes(conf_regex, filters, this->regexes_filter, verbose, true);
+    explicit PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, bool verbose) {
+        utils::MatchFinder::configure_regexes(conf_regex, filters, this->regexes_filter, verbose,
+            utils::MatchFinder::WithCapture(true));
         auto const count_regex = this->regexes_filter.size();
         if (count_regex) {
             this->regexes_searcher = std::make_unique<TextSearcher[]>(count_regex);
@@ -337,7 +338,7 @@ public:
     explicit PatternKbd(
         ReportMessageApi * report_message,
         char const * str_pattern_kill, char const * str_pattern_notify,
-        int verbose = 0)
+        bool verbose)
     : report_message(report_message)
     , pattern_kill(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                    str_pattern_kill && report_message ? str_pattern_kill : nullptr, verbose)
@@ -366,7 +367,7 @@ public:
                     }
                 }
             },
-            [this](array_view_const_char const &) {
+            [this](array_view_const_char const & /*noprintable_char*/) {
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
             },
@@ -614,11 +615,12 @@ public:
     explicit PatternsChecker(ReportMessageApi & report_message, PatternParams const & params)
     : report_message(report_message)
     {
+        auto without_capture = utils::MatchFinder::WithCapture(false);
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            params.pattern_kill, this->regexes_filter_kill, params.verbose);
+            params.pattern_kill, this->regexes_filter_kill, params.verbose, without_capture);
 
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
-            params.pattern_notify, this->regexes_filter_notify, params.verbose);
+            params.pattern_notify, this->regexes_filter_notify, params.verbose, without_capture);
     }
 
     [[nodiscard]] bool contains_pattern() const {

@@ -41,7 +41,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
         this->graphic_event = session_reactor.create_graphic_event()
-        .on_action(jln::one_shot([this](gdi::GraphicApi&){
+        .on_action(jln::one_shot([this](gdi::GraphicApi& /*gd*/){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(
                     *this, this->front_width, this->front_height, this->font(),

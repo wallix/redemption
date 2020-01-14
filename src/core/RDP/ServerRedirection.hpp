@@ -343,9 +343,9 @@ struct ServerRedirectionPDU {
             this->TargetNetAddressesLength = this->recv_field_process(
                 stream, make_array_view(this->TargetNetAddresses));
         }
-        int remains = this->Length - (stream.get_offset() - offset);
+        size_t remains = this->Length - (stream.get_offset() - offset);
         // LOG(LOG_INFO, "receive RDP_SERVER_REDIRECTION_PACKET pad = %d", remains);
-        if ((remains <= 8) && (remains >= 0)) {
+        if (remains <= 8 && remains >= 0) {
             stream.in_skip_bytes(remains);
         }
     }

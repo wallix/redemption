@@ -87,21 +87,21 @@ int main()
     array_view_const_u8{} = ba;
     array_view_const_u8{} = cba;
 
-    [](writable_buffer_view){}(a);
-    [](writable_buffer_view){}(ua);
-    [](writable_buffer_view){}(av);
-    [](writable_buffer_view){}(uav);
-    [](writable_buffer_view){}(ba);
+    [](writable_buffer_view /*dummy*/){}(a);
+    [](writable_buffer_view /*dummy*/){}(ua);
+    [](writable_buffer_view /*dummy*/){}(av);
+    [](writable_buffer_view /*dummy*/){}(uav);
+    [](writable_buffer_view /*dummy*/){}(ba);
 
-    [](buffer_view){}(a);
-    [](buffer_view){}(ua);
-    [](buffer_view){}(av);
-    [](buffer_view){}(uav);
-    [](buffer_view){}(ba);
+    [](buffer_view /*dummy*/){}(a);
+    [](buffer_view /*dummy*/){}(ua);
+    [](buffer_view /*dummy*/){}(av);
+    [](buffer_view /*dummy*/){}(uav);
+    [](buffer_view /*dummy*/){}(ba);
 
-    [](buffer_view){}(ca);
-    [](buffer_view){}(cua);
-    [](buffer_view){}(cav);
-    [](buffer_view){}(cuav);
-    [](buffer_view){}(cba);
+    [](buffer_view /*dummy*/){}(ca);
+    [](buffer_view /*dummy*/){}(cua);
+    [](buffer_view /*dummy*/){}(cav);
+    [](buffer_view /*dummy*/){}(cuav);
+    [](buffer_view /*dummy*/){}(cba);
 }

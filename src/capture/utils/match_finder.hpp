@@ -67,6 +67,12 @@ struct MatchFinder
       , KBD_INPUT = 1
     };
 
+    enum class WithCapture : bool
+    {
+        No,
+        Yes,
+    };
+
     /**
      * \param filters_list  filters separated by '\\x01' character
      * \see \a get_pattern_value
@@ -75,7 +81,7 @@ struct MatchFinder
     static void configure_regexes(
         ConfigureRegexes conf_regex, const char * filters_list,
         NamedRegexArray & regexes_filter_ref, int verbose,
-        bool is_capturing = false);
+        WithCapture is_capturing);
 
     static void report(
         ReportMessageApi & report_message, bool is_pattern_kill,

@@ -1158,7 +1158,6 @@ class RDPBmpCache {
     void receive_compressed_v1( InStream & stream, const RDPSecondaryOrderHeader & header
                               , const BGRPalette & palette, BitsPerPixel session_color_depth)
     {
-        int flags = header.flags;
         this->id = stream.in_uint8();
         stream.in_uint8(); // skip pad1
         uint8_t width = stream.in_uint8();
@@ -1167,7 +1166,7 @@ class RDPBmpCache {
         uint16_t bufsize = stream.in_uint16_le();
         this->idx = stream.in_uint16_le();
 
-        if (flags & NO_BITMAP_COMPRESSION_HDR) {
+        if (header.flags & NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t* data = stream.in_uint8p(bufsize);
             //if (this->verbose & 0x8000) {
             //    LOG(LOG_INFO,

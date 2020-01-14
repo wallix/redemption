@@ -253,7 +253,7 @@ namespace
         unsigned long minutes = 0;
         char * end_p = nullptr;
         try {
-            long d = strtoul(duration, &end_p, 10);
+            unsigned long d = strtoul(duration, &end_p, 10);
             if (*end_p == 'h') {
                 res = (d > 0);
                 hours = d;

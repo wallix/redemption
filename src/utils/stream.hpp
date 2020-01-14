@@ -507,8 +507,7 @@ public:
 
     void out_uint8(uint8_t v) noexcept {
         assert(this->has_room(1));
-        if (this->p)
-            *(this->p++) = v;
+        *this->p++ = v;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding

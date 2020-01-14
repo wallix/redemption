@@ -471,7 +471,9 @@ void ModuleManager::create_mod_rdp(
 
                     this->fdx_capture = std::make_unique<FdxCapture>(
                         capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
-                        session_id, groupid, mm.cctx, mm.gen, this->fstat);
+                        session_id, groupid, mm.cctx, mm.gen, this->fstat,
+                        /* TODO should be a log (siem?)*/
+                        ReportError());
                 }
 
                 return this->fdx_capture.get();

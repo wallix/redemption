@@ -113,12 +113,12 @@ SelectorMod::SelectorMod(
     this->selector.rdp_input_invalidate(this->selector.get_rect());
 
     this->started_copy_past_event = session_reactor.create_graphic_event()
-    .on_action(jln::one_shot([this](gdi::GraphicApi&){
+    .on_action(jln::one_shot([this](gdi::GraphicApi& /*gd*/){
         this->copy_paste.ready(this->front);
     }));
 
     this->sesman_event = session_reactor.create_sesman_event()
-    .on_action(jln::always_ready([this](Inifile&){
+    .on_action(jln::always_ready([this](Inifile& /*ini*/){
         char buffer[16];
 
         this->current_page = this->vars.get<cfg::context::selector_current_page>();

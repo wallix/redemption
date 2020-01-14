@@ -32,6 +32,7 @@ using namespace std::string_view_literals;
 
 
 constexpr bool verbosity = false;
+constexpr auto without_capture = utils::MatchFinder::WithCapture(false);
 
 RED_AUTO_TEST_CASE(configure_regexes)
 {
@@ -50,7 +51,7 @@ RED_AUTO_TEST_CASE(configure_regexes)
         "$content,ocr:title\x01"
     ;
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, pattern, regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, pattern, regexes, verbosity, without_capture);
 
     RED_REQUIRE_EQUAL(regexes.size(), 8);
     RED_CHECK_EQUAL(regexes[0].name, "a b ");
@@ -70,7 +71,7 @@ RED_AUTO_TEST_CASE(configure_regexes)
     RED_CHECK(not regexes[6].is_exact_search);
     RED_CHECK(not regexes[7].is_exact_search);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity, without_capture);
 
     RED_REQUIRE_EQUAL(regexes.size(), 7);
     RED_CHECK_EQUAL(regexes[0].name, "ocr");
@@ -90,36 +91,36 @@ RED_AUTO_TEST_CASE(configure_regexes)
 
     regexes.resize(0);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$ocr:abc", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$ocr:abc", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$ocr:abc", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$ocr:abc", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
     RED_CHECK_EQUAL(regexes[0].name, "abc");
     RED_CHECK(not regexes[0].is_exact_search);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "cba", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "cba", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
     RED_CHECK_EQUAL(regexes[0].name, "cba");
     RED_CHECK(not regexes[0].is_exact_search);
 
     regexes.resize(0);
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "  abc", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "  abc", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
     RED_CHECK_EQUAL(regexes[0].name, "abc"); // left space is stripped
     RED_CHECK(not regexes[0].is_exact_search);
 
     regexes.resize(0);
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "cba", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "cba", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$other", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$other", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$other", regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$other", regexes, verbosity, without_capture);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
 }
 
@@ -135,7 +136,7 @@ RED_AUTO_TEST_CASE(search)
         "$exact-content:(e)\x01"
     ;
 
-    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity);
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity, without_capture);
 
     RED_REQUIRE_EQUAL(regexes.size(), 5);
     RED_CHECK(regexes[0].search("(a)"));

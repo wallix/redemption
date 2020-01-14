@@ -948,10 +948,15 @@ namespace
             BmpCache::Recorder, BitsPerPixel{24}, 3, false,
             BmpCache::CacheOption(small_cache ? 2 : 600, 256, false),
             BmpCache::CacheOption(small_cache ? 2 : 300, 1024, false),
-            BmpCache::CacheOption(small_cache ? 2 : 262, 4096, false)
+            BmpCache::CacheOption(small_cache ? 2 : 262, 4096, false),
+            BmpCache::CacheOption(),
+            BmpCache::CacheOption(),
+            BmpCache::Verbose::none
         )
         , drawable(scr.cx, scr.cy)
-        , consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression)
+        , consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache,
+            drawable, WrmCompressionAlgorithm::no_compression,
+            GraphicToFile::SendInput::NO, GraphicToFile::Verbose::none)
         {}
 
         void next_second(int n = 1)
@@ -2015,7 +2020,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         }
     } report_message;
 
-    Capture::PatternKbd kbd_capture(&report_message, "$kbd:abcd", nullptr);
+    Capture::PatternKbd kbd_capture(&report_message, "$kbd:abcd", nullptr, /*verbose=*/false);
 
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
@@ -2046,7 +2051,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         }
     } report_message;
 
-    Capture::PatternKbd kbd_capture(&report_message, "$kbd:ab/cd", nullptr);
+    Capture::PatternKbd kbd_capture(&report_message, "$kbd:ab/cd", nullptr, /*verbose=*/false);
 
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;
@@ -2080,12 +2085,9 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
     BufSequenceTransport out_wrm_trans;
 
-    const struct ToCacheOption {
-        ToCacheOption()= default;
-        BmpCache::CacheOption operator()(const BmpCache::cache_ & cache) const {
-            return BmpCache::CacheOption(cache.entries(), cache.bmp_size(), cache.persistent());
-        }
-    } to_cache_option;
+    auto to_cache_option = [](const BmpCache::cache_ & cache) {
+        return BmpCache::CacheOption(cache.entries(), cache.bmp_size(), cache.persistent());
+    };
 
     BmpCache bmp_cache(
         BmpCache::Recorder,
@@ -2096,7 +2098,8 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
         to_cache_option(player.bmp_cache->get_cache(1)),
         to_cache_option(player.bmp_cache->get_cache(2)),
         to_cache_option(player.bmp_cache->get_cache(3)),
-        to_cache_option(player.bmp_cache->get_cache(4))
+        to_cache_option(player.bmp_cache->get_cache(4)),
+        BmpCache::Verbose::none
     );
     GlyphCache gly_cache;
     PointerCache ptr_cache;
@@ -2104,7 +2107,8 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     GraphicToFile graphic_to_file(
         player.record_now, out_wrm_trans, BitsPerPixel{24}, false,
-        bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression
+        bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression,
+        GraphicToFile::SendInput::NO, GraphicToFile::Verbose::none
     );
     WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 
@@ -2185,9 +2189,9 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
 RED_AUTO_TEST_CASE(TestPatternSearcher)
 {
-    PatternSearcher searcher(utils::MatchFinder::KBD_INPUT, "$kbd:e");
+    PatternSearcher searcher(utils::MatchFinder::KBD_INPUT, "$kbd:e", /*verbose=*/false);
     bool check = false;
-    auto report = [&](auto&, auto&){ check = true; };
+    auto report = [&](auto& /*dummy*/, auto& /*dummy*/){ check = true; };
     searcher.test_uchar(ZStrUtf8Char('e'), report); RED_CHECK(check); check = false;
     searcher.test_uchar(ZStrUtf8Char('a'), report); RED_CHECK(!check);
     // #15241: Pattern detection crash
