@@ -91,6 +91,7 @@ void RdpNego::set_identity(bytes_view user, bytes_view domain, char const * pass
         this->domain = std::vector<uint8_t>{} << domain;
 
         // Password is a multi-sz!
+        // TODO sould be array_view<z?string_view> or vector<z?string_view>
         MultiSZCopy(char_ptr_cast(this->password), sizeof(this->password), pass);
         this->current_password = this->password;
 

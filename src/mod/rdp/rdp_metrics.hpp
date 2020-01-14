@@ -79,7 +79,7 @@ class RDPMetrics
         COUNT_FIELD
     };
 
-    const char * rdp_metrics_name(int index) noexcept
+    static const char * rdp_metrics_name(int index) noexcept
     {
         switch (index) {
             case CLIENT_MAIN_CHANNEL_DATA:         return "CLIENT_MAIN_CHANNEL_DATA";
@@ -437,8 +437,6 @@ private:
             case RDPECLIP::CF_UNICODETEXT:
             case RDPECLIP::CF_DSPTEXT:
             case RDPECLIP::CF_LOCALE:
-                this->metrics.add_to_current_data(total_data_paste, header.dataLen());
-                break;
             case RDPECLIP::CF_METAFILEPICT:
             case RDPECLIP::CF_DSPMETAFILEPICT:
                 this->metrics.add_to_current_data(total_data_paste, header.dataLen());

@@ -2968,7 +2968,7 @@ public:
         this->BytesPerSector                 = stream.in_uint32_le();
     }
 
-    [[nodiscard]] size_t size() const {
+    [[nodiscard]] static constexpr size_t size() {
         return 32;  // TotalAllocationUnits(8) + CallerAvailableAllocationUnits(8) +
                     //     ActualAvailableAllocationUnits(8) + SectorsPerAllocationUnit(4) +
                     //     BytesPerSector(4)
@@ -3101,7 +3101,7 @@ public:
         this->BytesPerSector           = stream.in_uint32_le();
     }
 
-    [[nodiscard]] size_t size() const {
+    [[nodiscard]] static constexpr size_t size() {
         return 24;  // TotalAllocationUnits(8) + AvailableAllocationUnits(8) +
                     //     SectorsPerAllocationUnit(4) + BytesPerSector(4)
     }

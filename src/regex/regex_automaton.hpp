@@ -796,10 +796,10 @@ namespace re {
             [[nodiscard]] unsigned new_id(unsigned old_id) const
             { return this->sm.pop_idx_trace(old_id); }
 
-            bool open(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/) const
+            static bool open(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/)
             { return true; }
 
-            bool close(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/) const
+            static bool close(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/)
             { return true; }
 
             void fail(unsigned idx) const
@@ -1041,7 +1041,7 @@ namespace re {
         }
 
     public:
-        void display_elem_state_list(const StateList& e, unsigned idx) const
+        static void display_elem_state_list(const StateList& e, unsigned idx)
         {
             std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t"
             << *e.st << "\t" << e.next << "\033[0m" << std::endl;

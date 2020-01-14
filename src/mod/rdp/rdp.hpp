@@ -85,6 +85,7 @@
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
+#include "mod/rdp/rdp.hpp"
 
 #ifdef __EMSCRIPTEN__
 class RDPMetrics;
@@ -864,7 +865,7 @@ private:
 
 public:
     // TODO: make that private again when callers will be moved to channels
-    void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
+    static void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
@@ -1417,11 +1418,11 @@ public:
             std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
     }
 
-    void init_no_remote_program_no_session_probe(
-                const ClientInfo & info,
-                const ApplicationParams & application_params,
-                char (&program)[512],
-                char (&directory)[512])
+    static void init_no_remote_program_no_session_probe(
+        const ClientInfo & info,
+        const ApplicationParams & application_params,
+        char (&program)[512],
+        char (&directory)[512])
     {
         if (application_params.target_application && *application_params.target_application) {
             std::string shell_arguments = get_shell_arguments(application_params);
@@ -4596,7 +4597,7 @@ public:
         ERRINFO_DECRYPTFAILED2                    = 0x00001195
     };
 
-    const char* get_error_info_name(uint32_t errorInfo) {
+    static const char* get_error_info_name(uint32_t errorInfo) {
         switch (errorInfo){
             #define CASE(e) case ERRINFO_##e: return #e
             CASE(RPC_INITIATED_DISCONNECT);
@@ -4712,7 +4713,7 @@ public:
         }
     }   // get_error_info_name
 
-    uint32_t get_error_info_from_pdu(InStream & stream) {
+    static uint32_t get_error_info_from_pdu(InStream & stream) {
         return stream.in_uint32_le();
     }
 

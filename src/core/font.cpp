@@ -146,7 +146,7 @@ void Font::load_from_file(char const * file_path)
                 break;
         }
 
-        if (strncmp(writable_byte_ptr(stream_buf).as_charp(), "RBF1", 4)) {
+        if (0 != strncmp(byte_ptr(stream_buf).as_charp(), "RBF1", 4)) {
             LOG(LOG_ERR,"Font: bad magic number ('%.*s', expected 'RBF1'). Please, update font file", 4, stream_buf);
             return ;
         }

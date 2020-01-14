@@ -25,7 +25,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "regex/regex_parser.hpp"
-#include "regex/regex_st_automate.hpp"
+#include "regex/regex_st_automaton.hpp"
 
 
 using namespace re;

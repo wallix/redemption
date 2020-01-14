@@ -26,26 +26,20 @@ Author(s): David Fort
 namespace http {
 
 /** @brief internal state of the HTTP parser */
-typedef enum {
+enum HttpParserState
+{
 	HTTP_WAITING_FIRST_LINE,
 	HTTP_TREATING_HEADERS,
 	HTTP_TREATING_BODY
-} HttpParserState;
+};
 
 /** @brief internal data for a HTTP parser */
 struct HttpParserImpl {
 	std::string buffer;
-	HttpParserState state;
-	uint64_t bodyLength;
-	uint64_t remainingBody;
+	HttpParserState state = HTTP_WAITING_FIRST_LINE;
+	uint64_t bodyLength = 0;
+	uint64_t remainingBody = 0;
 	std::map<std::string, std::string> headers;
-
-	HttpParserImpl()
-		: state(HTTP_WAITING_FIRST_LINE)
-		, bodyLength(0)
-		, remainingBody(0)
-	{
-	}
 
 	void reset() {
 		this->state = HTTP_WAITING_FIRST_LINE;

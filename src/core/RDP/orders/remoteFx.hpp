@@ -230,7 +230,6 @@ public:
 
     RfxDecoder(DecoderState initialState = RFX_WAITING_SYNC)
         : decoderState(initialState)
-        , haveFlags(0)
     {
     }
 
@@ -241,7 +240,7 @@ public:
 
 protected:
     DecoderState decoderState;
-    uint8_t haveFlags;
+    uint8_t haveFlags = 0;
     TS_RFX_REGION currentRegion;
 };
 

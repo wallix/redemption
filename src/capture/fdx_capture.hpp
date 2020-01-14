@@ -57,7 +57,7 @@ private:
 
 struct FdxNameGenerator
 {
-    FdxNameGenerator(std::string_view path, std::string_view hashpath, std::string_view sid);
+    FdxNameGenerator(std::string_view record_path, std::string_view hash_path, std::string_view sid);
 
     // before next_tfl(): is a fdx file
     // after next_tfl(): is a tfl file

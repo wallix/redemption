@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "regex_automate.hpp"
+#include "regex_automaton.hpp"
 #include "regex_parser.hpp"
 
 namespace re

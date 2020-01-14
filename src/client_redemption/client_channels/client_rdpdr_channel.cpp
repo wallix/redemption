@@ -415,9 +415,7 @@ void ClientRDPDRChannel::process_core_server_capabilities(InStream & chunk) {
                 driveEnable = true;
                 [[fallthrough]];
             case rdpdr::CAP_PRINTER_TYPE:
-                [[fallthrough]];
             case rdpdr::CAP_PORT_TYPE:
-                [[fallthrough]];
             case rdpdr::CAP_SMARTCARD_TYPE:
                 chunk.in_skip_bytes(ch.CapabilityLength - 8);
                 this->fileSystemCapacity[ch.CapabilityType] = true;

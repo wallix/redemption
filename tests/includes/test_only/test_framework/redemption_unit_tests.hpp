@@ -442,19 +442,28 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
     void operator()(std::ostream& out, redemption_unit_test__::int_variation const & x) const;
 };
 
+namespace redemption_unit_test__
+{
+    template<class T>
+    auto to_av(T&& x)
+    {
+        return make_array_view(x);
+    }
+}
+
 /// CHECK
 //@{
 #define RED_CHECK_EQ RED_CHECK_EQUAL
 #define RED_CHECK_EQ_RANGES RED_CHECK_EQUAL_RANGES
 
 #define RED_CHECK_MEM_AA(mem, memref) \
-    RED_CHECK_MEM(make_array_view(mem), make_array_view(memref))
+    RED_CHECK_MEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 
 #define RED_CHECK_SMEM_AA(mem, memref) \
-    RED_CHECK_SMEM(make_array_view(mem), make_array_view(memref))
+    RED_CHECK_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 
 #define RED_CHECK_BMEM_AA(mem, memref) \
-    RED_CHECK_BMEM(make_array_view(mem), make_array_view(memref))
+    RED_CHECK_BMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 //@}
 
 /// REQUIRE
@@ -463,13 +472,13 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 #define RED_REQUIRE_EQ_RANGES RED_REQUIRE_EQUAL_RANGES
 
 #define RED_REQUIRE_MEM_AA(mem, memref) \
-    RED_REQUIRE_MEM(make_array_view(mem), make_array_view(memref))
+    RED_REQUIRE_MEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 
 #define RED_REQUIRE_SMEM_AA(mem, memref) \
-    RED_REQUIRE_SMEM(make_array_view(mem), make_array_view(memref))
+    RED_REQUIRE_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 
 #define RED_REQUIRE_RMEM_AA(mem, memref) \
-    RED_REQUIRE_SMEM(make_array_view(mem), make_array_view(memref))
+    RED_REQUIRE_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 //@}
 
 #define RED_ERROR_COUNT redemption_unit_test__::current_count_error()

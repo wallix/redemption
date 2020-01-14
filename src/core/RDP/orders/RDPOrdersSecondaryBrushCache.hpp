@@ -209,7 +209,7 @@ public:
                );
     }
 
-    size_t str(char * buffer, size_t sz) const
+    static size_t str(char * buffer, size_t sz)
     {
         size_t lg  = snprintf(buffer, sz, "RDPBrushCache()\n");
         if (lg >= sz) {
@@ -218,10 +218,10 @@ public:
         return lg;
     }
 
-    void log(int level) const
+    static void log(int level)
     {
         char buffer[1024];
-        this->str(buffer, 1024);
+        str(buffer, 1024);
         LOG(level, "%s", buffer);
     }
 };

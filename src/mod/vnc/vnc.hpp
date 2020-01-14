@@ -525,7 +525,7 @@ public:
         State state = State::Header;
         ReasonCtx reason;
 
-        Result read_header(Buf64k & buf)
+        static Result read_header(Buf64k & buf)
         {
             const size_t sz = 4;
 
@@ -1430,7 +1430,7 @@ private:
     	}
     }
 
-    void updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
+    static void updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
         static VncAuthType preferedAuthTypes[] = {
         	VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
         	//VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,     TLS not handled for now
@@ -1498,9 +1498,8 @@ private:
         	if (s.in_remain() < 2)
         		return false;
 
-        	uint8_t major, minor;
-        	major = s.in_uint8();
-        	minor = s.in_uint8();
+        	uint8_t major = s.in_uint8();
+        	uint8_t minor = s.in_uint8();
 
         	if (major != 0 && minor != 2) {
         		LOG(LOG_ERR, "unsupported VeNCrypt version %d.%d", major, minor);
@@ -1822,7 +1821,7 @@ private:
 
         case WAIT_SECURITY_RESULT: {
         	uint32_t status;
-        	bool haveReason = 0;
+        	bool haveReason = false;
         	std::string reason;
         	size_t skipLen;
         	InStream s(this->server_data_buf.av());

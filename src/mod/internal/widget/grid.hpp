@@ -584,17 +584,21 @@ void compute_format(WidgetGrid const& grid, ColumnWidthStrategy* column_width_st
                 for (bool exit_processing = false; !exit_processing; ) {
                     exit_processing = true;
 
-                    uint32_t const partial_weight = [](WidgetGrid const& grid, array_view<uint16_t> column_width_optimal, uint16_t* column_width) -> uint32_t {
-                            uint32_t partial_weight = 0;
+                    uint32_t const partial_weight = [](
+                        WidgetGrid const& grid,
+                        array_view<uint16_t const> column_width_optimal,
+                        uint16_t const* column_width
+                    ) -> uint32_t {
+                        uint32_t partial_weight = 0;
 
-                            for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
-                                if (column_width[column_index] < column_width_optimal[column_index]) {
-                                    partial_weight += column_width_optimal[column_index];
-                                }
+                        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
+                            if (column_width[column_index] < column_width_optimal[column_index]) {
+                                partial_weight += column_width_optimal[column_index];
                             }
+                        }
 
-                            return (partial_weight ? partial_weight : 1);
-                        }(grid, column_width_optimal, column_width);
+                        return (partial_weight ? partial_weight : 1);
+                    }(grid, column_width_optimal, column_width);
 
                     uint16_t const unused_width_saved = unused_width;
 

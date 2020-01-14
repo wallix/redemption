@@ -46,9 +46,9 @@ inline void init_keys(CryptoContext & cctx)
     ));
 }
 
-int main(int argc, char* argv[]){ return 0;}
+int main(){}
 
-// Test Disabled because when called in test 
+// Test Disabled because when called in test
 // ModuleManager should not try to actually connect to target
 // which is what the current module is actually doing.
 // We shoudl probably provide hime with some connection provider object to avoid that
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]){ return 0;}
 //    ModWrapper mod_wrapper;
 
 //    windowing_api* winapi = nullptr;
-//    
+//
 //    BGRPalette palette = BGRPalette::classic_332();
 
 //    ModOSD mod_osd(mod_wrapper, front, palette, front.gd(), info, font, theme, rail_client_execute, winapi, ini);

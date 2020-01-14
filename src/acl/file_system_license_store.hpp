@@ -119,13 +119,12 @@ public:
                     if (::rename(filename_temporary, filename) == 0) {
                         return true;
                     }
-                    else {
-                        LOG( LOG_ERR
-                           , "FileSystemLicenseStore::put_license: failed to rename the (temporary) license file! "
-                                "temporary_filename=\"%s\" filename=\"%s\" errno=%s(%d)"
-                           , filename_temporary, filename, strerror(errno), errno);
-                        ::unlink(filename_temporary);
-                    }
+
+                    LOG( LOG_ERR
+                        , "FileSystemLicenseStore::put_license: failed to rename the (temporary) license file! "
+                            "temporary_filename=\"%s\" filename=\"%s\" errno=%s(%d)"
+                        , filename_temporary, filename, strerror(errno), errno);
+                    ::unlink(filename_temporary);
                 }
                 else {
                     LOG( LOG_ERR

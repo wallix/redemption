@@ -148,9 +148,9 @@ struct PpOcrTitlesExtractor
     }
 
 private:
-    [[nodiscard]] bool is_title_bar(
+    [[nodiscard]] static bool is_title_bar(
         const DrawableImageView & input, unsigned tid,
-        mln::box2d const & box, unsigned button_col) const
+        mln::box2d const & box, unsigned button_col)
     {
         return ::ocr::is_title_bar(
             input, tid, box.min_row(), box.max_row(), button_col, ::ocr::bbox_max_height);

@@ -1216,7 +1216,7 @@ public:
 
 
     // TODO: the name of the function is misleading it converts from utf16 to utf8
-    inline void get_non_null_terminated_utf16_from_utf8(
+    static inline void get_non_null_terminated_utf16_from_utf8(
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {
@@ -2398,7 +2398,7 @@ public:
     }   // emit
 
     // TODO: the name of the function is misleading it converts from utf16 to utf8
-    inline void get_non_null_terminated_utf16_from_utf8(
+    static inline void get_non_null_terminated_utf16_from_utf8(
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {
@@ -2794,7 +2794,7 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }
 
     // TODO: the name of the function is misleading it converts from utf16 to utf8
-    inline void get_non_null_terminated_utf16_from_utf8(
+    static inline void get_non_null_terminated_utf16_from_utf8(
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {

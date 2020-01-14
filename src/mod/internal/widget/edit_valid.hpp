@@ -74,7 +74,7 @@ public:
 
     void notify(Widget* widget, NotifyApi::notify_event_t event) override;
 
-    [[nodiscard]] unsigned get_border_height() const
+    [[nodiscard]] static unsigned get_border_height()
     {
         return 1;
     }

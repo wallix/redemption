@@ -27,14 +27,9 @@
 
 using namespace http;
 
-class CustomHttpReqParser : public HttpRequestParser {
+class CustomHttpReqParser : public HttpRequestParser
+{
 public:
-	CustomHttpReqParser()
-	: parsingCompleted(0)
-	, headersParsed(false)
-	{
-	}
-
 	bool onHeadersTreated() override {
 		headersParsed = true;
 		return true;
@@ -50,8 +45,8 @@ public:
 	}
 
 	std::vector<size_t> bodySizes;
-	int parsingCompleted;
-	bool headersParsed;
+	int parsingCompleted = 0;
+	bool headersParsed = false;
 };
 
 RED_AUTO_TEST_CASE(TestRequestParser)
@@ -60,14 +55,14 @@ RED_AUTO_TEST_CASE(TestRequestParser)
 
 	// =========================================================================
 	// First test: a simple request in 1 chunk
-	const char *reqStr =
+	std::string_view reqStr =
 		"RDG_OUT_DATA /remoteDesktopGateway/ HTTP/1.1\r\n"
 		"Cache-Control: no-cache\r\n"
 		"Connection: Upgrade\r\n"
 		"Pragma: no-cache\r\n"
 		"\r\n";
 
-	RED_CHECK_EQ(reqParser.parse(array_view_const_char{reqStr, strlen(reqStr)}), true);
+	RED_CHECK_EQ(reqParser.parse(reqStr), true);
 	RED_CHECK_EQ(reqParser.parsingCompleted, 1);
 	RED_CHECK_EQ(reqParser.bodySizes.size(), 0);
 
@@ -75,21 +70,21 @@ RED_AUTO_TEST_CASE(TestRequestParser)
 	// second test: a simple request in but splitted in multiple chunks
 	reqParser.parsingCompleted = 0;
 	reqParser.headersParsed = false;
-	const char *splittedRequest[] = {
+	std::string_view splittedRequest[] = {
 		"RDG_OUT_DATA /remoteDesktopGateway/ HTTP/1.1\r\nCache-Control:",
 		"no-cache\r\nConnection: Upg",
 		"rade\r\nPragma: no-cache\r\n\r\n"
 	};
 
-	RED_CHECK_EQ(reqParser.parse(array_view_const_char{splittedRequest[0], strlen(splittedRequest[0])}), true);
+	RED_CHECK_EQ(reqParser.parse(splittedRequest[0]), true);
 	RED_CHECK_EQ(reqParser.parsingCompleted, 0);
 	RED_CHECK_EQ(reqParser.headersParsed, false);
 
-	RED_CHECK_EQ(reqParser.parse(array_view_const_char{splittedRequest[1], strlen(splittedRequest[1])}), true);
+	RED_CHECK_EQ(reqParser.parse(splittedRequest[1]), true);
 	RED_CHECK_EQ(reqParser.parsingCompleted, 0);
 	RED_CHECK_EQ(reqParser.headersParsed, false);
 
-	RED_CHECK_EQ(reqParser.parse(array_view_const_char{splittedRequest[2], strlen(splittedRequest[2])}), true);
+	RED_CHECK_EQ(reqParser.parse(splittedRequest[2]), true);
 	RED_CHECK_EQ(reqParser.parsingCompleted, 1);
 	RED_CHECK_EQ(reqParser.headersParsed, true);
 	RED_CHECK_EQ(reqParser.bodySizes.size(), 0);
@@ -97,12 +92,12 @@ RED_AUTO_TEST_CASE(TestRequestParser)
 	// =========================================================================
 	// third test: a simple request with a body
 	reqParser.parsingCompleted = 0;
-	const char *reqWithBody =
+	std::string_view reqWithBody =
 		"POST /path/script.cgi HTTP/1.0\r\n"
 		"Content-Length: 32\r\n"
 		"\r\n"
 		"home=Cosby&favorite+flavor=flies";
-	RED_CHECK_EQ(reqParser.parse(array_view_const_char{reqWithBody, strlen(reqWithBody)}), true);
+	RED_CHECK_EQ(reqParser.parse(reqWithBody), true);
 	RED_CHECK_EQ(reqParser.parsingCompleted, 1);
 	RED_CHECK_EQ(reqParser.bodySizes.size(), 1);
 	RED_CHECK_EQ(reqParser.bodySizes.at(0), 32);
@@ -111,7 +106,7 @@ RED_AUTO_TEST_CASE(TestRequestParser)
 	// fourth test: a request with a chunked body
 	reqParser.parsingCompleted = 0;
 	reqParser.bodySizes.clear();
-	const char *reqBodyChunked[] = {
+	std::string_view reqBodyChunked[] = {
 		"POST /path/script.cgi HTTP/1.0\r\n",
 		"Content-Length: 32\r\n",
 		"\r\n",
@@ -120,8 +115,8 @@ RED_AUTO_TEST_CASE(TestRequestParser)
 		"vor=flies"
 	};
 
-	for(size_t i = 0; i < sizeof(reqBodyChunked)/sizeof(reqBodyChunked[0]); i++) {
-		RED_CHECK_EQ(reqParser.parse(array_view_const_char{reqBodyChunked[i], strlen(reqBodyChunked[i])}), true);
+	for (std::string_view reqPart : reqBodyChunked) {
+		RED_CHECK_EQ(reqParser.parse(reqPart), true);
 	}
 
 	RED_CHECK_EQ(reqParser.parsingCompleted, 1);
@@ -136,12 +131,6 @@ RED_AUTO_TEST_CASE(TestRequestParser)
 
 class CustomHttpResponseParser : public HttpResponseParser {
 public:
-	CustomHttpResponseParser()
-	: parsingCompleted(0)
-	, headersParsed(false)
-	{
-	}
-
 	bool onHeadersTreated() override {
 		headersParsed = true;
 		return true;
@@ -157,8 +146,8 @@ public:
 	}
 
 	std::vector<size_t> bodySizes;
-	int parsingCompleted;
-	bool headersParsed;
+	int parsingCompleted = 0;
+	bool headersParsed = false;
 };
 
 
@@ -168,7 +157,7 @@ RED_AUTO_TEST_CASE(TestResponseParser)
 
 	// =========================================================================
 	// First test: a response with an empty body
-	const char *respStr =
+	std::string_view respStr =
 		"HTTP/1.1 401 Access Denied\r\n"
 		"Server: Microsoft-HTTPAPI/2.0\r\n"
 		"RDG-Auth-Scheme: SMARTCARD\r\n"
@@ -176,7 +165,7 @@ RED_AUTO_TEST_CASE(TestResponseParser)
 		"Content-Length: 0\r\n"
 		"\r\n";
 
-	RED_CHECK_EQ(respParser.parse(array_view_const_char{respStr, strlen(respStr)}), true);
+	RED_CHECK_EQ(respParser.parse(respStr), true);
 	RED_CHECK_EQ(respParser.responseCode, 401);
 	RED_CHECK_EQ(respParser.responseVersion, "HTTP/1.1");
 	RED_CHECK_EQ(respParser.responseString, "Access Denied");
@@ -185,7 +174,7 @@ RED_AUTO_TEST_CASE(TestResponseParser)
 	// =========================================================================
 	// Second test: a response with chunked body
 	respParser.headersParsed = false;
-	const char *chunkedRespStr[] = {
+	std::string_view chunkedRespStr[] = {
 		"HTTP/1.1 200 Ok\r\n"
 		"Server: Microsoft-HTTPAPI/2.0\r\n"
 		"RDG-Auth-Scheme: SMARTCARD\r\n"
@@ -199,22 +188,22 @@ RED_AUTO_TEST_CASE(TestResponseParser)
 		"cou"
 	};
 
-	RED_CHECK_EQ(respParser.parse(array_view_const_char{chunkedRespStr[0], strlen(chunkedRespStr[0])}), true);
+	RED_CHECK_EQ(respParser.parse(chunkedRespStr[0]), true);
 	RED_CHECK_EQ(respParser.headersParsed, false);
 	RED_CHECK_EQ(respParser.bodySizes.size(), 0);
 	RED_CHECK_EQ(respParser.parsingCompleted, 1);
 
-	RED_CHECK_EQ(respParser.parse(array_view_const_char{chunkedRespStr[1], strlen(chunkedRespStr[1])}), true);
+	RED_CHECK_EQ(respParser.parse(chunkedRespStr[1]), true);
 	RED_CHECK_EQ(respParser.responseCode, 200);
 	RED_CHECK_EQ(respParser.responseVersion, "HTTP/1.1");
 	RED_CHECK_EQ(respParser.responseString, "Ok");
 	RED_CHECK_EQ(respParser.parsingCompleted, 1);
 	RED_CHECK_EQ(respParser.headersParsed, true);
 
-	RED_CHECK_EQ(respParser.parse(array_view_const_char{chunkedRespStr[2], strlen(chunkedRespStr[2])}), true);
+	RED_CHECK_EQ(respParser.parse(chunkedRespStr[2]), true);
 	RED_CHECK_EQ(respParser.parsingCompleted, 1);
 
-	RED_CHECK_EQ(respParser.parse(array_view_const_char{chunkedRespStr[3], strlen(chunkedRespStr[3])}), true);
+	RED_CHECK_EQ(respParser.parse(chunkedRespStr[3]), true);
 	RED_CHECK_EQ(respParser.parsingCompleted, 2);
 	RED_CHECK_EQ(respParser.bodySizes.size(), 2);
 	RED_CHECK_EQ(respParser.bodySizes.at(0) + respParser.bodySizes.at(1), 6);

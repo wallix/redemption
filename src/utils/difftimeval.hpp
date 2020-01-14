@@ -37,7 +37,7 @@ public:
 class TimeSystem : public TimeObj {
 public:
     TimeSystem() = default;
-    ~TimeSystem() override = default;
+
     timeval get_time() override {
         timeval tv;
         gettimeofday(&tv, nullptr);
@@ -53,7 +53,7 @@ public:
         tv.tv_sec = ustime.count()/1000000;
         tv.tv_usec = ustime.count()%1000000;
     }
-    ~FrozenTime() override = default;
+
     timeval get_time() override {
         return tv;
     }
@@ -64,10 +64,10 @@ class ReplayTime : public TimeObj {
     std::vector<timeval> tvvec;
     uint32_t index = 0;
 public:
-    explicit ReplayTime(const std::vector<timeval> tvv)
-       : tvvec(tvv.data(),tvv.data()+tvv.size())
+    explicit ReplayTime(std::vector<timeval> tvv)
+       : tvvec(std::move(tvv))
     {}
-    ~ReplayTime() override = default;
+
     timeval get_time() override {
         return this->tvvec[index++];
     }

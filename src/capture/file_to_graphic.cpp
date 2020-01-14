@@ -586,7 +586,7 @@ void FileToGraphic::interpret_order()
     case WrmChunkType::LAST_IMAGE_CHUNK:
     case WrmChunkType::PARTIAL_IMAGE_CHUNK:
     {
-        if (this->graphic_consumers.size()) {
+        if (not this->graphic_consumers.empty()) {
             set_rows_from_image_chunk(
                 *this->trans,
                 this->chunk_type,

@@ -169,7 +169,7 @@ namespace Extractors
 
     struct CreedsppExtractor
     {
-        HeaderResult read_header(Buf64k & buf)
+        static HeaderResult read_header(Buf64k & buf)
         {
             if (buf.remaining() < 4)
             {
@@ -184,7 +184,7 @@ namespace Extractors
             throw Error(ERR_NEGO_INCONSISTENT_FLAGS);
         }
 
-        void prepare_data(Buf64k const & /*unused*/) const
+        static void prepare_data(Buf64k const & /*unused*/)
         {}
     };
 } // namespace Extractors
@@ -232,18 +232,6 @@ struct TpduBuffer
 
 // or fully extracting the knowledge of the Tpdu structure.
 // Write tests with both CredSSP and Tpdu and see how it looks.
-
-    bool check(TpduType packet)
-    {
-        switch (packet){
-        default:
-        case PDU:
-            return this->check_extract(this->extractors.x224);
-        case CREDSSP:
-            return this->check_extract(this->extractors.x224);
-        }
-    }
-
 
     bool next(TpduType packet)
     {
@@ -327,43 +315,6 @@ private:
                 }
                 return false;
         }
-    }
-
-    template<class Extractor>
-    bool check_extract(Extractor & extractor)
-    {
-        if (!this->data_ready){
-            switch (this->state)
-            {
-                case StateRead::Header:
-                    this->consume_current_packet();
-                    if (auto r = extractor.read_header(this->buf))
-                    {
-                        this->pdu_len = r.data_size();
-                        if (this->pdu_len <= this->buf.remaining())
-                        {
-                            extractor.prepare_data(this->buf);
-                            this->data_ready = true;
-                            return true;
-                        }
-                        this->state = StateRead::Data;
-                    }
-                    this->data_ready = false;
-                    return false;
-
-                case StateRead::Data:
-                    if (this->pdu_len <= this->buf.remaining())
-                    {
-                        this->state = StateRead::Header;
-                        extractor.prepare_data(this->buf);
-                        this->data_ready = true;
-                        return true;
-                    }
-                    this->data_ready = false;
-                    return false;
-            }
-        }
-        return this->data_ready;
     }
 
     StateRead state = StateRead::Header;

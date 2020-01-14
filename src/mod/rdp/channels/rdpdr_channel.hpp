@@ -74,8 +74,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     using device_io_request_info_inventory_type = std::vector<device_io_request_info_type>;
     device_io_request_info_inventory_type device_io_request_info_inventory;
 
-    static constexpr const int64_t END_OF_FILE_READING = -1ll;  // Reading in progress.
-    static constexpr const int64_t END_OF_FILE_UNREAD  = -2ll;
+    static constexpr const int64_t END_OF_FILE_READING = -1;  // Reading in progress.
+    static constexpr const int64_t END_OF_FILE_UNREAD  = -2;
 
     struct device_io_target_info_type
     {

@@ -1327,7 +1327,7 @@ public:
                     }
                 }
                 else if (!::strcasecmp(order_.c_str(), "FOREGROUND_WINDOW_CHANGED")) {
-                    if (parameters_.size() >= 1) {
+                    if (not parameters_.empty()) {
                         this->log6(LogId::TITLE_BAR, {
                             KVLog("source"_av, "Probe"_av),
                             KVLog("window"_av, parameters_[0]),

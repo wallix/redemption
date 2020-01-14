@@ -1449,22 +1449,22 @@ public:
 class DeviceCloseRequest {
 
 public:
-    void emit(OutStream & stream) const {
+    static void emit(OutStream & stream) {
         stream.out_clear_bytes(32); // Padding(32)
     }
 
-    void receive(InStream & stream) {
+    static void receive(InStream & stream) {
         // TODO: somewhat misleading because DeviceIORequestHeader of 24 bytes has already been read.
         // Padding(32)
         ::check_throw(stream, 32, "RDPDR::DeviceCloseRequest", ERR_RDPDR_PDU_TRUNCATED);
         stream.in_skip_bytes(32);   // Padding(32)
     }
 
-    void log(int level) const {
+    static void log(int level) {
         LOG(level, "DeviceCloseRequest:");
     }
 
-    void log() const {
+    static void log() {
         LOG(LOG_INFO, "     Device Close Request:");
         LOG(LOG_INFO, "          * Padding - (32 bytes) NOT USED");
     }
@@ -4581,18 +4581,18 @@ struct ClientDriveLockControlResponse {
 
     explicit ClientDriveLockControlResponse() = default;
 
-    void emit(OutStream & stream) const {
+    static void emit(OutStream & stream) {
         stream.out_clear_bytes(5);
     }
 
-    void receive(InStream & stream) {
+    static void receive(InStream & stream) {
          // Padding(5)
         ::check_throw(stream, 5, "RDPDR::ClientDriveLockControlResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         stream.in_skip_bytes(5);
     }
 
-    void log() const {
+    static void log() {
         LOG(LOG_INFO, "     Client Drive Lock Control Response:");
         LOG(LOG_INFO, "          * Padding - (5 bytes) NOT USED");
 
@@ -5705,11 +5705,7 @@ void streamLog(InStream & stream , RdpDrStatus & status)
                     break;
 
                 case PacketId::PAKID_PRN_CACHE_DATA:
-                    break;
-
                 case PacketId::PAKID_CORE_USER_LOGGEDON:
-                    break;
-
                 case PacketId::PAKID_PRN_USING_XPS:
                     break;
             }

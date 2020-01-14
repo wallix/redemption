@@ -35,7 +35,7 @@ class InStream;
 
 namespace RDP
 {
-    namespace RAII
+    namespace RAIL
     {
         class NewOrExistingWindow;
         class ActivelyMonitoredDesktop;

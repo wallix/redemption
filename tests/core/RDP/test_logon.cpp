@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestLogon)
         /*.cbDomain = */ "Domain_Test",
         /*.cbUserName = */ "UserName_Test",
         /*.cbPassword = */ "Password_Test",
-        /*cbAlternateShell = */ "Program_Test",
+        /*.cbAlternateShell = */ "Program_Test",
         /*.cbWorkingDir = */ "Directory_Test",
         /*.performanceFlags = */ PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
 

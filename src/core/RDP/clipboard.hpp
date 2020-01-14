@@ -770,15 +770,15 @@ public:
 class ServerMonitorReadyPDU
 {
 public:
-    void emit(OutStream &/* stream*/) const {}
+    static void emit(OutStream &/* stream*/) {}
 
-    void recv(InStream &/* stream*/) {}
+    static void recv(InStream &/* stream*/) {}
 
     static constexpr size_t size() {
         return 0;
     }
 
-    void log(int level = LOG_INFO) const {
+    static void log(int level = LOG_INFO) {
         LOG(level, "ServerMonitorReadyPDU");
     }
 };  // struct ServerMonitorReadyPDU
@@ -890,15 +890,15 @@ public:
 
 struct FormatListResponsePDU
 {
-    void emit(OutStream & /*out_stream*/) const {}
+    static void emit(OutStream & /*out_stream*/) {}
 
-    void recv(InStream & /*in_stream*/) {}
+    static void recv(InStream & /*in_stream*/) {}
 
     static constexpr size_t size() {
         return 0;
     }
 
-    void log(int level = LOG_INFO) const {
+    static void log(int level = LOG_INFO) {
         LOG(level, "FormatListResponsePDU");
     }
 
@@ -1244,7 +1244,7 @@ struct FileContentsResponseSize
        LOG(LOG_INFO, "     File Contents Response Size: streamID = 0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding - (4 byte) NOT USED", this->streamID, this->size);
    }
 
-   size_t packet_size() {
+   static constexpr size_t packet_size() {
         return 12;                                          // streamID(4) + size(8)
    }
 };
@@ -1274,7 +1274,7 @@ struct FileContentsResponseRange
        LOG(LOG_INFO, "     File Contents Response Range: streamID=0X%08x(4 bytes)", this->streamID);
    }
 
-   size_t packet_size() {
+   static constexpr size_t packet_size() {
         return 4;                                          // streamID(4)
    }
 };
@@ -1623,7 +1623,7 @@ enum : int {
 
 struct FormatDataResponsePDU
 {
-    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
+    static void emit(OutStream & stream, const uint8_t * data, size_t data_length) {
         if (data_length
         // in some case (VNC clipboard) we already have data inplace
         // in these cases no need to copy anything
@@ -1633,7 +1633,7 @@ struct FormatDataResponsePDU
         }
     }
 
-    void log() const {
+    static void log() {
         LOG(LOG_INFO, "FormatDataResponsePDU:");
     }
 
@@ -1731,7 +1731,7 @@ struct FormatDataResponsePDU_MetaFilePic {
           , FLAG = 0x03
         };
 
-        void emit(uint8_t * chunk, const size_t data_len) {
+        static void emit(uint8_t * chunk, const size_t data_len) {
             chunk[data_len + 1] = FLAG;
             chunk[data_len + 2] = 0x00;
             chunk[data_len + 3] = 0x00;

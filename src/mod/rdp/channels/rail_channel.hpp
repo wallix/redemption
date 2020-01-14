@@ -224,7 +224,7 @@ private:
     // - it has both FLAG_FIRST and FLAG_LAST
     // - it contains at least two bytes (to read the chunk length)
     // - its total length is the same as the chunk length
-    void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message)
+    static void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message)
     {
         if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST))
                   != (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST)){

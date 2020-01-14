@@ -170,7 +170,7 @@ inline ProtocolParseClientResult ws_protocol_parse_client(writable_bytes_view da
 {
     if (data.size() < 8) {
         return {
-            (data.size() > 0 && (data[0] & 0xF) == WsHeader::OpCode::Close)
+            (not data.empty() && (data[0] & 0xF) == WsHeader::OpCode::Close)
              ? ProtocolParseClientResult::State::Close
              : ProtocolParseClientResult::State::UnsupportedPartialHeader,
             writable_bytes_view{}

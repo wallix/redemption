@@ -92,5 +92,4 @@ public:
 
 private:
     int interaction();
-    void wipe(Rect const oldrect, Rect newrect, RDPColor color, const Rect clip, gdi::GraphicApi & gd);
 };

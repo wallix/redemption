@@ -75,7 +75,7 @@ namespace tu
 [&](auto&& filename__, auto&& content__){                                             \
     std::string file_contents_;                                                       \
     auto current_count_error = ::redemption_unit_test__::current_count_error();       \
-    std::string_view strctx = #content;                                               \
+    [[maybe_unused]] std::string_view strctx = #content;                              \
     RED_TEST_CONTEXT("filename: " << filename__ << "\n    content: "                  \
     << std::string_view(strctx.data(), strctx.size() > 40 ? 40 : strctx.size())       \
     << (strctx.size() > 40 ? "[...]" : "")) {                                         \

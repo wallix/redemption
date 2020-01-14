@@ -2671,7 +2671,7 @@ public:
         }
 
         st = this->nego_server->credssp.state;
-        if (result.size() > 0){
+        if (not result.empty()){
             trans.send(result);
         }
 
@@ -2699,7 +2699,7 @@ public:
         LOG(LOG_INFO, "NegoServer recv_data authenticate_next");
         result << this->nego_server->credssp.authenticate_next({});
         st = this->nego_server->credssp.state;
-        if (result.size() > 0){
+        if (not result.empty()){
             trans.send(result);
         }
 
