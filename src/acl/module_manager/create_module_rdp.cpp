@@ -788,7 +788,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
 
         if (enable_validator) {
             new_mod->file_validator = std::move(file_validator);
-            new_mod->file_validator->validator_event = this->session_reactor.create_fd_event(this->fd_events_, validator_fd)
+            new_mod->file_validator->validator_event = this->fd_events_.create_top_executor(this->session_reactor, validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())

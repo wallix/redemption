@@ -234,7 +234,7 @@ RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
     int const fd1 = ufd.fd();
     RED_REQUIRE_GT(fd1, 0);
 
-    TopFdPtr fd_event = session_reactor.create_fd_event(fd_events_, fd1, std::ref(s))
+    TopFdPtr fd_event = fd_events_.create_top_executor(session_reactor, fd1, std::ref(s))
     .on_action([](JLN_TOP_CTX ctx, std::string& s){
         s += "fd1\n";
         return ctx.next();

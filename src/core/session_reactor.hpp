@@ -2865,13 +2865,6 @@ struct EnableGraphics
 
 struct SessionReactor
 {
-    template<class... Args>
-    REDEMPTION_JLN_CONCEPT(jln::detail::TopExecutorBuilder_Concept)
-    create_fd_event(TopFdContainer & fd_events_, int fd, Args&&... args)
-    {
-        return fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
-    }
-
     timeval current_time {};
 
     void set_current_time(timeval const& now)

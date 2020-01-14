@@ -116,7 +116,7 @@ public:
     void configure_event(SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& /*timer_events_*/, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
-        this->fdobject = session_reactor.create_fd_event(fd_events_,
+        this->fdobject = fd_events_.create_top_executor(session_reactor,
             this->file_descriptor, std::ref(*this), terminate_notifier)
         .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
             if (self.run()) {
