@@ -340,7 +340,7 @@ struct rdp_mppc_enc_match_finder
 
 struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
 {
-    inline void get_match_length(const uint8_t * output_data, uint16_t output_data_size,
+    static inline void get_match_length(const uint8_t * output_data, uint16_t output_data_size,
         const uint8_t * history_data, uint32_t history_data_size, uint16_t & MatchLength,
         uint32_t & MatchHistoryOffset)
     {

@@ -96,7 +96,7 @@ mod_vnc::mod_vnc( Transport & t
 		gdi_clear_screen(gd, this->get_dim());
 		// rearmed by clipboard
 		return ctx.disable_timeout()
-		.replace_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){
+		.replace_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& /*gd*/){
 			this->check_timeout();
 			return ctx.disable_timeout().ready();
 		});
@@ -918,7 +918,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
 
     case WAIT_SECURITY_RESULT: {
     	uint32_t status;
-    	bool haveReason = 0;
+    	bool haveReason = false;
     	std::string reason;
     	size_t skipLen;
     	InStream s(this->server_data_buf.av());

@@ -49,7 +49,7 @@ public:
       , client(client)
     {}
 
-    virtual bool start_to_listen(int /*client_sck*/, mod_api * mod) override
+    bool start_to_listen(int /*client_sck*/, mod_api * mod) override
     {
         using namespace std::chrono_literals;
 
@@ -61,7 +61,7 @@ public:
         return true;
     }
 
-    virtual void disconnect() override {}
+    void disconnect() override {}
 };
 
 
@@ -86,7 +86,7 @@ public:
 
     void close() override {}
 
-    virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
+    void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {

@@ -478,7 +478,7 @@ public:
         State state = State::Header;
         ReasonCtx reason;
 
-        Result read_header(Buf64k & buf)
+        static Result read_header(Buf64k & buf)
         {
             const size_t sz = 4;
 

@@ -54,7 +54,7 @@ namespace Cliprdr
         };
 
         template<class T, class U>
-        T&& operator,(T&& x, LeftOrTrue const&) noexcept
+        T&& operator,(T&& x, LeftOrTrue const& /*dummy*/) noexcept
         {
             return static_cast<T&&>(x);
         }

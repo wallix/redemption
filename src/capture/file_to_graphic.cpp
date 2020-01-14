@@ -556,7 +556,8 @@ void FileToGraphic::interpret_order()
                 BmpCache::CacheOption(
                     this->info.cache_3_entries, this->info.cache_3_size, this->info.cache_3_persistent),
                 BmpCache::CacheOption(
-                    this->info.cache_4_entries, this->info.cache_4_size, this->info.cache_4_persistent));
+                    this->info.cache_4_entries, this->info.cache_4_size, this->info.cache_4_persistent),
+                BmpCache::Verbose::none);
 //            this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
             this->meta_ok = true;
         }
@@ -586,7 +587,7 @@ void FileToGraphic::interpret_order()
     case WrmChunkType::LAST_IMAGE_CHUNK:
     case WrmChunkType::PARTIAL_IMAGE_CHUNK:
     {
-        if (this->graphic_consumers.size()) {
+        if (not this->graphic_consumers.empty()) {
             set_rows_from_image_chunk(
                 *this->trans,
                 this->chunk_type,
@@ -1032,12 +1033,12 @@ void FileToGraphic::process_desktop_information(
 
 void FileToGraphic::play(bool const & requested_to_stop)
 {
-    this->privplay([](time_t){}, requested_to_stop);
+    this->privplay([](time_t /*t*/){}, requested_to_stop);
 }
 
 bool FileToGraphic::play_client()
 {
-    return this->privplay_client([](time_t){});
+    return this->privplay_client([](time_t /*t*/){});
 }
 
 void FileToGraphic::instant_play_client(std::chrono::microseconds endin_frame)

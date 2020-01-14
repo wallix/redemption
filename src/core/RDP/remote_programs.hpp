@@ -682,7 +682,7 @@ public:
 
     // TODO: the name of the function is misleading it converts from utf16 to utf8
 
-    inline void get_non_null_terminated_utf16_from_utf8(
+    static inline void get_non_null_terminated_utf16_from_utf8(
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {
@@ -905,7 +905,7 @@ class ServerExecuteResultPDU {
 
 
     // TODO: the name of the function is misleading it converts from utf16 to utf8
-    inline void get_non_null_terminated_utf16_from_utf8(
+    static inline void get_non_null_terminated_utf16_from_utf8(
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {
@@ -1058,7 +1058,7 @@ public:
     , color_scheme(ColorScheme_) {}
 
     // TODO: the name of the function is misleading it converts from utf16 to utf8
-    inline void get_non_null_terminated_utf16_from_utf8(
+    static inline void get_non_null_terminated_utf16_from_utf8(
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {

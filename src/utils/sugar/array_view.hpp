@@ -25,7 +25,7 @@
 #include <cstdint>
 #include <cassert>
 #include <string_view>
-#include <string.h>
+#include <cstring>
 #include <vector>
 
 #include "utils/sugar/array.hpp"

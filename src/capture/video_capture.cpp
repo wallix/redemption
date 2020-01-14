@@ -424,10 +424,10 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
     &this->trans_tmp_file,
     imageFrameApi.get_image_view(),
-    video_params.frame_rate,
+    checked_int{video_params.frame_rate},
     video_params.codec.c_str(),
     video_params.codec_options.c_str(),
-    video_params.verbosity)
+    checked_int{video_params.verbosity})
 {
     log_video_params(video_params);
 }

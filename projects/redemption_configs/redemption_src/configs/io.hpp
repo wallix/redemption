@@ -54,7 +54,7 @@ template<>
 struct zstr_buffer<0>
 {
     static constexpr std::size_t size() { return 0; }
-    char * get() { return nullptr; }
+    static char * get() { return nullptr; }
 };
 
 namespace detail
@@ -253,11 +253,10 @@ array_view_const_char assign_zbuf_from_cfg(
     std::array<unsigned char, N> const & arr
 ) {
     char * p = buf.get();
+    const char * hex = "0123456789ABCDEF";
     for (int c : arr) {
-        auto x = (c & 0xf0) >> 4;
-        *p++ = x < 10 ? ('0' + x) : ('A' + x - 10);
-        x = c & 0xf;
-        *p++ = x < 10 ? ('0' + x) : ('A' + x - 10);
+        *p++ = hex[(c & 0xf0) >> 4];
+        *p++ = hex[c & 0xf];
     }
     return array_view_const_char(buf.get(), p-buf.get());
 }

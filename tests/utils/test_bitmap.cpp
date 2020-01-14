@@ -3846,17 +3846,13 @@ static int rle_bin_to_run_order(
                 image_data_current_p += nb_bytes_per_pixel(image_bpp) * run_order.length;
             break;
 
-            case CodeIdentifier::REGULAR_FG_RUN:
-            break;
-
             case CodeIdentifier::LITE_SET_FG_FG_RUN:
                 image_data_current_p += nb_bytes_per_pixel(image_bpp);
             break;
 
             case CodeIdentifier::LITE_SET_FG_FGBG_IMAGE:
-            break;
-
             case CodeIdentifier::MEGA_MEGA_BG_RUN:
+            case CodeIdentifier::REGULAR_FG_RUN:
             break;
 
             default:

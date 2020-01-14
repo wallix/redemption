@@ -95,7 +95,7 @@ bool MatchFinder::NamedRegexArray::empty() const noexcept
 void MatchFinder::configure_regexes(
     ConfigureRegexes conf_regex, const char * filters_list,
     NamedRegexArray & regexes_filter_ref, int verbose,
-    bool is_capturing)
+    WithCapture is_capturing)
 {
     if (!filters_list || !*filters_list) {
         return ;
@@ -169,7 +169,7 @@ void MatchFinder::configure_regexes(
                 c_str_filter = reg_pattern.c_str();
             }
 
-            if (is_capturing) {
+            if (bool(is_capturing)) {
                 capturing_regex = '(';
                 capturing_regex += c_str_filter;
                 capturing_regex += ')';

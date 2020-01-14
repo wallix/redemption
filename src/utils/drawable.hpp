@@ -284,12 +284,12 @@ public:
         return this->impl_.data();
     }
 
-    [[nodiscard]] Color u32_to_color(uint32_t color) const
+    [[nodiscard]] static Color u32_to_color(uint32_t color)
     {
         return DrawableImplPrivate::traits::u32_to_color(color);
     }
 
-    [[nodiscard]] Color u32bgr_to_color(uint32_t color) const
+    [[nodiscard]] static Color u32bgr_to_color(uint32_t color)
     {
         return DrawableImplPrivate::traits::u32bgr_to_color(color);
     }

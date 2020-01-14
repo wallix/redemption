@@ -241,8 +241,6 @@ Author(s): Jonathan Poelen
 
 namespace detail
 {
-namespace
-{
     template<class SetPoint>
     void rdp_draw_glyph(SetPoint& set_point, FontChar const & fc, int16_t px, int16_t py, Rect clip)
     {
@@ -267,7 +265,6 @@ namespace
             fc_data++;
         }
     }
-}
 }
 
 template<class SetPoint>

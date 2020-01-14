@@ -131,7 +131,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 class NullSender : public VirtualChannelDataSender
 {
 public:
-    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view /*chunk_data*/) override {}
+    void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view /*chunk_data*/) override {}
 };
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
@@ -414,7 +414,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             FdxCapture fdx = FdxCapture{
                 record_path.dirname().string(),
                 hash_path.dirname().string(),
-                sid, -1, cctx, rnd, fstat};
+                sid, -1, cctx, rnd, fstat,
+                ReportError()};
         };
 
         auto fdx_ctx = [&]{

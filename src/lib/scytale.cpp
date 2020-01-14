@@ -713,7 +713,7 @@ struct ScytaleFdxWriterHandle
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
     , fdx_capture(record_path, hash_path, sid, groupid,
-        this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat)
+        this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat, ReportError())
     {
         this->qhashhex[0] = 0;
         this->fhashhex[0] = 0;
@@ -957,7 +957,7 @@ namespace
         storage_list() = default;
 
         template<class... Us>
-        storage_list(storage_list<Us...>) noexcept
+        storage_list(storage_list<Us...> /*dummy*/) noexcept
         {}
 
         static const std::size_t size = sizeof...(Ts);
@@ -987,7 +987,7 @@ namespace
             typename storage_params::storage_type storage;
             typename recursive_storage_union<others...>::type next;
 
-            type() noexcept {}
+            type() = default;
         };
     };
 
@@ -1027,16 +1027,16 @@ namespace
                         typename storage_params::storage_type storage;
                         typename recursive_storage_union<others...>::type next;
 
-                        type3() noexcept {}
+                        type3() = default;
                     } next;
 
-                    type2() noexcept {}
+                    type2() = default;
                 } next;
 
-                type1() noexcept {}
+                type1() = default;
             } next;
 
-            type() noexcept {}
+            type() = default;
         };
     };
 
@@ -1182,7 +1182,7 @@ namespace
             >>();
         };
 
-        return Mwrm3::unserialize_packet(Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type){
+        return Mwrm3::unserialize_packet(Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type /*type*/){
             return storage_list<>();
         });
     }

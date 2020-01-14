@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "cxx/diagnostic.hpp"
-
 #include <type_traits>
 #include <algorithm>
 #include <limits>
@@ -184,12 +182,20 @@ namespace detail
     constexpr Dst checked_cast(type_<Dst> /*unused*/, Src value) noexcept
     {
     #ifndef NDEBUG
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wsign-compare")
+        using DstIsSign = std::is_signed<Dst>;
+        using SrcIsSign = std::is_signed<Src>;
         using dst_limits = std::numeric_limits<Dst>;
-        assert(dst_limits::max() >= value);
-        assert(dst_limits::min() <= value);
-        REDEMPTION_DIAGNOSTIC_POP
+        if constexpr (DstIsSign::value == SrcIsSign::value) {
+            assert(dst_limits::max() >= value);
+            assert(dst_limits::min() <= value);
+        }
+        else if constexpr (DstIsSign::value) {
+            assert(std::make_unsigned_t<Dst>(dst_limits::max()) >= value);
+        }
+        else {
+            assert(0 <= value);
+            assert(dst_limits::max() >= std::make_unsigned_t<Src>(value));
+        }
     # endif
         return static_cast<Dst>(value);
     }

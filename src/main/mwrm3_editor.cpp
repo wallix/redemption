@@ -130,13 +130,13 @@ constexpr TypeName get_enum_name()
 template<class E>
 class enum_names
 {
-    constexpr static std::size_t _len(std::index_sequence<>)
+    constexpr static std::size_t _len(std::index_sequence<> /*ints*/)
     {
         return 0;
     }
 
     template<std::size_t... ints>
-    constexpr static std::size_t _len(std::index_sequence<ints...>)
+    constexpr static std::size_t _len(std::index_sequence<ints...> /*ints*/)
     {
         std::string_view names[]{get_enum_name<E, E(ints)>()...};
         for (auto& name : names)
@@ -150,7 +150,7 @@ class enum_names
     }
 
     template<std::size_t... ints>
-    constexpr static auto _names(std::index_sequence<ints...>)
+    constexpr static auto _names(std::index_sequence<ints...> /*ints*/)
     {
         return std::array<std::string_view, sizeof...(ints)>{
             get_enum_name<E, E(ints)>()...
@@ -158,7 +158,7 @@ class enum_names
     }
 
     template<std::size_t... ints>
-    constexpr static auto _name(E e, std::index_sequence<ints...>)
+    constexpr static auto _name(E e, std::index_sequence<ints...> /*ints*/)
     {
         auto v = +underlying_cast(e);
         std::string_view sv;
@@ -357,7 +357,7 @@ struct integral_mwrm3_type_info_list
     integral_mwrm3_type_info_list() = default;
 
     template<class... Us>
-    integral_mwrm3_type_info_list(integral_mwrm3_type_info_list<Us...>) noexcept
+    integral_mwrm3_type_info_list(integral_mwrm3_type_info_list<Us...> /*infos*/) noexcept
     {}};
 }
 
@@ -388,11 +388,9 @@ bool read_choice(T& x)
         {
             return false;
         }
-        else if (std::cin.fail())
-        {
-            std::cin.clear();
-            std::cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n');
-        }
+
+        std::cin.clear();
+        std::cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
     return true;
@@ -401,7 +399,7 @@ bool read_choice(T& x)
 
 
 template<Mwrm3::Type type, class... Ts>
-void mwrm3_text_writer_print_type(mwrm3_type_info<type, Ts...>)
+void mwrm3_text_writer_print_type(mwrm3_type_info<type, Ts...> /*infos*/)
 {
     auto name = get_enum_name<Mwrm3::Type, type>();
     if (not name.empty())
@@ -565,13 +563,13 @@ void mwrm3_text_writer_read_data(mwrm3_type_info<type, Ts...> m)
                 serial.serialize(Ts(static_cast<decltype(reader<Ts>())&>(readers).value)...,
                     PrintSerialization());
             }
-        }, [](auto){});
+        }, [](auto /*dummy*/){});
     }
 }
 REDEMPTION_DIAGNOSTIC_POP
 
 template<class... Mwrm3TypeInfo>
-void mwrm3_text_writer_impl(integral_mwrm3_type_info_list<Mwrm3TypeInfo...>)
+void mwrm3_text_writer_impl(integral_mwrm3_type_info_list<Mwrm3TypeInfo...> /*infos*/)
 {
     int nb = 0;
 
@@ -613,7 +611,7 @@ void mwrm3_text_writer()
     };
 
     mwrm3_text_writer_impl(Mwrm3::unserialize_packet(
-        Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type){
+        Mwrm3::Type::None, {}, bind_params, [](Mwrm3::Type /*type*/){
             return integral_mwrm3_type_info_list<>();
         }
     ));

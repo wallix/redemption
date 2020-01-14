@@ -30,7 +30,10 @@ RED_AUTO_TEST_CASE(TestBitmapCacheBasic)
         BmpCache::Recorder, BitsPerPixel{24}, 3, true,
         BmpCache::CacheOption(120, 768, false),
         BmpCache::CacheOption(120, 3072, false),
-        BmpCache::CacheOption(2555, 12288, true)
+        BmpCache::CacheOption(2555, 12288, true),
+        BmpCache::CacheOption(),
+        BmpCache::CacheOption(),
+        BmpCache::Verbose::none
     );
 
     const BGRPalette & palette = BGRPalette::classic_332();
@@ -8589,7 +8592,10 @@ RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
         BmpCache::Recorder, BitsPerPixel{24}, 3, true,
         BmpCache::CacheOption(120, 768, false),
         BmpCache::CacheOption(120, 3072, false),
-        BmpCache::CacheOption(2555, 12288, true)
+        BmpCache::CacheOption(2555, 12288, true),
+        BmpCache::CacheOption(),
+        BmpCache::CacheOption(),
+        BmpCache::Verbose::none
     );
 
     #include "./fixtures/test_bitmapcache.hpp"
@@ -8654,7 +8660,14 @@ RED_AUTO_TEST_CASE(TestBitmapCacheWaitingList)
 
 RED_AUTO_TEST_CASE(BmpcachePutAndGet)
 {
-    BmpCache bmpcache(BmpCache::Mod_rdp, BitsPerPixel{24}, 1, false, BmpCache::CacheOption(256, 1024, true));
+    BmpCache bmpcache(
+        BmpCache::Mod_rdp, BitsPerPixel{24}, 1, false,
+        BmpCache::CacheOption(256, 1024, true),
+        BmpCache::CacheOption(),
+        BmpCache::CacheOption(),
+        BmpCache::CacheOption(),
+        BmpCache::CacheOption(),
+        BmpCache::Verbose::none);
     {
         Bitmap bmp = bitmap_from_file("no_image");
         RED_CHECK(bmp.is_valid());

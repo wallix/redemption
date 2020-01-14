@@ -101,23 +101,27 @@ void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
     auto const color_ctx = gdi::ColorCtx::depth24();
 
+    auto const green = encode_color24()(GREEN);
+    auto const red = encode_color24()(RED);
+
     if (this->draw_green_carpet) {
         update_lock lock{gd};
-        gd.draw(RDPOpaqueRect(this->get_screen_rect(), encode_color24()(GREEN)), this->get_screen_rect(), color_ctx);
+        gd.draw(RDPOpaqueRect(this->get_screen_rect(), green), this->get_screen_rect(), color_ctx);
         this->draw_green_carpet = false;
     }
 
     this->interaction();
 
     // Calculating new speedx and speedy
-    if (this->dancing_rect.x <= 0 && this->speedx < 0) {
-        this->speedx = -this->speedx;
-    } else if (this->dancing_rect.x + this->dancing_rect.cx >= this->get_screen_rect().cx && this->speedx > 0) {
+    if ((this->dancing_rect.x <= 0 && this->speedx < 0)
+     || (this->dancing_rect.x + this->dancing_rect.cx >= this->get_screen_rect().cx && this->speedx > 0)
+    ) {
         this->speedx = -this->speedx;
     }
-    if (this->dancing_rect.y <= 0 && this->speedy < 0) {
-        this->speedy = -this->speedy;
-    } else if (this->dancing_rect.y + this->dancing_rect.cy >= this->get_screen_rect().cy && this->speedy > 0) {
+
+    if ((this->dancing_rect.y <= 0 && this->speedy < 0)
+     || (this->dancing_rect.y + this->dancing_rect.cy >= this->get_screen_rect().cy && this->speedy > 0)
+    ) {
         this->speedy = -this->speedy;
     }
 
@@ -130,18 +134,11 @@ void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 
     gd.begin_update();
     // Drawing the RECT
-    gd.draw(RDPOpaqueRect(this->dancing_rect, encode_color24()(RED)), this->get_screen_rect(), color_ctx);
+    gd.draw(RDPOpaqueRect(this->dancing_rect, red), this->get_screen_rect(), color_ctx);
 
     // And erase
-    this->wipe(oldrect, this->dancing_rect, encode_color24()(GREEN), this->get_screen_rect(), gd);
-    gd.end_update();
-}
-
-void Bouncer2Mod::wipe(
-    Rect const oldrect, Rect newrect, RDPColor color,
-    const Rect clip, gdi::GraphicApi & gd)
-{
-    oldrect.difference(newrect, [&](const Rect & a) {
-        gd.draw(RDPOpaqueRect(a, color), clip, gdi::ColorCtx::depth24());
+    oldrect.difference(this->dancing_rect, [&](const Rect & a) {
+        gd.draw(RDPOpaqueRect(a, green), this->get_screen_rect(), gdi::ColorCtx::depth24());
     });
+    gd.end_update();
 }

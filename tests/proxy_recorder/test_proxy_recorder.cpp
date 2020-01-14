@@ -98,9 +98,6 @@ uint8_t data0[0x2E] = {
         uint8_t * data;
     } datas[1] = {{1, sizeof(data0), data0}};
 
-    ReplayBackTransport(){}
-    ~ReplayBackTransport(){}
-
 private:
     Read do_atomic_read(uint8_t * buffer, size_t len) override {
         LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer", len);

@@ -33,7 +33,7 @@ static BGRColor color_from_cstr(const char * str)
 {
     BGRColor bgr;
 
-    if (false) {}
+    if (false) {} /*NOLINT*/
 # define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
     ELSE_COLOR(BLACK)
     ELSE_COLOR(GREY)

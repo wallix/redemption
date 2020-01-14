@@ -34,8 +34,7 @@ class TestToServerSender : public VirtualChannelDataSender {
 public:
     TestToServerSender(Transport & transport) : transport(transport) {}
 
-    virtual void operator() (uint32_t total_length, uint32_t flags,
-        bytes_view chunk_data) override {
+    void operator() (uint32_t total_length, uint32_t flags, bytes_view chunk_data) override {
         StaticOutStream<8> stream;
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);

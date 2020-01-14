@@ -103,7 +103,7 @@ namespace
         };
     }
 
-    static iovec to_iov(array_view_const_char av) noexcept
+    iovec to_iov(array_view_const_char av) noexcept
     {
         return {const_cast<char*>(av.data()), av.size()}; /*NOLINT*/
     }

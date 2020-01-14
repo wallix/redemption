@@ -144,8 +144,8 @@ public:
                 , PointerCache & ptr_cache
                 , gdi::ImageFrameApi & image_frame_api
                 , WrmCompressionAlgorithm wrm_compression_algorithm
-                , SendInput send_input = SendInput::NO
-                , Verbose verbose = Verbose::none)
+                , SendInput send_input
+                , Verbose verbose)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
                    , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, true, verbose)
     , compression_bullder(trans, wrm_compression_algorithm)
@@ -792,7 +792,10 @@ public:
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
         BmpCache::CacheOption(300, 3072, false),
-        BmpCache::CacheOption(262, 12288, false))
+        BmpCache::CacheOption(262, 12288, false),
+        BmpCache::CacheOption(),
+        BmpCache::CacheOption(),
+        BmpCache::Verbose::none)
     , ptr_cache(/*pointer_cache_entries=*/0x19)
     , out(
         wrm_params.cctx,

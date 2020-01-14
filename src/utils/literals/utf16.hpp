@@ -37,7 +37,7 @@ namespace detail
     };
 
     template<class C, C... cs, std::size_t... ints>
-    constexpr decltype(auto) utf16_le_impl(std::integer_sequence<std::size_t, ints...>)
+    constexpr decltype(auto) utf16_le_impl(std::integer_sequence<std::size_t, ints...> /*ints*/)
     {
         constexpr C a[]{cs...};
         return utf16_le_literal<((ints&1) ? '\0' : a[ints/2])...>::av();

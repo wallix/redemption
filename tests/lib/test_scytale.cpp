@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 
         size_t total = 0;
         while (total < sizeof(buf)) {
-            int res = scytale_reader_read(handle, &buf[total], 10);
+            long long res = scytale_reader_read(handle, &buf[total], 10);
             RED_REQUIRE_GT(res, 0);
             total += size_t(res);
         }
@@ -513,7 +513,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         {
             std::array<uint8_t, 1024> buffer;
 
-            auto readall = [&](char const* filename, char const* derivator){
+            auto readall = [&](char const* filename, char const* derivator) {
                 RED_TEST_CONTEXT("filename: " << filename << "\n    derivator: " << derivator)
                 {
                     auto* reader = scytale_reader_new(master_derivator, hmac_fn, trace_fn, 0, 0);
@@ -529,7 +529,8 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
                     return bytes_view(buffer.data(), std::size_t(len));
                 }
-                return bytes_view{};
+
+                return bytes_view{}; /*NOLINT*/
             };
 
             auto content = readall(file2hash.c_str(), fname.c_str());

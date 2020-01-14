@@ -258,12 +258,6 @@ Primitives *Primitives::instance() {
     return &s_instance;
 }
 
-size_t Primitives::pixelFormatSize(PixelFormat format) {
-    switch(format) {
-    case Primitives::PIXEL_FORMAT_BGRA32:
-    case Primitives::PIXEL_FORMAT_BGRX32:
-        return 4;
-    default:
-        return 4;
-    }
+size_t Primitives::pixelFormatSize(PixelFormat /*format*/) {
+    return 4;
 }

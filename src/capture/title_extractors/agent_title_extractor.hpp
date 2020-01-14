@@ -58,7 +58,7 @@ public:
 
     void session_update(LogId id, KVList kv_list)
     {
-        if (id == LogId::FOREGROUND_WINDOW_CHANGED && kv_list.size() > 0) {
+        if (id == LogId::FOREGROUND_WINDOW_CHANGED && not kv_list.empty()) {
             auto title = kv_list[0].value;
             this->title.assign(title.begin(), title.end());
             this->has_title = true;

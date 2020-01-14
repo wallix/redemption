@@ -165,7 +165,7 @@ public:
         ::memset(this->mask, 0xFF, sizeof(this->mask));
     }
 
-    [[nodiscard]] const array_view_const_u8 get_monochrome_and_mask() const
+    [[nodiscard]] array_view_const_u8 get_monochrome_and_mask() const
     {
         return {this->mask, this->bit_mask_size()};
     }

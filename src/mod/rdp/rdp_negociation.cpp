@@ -1317,7 +1317,7 @@ bool RdpNegociation::get_license(InStream & stream)
                                 writable_bytes_view(this->lic_layer_license_data, sizeof(lic_layer_license_data)),
                                 bool(this->verbose & RDPVerbose::license)
                             );
-                        if (out.size())
+                        if (not out.empty())
                         {
                             this->lic_layer_license_size = out.size();
 

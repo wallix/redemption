@@ -50,7 +50,7 @@ private:
         COUNT_FIELD
     };
 
-    const char * vnc_metrics_name(int index) {
+    static const char * vnc_metrics_name(int index) {
 
         switch (index) {
             case DATA_FROM_CLIENT:   return "data_from_client";

@@ -1279,23 +1279,24 @@ public:
                          !::strcasecmp(order_.c_str(), "ACCOUNT_MANIPULATION_DETECTED")) {
                     bool deny = (!::strcasecmp(order_.c_str(), "ACCOUNT_MANIPULATION_BLOCKED"));
 
-                    if (parameters_.size() == 5) {
+                    if (parameters_.size() == 6) {
                         this->log6(
                             deny ? LogId::ACCOUNT_MANIPULATION_BLOCKED : LogId::ACCOUNT_MANIPULATION_DETECTED, {
-                            KVLog("server_name"_av,  parameters_[0]),
-                            KVLog("group_name"_av,   parameters_[1]),
-                            KVLog("account_name"_av, parameters_[2]),
-                            KVLog("app_name"_av,     parameters_[3]),
-                            KVLog("app_cmd_line"_av, parameters_[4]),
+                            KVLog("operation"_av,    parameters_[0]),
+                            KVLog("server_name"_av,  parameters_[1]),
+                            KVLog("group_name"_av,   parameters_[2]),
+                            KVLog("account_name"_av, parameters_[3]),
+                            KVLog("app_name"_av,     parameters_[4]),
+                            KVLog("app_cmd_line"_av, parameters_[5]),
                         });
 
                         {
                             char message[4096];
 
-                            // server_name, group_name, account_name, app_name, app_cmd_line
-                            snprintf(message, sizeof(message), "%s|%s|%s|%s|%s",
+                            // operation, server_name, group_name, account_name, app_name, app_cmd_line
+                            snprintf(message, sizeof(message), "%s|%s|%s|%s|%s|%s",
                                 parameters_[0].c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
-                                parameters_[3].c_str(), parameters_[4].c_str());
+                                parameters_[3].c_str(), parameters_[4].c_str(), parameters_[5].c_str());
 
                             this->report_message.report(
                                 (deny ? "ACCOUNTMANIPULATION_DENY" : "ACCOUNTMANIPULATION_NOTIFY"),
@@ -1317,7 +1318,7 @@ public:
                     }
                 }
                 else if (!::strcasecmp(order_.c_str(), "FOREGROUND_WINDOW_CHANGED")) {
-                    if (parameters_.size() >= 1) {
+                    if (not parameters_.empty()) {
                         this->log6(LogId::TITLE_BAR, {
                             KVLog("source"_av, "Probe"_av),
                             KVLog("window"_av, parameters_[0]),

@@ -288,7 +288,7 @@ struct ServerRedirectionPDU {
 
     ServerRedirectionPDU() = default;
 
-    uint32_t recv_field_process(InStream & stream, writable_bytes_view field) {
+    static uint32_t recv_field_process(InStream & stream, writable_bytes_view field) {
         uint32_t field_length = stream.in_uint32_le();
         if (field_length > field.size()) {
             ::check_throw(stream, field_length, "ServerRedirectionPDU::recv_field_process", ERR_RDP_DATA_TRUNCATED);
@@ -343,9 +343,9 @@ struct ServerRedirectionPDU {
             this->TargetNetAddressesLength = this->recv_field_process(
                 stream, make_array_view(this->TargetNetAddresses));
         }
-        int remains = this->Length - (stream.get_offset() - offset);
+        size_t remains = this->Length - (stream.get_offset() - offset);
         // LOG(LOG_INFO, "receive RDP_SERVER_REDIRECTION_PACKET pad = %d", remains);
-        if ((remains <= 8) && (remains >= 0)) {
+        if (remains <= 8 && remains >= 0) {
             stream.in_skip_bytes(remains);
         }
     }

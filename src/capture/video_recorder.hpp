@@ -44,7 +44,7 @@ public:
 
     void preparing_video_frame();
 
-    void encoding_video_frame(uint64_t frame_index = 1);
+    void encoding_video_frame(uint64_t frame_index);
 
 private:
     class D;

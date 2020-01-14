@@ -725,7 +725,7 @@ private:
                     file_contents_request_pdu.clipDataId(),
                     file_validator_id,
                     this->fdx_capture
-                        ? std::unique_ptr<FdxCapture::TflFile>(new FdxCapture::TflFile(
+                        ? std::unique_ptr<FdxCapture::TflFile>(new FdxCapture::TflFile( /*NOLINT*/
                             this->fdx_capture->new_tfl(direction == Direction::FileFromServer
                                 ? Mwrm3::Direction::ServerToClient
                                 : Mwrm3::Direction::ClientToServer
@@ -795,7 +795,7 @@ private:
                                 original_chunk.remaining_bytes(),
                                 make_array_view(utf8_buf));
                             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                                if (utf8_av.size() > 0 && utf8_av.back() == '\0') {
+                                if (not utf8_av.empty() && utf8_av.back() == '\0') {
                                     utf8_av = utf8_av.drop_back(1);
                                 }
                             }
