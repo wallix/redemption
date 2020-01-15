@@ -111,8 +111,6 @@ public:
         new_mod = 0x1,
     };
 
-    int validator_fd = -1;
-
 private:
 
     EndSessionWarning & end_session_warning;

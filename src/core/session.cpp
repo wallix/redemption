@@ -80,6 +80,7 @@ class Session
         : timeout{timeout}
         {
             io_fd_zero(this->rfds);
+            io_fd_zero(this->wfds);
         }
 
         int select(timeval now)
@@ -92,6 +93,9 @@ class Session
                     - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
             }
 
+            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us", 
+                now.tv_sec, now.tv_usec, this->timeout.tv_sec, this->timeout.tv_usec, 
+                timeoutastv.tv_sec, timeoutastv.tv_usec);
             return ::select(
                 this->max + 1, &this->rfds,
                 this->want_write ? &this->wfds : nullptr,
@@ -100,46 +104,45 @@ class Session
 
         void set_timeout(timeval next_timeout)
         {
+            LOG(LOG_INFO, "set timeout at %u s %u us", next_timeout.tv_sec, next_timeout.tv_usec);
             this->timeout = next_timeout;
         }
 
-        std::chrono::milliseconds get_timeout(timeval now)
+        timeval get_timeout()
         {
-            const timeval & ultimatum = this->timeout;
-            const timeval & starttime = now;
-            if (ultimatum > starttime) {
-                return std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                        - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
-            }
-            return 0ms;
+            return this->timeout;
         }
 
         bool is_set_for_writing(int fd){
-            return fd != INVALID_SOCKET && io_fd_isset(fd, this->wfds);
+            bool res = io_fd_isset(fd, this->wfds);
+            if (res){
+                LOG(LOG_INFO, "is set for writing fd=%u", fd);
+            }
+            return res;
         };
 
         bool is_set_for_reading(int fd){
-            return fd != INVALID_SOCKET && io_fd_isset(fd, this->rfds);
+            bool res = io_fd_isset(fd, this->rfds);
+            if (res){
+                LOG(LOG_INFO, "is set for reading fd=%u", fd);
+            }
+            return res;
         };
 
         void set_read_sck(int sck)
         {
+            LOG(LOG_INFO, "--> set for reading fd=%u", sck);
             this->max = prepare_fds(sck, this->max, this->rfds);
         }
 
         void set_write_sck(int sck)
         {
+            LOG(LOG_INFO, "--> set for writing fd=%u", sck);
             if (!this->want_write) {
                 this->want_write = true;
                 io_fd_zero(this->wfds);
             }
             this->max = prepare_fds(sck, this->max, this->wfds);
-        }
-
-        void immediate_wakeup(timeval now)
-        {
-            this->timeout = now;
         }
     };
 
@@ -507,7 +510,9 @@ class Session
                 graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
             }
             fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
-                                    {return ioswitch.is_set_for_reading(fd);});
+                                    { return fd != INVALID_SOCKET 
+                                            &&  ioswitch.is_set_for_reading(fd);
+                                    });
             if (!front_events_.is_empty()) {
                 front_events_.exec_action(mod_wrapper.get_callback());
             }
@@ -601,7 +606,10 @@ class Session
             fd_events_.exec_timeout(end_tv);
             graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
             graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
-            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){return ioswitch.is_set_for_reading(fd);
+            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
+                                {
+                                    return fd != INVALID_SOCKET 
+                                        && ioswitch.is_set_for_reading(fd);
                                 });
         } catch (Error const& e) {
             if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini)) {
@@ -660,14 +668,17 @@ class Session
                     graphic_events_.exec_action(gd);
                     LOG(LOG_INFO, "--------------------- Execute fd_events actions");
                     graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                        return ioswitch.is_set_for_reading(fd);
+                        return fd != INVALID_SOCKET 
+                            &&  ioswitch.is_set_for_reading(fd);
                     }, gd);
                     LOG(LOG_INFO, "--------------------- Back event loop done");
                 }
 
                 // Incoming data from ACL
                 LOG(LOG_INFO, "-------------------------- check acl pending");
-                if (acl && (acl->auth_trans.has_pending_data() || ioswitch.is_set_for_reading(acl->auth_trans.sck))) {
+                if (acl && (acl->auth_trans.has_tls_pending_data() || (
+                       acl->auth_trans.sck != INVALID_SOCKET 
+                    && ioswitch.is_set_for_reading(acl->auth_trans.sck)))) {
                     // authentifier received updated values
                     LOG(LOG_INFO, "acl pending");
                     acl->acl_serial.receive();
@@ -717,30 +728,32 @@ public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
     {
+
+        TRANSLATIONCONF.set_ini(&ini);
+        std::string disconnection_message_error;
+
+        const bool mem3blt_support = true;
+        Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
+
+        SessionReactor session_reactor;
+        TopFdContainer fd_events_;
+        GraphicFdContainer graphic_fd_events_;
+        TimerContainer timer_events_;
+        GraphicEventContainer graphic_events_;
+        CallbackEventContainer front_events_;
+        SesmanEventContainer sesman_events_;
+        GraphicTimerContainer graphic_timer_events_;
+
+        TimeSystem timeobj;
+
+        session_reactor.set_current_time(tvtime());
+        Front front(session_reactor, timer_events_, front_events_, front_trans, rnd, ini, cctx, authentifier,
+            ini.get<cfg::client::fast_path>(), mem3blt_support
+        );
+        SesmanInterface acl_cb(ini);
+        std::unique_ptr<Acl> acl;
+
         try {
-            TRANSLATIONCONF.set_ini(&ini);
-            std::string disconnection_message_error;
-
-            const bool mem3blt_support = true;
-            Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
-
-            SessionReactor session_reactor;
-            TopFdContainer fd_events_;
-            GraphicFdContainer graphic_fd_events_;
-            TimerContainer timer_events_;
-            GraphicEventContainer graphic_events_;
-            CallbackEventContainer front_events_;
-            SesmanEventContainer sesman_events_;
-            GraphicTimerContainer graphic_timer_events_;
-
-            TimeSystem timeobj;
-
-            session_reactor.set_current_time(tvtime());
-            Front front(session_reactor, timer_events_, front_events_, front_trans, rnd, ini, cctx, authentifier,
-                ini.get<cfg::client::fast_path>(), mem3blt_support
-            );
-            SesmanInterface acl_cb(ini);
-            std::unique_ptr<Acl> acl;
 
             Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());;
 
@@ -774,108 +787,109 @@ public:
             timeval now = tvtime();
             session_reactor.set_current_time(now);
 
+            int count = 1000;
             while (run_session) {
+                if (count-- <= 0) break;
+
+//                this->wait_for_event();
+
                 Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
 
-                int sck_no_read_sck_front = INVALID_SOCKET;
-                int sck_no_read_sck_mod = INVALID_SOCKET;
-
                 if (front_trans.has_data_to_write()) {
+                    LOG(LOG_INFO, "Wait end of writing on front sck fd=%d", front_trans.sck);
                     ioswitch.set_write_sck(front_trans.sck);
-                    sck_no_read_sck_front = front_trans.sck;
                 }
-                else {
-                    ioswitch.set_read_sck(front_trans.sck);
-                    if (mm.validator_fd > 0) {
-                        ioswitch.set_read_sck(mm.validator_fd);
+
+                if (mod_wrapper.has_mod()){
+                    auto mod_trans = mod_wrapper.get_mod_transport();
+                    if (mod_trans && !mod_trans->has_tls_pending_data()) {
+                        if (mod_trans->has_data_to_write()){
+                            LOG(LOG_INFO, "Wait end of writing on mod sck fd=%d", mod_trans->sck);
+                            ioswitch.set_write_sck(mod_trans->sck);
+                        }
                     }
                 }
 
-                LOG(LOG_INFO, "mod_trans (1)");
-                auto mod_trans = mod_wrapper.get_mod_transport();
-                if (mod_trans && !mod_trans->has_pending_data()) {
-                    LOG(LOG_INFO, "mod_trans don't have pending data (2)");
-                    if (mod_trans->has_data_to_write()){
-                        sck_no_read_sck_mod = mod_trans->sck;
-                        ioswitch.set_write_sck(sck_no_read_sck_mod);
-                    }
-                    else if (sck_no_read_sck_front != INVALID_SOCKET) {
-                        sck_no_read_sck_mod = mod_trans->sck;
-                    }
-                }
-
-                LOG(LOG_INFO, "acl check");
-                if (acl) {
-                    LOG(LOG_INFO, "read acl (1)");
-                    ioswitch.set_read_sck(acl->auth_trans.sck);
-                }
-
-//                // We should check we are able to write on acl socket
-//                if (front.state == Front::PRIMARY_AUTH_NLA) {
-//                    LOG(LOG_INFO, "primary auth nla (1) user=%s", this->ini.get<cfg::globals::nla_auth_user>());
-//                    if ((this->ini.is_asked<cfg::context::nla_password_hash>())
-//                        && this->ini.get<cfg::client::enable_nla>()) {
-//                        acl->acl_serial.send_acl_data();
-//                    }
-//                }
-
-                LOG(LOG_INFO, "front_trans check pending data");
-                if (front_trans.has_pending_data()
-                || (mod_trans && mod_trans->has_pending_data())
-                || (acl && acl->auth_trans.has_pending_data())){
-                    ioswitch.immediate_wakeup(session_reactor.get_current_time());
-                }
-
-                auto g = [sck_no_read_sck_front,sck_no_read_sck_mod,&ioswitch](int fd, auto& /*top*/){
-                    assert(fd != -1);
-                    if ((sck_no_read_sck_front != fd)
-                    &&  (sck_no_read_sck_mod != fd)) {
-                        ioswitch.set_read_sck(fd);
-                    }
+                // if event lists are waiting for incoming data 
+                auto g = [&](int fd, auto& /*top*/){ 
+                    LOG(LOG_INFO, "Wait for read event on fd=%d (frontfd =%d)", fd, front_trans.sck);
+                    ioswitch.set_read_sck(fd);
                 };
                 fd_events_.for_each(g);
-                if (front.state == Front::FRONT_UP_AND_RUNNING) {
+                if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
                     graphic_fd_events_.for_each(g);
+                }
+
+                if (acl) {
+                    ioswitch.set_read_sck(acl->auth_trans.sck);
                 }
 
                 now = tvtime();
                 session_reactor.set_current_time(now);
+                
+                timeval ultimatum = ioswitch.get_timeout();
 
-                timeval tv = session_reactor.get_current_time() + std::chrono::milliseconds{ioswitch.get_timeout(now)};
+                LOG(LOG_INFO, "ultimatum=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
 
-                // for front_events_ and graphic_events_ we want to wake up immediately
-                if ((front.state != Front::FRONT_UP_AND_RUNNING || graphic_events_.is_empty())
-                 && front_events_.is_empty()) {
-                    auto top_update_tv = [&](int /*fd*/, auto& top){
-                        if (top.timer_data.is_enabled) {
-                            if (top.timer_data.tv.tv_sec >= 0) {
-                                tv = std::min(tv, top.timer_data.tv);
-                            }
+                auto top_update_tv = [&](int /*fd*/, auto& top){
+                    if (top.timer_data.is_enabled) {
+                        if (top.timer_data.tv.tv_sec >= 0) {
+                            ultimatum = std::min(ultimatum, top.timer_data.tv);
                         }
-                    };
-
-                    auto timer_update_tv = [&](auto& timer){
-                        if (timer.tv.tv_sec >= 0) {
-                            tv = std::min(tv, timer.tv);
-                        }
-                    };
-
-                    timer_events_.for_each(timer_update_tv);
-                    fd_events_.for_each(top_update_tv);
-                    if (front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_timer_events_.for_each(timer_update_tv);
-                        graphic_fd_events_.for_each(top_update_tv);
                     }
+                };
+
+                auto timer_update_tv = [&](auto& timer){
+                    if (timer.tv.tv_sec >= 0) {
+                        ultimatum = std::min(ultimatum, timer.tv);
+                    }
+                };
+
+                timer_events_.for_each(timer_update_tv);
+                LOG(LOG_INFO, "ultimatum (timers)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
+
+                fd_events_.for_each(top_update_tv);
+                LOG(LOG_INFO, "ultimatum (fd)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
+
+                if (front.state == Front::FRONT_UP_AND_RUNNING) {
+                    graphic_timer_events_.for_each(timer_update_tv);
+                    LOG(LOG_INFO, "ultimatum (graphic timer)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
+                    graphic_fd_events_.for_each(top_update_tv);
+                    LOG(LOG_INFO, "ultimatum (graphic fd)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
                 }
 
-                ioswitch.set_timeout(tv);
+                if (!front_events_.is_empty()) {
+                    LOG(LOG_INFO, "ultimatum (front events)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
+                    ultimatum = now;
+                }
 
-                LOG(LOG_INFO, "select");
+                if (mod_wrapper.has_mod() 
+                    && mod_wrapper.get_mod_transport() 
+                    && mod_wrapper.get_mod_transport()->has_tls_pending_data()) {
+                    LOG(LOG_INFO, "ultimatum (mod pending)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
+                    ultimatum = now;
+                }
+
+                if ((front.state == Front::FRONT_UP_AND_RUNNING and !graphic_events_.is_empty())) {
+                    LOG(LOG_INFO, "ultimatum (mod graphic event)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
+                    ultimatum = now;
+                }
+
+                if (front_trans.has_tls_pending_data()) {
+                    LOG(LOG_INFO, "ultimatum (front tls pending)=%d.%d", ultimatum.tv_sec, ultimatum.tv_usec);
+                    ultimatum = now;
+                }
+
+                ioswitch.set_timeout(ultimatum);
+
                 int num = ioswitch.select(now);
+                LOG(LOG_INFO, " Select num = %d", num);
 
                 if (num < 0) {
+                    LOG(LOG_INFO, " Select error");
+
                     if (errno == EINTR) {
-                        continue;
+                        break;
                     }
                     // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
                     // EBADF: means fd has been closed (by me) or as already returned an error on another call
@@ -887,16 +901,17 @@ public:
                     continue;
                 }
 
-                {
-                    LOG(LOG_INFO, "send mod data waiting to be sent");
-                    if (ioswitch.is_set_for_writing(sck_no_read_sck_mod)) {
-                        mod_trans->send_waiting_data();
-                    }
+                if (mod_wrapper.has_mod() 
+                && mod_wrapper.get_mod_transport() 
+                && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
+                    LOG(LOG_INFO, "Send waiting mod data");
+                    mod_wrapper.get_mod_transport()->send_waiting_data();
+                }
 
-                    LOG(LOG_INFO, "send front data waiting to be sent");
-                    if (ioswitch.is_set_for_writing(sck_no_read_sck_front)) {
-                        front_trans.send_waiting_data();
-                    }
+                if (front_trans.sck != INVALID_SOCKET
+                && ioswitch.is_set_for_writing(front_trans.sck)) {
+                    LOG(LOG_INFO, "Send waiting front data");
+                    front_trans.send_waiting_data();
                 }
 
                 now = tvtime();
@@ -905,27 +920,19 @@ public:
                     this->write_performance_log(now.tv_sec);
                 }
 
-                LOG(LOG_INFO, "front is set flag");
-                bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
+                bool const front_is_set = front_trans.has_tls_pending_data() 
+                || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
 
-                LOG(LOG_INFO, "acl is set flag");
-                bool acl_is_set = false; //(acl) && ioswitch.is_set_for_reading(acl->auth_trans.sck);
-                if (acl){
-                    if (ioswitch.is_set_for_reading(acl->auth_trans.sck)){
-                        acl_is_set = true;
-                    }
-                }
+                bool acl_is_set = bool(acl) 
+                    && acl->auth_trans.sck != INVALID_SOCKET 
+                    && ioswitch.is_set_for_reading(acl->auth_trans.sck);
 
-                LOG(LOG_INFO, "mod is set flag");
-                bool mod_is_set = false;
-                if (mod_wrapper.has_mod()) {
-                    LOG(LOG_INFO, "mod is set flag ?");
-                    if (ioswitch.is_set_for_reading(sck_no_read_sck_mod)){
-                        mod_is_set = true;
-                    }
-                }
+                bool mod_is_set = mod_wrapper.has_mod()
+                    && mod_wrapper.get_mod_transport()
+                    && mod_wrapper.get_mod_transport()->sck != INVALID_SOCKET
+                    && ioswitch.is_set_for_reading(mod_wrapper.get_mod_transport()->sck);
 
-                LOG(LOG_INFO, "SELECT LOOP: %s front_data=%s %s acl_data=%s mod=%s [%s]",
+                LOG(LOG_INFO, "SELECT LOOP: %s front_data_incoming=%s %s acl_data_incoming=%s mod_data_incoming=%s [%s]",
                     front.state_name(),
                     front_is_set?"yes":"no",
                     acl?"ACL Connected":"ACL not connected",
@@ -941,10 +948,11 @@ public:
 //                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
 //                }
                 {
-                    bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
+                    bool const front_is_set = front_trans.has_tls_pending_data() || (
+                        front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
 
                     fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                        return ioswitch.is_set_for_reading(fd);
+                        return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
                     });
 
                     // front event
@@ -1004,7 +1012,8 @@ public:
                         }
                     }
 
-                    bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
+                    bool const front_is_set = front_trans.has_tls_pending_data() 
+                    || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
 
                     if (this->last_module){
                         run_session = this->front_close_box(front_is_set, ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, front_events_, mod_wrapper, front, acl_cb);
@@ -1016,17 +1025,19 @@ public:
                 break;
                 case Front::PRIMARY_AUTH_NLA:
                 {
-                    bool const front_is_set = front_trans.has_pending_data() || ioswitch.is_set_for_reading(front_trans.sck);
+                    bool const front_is_set = front_trans.has_tls_pending_data() || (front_trans.sck != INVALID_SOCKET 
+                                                                        && ioswitch.is_set_for_reading(front_trans.sck));
                     if (!acl && !this->last_module) {
                         this->start_acl_activate(mod_wrapper, acl, cctx, rnd, now, ini, authentifier, fstat);
                     }
 
                     fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                        return ioswitch.is_set_for_reading(fd);
+                        return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
                     });
 
                     // Incoming data from ACL
-                    if (acl && (acl->auth_trans.has_pending_data() || ioswitch.is_set_for_reading(acl->auth_trans.sck))) {
+                    if (acl && (acl->auth_trans.has_tls_pending_data() || (acl->auth_trans.sck != INVALID_SOCKET 
+                    && ioswitch.is_set_for_reading(acl->auth_trans.sck)))) {
                         LOG(LOG_INFO, "ACL pending");
                         // authentifier received updated values
                         acl->acl_serial.receive();

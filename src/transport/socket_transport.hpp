@@ -90,7 +90,7 @@ public:
     [[nodiscard]] bool has_data_to_write() const;
     void send_waiting_data();
 
-    [[nodiscard]] bool has_pending_data() const;
+    [[nodiscard]] bool has_tls_pending_data() const;
 
     [[nodiscard]] int get_fd() const override { return this->sck; }
 

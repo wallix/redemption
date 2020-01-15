@@ -78,7 +78,7 @@ SocketTransport::~SocketTransport()
       , this->name, this->sck, this->total_received, this->total_sent);
 }
 
-bool SocketTransport::has_pending_data() const
+bool SocketTransport::has_tls_pending_data() const
 {
     return this->tls && this->tls->pending_data();
 }

@@ -122,7 +122,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 max = recv_sck[i];
             }
             FD_SET(recv_sck[i], &rfds);
-            if (sck_trans[i]->has_pending_data()) {
+            if (sck_trans[i]->has_tls_pending_data()) {
                 timeout.tv_sec = 0;
             }
         }
@@ -159,7 +159,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
             }
 
             for (int i = 0 ; i < nb_recv_sck ; i++){
-                if (FD_ISSET(recv_sck[i], & rfds) || sck_trans[i]->has_pending_data()){
+                if (FD_ISSET(recv_sck[i], & rfds) || sck_trans[i]->has_tls_pending_data()){
                     LOG(LOG_INFO, "activity on %d", recv_sck[i]);
                     sck_trans[i]->recv_boom(p, 5);
                     p += 5;
