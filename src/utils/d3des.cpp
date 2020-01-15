@@ -81,11 +81,11 @@ static unsigned char pc2[48] = {
 /* Thanks to James Gillogly & Phil Karn! */
 void rfbDesKey(const unsigned char *key, int edf)
 {
-    int j, l, m, n;
+    int l, m, n;
     unsigned char pc1m[56], pcr[56];
     unsigned long kn[32];
 
-    for ( j = 0; j < 56; j++ ) {
+    for (int j = 0; j < 56; j++ ) {
         l = pc1[j];
         m = l & 07;
         pc1m[j] = (key[l >> 3] & bytebit[m]) ? 1 : 0;
@@ -94,15 +94,15 @@ void rfbDesKey(const unsigned char *key, int edf)
         m = (edf == DE1) ? ((15 - i) << 1) : (i << 1);
         n = m + 1;
         kn[m] = kn[n] = 0L;
-        for ( j = 0; j < 28; j++ ) {
+        for (int j = 0; j < 28; j++ ) {
             l = j + totrot[i];
             pcr[j] = (l < 28) ? pc1m[l] : pc1m[l - 28];
         }
-        for ( j = 28; j < 56; j++ ) {
+        for (int j = 28; j < 56; j++ ) {
             l = j + totrot[i];
             pcr[j] = (l < 56) ? pc1m[l] : pc1m[l - 28];
         }
-        for ( j = 0; j < 24; j++ ) {
+        for (int j = 0; j < 24; j++ ) {
             if ( pcr[pc2[j]] ) { kn[m] |= bigbyte[j]; }
             if ( pcr[pc2[j+24]] ) { kn[n] |= bigbyte[j]; }
         }

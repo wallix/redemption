@@ -63,7 +63,7 @@ public:
         size_t line_size,
         BitsOrBytePerPixel bytes_or_byte_per_pixel,
         Storage storage,
-        BGRPalette const * palette = nullptr
+        BGRPalette const * palette = nullptr /*NOLINT*/
     ) noexcept
     : data_(data)
     , rowsize_(line_size)
@@ -130,7 +130,7 @@ struct MutableImageDataView : ConstImageDataView
         size_t line_size,
         BitsOrBytePerPixel bytes_or_byte_per_pixel,
         Storage storage,
-        BGRPalette const * palette = nullptr
+        BGRPalette const * palette = nullptr /*NOLINT*/
     ) noexcept
     : ConstImageDataView(data, width, height, line_size, bytes_or_byte_per_pixel, storage, palette)
     {}

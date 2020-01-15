@@ -99,8 +99,9 @@ private:
 
         T dest_id;
 
-        if (((src_id >= first_invariable) && (src_id <= last_invariable)) ||
-            (this->dest_to_src.end() == this->dest_to_src.find(src_id))) {
+        if ((src_id >= first_invariable && src_id <= last_invariable) ||
+            this->dest_to_src.end() == this->dest_to_src.find(src_id)
+        ) {
             dest_id = src_id;
 
             if (dest_id == this->next_usable_dest_id) {

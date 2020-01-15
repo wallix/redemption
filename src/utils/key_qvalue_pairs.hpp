@@ -41,7 +41,7 @@ namespace qvalue_table_formats
     }
 
     constexpr inline auto log_table = log();
-} // anonymous qvalue_table_formats
+} // namespace qvalue_table_formats
 
 inline void escaped_qvalue(
     std::string& escaped_subject,

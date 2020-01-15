@@ -61,7 +61,7 @@ public:
     // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
     Bitmap(BitsPerPixel session_color_depth, BitsPerPixel bpp, const BGRPalette * palette,
            uint16_t cx, uint16_t cy, const uint8_t * data, size_t size,
-           bool compressed = false, size_t* RM18446_adjusted_size = nullptr);
+           bool compressed = false, size_t* RM18446_adjusted_size = nullptr); /*NOLINT*/
 
     Bitmap(const uint8_t *data, size_t stride, const Rect &rect);
 

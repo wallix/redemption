@@ -445,7 +445,7 @@ inline Translation::language_t language(Language lang)
 
 struct Translator
 {
-    explicit Translator(Translation::language_t lang = Translation::EN)
+    explicit Translator(Translation::language_t lang = Translation::EN) /*NOLINT*/
       : lang(lang)
     {}
 
