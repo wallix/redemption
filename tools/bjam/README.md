@@ -4,7 +4,7 @@ In your `~/.bashrc`:
 
 ```bash
 bf () {
-  bjam "$@" 2>&1 \
+  BOOST_TEST_COLOR_OUTPUT=0 bjam "$@" 2>&1 \
   | stdbuf -o0 "$REDEMPTION_PATH"/tools/bjam/bjam_filter.awk \
     -v columns=$COLUMNS \
     -v "replacements=$PWD;;$HOME;" \
