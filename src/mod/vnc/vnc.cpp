@@ -653,10 +653,9 @@ bool mod_vnc::treatVeNCrypt() {
     		throw Error(ERR_VNC_CONNECTION_ERROR);
     	}
 
-    	uint32_t clientAnswer;
-    	OutStream outStream(writable_buffer_view(reinterpret_cast<uint8_t *>(&clientAnswer), sizeof(clientAnswer)));
-    	outStream.out_uint32_be( static_cast<uint32_t>(preferedAuth) );
-    	this->t.send(outStream.get_data(), 4);
+    	StaticOutStream<4> outStream;
+    	outStream.out_uint32_be(static_cast<uint32_t>(preferedAuth));
+    	this->t.send(outStream.get_bytes());
 
     	this->choosenAuth = preferedAuth;
     	this->vencryptState = WAIT_VENCRYPT_AUTH_ANSWER;
@@ -760,6 +759,8 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             	LOG(LOG_INFO, "Invalid server handshake");
             	throw Error(ERR_VNC_CONNECTION_ERROR);
             }
+
+            // TODO std::from_chars
             auto versionParser = [](const uint8_t *str, int &v) {
             	v = 0;
             	for (int i = 0; i < 3; i++) {
@@ -971,7 +972,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             char key[12] = {};
 
             // key is simply password padded with nulls
-            strncpy(key, this->password, 8);
+            strncpy(key, this->password, 8); /*NOLINT*/
             rfbDesKey(byte_ptr_cast(key), EN0); // 0, encrypt
             auto const random_buf = this->password_ctx.server_random.data();
             rfbDes(random_buf, random_buf);

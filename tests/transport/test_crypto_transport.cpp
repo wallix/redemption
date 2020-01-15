@@ -70,7 +70,7 @@ namespace
 
 RED_AUTO_TEST_CASE(TestEncryption1)
 {
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -140,7 +140,7 @@ RED_AUTO_TEST_CASE(TestEncryption1)
 RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
 {
     Fstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -339,7 +339,7 @@ static uint8_t randomSample[8192] = {
 RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 {
     Fstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -465,7 +465,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
 {
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -554,7 +554,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
 {
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -631,7 +631,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
 
 RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
 {
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -731,7 +731,7 @@ RED_BIND_DATA_TEST_CASE(TestOutCryptoTransport, (std::array{
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -761,7 +761,7 @@ RED_BIND_DATA_TEST_CASE(TestOutCryptoTransport, (std::array{
 RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportBigFile, wd)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -796,7 +796,7 @@ RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportBigFile, wd)
 RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportAutoClose, wd)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -816,7 +816,7 @@ RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportAutoClose, wd)
 RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportMultipleFiles, wd)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -848,7 +848,7 @@ using Read = Transport::Read;
 RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -923,7 +923,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -999,7 +999,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
 RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -1080,7 +1080,7 @@ static char clearSample[] = "Lorem ipsum dolor sit amet, consectetur adipiscing 
 RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -1144,7 +1144,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
 RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -1211,7 +1211,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
 RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 
@@ -1263,7 +1263,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
 RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
 {
     FakeFstat fstat;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     CryptoContext cctx;
     init_keys(cctx);
 

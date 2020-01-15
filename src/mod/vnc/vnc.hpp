@@ -760,7 +760,7 @@ public:
     ) override;
 
 private:
-    void update_screen(Rect r, uint8_t incr = 1);
+    void update_screen(Rect r, uint8_t incr);
 
 public:
     void rdp_input_invalidate(Rect r) override;

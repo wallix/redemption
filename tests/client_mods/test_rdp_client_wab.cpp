@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     mod_rdp_params.experimental_fix_input_event_sync = false;
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
+    LCGRandom gen;
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;

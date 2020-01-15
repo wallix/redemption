@@ -36,7 +36,8 @@ RED_AUTO_TEST_CASE(TestLogon)
         /*.cbPassword = */ "Password_Test",
         /*.cbAlternateShell = */ "Program_Test",
         /*.cbWorkingDir = */ "Directory_Test",
-        /*.performanceFlags = */ PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
+        /*.performanceFlags = */ PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS,
+        /*.clientAddr = */ nullptr);
 
     RED_CHECK_EQUAL(infoPacket.rdp5_support, static_cast<uint32_t>(1));
     RED_CHECK_EQUAL(infoPacket.flags, static_cast<uint32_t>

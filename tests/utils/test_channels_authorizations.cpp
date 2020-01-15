@@ -373,7 +373,7 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels2)
 {
     std::string allow = "*";
-    std::string deny = "";
+    std::string deny;
     ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_SMARTCARD,RDP_CLIPBOARD_UP");
     RED_CHECK_EQUAL(allow, "*,cliprdr_up,rdpdr_smartcard");
     RED_CHECK_EQUAL(deny, "cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpsnd_audio_output");

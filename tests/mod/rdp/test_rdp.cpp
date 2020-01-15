@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
     //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
+    LCGRandom gen;
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
@@ -213,7 +213,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     TLSClientParams tls_client_params;
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
+    LCGRandom gen;
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
@@ -312,7 +312,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
     //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
+    LCGRandom gen;
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
@@ -399,7 +399,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
+    LCGRandom gen;
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;

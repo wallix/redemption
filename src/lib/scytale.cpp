@@ -158,7 +158,7 @@ namespace
         ScytaleRandomWrapper(RandomType rnd_type)
         {
             switch (rnd_type) {
-                case LCG: rnd = new (&u.lcg) LCGRandom(0); break;
+                case LCG: rnd = new (&u.lcg) LCGRandom(); break;
                 case UDEV: rnd = new (&u.udev) UdevRandom(); break;
             }
         }

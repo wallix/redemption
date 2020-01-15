@@ -60,7 +60,7 @@ int main(){}
 //    BackEvent_t signal       = BACK_EVENT_NONE;
 //    BackEvent_t front_signal = BACK_EVENT_NONE;
 
-//    LCGRandom rnd1(0);
+//    LCGRandom rnd1;
 //    LCGTime timeobj;
 //    CryptoContext cctx1;
 //    init_keys(cctx1);
@@ -163,7 +163,7 @@ int main(){}
 //    Fstat fstat;
 //    CryptoContext cctx;
 //    init_keys(cctx);
-//    LCGRandom rnd(0);
+//    LCGRandom rnd;
 
 //    TestTransport acl_trans(indata, outdata);
 //    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, AclSerializer::Verbose::variable);
@@ -275,7 +275,7 @@ int main(){}
 //    ;
 
 //    Fstat fstat;
-//    LCGRandom rnd(0);
+//    LCGRandom rnd;
 //    CryptoContext cctx;
 //    init_keys(cctx);
 
@@ -412,7 +412,7 @@ int main(){}
 //        ;
 
 //    Fstat fstat;
-//    LCGRandom rnd(0);
+//    LCGRandom rnd;
 //    CryptoContext cctx;
 //    init_keys(cctx);
 

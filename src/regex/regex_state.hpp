@@ -88,8 +88,8 @@ namespace re {
 
     struct State
     {
-        explicit State(unsigned type, char_int range_left = 0, char_int range_right = 0,
-                       State * out1 = nullptr, State * out2 = nullptr)
+        explicit State(unsigned type, char_int range_left = 0, char_int range_right = 0, /*NOLINT*/
+                       State * out1 = nullptr, State * out2 = nullptr)                   /*NOLINT*/
         : type(type)
         , num(0)
         , out1(out1)
@@ -205,39 +205,39 @@ namespace re {
         return os;
     }
 
-    inline State * new_character(char_int c, State * out1 = nullptr) {
+    inline State * new_character(char_int c, State * out1 = nullptr) /*NOLINT*/ {
         return new State(RANGE, c, c, out1); /*NOLINT*/
     }
 
-    inline State * new_range(char_int left, char_int right, State * out1 = nullptr) {
+    inline State * new_range(char_int left, char_int right, State * out1 = nullptr) /*NOLINT*/ {
         return new State(RANGE, left, right, out1); /*NOLINT*/
     }
 
-    inline State * new_any(State * out1 = nullptr) {
+    inline State * new_any(State * out1 = nullptr) /*NOLINT*/ {
         return new State(RANGE, 0, ~char_int{}, out1); /*NOLINT*/
     }
 
-    inline State * new_split(State * out1 = nullptr, State * out2 = nullptr) {
+    inline State * new_split(State * out1 = nullptr, State * out2 = nullptr) /*NOLINT*/ {
         return new State(SPLIT, 0, 0, out1, out2); /*NOLINT*/
     }
 
-    inline State * new_cap_open(State * out1 = nullptr) {
+    inline State * new_cap_open(State * out1 = nullptr) /*NOLINT*/ {
         return new State(CAPTURE_OPEN, 0, 0, out1); /*NOLINT*/
     }
 
-    inline State * new_cap_close(State * out1 = nullptr) {
+    inline State * new_cap_close(State * out1 = nullptr) /*NOLINT*/ {
         return new State(CAPTURE_CLOSE, 0, 0, out1); /*NOLINT*/
     }
 
-    inline State * new_epsilone(State * out1 = nullptr) {
+    inline State * new_epsilone(State * out1 = nullptr) /*NOLINT*/ {
         return new State(EPSILONE, 0, 0, out1); /*NOLINT*/
     }
 
-    inline State * new_finish(State * out1 = nullptr) {
+    inline State * new_finish(State * out1 = nullptr) /*NOLINT*/ {
         return new State(FINISH, 0, 0, out1); /*NOLINT*/
     }
 
-    inline State * new_begin(State * out1 = nullptr) {
+    inline State * new_begin(State * out1 = nullptr) /*NOLINT*/ {
         return new State(FIRST, 0, 0, out1); /*NOLINT*/
     }
 
@@ -245,14 +245,14 @@ namespace re {
         return new State(LAST, 0, 0); /*NOLINT*/
     }
 
-    inline State * new_sequence(const char_int * s, size_t len, State * out1 = nullptr) {
+    inline State * new_sequence(const char_int * s, size_t len, State * out1 = nullptr) /*NOLINT*/ {
         State * ret = new State(SEQUENCE, 0, 0, out1); /*NOLINT*/
         ret->data.sequence.s = s;
         ret->data.sequence.len = len;
         return ret;
     }
 
-    inline State * new_sequence(const SequenceString & ss, State * out1 = nullptr) {
+    inline State * new_sequence(const SequenceString & ss, State * out1 = nullptr) /*NOLINT*/ {
         return new_sequence(ss.s, ss.len, out1);
     }
 
@@ -283,7 +283,7 @@ namespace re {
         return new_string_sequence(seq.s, seq.len, count);
     }
 
-    inline State * new_sequence(char_int c, std::size_t count, State * out1 = nullptr) {
+    inline State * new_sequence(char_int c, std::size_t count, State * out1 = nullptr) /*NOLINT*/ {
         return new_sequence(new_string_sequence(c, count), out1);
     }
 

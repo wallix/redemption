@@ -30,7 +30,7 @@
 using namespace re;
 
 inline void st_to_string(const state_list_t & states, StatesValue & stval, const State * st,
-                         std::ostream& os, unsigned depth = 0)
+                         std::ostream& os, unsigned depth = 0) /*NOLINT*/
 {
     size_t n = std::find(states.begin(), states.end(), st) - states.begin() + 1;
     os << std::string(depth, '\t') << n;

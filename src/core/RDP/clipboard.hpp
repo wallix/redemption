@@ -778,7 +778,7 @@ public:
         return 0;
     }
 
-    static void log(int level = LOG_INFO) {
+    static void log(int level = LOG_INFO) /*NOLINT*/ {
         LOG(level, "ServerMonitorReadyPDU");
     }
 };  // struct ServerMonitorReadyPDU
@@ -862,7 +862,7 @@ public:
         return 520;  // wszTempDir(520)
     }
 
-    void log(int level = LOG_INFO) const {
+    void log(int level = LOG_INFO) const /*NOLINT*/ {
         LOG(level, "ClientTemporaryDirectoryPDU: wszTempDir=\"%s\"", temp_dir);
     }
 };  // struct ClientTemporaryDirectoryPDU
@@ -898,7 +898,7 @@ struct FormatListResponsePDU
         return 0;
     }
 
-    static void log(int level = LOG_INFO) {
+    static void log(int level = LOG_INFO) /*NOLINT*/ {
         LOG(level, "FormatListResponsePDU");
     }
 
@@ -1928,7 +1928,7 @@ public:
 
             // 2.3 WMF Records
             int size = chunk.in_uint32_le() * 2;
-            int type = chunk.in_uint16_le();
+            unsigned type = chunk.in_uint16_le();
 
             switch (type) {
 
@@ -1982,9 +1982,9 @@ public:
                 }
                 break;
 
-                default: LOG(LOG_INFO, "DEFAULT: unknown record type=%x size=%d octets", unsigned(type), size);
-                         chunk.in_skip_bytes(size - 6);
-
+                default:
+                    LOG(LOG_INFO, "DEFAULT: unknown record type=%x size=%d octets", type, size);
+                    chunk.in_skip_bytes(size - 6);
                 break;
             }
         }

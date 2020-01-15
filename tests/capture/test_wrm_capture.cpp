@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
         Rect scr(0, 0, 800, 600);
 
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         FakeFstat fstat;
         CryptoContext cctx;
 
@@ -182,7 +182,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         Rect scr(0, 0, 800, 600);
 
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         FakeFstat fstat;
 
         CryptoContext cctx;
@@ -299,7 +299,7 @@ int wrmcapture_write_meta_file(
     auto buf = mwrm_buf.buffer();
     ssize_t res = writer.write(byte_ptr(buf.data()), buf.size());
     if (res < static_cast<ssize_t>(buf.size())) {
-        return res < 0 ? res : 1;
+        return res < 0 ? int(res) : 1;
     }
     return 0;
 }
@@ -350,7 +350,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
             "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         FakeFstat fstat;
 
         timeval now;
@@ -420,7 +420,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         FakeFstat fstat;
 
         timeval now;
@@ -483,7 +483,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         Rect scr(0, 0, 800, 600);
 
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         FakeFstat fstat;
         CryptoContext cctx;
 
@@ -626,7 +626,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 
         Rect scr(0, 0, 800, 600);
 
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         FakeFstat fstat;
         CryptoContext cctx;
 

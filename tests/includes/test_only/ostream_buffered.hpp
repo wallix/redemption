@@ -28,7 +28,7 @@ namespace tu
 
 struct ostream_buffered
 {
-    ostream_buffered(std::ostream& ostream = std::cout)
+    ostream_buffered(std::ostream& ostream = std::cout) /*NOLINT*/
     : ostream(ostream)
     , oldbuf(ostream.rdbuf(&sbuf))
     {}

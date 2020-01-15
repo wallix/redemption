@@ -149,15 +149,15 @@ RED_AUTO_TEST_CASE(TestBytesT)
     array_view_const_u8{} = ba;
     array_view_const_u8{} = cba;
 
-    [](writable_bytes_view){}(av);
-    [](writable_bytes_view){}(uav);
-    [](writable_bytes_view){}(ba);
+    [](writable_bytes_view /*dummy*/){}(av);
+    [](writable_bytes_view /*dummy*/){}(uav);
+    [](writable_bytes_view /*dummy*/){}(ba);
 
-    [](bytes_view){}(av);
-    [](bytes_view){}(uav);
-    [](bytes_view){}(ba);
+    [](bytes_view /*dummy*/){}(av);
+    [](bytes_view /*dummy*/){}(uav);
+    [](bytes_view /*dummy*/){}(ba);
 
-    [](bytes_view){}(cav);
-    [](bytes_view){}(cuav);
-    [](bytes_view){}(cba);
+    [](bytes_view /*dummy*/){}(cav);
+    [](bytes_view /*dummy*/){}(cuav);
+    [](bytes_view /*dummy*/){}(cba);
 }

@@ -60,12 +60,12 @@ namespace re
 
         unsigned step_limit;
 
-        explicit Regex(unsigned step_limit = 10000)
+        explicit Regex(unsigned step_limit = 10000) /*NOLINT*/
         : sm(state_list_t(), nullptr, 0)
         , step_limit(step_limit)
         {}
 
-        explicit Regex(const char * s, flag_t flags = DEFAULT_FLAG, unsigned step_limit = 10000)
+        explicit Regex(const char * s, flag_t flags = DEFAULT_FLAG, unsigned step_limit = 10000) /*NOLINT*/
         : parser(s)
         , sm(this->parser.st_parser.states(),
              this->parser.st_parser.root(),
@@ -79,7 +79,7 @@ namespace re
             }
         }
 
-        void reset(const char * s, flag_t flags = DEFAULT_FLAG)
+        void reset(const char * s, flag_t flags = DEFAULT_FLAG) /*NOLINT*/
         {
             this->sm.~StateMachine2();
             this->parser.reset(s);
@@ -92,9 +92,6 @@ namespace re
                 this->parser.st_parser.clear_and_shrink();
             }
         }
-
-        ~Regex()
-        = default;
 
         [[nodiscard]] unsigned mark_count() const
         {
@@ -119,7 +116,7 @@ namespace re
 
         using range_matches = StateMachine2::range_matches;
 
-        range_matches exact_match(const char * s, bool all_match = true)
+        range_matches exact_match(const char * s, bool all_match = true) /*NOLINT*/
         {
             range_matches ret;
             if (this->sm.exact_search_with_trace(s, this->step_limit, &this->pos)) {
@@ -129,7 +126,7 @@ namespace re
         }
 
         template<typename Tracer>
-        range_matches exact_match(const char * s, Tracer tracer, bool all_match = true)
+        range_matches exact_match(const char * s, Tracer tracer, bool all_match = true) /*NOLINT*/
         {
             range_matches ret;
             if (this->sm.exact_search_with_trace(s, this->step_limit, tracer, &this->pos)) {
@@ -138,7 +135,7 @@ namespace re
             return ret;
         }
 
-        range_matches match(const char * s, bool all_match = true)
+        range_matches match(const char * s, bool all_match = true) /*NOLINT*/
         {
             range_matches ret;
             if (this->sm.search_with_trace(s, this->step_limit, &this->pos)) {
@@ -148,7 +145,7 @@ namespace re
         }
 
         template<typename Tracer>
-        range_matches match(const char * s, Tracer tracer, bool all_match = true)
+        range_matches match(const char * s, Tracer tracer, bool all_match = true) /*NOLINT*/
         {
             range_matches ret;
             if (this->sm.search_with_trace(s, this->step_limit, tracer, &this->pos)) {
@@ -253,7 +250,7 @@ namespace re
             unsigned res;
 
         public:
-            BasicPartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            BasicPartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer()) /*NOLINT*/
             : re(re)
             , tracer(tracer)
             , res(re.sm.part_of_text_start_with_trace(s, this->tracer, &re.pos))
@@ -294,7 +291,7 @@ namespace re
         template<typename Tracer>
         struct ExactPartOfTextWithCapture : BasicPartOfTextWithCapture<true, Tracer>
         {
-            ExactPartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            ExactPartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer()) /*NOLINT*/
             : BasicPartOfTextWithCapture<true, Tracer>(re, s, tracer)
             {}
         };
@@ -302,7 +299,7 @@ namespace re
         template<typename Tracer>
         struct PartOfTextWithCapture : BasicPartOfTextWithCapture<false, Tracer>
         {
-            PartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            PartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer()) /*NOLINT*/
             : BasicPartOfTextWithCapture<false, Tracer>(re, s, tracer)
             {}
         };
@@ -401,12 +398,12 @@ namespace re
 //             return PartOfTextWithCapture<Tracer>(*this, str_is_empty ? "" : " ", tracer);
 //         }
 
-        [[nodiscard]] range_matches match_result(bool all = true) const
+        [[nodiscard]] range_matches match_result(bool all = true) const /*NOLINT*/
         {
             return this->sm.match_result(all);
         }
 
-        range_matches & match_result(range_matches & ranges, bool all = true) const
+        range_matches & match_result(range_matches & ranges, bool all = true) const /*NOLINT*/
         {
             this->sm.append_match_result(ranges, all);
             return ranges;

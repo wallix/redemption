@@ -61,7 +61,7 @@ RED_AUTO_TEST_CASE(TestUdevRandom)
 
 RED_AUTO_TEST_CASE(TestLCGRandom)
 {
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     unsigned mem[128] = {};
     rnd.random(mem, sizeof(mem));
     unsigned count_null = 0;

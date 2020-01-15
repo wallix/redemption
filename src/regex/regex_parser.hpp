@@ -95,8 +95,8 @@ namespace re {
 #endif
 
         State * push(unsigned type,
-                     char_int range_left = 0, char_int range_right = 0,
-                     State * out1 = nullptr, State * out2 = nullptr)
+                     char_int range_left = 0, char_int range_right = 0, /*NOLINT*/
+                     State * out1 = nullptr, State * out2 = nullptr) /*NOLINT*/
         {
 #ifdef RE_PARSER_POOL_STATE
             if (this->mem->is_full()) {
@@ -127,49 +127,49 @@ namespace re {
 #endif
         }
 
-        State * normal(unsigned type, char_int range_left = 0, char_int range_right = 0,
-                       State * out1 = nullptr, State * out2 = nullptr)
+        State * normal(unsigned type, char_int range_left = 0, char_int range_right = 0, /*NOLINT*/
+                       State * out1 = nullptr, State * out2 = nullptr) /*NOLINT*/
         {
             return this->push(type, range_left, range_right, out1, out2);
         }
 
-        State * character(char_int c, State * out1 = nullptr) {
+        State * character(char_int c, State * out1 = nullptr) /*NOLINT*/ {
             return this->push(RANGE, c, c, out1);
         }
 
-        State * range(char_int left, char_int right, State * out1 = nullptr) {
+        State * range(char_int left, char_int right, State * out1 = nullptr) /*NOLINT*/ {
             return this->push(RANGE, left, right, out1);
         }
 
-        State * any(State * out1 = nullptr) {
+        State * any(State * out1 = nullptr) /*NOLINT*/ {
             return this->push(RANGE, 0, ~char_int{}, out1);
         }
 
-        State * split(State * out1 = nullptr, State * out2 = nullptr) {
+        State * split(State * out1 = nullptr, State * out2 = nullptr) /*NOLINT*/ {
             return this->push(SPLIT, 0, 0, out1, out2);
         }
 
-        State * cap_open(State * out1 = nullptr) {
+        State * cap_open(State * out1 = nullptr) /*NOLINT*/ {
             State * ret = this->push(CAPTURE_OPEN, 0, 0, out1);
             ret->num = this->num_cap++;
             return ret;
         }
 
-        State * cap_close(State * out1 = nullptr) {
+        State * cap_close(State * out1 = nullptr) /*NOLINT*/ {
             State * ret = this->push(CAPTURE_CLOSE, 0, 0, out1);
             ret->num = this->num_cap++;
             return ret;
         }
 
-        State * epsilone(State * out1 = nullptr) {
+        State * epsilone(State * out1 = nullptr) /*NOLINT*/ {
             return this->push(EPSILONE, 0, 0, out1);
         }
 
-        State * finish(State * out1 = nullptr) {
+        State * finish(State * out1 = nullptr) /*NOLINT*/ {
             return this->push(FINISH, 0, 0, out1);
         }
 
-        State * begin(State * out1 = nullptr) {
+        State * begin(State * out1 = nullptr) /*NOLINT*/ {
             return this->push(FIRST, 0, 0, out1);
         }
 
@@ -177,14 +177,14 @@ namespace re {
             return this->push(LAST);
         }
 
-        State * sequence(const char_int * s, size_t len, State * out1 = nullptr) {
+        State * sequence(const char_int * s, size_t len, State * out1 = nullptr) /*NOLINT*/ {
             State * ret = this->push(SEQUENCE, 0, 0, out1);
             ret->data.sequence.s = s;
             ret->data.sequence.len = len;
             return ret;
         }
 
-        State * sequence(const SequenceString & ss, State * out1 = nullptr) {
+        State * sequence(const SequenceString & ss, State * out1 = nullptr) /*NOLINT*/ {
             return this->sequence(ss.s, ss.len, out1);
         }
 
@@ -726,7 +726,7 @@ namespace re {
     inline IntermendaryState intermendary_st_compile(StateAccu & accu,
                                                      utf8_consumer & consumer,
                                                      const char * & msg_err,
-                                                     int recusive = 0)
+                                                     int recusive = 0) /*NOLINT*/
     {
         State st(EPSILONE);
         State ** pst = &st.out1;
@@ -1040,7 +1040,7 @@ namespace re {
         StateParser(const StateParser &) = delete;
         StateParser& operator=(const StateParser &) = delete;
 
-        void compile(const char * s, const char * * msg_err = nullptr, size_t * pos_err = nullptr)
+        void compile(const char * s, const char * * msg_err = nullptr, size_t * pos_err = nullptr) /*NOLINT*/
         {
             this->m_accu.clear();
 

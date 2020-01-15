@@ -616,7 +616,7 @@ RED_AUTO_TEST_CASE_WD(ScytaleMWrm3Reader, wd)
             scytale_bytes_view fhash;
             scytale_bytes_view sig;
         };
-        D const& d = *reinterpret_cast<D const*>(raw_data);
+        D const& d = *static_cast<D const*>(data->data);
         RED_TEST(d.file_id == 4);
         RED_TEST(d.file_size == 3);
         RED_TEST(d.direction == int(Mwrm3::Direction::ClientToServer));

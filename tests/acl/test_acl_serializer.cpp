@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     Inifile ini;
     NullTransport trans;
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.out_copy_bytes("\n!6455\n"_av);
     stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
@@ -167,7 +167,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
         "\n!didier\n");
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
@@ -216,7 +216,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     CheckTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
@@ -259,7 +259,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
@@ -299,7 +299,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
 
     GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
@@ -319,7 +319,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     std::string s("----abcd\n!something\nefg\n!other something\n");
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
@@ -351,7 +351,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     Inifile ini;
     ini.clear_send_index();
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     timeval time = {0, 0};
@@ -437,7 +437,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     auto hashdir = wd.create_subdirectory("hash");
     auto hashname = hashdir.add_file(logname);
 
-    LCGRandom rnd(0);
+    LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);

@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             mod_rdp_params.load_balance_info = "tsv://MS Terminal Services Plugin.1.Sessions";
 
             // To always get the same client random, in tests
-            LCGRandom gen(0);
+            LCGRandom gen;
             LCGTime timeobj;
             NullAuthentifier authentifier;
 
@@ -412,7 +412,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             mod_rdp_params.load_balance_info = "tsv://MS Terminal Services Plugin.1.Sessions";
 
             // To always get the same client random, in tests
-            LCGRandom gen(0);
+            LCGRandom gen;
             LCGTime timeobj;
             NullAuthentifier authentifier;
 

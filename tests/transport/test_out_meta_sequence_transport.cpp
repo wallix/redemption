@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestMetaSequenceTransport)
         ));
         cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         FakeFstat fstat;
         timeval tv;
         tv.tv_usec = 0;
