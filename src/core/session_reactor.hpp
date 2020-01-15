@@ -2930,22 +2930,22 @@ struct SessionReactor
 //    }
 
 
-    template<class GetGd>
-    void execute_timers(TopFdContainer & fd_events_,
-                        GraphicFdContainer& graphic_fd_events_,
-                        TimerContainer& timer_events_,
-                        GraphicTimerContainer & graphic_timer_events_,
-                        EnableGraphics enable_gd,
-                        GetGd get_gd)
-    {
-        auto const end_tv = this->get_current_time();
-        timer_events_.exec_timer(end_tv);
-        fd_events_.exec_timeout(end_tv);
-        if (enable_gd) {
-            graphic_timer_events_.exec_timer(end_tv, get_gd());
-            graphic_fd_events_.exec_timeout(end_tv, get_gd());
-        }
-    }
+//    template<class GetGd>
+//    void execute_timers(TopFdContainer & fd_events_,
+//                        GraphicFdContainer& graphic_fd_events_,
+//                        TimerContainer& timer_events_,
+//                        GraphicTimerContainer & graphic_timer_events_,
+//                        EnableGraphics enable_gd,
+//                        GetGd get_gd)
+//    {
+//        auto const end_tv = this->get_current_time();
+//        timer_events_.exec_timer(end_tv);
+//        fd_events_.exec_timeout(end_tv);
+//        if (enable_gd) {
+//            graphic_timer_events_.exec_timer(end_tv, get_gd());
+//            graphic_fd_events_.exec_timeout(end_tv, get_gd());
+//        }
+//    }
 
     ~SessionReactor()
     {

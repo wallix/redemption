@@ -28,13 +28,13 @@ Author(s): Jonathan Poelen
 inline void execute_negociate_mod(
     SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
 {
-    session_reactor.execute_timers(
-        fd_events_,
-        graphic_fd_events_,
-        timer_events_,
-        graphic_timer_events_,
-        EnableGraphics{true},
-        [&]()->gdi::GraphicApi&{ return gd; });
+    auto end_tv = session_reactor.get_current_time();
+    timer_events_.exec_timer(end_tv);
+    fd_events_.exec_timeout(end_tv);
+    // also gd enabled
+    graphic_timer_events_.exec_timer(end_tv, gd);
+    graphic_fd_events_.exec_timeout(end_tv, gd);
+
     int n = 0;
     int const limit = 1000;
     while (!mod.is_up_and_running()

@@ -61,9 +61,33 @@ inline ExecuteEventsResult execute_events(
     }
 
     session_reactor.set_current_time(tvtime());
-    timeval timeoutastv = to_timeval(
-                            session_reactor.get_next_timeout(fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front_events_, enable_graphics, timeout)
-                          - session_reactor.get_current_time());
+    // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
+    timeval tv =  timeval{0,0} + timeout;
+    if ((!enable_graphics || graphic_events_.is_empty()) && front_events_.is_empty()) 
+    {
+        auto update_tv = [&](timeval const& tv2){
+            if (tv2.tv_sec >= 0) {
+                tv = std::min(tv, tv2);
+            }
+        };
+        auto top_update_tv = [&](int /*fd*/, auto& top){
+            if (top.timer_data.is_enabled) {
+                update_tv(top.timer_data.tv);
+            }
+        };
+        auto timer_update_tv = [&](auto& timer){
+            update_tv(timer.tv);
+        };
+
+        timer_events_.for_each(timer_update_tv);
+        fd_events_.for_each(top_update_tv);
+        if (enable_graphics) {
+            graphic_timer_events_.for_each(timer_update_tv);
+            graphic_fd_events_.for_each(top_update_tv);
+        }
+    }
+
+    timeval timeoutastv = tv;
 
     int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
 
