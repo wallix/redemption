@@ -87,7 +87,7 @@ public:
 
     ~SocketTransport() override;
 
-    [[nodiscard]] bool has_waiting_data() const;
+    [[nodiscard]] bool has_data_to_write() const;
     void send_waiting_data();
 
     [[nodiscard]] bool has_pending_data() const;

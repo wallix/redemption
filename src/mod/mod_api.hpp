@@ -49,10 +49,8 @@ public:
                    :"BACK_EVENT_UNKNOWN";
         };
     
-        LOG(LOG_INFO, "Previous signal value of %p %p was %s",
-            this, &this->mod_signal, signal_name(this->mod_signal)); 
-        LOG(LOG_INFO, "Setting signal of %p %p to %s", this, &this->mod_signal,
-                    signal_name(signal)); 
+        LOG(LOG_INFO, "Previous signal value of %p was %s", this, signal_name(this->mod_signal)); 
+        LOG(LOG_INFO, "Setting signal of %p to %s", this, signal_name(signal)); 
 
         if (signal != BACK_EVENT_NONE || signal != this->mod_signal){
             LOG(LOG_INFO, "======= SIGNAL TROUBLES ======== %s -> %s",
@@ -72,10 +70,9 @@ public:
                    :"BACK_EVENT_UNKNOWN";
         };
 
-        LOG(LOG_INFO, "Reading mod_signal from %p %p is %s",
-            this, &mod_signal, signal_name(this->mod_signal)); 
+        LOG(LOG_INFO, "Reading mod_signal from %p is %s",
+            this, signal_name(this->mod_signal)); 
         return this->mod_signal;
-
     }
 
     [[nodiscard]] virtual bool is_up_and_running() const { return false; }

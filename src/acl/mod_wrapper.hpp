@@ -479,8 +479,23 @@ public:
 
     gdi::GraphicApi & get_graphics() 
     {
+        LOG(LOG_INFO, "get_graphics()");
         return this->gfilter;
     }
+
+    // FIXME: we should always be able to use graphic_wrapper directly
+    // finding out the actual internal graphics interface should never be necessary
+    gdi::GraphicApi & get_graphic_wrapper()
+    {
+        LOG(LOG_INFO, "get_graphic_wrapper()");
+        gdi::GraphicApi& gd = this->get_graphics();
+        if (this->rail_module_host_mod_ptr) {
+            LOG(LOG_INFO, "Rail module host_mod_ptr()");
+            return this->rail_module_host_mod_ptr->proxy_gd(gd);
+        }
+        return gd;
+    }
+
 
     [[nodiscard]] Rect get_protected_rect() const
     { return this->gfilter.protected_rect; }
@@ -522,17 +537,6 @@ public:
 
     ~ModWrapper(){
         this->remove_mod();
-    }
-
-    // FIXME: we should always be able to use graphic_wrapper directly
-    // finding out the actual internal graphics interface should never be necessary
-    gdi::GraphicApi & get_graphic_wrapper()
-    {
-        gdi::GraphicApi& gd = this->get_graphics();
-        if (this->rail_module_host_mod_ptr) {
-            return this->rail_module_host_mod_ptr->proxy_gd(gd);
-        }
-        return gd;
     }
 
     Callback & get_callback() noexcept
@@ -673,7 +677,7 @@ public:
 
     void set_mod_transport(SocketTransport * psocket_transport)
     {
-        LOG(LOG_INFO, "set_mod_transport %p", psocket_transport);
+        LOG(LOG_INFO, "XXXXXXXXXXXXXX set_mod_transport %p", psocket_transport);
         this->psocket_transport = psocket_transport;
     }
 
@@ -792,6 +796,8 @@ public:
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE RECEIVED MOD WRAPPER !!!!!!!!!!!!!!!!!!!!!");
+        
         if (!this->try_input_scancode(param1, param2, param3, param4, keymap)) {
             this->get_mod()->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }

@@ -599,12 +599,9 @@ class Session
             auto const end_tv = session_reactor.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
-            if (EnableGraphics{true}) {
-                graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
-                graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
-            }
-            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                                return ioswitch.is_set_for_reading(fd);
+            graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
+            graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
+            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){return ioswitch.is_set_for_reading(fd);
                                 });
         } catch (Error const& e) {
             if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini)) {
@@ -656,12 +653,16 @@ class Session
                 this->rt_display(ini, mm, mod_wrapper, front);
 
                 if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
+                    LOG(LOG_INFO, "--------------------- Process incoming module traffic");
                     // Process incoming module trafic
                     auto& gd = mod_wrapper.get_graphic_wrapper();
+                    LOG(LOG_INFO, "--------------------- Execute graphic_events actions");
                     graphic_events_.exec_action(gd);
+                    LOG(LOG_INFO, "--------------------- Execute fd_events actions");
                     graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                         return ioswitch.is_set_for_reading(fd);
                     }, gd);
+                    LOG(LOG_INFO, "--------------------- Back event loop done");
                 }
 
                 // Incoming data from ACL
@@ -712,68 +713,49 @@ class Session
     }
 
 
-
-
 public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
     {
-        TRANSLATIONCONF.set_ini(&ini);
-        std::string disconnection_message_error;
-
-        const bool mem3blt_support = true;
-        Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
-
-        SessionReactor session_reactor;
-        TopFdContainer fd_events_;
-        GraphicFdContainer graphic_fd_events_;
-        TimerContainer timer_events_;
-        GraphicEventContainer graphic_events_;
-        CallbackEventContainer front_events_;
-        SesmanEventContainer sesman_events_;
-        GraphicTimerContainer graphic_timer_events_;
-
-//        void set_next_event(/*BackEvent_t*/int signal)
-//        {
-//            LOG(LOG_DEBUG, "set_next_event %d", signal);
-//            assert(!this->signal || this->signal == signal);
-//            this->signal = signal;
-//            // assert(is not already set)
-//        }
-
-        session_reactor.set_current_time(tvtime());
-        Front front(
-            session_reactor, timer_events_, front_events_, front_trans, rnd, ini, cctx, authentifier,
-            ini.get<cfg::client::fast_path>(), mem3blt_support
-        );
-        SesmanInterface acl_cb(ini);
-
-        std::unique_ptr<Acl> acl;
-
         try {
+            TRANSLATIONCONF.set_ini(&ini);
+            std::string disconnection_message_error;
+
+            const bool mem3blt_support = true;
+            Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
+
+            SessionReactor session_reactor;
+            TopFdContainer fd_events_;
+            GraphicFdContainer graphic_fd_events_;
+            TimerContainer timer_events_;
+            GraphicEventContainer graphic_events_;
+            CallbackEventContainer front_events_;
+            SesmanEventContainer sesman_events_;
+            GraphicTimerContainer graphic_timer_events_;
+
             TimeSystem timeobj;
 
-            // load font for internal pages
-            Font glyphs = Font(app_path(AppPath::DefaultFontFile),
-                ini.get<cfg::globals::spark_view_specific_glyph_width>());;
+            session_reactor.set_current_time(tvtime());
+            Front front(session_reactor, timer_events_, front_events_, front_trans, rnd, ini, cctx, authentifier,
+                ini.get<cfg::client::fast_path>(), mem3blt_support
+            );
+            SesmanInterface acl_cb(ini);
+            std::unique_ptr<Acl> acl;
 
-            // load theme for internal pages
+            Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());;
+
             auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
             LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
-
             Theme theme;
             ::load_theme(theme, theme_name);
 
-            ClientExecute rail_client_execute(session_reactor, timer_events_, front, front,
-                                            front.client_info.window_list_caps,
-                                            ini.get<cfg::debug::mod_internal>() & 1);
-
+            ClientExecute rail_client_execute(session_reactor, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
-
             ModFactory mod_factory(mod_wrapper, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
+
             ModuleManager mm(end_session_warning, mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             if (ini.get<cfg::debug::session>()) {
@@ -793,19 +775,12 @@ public:
             session_reactor.set_current_time(now);
 
             while (run_session) {
-                LOG(LOG_INFO, "while loop beginning of loop");
-
-                timeval default_timeout = now;
-                default_timeout.tv_sec += this->select_timeout_tv_sec;
-
-                Select ioswitch(default_timeout);
+                Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
 
                 int sck_no_read_sck_front = INVALID_SOCKET;
                 int sck_no_read_sck_mod = INVALID_SOCKET;
 
-                LOG(LOG_INFO, "check front_trans.has_waiting_data()");
-                if (front_trans.has_waiting_data()) {
-                    LOG(LOG_INFO, "front_trans don't have waiting data (1)");
+                if (front_trans.has_data_to_write()) {
                     ioswitch.set_write_sck(front_trans.sck);
                     sck_no_read_sck_front = front_trans.sck;
                 }
@@ -818,11 +793,9 @@ public:
 
                 LOG(LOG_INFO, "mod_trans (1)");
                 auto mod_trans = mod_wrapper.get_mod_transport();
-
-                LOG(LOG_INFO, "mod_trans->has_pending_data()");
                 if (mod_trans && !mod_trans->has_pending_data()) {
                     LOG(LOG_INFO, "mod_trans don't have pending data (2)");
-                    if (mod_trans->has_waiting_data()){
+                    if (mod_trans->has_data_to_write()){
                         sck_no_read_sck_mod = mod_trans->sck;
                         ioswitch.set_write_sck(sck_no_read_sck_mod);
                     }
@@ -853,7 +826,6 @@ public:
                     ioswitch.immediate_wakeup(session_reactor.get_current_time());
                 }
 
-
                 auto g = [sck_no_read_sck_front,sck_no_read_sck_mod,&ioswitch](int fd, auto& /*top*/){
                     assert(fd != -1);
                     if ((sck_no_read_sck_front != fd)
@@ -868,15 +840,34 @@ public:
 
                 now = tvtime();
                 session_reactor.set_current_time(now);
-                timeval tv = session_reactor.get_next_timeout(
-                            fd_events_,
-                            graphic_fd_events_,
-                            timer_events_,
-                            graphic_events_,
-                            graphic_timer_events_,
-                            front_events_,
-                            EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
-                            ioswitch.get_timeout(now));
+
+                timeval tv = session_reactor.get_current_time() + std::chrono::milliseconds{ioswitch.get_timeout(now)};
+
+                // for front_events_ and graphic_events_ we want to wake up immediately
+                if ((front.state != Front::FRONT_UP_AND_RUNNING || graphic_events_.is_empty())
+                 && front_events_.is_empty()) {
+                    auto top_update_tv = [&](int /*fd*/, auto& top){
+                        if (top.timer_data.is_enabled) {
+                            if (top.timer_data.tv.tv_sec >= 0) {
+                                tv = std::min(tv, top.timer_data.tv);
+                            }
+                        }
+                    };
+
+                    auto timer_update_tv = [&](auto& timer){
+                        if (timer.tv.tv_sec >= 0) {
+                            tv = std::min(tv, timer.tv);
+                        }
+                    };
+
+                    timer_events_.for_each(timer_update_tv);
+                    fd_events_.for_each(top_update_tv);
+                    if (front.state == Front::FRONT_UP_AND_RUNNING) {
+                        graphic_timer_events_.for_each(timer_update_tv);
+                        graphic_fd_events_.for_each(top_update_tv);
+                    }
+                }
+
                 ioswitch.set_timeout(tv);
 
                 LOG(LOG_INFO, "select");

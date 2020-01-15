@@ -2116,8 +2116,11 @@ public:
     }
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE RECEIVED RDP MOD!!!!!!!!!!!!!!!!!!!!!");
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && !this->input_event_disabled) {
+
+            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode Keyboard Event");
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
 #ifndef __EMSCRIPTEN__
@@ -2154,6 +2157,7 @@ public:
                 }
             }
 
+            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode::send_input");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
 #ifndef __EMSCRIPTEN__
@@ -5220,6 +5224,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
+        
         [[maybe_unused]] std::size_t channel_data_size = this->enable_fastpath_client_input_event
             ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
             : this->send_input_slowpath(time, message_type, device_flags, param1, param2);
@@ -5877,6 +5882,7 @@ private:
 
     std::size_t send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2)
     {
+        LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         std::size_t channel_data_size = 0;
 
         LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
@@ -5923,10 +5929,12 @@ private:
 
                 switch (message_type) {
                 case RDP_INPUT_SCANCODE:
+                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Scancode");
                     FastPath::KeyboardEvent_Send(stream, device_flags, param1);
                     break;
 
                 case RDP_INPUT_UNICODE:
+                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Unicode");
                     FastPath::UniCodeKeyboardEvent_Send(stream, device_flags, param1);
                     break;
 
@@ -5938,6 +5946,7 @@ private:
                     break;
 
                 case RDP_INPUT_MOUSE:
+                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Input Mouse");
                     FastPath::MouseEvent_Send(stream, device_flags, param1, param2);
                     break;
 

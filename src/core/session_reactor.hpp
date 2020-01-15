@@ -2863,6 +2863,7 @@ struct EnableGraphics
 };
 
 
+// TODO: could be renamed GlobalClock (and 'session_reactor' renamed 'clock')
 struct SessionReactor
 {
     timeval current_time {};
@@ -2878,50 +2879,6 @@ struct SessionReactor
         //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
         return this->current_time;
     }
-
-    // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
-    timeval get_next_timeout(TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
-    {
-        timeval tv = this->get_current_time() + maxdelay;
-        if ((!enable_gd || graphic_events_.is_empty())
-         && front_events_.is_empty()) {
-
-            auto update_tv = [&](timeval const& tv2){
-                if (tv2.tv_sec >= 0) {
-                    tv = std::min(tv, tv2);
-                }
-            };
-            auto top_update_tv = [&](int /*fd*/, auto& top){
-                if (top.timer_data.is_enabled) {
-                    update_tv(top.timer_data.tv);
-                }
-            };
-            auto timer_update_tv = [&](auto& timer){
-                update_tv(timer.tv);
-            };
-
-            timer_events_.for_each(timer_update_tv);
-            fd_events_.for_each(top_update_tv);
-            if (enable_gd) {
-                graphic_timer_events_.for_each(timer_update_tv);
-                graphic_fd_events_.for_each(top_update_tv);
-            }
-        }
-
-        return tv;
-    }
-
-    ~SessionReactor()
-    {
-//        graphic_events_.clear();
-//        sesman_events_.clear();
-//        front_events_.clear();
-//        timer_events_.clear();
-//        graphic_timer_events_.clear();
-//        fd_events_.clear();
-//        graphic_fd_events_.clear();
-    }
-
 };
 
 namespace jln

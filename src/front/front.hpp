@@ -825,8 +825,7 @@ public:
             }
 
             if (this->client_info.remote_program) {
-                this->incoming_event = this->front_events_
-                .create_action_executor(this->session_reactor, std::ref(*this))
+                this->incoming_event = this->front_events_.create_action_executor(this->session_reactor, std::ref(*this))
                 .on_action(jln::one_shot([](Callback& cb, Front& front){
                     cb.refresh(Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
                 }));
@@ -5013,24 +5012,22 @@ private:
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
-        bool const send_to_mod = [&]{
-            if (!this->capture || 0 == decoded_keys.count) {
-                return true;
-            }
-            auto const timeval = this->session_reactor.get_current_time();
-            return (1 == decoded_keys.count
-                    && this->capture->kbd_input(timeval, decoded_keys.uchars[0]))
-                || (2 == decoded_keys.count
-                    && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
-                    && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
-        }();
-
         if (this->state == FRONT_UP_AND_RUNNING) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
+                auto const timeval = this->session_reactor.get_current_time();
+                bool const send_to_mod = !this->capture 
+                    || (0 == decoded_keys.count)
+                    || (1 == decoded_keys.count 
+                        && this->capture->kbd_input(timeval, decoded_keys.uchars[0]))
+                    || (2 == decoded_keys.count 
+                        && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
+                        && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
                 if (send_to_mod) {
+                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE SENT BY FRONT!!!!!!!!!!!!!!!!!!!!!");
+
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }
                 this->has_user_activity = true;

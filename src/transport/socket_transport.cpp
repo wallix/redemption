@@ -84,7 +84,7 @@ bool SocketTransport::has_pending_data() const
 }
 
 
-bool SocketTransport::has_waiting_data() const
+bool SocketTransport::has_data_to_write() const
 {
     return !this->async_buffers.empty();
 }
@@ -274,6 +274,8 @@ SocketTransport::AsyncBuf::AsyncBuf(const uint8_t* data, std::size_t len)
 
 void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
 {
+    LOG(LOG_INFO, "SocketTransport::do_send %u bytes", unsigned(len));
+
     if (len == 0) { return; }
 
     if (!this->async_buffers.empty()) {
