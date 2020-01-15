@@ -546,7 +546,7 @@ struct ShareData_Recv : private CheckShareData_Recv
     InStream payload;
 
 
-    explicit ShareData_Recv(InStream & stream, rdp_mppc_dec * dec = nullptr)
+    explicit ShareData_Recv(InStream & stream, rdp_mppc_dec * dec)
     //==============================================================================
     : CheckShareData_Recv(stream)
     , share_id(stream.in_uint32_le())
@@ -629,9 +629,9 @@ struct ShareData
     void emit_begin( uint8_t pdu_type2
                    , uint32_t share_id
                    , uint8_t streamid
-                   , uint16_t _uncompressedLen = 0
-                   , uint8_t compressedType = 0
-                   , uint16_t compressedLen = 0
+                   , uint16_t _uncompressedLen = 0 /*NOLINT*/
+                   , uint8_t compressedType = 0 /*NOLINT*/
+                   , uint16_t compressedLen = 0 /*NOLINT*/
                    )
     //==============================================================================
     {

@@ -704,7 +704,7 @@ public:
                 if (this->state == UP_AND_RUNNING) {
                     this->send_data_indication_ex_impl(
                         GCC::MCS_GLOBAL_CHANNEL,
-                        [&](StreamSize<256>, OutStream & stream) {
+                        [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
                             ShareFlow_Send(stream, FLOW_TEST_PDU, 0, 0, this->userid + GCC::MCS_USERCHANNEL_BASE);
                             if (bool(this->verbose & Verbose::global_channel)) {
                                 LOG(LOG_INFO, "Front::process_flow_control_event: Sec clear payload to send:");
@@ -1159,7 +1159,7 @@ public:
         if (!this->is_client_disconnected) {
             write_packets(
                 this->trans,
-                [](StreamSize<256>, OutStream & mcs_data) {
+                [](StreamSize<256> /*maxlen*/, OutStream & mcs_data) {
                     MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
                 },
                 X224::write_x224_dt_tpdu_fn{}
@@ -1513,7 +1513,7 @@ public:
 
             write_packets(
                 this->trans,
-                [this](StreamSize<65536-1024>, OutStream & stream) {
+                [this](StreamSize<65536-1024> /*maxlen*/, OutStream & stream) {
                     {
                         GCC::UserData::SCCore sc_core;
                         sc_core.version = 0x00080004;
@@ -1623,10 +1623,10 @@ public:
                         sc_sec1.emit(stream);
                     }
                 },
-                [](StreamSize<256>, OutStream & gcc_header, std::size_t packed_size) {
+                [](StreamSize<256> /*maxlen*/, OutStream & gcc_header, std::size_t packed_size) {
                     GCC::Create_Response_Send(gcc_header, packed_size);
                 },
-                [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
+                [](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packed_size) {
                     MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
                 },
                 X224::write_x224_dt_tpdu_fn{}
@@ -1707,7 +1707,7 @@ public:
 
         write_packets(
             this->trans,
-            [this](StreamSize<256>, OutStream & mcs_data) {
+            [this](StreamSize<256> /*maxlen*/, OutStream & mcs_data) {
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
             },
             X224::write_x224_dt_tpdu_fn{}
@@ -1725,7 +1725,7 @@ public:
 
         write_packets(
             this->trans,
-            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+            [&mcs](StreamSize<256> /*maxlen*/, OutStream & mcs_cjcf_data) {
                 MCS::ChannelJoinConfirm_Send(
                     mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                     mcs.initiator, mcs.channelId,
@@ -1750,7 +1750,7 @@ public:
 
         write_packets(
             this->trans,
-            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+            [&mcs](StreamSize<256> /*maxlen*/, OutStream & mcs_cjcf_data) {
                 MCS::ChannelJoinConfirm_Send(
                     mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                     mcs.initiator, mcs.channelId,
@@ -1784,7 +1784,7 @@ public:
 
         write_packets(
             this->trans,
-            [&mcs](StreamSize<256>, OutStream & mcs_cjcf_data) {
+            [&mcs](StreamSize<256> /*maxlen*/, OutStream & mcs_cjcf_data) {
                 MCS::ChannelJoinConfirm_Send(
                     mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                     mcs.initiator, mcs.channelId,
@@ -1929,7 +1929,7 @@ public:
 
         this->send_data_indication(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this](StreamSize<314+8+4>, OutStream & sec_header) {
+            [this](StreamSize<314+8+4> /*maxlen*/, OutStream & sec_header) {
                 /* some compilers need unsigned char to avoid warnings */
                 static const uint8_t lic1[] = {
                     // SEC_RANDOM ?
@@ -2795,7 +2795,7 @@ public:
         uint16_t channelId = GCC::MCS_GLOBAL_CHANNEL;
         auto userid = this->userid;
 
-        auto data_writer = [this](StreamSize<24>, OutStream & sec_header) {
+        auto data_writer = [this](StreamSize<24> /*maxlen*/, OutStream & sec_header) {
                 // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
                 /* some compilers need unsigned char to avoid warnings */
@@ -2825,7 +2825,7 @@ public:
         write_packets(
             answer_trans,
             data_writer,
-            [channelId, userid](StreamSize<256>, OutStream & mcs_header, std::size_t packet_sz) {
+            [channelId, userid](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_sz) {
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, packet_sz,
                     MCS::PER_ENCODING
                 );
@@ -2841,7 +2841,7 @@ public:
         write_packets(
             this->trans,
             data_writer,
-            [channelId, this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_sz) {
+            [channelId, this](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_sz) {
                 MCS::SendDataIndication_Send mcs(
                     mcs_header,
                     this->userid, channelId,
@@ -2937,7 +2937,7 @@ private:
 
         this->send_data_indication_ex_impl(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this](StreamSize<65536>, OutStream & stream) {
+            [this](StreamSize<65536> /*maxlen*/, OutStream & stream) {
                 size_t caps_count = 0;
 
                 // Payload
@@ -3141,11 +3141,11 @@ private:
 
                 stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
             },
-            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+            [this](StreamSize<256> /*maxlen*/, OutStream & sctrl_header, std::size_t packet_size) {
                 ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             },
-            [this](StreamSize<0>, OutStream &, bytes_view packet) {
+            [this](StreamSize<0> /*maxlen*/, OutStream &, bytes_view packet) {
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_demand_active: Sec clear payload to send:");
                     hexdump_d(packet);
@@ -4308,7 +4308,7 @@ private:
 
         this->send_data_indication_ex_impl(
             GCC::MCS_GLOBAL_CHANNEL,
-            [&](StreamSize<256>, OutStream & stream) {
+            [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
                 ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_deactive: Sec clear payload to send:");

@@ -1049,7 +1049,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        explicit CC_TPDU_Recv(InStream & stream, uint32_t verbose = 0)
+        explicit CC_TPDU_Recv(InStream & stream/*, uint32_t verbose = 0*/)
             : Recv(stream)
             , tpdu_hdr([&]()
             {
@@ -1107,8 +1107,8 @@ namespace X224
                     throw Error(ERR_X224);
                 }
 
-                LOG_IF(verbose, LOG_INFO, "Found RDP Negotiation %s Structure",
-                    (this->rdp_neg_type == X224::RDP_NEG_RSP)?"Response":"Failure");
+                // LOG_IF(verbose, LOG_INFO, "Found RDP Negotiation %s Structure",
+                //     (this->rdp_neg_type == X224::RDP_NEG_RSP)?"Response":"Failure");
                 //NEGTYPE=2 NEGFLAGS=0 NEGLENGTH=8 NEGCODE=1
                 this->rdp_neg_flags = stream.in_uint8();
                 this->rdp_neg_length = stream.in_uint16_le();
@@ -1169,7 +1169,6 @@ namespace X224
                 throw Error(ERR_X224);
             }
             this->_header_size = stream.get_offset();
-
         }
 
         void throw_error() {

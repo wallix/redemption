@@ -216,12 +216,12 @@ struct Error
 
 public:
     Error() = delete;
-    explicit Error(error_type id, int errnum = 0) noexcept;
+    explicit Error(error_type id, int errnum = 0) noexcept; /*NOLINT*/
 
-    [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept;
+    [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept; /*NOLINT*/
 };
 
-zstring_view local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) noexcept;
+zstring_view local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) noexcept; /*NOLINT*/
 
 #ifndef NOT_UNDEF_EACH_ERROR
 # undef EACH_ERROR

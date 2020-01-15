@@ -46,7 +46,7 @@ public:
         CertError,
     };
 
-    virtual void server_cert_status(Status status, std::string_view error_msg = {}) = 0;
+    virtual void server_cert_status(Status status, std::string_view error_msg = {}) = 0; /*NOLINT*/
 
     virtual CertificateResult server_cert_callback(X509& certificate, std::string* error_message, const char* ip_address, int port) = 0;
 
@@ -56,7 +56,7 @@ public:
 class NullServerNotifier : public ServerNotifier
 {
 public:
-    void server_cert_status(Status status, std::string_view error_msg = {}) override
+    void server_cert_status(Status status, std::string_view error_msg = {}) override /*NOLINT*/
     {
         (void)status;
         (void)error_msg;

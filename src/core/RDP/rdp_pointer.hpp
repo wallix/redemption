@@ -93,7 +93,7 @@ struct Pointer {
     friend Pointer predefined_pointer(const unsigned width, const unsigned height,
                                       const char * def,
                                       const unsigned hsx, const unsigned hsy,
-                                      const unsigned inverted);
+                                      const bool inverted);
 
     friend Pointer harmonize_pointer(Pointer const& src_ptr);
 
@@ -861,8 +861,8 @@ inline Pointer pointer_loader_32x32(InStream & stream)
 
 inline Pointer predefined_pointer(const unsigned width, const unsigned height,
                                   const char * def,
-                                  const unsigned hsx = 0, const unsigned hsy = 0,
-                                  const unsigned inverted = 0)
+                                  const unsigned hsx = 0, const unsigned hsy = 0, /*NOLINT*/
+                                  const bool inverted = false) /*NOLINT*/
 {
     Pointer cursor(CursorSize(width, height), Hotspot(hsx, hsy));
     uint8_t * dest      = cursor.data;
@@ -873,8 +873,7 @@ inline Pointer predefined_pointer(const unsigned width, const unsigned height,
         uint8_t res_mask = 0;
         for (size_t x = 0 ; x < width ; x++){
             const char c = *src;
-            uint8_t v = (((c == 'X')||(c == '-'))^inverted);
-            ::out_bytes_le(dest, 3, v?0xFFFFFF:0);
+            ::out_bytes_le(dest, 3, ((c == 'X' || c == '-') != inverted) ? 0xFFFFFF : 0);
             dest += 3;
             res_mask |= ((c == '.')||(c == '-'))?(1 << bit_count):0;
             if (bit_count == 0){

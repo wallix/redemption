@@ -75,18 +75,10 @@ static inline uint32_t lzcnt_s(uint32_t x)
 
 bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int16_t *pDstData, uint32_t dstSize)
 {
-    int run;
-    int cnt;
     int size;
-    int nbits;
     unsigned int offset;
     int16_t mag;
     uint16_t code;
-    uint32_t sign;
-    uint32_t nIdx;
-    uint32_t val1;
-    uint32_t val2;
-    int16_t* pOutput;
 
     size_t k = 1;
     int kp = k << LSGR;
@@ -104,16 +96,16 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
         return false;
     }
 
-    pOutput = pDstData;
+    int16_t* pOutput = pDstData;
 
     while ((bs.getRemainingLength() > 0) && ((pOutput - pDstData) < dstSize)) {
         if (k) {
             /* Run-Length (RL) Mode */
-            run = 0;
+            int run = 0;
 
             /* count number of leading 0s */
-            cnt = lzcnt_s(bs.peekBits(32));
-            nbits = bs.getRemainingLength();
+            int cnt = lzcnt_s(bs.peekBits(32));
+            int nbits = bs.getRemainingLength();
             if (cnt > nbits) {
                 cnt = nbits;
             }
@@ -165,7 +157,7 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
             if (bs.getRemainingLength() < 1) {
                 break;
             }
-            sign = bs.getBits(1) ? 1 : 0;
+            uint32_t sign = bs.getBits(1) ? 1 : 0;
 
             /* count number of leading 1s */
             cnt = lzcnt_s(~bs.peekBits(32));
@@ -266,8 +258,8 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
             /* Golomb-Rice (GR) Mode */
 
             /* count number of leading 1s */
-            cnt = lzcnt_s(~bs.peekBits(32));
-            nbits = bs.getRemainingLength();
+            int cnt = lzcnt_s(~bs.peekBits(32));
+            int nbits = bs.getRemainingLength();
 
             if (cnt > nbits) {
                 cnt = nbits;
@@ -363,7 +355,7 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
                     pOutput++;
                 }
             } else if (mode == RLGR3) { /* RLGR3 */
-                nIdx = 0;
+                uint32_t nIdx = 0;
 
                 if (code) {
                     mag = static_cast<uint32_t>(code);
@@ -373,9 +365,9 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
                 if (bs.getRemainingLength() < nIdx) {
                     break;
                 }
-                val1 = bs.getBits(nIdx);
+                uint32_t val1 = bs.getBits(nIdx);
 
-                val2 = code - val1;
+                uint32_t val2 = code - val1;
 
                 if (val1 && val2) {
                     /* update k, kp params */

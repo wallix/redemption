@@ -32,7 +32,7 @@ namespace CHANNELS
     {
         enum class Id : uint64_t;
 
-        constexpr explicit ChannelNameId(Id id = Id{}) noexcept
+        constexpr explicit ChannelNameId(Id id = Id{}) noexcept /*NOLINT*/
           : id(id)
         {}
 

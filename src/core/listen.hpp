@@ -143,8 +143,7 @@ inline unique_fd create_server_bind_sck(
 }
 
 inline unique_fd create_unix_server(
-    char const* sck_name,
-    EnableTransparentMode enable_transparent_mode = EnableTransparentMode::No)
+    char const* sck_name, EnableTransparentMode enable_transparent_mode)
 {
     unique_fd sck {socket(AF_UNIX, SOCK_STREAM, 0)};
 
@@ -164,8 +163,7 @@ inline unique_fd create_unix_server(
 }
 
 inline unique_fd create_server(
-    uint32_t s_addr, int port,
-    EnableTransparentMode enable_transparent_mode = EnableTransparentMode::No)
+    uint32_t s_addr, int port, EnableTransparentMode enable_transparent_mode)
 {
     unique_fd sck {socket(PF_INET, SOCK_STREAM, 0)};
 

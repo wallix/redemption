@@ -389,7 +389,7 @@ namespace CHANNELS {
         , bytes_view chunk) {
             write_packets(
                 trans,
-                [&](StreamSize<65536-1024>, OutStream & stream) {
+                [&](StreamSize<65536-1024> /*maxlen*/, OutStream & stream) {
                     stream.out_uint32_le(length);
                     stream.out_uint32_le(flags);
                     stream.out_copy_bytes(chunk);
@@ -400,7 +400,7 @@ namespace CHANNELS {
                     }
                 },
                 SEC::write_sec_send_fn{0, crypt_context, encryptionLevel},
-                [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+                [&](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_size) {
                     MCS_SendData(mcs_header, userId, channelId, 1, 3, packet_size, MCS::PER_ENCODING);
                 },
                 X224::write_x224_dt_tpdu_fn{}
