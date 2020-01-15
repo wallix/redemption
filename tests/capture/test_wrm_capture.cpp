@@ -520,9 +520,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
           CaptureParams{now, "capture_kbd_input", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
           wrm_params, gd_drawable);
 
-        bool ignore_frame_in_timeval = false;
-
-        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+        wrm.send_timestamp_chunk(now);
 
         wrm.kbd_input(now, 'i');
         wrm.kbd_input(now, 'p');
@@ -532,7 +530,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         wrm.kbd_input(now, 'f');
         wrm.kbd_input(now, 'i');
         now.tv_sec++;
-        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+        wrm.send_timestamp_chunk(now);
 
         wrm.kbd_input(now, 'g');
         wrm.kbd_input(now, '\r');
@@ -543,7 +541,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
             KVLog("command_line"_av, "COMMAND_LINE"_av),
         });
 
-        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+        wrm.send_timestamp_chunk(now);
     }
 
     struct KbdInput : public gdi::KbdInputApi
@@ -661,9 +659,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
           CaptureParams{now, "capture_remoteapp", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::v1, 0},
           wrm_params, gd_drawable);
 
-        bool ignore_frame_in_timeval = false;
-
-        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+        wrm.send_timestamp_chunk(now);
 
         wrm.draw(RDPOpaqueRect(scr, encode_color24()(BLACK)), scr, color_cxt);
 
@@ -673,7 +669,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 
 
         now.tv_sec++;
-        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+        wrm.send_timestamp_chunk(now);
 
         wrm.draw(RDPOpaqueRect(scr, encode_color24()(BLACK)), scr, color_cxt);
 
@@ -681,7 +677,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         wrm.draw(RDPOpaqueRect(rect, encode_color24()(BLUE)), rect, color_cxt);
         wrm.visibility_rects_event(rect);
 
-        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+        wrm.send_timestamp_chunk(now);
     }
 
     auto first_file = record_wd.add_file("capture_remoteapp-000000.wrm");

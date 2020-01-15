@@ -189,7 +189,7 @@ struct RDPBrush {
     }
 
     RDPBrush(int8_t org_x, int8_t org_y, uint8_t style, uint8_t hatch,
-             const uint8_t * extra = byte_ptr_cast("\0\0\0\0\0\0\0"))
+             const uint8_t * extra = byte_ptr_cast("\0\0\0\0\0\0\0")) /*NOLINT*/
     : org_x(org_x)
     , org_y(org_y)
     , style(style)
@@ -1141,7 +1141,7 @@ public:
     }
 
     // TODO remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions
-    size_t str(char * buffer, size_t sz, bool showclip = true) const
+    size_t str(char * buffer, size_t sz, bool showclip = true) const /*NOLINT*/
     {
         size_t lg;
         if (showclip){

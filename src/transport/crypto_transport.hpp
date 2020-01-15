@@ -69,7 +69,7 @@ public:
 
     bool is_eof() noexcept;
 
-    void disable_log_decrypt(bool disable = true) noexcept;
+    void disable_log_decrypt(bool disable = true) noexcept; /*NOLINT*/
 
 private:
     // this perform atomic read, partial read will result in exception
@@ -162,7 +162,7 @@ public:
 
     explicit OutCryptoTransport(
         CryptoContext & cctx, Random & rnd, Fstat & fstat,
-        ReportError report_error = ReportError()
+        ReportError report_error
     ) noexcept;
 
     [[nodiscard]] const char * get_finalname() const noexcept { return this->finalname; }
@@ -212,12 +212,8 @@ enum class EncryptionSchemeTypeResult
 };
 
 EncryptionSchemeTypeResult get_encryption_scheme_type(
-    CryptoContext & cctx, const char * filename,
-    bytes_view derivator = bytes_view(nullptr),
-    Error * err = nullptr);
+    CryptoContext & cctx, const char * filename, bytes_view derivator, Error * err);
 
 /// \attention if result is \c EncryptionSchemeTypeResult::OldScheme, the CryptoContext::old_encryption_scheme must be set to 1 and the file reopen because some data are lost
 EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
-    InCryptoTransport & in, const char * filename,
-    bytes_view derivator = bytes_view(nullptr),
-    Error * err = nullptr);
+    InCryptoTransport & in, const char * filename, bytes_view derivator, Error * err);

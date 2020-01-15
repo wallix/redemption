@@ -466,13 +466,13 @@ class RDPBmpCache {
     uint32_t key2{0};
     bool verbose;
 
-    RDPBmpCache(Bitmap bmp, int id, int idx, bool persistent, bool do_not_cache, bool verbose = false)
+    RDPBmpCache(Bitmap bmp, int id, int idx, bool persistent, bool do_not_cache, bool verbose = false) /*NOLINT*/
         : id(id), idx(idx), bmp(std::move(bmp)), persistent(persistent)
         , do_not_cache(do_not_cache), key1(0), key2(0), verbose(verbose)
     {
     }
 
-    explicit RDPBmpCache(bool verbose = false)
+    explicit RDPBmpCache(bool verbose = false) /*NOLINT*/
         :  verbose(verbose) {
     }
 

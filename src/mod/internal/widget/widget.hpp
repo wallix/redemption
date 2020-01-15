@@ -93,7 +93,7 @@ protected:
     {}
 
 public:
-    Widget(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0)
+    Widget(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0) /*NOLINT*/
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)

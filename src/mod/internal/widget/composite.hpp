@@ -97,7 +97,7 @@ public:
     Widget * current_focus;
 
     WidgetParent(gdi::GraphicApi & drawable, Widget & parent,
-                 NotifyApi * notifier, int group_id = 0);
+                 NotifyApi * notifier, int group_id = 0); /*NOLINT*/
 
     ~WidgetParent() override;
 
@@ -158,7 +158,7 @@ class WidgetComposite: public WidgetParent
 
 public:
     WidgetComposite(gdi::GraphicApi & drawable, Widget & parent,
-                    NotifyApi * notifier, int group_id = 0)
+                    NotifyApi * notifier, int group_id = 0) /*NOLINT*/
     : WidgetParent(drawable, parent, notifier, group_id)
     {
         this->impl = & composite_array;

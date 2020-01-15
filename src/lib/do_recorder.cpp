@@ -1795,7 +1795,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         {"json-pgs", "use json format to .pgs file"},
     });
 
-    auto cl_error = [&recorder](char const* mes, int const errnum = 1){
+    auto cl_error = [&recorder](char const* mes, int const errnum = 1) /*NOLINT*/ {
         std::cerr << mes << "\n";
         if (recorder.json_pgs) {
             raise_error(UpdateProgressData::JSON_FORMAT, recorder.output_filename, errnum, mes);

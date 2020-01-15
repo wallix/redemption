@@ -255,8 +255,8 @@ namespace ocr
         } context;
 
     public:
-        explicit ExtractTitles(unsigned box_min_height = ocr::bbox_min_height,
-                               unsigned box_max_height = ocr::bbox_max_height)
+        explicit ExtractTitles(unsigned box_min_height = ocr::bbox_min_height, /*NOLINT*/
+                               unsigned box_max_height = ocr::bbox_max_height) /*NOLINT*/
         : bbox_min_height(box_min_height)
         , bbox_max_height(box_max_height)
         {}
@@ -268,7 +268,7 @@ namespace ocr
         }
 
         template <class ImageView, class Callback>
-        void extract_titles(ImageView const & input, Callback f, unsigned title_id = uninitialized_titlebar_color_id)
+        void extract_titles(ImageView const & input, Callback f, unsigned title_id = uninitialized_titlebar_color_id) /*NOLINT*/
         {
             if (input.width() < ocr::bbox_min_width){
                 return ;

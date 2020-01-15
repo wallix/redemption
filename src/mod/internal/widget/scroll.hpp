@@ -69,7 +69,7 @@ public:
     WidgetScrollBar(gdi::GraphicApi & drawable, Widget& parent,
                     NotifyApi* notifier, bool horizontal,
                     int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focuscolor,
-                    Font const & font, bool rail_style, int maxvalue = 100);
+                    Font const & font, bool rail_style, int maxvalue = 100); /*NOLINT*/
 
     [[nodiscard]] unsigned int get_current_value() const;
 

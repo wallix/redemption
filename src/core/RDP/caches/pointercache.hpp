@@ -50,7 +50,7 @@ public:
     Pointer Pointers[MAX_POINTER_COUNT];
 
 public:
-    explicit PointerCache(int pointer_cache_entries = 0)
+    explicit PointerCache(int pointer_cache_entries = 0) /*NOLINT*/
     : pointer_cache_entries(pointer_cache_entries)
     {}
 

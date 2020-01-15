@@ -139,7 +139,7 @@ public:
                BGRColor bg_color_2, BGRColor fg_color_2,
                BGRColor bg_color_focus, BGRColor fg_color_focus,
                BGRColor bg_color_selection, BGRColor fg_color_selection,
-               uint16_t border = 0, int group_id = 0)
+               uint16_t border = 0, int group_id = 0) /*NOLINT*/
         : Widget(drawable, parent, notifier, group_id)
         , widgets(nb_rows, nb_columns)
         , bg_color_1(bg_color_1)

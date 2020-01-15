@@ -48,7 +48,7 @@ struct unique_fd
         return *this;
     }
 
-    explicit unique_fd(char const * pathname, int flags = O_RDONLY) noexcept
+    explicit unique_fd(char const * pathname, int flags = O_RDONLY) noexcept /*NOLINT*/
     : fd_(::open(pathname, flags))
     {}
 
@@ -56,7 +56,7 @@ struct unique_fd
     : fd_(::open(pathname, flags, mode))
     {}
 
-    explicit unique_fd(std::string const & pathname, int flags = O_RDONLY) noexcept
+    explicit unique_fd(std::string const & pathname, int flags = O_RDONLY) noexcept /*NOLINT*/
     : unique_fd(pathname.c_str(), flags)
     {}
 
@@ -104,7 +104,7 @@ struct unique_fd
         return false;
     }
 
-    void reset(int fd = -1) noexcept
+    void reset(int fd = -1) noexcept /*NOLINT*/
     {
         if (this->is_open()) {
             ::close(this->fd_);

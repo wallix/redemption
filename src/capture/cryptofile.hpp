@@ -426,7 +426,7 @@ struct DecryptContext
         return size_t(written + trail); /*NOLINT*/
     }
 
-    void disable_log_decrypt(bool disable = true) noexcept
+    void disable_log_decrypt(bool disable = true) noexcept /*NOLINT*/
     {
         this->enable_log_decrypt = !disable;
     }

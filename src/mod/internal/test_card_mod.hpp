@@ -47,7 +47,7 @@ public:
     TestCardMod(
         SessionReactor& session_reactor,
         uint16_t width, uint16_t height,
-        Font const & font, bool unit_test = true);
+        Font const & font, bool unit_test = true); /*NOLINT*/
 
     void rdp_input_invalidate(Rect /*rect*/) override
     {}

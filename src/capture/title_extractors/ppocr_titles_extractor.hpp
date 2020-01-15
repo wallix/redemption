@@ -72,7 +72,7 @@ struct PpOcrTitlesExtractor
     , max_unrecog_char_rate(max_unrecog_char_rate)
     {}
 
-    void reset_titlebar_color_id(unsigned bg = ocr::uninitialized_titlebar_color_id) {
+    void reset_titlebar_color_id(unsigned bg = ocr::uninitialized_titlebar_color_id) /*NOLINT*/ {
         this->title_color_id_selected = bg;
     }
 

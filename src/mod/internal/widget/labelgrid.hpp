@@ -35,7 +35,7 @@ struct WidgetLabelGrid : public WidgetGrid
                BGRColor bg_color_2, BGRColor fg_color_2,
                BGRColor bg_color_focus, BGRColor fg_color_focus,
                BGRColor bg_color_selection, BGRColor fg_color_selection,
-               Font const & font, uint16_t border = 0, int group_id = 0);
+               Font const & font, uint16_t border = 0, int group_id = 0); /*NOLINT*/
 
     ~WidgetLabelGrid() override;
 

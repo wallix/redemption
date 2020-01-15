@@ -186,7 +186,7 @@ bool HttpRequestParser::onFirstLine(const std::string &line) {
 
 	this->method = line.substr(0, pos1);
 	size_t pos2 = line.rfind(' ');
-	if ((pos2 == std::string::npos) || (pos2 == pos1))
+	if (pos2 == std::string::npos || pos2 == pos1)
 		return false;
 
 	this->httpVersion = line.substr(pos2 + 1, std::string::npos);

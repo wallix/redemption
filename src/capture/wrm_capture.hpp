@@ -253,7 +253,7 @@ public:
     }
 
     // this one is used to store some embedded image inside WRM
-    void send_image_chunk(bool bgr = false)
+    void send_image_chunk(bool bgr = false) /*NOLINT*/
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
         ::dump_png24(png_trans, this->image_frame_api, bgr);
@@ -264,7 +264,7 @@ public:
         send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
     }
 
-    void send_timestamp_chunk(bool ignore_time_interval = false)
+    void send_timestamp_chunk()
     {
         StaticOutStream<12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1> payload;
         payload.out_timeval_to_uint64le_usec(this->timer);
@@ -272,7 +272,7 @@ public:
             payload.out_uint16_le(this->mouse_x);
             payload.out_uint16_le(this->mouse_y);
 
-            payload.out_uint8(ignore_time_interval ? 1 : 0);
+            payload.out_uint8(/*ignore_time_interval*/ 0);
 
             payload.out_copy_bytes(keyboard_buffer_32.get_bytes());
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
@@ -844,9 +844,9 @@ public:
         this->graphic_to_file.enable_kbd_input_mask(enable);
     }
 
-    void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
+    void send_timestamp_chunk(timeval const & now) {
         this->graphic_to_file.timestamp(now);
-        this->graphic_to_file.send_timestamp_chunk(ignore_time_interval);
+        this->graphic_to_file.send_timestamp_chunk();
     }
 
     Microseconds periodic_snapshot(

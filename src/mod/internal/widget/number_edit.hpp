@@ -29,8 +29,8 @@ public:
     WidgetNumberEdit(gdi::GraphicApi & drawable, Widget & parent,
                      NotifyApi* notifier, const char* text, int group_id,
                      BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color,
-                     Font const & font, size_t edit_position = -1,
-                     int xtext = 0, int ytext = 0);
+                     Font const & font, size_t edit_position = -1, /*NOLINT*/
+                     int xtext = 0, int ytext = 0); /*NOLINT*/
 
     void set_text(const char * text) override;
 

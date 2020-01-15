@@ -56,7 +56,7 @@ public:
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, ClientExecute & rail_client_execute,
-        Font const& font, Theme const& theme, ChallengeOpt has_challenge = NO_CHALLENGE);
+        Font const& font, Theme const& theme, ChallengeOpt has_challenge = NO_CHALLENGE); /*NOLINT*/
 
     ~DialogMod() override;
 

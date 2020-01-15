@@ -65,7 +65,7 @@ public:
      * @param content input data for the parser
      * @return if the processing was successful
      */
-    bool parse(array_view_const_char content);
+    bool parse(array_view_const_char input);
 
     /** returns if the corresponding header was parsed in the headers
      * @param header the name of the header

@@ -38,7 +38,7 @@ public:
         /*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod, Font const & font,
         const GCC::UserData::CSMonitor& cs_monitor,
         uint16_t front_width, uint16_t front_height,
-        int group_id = 0);
+        int group_id = 0); /*NOLINT*/
 
     gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
 
