@@ -109,7 +109,7 @@ namespace
             gen.get_current_hash_path().c_str(),
             groupid, derivator);
     }
-}
+} // anonymous namespace
 
 
 FdxCapture::FdxCapture(

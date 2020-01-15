@@ -26,8 +26,6 @@ Author(s): David Fort
 
 namespace http {
 
-typedef struct HttpParserImpl HttpParserImpl;
-
 /** @brief a generic HTTP parser (for request or response) */
 class HttpParser {
 public:
@@ -54,7 +52,7 @@ public:
     /** called when we have some body content
      * @return if the processing was successful
      */
-    virtual bool onBodyContent(array_view_const_char content);
+    virtual bool onBodyContent(array_view_const_char input);
 
     /** called when the parsing is finished
      * @return if the processing was successful
@@ -85,6 +83,7 @@ protected:
     bool treatHeaderLine(const std::string &line);
 
 protected:
+    class HttpParserImpl;
     HttpParserImpl *impl;
 };
 

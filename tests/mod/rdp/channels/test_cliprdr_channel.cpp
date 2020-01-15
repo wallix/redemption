@@ -80,7 +80,7 @@ namespace
             return clipboard_virtual_channel_params;
         }();
     } // namespace data_full_denied
-}
+} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 {

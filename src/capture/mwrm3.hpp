@@ -203,7 +203,7 @@ namespace Mwrm3
                 : u16_unsafe{bytes.size()}
                 {}
             };
-        }
+        } // namespace types
 
         namespace readers
         {
@@ -587,7 +587,7 @@ namespace Mwrm3
                     std::index_sequence_for<Reader...>, Reader...>::type;
                 return g{{{reader}}...};
             }
-        }
+        } // namespace readers
 
         template<class T> struct wrap_type { using type = T; };
         template<> struct wrap_type<Type> { using type = types::u16; };
@@ -752,7 +752,7 @@ namespace Mwrm3
                 return not buf.empty() ? f(integral_type<type>(), buf.drop_front(1)) : ferror();
             }
         };
-    }
+    } // namespace Mwrm3Serial
 
     inline constexpr Mwrm3Serial::MwrmHeaderCompatibility mwrm_header_compatibility {};
 
@@ -778,7 +778,7 @@ namespace Mwrm3
                 return detail::unserialize<type>(buf, f, ferror, group(to<u16str, Filename>()));
             }
         };
-    }
+    } // namespace Mwrm3Serial
 
     inline constexpr Mwrm3Serial::WrmNew wrm_new {};
 
@@ -821,7 +821,7 @@ namespace Mwrm3
                 );
             }
         };
-    }
+    } // namespace Mwrm3Serial
 
     inline constexpr Mwrm3Serial::WrmState wrm_state {};
 
@@ -847,7 +847,7 @@ namespace Mwrm3
                 return detail::unserialize<type>(buf, f, ferror, group(to<u16str, Filename>()));
             }
         };
-    }
+    } // namespace Mwrm3Serial
 
     inline constexpr Mwrm3Serial::FdxNew fdx_new {};
 
@@ -914,7 +914,7 @@ namespace Mwrm3
                 );
             }
         };
-    }
+    } // namespace Mwrm3Serial
 
     inline constexpr Mwrm3Serial::TflNew tfl_new {};
 

@@ -380,8 +380,8 @@ private:
         BmpCache::cache_ const & cache = bmp_cache.get_cache(cache_id);
 
         if (cache.persistent()) {
-            for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {
-                if (cache[cache_index]) {
+            for (auto const& cache_elem : cache.view()) {
+                if (cache_elem) {
                     bitmap_count++;
                 }
             }
@@ -394,12 +394,12 @@ private:
             return;
         }
 
-        for (uint16_t cache_index = 0; cache_index < cache.size(); cache_index++) {
-            if (cache[cache_index]) {
+        for (auto const& cache_elem : cache.view()) {
+            if (cache_elem) {
                 stream.rewind();
 
-                const Bitmap &   bmp      = cache[cache_index].bmp;
-                const uint8_t (& sig)[8]  = cache[cache_index].sig.sig_8;
+                const Bitmap &   bmp      = cache_elem.bmp;
+                const uint8_t (& sig)[8]  = cache_elem.sig.sig_8;
                 const uint16_t   bmp_size = bmp.bmp_size();
                 const uint8_t  * bmp_data = bmp.data();
 

@@ -85,7 +85,7 @@ namespace Cliprdr
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_group_descriptor_w, "FileGroupDescriptorW")
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(preferred_drop_effect, "Preferred DropEffect")
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_contents, "FileContents")
-    }
+    } // namespace formats
 
     struct FormatName
     {

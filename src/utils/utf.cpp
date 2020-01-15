@@ -231,7 +231,7 @@ size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept
                 // allows control characters
                 if (c == 0){
                     // should never happen, catched by test above
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
 
                 ucode = c;
@@ -243,7 +243,7 @@ size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
                 if (i + 1 > source.size()){
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
                 ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
                 i+=1;
@@ -251,14 +251,14 @@ size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
                 if (i + 2 > source.size()){
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
                 ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
                 if (i + 3 > source.size()){
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
 // TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
                 ucode = ((c & 0x07) << 18)|((s[i+1] & 0x3F) << 12)|((s[i+2] & 0x3F) << 6)|(s[i+3] & 0x3F);
@@ -266,15 +266,15 @@ size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept
             break;
             case 8: case 9: case 0x0A: case 0x0B:
                 // should never happen on valid UTF8
-                goto UTF8toUTF16_exit;
+                return i_t;
         }
-        if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
+        if (i_t + 2 > t_len) { return i_t; }
         target[i_t] = ucode & 0xFF;
         target[i_t + 1] = (ucode >> 8) & 0xFF;
         i_t += 2;
     }
+
     // do not write final 0
-UTF8toUTF16_exit:
     return i_t;
 }
 
@@ -298,7 +298,7 @@ size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, size_t t_len) noexc
                 // allows control characters
                 if (c == 0){
                     // should never happen, catched by test above
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
 
                 ucode = c;
@@ -310,7 +310,7 @@ size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, size_t t_len) noexc
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
                 if (i + 1 > source.size()){
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
                 ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
                 i+=1;
@@ -318,28 +318,28 @@ size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, size_t t_len) noexc
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
                 if (i + 2 > source.size()){
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
                 ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
                 if (i + 3 > source.size()){
-                    goto UTF8toUTF16_exit;
+                    return i_t;
                 }
                 ucode = ((c & 0x07) << 18)|((s[i] & 0x3F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:
                 // should never happen on valid UTF8
-                goto UTF8toUTF16_exit;
+                return i_t;
         }
 
         if ((ucode == 0x0D) && (i + 1 < source.size()) && (s[i+1] == 0x0A)){
            continue;
         }
         if (ucode == 0x0A) {
-            if (i_t + 4 /* CrLf en unicode */ > t_len) { goto UTF8toUTF16_exit; }
+            if (i_t + 4 /* CrLf en unicode */ > t_len) { return i_t; }
             target[i_t]     = 0x0D;
             target[i_t + 1] = 0x00;
             target[i_t + 2] = 0x0A;
@@ -357,14 +357,14 @@ size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, size_t t_len) noexc
             //      For now what we do is ignoring that char.
         }
         else {
-            if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
+            if (i_t + 2 > t_len) { return i_t; }
             target[i_t] = ucode & 0xFF;
             target[i_t + 1] = (ucode >> 8) & 0xFF;
             i_t += 2;
         }
     }
+
     // write final 0
-UTF8toUTF16_exit:
     return i_t;
 }
 

@@ -55,7 +55,7 @@ namespace detail
 
     template<class T, class R>
     struct filter_dangerous_implicit_array_view<T&, R> : filter_dangerous_implicit_array_view<T, R> {};
-}
+} // namespace detail
 
 template<class T>
 struct array_view
@@ -91,7 +91,7 @@ struct array_view
         *static_cast<type**>(nullptr) = utils::data(std::declval<U&&>()),
         *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&&>())
     )>::type>
-    constexpr array_view(U && x)
+    constexpr array_view(U && x) /*NOLINT(bugprone-forwarding-reference-overload)*/
     noexcept(noexcept((void(utils::data(std::forward<U>(x))), utils::size(std::forward<U>(x)))))
     : p(utils::data(std::forward<U>(x)))
     , sz(utils::size(std::forward<U>(x)))

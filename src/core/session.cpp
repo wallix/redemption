@@ -770,7 +770,6 @@ public:
 
 
             windowing_api* winapi = nullptr;
-
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
 
             ModFactory mod_factory(mod_wrapper, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
@@ -1247,7 +1246,7 @@ void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random&
     session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
         WsTransport::UseTls(true), WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
-            ini.get<cfg::client::ssl_cipher_list>().c_str(),
+            ini.get<cfg::client::ssl_cipher_list>(),
             ini.get<cfg::client::tls_min_level>(),
             ini.get<cfg::client::tls_max_level>(),
             ini.get<cfg::client::show_common_cipher_list>(),

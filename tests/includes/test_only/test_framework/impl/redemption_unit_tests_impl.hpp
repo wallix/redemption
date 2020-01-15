@@ -411,7 +411,7 @@ namespace redemption_unit_test__
         }
     }
 #endif
-}
+} // namespace redemption_unit_test__
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
 using redemption_unit_test__::ops::operator ==;

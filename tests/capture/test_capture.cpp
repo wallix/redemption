@@ -2383,16 +2383,16 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
 
-#define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output, output_error) { \
-    int argc = sizeof(argv)/sizeof(char*);                                        \
-    tu::ostream_buffered cout_buf;                                                \
-    tu::ostream_buffered cerr_buf(std::cerr);                                     \
-    int res = do_main(argc, argv, hmac_fn, trace_fn);                             \
-    EVP_cleanup();                                                                \
-    RED_CHECK_SMEM(cout_buf.str(), output);                                       \
-    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                 \
-    RED_TEST(res_result == res);                                                  \
-}
+#define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output, output_error) do { \
+    int argc = sizeof(argv)/sizeof(char*);                                           \
+    tu::ostream_buffered cout_buf;                                                   \
+    tu::ostream_buffered cerr_buf(std::cerr);                                        \
+    int res = do_main(argc, argv, hmac_fn, trace_fn);                                \
+    EVP_cleanup();                                                                   \
+    RED_CHECK_SMEM(cout_buf.str(), output);                                          \
+    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                    \
+    RED_TEST(res_result == res);                                                     \
+} while (0)
 
     {
         WorkingDirectory output_wd("output1");

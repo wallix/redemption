@@ -234,7 +234,7 @@ public:
         auto it = std::find(this->clip_text_id_list.begin(), this->clip_text_id_list.end(),
             file_validator_id);
         if (it != this->clip_text_id_list.end()) {
-            *it = std::move(this->clip_text_id_list.back());
+            *it = this->clip_text_id_list.back();
             this->clip_text_id_list.pop_back();
             return true;
         }

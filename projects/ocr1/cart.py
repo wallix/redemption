@@ -40,7 +40,7 @@ class Node:
             i = len(self.children)/2
             s += "if ("
             s += self._get_name_var()
-            s += " < %s) {\n" % self.children[i].value
+            s += " < %s) /* NOLINT */ {\n" % self.children[i].value
             c = Node()
             c.children = self.children[:i]
             c.dim = self.dim
@@ -55,7 +55,7 @@ class Node:
             for c in self.children:
                 s += "if ("
                 s += self._get_name_var()
-                s += " == %s) {\n" % c.value
+                s += " == %s) /* NOLINT */ {\n" % c.value
                 s += c._c_str(tab + 1)
                 s += "  " * tab + "} else /* NOLINT */ "
             s += "{}\n"

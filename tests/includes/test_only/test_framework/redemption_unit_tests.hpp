@@ -266,7 +266,7 @@ namespace redemption_unit_test__
 
 #if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK) || REDEMPTION_UNIT_TEST_FAST_CHECK != 1
 
-namespace std
+namespace std /*NOLINT*/
 {
     // hack hack hack :D
     std::ostream& operator<<(std::ostream& out, ::redemption_unit_test__::Enum const& e);

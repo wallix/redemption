@@ -88,7 +88,7 @@ struct static_vector
     T& emplace_back(Xs&&... args)
     {
         assert(this->size() < this->capacity());
-        auto* p = new (this->data() + this->n) T{static_cast<Xs&&>(args)...};
+        auto* p = new (this->data() + this->n) T{static_cast<Xs&&>(args)...}; /*NOLINT*/
         ++this->n;
         return *p;
     }
@@ -97,7 +97,7 @@ struct static_vector
     T& push_back(X&& arg)
     {
         assert(this->size() < this->capacity());
-        auto* p = new (this->data() + this->n) T{static_cast<X&&>(arg)};
+        auto* p = new (this->data() + this->n) T{static_cast<X&&>(arg)}; /*NOLINT*/
         ++this->n;
         return *p;
     }
@@ -363,7 +363,7 @@ namespace detail
     MK_OP(>=)
 
 #undef MK_OP
-}
+} // namespace detail
 
 namespace std
 {
