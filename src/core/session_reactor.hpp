@@ -2883,69 +2883,33 @@ struct SessionReactor
     timeval get_next_timeout(TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
     {
         timeval tv = this->get_current_time() + maxdelay;
-        if ((enable_gd && !graphic_events_.is_empty())
-         || !front_events_.is_empty()) {
-            return tv;
-        }
+        if ((!enable_gd || graphic_events_.is_empty())
+         && front_events_.is_empty()) {
 
-        auto update_tv = [&](timeval const& tv2){
-            if (tv2.tv_sec >= 0) {
-                tv = std::min(tv, tv2);
-            }
-        };
-        auto top_update_tv = [&](int /*fd*/, auto& top){
-            if (top.timer_data.is_enabled) {
-                update_tv(top.timer_data.tv);
-            }
-        };
-        auto timer_update_tv = [&](auto& timer){
-            update_tv(timer.tv);
-        };
+            auto update_tv = [&](timeval const& tv2){
+                if (tv2.tv_sec >= 0) {
+                    tv = std::min(tv, tv2);
+                }
+            };
+            auto top_update_tv = [&](int /*fd*/, auto& top){
+                if (top.timer_data.is_enabled) {
+                    update_tv(top.timer_data.tv);
+                }
+            };
+            auto timer_update_tv = [&](auto& timer){
+                update_tv(timer.tv);
+            };
 
-        timer_events_.for_each(timer_update_tv);
-        fd_events_.for_each(top_update_tv);
-        if (enable_gd) {
-            graphic_timer_events_.for_each(timer_update_tv);
-            graphic_fd_events_.for_each(top_update_tv);
+            timer_events_.for_each(timer_update_tv);
+            fd_events_.for_each(top_update_tv);
+            if (enable_gd) {
+                graphic_timer_events_.for_each(timer_update_tv);
+                graphic_fd_events_.for_each(top_update_tv);
+            }
         }
 
         return tv;
     }
-
-//        auto get_gd = &gdi::null_gd;
-//        auto const end_tv = session_reactor.get_current_time();
-//        this->timer_events_.exec_timer(end_tv);
-//        this->fd_events_.exec_timeout(end_tv);
-//        if (disable_gd) {
-//            this->graphic_timer_events_.exec_timer(end_tv, get_gd());
-//            this->graphic_fd_events_.exec_timeout(end_tv, get_gd());
-
-
-//    auto const end_tv = session_reaction.get_current_time();
-//    timer_events_.exec_timer(end_tv);
-//    fd_events_.exec_timeout(end_tv);
-//    if (enable_gd) {
-//        graphic_timer_events_.exec_timer(end_tv, get_gd());
-//        graphic_fd_events_.exec_timeout(end_tv, get_gd());
-//    }
-
-
-//    template<class GetGd>
-//    void execute_timers(TopFdContainer & fd_events_,
-//                        GraphicFdContainer& graphic_fd_events_,
-//                        TimerContainer& timer_events_,
-//                        GraphicTimerContainer & graphic_timer_events_,
-//                        EnableGraphics enable_gd,
-//                        GetGd get_gd)
-//    {
-//        auto const end_tv = this->get_current_time();
-//        timer_events_.exec_timer(end_tv);
-//        fd_events_.exec_timeout(end_tv);
-//        if (enable_gd) {
-//            graphic_timer_events_.exec_timer(end_tv, get_gd());
-//            graphic_fd_events_.exec_timeout(end_tv, get_gd());
-//        }
-//    }
 
     ~SessionReactor()
     {

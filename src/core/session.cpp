@@ -868,8 +868,7 @@ public:
 
                 now = tvtime();
                 session_reactor.set_current_time(now);
-                ioswitch.set_timeout(
-                        session_reactor.get_next_timeout(
+                timeval tv = session_reactor.get_next_timeout(
                             fd_events_,
                             graphic_fd_events_,
                             timer_events_,
@@ -877,7 +876,8 @@ public:
                             graphic_timer_events_,
                             front_events_,
                             EnableGraphics{front.state == Front::FRONT_UP_AND_RUNNING},
-                            ioswitch.get_timeout(now)));
+                            ioswitch.get_timeout(now));
+                ioswitch.set_timeout(tv);
 
                 LOG(LOG_INFO, "select");
                 int num = ioswitch.select(now);
