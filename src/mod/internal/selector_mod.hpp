@@ -22,6 +22,7 @@
 #pragma once
 
 #include "configs/config_access.hpp"
+#include "acl/acl_api.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/selector.hpp"
@@ -48,7 +49,7 @@ using SelectorModVariables = vcfg::variables<
 >;
 
 
-class SelectorMod : public LocallyIntegrableMod, public NotifyApi
+class SelectorMod : public LocallyIntegrableMod, public NotifyApi, public AclApi
 {
     LanguageButton language_button;
 
@@ -85,6 +86,8 @@ public:
     {
         this->screen.clear();
     }
+
+    void acl_update() override {}
 
     std::string module_name() override {return "Selector Mod";}
 

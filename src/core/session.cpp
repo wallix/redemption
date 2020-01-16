@@ -656,20 +656,6 @@ class Session
                 }
 
                 // Incoming data from ACL
-                LOG(LOG_INFO, "-------------------------- check acl pending");
-                if (acl && (acl->auth_trans.has_tls_pending_data() || (
-                       acl->auth_trans.sck != INVALID_SOCKET 
-                    && ioswitch.is_set_for_reading(acl->auth_trans.sck)))) {
-                    // authentifier received updated values
-                    LOG(LOG_INFO, "acl pending");
-                    acl->acl_serial.receive();
-                    LOG(LOG_INFO, "data received from acl");
-                    if (!ini.changed_field_size()) {
-                        LOG(LOG_INFO, "sesman event");
-                        sesman_events_.exec_action(ini);
-                    }
-                }
-
                 LOG(LOG_INFO, "-------------------------- enable OSD");
                 const bool enable_osd = ini.get<cfg::globals::enable_osd>();
                 if (enable_osd) {
@@ -807,8 +793,12 @@ class Session
     }
 
 
-    void acl_incoming_data()
+    void acl_incoming_data(Acl & acl, Inifile& ini, SesmanEventContainer & sesman_events_)
     {
+        acl.acl_serial.receive();
+        if (!ini.changed_field_size()) {
+            sesman_events_.exec_action(ini);
+        }
     }
 
 
@@ -1059,7 +1049,7 @@ public:
                 }
 
                 if (acl_is_set) {
-                    this->acl_incoming_data();
+                    this->acl_incoming_data(*acl.get(), ini, sesman_events_);
                 }
 
 
