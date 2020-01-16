@@ -538,8 +538,6 @@ private:
     bool mem3blt_support;
     int clientRequestedProtocols;
 
-    uint8_t front_public_key[1024] = {};
-    array_view_u8 front_public_key_av;
     std::unique_ptr<NegoServer> nego_server;
 
     std::string server_capabilities_filename;
@@ -1296,12 +1294,8 @@ public:
                 this->ini.get<cfg::client::tls_max_level>(),
                 this->ini.get<cfg::client::show_common_cipher_list>());
 
-            bytes_view key = this->trans.get_public_key();
-            memcpy(this->front_public_key, key.data(), key.size());
-            this->front_public_key_av = array_view{this->front_public_key, key.size()};
-
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
-                this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, true);
+                this->nego_server = std::make_unique<NegoServer>(this->trans.get_public_key(), true);
             }
         }
 

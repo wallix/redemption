@@ -33,5 +33,5 @@ void RDPClipboardConfig::add_format(uint32_t id, Cliprdr::AsciiName name)
 
 void RDPClipboardConfig::add_format(RDPECLIP::CF cf)
 {
-    this->formats.push(cf, Cliprdr::AsciiName{{}});
+    this->formats.push(cf, Cliprdr::AsciiName{""_av});
 }

@@ -1045,7 +1045,7 @@ inline Pointer drawable_default_pointer(bool inverted = false)
             /* 0ae0 */ "X+X............................."
             /* 0b40 */ "XX.............................."
             /* 0ba0 */ "X..............................."
-            , 0, 0, inverted?1:0
+            , 0, 0, inverted
     );
 }
 

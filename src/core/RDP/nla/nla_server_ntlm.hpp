@@ -175,7 +175,7 @@ public:
                bytes_view NetbiosComputerName, bytes_view NetbiosDomainName,
                bytes_view DnsComputerName, bytes_view DnsDomainName,
                bytes_view DnsTreeName,
-               array_view_u8 key,
+               bytes_view key,
                const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
                TimeObj & timeobj,
@@ -222,7 +222,7 @@ public:
     PasswordCallback password_res;
     array_md4 password_hash;
     TSRequest authentication_token;
-    
+
     void set_password_hash(PasswordCallback password_res, array_md4 password_hash)
     {
         this->password_res  = password_res;
