@@ -131,8 +131,7 @@ void mod_rdp::init_negociate_event_(
         return er.to_result();
     };
 
-    this->fd_event = this->graphic_fd_events_
-    .create_top_executor(this->session_reactor, this->trans.get_fd(), std::make_unique<PrivateRdpNegociation>(
+    this->fd_event = this->graphic_fd_events_.create_top_executor(this->session_reactor, this->trans.get_fd(), std::make_unique<PrivateRdpNegociation>(
         open_session_timeout, program, directory,
         this->channels.channels_authorizations, this->channels.mod_channel_list,
         this->channels.auth_channel, this->channels.checkout_channel,

@@ -2116,7 +2116,8 @@ public:
     }
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE RECEIVED RDP MOD!!!!!!!!!!!!!!!!!!!!!");
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE RECEIVED RDP MOD!!!!!!!!!!!!!!!!!!!!! cfs=%d ie=%s",
+            int(this->connection_finalization_state), this->input_event_disabled?"dis":"ena");
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && !this->input_event_disabled) {
 
