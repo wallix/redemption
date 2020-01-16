@@ -144,7 +144,7 @@ public:
     }
 
     virtual bool eventFilter(QObject *obj, QEvent *e) override {
-        Q_UNUSED(obj);
+        (void)obj;
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
@@ -249,7 +249,7 @@ public:
     }
 
     void paintEvent(QPaintEvent * event) override {
-        Q_UNUSED(event);
+        (void)event;
 
         QPen                 pen;
         QPainter             painter(this);
@@ -287,7 +287,7 @@ public:
     }
 
     bool eventFilter(QObject *obj, QEvent *e) override {
-        Q_UNUSED(obj);
+        (void)obj;
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
@@ -410,7 +410,7 @@ public:
     }
 
     void paintEvent(QPaintEvent * event) override {
-        Q_UNUSED(event);
+        (void)event;
 
         QPen                 pen;
         QPainter             painter(this);
@@ -628,7 +628,7 @@ public:
     }
 
     void paintEvent(QPaintEvent * event) override {
-        Q_UNUSED(event);
+        (void)event;
         QPen                 pen;
         QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);

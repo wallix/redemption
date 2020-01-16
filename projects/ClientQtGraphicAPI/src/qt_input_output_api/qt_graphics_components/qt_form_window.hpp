@@ -174,8 +174,8 @@ public:
         return date_str;
     }
 
-    void enterEvent(QEvent *ev) override {
-        Q_UNUSED(ev);
+    void enterEvent(QEvent *event) override {
+        (void)event;
         QPen                 pen;
         QPainter             painter(&(this->pixmap));
         painter.setRenderHint(QPainter::Antialiasing);
@@ -187,8 +187,8 @@ public:
         this->repaint();
     }
 
-    void leaveEvent(QEvent *ev) override {
-        Q_UNUSED(ev);
+    void leaveEvent(QEvent *event) override {
+        (void)event;
         QPen                 pen;
         QPainter             painter(&(this->pixmap));
         painter.setRenderHint(QPainter::Antialiasing);
@@ -207,7 +207,7 @@ public:
     }
 
     void paintEvent(QPaintEvent * event) override {
-        Q_UNUSED(event);
+        (void)event;
         QPen                 pen;
         QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -252,7 +252,7 @@ public:
     }
 
     void paintEvent(QPaintEvent * event) override {
-        Q_UNUSED(event);
+        (void)event;
         QPen                 pen;
         QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -490,8 +490,8 @@ public:
         this->repaint();
     }
 
-    void enterEvent(QEvent *ev) override {
-        Q_UNUSED(ev);
+    void enterEvent(QEvent *event) override {
+        (void)event;
         QPen                 pen;
         QPainter             painter(&(this->pixmap));
         painter.setRenderHint(QPainter::Antialiasing);
@@ -503,8 +503,8 @@ public:
         this->repaint();
     }
 
-    void leaveEvent(QEvent *ev) override {
-        Q_UNUSED(ev);
+    void leaveEvent(QEvent *event) override {
+        (void)event;
         QPen                 pen;
         QPainter             painter(&(this->pixmap));
         painter.setRenderHint(QPainter::Antialiasing);
@@ -577,7 +577,7 @@ public:
     }
 
     void paintEvent(QPaintEvent * event) override {
-        Q_UNUSED(event);
+        (void)event;
         QPen                 pen;
         QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -627,7 +627,7 @@ public:
     }
 
     void paintEvent(QPaintEvent * event) override {
-        Q_UNUSED(event);
+        (void)event;
         QPen                 pen;
         QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
