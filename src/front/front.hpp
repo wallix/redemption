@@ -691,8 +691,7 @@ public:
           )
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            this->handshake_timeout = this->timer_events_
-            .create_timer_executor(this->session_reactor)
+            this->handshake_timeout = this->timer_events_.create_timer_executor(this->session_reactor)
             .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
             .on_action([](JLN_TIMER_CTX ctx){
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
@@ -700,6 +699,11 @@ public:
                 return ctx.ready();
             });
         }
+
+        auto tvtmp = this->session_reactor.get_current_time() + this->ini.get<cfg::globals::handshake_timeout>();
+
+        LOG(LOG_INFO, "set front connection timeout at %u s %u us", tvtmp.tv_sec, tvtmp.tv_usec);
+
 
         init_TLS();
 

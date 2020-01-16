@@ -79,6 +79,7 @@ class Session
         Select(timeval timeout)
         : timeout{timeout}
         {
+            LOG(LOG_INFO, "set initial timeout at %u s %u us", this->timeout.tv_sec, this->timeout.tv_usec);
             io_fd_zero(this->rfds);
             io_fd_zero(this->wfds);
         }
@@ -787,7 +788,7 @@ public:
             timeval now = tvtime();
             session_reactor.set_current_time(now);
 
-            int count = 1000;
+            int count = 100;
             while (run_session) {
                 if (count-- <= 0) break;
 
@@ -799,6 +800,7 @@ public:
                     LOG(LOG_INFO, "Wait end of writing on front sck fd=%d", front_trans.sck);
                     ioswitch.set_write_sck(front_trans.sck);
                 }
+                ioswitch.set_read_sck(front_trans.sck);
 
                 if (mod_wrapper.has_mod()){
                     auto mod_trans = mod_wrapper.get_mod_transport();
@@ -807,6 +809,7 @@ public:
                             LOG(LOG_INFO, "Wait end of writing on mod sck fd=%d", mod_trans->sck);
                             ioswitch.set_write_sck(mod_trans->sck);
                         }
+                        ioswitch.set_read_sck(mod_trans->sck);
                     }
                 }
 
@@ -834,6 +837,7 @@ public:
                 auto top_update_tv = [&](int /*fd*/, auto& top){
                     if (top.timer_data.is_enabled) {
                         if (top.timer_data.tv.tv_sec >= 0) {
+                            LOG(LOG_INFO, "top_timer=%d.%d", top.timer_data.tv.tv_sec, top.timer_data.tv.tv_usec);
                             ultimatum = std::min(ultimatum, top.timer_data.tv);
                         }
                     }
@@ -841,6 +845,7 @@ public:
 
                 auto timer_update_tv = [&](auto& timer){
                     if (timer.tv.tv_sec >= 0) {
+                        LOG(LOG_INFO, "timer=%d.%d", timer.tv.tv_sec, timer.tv.tv_usec);
                         ultimatum = std::min(ultimatum, timer.tv);
                     }
                 };
