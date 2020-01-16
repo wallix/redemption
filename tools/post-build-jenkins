@@ -65,18 +65,24 @@ cppcheck [src/capture/FileToGraphic.hpp:998]: (style) [unreadVariable] Variable 
 
 Compiler warning
 
-^([^:]+):(\d+):\d+: warning: (?:(.*) \[([^\]]+)\]|(.*))$
+^([^:]+):(\d+):\d+: (warning|runtime error): (?:(.*) \[([^\]]+)\]|(.*))$
 
 import hudson.plugins.warnings.parser.Warning
 
 String fileName = matcher.group(1)
 String lineNumber = matcher.group(2)
-String category = matcher.group(4)
-String message = matcher.group(3)
+String type = matcher.group(3)
+String message = matcher.group(4)
+String category = matcher.group(5)
 
 if (!message) {
-  message = matcher.group(5)
-  category = "unspecified"
+  message = matcher.group(6)
+  if (type == "warning") {
+    category = "unspecified"
+  }
+  else {
+    category = "runtime error"
+  }
 }
 
 return new Warning(fileName, Integer.parseInt(lineNumber), "gcc/clang warning", category, message)
