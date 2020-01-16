@@ -116,12 +116,20 @@ public:
 
     [[nodiscard]] uint16_t eBottom() const { return this->Bottom_; }
 
-    size_t str(char * buffer, size_t size) const {
-        const size_t length =
-            ::snprintf(buffer, size,
-                       "Rectangle=(Left=%u Top=%u Right=%u Bottom=%u)",
-                       unsigned(this->Left_), unsigned(this->Top_),
-                       unsigned(this->Right_), unsigned(this->Bottom_));
+    size_t str(char * buffer, size_t size, bool signed_left_top) const {
+        size_t length = 0;
+        if (signed_left_top) {
+            length = ::snprintf(buffer, size,
+                "Rectangle=(Left=%d Top=%d Right=%u Bottom=%u)",
+                int16_t(this->Left_), int16_t(this->Top_),
+                unsigned(this->Right_), unsigned(this->Bottom_));
+        }
+        else {
+            length = ::snprintf(buffer, size,
+                "Rectangle=(Left=%u Top=%u Right=%u Bottom=%u)",
+                unsigned(this->Left_), unsigned(this->Top_),
+                unsigned(this->Right_), unsigned(this->Bottom_));
+        }
         return ((length < size) ? length : size - 1);
     }
 
@@ -1747,13 +1755,14 @@ private:
             result = ::snprintf(buffer + length, size - length, " (");
             length += ((result < size - length) ? result : (size - length - 1));
 
+            bool const signed_left_top = false;
             unsigned idx = 0;
             for (Rectangle rectangle : this->window_rects) {
                 if (idx) {
                     result = ::snprintf(buffer + length, size - length, ", ");
                     length += ((result < size - length) ? result : (size - length - 1));
                 }
-                length += rectangle.str(buffer + length, size - length);
+                length += rectangle.str(buffer + length, size - length, signed_left_top);
                 idx++;
             }
 
@@ -1775,13 +1784,14 @@ private:
             result = ::snprintf(buffer + length, size - length, " (");
             length += ((result < size - length) ? result : (size - length - 1));
 
+            bool const signed_left_top = false;
             unsigned idx = 0;
             for (Rectangle rectangle : this->visibility_rects) {
                 if (idx) {
                     result = ::snprintf(buffer + length, size - length, ", ");
                     length += ((result < size - length) ? result : (size - length - 1));
                 }
-                length += rectangle.str(buffer + length, size - length);
+                length += rectangle.str(buffer + length, size - length, signed_left_top);
                 idx++;
             }
 
