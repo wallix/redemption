@@ -91,6 +91,10 @@ public:
         return this->screen.get_rect();
     }
 
+    void rdp_gdi_up_and_running(ScreenInfo &) override {}
+
+    void rdp_gdi_down() override {}
+
     void rdp_input_invalidate(Rect r) override;
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;

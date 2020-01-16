@@ -1302,7 +1302,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         }
 
 
-        switch (this->front.server_resize({this->width, this->height, this->bpp})){
+        switch (this->front.server_resize({this->width, this->height, this->bpp}, *this)){
         case FrontAPI::ResizeResult::instant_done:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
             // no resizing needed
@@ -1983,7 +1983,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 }
 
 
-void mod_vnc::rdp_input_up_and_running(ScreenInfo & /*screen_info*/)
+void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & )
 {
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");

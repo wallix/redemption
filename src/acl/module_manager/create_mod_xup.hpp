@@ -60,6 +60,10 @@ public:
     }
 
     // from RdpInput
+    void rdp_gdi_up_and_running(ScreenInfo &) override {}
+
+    void rdp_gdi_down() override {}
+    
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
         //LOG(LOG_INFO, "mod_wrapper::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);

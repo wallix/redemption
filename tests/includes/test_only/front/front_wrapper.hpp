@@ -63,7 +63,7 @@ public:
     void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                         , std::size_t total_length, int flags) override;
 
-    ResizeResult server_resize(ScreenInfo screen_server) override;
+    ResizeResult server_resize(ScreenInfo screen_server, Callback & cb) override;
 
     void update_pointer_position(uint16_t x, uint16_t y) override;
 

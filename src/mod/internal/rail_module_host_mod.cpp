@@ -61,6 +61,12 @@ RailModuleHost& RailModuleHostMod::get_module_host()
 }
 
 // RdpInput
+void RailModuleHostMod::rdp_gdi_up_and_running(ScreenInfo & screen_info)
+{
+    mod_api& mod = this->rail_module_host.get_managed_mod();
+
+    mod.rdp_gdi_up_and_running(screen_info);
+}
 
 void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
@@ -75,13 +81,6 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
     else {
         LocallyIntegrableMod::rdp_input_mouse(device_flags, x, y, keymap);
     }
-}
-
-void RailModuleHostMod::rdp_input_up_and_running(ScreenInfo & screen_info)
-{
-    mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    mod.rdp_input_up_and_running(screen_info);
 }
 
 // Callback

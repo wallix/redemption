@@ -65,7 +65,7 @@ public:
         return false;
     }
 
-    ResizeResult server_resize(ScreenInfo screen_server) override
+    ResizeResult server_resize(ScreenInfo screen_server, Callback & cb) override
     {
         this->screen_info = screen_server;
         LOG_IF(this->verbose, LOG_INFO,

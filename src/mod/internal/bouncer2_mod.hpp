@@ -56,6 +56,10 @@ public:
 
     std::string module_name() override {return "Bouncer2 Mod";}
 
+    void rdp_gdi_up_and_running(ScreenInfo &) override {}
+
+    void rdp_gdi_down() override {}
+
     void rdp_input_invalidate(Rect /*rect*/) override
     {
         this->draw_green_carpet = true;

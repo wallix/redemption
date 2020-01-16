@@ -199,8 +199,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         s += "callback\n";
     }));
 
-    auto ini = sesman_events_
-    .create_action_executor(session_reactor, std::ref(s))
+    auto ini = sesman_events_.create_action_executor(session_reactor, std::ref(s))
     .on_action([](JLN_ACTION_CTX ctx, Inifile&, std::string& s){
         s += "ini\n";
         return ctx.terminate();
@@ -221,7 +220,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         void rdp_input_invalidate(const Rect) override {}
         void refresh(const Rect) override {}
         bool is_up_and_running() const override { return true; }
-        void rdp_input_up_and_running(ScreenInfo & /*screen_info*/) override {}
+        void rdp_gdi_up_and_running(ScreenInfo & /*screen_info*/) override {}
+        void rdp_gdi_down() override {}
     } dummy_cb;
 
 

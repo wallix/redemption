@@ -75,7 +75,9 @@ public:
         (void)param2;
     }
 
-    void rdp_input_up_and_running(ScreenInfo & screen_info) override;
+    void rdp_gdi_down() override {}
+
+    void rdp_gdi_up_and_running(ScreenInfo &) override;
 
     // Callback
 

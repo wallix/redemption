@@ -1218,7 +1218,7 @@ public:
         this->draw_impl(no_log{}, cmd, content);
     }
 
-    ResizeResult server_resize(ScreenInfo screen_server) override
+    ResizeResult server_resize(ScreenInfo screen_server, Callback & cb) override
     {
         LOG_IF(bool(this->config.verbose & RDPVerbose::graphics), LOG_INFO,
             "server_resize to (%u, %u, %d)",

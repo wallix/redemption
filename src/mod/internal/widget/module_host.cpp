@@ -124,9 +124,14 @@ void WidgetModuleHost::ModuleHolder::rdp_input_synchronize(
         param1, param2);
 }
 
-void WidgetModuleHost::ModuleHolder::rdp_input_up_and_running(ScreenInfo & screen_info)
+void WidgetModuleHost::ModuleHolder::rdp_gdi_up_and_running(ScreenInfo & screen_info)
 {
-    this->managed_mod->rdp_input_up_and_running(screen_info);
+    this->managed_mod->rdp_gdi_up_and_running(screen_info);
+}
+
+void WidgetModuleHost::ModuleHolder::rdp_gdi_down()
+{
+    this->managed_mod->rdp_gdi_down();
 }
 
 void WidgetModuleHost::ModuleHolder::refresh(Rect r)

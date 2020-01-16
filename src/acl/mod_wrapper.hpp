@@ -153,7 +153,7 @@
 //            instant_done = 2,
 //            remoteapp = 3
 //        };
-//        virtual ResizeResult server_resize(ScreenInfo screen_server) = 0;
+//        virtual ResizeResult server_resize(ScreenInfo screen_server, Callback & cb) = 0;
 
 //        virtual void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) { (void)monitor_layout_pdu_ref; }
 
@@ -832,8 +832,11 @@ public:
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     { this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2); }
 
-    void rdp_input_up_and_running(ScreenInfo & screen_info)
-    { this->get_mod()->rdp_input_up_and_running(screen_info); }
+    void rdp_gdi_up_and_running(ScreenInfo & screen_info)
+    { this->get_mod()->rdp_gdi_up_and_running(screen_info); }
+
+    void rdp_gdi_down()
+    { this->get_mod()->rdp_gdi_down(); }
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
     { this->get_mod()->rdp_allow_display_updates(left, top, right, bottom); }

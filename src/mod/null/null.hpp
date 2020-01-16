@@ -38,5 +38,7 @@ struct null_mod : public mod_api
     void rdp_input_invalidate(const Rect) override {}
     void refresh(const Rect) override {}
     bool is_up_and_running() const override { return true; }
+    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_down() override {}
 };
 

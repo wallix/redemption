@@ -38,7 +38,7 @@ const CHANNELS::ChannelDefArray & FakeFront::get_channel_list() const
     return d->cl;
 }
 
-FakeFront::ResizeResult FakeFront::server_resize(ScreenInfo screen_server)
+FakeFront::ResizeResult FakeFront::server_resize(ScreenInfo screen_server, Callback & cb)
 {
     this->d->gd.resize(screen_server.width, screen_server.height);
     this->d->screen_info.bpp = screen_server.bpp;

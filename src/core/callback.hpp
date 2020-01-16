@@ -88,6 +88,29 @@ enum: uint8_t {
     KBD_SCANCODE_DELETE = 0x53
 };
 
+struct WidgetApi : private noncopyable
+{
+    virtual ~WidgetApi() = default;
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
+    virtual void rdp_input_unicode(uint16_t unicode, uint16_t flag) { (void)unicode; (void)flag; }
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
+    virtual void rdp_input_invalidate(Rect r) = 0;
+    virtual void rdp_input_invalidate2(array_view<Rect const> vr) {
+        for (Rect const & rect : vr) {
+            if (!rect.isempty()) {
+                this->rdp_input_invalidate(rect);
+            }
+        }
+    }
+
+    virtual void rdp_allow_display_updates(uint16_t /*left*/, uint16_t /*top*/, uint16_t /*right*/, uint16_t /*bottom*/)
+    {}
+    virtual void rdp_suppress_display_updates() {}
+
+    virtual void refresh(Rect clip) = 0;
+};
+
 
 struct RdpInput : private noncopyable
 {
@@ -108,8 +131,12 @@ struct RdpInput : private noncopyable
             }
         }
     }
-    // Client calls this member function when it became up and running.
-    virtual void rdp_input_up_and_running(ScreenInfo & ) { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
+
+    // Client Notify module that gdi is up and running
+    virtual void rdp_gdi_up_and_running(ScreenInfo & ) = 0;
+
+    // Client Notify module that gdi is not up and running any more
+    virtual void rdp_gdi_down() = 0;
 
     virtual void rdp_allow_display_updates(uint16_t /*left*/, uint16_t /*top*/, uint16_t /*right*/, uint16_t /*bottom*/)
     {}

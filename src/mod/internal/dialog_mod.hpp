@@ -183,6 +183,10 @@ public:
         this->dialog_widget.move_size_widget(left, top, width, height);
     }
 
+    void rdp_gdi_up_and_running(ScreenInfo &) override {}
+
+    void rdp_gdi_down() override {}
+
 private:
     void accepted();
 

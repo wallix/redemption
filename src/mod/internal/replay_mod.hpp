@@ -99,6 +99,7 @@ public:
 
     std::string module_name() override {return "Replay Mod";}
 
+
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
         gdi::CaptureApi * capture_ptr,
@@ -132,6 +133,10 @@ public:
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
                                int16_t /*param1*/, int16_t /*param2*/) override
     {}
+
+    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+
+    void rdp_gdi_down() override {}
 
     void set_pause(timeval & time);
 

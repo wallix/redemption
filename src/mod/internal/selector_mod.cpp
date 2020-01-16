@@ -126,8 +126,7 @@ SelectorMod::SelectorMod(
         this->copy_paste.ready(this->front);
     }));
 
-    this->sesman_event = sesman_events_
-    .create_action_executor(session_reactor)
+    this->sesman_event = sesman_events_.create_action_executor(session_reactor)
     .on_action(jln::always_ready([this](Inifile&){
         char buffer[16];
 

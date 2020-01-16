@@ -1644,7 +1644,8 @@ private:
 
 public:
     // Front calls this member function when it became up and running.
-    void rdp_input_up_and_running(ScreenInfo & /*screen_info*/) override;
+    void rdp_gdi_up_and_running(ScreenInfo & ) override;
+    void rdp_gdi_down() override {}
 
 private:
     [[nodiscard]] bool is_up_and_running() const override {

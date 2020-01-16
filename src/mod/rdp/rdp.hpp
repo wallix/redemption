@@ -2851,7 +2851,7 @@ public:
                                 else {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
 
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()})){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()}, *this)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
@@ -5235,6 +5235,9 @@ public:
         }
     }
 
+    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_down() override {}
+    
     void rdp_input_invalidate(Rect r) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,

@@ -93,6 +93,10 @@ public:
 
     void notify(Widget* widget, notify_event_t event) override;
 
+    void rdp_gdi_up_and_running(ScreenInfo &) override {}
+
+    void rdp_gdi_down() override {}
+
     void rdp_input_scancode(long int param1, long int param2, long int param3,
                             long int param4, Keymap2* keymap) override;
 

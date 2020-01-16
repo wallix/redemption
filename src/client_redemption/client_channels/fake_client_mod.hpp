@@ -80,6 +80,10 @@ public:
         }
     }
 
+    void rdp_gdi_up_and_running(ScreenInfo & screen_info) override {}
+
+    void rdp_gdi_down() override {}
+
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
         (void) param1;
         (void) param2;
@@ -311,7 +315,7 @@ public:
 
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(ScreenInfo /*screen_server*/) override { return ResizeResult::instant_done;}
+    ResizeResult server_resize(ScreenInfo /*screen_server*/, Callback & cb) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
 };
 

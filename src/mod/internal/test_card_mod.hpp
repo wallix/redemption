@@ -71,6 +71,10 @@ public:
     void refresh(Rect /*rect*/) override
     {}
 
+    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+
+    void rdp_gdi_down() override {}
+
     [[nodiscard]] Dimension get_dim() const override;
 
     void draw_event(gdi::GraphicApi & gd);

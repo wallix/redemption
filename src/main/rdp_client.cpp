@@ -283,7 +283,7 @@ int main(int argc, char** argv)
                 graphic_fd_events_,
                 timer_events_,
                 graphic_events_,
-                sesman_events_ ,
+                sesman_events_,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,

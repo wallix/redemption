@@ -187,8 +187,7 @@ void mod_rdp::init_negociate_event_(
                 this->vars.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
                 this->vars.ask<cfg::mod_rdp::server_cert_response>();
 
-                private_rdp_negociation->sesman_event = this->sesman_events_
-                .create_action_executor(this->session_reactor)
+                private_rdp_negociation->sesman_event = this->sesman_events_.create_action_executor(this->session_reactor)
                 .on_action([&result, &private_rdp_negociation, this](auto ctx, Inifile& ini){
                     auto const& message = ini.get<cfg::mod_rdp::server_cert_response>();
                     if (message.empty()) {

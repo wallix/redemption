@@ -767,7 +767,7 @@ public:
         }
     }
 
-    ResizeResult server_resize(ScreenInfo screen_server) override
+    ResizeResult server_resize(ScreenInfo screen_server, Callback& cb) override
     {
         ResizeResult res = ResizeResult::no_need;
 
@@ -816,7 +816,9 @@ public:
                     // start a send_deactive, send_deman_active process with
                     // the new resolution setting
                     /* shut down the rdp client */
+                    cb.rdp_gdi_down();
                     this->state = ACTIVATE_AND_PROCESS_DATA;
+
                     this->send_deactive();
                     /* this should do the actual resizing */
                     this->send_demand_active();
@@ -4181,7 +4183,7 @@ private:
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API
                 LOG(LOG_INFO, "RDP INPUT UP AND RUNNING ==================");
-                cb.rdp_input_up_and_running(this->client_info.screen_info);
+                cb.rdp_gdi_up_and_running(this->client_info.screen_info);
                 sesman.set_screen_info(this->client_info.screen_info);
                 sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
 

@@ -637,7 +637,6 @@ class Session
         // acl event
         try {
             try {
-
                 // new value incoming from authentifier
                 LOG(LOG_INFO, "--------------------- rt_display()");
                 this->rt_display(ini, mm, mod_wrapper, front);
@@ -807,6 +806,12 @@ class Session
         }
     }
 
+
+    void acl_incoming_data()
+    {
+    }
+
+
 public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
@@ -968,6 +973,7 @@ public:
                 bool mod_data_pending = (mod_wrapper.has_mod()
                         && mod_wrapper.get_mod_transport()
                         && mod_wrapper.get_mod_transport()->has_tls_pending_data());
+
                 timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
                         front,  
                         timer_events_,
@@ -1051,6 +1057,11 @@ public:
                     run_session = false;
                     continue;
                 }
+
+                if (acl_is_set) {
+                    this->acl_incoming_data();
+                }
+
 
                 switch (front.state) {
                 default:
