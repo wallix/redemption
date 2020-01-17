@@ -72,8 +72,7 @@ InteractiveTargetMod::InteractiveTargetMod(
     }
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->started_copy_past_event = graphic_events_
-    .create_action_executor(session_reactor)
+    this->started_copy_past_event = graphic_events_.create_action_executor(session_reactor)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

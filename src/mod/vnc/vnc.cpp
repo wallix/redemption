@@ -1989,8 +1989,7 @@ void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & )
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->wait_client_up_and_running_event = this->graphic_events_
-        .create_action_executor(this->session_reactor)
+        this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->session_reactor)
         .on_action([this](auto ctx, gdi::GraphicApi & drawable){
             this->initial_clear_screen(drawable);
             return ctx.terminate();
