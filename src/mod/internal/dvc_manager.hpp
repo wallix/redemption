@@ -33,7 +33,7 @@ class DVCManager
     bool verbose;
 
 public:
-    explicit DVCManager(bool verbose = false)
+    explicit DVCManager(bool verbose = false) /*NOLINT*/
     : verbose(verbose)
     {}
 

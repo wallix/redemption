@@ -44,7 +44,6 @@ unique_fd local_connect(const char* sck_name, bool no_log);
 unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket);
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
-                       writable_bytes_view transparent_dest, uint32_t verbose = 0);
+                       writable_bytes_view transparent_dest, uint32_t verbose);
 
-FILE* popen_conntrack(const char* source_ip, int source_port,
-                      int target_port);
+FILE* popen_conntrack(const char* source_ip, int source_port, int target_port);

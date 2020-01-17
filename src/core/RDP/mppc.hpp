@@ -458,7 +458,7 @@ public:
     void compress(
         const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType, uint16_t & compressed_data_size,
-        uint16_t max_compressed_data_size = MAX_COMPRESSED_DATA_SIZE_UNUSED);
+        uint16_t max_compressed_data_size = MAX_COMPRESSED_DATA_SIZE_UNUSED); /*NOLINT*/
 
     virtual void get_compressed_data(OutStream & stream) const = 0;
 

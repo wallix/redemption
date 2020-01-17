@@ -87,7 +87,7 @@ class CopyPaste
     bool verbose;
 
 public:
-    explicit CopyPaste(bool verbose = false)
+    explicit CopyPaste(bool verbose = false) /*NOLINT*/
     : verbose(verbose)
     {}
 

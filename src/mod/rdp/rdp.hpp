@@ -2606,7 +2606,7 @@ public:
                             uint32_t localLastFrame = this->currentFrameId;
                             this->send_pdu_type2(
                                 PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-                                [localLastFrame](StreamSize<32>, OutStream & ostream) {
+                                [localLastFrame](StreamSize<32> /*maxlen*/, OutStream & ostream) {
                                     ostream.out_uint32_le(localLastFrame);
                                 }
                             );
@@ -2625,7 +2625,7 @@ public:
                     if (this->haveSurfaceFrameAck) {
                         this->send_pdu_type2(
                             PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-                            [frameId](StreamSize<32>, OutStream & ostream) {
+                            [frameId](StreamSize<32> /*maxlen*/, OutStream & ostream) {
                                 ostream.out_uint32_le(frameId);
                             }
                         );
@@ -3357,7 +3357,7 @@ public:
             LOG_INFO, "mod_rdp::send_confirm_active");
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this, &drawable](StreamSize<65536>, OutStream & stream) {
+            [this, &drawable](StreamSize<65536> /*maxlen*/, OutStream & stream) {
                 RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
 
                 confirm_active_pdu.emit_begin(this->share_id);
@@ -3699,7 +3699,7 @@ public:
 
                 confirm_active_pdu.emit_end();
             },
-            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+            [this](StreamSize<256> /*maxlen*/, OutStream & sctrl_header, std::size_t packet_size) {
                 // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
                 // containing information about the packet. The type subfield of the pduType
                 // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
@@ -5085,7 +5085,7 @@ public:
 
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this, action](StreamSize<256>, OutStream & stream) {
+            [this, action](StreamSize<256> /*maxlen*/, OutStream & stream) {
                 ShareData sdata(stream);
                 sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -5097,7 +5097,7 @@ public:
                 // Packet trailer
                 sdata.emit_end();
             },
-            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+            [this](StreamSize<256> /*maxlen*/, OutStream & sctrl_header, std::size_t packet_size) {
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             }
@@ -5173,7 +5173,7 @@ public:
                         // function yet
                         this->send_pdu_type2(
                             PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, RDP::STREAM_MED,
-                            [&pklpdu](StreamSize<2048>, OutStream & pdu_data_stream) {
+                            [&pklpdu](StreamSize<2048> /*maxlen*/, OutStream & pdu_data_stream) {
                                 pklpdu.emit(pdu_data_stream);
                             }
                         );
@@ -5197,7 +5197,7 @@ public:
 
         this->send_pdu_type2(
             PDUTYPE2_SYNCHRONIZE, RDP::STREAM_MED,
-            [](StreamSize<4>, OutStream & stream) {
+            [](StreamSize<4> /*maxlen*/, OutStream & stream) {
                 stream.out_uint16_le(1); /* type */
                 stream.out_uint16_le(1002);
             }
@@ -5212,7 +5212,7 @@ public:
 
         this->send_pdu_type2(
             PDUTYPE2_FONTLIST, RDP::STREAM_MED,
-            [seq](StreamSize<8>, OutStream & stream){
+            [seq](StreamSize<8> /*maxlen*/, OutStream & stream){
                 // Payload
                 stream.out_uint16_le(0); /* number of fonts */
                 stream.out_uint16_le(0); /* pad? */
@@ -5294,7 +5294,7 @@ public:
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_pdu_type2(
                 PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
-                [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
+                [left, top, right, bottom](StreamSize<32> /*maxlen*/, OutStream & stream) {
                     RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
 
                     sopdud.emit(stream);
@@ -5313,7 +5313,7 @@ public:
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_pdu_type2(
                 PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
-                [](StreamSize<32>, OutStream & stream) {
+                [](StreamSize<32> /*maxlen*/, OutStream & stream) {
                     RDP::SuppressOutputPDUData sopdud;
 
                     sopdud.emit(stream);
@@ -5697,7 +5697,7 @@ private:
             this->connection_finalization_state = DISCONNECTED;
             write_packets(
                 this->trans,
-                [](StreamSize<256>, OutStream & mcs_data) {
+                [](StreamSize<256> /*maxlen*/, OutStream & mcs_data) {
                     MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
                 },
                 X224::write_x224_dt_tpdu_fn{}
@@ -5841,7 +5841,7 @@ private:
             this->trans,
             writer_data...,
             SEC::write_sec_send_fn{0, this->encrypt, this->negociation_result.encryptionLevel},
-            [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+            [this, channelId](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
                     mcs_header, this->negociation_result.userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
@@ -5849,7 +5849,7 @@ private:
                 (void)mcs;
             },
             X224::write_x224_dt_tpdu_fn{},
-            [this](StreamSize<0>, OutStream &, std::size_t total_pdu_sz) {
+            [this](StreamSize<0> /*maxlen*/, OutStream &, std::size_t total_pdu_sz) {
                 (void)this;
                 (void)total_pdu_sz;
                 IF_ENABLE_METRICS(client_main_channel_data(total_pdu_sz));
@@ -5875,7 +5875,7 @@ private:
                 }
                 sdata.emit_end();
             },
-            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+            [this](StreamSize<256> /*maxlen*/, OutStream & sctrl_header, std::size_t packet_size) {
                 ShareControl_Send(
                     sctrl_header, PDUTYPE_DATAPDU,
                     this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size
@@ -5899,7 +5899,7 @@ private:
 
         this->send_pdu_type2(
             PDUTYPE2_INPUT, RDP::STREAM_HI,
-            [&](StreamSize<16>, OutStream & stream){
+            [&](StreamSize<16> /*maxlen*/, OutStream & stream){
                 // Payload
                 stream.out_uint16_le(1); /* number of events */
                 stream.out_uint16_le(0);
@@ -5929,7 +5929,7 @@ private:
 
         write_packets(
             this->trans,
-            [&](StreamSize<256>, OutStream & stream) {
+            [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
 
                 switch (message_type) {
                 case RDP_INPUT_SCANCODE:
@@ -5961,7 +5961,7 @@ private:
 
                 channel_data_size = stream.tailroom();
             },
-            [&](StreamSize<256>, OutStream & fastpath_header, writable_bytes_view packet) {
+            [&](StreamSize<256> /*maxlen*/, OutStream & fastpath_header, writable_bytes_view packet) {
                 FastPath::ClientInputEventPDU_Send out_cie(
                     fastpath_header, packet.data(), packet.size(), 1,
                     this->encrypt, this->negociation_result.encryptionLevel,

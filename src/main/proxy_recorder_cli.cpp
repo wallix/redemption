@@ -22,6 +22,7 @@
 
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
+#include "utils/select.hpp"
 
 using PacketType = RecorderFile::PacketType;
 
@@ -102,23 +103,23 @@ public:
                 backConn.set_trace_send(conn.verbosity > 512);
 
                 for (;;) {
-                    FD_ZERO(&rset);
+                    io_fd_zero(rset);
                     switch(conn.pstate) {
                     case ProxyRecorder::PState::NEGOCIATING_FRONT_NLA:
                     case ProxyRecorder::PState::NEGOCIATING_FRONT_STEP1:
                     case ProxyRecorder::PState::NEGOCIATING_FRONT_INITIAL_PDU:
                         // Negotiation with back delayed until front finished
-                        FD_SET(front_fd, &rset);
+                        io_fd_set(front_fd, rset);
                         break;
                     case ProxyRecorder::PState::NEGOCIATING_BACK_NLA:
                     case ProxyRecorder::PState::NEGOCIATING_BACK_INITIAL_PDU:
                         // Now start negociation with back
                         // FIXME: use front NLA parameters!
-                        FD_SET(back_fd, &rset);
+                        io_fd_set(back_fd, rset);
                         break;
                     case ProxyRecorder::PState::FORWARD:
-                        FD_SET(front_fd, &rset);
-                        FD_SET(back_fd, &rset);
+                        io_fd_set(front_fd, rset);
+                        io_fd_set(back_fd, rset);
                         break;
                     }
 
@@ -362,7 +363,7 @@ int main(int argc, char *argv[])
         target_host, target_port, capture_file,
         std::move(nla_username), std::move(nla_password),
         enable_kerberos, !no_forkable, verbosity);
-    auto sck = create_server(inet_addr("0.0.0.0"), listen_port);
+    auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
     if (!sck) {
         return 2;
     }

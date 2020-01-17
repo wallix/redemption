@@ -149,7 +149,7 @@ std::size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, std::size_t 
 
 size_t UTF8CharNbBytes(const uint8_t * source) noexcept;
 
-bool is_utf8_string(uint8_t const * s, int length = -1) noexcept;
+bool is_utf8_string(uint8_t const * s, int length = -1) noexcept; /*NOLINT*/
 
 bool is_ASCII_string(bytes_view source) noexcept;
 bool is_ASCII_string(byte_ptr source) noexcept;

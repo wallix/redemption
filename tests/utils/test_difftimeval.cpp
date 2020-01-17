@@ -321,8 +321,10 @@ RED_AUTO_TEST_CASE(TestLessThanTimeVal)
 
 RED_AUTO_TEST_CASE(TestHowLongToWait)
 {
-    timeval time1, time2;
-    timeval res, sym;
+    timeval time1;
+    timeval time2;
+    timeval res;
+    timeval sym;
 
     time1.tv_sec  = 0;
     time1.tv_usec = 0;

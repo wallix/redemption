@@ -46,7 +46,7 @@ public:
     unsigned first_unrecognized_index{0};
     unsigned font_id;
 
-    explicit classifier_type(unsigned font = -1u)
+    explicit classifier_type(unsigned font = -1u) /*NOLINT*/
     : font_id(font)
     {}
 
@@ -143,8 +143,8 @@ struct Classification
 
     const classifier_type & classify(
         const ::mln::image2d<bool> & input
-      , ocr::fonts::LocaleId local_id = ocr::fonts::LocaleId::latin
-      , unsigned font_id = -1u
+      , ocr::fonts::LocaleId local_id = ocr::fonts::LocaleId::latin /*NOLINT*/
+      , unsigned font_id = -1u /*NOLINT*/
     ) {
         this->attrs.clear();
         labelize(this->attrs, input);

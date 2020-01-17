@@ -230,7 +230,7 @@ struct Font
     Font() = default;
 
     /// \param file_path  path to the font definition file (*.rbf)
-    explicit Font(const char * file_path, bool spark_view_specific_glyph_width = false)
+    explicit Font(const char * file_path, bool spark_view_specific_glyph_width = false) /*NOLINT*/
     : spark_view_specific_glyph_width_(spark_view_specific_glyph_width)
     {
         this->load_from_file(file_path);
@@ -240,7 +240,7 @@ struct Font
         }
     }
 
-    explicit Font(std::string const & file_path, bool spark_view_specific_glyph_width = false)
+    explicit Font(std::string const & file_path, bool spark_view_specific_glyph_width = false) /*NOLINT*/
     : Font(file_path.c_str(), spark_view_specific_glyph_width)
     {}
 

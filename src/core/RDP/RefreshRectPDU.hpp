@@ -189,7 +189,7 @@ struct RefreshRectPDU {
 
         write_packets(
             trans,
-            [this](StreamSize<65536+256>, OutStream & sctrl_header) {
+            [this](StreamSize<65536+256> /*maxlen*/, OutStream & sctrl_header) {
                 ShareControl_Send(sctrl_header,
                                   PDUTYPE_DATAPDU,
                                   this->userId + GCC::MCS_USERCHANNEL_BASE,
@@ -198,7 +198,7 @@ struct RefreshRectPDU {
                 sctrl_header.out_copy_bytes(this->buffer_stream.get_data(),
                                             this->buffer_stream.get_offset());
             },
-            [this](StreamSize<256>, OutStream & sec_header, writable_bytes_view pkt) {
+            [this](StreamSize<256> /*maxlen*/, OutStream & sec_header, writable_bytes_view pkt) {
                 SEC::Sec_Send sec(sec_header,
                                   pkt,
                                   0,
@@ -206,7 +206,7 @@ struct RefreshRectPDU {
                                   this->encryptionLevel);
                 (void)sec;
             },
-            [this](StreamSize<256>, OutStream & mcs_header, std::size_t pkt_size) {
+            [this](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t pkt_size) {
                 MCS::SendDataRequest_Send mcs(mcs_header,
                                               this->userId,
                                               GCC::MCS_GLOBAL_CHANNEL,
@@ -216,7 +216,7 @@ struct RefreshRectPDU {
                                               MCS::PER_ENCODING);
                 (void)mcs;
             },
-            [](StreamSize<256>, OutStream &x224_header, std::size_t pkt_size) {
+            [](StreamSize<256> /*maxlen*/, OutStream &x224_header, std::size_t pkt_size) {
                 X224::DT_TPDU_Send(x224_header, pkt_size);
             }
         );

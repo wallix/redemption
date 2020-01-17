@@ -27,8 +27,8 @@ template<class T>
 struct only_type
 {
     only_type() = default;
-    only_type(only_type&&) = default;
-    only_type(only_type const&) = default;
+    only_type(only_type&& /*other*/) = default;
+    only_type(only_type const& /*other*/) = default;
 
     template<class U, class = std::enable_if_t<std::is_same_v<T, std::decay_t<U>>, T>>
     constexpr only_type(U&& x) noexcept(noexcept(T(static_cast<U&&>(x))))

@@ -53,12 +53,12 @@ public:
     WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
                 NotifyApi* notifier, array_view_const_char text,
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
-                int xtext = 0, int ytext = 0);
+                int xtext = 0, int ytext = 0); /*NOLINT*/
 
     WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
                 NotifyApi* notifier, char const* text,
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
-                int xtext = 0, int ytext = 0);
+                int xtext = 0, int ytext = 0); /*NOLINT*/
 
     WidgetLabel(WidgetLabel const & other);
 

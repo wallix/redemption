@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestNego)
     std::string domain("Ithaque");
     char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
-    LCGRandom rand(0);
+    LCGRandom rand;
     LCGTime timeobj;
     NullServerNotifier null_server_notifier;
     std::string extra_message;

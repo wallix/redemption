@@ -92,7 +92,7 @@ struct BGRColor
 
     constexpr BGRColor(BGRasRGBColor const & color) noexcept;
 
-    constexpr explicit BGRColor(uint32_t color = 0) noexcept
+    constexpr explicit BGRColor(uint32_t color = 0) noexcept /*NOLINT*/
     : color_(color/* & 0xFFFFFF*/)
     {}
 

@@ -15,18 +15,23 @@ exception=$esc'1;37m'
 exec=$esc'34m'
 msg=$esc'1m'
 
-sed -E "$@" -e '/^\x1b/n
+sed -E "$@" -e '
+s/^\x1b\[0;39;49m//;tx
+/^\x1b/n
+:x
 /^tests\//{
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): error:? in "([^"]+)": check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\](\]\. )?$/'$file'\1'$reset'('$line'\2'$reset'): '$err'error'$reset' in "'$name'\3'$reset'": '$cat'check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
+  s/^(tests\/([^.]|..\/)+\.[ch]pp)\(([0-9]+)\):/'$file'\1'$reset'('$line'\3'$reset'):/;tc
+  :c
 
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): fatal error:? in "([^"]+)": critical check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\](\]\. )?$/'$file'\1'$reset'('$line'\2'$reset'): '$err'fatal error'$reset' in "'$name'\3'$reset'": '$cat'critical check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
+  s/(fatal )?error:? in "([^"]+)": (critical )?check/'$err'\1error'$reset' in "'$name'\2'$reset'": '$cat'\3check'$reset'/;tm
+  :m
 
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): (fatal )?error:? in "([^"]+)": (critical )?check (.*) (has )?failed$/'$file'\1'$reset'('$line'\2'$reset'): '$err'\3error'$reset' in "'$name'\4'$reset'": '$cat'\5check'$reset' '$code'\6'$reset' \7failed/;t
+  s/(check\x1b\[0m )(.*)( !=|==|<=|>=|>|< )(.*) has failed \[(.*)( !=|==|<=|>=|>|< )(.*)\](\]\. )?/\1'$code'\2'$op'\3'$code'\4'$reset' has failed ['$value'\5'$op'\6'$value'\7'$reset']/;t
 
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): (fatal )?error:? in "([^"]+)": (.*)$/'$file'\1'$reset'('$line'\2'$reset'): '$err'\3error'$reset' in "'$name'\4'$reset'": '$cat'\5'$reset'/;t
+  s/(check\x1b\[0m )(.*) (has )?failed$/\1'$code'\2'$reset' \3failed/;t
 
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): last checkpoint$/'$file'\1'$reset'('$line'\2'$reset'): '$cat'last checkpoint'$reset'/;t
-  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): last checkpoint: "([^"]+)" (test )?entry.?$/'$file'\1'$reset'('$line'\2'$reset'): '$cat'last checkpoint'$reset': "'$name'\3'$reset'" test entry/;t
+  s/last checkpoint$/'$cat'last checkpoint'$reset'/;t
+  s/last checkpoint: "([^"]+)" (test )?entry.?$/'$cat'last checkpoint'$reset': "'$name'\1'$reset'" test entry/;t
 }
 s/^(src|tests|)(\/[^.]+\.[ch]p?p?:[0-9]+:[0-9]+): ([^:]+): (.*)/'$file'\1\2'$reset': '$err'\3'$reset': '$msg'\4'$reset'/;t
 s/^SUMMARY: (.*)/'$err'SUMMARY: '$msg'\1'$reset'/;t

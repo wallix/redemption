@@ -36,7 +36,7 @@ public:
     BGRColor color;
 
 public:
-    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0, BGRColor color = BLACK);
+    WidgetRect(gdi::GraphicApi & drawable, Widget & parent, NotifyApi * notifier, int group_id = 0, BGRColor color = BLACK); /*NOLINT*/
 
     void rdp_input_invalidate(Rect clip) override;
 };

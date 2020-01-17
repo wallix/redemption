@@ -23,6 +23,7 @@
 
 #include "transport/socket_transport.hpp"
 #include "core/listen.hpp"
+#include "utils/select.hpp"
 #include "cxx/diagnostic.hpp"
 #include "cxx/cxx.hpp"
 
@@ -50,7 +51,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
 {
     int port = 4444;
 
-    unique_fd sck_server = create_server(inet_addr("127.0.0.1"), port);
+    unique_fd sck_server = create_server(inet_addr("127.0.0.1"), port, EnableTransparentMode::No);
 
     int nb_inbuffer = 0;
     uint8_t buffer[1024];
@@ -108,20 +109,20 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     while (run){
         fd_set rfds;
         fd_set wfds;
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
+        io_fd_zero(rfds);
+        io_fd_zero(wfds);
         timeval timeout;
         timeout.tv_sec = 5;
         timeout.tv_usec = 0;
 
         int max = sck_server.fd();
-        FD_SET(max, &rfds);
+        io_fd_set(max, rfds);
 
         for (int i = 0 ; i < nb_recv_sck ; i++){
             if (recv_sck[i] > max){
                 max = recv_sck[i];
             }
-            FD_SET(recv_sck[i], &rfds);
+            io_fd_set(recv_sck[i], rfds);
             if (sck_trans[i]->has_tls_pending_data()) {
                 timeout.tv_sec = 0;
             }
@@ -129,7 +130,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
 
         if ((client_trans && data_sent == 0) || (res == -1))
         {
-            FD_SET(client_sck, &wfds);
+            io_fd_set(client_sck, wfds);
             if (client_sck > max){
                 max = client_sck;
             }
@@ -143,7 +144,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
             REDEMPTION_CXX_FALLTHROUGH;
         default:
         {
-            if (FD_ISSET(client_sck, &wfds)){
+            if (io_fd_isset(client_sck, wfds)){
                 if (client_trans && (data_sent == 0)){
                     client_trans->send("AAAAXBBBBXCCCCXDDDDX", 20);
                     data_sent = 20;
@@ -159,7 +160,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
             }
 
             for (int i = 0 ; i < nb_recv_sck ; i++){
-                if (FD_ISSET(recv_sck[i], & rfds) || sck_trans[i]->has_tls_pending_data()){
+                if (io_fd_isset(recv_sck[i], rfds) || sck_trans[i]->has_tls_pending_data()){
                     LOG(LOG_INFO, "activity on %d", recv_sck[i]);
                     sck_trans[i]->recv_boom(p, 5);
                     p += 5;
@@ -171,8 +172,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 }
             }
 
-            if (FD_ISSET(sck_server.fd(), &rfds)){
-                char ip_source[128];
+            if (io_fd_isset(sck_server.fd(), rfds)){
                 union
                 {
                   sockaddr s;
@@ -185,8 +185,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 unsigned int sin_size = sizeof(u);
                 memset(&u, 0, sin_size);
                 int sck = accept(sck_server.fd(), &u.s, &sin_size);
-                strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
-                LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
+                LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, inet_ntoa(u.s4.sin_addr));
                 RED_REQUIRE(sck > 0);
                 recv_sck[nb_recv_sck] = sck;
                 sck_trans[nb_recv_sck] = std::make_unique<SocketTransport>(

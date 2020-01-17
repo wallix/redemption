@@ -46,7 +46,7 @@ namespace
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
 
-        LCGRandom rnd{0};
+        LCGRandom rnd;
         FakeFstat fstat;
         CryptoContext cctx;
         const int groupid = 0;
@@ -88,7 +88,7 @@ namespace
         TestCaptureContext(
             char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
             WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
-            KbdLogParams kbd_log_params = KbdLogParams())
+            KbdLogParams kbd_log_params)
         : capture_wrm(bool(capture_flags & CaptureFlags::wrm))
         , capture_png(bool(capture_flags & CaptureFlags::png))
         , capture_kbd(kbd_log_params.wrm_keyboard_log)
@@ -146,8 +146,8 @@ namespace
     template<class F>
     void test_capture_context(
         char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
-        WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
-        F&& f, KbdLogParams kbd_log_params = KbdLogParams())
+        WorkingDirectory& record_wd, WorkingDirectory& hash_wd, KbdLogParams kbd_log_params,
+        F&& f)
     {
         TestCaptureContext{basename, capture_flags, cx, cy, record_wd, hash_wd, kbd_log_params}
           .run(f);
@@ -204,7 +204,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     WorkingDirectory record_wd("record");
 
     test_capture_context("test_capture", CaptureFlags::wrm | CaptureFlags::png,
-        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+        800, 600, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
@@ -241,7 +241,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     WorkingDirectory record_wd("record");
 
     test_capture_context("test_capture", CaptureFlags::png,
-        100, 100, record_wd, hash_wd, [](Capture& capture, Rect scr)
+        100, 100, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
@@ -296,7 +296,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
     WorkingDirectory record_wd("record");
 
     test_capture_context("resizing-capture-0", CaptureFlags::wrm | CaptureFlags::png,
-        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+        800, 600, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
@@ -349,7 +349,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
     WorkingDirectory record_wd("record");
 
     test_capture_context("resizing-capture-1", CaptureFlags::wrm | CaptureFlags::png,
-        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+        800, 600, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
         timeval now{1000, 0};
 
@@ -441,7 +441,7 @@ namespace
         };
     }
 
-    Capture::SessionMeta make_session_meta(timeval now, Transport& trans, bool key_markers_hidden_state = false)
+    Capture::SessionMeta make_session_meta(timeval now, Transport& trans, bool key_markers_hidden_state)
     {
         return Capture::SessionMeta(now, trans, key_markers_hidden_state, make_meta_params());
     }
@@ -456,7 +456,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -508,7 +508,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -550,7 +550,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -589,7 +589,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -646,7 +646,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -699,7 +699,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -800,7 +800,7 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionMeta meta = make_session_meta(now, trans, false);
         Capture::SessionLogAgent log_agent(meta, make_meta_params());
 
         meta.session_update(now, LogId::NEW_PROCESS, {
@@ -959,7 +959,7 @@ namespace
             GraphicToFile::SendInput::NO, GraphicToFile::Verbose::none)
         {}
 
-        void next_second(int n = 1)
+        void next_second(int n = 1) /*NOLINT*/
         {
             now.tv_sec += n;
             consumer.timestamp(now);
@@ -2204,7 +2204,8 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
-    TestCaptureContext ctx_cap("title_extractor", CaptureFlags{}, 800, 600, record_wd, hash_wd);
+    TestCaptureContext ctx_cap("title_extractor", CaptureFlags{}, 800, 600,
+        record_wd, hash_wd, KbdLogParams());
     ctx_cap.capture_meta = true;
     ctx_cap.capture_ocr = true;
 
@@ -2331,7 +2332,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     KbdLogParams kbd_log_params {};
     kbd_log_params.wrm_keyboard_log = true;
     test_capture_context("test_capture", CaptureFlags::wrm,
-        100, 100, record_wd, hash_wd, [](Capture& capture, Rect /*scr*/)
+        100, 100, record_wd, hash_wd, kbd_log_params, [](Capture& capture, Rect /*scr*/)
     {
         timeval now{1000, 0};
         now.tv_sec += 10;
@@ -2368,7 +2369,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             KVLog("command_line"_av, "abc"_av),
         });
         now.tv_sec++;
-    }, kbd_log_params);
+    });
 
     auto mwrm_file = record_wd.add_file("test_capture.mwrm");
 

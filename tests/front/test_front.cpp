@@ -141,7 +141,7 @@ RED_AUTO_TEST_CASE(TestFront)
     // Comment the code block below to generate testing data.
     FrontTransport front_trans(cstr_array_view(indata));
 
-    LCGRandom gen1(0);
+    LCGRandom gen1;
     CryptoContext cctx;
 
     const bool fastpath_support = false;
@@ -227,7 +227,7 @@ RED_AUTO_TEST_CASE(TestFront)
     mod_rdp_params.verbose = to_verbose_flags(verbose);
 
     // To always get the same client random, in tests
-    LCGRandom gen2(0);
+    LCGRandom gen2;
     LCGTime timeobj;
 
     front.clear_channels();
@@ -312,7 +312,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     GeneratorTransport front_trans(cstr_array_view(indata));
     front_trans.disable_remaining_error();
 
-    LCGRandom gen1(0);
+    LCGRandom gen1;
     CryptoContext cctx;
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
@@ -400,7 +400,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // mod_rdp_params.verbose = to_verbose_flags(verbose);
     //
     // // To always get the same client random, in tests
-    // LCGRandom gen2(0);
+    // LCGRandom gen2;
     // LCGTime timeobj;
     //
     // front.clear_channels();
@@ -497,7 +497,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     // GeneratorTransport front_trans(cstr_array_view(indata), verbose);
     TestTransport front_trans(cstr_array_view(indata), cstr_array_view(outdata));
 
-    LCGRandom gen1(0);
+    LCGRandom gen1;
     CryptoContext cctx;
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
@@ -572,7 +572,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     mod_rdp_params.verbose = to_verbose_flags(verbose);
 
     // To always get the same client random, in tests
-    LCGRandom gen2(0);
+    LCGRandom gen2;
     LCGTime timeobj;
 
     front.clear_channels();

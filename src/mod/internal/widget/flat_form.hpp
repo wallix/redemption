@@ -64,12 +64,12 @@ public:
     FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             unsigned flags = NONE, int duration_max = 0);
+             unsigned flags = NONE, int duration_max = 0); /*NOLINT*/
 
     FlatForm(gdi::GraphicApi& drawable,
              Widget & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             unsigned flags = NONE, int duration_max = 0);
+             unsigned flags = NONE, int duration_max = 0); /*NOLINT*/
 
     ~FlatForm() override;
 

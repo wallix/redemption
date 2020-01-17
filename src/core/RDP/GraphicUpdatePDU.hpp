@@ -64,10 +64,10 @@ void send_data_indication_ex( Transport & trans
     write_packets(
         trans,
         data_writer...,
-        [&](StreamSize<256>, OutStream & security_header, writable_bytes_view packet) {
+        [&](StreamSize<256> /*maxlen*/, OutStream & security_header, writable_bytes_view packet) {
             SEC::Sec_Send sec(security_header, packet, 0, encrypt, encryptionLevel);
         },
-        [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+        [&](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_size) {
             MCS::SendDataIndication_Send mcs( mcs_header
                                             , initiator
                                             , channelId
@@ -76,7 +76,7 @@ void send_data_indication_ex( Transport & trans
                                             , packet_size
                                             , MCS::PER_ENCODING);
         },
-        [](StreamSize<256>, OutStream & x224_header, std::size_t packet_size) {
+        [](StreamSize<256> /*maxlen*/, OutStream & x224_header, std::size_t packet_size) {
             X224::DT_TPDU_Send(x224_header, packet_size);
         }
     );
@@ -171,8 +171,9 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
         uint32_t fragmentMax = 0x3fff - 20; /* taken in FreeRDP */
         uint32_t startAt = 0;
 
-        if (compression_support)
+        if (compression_support) {
             fragmentMax = std::min(fragmentMax, mppc_enc->get_max_data_block_size() - 20);
+        }
 
         fragmentId = 0;
 
@@ -259,11 +260,13 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             startAt += fragmentSize;
 
             StaticOutStream<8> update_header;
-            uint8_t fragFlags;
-            if (fragmentId != 0)
-                fragFlags = (startAt == payloadSize) ? FastPath::FASTPATH_FRAGMENT_LAST : FastPath::FASTPATH_FRAGMENT_NEXT;
-            else
-                fragFlags = (startAt == payloadSize) ? FastPath::FASTPATH_FRAGMENT_SINGLE : FastPath::FASTPATH_FRAGMENT_FIRST;
+            uint8_t fragFlags = (fragmentId != 0)
+                ? ((startAt == payloadSize)
+                    ? FastPath::FASTPATH_FRAGMENT_LAST
+                    : FastPath::FASTPATH_FRAGMENT_NEXT)
+                : ((startAt == payloadSize)
+                    ? FastPath::FASTPATH_FRAGMENT_SINGLE
+                    : FastPath::FASTPATH_FRAGMENT_FIRST);
 
             // Fast-Path Update (TS_FP_UPDATE)
             FastPath::Update_Send Upd( update_header

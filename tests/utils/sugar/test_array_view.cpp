@@ -206,8 +206,8 @@ namespace
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
     struct Range
     {
-        char* data() const { return nullptr; }
-        std::size_t size() const { return 0; }
+        char* data() const { return nullptr; } /*NOLINT*/
+        std::size_t size() const { return 0; } /*NOLINT*/
     };
     REDEMPTION_DIAGNOSTIC_POP
 

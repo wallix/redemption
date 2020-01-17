@@ -746,7 +746,7 @@ public:
     }
 
     /// set current position to start buffer (\a p = \a begin)
-    void rewind(std::size_t offset = 0) noexcept {
+    void rewind(std::size_t offset = 0) noexcept /*NOLINT*/ {
         assert(this->begin + offset <= this->end);
         this->p = this->begin + offset;
     }
@@ -884,7 +884,7 @@ struct OutReservedStreamHelper
      * @param len take only len bytes
      * @return the corresponding substream
      */
-    OutReservedStreamHelper get_sub_stream(size_t offset, size_t len = 0) noexcept {
+    OutReservedStreamHelper get_sub_stream(size_t offset, size_t len = 0) noexcept /*NOLINT*/ {
     	// this object is like:
     	//    reserved_leading_space
     	//  <----->
@@ -899,8 +899,9 @@ struct OutReservedStreamHelper
     	//  |---------------------+-----------|
     	//                        ^ payloadStream
 
-    	if (len == 0)
+    	if (len == 0) {
     		len = (this->payload_stream.get_offset() - offset);
+        }
     	uint8_t *originalBuf = this->head_ptr - this->reserved_leading_space;
 
     	OutReservedStreamHelper ret(originalBuf, this->reserved_leading_space + offset, this->reserved_leading_space + offset + len);

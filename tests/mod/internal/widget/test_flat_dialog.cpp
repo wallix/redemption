@@ -326,8 +326,8 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     RED_CHECK(notifier.sender == &flat_dialog);
     RED_CHECK(notifier.event == 0);
 
-    unsigned x = flat_dialog.ok.x() + flat_dialog.ok.cx() / 2 ;
-    unsigned y = flat_dialog.ok.y() + flat_dialog.ok.cy() / 2 ;
+    int x = flat_dialog.ok.x() + flat_dialog.ok.cx() / 2 ;
+    int y = flat_dialog.ok.y() + flat_dialog.ok.cy() / 2 ;
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
 //    RED_CHECK(notifier.sender == 0);

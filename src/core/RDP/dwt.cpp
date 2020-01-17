@@ -24,36 +24,31 @@
 
 static void rfx_dwt_2d_decode_block(int16_t *buffer, int16_t *idwt, int subband_width)
 {
-    int16_t *dst, *l, *h;
-    int16_t *l_dst, *h_dst;
-    int16_t *hl, *lh, *hh, *ll;
-    int total_width;
-    int x, y;
-    int n;
-
-    total_width = subband_width << 1;
+    int total_width = subband_width << 1;
 
     /* Inverse DWT in horizontal direction, results in 2 sub-bands in L, H order in tmp buffer idwt. */
     /* The 4 sub-bands are stored in HL(0), LH(1), HH(2), LL(3) order. */
     /* The lower part L uses LL(3) and HL(0). */
     /* The higher part H uses LH(1) and HH(2). */
 
-    ll = buffer + subband_width * subband_width * 3;
-    hl = buffer;
-    l_dst = idwt;
+    int16_t* ll = buffer + subband_width * subband_width * 3;
+    int16_t* hl = buffer;
+    int16_t* l_dst = idwt;
 
-    lh = buffer + subband_width * subband_width;
-    hh = buffer + subband_width * subband_width * 2;
-    h_dst = idwt + subband_width * subband_width * 2;
+    int16_t* lh = buffer + subband_width * subband_width;
+    int16_t* hh = buffer + subband_width * subband_width * 2;
+    int16_t* h_dst = idwt + subband_width * subband_width * 2;
 
-    for (y = 0; y < subband_width; y++)
+    int n;
+
+    for (int y = 0; y < subband_width; y++)
     {
         /* Even coefficients */
         l_dst[0] = ll[0] - ((hl[0] + hl[0] + 1) >> 1);
         h_dst[0] = lh[0] - ((hh[0] + hh[0] + 1) >> 1);
         for (n = 1; n < subband_width; n++)
         {
-            x = n << 1;
+            int x = n << 1;
             l_dst[x] = ll[n] - ((hl[n-1] + hl[n] + 1) >> 1);
             h_dst[x] = lh[n] - ((hh[n-1] + hh[n] + 1) >> 1);
         }
@@ -61,11 +56,11 @@ static void rfx_dwt_2d_decode_block(int16_t *buffer, int16_t *idwt, int subband_
         /* Odd coefficients */
         for (n = 0; n < subband_width-1; n++)
         {
-            x = n << 1;
+            int x = n << 1;
             l_dst[x + 1] = (hl[n] << 1) + ((l_dst[x] + l_dst[x + 2]) >> 1);
             h_dst[x + 1] = (hh[n] << 1) + ((h_dst[x] + h_dst[x + 2]) >> 1);
         }
-        x = n << 1;
+        int x = n << 1;
         l_dst[x + 1] = (hl[n] << 1) + (l_dst[x]);
         h_dst[x + 1] = (hh[n] << 1) + (h_dst[x]);
 
@@ -79,12 +74,16 @@ static void rfx_dwt_2d_decode_block(int16_t *buffer, int16_t *idwt, int subband_
     }
 
     /* Inverse DWT in vertical direction, results are stored in original buffer. */
-    for (x = 0; x < total_width; x++)
+    for (int x = 0; x < total_width; x++)
     {
+        int16_t* dst;
+        int16_t* l;
+        int16_t* h;
+
         /* Even coefficients */
         for (n = 0; n < subband_width; n++)
         {
-            y = n << 1;
+            int y = n << 1;
             dst = buffer + y * total_width + x;
             l = idwt + n * total_width + x;
             h = l + subband_width * total_width;
@@ -94,7 +93,7 @@ static void rfx_dwt_2d_decode_block(int16_t *buffer, int16_t *idwt, int subband_
         /* Odd coefficients */
         for (n = 0; n < subband_width; n++)
         {
-            y = n << 1;
+            int y = n << 1;
             dst = buffer + y * total_width + x;
             l = idwt + n * total_width + x;
             h = l + subband_width * total_width;

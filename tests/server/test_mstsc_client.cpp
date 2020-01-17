@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::globals::large_pointer_support>(false);
     ini.set<cfg::globals::unicode_keyboard_event_support>(false);
 
-    LCGRandom gen(0);
+    LCGRandom gen;
     CryptoContext cctx;
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;

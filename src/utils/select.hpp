@@ -34,12 +34,12 @@ REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 inline void io_fd_zero(fd_set & rfds)
 {
-    FD_ZERO(&rfds);
+    FD_ZERO(&rfds); /*NOLINT*/
 }
 
 inline void io_fd_set(int const fd, fd_set & rfds)
 {
-    FD_SET(fd, &rfds);
+    FD_SET(fd, &rfds); /*NOLINT*/
 }
 
 inline void io_fd_clr(int const fd, fd_set & rfds)

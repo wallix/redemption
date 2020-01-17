@@ -45,7 +45,7 @@ struct OcrTitlesExtractor
         this->reset_letters();
     }
 
-    void set_font_id(unsigned id, unsigned bg = ocr::uninitialized_titlebar_color_id) {
+    void set_font_id(unsigned id, unsigned bg = ocr::uninitialized_titlebar_color_id) /*NOLINT*/ {
         this->font_id = id;
         this->title_color_id_selected = bg;
         if (this->font_id != -1u) {

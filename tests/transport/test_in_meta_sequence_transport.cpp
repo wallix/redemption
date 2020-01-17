@@ -252,7 +252,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
     // two files: 5 and 10 bytes
     {
-        LCGRandom rnd(0);
+        LCGRandom rnd;
         Fstat fstat;
         timeval tv;
         tv.tv_usec = 0;

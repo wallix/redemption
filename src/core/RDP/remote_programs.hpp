@@ -1461,6 +1461,8 @@ private:
             this->SystemParam_);
         length += ((result < size - length) ? result : (size - length - 1));
 
+        bool const signed_left_top = true;
+
         switch (this->SystemParam_) {
             case SPI_SETDRAGFULLWINDOWS:
             case SPI_SETKEYBOARDCUES:
@@ -1475,7 +1477,7 @@ private:
             case SPI_SETWORKAREA:
             case RAIL_SPI_DISPLAYCHANGE:
             case RAIL_SPI_TASKBARPOS:
-                result = this->body_r_.str(buffer + length, size - length);
+                result = this->body_r_.str(buffer + length, size - length, signed_left_top);
                 length += ((result < size - length) ? result : (size - length - 1));
                 break;
 

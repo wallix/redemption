@@ -78,7 +78,7 @@ struct [[nodiscard]] WorkingFile : WorkingFileBase
 {
     WorkingFile(std::string_view name);
     ~WorkingFile();
-    void set_removed(bool x = true) noexcept { this->is_removed = x; }
+    void set_removed(bool x = true) /*NOLINT*/ noexcept { this->is_removed = x; }
 
 private:
     unsigned start_error_count;
@@ -114,7 +114,7 @@ struct [[nodiscard]] WorkingDirectory
         SubDirectory(WorkingDirectory& wd, std::string fullpath, std::size_t dirname_pos);
     };
 
-    WorkingDirectory(std::string_view name = {});
+    WorkingDirectory(std::string_view name = {}); /*NOLINT*/
 
     WorkingDirectory(WorkingDirectory const&) = delete;
 

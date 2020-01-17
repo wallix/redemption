@@ -55,7 +55,7 @@ public:
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             bool showform = false, unsigned flags = FlatForm::NONE, int duration_max = 0);
+             bool showform = false, unsigned flags = FlatForm::NONE, int duration_max = 0); /*NOLINT*/
 
     ~FlatWait() override;
 

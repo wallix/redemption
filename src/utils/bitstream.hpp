@@ -38,7 +38,7 @@ public:
      *    @param size size of array
      *    @param offset an offset to start at
      */
-    explicit InBitStream(const uint8_t *array, std::size_t size, std::size_t offset = 0)
+    explicit InBitStream(const uint8_t *array, std::size_t size, std::size_t offset = 0) /*NOLINT*/
     : end(array + size)
     , p(array + offset)
     , bitsLeft(8)

@@ -48,7 +48,7 @@ public:
 class FrozenTime : public TimeObj {
     timeval tv;
 public:
-    explicit FrozenTime(std::chrono::microseconds ustime = 1533211681s)
+    explicit FrozenTime(std::chrono::microseconds ustime = 1533211681s) /*NOLINT*/
     {
         tv.tv_sec = ustime.count()/1000000;
         tv.tv_usec = ustime.count()%1000000;
@@ -74,20 +74,27 @@ public:
 };
 
 
-class LCGTime : public TimeObj {
-    uint32_t seed;
+class LCGTime : public TimeObj
+{
+    uint32_t seed = 7984813;
+
 public:
-    explicit LCGTime(uint32_t seed = 7984813UL)
-        : seed(seed)
+    explicit LCGTime() = default;
+
+    explicit LCGTime(uint32_t seed)
+    : seed(seed)
     {}
-    ~LCGTime() override = default;
-    timeval get_time() override {
+
+    timeval get_time() override
+    {
         timeval tv;
         tv.tv_sec = this->rand32();
         tv.tv_usec = this->rand32();
         return tv;
     }
-    uint32_t rand32() {
+
+    uint32_t rand32()
+    {
         return this->seed = 6843513UL * this->seed + 451209UL;
     }
 };

@@ -37,7 +37,7 @@ namespace re {
         }
         stval.reset_nums();
         struct Impl {
-            static void display(StatesValue & stval, const State * st, unsigned depth = 0) {
+            static void display(StatesValue & stval, const State * st, int depth = 0) {
                 if (st && stval.get_num_at(st) != -2u) {
                     std::cout
                     << std::setw(depth) << "" << "\033[33m" << st << "\t" << st->num << "\t" << *st

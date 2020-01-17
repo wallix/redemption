@@ -301,9 +301,9 @@ void FlatForm::check_confirmation()
 
     if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
         (this->duration_edit.num_chars != 0)) {
-        long res = check_duration(this->duration_edit.get_text());
+        unsigned long res = check_duration(this->duration_edit.get_text());
         // res is duration in hours.
-        if ((res <= 0) || (res > this->duration_max)) {
+        if (res <= 0 || res > this->duration_max) {
             if (res <= 0) {
                 this->duration_edit.set_text("");
                 this->set_warning_buffer(trkeys::fmt_invalid_format, tr(trkeys::duration));

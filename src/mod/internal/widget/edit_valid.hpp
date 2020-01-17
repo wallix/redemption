@@ -35,9 +35,9 @@ public:
                     Widget & parent, NotifyApi* notifier, const char * text,
                     int group_id, BGRColor fgcolor, BGRColor bgcolor,
                     BGRColor focus_color, BGRColor border_none_color, Font const & font,
-                    const char * title, bool use_title, std::size_t edit_position = -1,
+                    const char * title, bool use_title, std::size_t edit_position = -1, /*NOLINT*/
                     // TODO re-enable
-                    int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false);
+                    int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false); /*NOLINT*/
 
     Dimension get_optimal_dim() override;
 

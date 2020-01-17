@@ -31,8 +31,8 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
     auto buf = make_array_view(rawbuf);
 
 #define TEST(s, r) do {                                                                   \
-    std::string in = s;                                                                   \
-    std::string in2 = s;                                                                  \
+    std::string in = s; /*NOLINT*/                                                        \
+    std::string in2 = s; /*NOLINT*/                                                       \
     auto expected = r ""_av;                                                              \
     auto minilen = std::min(expected.size(), size_t(4));                                  \
     RED_CHECK_MEM(windows_to_linux_newline_convert(in, buf), expected);                   \

@@ -29,7 +29,7 @@ class WidgetImage : public Widget
     Bitmap bmp;
 
 public:
-    WidgetImage(gdi::GraphicApi & drawable, const char * filename, Widget & parent, NotifyApi* notifier, int group_id = 0);
+    WidgetImage(gdi::GraphicApi & drawable, const char * filename, Widget & parent, NotifyApi* notifier, int group_id = 0); /*NOLINT*/
 
     ~WidgetImage() override;
 

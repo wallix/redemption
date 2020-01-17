@@ -384,7 +384,7 @@ struct IOVideoRecorderWithTransport
         catch (Error const & e){
             LOG(LOG_ERR, "Video seek failure (id=%u)", e.id);
             return -1;
-        };
+        }
     }
 #else
     static int write(void * /*opaque*/, uint8_t * /*buf*/, int buf_size) { return buf_size; }

@@ -742,7 +742,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 
     write_packets(
         this->trans,
-        [](StreamSize<256>, OutStream & mcs_header){
+        [](StreamSize<256> /*maxlen*/, OutStream & mcs_header){
             MCS::ErectDomainRequest_Send mcs(mcs_header, 0, 0, MCS::PER_ENCODING);
             (void)mcs;
         },
@@ -754,7 +754,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 
     write_packets(
         this->trans,
-        [](StreamSize<256>, OutStream & mcs_data){
+        [](StreamSize<256> /*maxlen*/, OutStream & mcs_data){
             MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
             (void)mcs;
         },
@@ -793,7 +793,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
     /* Generic Conference Control (T.124) ConferenceCreateRequest */
     write_packets(
         this->trans,
-        [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
+        [this, &hostname](StreamSize<65536-1024> /*maxlen*/, OutStream & stream) {
             // ------------------------------------------------------------
             GCC::UserData::CSCore cs_core(216); // 216: optional parameters up to serverSelectedProtocol
             LOG(LOG_INFO, "Sending CS_CORE to server: color_depth %d", int(this->front_bpp));
@@ -1101,10 +1101,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 this->cs_monitor.emit(stream);
             }
         },
-        [](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
+        [](StreamSize<256> /*maxlen*/, OutStream & gcc_header, std::size_t packet_size) {
             GCC::Create_Request_Send(gcc_header, packet_size);
         },
-        [](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+        [](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_size) {
             MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
             (void)mcs;
         },
@@ -1138,7 +1138,7 @@ bool RdpNegociation::channel_connection_attach_user(InStream & stream)
             "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
         write_packets(
             this->trans,
-            [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
+            [this, &channels_id, index](StreamSize<256> /*maxlen*/, OutStream & mcs_cjrq_data){
                 MCS::ChannelJoinRequest_Send mcs(
                     mcs_cjrq_data, this->negociation_result.userid,
                     channels_id[index], MCS::PER_ENCODING
@@ -1524,7 +1524,7 @@ void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_
     write_packets(
         this->trans,
         writer_data...,
-        [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+        [this, channelId](StreamSize<256> /*maxlen*/, OutStream & mcs_header, std::size_t packet_size) {
             MCS::SendDataRequest_Send mcs(
                 mcs_header, this->negociation_result.userid,
                 channelId, 1, 3, packet_size, MCS::PER_ENCODING
@@ -1625,7 +1625,7 @@ void RdpNegociation::send_client_info_pdu()
 
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
-        [&infoPacket](StreamSize<1024>, OutStream & stream) {
+        [&infoPacket](StreamSize<1024> /*maxlen*/, OutStream & stream) {
             infoPacket.emit(stream);
         },
         SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}

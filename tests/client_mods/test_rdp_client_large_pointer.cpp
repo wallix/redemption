@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     mod_rdp_params.use_license_store                 = false;
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
+    LCGRandom gen;
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
@@ -240,7 +240,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     mod_rdp_params.use_license_store                 = false;
 
     // To always get the same client random, in tests
-    LCGRandom gen(0);
+    LCGRandom gen;
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;

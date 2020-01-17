@@ -29,7 +29,7 @@
 
 static __inline__ std::chrono::microseconds rdtsc(void)
 {
-  unsigned long long int x;
+  unsigned long long x;
     __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
     return std::chrono::microseconds(x);
 }
@@ -37,7 +37,8 @@ static __inline__ std::chrono::microseconds rdtsc(void)
 
 static __inline__ std::chrono::microseconds rdtsc()
 {
-  unsigned hi, lo;
+  unsigned hi;
+  unsigned lo;
   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
   return std::chrono::microseconds(
       static_cast<unsigned long long>(lo)
@@ -49,8 +50,10 @@ static __inline__ std::chrono::microseconds rdtsc()
 
 static __inline__ std::chrono::microseconds rdtsc(void)
 {
-  unsigned long long int result=0;
-  unsigned long int upper, lower,tmp;
+  unsigned long long result=0;
+  unsigned long upper;
+  unsigned long lower;
+  unsigned long tmp;
   __asm__ volatile(
                 "0:                  \n"
                 "\tmftbu   %0           \n"

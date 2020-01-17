@@ -1682,7 +1682,7 @@ Capture::~Capture()
 
         if (this->wrm_capture_obj) {
             timeval now = tvtime();
-            this->wrm_capture_obj->send_timestamp_chunk(now, false);
+            this->wrm_capture_obj->send_timestamp_chunk(now);
             this->wrm_capture_obj.reset();
         }
     }

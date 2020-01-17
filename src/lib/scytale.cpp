@@ -158,7 +158,7 @@ namespace
         ScytaleRandomWrapper(RandomType rnd_type)
         {
             switch (rnd_type) {
-                case LCG: rnd = new (&u.lcg) LCGRandom(0); break;
+                case LCG: rnd = new (&u.lcg) LCGRandom(); break;
                 case UDEV: rnd = new (&u.udev) UdevRandom(); break;
             }
         }
@@ -191,7 +191,7 @@ struct ScytaleWriterHandle
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum,
             old_encryption_scheme, one_shot_encryption_scheme,
             master_derivator)
-    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
+    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat, ReportError())
     {}
 
 private:

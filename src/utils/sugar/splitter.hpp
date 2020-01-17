@@ -139,25 +139,25 @@ get_split(Cont && cont, T && sep)
 }
 
 
-inline splitter<char const *> get_line(const char * s, char sep = '\n')
+inline splitter<char const *> get_line(const char * s, char sep = '\n') /*NOLINT*/
 {
     return {s, s+strlen(s), sep};
 }
 
-inline splitter<char *> get_line(char * s, char sep = '\n')
+inline splitter<char *> get_line(char * s, char sep = '\n') /*NOLINT*/
 {
     return {s, s+strlen(s), sep};
 }
 
-inline splitter<char const *> get_line(std::string const & s, char sep = '\n')
+inline splitter<char const *> get_line(std::string const & s, char sep = '\n') /*NOLINT*/
 {
     return {s.data(), s.data()+s.size(), sep};
 }
 
-inline splitter<char *> get_line(std::string & s, char sep = '\n')
+inline splitter<char *> get_line(std::string & s, char sep = '\n') /*NOLINT*/
 {
     return {&s[0], &s[0]+s.size(), sep};
 }
 
-splitter<char *> get_line(std::string && s, char sep = '\n') = delete;
-splitter<char const *> get_line(std::string const && s, char sep = '\n') = delete;
+splitter<char *> get_line(std::string && s, char sep = '\n') = delete; /*NOLINT*/
+splitter<char const *> get_line(std::string const && s, char sep = '\n') = delete; /*NOLINT*/

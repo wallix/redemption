@@ -261,6 +261,7 @@ namespace FastPath {
                                 , CryptContext & crypt
                                 , uint32_t encryptionLevel
                                 , uint32_t encryptionMethod
+                                // TODO std::optional
                                 , uint32_t const * fipsInformation = nullptr) {
             uint8_t secFlags = (encryptionLevel | encryptionMethod) ? FASTPATH_INPUT_ENCRYPTED : 0;
 

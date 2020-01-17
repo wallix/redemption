@@ -98,7 +98,7 @@ namespace cli
         DataOption d;
         Act act;
 
-        Option(char short_name, char const * long_name, Act act = Act{})
+        Option(char short_name, char const * long_name, Act act = Act{}) /*NOLINT*/
           : d{short_name, long_name, "", false}
           , act(act)
         {}

@@ -291,7 +291,7 @@ inline FileValidatorId send_open_data(
 }
 
 inline void send_header(
-    OutTransport trans, FileValidatorId file_id, MsgType msg_type, uint32_t pkt_len = 0)
+    OutTransport trans, FileValidatorId file_id, MsgType msg_type, uint32_t pkt_len)
 {
     StaticOutStream<16> message;
 
@@ -411,19 +411,19 @@ struct FileValidatorService
     void send_eof(FileValidatorId file_id)
     {
         using namespace LocalFileValidatorProtocol;
-        send_header(this->trans, file_id, MsgType::Eof);
+        send_header(this->trans, file_id, MsgType::Eof, 0);
     }
 
     void send_abort(FileValidatorId file_id)
     {
         using namespace LocalFileValidatorProtocol;
-        send_header(this->trans, file_id, MsgType::AbortFile);
+        send_header(this->trans, file_id, MsgType::AbortFile, 0);
     }
 
     void send_close_session()
     {
         using namespace LocalFileValidatorProtocol;
-        send_header(this->trans, FileValidatorId(), MsgType::CloseSession);
+        send_header(this->trans, FileValidatorId(), MsgType::CloseSession, 0);
     }
 
     [[nodiscard]] std::string const& get_content() const noexcept

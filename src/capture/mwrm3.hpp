@@ -723,7 +723,7 @@ namespace Mwrm3
                 ? unwrapper_group<type>(f, in.remaining_bytes(), reader...)
                 : ferror();
         }
-    }
+    } // namespace detail
 
     // for serialize_*
     // fn_ok(integral_type<Type>, serialized_bytes_view...)
@@ -988,4 +988,4 @@ namespace Mwrm3
 
         return ParserResult::NeedMoreData;
     }
-}
+} // namespace Mwrm3

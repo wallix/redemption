@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
     openlog("NLAServer", LOG_CONS | LOG_PERROR, LOG_USER);
 
     NLAServer front(std::move(nla_username), std::move(nla_password), enable_kerberos, !no_forkable, verbosity);
-    auto sck = create_server(inet_addr("0.0.0.0"), listen_port);
+    auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
     if (!sck) {
         return -2;
     }

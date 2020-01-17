@@ -49,7 +49,7 @@ public:
         SessionReactor& session_reactor,
         GraphicEventContainer & graphic_events_,
         uint16_t width, uint16_t height,
-        Font const & font, bool unit_test = true);
+        Font const & font, bool unit_test = true); /*NOLINT*/
 
     std::string module_name() override {return "Test Card Mod";}
 

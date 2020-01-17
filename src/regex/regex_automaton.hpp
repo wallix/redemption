@@ -214,7 +214,7 @@ namespace re {
 
     public:
         StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture,
-                      bool copy_states = false, bool minimal_mem = false)
+                      bool copy_states = false, bool minimal_mem = false) /*NOLINT*/
         : root(root)
         , nb_states(sts.size())
         , nb_capture(nb_capture)
@@ -694,7 +694,7 @@ namespace re {
             return false;
         }
 
-        void push_state(RangeList* l, const State * st, unsigned num_open = -1u, unsigned is_first = 0)
+        void push_state(RangeList* l, const State * st, unsigned num_open = -1u, unsigned is_first = 0) /*NOLINT*/
         {
             if (this->is_valid_and_mark(st)) {
                 if (st->is_split()) {
@@ -742,7 +742,7 @@ namespace re {
             return nullptr;
         }
 
-        void init_range_list(RangeList* l, const State * st, unsigned is_first = true)
+        void init_range_list(RangeList* l, const State * st, unsigned is_first = true) /*NOLINT*/
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
             l->st_num = st->num;
@@ -820,7 +820,7 @@ namespace re {
         template<bool> struct ActivePartOfText { };
 
     public:
-        bool exact_search(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        bool exact_search(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (0 == this->nb_states) {
                 return !*s;
@@ -829,7 +829,7 @@ namespace re {
                                ExactMatch<true>(), ActiveCapture<false>(), ActivePartOfText<false>());
         }
 
-        bool exact_search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        bool exact_search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->exact_search(s, step_limit, pos);
@@ -839,7 +839,7 @@ namespace re {
         }
 
         template<typename Tracer>
-        bool exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = nullptr)
+        bool exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->exact_search(s, step_limit, pos);
@@ -848,7 +848,7 @@ namespace re {
                                ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<false>());
         }
 
-        bool search(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        bool search(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (0 == this->nb_states) {
                 return !*s;
@@ -857,7 +857,7 @@ namespace re {
                                ExactMatch<false>(), ActiveCapture<false>(), ActivePartOfText<false>());
         }
 
-        bool search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        bool search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->search(s, step_limit, pos);
@@ -867,7 +867,7 @@ namespace re {
         }
 
         template<typename Tracer>
-        bool search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = nullptr)
+        bool search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->search(s, step_limit, pos);
@@ -877,7 +877,7 @@ namespace re {
         }
 
 
-        unsigned part_of_text_exact_search(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        unsigned part_of_text_exact_search(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (0 == this->nb_states) {
                 return !*s;
@@ -886,7 +886,7 @@ namespace re {
                                    ExactMatch<true>(), ActiveCapture<false>(), ActivePartOfText<true>());
         }
 
-        unsigned part_of_text_exact_search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        unsigned part_of_text_exact_search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->part_of_text_exact_search(s, step_limit, pos);
@@ -897,7 +897,7 @@ namespace re {
 
         template<typename Tracer>
         unsigned part_of_text_exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer,
-                                                      size_t * pos = nullptr)
+                                                      size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->part_of_text_exact_search(s, step_limit, pos);
@@ -906,7 +906,7 @@ namespace re {
                                    ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<true>());
         }
 
-        unsigned part_of_text_search(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        unsigned part_of_text_search(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (0 == this->nb_states) {
                 return !*s;
@@ -915,7 +915,7 @@ namespace re {
                                    ExactMatch<false>(), ActiveCapture<false>(), ActivePartOfText<true>());
         }
 
-        unsigned part_of_text_search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr)
+        unsigned part_of_text_search_with_trace(const char * s, unsigned step_limit, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->part_of_text_search(s, step_limit, pos);
@@ -926,7 +926,7 @@ namespace re {
 
         template<typename Tracer>
         unsigned part_of_text_search_with_trace(const char * s, unsigned step_limit, Tracer tracer,
-                                                size_t * pos = nullptr)
+                                                size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->part_of_text_search(s, step_limit, pos);
@@ -936,7 +936,7 @@ namespace re {
         }
 
 
-        unsigned part_of_text_start(const char * s, size_t * pos = nullptr)
+        unsigned part_of_text_start(const char * s, size_t * pos = nullptr) /*NOLINT*/
         {
             if (0 == this->nb_states) {
                 return !*s ? match_success : match_fail;
@@ -944,7 +944,7 @@ namespace re {
             return this->match_start(s, DefaultMatchTracer(*this), pos, ActiveCapture<false>());
         }
 
-        unsigned part_of_text_start_with_trace(const char * s, size_t * pos = nullptr)
+        unsigned part_of_text_start_with_trace(const char * s, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->part_of_text_start(s, pos);
@@ -953,7 +953,7 @@ namespace re {
         }
 
         template<typename Tracer>
-        unsigned part_of_text_start_with_trace(const char * s, Tracer tracer, size_t * pos = nullptr)
+        unsigned part_of_text_start_with_trace(const char * s, Tracer tracer, size_t * pos = nullptr) /*NOLINT*/
         {
             if (this->nb_capture == 0) {
                 return this->part_of_text_start(s, pos);
@@ -962,33 +962,33 @@ namespace re {
         }
 
 
-        bool part_of_text_finish(size_t * pos = nullptr)
+        bool part_of_text_finish(size_t * pos = nullptr) /*NOLINT*/
         {
             return this->match_finish(DefaultMatchTracer(*this), pos, ActiveCapture<false>(),
                                       ActivePartOfText<true>());
         }
 
-        bool part_of_text_finish_with_trace(size_t * pos = nullptr)
+        bool part_of_text_finish_with_trace(size_t * pos = nullptr) /*NOLINT*/
         {
             return this->match_finish(DefaultMatchTracer(*this), pos, ActiveCapture<true>(),
                                       ActivePartOfText<true>());
         }
 
         template<typename Tracer>
-        bool part_of_text_finish_with_trace(Tracer tracer, size_t * pos = nullptr)
+        bool part_of_text_finish_with_trace(Tracer tracer, size_t * pos = nullptr) /*NOLINT*/
         {
             return this->match_finish(tracer, pos, ActiveCapture<true>(), ActivePartOfText<true>());
         }
 
 
-        [[nodiscard]] range_matches match_result(bool all = true) const
+        [[nodiscard]] range_matches match_result(bool all = true) const /*NOLINT*/
         {
             range_matches ret;
             this->append_match_result(ret, all);
             return ret;
         }
 
-        void append_match_result(range_matches& ranges, bool all = true) const
+        void append_match_result(range_matches& ranges, bool all = true) const /*NOLINT*/
         {
             if (this->idx_trace == -1u) {
                 return ;

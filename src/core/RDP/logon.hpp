@@ -800,8 +800,8 @@ public:
               , const char *password
               , const char *program
               , const char *directory
-              , uint32_t performanceFlags = 0
-              , const char *clientAddr = nullptr)
+              , uint32_t performanceFlags
+              , const char *clientAddr)
     : rdp5_support(use_rdp5)
     {
         auto cpy = [](auto& arr, uint16_t& n, char const* s){
@@ -1049,7 +1049,7 @@ public:
          }
     } // END FUNCT : recv()
 
-    void log(const char * msg, uint32_t password_printing_mode, bool show_alternate_shell = true) const {
+    void log(const char * msg, uint32_t password_printing_mode, bool show_alternate_shell = true) /*NOLINT*/ const {
         LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);

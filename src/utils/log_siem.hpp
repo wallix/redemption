@@ -58,7 +58,7 @@ namespace log_proxy
     void init(char const* psid, char const* source_ip, int source_port) noexcept;
     void set_user(char const* username) noexcept;
     void target_disconnection(char const* reason) noexcept;
-    void disconnection(char const* reason = nullptr) noexcept;
+    void disconnection(char const* reason) noexcept;
 
     char const* get_psid() noexcept;
     char const* get_user() noexcept;

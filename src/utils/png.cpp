@@ -181,12 +181,12 @@ struct NoExceptTransport
         } catch (Error const& err) {
             self.fail(png_ptr, "Exception in dump_png24", name, &err);
         } catch (...) {
-            self.fail(png_ptr, "Exception in dump_png24", name);
+            self.fail(png_ptr, "Exception in dump_png24", name, nullptr);
         }
     }
 
     [[noreturn]]
-    void fail(png_structp png_ptr, char const* msg, char const* name, Error const* err = nullptr) noexcept
+    void fail(png_structp png_ptr, char const* msg, char const* name, Error const* err) noexcept
     {
         this->has_error = true;
         if (err) {
