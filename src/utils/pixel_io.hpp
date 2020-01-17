@@ -20,7 +20,6 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include "utils/bitfu.hpp"
 
 static inline uint8_t get_pixel_1bpp(const uint8_t* data, size_t line_bytes, size_t x, size_t y)
 {
@@ -45,9 +44,9 @@ static inline uint32_t get_pixel_24bpp(const uint8_t* data, size_t line_bytes, s
     const uint8_t* dest = data + y * line_bytes + x * 3;
 
     uint32_t res = 0;
-    for (int b = 0 ; b < 3 ; ++b){
-        res |= dest[b] << (8 * b);
-    }
+    res |= dest[0] << (8 * 0);
+    res |= dest[1] << (8 * 1);
+    res |= dest[2] << (8 * 2);
 
     return res;
 }
@@ -55,5 +54,7 @@ static inline uint32_t get_pixel_24bpp(const uint8_t* data, size_t line_bytes, s
 static inline void put_pixel_24bpp(uint8_t* data, size_t line_bytes, size_t x, size_t y, uint32_t value) {
     uint8_t* dest = data + y * line_bytes + x * 3;
 
-    ::out_bytes_le(dest, 3, value);
+    dest[0] = static_cast<uint8_t>(value >> (8 * 0));
+    dest[1] = static_cast<uint8_t>(value >> (8 * 1));
+    dest[2] = static_cast<uint8_t>(value >> (8 * 2));
 }
