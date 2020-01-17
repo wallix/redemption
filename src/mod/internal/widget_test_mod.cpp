@@ -97,7 +97,7 @@ WidgetTestMod::WidgetTestMod(
     Font const & /*font*/)
 : d(std::make_unique<WidgetTestModPrivate>(session_reactor, graphic_timer_events_, *this))
 {
-    front.server_resize({width, height, BitsPerPixel{8}}, *this);
+    front.server_resize({width, height, BitsPerPixel{8}});
 }
 
 WidgetTestMod::~WidgetTestMod() = default;

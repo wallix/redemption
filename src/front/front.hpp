@@ -606,7 +606,13 @@ public:
 
     void notify_resize(Callback & cb)
     {
-        cb.refresh(Rect(0, 0, this->client_info.screen_info.width, this->client_info.screen_info.height));
+        if (this->state != FRONT_UP_AND_RUNNING) {
+            cb.rdp_gdi_down();
+        }
+        else {
+            // TODO: see if we could use UP_AND_RUNNING notification instead
+            cb.refresh(Rect(0, 0, this->client_info.screen_info.width, this->client_info.screen_info.height));
+        }
         front_must_notify_resize = false;
     }
 
@@ -772,9 +778,8 @@ public:
         }
     }
 
-    ResizeResult server_resize(ScreenInfo screen_server, Callback& cb) override
+    ResizeResult server_resize(ScreenInfo screen_server) override
     {
-        LOG(LOG_INFO, "server_resize");
         ResizeResult res = ResizeResult::no_need;
 
         this->mod_bpp = screen_server.bpp;
@@ -822,15 +827,13 @@ public:
                     // start a send_deactive, send_deman_active process with
                     // the new resolution setting
                     /* shut down the rdp client */
-                    cb.rdp_gdi_down();
+                    this->front_must_notify_resize = true;
                     this->state = ACTIVATE_AND_PROCESS_DATA;
 
                     this->send_deactive();
                     /* this should do the actual resizing */
                     this->send_demand_active();
                     this->send_monitor_layout();
-
-                    LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
                     this->is_first_memblt = true;
                     res = ResizeResult::done;
                 }

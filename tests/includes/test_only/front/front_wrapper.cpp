@@ -45,9 +45,9 @@ void FrontWrapper::send_to_channel(
     return d->front.send_to_channel(channel_def, chunk_data, total_length, flags);
 }
 
-FrontWrapper::ResizeResult FrontWrapper::server_resize(ScreenInfo screen_server, Callback & cb)
+FrontWrapper::ResizeResult FrontWrapper::server_resize(ScreenInfo screen_server)
 {
-    return d->front.server_resize(screen_server, cb);
+    return d->front.server_resize(screen_server);
 }
 
 void FrontWrapper::update_pointer_position(uint16_t x, uint16_t y)

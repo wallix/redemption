@@ -27,9 +27,10 @@
 
 #include "utils/sugar/noncopyable.hpp"
 
-struct AclApi : private noncopyable
+struct AclApi
 {
     // notify that acl have been updated
     virtual void acl_update() = 0;
+    virtual ~AclApi() {}
 };
 

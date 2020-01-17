@@ -153,7 +153,7 @@
 //            instant_done = 2,
 //            remoteapp = 3
 //        };
-//        virtual ResizeResult server_resize(ScreenInfo screen_server, Callback & cb) = 0;
+//        virtual ResizeResult server_resize(ScreenInfo screen_server) = 0;
 
 //        virtual void server_relayout(MonitorLayoutPDU const& monitor_layout_pdu_ref) { (void)monitor_layout_pdu_ref; }
 

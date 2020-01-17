@@ -230,11 +230,11 @@ struct ReplayMod::Reader
     }
 
     REDEMPTION_CXX_NODISCARD
-    bool server_resize(gdi::GraphicApi & drawable, FrontAPI& front, Callback & cb)
+    bool server_resize(gdi::GraphicApi & drawable, FrontAPI& front)
     {
         bool is_resized = false;
         switch (front.server_resize(
-            {this->reader.info.width , this->reader.info.height , this->reader.info.bpp}, cb)
+            {this->reader.info.width , this->reader.info.height , this->reader.info.bpp})
         ) {
             case FrontAPI::ResizeResult::no_need:
                 // no resizing needed
@@ -289,7 +289,7 @@ ReplayMod::ReplayMod(
 , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
 , session_reactor(session_reactor)
 {
-    if (this->internal_reader->server_resize(drawable, front, *this)) {
+    if (this->internal_reader->server_resize(drawable, front)) {
         this->front_width  = this->internal_reader->reader.info.width;
         this->front_height = this->internal_reader->reader.info.height;
     }
@@ -435,7 +435,7 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
                         this->play_video_with_corrupted_bitmap,
                         this->internal_reader->debug_capture);
 
-                    if (this->internal_reader->server_resize(this->drawable, this->front, *this)) {
+                    if (this->internal_reader->server_resize(this->drawable, this->front)) {
                         this->front_width  = this->internal_reader->reader.info.width;
                         this->front_height = this->internal_reader->reader.info.height;
                     }
