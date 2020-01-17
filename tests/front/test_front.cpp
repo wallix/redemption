@@ -162,7 +162,6 @@ RED_AUTO_TEST_CASE(TestFront)
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
-    CallbackEventContainer front_events_;
     SesmanEventContainer sesman_events_;
     SesmanInterface sesman(ini);
 
@@ -172,7 +171,7 @@ RED_AUTO_TEST_CASE(TestFront)
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        session_reactor, timer_events_, front_events_, front_trans, gen1, ini , cctx,
+        session_reactor, timer_events_, front_trans, gen1, ini , cctx,
         report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 
@@ -180,7 +179,6 @@ RED_AUTO_TEST_CASE(TestFront)
         front.incoming(no_mod, sesman);
         RED_CHECK(timer_events_.is_empty());
     }
-    RED_CHECK(front_events_.is_empty());
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
@@ -331,13 +329,12 @@ RED_AUTO_TEST_CASE(TestFront2)
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
-    CallbackEventContainer front_events_;
 
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
 
-    MyFront front(session_reactor, timer_events_, front_events_, front_trans, gen1, ini
+    MyFront front(session_reactor, timer_events_, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 

@@ -153,7 +153,6 @@ int main(int argc, char** argv)
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
     SesmanEventContainer sesman_events_;
-    CallbackEventContainer front_events_;
     TimeSystem system_timeobj;
 
     auto run = [&](auto create_mod){
@@ -189,7 +188,7 @@ int main(int argc, char** argv)
                                     timer_events_,
                                     graphic_events_,
                                     graphic_timer_events_,
-                                    front_events_, *mod, gdi::null_gd(),
+                                    *mod, gdi::null_gd(),
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 

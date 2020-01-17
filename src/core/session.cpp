@@ -499,7 +499,7 @@ class Session
     }
 
 
-    bool front_close_box(Select& ioswitch, SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, CallbackEventContainer & front_events_, ModWrapper & mod_wrapper, Front & front, SesmanInterface & acl_cb)
+    bool front_close_box(Select& ioswitch, SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, ModWrapper & mod_wrapper, Front & front, SesmanInterface & acl_cb)
     {
         bool run_session = true;
         try {
@@ -514,9 +514,6 @@ class Session
                                     { return fd != INVALID_SOCKET 
                                             &&  ioswitch.is_set_for_reading(fd);
                                     });
-            if (!front_events_.is_empty()) {
-                front_events_.exec_action(mod_wrapper.get_callback());
-            }
             BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
             if ((signal == BACK_EVENT_STOP)||(signal==BACK_EVENT_NEXT)){
                 run_session = false;
@@ -590,7 +587,8 @@ class Session
                               GraphicFdContainer & graphic_fd_events_,
                               TimerContainer& timer_events_,
                               GraphicEventContainer& graphic_events_,
-                              GraphicTimerContainer graphic_timer_events_, CallbackEventContainer & front_events_, SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & acl_cb)
+                              GraphicTimerContainer graphic_timer_events_, 
+                              SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & acl_cb)
     {
         try {
             auto const end_tv = session_reactor.get_current_time();
@@ -609,30 +607,6 @@ class Session
             }
         }
 
-
-        // front event
-        try {
-            if (!front_events_.is_empty()) {
-                LOG(LOG_INFO, "front_up_and_running:  has_front_events");
-                front_events_.exec_action(mod_wrapper.get_callback());
-            }
-        } catch (Error const& e) {
-            // RemoteApp disconnection initiated by user
-            // ERR_DISCONNECT_BY_USER == e.id
-            if (// Can be caused by client disconnect.
-                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                // Can be caused by client disconnect.
-                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                // Can be caused by wabwatchdog.
-                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-            }
-            return false;
-        } catch (...) {
-            LOG(LOG_ERR, "Proxy data processing raised unknown error");
-            return false;
-        }
 
         // acl event
         try {
@@ -704,7 +678,6 @@ class Session
                 TopFdContainer & fd_events_,
                 GraphicTimerContainer & graphic_timer_events_,
                 GraphicFdContainer & graphic_fd_events_,
-                const CallbackEventContainer & front_events_,
                 const GraphicEventContainer & graphic_events_,
                 bool front_pending,
                 bool mod_pending)
@@ -739,9 +712,9 @@ class Session
             this->show_ultimatum("ultimatum (graphic fd) =", ultimatum, now);
         }
 
-        if (!front_events_.is_empty()) {
+        if (front.front_must_notify_resize) {
             ultimatum = now;
-            this->show_ultimatum("ultimatum (front events) =", ultimatum, now);
+            this->show_ultimatum("ultimatum (front must notify resize) =", ultimatum, now);
         }
 
         if (mod_pending) {
@@ -764,6 +737,10 @@ class Session
 
     void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & acl_cb)
     {
+        if (front.front_must_notify_resize) {
+            front.notify_resize(mod_wrapper.get_callback());
+        }
+
         front.rbuf.load_data(front_trans);
 //        } catch (Error const& e) {
 //            // RemoteApp disconnection initiated by user
@@ -818,14 +795,13 @@ public:
         GraphicFdContainer graphic_fd_events_;
         TimerContainer timer_events_;
         GraphicEventContainer graphic_events_;
-        CallbackEventContainer front_events_;
         SesmanEventContainer sesman_events_;
         GraphicTimerContainer graphic_timer_events_;
 
         TimeSystem timeobj;
 
         session_reactor.set_current_time(tvtime());
-        Front front(session_reactor, timer_events_, front_events_, front_trans, rnd, ini, cctx, authentifier,
+        Front front(session_reactor, timer_events_, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>(), mem3blt_support
         );
         SesmanInterface acl_cb(ini);
@@ -970,7 +946,6 @@ public:
                         fd_events_,
                         graphic_timer_events_,
                         graphic_fd_events_,
-                        front_events_,
                         graphic_events_,
                         front_trans.has_tls_pending_data(),
                         mod_data_pending
@@ -1052,6 +1027,8 @@ public:
                     this->acl_incoming_data(*acl.get(), ini, sesman_events_);
                 }
 
+                if (mod_is_set) {
+                }
 
                 switch (front.state) {
                 default:
@@ -1067,9 +1044,6 @@ public:
 
                     // front event
                     try {
-                        if (!front_events_.is_empty()) {
-                            front_events_.exec_action(mod_wrapper.get_callback());
-                        }
                     } catch (Error const& e) {
                         // RemoteApp disconnection initiated by user
                         // ERR_DISCONNECT_BY_USER == e.id
@@ -1113,11 +1087,11 @@ public:
                     }
 
                     if (this->last_module){
-                        run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, front_events_, mod_wrapper, front, acl_cb);
+                        run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, mod_wrapper, front, acl_cb);
                         continue;
                     }
 
-                    run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, acl_cb);
+                    run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, acl_cb);
                 }
                 break;
                 } // switch

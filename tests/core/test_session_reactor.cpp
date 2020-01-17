@@ -177,7 +177,6 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     GraphicFdContainer graphic_fd_events_;
     GraphicEventContainer graphic_events_;
     SesmanEventContainer sesman_events_;
-    CallbackEventContainer front_events_;
     using Dt = jln::NotifyDeleteType;
 
     std::string s;
@@ -188,15 +187,6 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     })
     .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
         s += "gd\n";
-    }));
-
-    auto callback = front_events_
-    .create_action_executor(session_reactor, std::ref(s))
-    .set_notify_delete([](Dt, std::string& s){
-        s += "~callback\n";
-    })
-    .on_action(jln::one_shot([](Callback&, std::string& s){
-        s += "callback\n";
     }));
 
     auto ini = sesman_events_.create_action_executor(session_reactor, std::ref(s))
@@ -228,12 +218,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     sesman_events_.exec_action(*reinterpret_cast<Inifile*>(&dummy));
     RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
-    front_events_.exec_action(dummy_cb);
-    RED_CHECK_EQ(s, "gd\n~gd\nini\ncallback\n~callback\n");
-
     RED_CHECK(!gd);
     RED_CHECK(!ini);
-    RED_CHECK(!callback);
 }
 
 

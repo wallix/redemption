@@ -42,7 +42,6 @@ inline ExecuteEventsResult execute_events(
     TimerContainer& timer_events_,
     GraphicEventContainer & graphic_events_,
     GraphicTimerContainer & graphic_timer_events_,
-    CallbackEventContainer & front_events_,
     EnableGraphics enable_graphics,
     Callback& callback, gdi::GraphicApi& front)
 {
@@ -63,7 +62,7 @@ inline ExecuteEventsResult execute_events(
     session_reactor.set_current_time(tvtime());
     // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
     timeval tv =  timeval{0,0} + timeout;
-    if ((!enable_graphics || graphic_events_.is_empty()) && front_events_.is_empty()) 
+    if (!enable_graphics || graphic_events_.is_empty()) 
     {
         auto update_tv = [&](timeval const& tv2){
             if (tv2.tv_sec >= 0) {
@@ -108,7 +107,6 @@ inline ExecuteEventsResult execute_events(
     }
 
     if (num) {
-        front_events_.exec_action(callback);
         auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
         graphic_events_.exec_action(front);
         graphic_fd_events_.exec_action(fd_isset, front);

@@ -101,7 +101,6 @@ public:
     GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
     SesmanEventContainer & sesman_events_;
-    CallbackEventContainer front_events_;
 
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
@@ -313,7 +312,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_, this->graphic_timer_events_, this->front_events_, EnableGraphics{true},
+            timeout, this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_, this->graphic_timer_events_, EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));

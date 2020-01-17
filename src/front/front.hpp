@@ -596,13 +596,20 @@ private:
 
     SessionReactor& session_reactor;
     TimerContainer& timer_events_;
-    CallbackEventContainer & front_events_;
     TimerPtr handshake_timeout;
-    CallbackEventPtr incoming_event;
     TimerPtr capture_timer;
     TimerPtr flow_control_timer;
 
 public:
+
+    bool front_must_notify_resize = false;
+
+    void notify_resize(Callback & cb)
+    {
+        cb.refresh(Rect(0, 0, this->client_info.screen_info.width, this->client_info.screen_info.height));
+        front_must_notify_resize = false;
+    }
+
     bool ignore_rdesktop_bogus_clip = false;
 
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
@@ -656,7 +663,6 @@ public:
 public:
     Front( SessionReactor& session_reactor
          , TimerContainer& timer_events_
-         , CallbackEventContainer & front_events_
          , Transport & trans
          , Random & gen
          , Inifile & ini
@@ -684,7 +690,6 @@ public:
     , report_message(report_message)
     , session_reactor(session_reactor)
     , timer_events_(timer_events_)
-    , front_events_(front_events_)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
              (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
@@ -769,6 +774,7 @@ public:
 
     ResizeResult server_resize(ScreenInfo screen_server, Callback& cb) override
     {
+        LOG(LOG_INFO, "server_resize");
         ResizeResult res = ResizeResult::no_need;
 
         this->mod_bpp = screen_server.bpp;
@@ -831,10 +837,7 @@ public:
             }
 
             if (this->client_info.remote_program) {
-                this->incoming_event = this->front_events_.create_action_executor(this->session_reactor, std::ref(*this))
-                .on_action(jln::one_shot([](Callback& cb, Front& front){
-                    cb.refresh(Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
-                }));
+                this->front_must_notify_resize = true;
                 res = ResizeResult::remoteapp;
             }
         }
