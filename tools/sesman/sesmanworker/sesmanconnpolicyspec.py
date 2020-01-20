@@ -15,7 +15,7 @@ cp_spec = {
     u'mod_rdp:enable_kerberos': ('enable_kerberos', False),
     u'mod_rdp:tls_min_level': ('tls_min_level', 0),
     u'mod_rdp:tls_max_level': ('tls_max_level', 0),
-    u'mod_rdp:cipher_string': ('cipher_string', u''),
+    u'mod_rdp:cipher_string': ('cipher_string', u'ALL'),
     u'mod_rdp:show_common_cipher_list': ('show_common_cipher_list', False),
     u'mod_rdp:server_redirection_support': ('server_redirection', False),
     u'mod_rdp:load_balance_info': ('load_balance_info', u''),
@@ -82,7 +82,7 @@ cp_spec = {
     u'video:disable_keyboard_log': ('disable_keyboard_log', 1),
   },
   'vnc': {
-    u'mod_vnc:server_is_apple': ('server_is_apple', False),
+    u'mod_vnc:server_is_macos': ('server_is_macos', False),
     u'mod_vnc:server_unix_alt': ('server_unix_alt', False),
     u'mod_vnc:support_cursor_pseudo_encoding': ('support_cursor_pseudo_encoding', True),
   },

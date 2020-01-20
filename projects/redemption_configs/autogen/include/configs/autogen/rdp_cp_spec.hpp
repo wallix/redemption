@@ -55,7 +55,7 @@ tls_min_level = integer(min=0, default=0)
 tls_max_level = integer(min=0, default=0)
 
 # TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers.
-cipher_string = string(default='')
+cipher_string = string(default='ALL')
 
 # Show common cipher list supported by client and server
 show_common_cipher_list = boolean(default=False)

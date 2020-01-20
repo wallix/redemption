@@ -808,7 +808,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
-#server_is_apple = 0
+#server_is_macos = 0
 
 # value: 0 or 1
 #_hidden

@@ -96,7 +96,7 @@ constexpr array_view_const_char const authstr[] = {
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,
     "vnc_bogus_clipboard_infinite_loop"_av,
-    "mod_vnc:server_is_apple"_av,
+    "mod_vnc:server_is_macos"_av,
     "mod_vnc:server_unix_alt"_av,
     "mod_vnc:support_cursor_pseudo_encoding"_av,
     "file_verification:enable_up"_av,
