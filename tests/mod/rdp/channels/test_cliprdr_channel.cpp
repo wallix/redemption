@@ -358,6 +358,12 @@ struct Buffer
     }
 };
 
+namespace
+{
+    using namespace std::string_view_literals;
+    inline constexpr auto fdx_basename = "sid,blabla.fdx"sv;
+}
+
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 {
     struct ReportMessage : NullReportMessage
@@ -414,7 +420,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             FdxCapture fdx = FdxCapture{
                 record_path.dirname().string(),
                 hash_path.dirname().string(),
-                sid, -1, cctx, rnd, fstat,
+                fdx_basename, sid, -1, cctx, rnd, fstat,
                 ReportError()};
         };
 
@@ -770,10 +776,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             }
         }
 
-        if (fdx_ctx && d.always_file_record) {
-            auto basename = str_concat(sid, ".fdx");
-            (void)fdx_ctx->fdx_hash_path.add_file(basename);
-            auto fdx_path = fdx_ctx->fdx_record_path.add_file(basename);
+        if (fdx_ctx) {
+            (void)fdx_ctx->hash_path.add_file(fdx_basename);
+            auto fdx_path = fdx_ctx->record_path.add_file(fdx_basename);
 
             OutCryptoTransport::HashArray qhash;
             OutCryptoTransport::HashArray fhash;
@@ -781,17 +786,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
             RED_CHECK_WORKSPACE(fdx_ctx->wd);
 
-            std::string file_content = RED_CHECK_GET_FILE_CONTENTS(fdx_path);
-            bytes_view av = file_content;
+            if (d.always_file_record) {
+                std::string file_content = RED_CHECK_GET_FILE_CONTENTS(fdx_path);
+                bytes_view av = file_content;
 
-            RED_CHECK(av ==
-                "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00,\x03\x00\x18\x00""abcmy_session_id,000001.tfl\xd1\xb9\xc9"
-                "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
-                "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
-        }
-        else if (fdx_ctx) {
-            RED_CHECK_WORKSPACE(fdx_ctx->wd);
+                RED_CHECK(av ==
+                    "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "\x00\x00,\x03\x00\x18\x00""abcmy_session_id,000001.tfl\xd1\xb9\xc9"
+                    "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
+                    "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
+            }
         }
     }
 }
