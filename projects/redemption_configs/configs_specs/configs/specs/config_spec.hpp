@@ -84,6 +84,7 @@ void config_spec_definition(Writer && W)
             "mod_replay",
             "ocr",
             "video",
+            "capture",
             "crypto",
             "websocket",
             "debug",
@@ -566,6 +567,11 @@ void config_spec_definition(Writer && W)
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update.\nNote: Useless with mpv and mplayer."}, set(false));
+    });
+
+    W.section("capture", [&]
+    {
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "record_filebase", desc{"basename without extension"});
     });
 
     W.section("crypto", [&]

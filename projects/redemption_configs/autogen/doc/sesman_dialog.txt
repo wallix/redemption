@@ -232,6 +232,9 @@ cfg::video::disable_keyboard_log ⇐ video:disable_keyboard_log   [KeyboardLogFl
     Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::video::rt_display ⇐ rt_display   [bool]
 
+cfg::capture::record_filebase ⇐ record_filebase   [std::string]
+    basename without extension
+
 cfg::crypto::key0 ⇐ encryption_key   [std::array<unsigned char, 32>]
 cfg::crypto::key1 ⇐ sign_key   [std::array<unsigned char, 32>]
 

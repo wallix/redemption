@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(188);
+constexpr authid_t MAX_AUTHID = authid_t(189);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -111,6 +111,7 @@ constexpr array_view_const_char const authstr[] = {
     "record_path"_av,
     "video:disable_keyboard_log"_av,
     "rt_display"_av,
+    "record_filebase"_av,
     "encryption_key"_av,
     "sign_key"_av,
     "allow_resize_hosted_desktop"_av,

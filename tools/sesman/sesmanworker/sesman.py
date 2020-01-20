@@ -1526,6 +1526,7 @@ class Sesman():
                     uname,
                     start_time
                 )
+                kv['record_filebase'] = self.record_filebase
                 Logger().info(u"Session will be recorded in %s" % self.record_filebase)
                 try:
                     _status, _error = self.create_record_path_directory(rec_path)

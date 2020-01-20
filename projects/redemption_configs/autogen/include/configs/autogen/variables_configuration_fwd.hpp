@@ -277,6 +277,10 @@ namespace cfg {
         struct play_video_with_corrupted_bitmap;
     };
 
+    struct capture {
+        struct record_filebase;
+    };
+
     struct crypto {
         struct key0;
         struct key1;

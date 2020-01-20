@@ -468,9 +468,11 @@ void ModuleManager::create_mod_rdp(
                     );
                     int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
                     auto const& session_id = mm.ini.get<cfg::context::session_id>();
+                    auto const& record_filebase = mm.ini.get<cfg::capture::record_filebase>();
 
                     this->fdx_capture = std::make_unique<FdxCapture>(
                         capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
+                        str_concat(record_filebase, ".fdx"_av),
                         session_id, groupid, mm.cctx, mm.gen, this->fstat,
                         /* TODO should be a log (siem?)*/
                         ReportError());

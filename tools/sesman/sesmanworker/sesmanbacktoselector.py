@@ -25,6 +25,7 @@ back_to_selector_default_sent = {
   u'rd_shadow_type': u'',
   u'rd_shadow_userdata': u'',
   u'rec_path': u'',
+  u'record_filebase': u'',
   u'reporting': u'',
   u'rt_display': False,
   u'rt_ready': False,

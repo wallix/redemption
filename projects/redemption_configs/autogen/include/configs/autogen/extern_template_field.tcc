@@ -98,6 +98,7 @@ template class Inifile::Field<cfg::video::record_tmp_path>;
 template class Inifile::Field<cfg::video::record_path>;
 template class Inifile::Field<cfg::video::disable_keyboard_log>;
 template class Inifile::Field<cfg::video::rt_display>;
+template class Inifile::Field<cfg::capture::record_filebase>;
 template class Inifile::Field<cfg::crypto::key0>;
 template class Inifile::Field<cfg::crypto::key1>;
 template class Inifile::Field<cfg::remote_program::allow_resize_hosted_desktop>;
