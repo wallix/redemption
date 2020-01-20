@@ -21,7 +21,7 @@
       "name": "vnc",
       "members": [
         {
-          "name": "server_is_apple",
+          "name": "server_is_macos",
           "type": "bool",
           "default": false,
           "description": ""

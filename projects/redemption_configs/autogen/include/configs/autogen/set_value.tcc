@@ -1259,10 +1259,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "server_is_apple")) {
+        else if (0 == strcmp(key, "server_is_macos")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_vnc::server_is_apple&>(this->variables).value,
+                static_cast<cfg::mod_vnc::server_is_macos&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

@@ -21,7 +21,7 @@ vault_transformation_rule = string(default='')
 
 [vnc]
 
-server_is_apple = boolean(default=False)
+server_is_macos = boolean(default=False)
 
 server_unix_alt = boolean(default=False)
 

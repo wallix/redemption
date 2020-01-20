@@ -196,7 +196,7 @@ namespace cfg {
         struct encodings;
         struct server_clipboard_encoding_type;
         struct bogus_clipboard_infinite_loop;
-        struct server_is_apple;
+        struct server_is_macos;
         struct server_unix_alt;
         struct support_cursor_pseudo_encoding;
     };

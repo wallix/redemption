@@ -682,7 +682,7 @@ server_clipboard_encoding_type = option('utf-8', 'latin1', default='latin1')
 bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
 #_hidden
-server_is_apple = boolean(default=False)
+server_is_macos = boolean(default=False)
 
 #_hidden
 server_unix_alt = boolean(default=False)

@@ -83,7 +83,7 @@ template class Inifile::Field<cfg::mod_vnc::clipboard_up>;
 template class Inifile::Field<cfg::mod_vnc::clipboard_down>;
 template class Inifile::Field<cfg::mod_vnc::server_clipboard_encoding_type>;
 template class Inifile::Field<cfg::mod_vnc::bogus_clipboard_infinite_loop>;
-template class Inifile::Field<cfg::mod_vnc::server_is_apple>;
+template class Inifile::Field<cfg::mod_vnc::server_is_macos>;
 template class Inifile::Field<cfg::mod_vnc::server_unix_alt>;
 template class Inifile::Field<cfg::mod_vnc::support_cursor_pseudo_encoding>;
 template class Inifile::Field<cfg::file_verification::enable_up>;

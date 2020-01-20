@@ -1295,7 +1295,7 @@ namespace cfg {
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:cipher_string <br/>
-    /// value{} <br/>
+    /// value = "ALL" <br/>
     struct mod_rdp::cipher_string {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1307,7 +1307,7 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value{};
+        type value = "ALL";
     };
     /// Show common cipher list supported by client and server <br/>
     /// type: bool <br/>
@@ -2641,13 +2641,13 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
-    /// sesman::name: mod_vnc:server_is_apple <br/>
+    /// sesman::name: mod_vnc:server_is_macos <br/>
     /// value{false} <br/>
-    struct mod_vnc::server_is_apple {
+    struct mod_vnc::server_is_macos {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "mod_vnc";
-        static constexpr char const * name = "server_is_apple";
+        static constexpr char const * name = "server_is_macos";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(85);
@@ -5425,7 +5425,7 @@ struct mod_vnc
 , cfg::mod_vnc::encodings
 , cfg::mod_vnc::server_clipboard_encoding_type
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
-, cfg::mod_vnc::server_is_apple
+, cfg::mod_vnc::server_is_macos
 , cfg::mod_vnc::server_unix_alt
 , cfg::mod_vnc::support_cursor_pseudo_encoding
 { static constexpr bool is_section = true; };
@@ -5755,7 +5755,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
-, cfg::mod_vnc::server_is_apple
+, cfg::mod_vnc::server_is_macos
 , cfg::mod_vnc::server_unix_alt
 , cfg::mod_vnc::support_cursor_pseudo_encoding
 , cfg::file_verification::enable_up

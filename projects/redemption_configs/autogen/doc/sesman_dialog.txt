@@ -195,7 +195,7 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loo
       0: delayed
       1: duplicated
       2: continued
-cfg::mod_vnc::server_is_apple ⇐ mod_vnc:server_is_apple   [bool]
+cfg::mod_vnc::server_is_macos ⇐ mod_vnc:server_is_macos   [bool]
 cfg::mod_vnc::server_unix_alt ⇐ mod_vnc:server_unix_alt   [bool]
 cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_encoding   [bool]
 

@@ -309,7 +309,7 @@ void config_spec_definition(Writer && W)
         }, set(false));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "cipher_string", desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."});
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "cipher_string", desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."}, set("ALL"));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the mod side."}, set(true));
@@ -499,7 +499,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<VncBogusClipboardInfiniteLoop>(), "bogus_clipboard_infinite_loop", sesman::name{"vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed));
 
-        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_is_apple", set(false));
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_is_macos", set(false));
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_unix_alt", set(false));
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "support_cursor_pseudo_encoding", set(true));
