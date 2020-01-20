@@ -131,24 +131,28 @@ void mod_rdp::init_negociate_event_(
         return er.to_result();
     };
 
-    this->fd_event = this->graphic_fd_events_.create_top_executor(this->session_reactor, this->trans.get_fd(), std::make_unique<PrivateRdpNegociation>(
-        open_session_timeout, program, directory,
-        this->channels.channels_authorizations, this->channels.mod_channel_list,
-        this->channels.auth_channel, this->channels.checkout_channel,
-        this->decrypt, this->encrypt, this->logon_info,
-        this->channels.enable_auth_channel,
-        this->trans, this->front, info, this->redir_info,
-        gen, timeobj, mod_rdp_params, this->report_message, this->license_store,
-#ifndef __EMSCRIPTEN__
-        this->channels.drive.file_system_drive_manager.has_managed_drive()
-        || this->channels.session_probe.enable_session_probe,
-        this->channels.remote_app.convert_remoteapp_to_desktop,
-#else
-        false,
-        false,
-#endif
-        tls_client_params
-    ))
+    std::unique_ptr<PrivateRdpNegociation> private_rdp_negociation = 
+                 std::make_unique<PrivateRdpNegociation>(
+                    open_session_timeout, program, directory,
+                    this->channels.channels_authorizations, this->channels.mod_channel_list,
+                    this->channels.auth_channel, this->channels.checkout_channel,
+                    this->decrypt, this->encrypt, this->logon_info,
+                    this->channels.enable_auth_channel,
+                    this->trans, this->front, info, this->redir_info,
+                    gen, timeobj, mod_rdp_params, this->report_message, this->license_store,
+            #ifndef __EMSCRIPTEN__
+                    this->channels.drive.file_system_drive_manager.has_managed_drive()
+                    || this->channels.session_probe.enable_session_probe,
+                    this->channels.remote_app.convert_remoteapp_to_desktop,
+            #else
+                    false,
+                    false,
+            #endif
+                    tls_client_params
+                );
+
+    this->fd_event = this->graphic_fd_events_.create_top_executor(this->session_reactor,
+                        this->trans.get_fd(), std::move(private_rdp_negociation))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
     .on_action(jln::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
