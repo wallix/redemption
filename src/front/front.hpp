@@ -1292,6 +1292,15 @@ public:
                         LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
                                      " %zu bytes remains", new_x224_stream.get_capacity() - x224._header_size);
                     }
+
+                    if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED) {
+                        LOG(LOG_INFO, "Front::incoming: Client requires Restricted Administration mode");
+                        this->client_info.restricted_admin_mode = true;
+                    }
+                    else {
+                        this->client_info.restricted_admin_mode = false;
+                    }
+
                     this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
                 }
 
@@ -1490,9 +1499,14 @@ public:
                         {
                             GCC::UserData::CSCluster cs_cluster;
                             cs_cluster.recv(f.payload);
-                            this->client_info.console_session =
-                                (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID))
-                                && (0 == cs_cluster.redirectedSessionID);
+                            if (   (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID))
+                                && (0 == cs_cluster.redirectedSessionID)) {
+                                LOG(LOG_INFO, "Front::incoming: Client requires session (Console) for administration");
+                                this->client_info.console_session = true;
+                            }
+                            else {
+                                this->client_info.console_session = false;
+                            }
                             if (bool(this->verbose & Verbose::basic_trace)) {
                                 cs_cluster.log("Front::incoming: Receiving from Client");
                             }
