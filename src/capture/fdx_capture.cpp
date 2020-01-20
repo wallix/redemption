@@ -66,15 +66,13 @@ std::string TflSuffixGenerator::name_at(uint64_t i)
 FdxNameGenerator::FdxNameGenerator(
     std::string_view record_path, std::string_view hash_path, std::string_view sid)
 {
-    constexpr array_view_const_char fdx_suffix = ".fdx"_av;
-
-    str_append(this->record_path, record_path, '/', sid, '/', sid, fdx_suffix);
+    str_append(this->record_path, record_path, '/', sid, '/', sid);
     str_append(this->hash_path, hash_path,
         array_view(this->record_path).drop_front(record_path.size()));
 
-    this->pos_end_record_suffix = this->record_path.size() - fdx_suffix.size();
-    this->pos_end_hash_suffix = this->hash_path.size() - fdx_suffix.size();
-    this->pos_start_filename = this->pos_end_record_suffix - sid.size();
+    this->pos_end_record_suffix = checked_int(this->record_path.size());
+    this->pos_end_hash_suffix = checked_int(this->hash_path.size());
+    this->pos_start_filename = checked_int(this->pos_end_record_suffix - sid.size());
 }
 
 void FdxNameGenerator::next_tfl()
@@ -97,8 +95,9 @@ std::string_view FdxNameGenerator::get_current_filename() const noexcept
 
 
 FdxCapture::FdxCapture(
-    std::string_view record_path, std::string_view hash_path, std::string_view sid, int groupid,
-    CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
+    std::string_view record_path, std::string_view hash_path,
+    std::string_view fdx_basename, std::string_view sid,
+    int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
 : name_generator(record_path, hash_path, sid)
 , cctx(cctx)
 , rnd(rnd)
@@ -115,6 +114,7 @@ FdxCapture::FdxCapture(
 
     // create directory
     for (std::string const* path : {&record_fdx_path, &hash_fdx_path}) {
+        str_assign(directory, *path, '/', fdx_basename);
         directory.assign(path->begin(), path->begin() + (path->size() - fdx_basename_len));
 
         if (recursive_create_directory(directory.data(), S_IRWXU | S_IRGRP | S_IXGRP, this->groupid) != 0) {
@@ -125,15 +125,11 @@ FdxCapture::FdxCapture(
         }
     }
 
-    // open fdx file
-    bytes_view derivator = array_view(record_fdx_path)
-        .last(fdx_basename_len);
-
     this->out_crypto_transport.open(
-        record_fdx_path.c_str(),
-        hash_fdx_path.c_str(),
+        str_concat(record_path, '/', fdx_basename).c_str(),
+        str_concat(hash_path, '/', fdx_basename).c_str(),
         this->groupid,
-        derivator);
+        /*derivator=*/fdx_basename);
 
     this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
 }

@@ -34,10 +34,12 @@ RED_AUTO_TEST_CASE(tfl_suffix_genarator)
 {
     TflSuffixGenerator gen;
 
+    // 6 digits
     RED_TEST(gen.next() == ",000001.tfl");
     RED_TEST(gen.next() == ",000002.tfl");
     RED_TEST(gen.name_at(99999) == ",099999.tfl");
     RED_TEST(gen.name_at(999999) == ",999999.tfl");
+    // 7 digits
     RED_TEST(gen.name_at(1000000) == ",1000000.tfl");
 }
 
@@ -51,9 +53,9 @@ RED_AUTO_TEST_CASE(fdx_name_generator)
 
     FdxNameGenerator gen(MY_RECORD_PATH, MY_HASH_PATH, MY_SID);
 
-    RED_TEST(gen.get_current_filename() == MY_SID ".fdx");
-    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID ".fdx");
-    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID ".fdx");
+    RED_TEST(gen.get_current_filename() == MY_SID);
+    RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID);
+    RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID);
 
     gen.next_tfl();
 
@@ -74,15 +76,14 @@ RED_AUTO_TEST_CASE(fdx_name_generator)
 #undef MY_SID
 }
 
-RED_AUTO_TEST_CASE_WD(fdx_capture_not_fdx, wd)
+RED_AUTO_TEST_CASE_WD(fdx_capture_empty_fdx, wd)
 {
-    (void)wd;
-
     using namespace std::string_view_literals;
 
     auto record_path = wd.create_subdirectory("record");
     auto hash_path = wd.create_subdirectory("hash");
     auto sid = "my_session_id"sv;
+    auto fdx_basename = "sid,blabla.fdx"sv;
 
     CryptoContext cctx;
     LCGRandom rnd;
@@ -91,14 +92,18 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_not_fdx, wd)
     FdxCapture fdx_capture(
         record_path.dirname().string(),
         hash_path.dirname().string(),
-        sid, -1, cctx, rnd, fstat,
+        fdx_basename, sid, -1, cctx, rnd, fstat,
         ReportError());
 
-    auto fdx_record_path = record_path.create_subdirectory(sid);
-    auto fdx_hash_path = hash_path.create_subdirectory(sid);
+    (void)record_path.create_subdirectory(sid);
+    (void)hash_path.create_subdirectory(sid);
 
-    (void)fdx_record_path.add_file(str_concat(sid, ".fdx"));
-    (void)fdx_hash_path.add_file(str_concat(sid, ".fdx"));
+    OutCryptoTransport::HashArray qhash;
+    OutCryptoTransport::HashArray fhash;
+    fdx_capture.close(qhash, fhash);
+
+    RED_CHECK_FILE_CONTENTS(record_path.add_file(fdx_basename), "v3\n"sv);
+    (void)hash_path.add_file(fdx_basename);
 }
 
 RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
@@ -109,6 +114,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     auto hash_path = wd.create_subdirectory("hash");
 
     auto sid = "my_session_id"sv;
+    auto fdx_basename = "sid,blabla.fdx"sv;
 
     CryptoContext cctx;
     LCGRandom rnd;
@@ -131,7 +137,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     FdxCapture fdx_capture(
         record_path.dirname().string(),
         hash_path.dirname().string(),
-        sid, -1, cctx, rnd, fstat,
+        fdx_basename, sid, -1, cctx, rnd, fstat,
         ReportError());
 
     auto sig1 = Mwrm3::Sha256Signature{"abcdefghijabcdefghijabcdefghijab"_av};
@@ -183,7 +189,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     auto fdx_record_path = record_path.create_subdirectory(sid);
     auto fdx_hash_path = hash_path.create_subdirectory(sid);
 
-    auto fdx_filepath = fdx_record_path.add_file(str_concat(sid, ".fdx"));
+    auto fdx_filepath = record_path.add_file(fdx_basename);
     std::string file_content = RED_REQUIRE_GET_FILE_CONTENTS(fdx_filepath);
 
     RED_TEST(bytes_view(file_content) ==
@@ -198,8 +204,8 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
         "\x00\x05\x00\x00\x00\x00\x00\x00\x00T\x05\x00\x18\x00""file6my_session_id,"
         "000006.tflABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
 
-    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ".fdx")), str_concat(
-        "v2\n\n\nmy_session_id.fdx "sv,
+    RED_CHECK_FILE_CONTENTS(hash_path.add_file(fdx_basename), str_concat(
+        "v2\n\n\nsid,blabla.fdx "sv,
         std::to_string(file_content.size()),
         " 1 2 3 4 5 12345678 12345678\n"sv));
 
@@ -229,6 +235,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
     auto hash_path = wd.create_subdirectory("hash");
 
     auto sid = "my_session_id"sv;
+    auto fdx_basename = "sid,blabla.fdx"sv;
 
     CryptoContext cctx;
 
@@ -252,7 +259,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
     FdxCapture fdx_capture(
         record_path.dirname().string(),
         hash_path.dirname().string(),
-        sid, -1, cctx, rnd, fstat,
+        fdx_basename, sid, -1, cctx, rnd, fstat,
         ReportError());
 
     auto sig1 = Mwrm3::Sha256Signature{"abcdefghijabcdefghijabcdefghijab"_av};
@@ -275,10 +282,10 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
     auto fdx_hash_path = hash_path.create_subdirectory(sid);
 
     (void)fdx_hash_path.add_file(str_concat(sid, ",000001.tfl"));
-    (void)fdx_hash_path.add_file(str_concat(sid, ".fdx"));
+    (void)hash_path.add_file(fdx_basename);
 
     std::string file_content = RED_REQUIRE_GET_FILE_CONTENTS(
-        fdx_record_path.add_file(str_concat(sid, ".fdx")));
+        record_path.add_file(fdx_basename));
 
     RED_REQUIRE(file_content.size() > 4);
     RED_REQUIRE(array_view(file_content).first(4) == "WCFM"sv);
