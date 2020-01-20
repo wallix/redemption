@@ -93,6 +93,12 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_not_fdx, wd)
         hash_path.dirname().string(),
         sid, -1, cctx, rnd, fstat,
         ReportError());
+
+    auto fdx_record_path = record_path.create_subdirectory(sid);
+    auto fdx_hash_path = hash_path.create_subdirectory(sid);
+
+    (void)fdx_record_path.add_file(str_concat(sid, ".fdx"));
+    (void)fdx_hash_path.add_file(str_concat(sid, ".fdx"));
 }
 
 RED_AUTO_TEST_CASE_WD(fdx_capture, wd)

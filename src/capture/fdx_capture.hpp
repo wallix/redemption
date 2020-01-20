@@ -22,11 +22,14 @@
 
 #include "core/report_error.hpp"
 #include "capture/mwrm3.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include <vector>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <memory>
 
 #include <cstdint>
 
@@ -50,10 +53,6 @@ private:
     uint64_t idx = 0;
 };
 
-
-#include "transport/crypto_transport.hpp"
-#include <utility>
-#include <memory>
 
 struct FdxNameGenerator
 {
@@ -79,6 +78,7 @@ private:
     uint16_t pos_end_hash_suffix;
     TflSuffixGenerator tfl_suffix_generator;
 };
+
 
 struct FdxCapture
 {
@@ -112,13 +112,8 @@ struct FdxCapture
 
     void close(OutCryptoTransport::HashArray & qhash, OutCryptoTransport::HashArray & fhash);
 
-    bool is_open() const noexcept;
-
 private:
     friend TflFile;
-
-    void _open_fdx();
-    void _create_dir();
 
     FdxNameGenerator name_generator;
 
@@ -128,9 +123,5 @@ private:
     ReportError report_error;
     int groupid;
 
-    std::optional<OutCryptoTransport> out_crypto_transport;
-
-    long fdx_basename_len;
-    std::string record_fdx_path;
-    std::string hash_fdx_path;
+    OutCryptoTransport out_crypto_transport;
 };
