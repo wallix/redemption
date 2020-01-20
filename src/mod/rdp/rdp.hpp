@@ -130,6 +130,7 @@ struct FileValidatorService;
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
+#include "acl/sesman.hpp"
 
 #include <cstdlib>
 #include <deque>
@@ -1911,6 +1912,7 @@ class mod_rdp : public mod_api, public rdp_api
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     SesmanEventContainer & sesman_events_;
+    SesmanInterface & sesman;
     GraphicFdPtr fd_event;
 
 #ifndef __EMSCRIPTEN__
@@ -1985,6 +1987,7 @@ public:
       , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
       , SesmanEventContainer & sesman_events_
+      , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info
@@ -2054,6 +2057,7 @@ public:
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman_events_(sesman_events_)
+        , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor, fd_events_, graphic_fd_events_, timer_events_)
         , lang(mod_rdp_params.lang)

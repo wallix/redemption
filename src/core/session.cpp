@@ -499,7 +499,7 @@ class Session
     }
 
 
-    bool front_close_box(Select& ioswitch, SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, ModWrapper & mod_wrapper, Front & front, SesmanInterface & acl_cb)
+    bool front_close_box(Select& ioswitch, SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, ModWrapper & mod_wrapper, Front & front, SesmanInterface & sesman)
     {
         bool run_session = true;
         try {
@@ -588,7 +588,7 @@ class Session
                               TimerContainer& timer_events_,
                               GraphicEventContainer& graphic_events_,
                               GraphicTimerContainer graphic_timer_events_, 
-                              SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & acl_cb)
+                              SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & sesman)
     {
         try {
             auto const end_tv = session_reactor.get_current_time();
@@ -735,7 +735,7 @@ class Session
     }
 
 
-    void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & acl_cb)
+    void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & sesman)
     {
         if (front.front_must_notify_resize) {
             front.notify_resize(mod_wrapper.get_callback());
@@ -765,7 +765,7 @@ class Session
         {
             bytes_view tpdu = front.rbuf.current_pdu_buffer();
             uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-            front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback(), acl_cb);
+            front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback(), sesman);
         }
     }
 
@@ -804,7 +804,7 @@ public:
         Front front(session_reactor, timer_events_, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>(), mem3blt_support
         );
-        SesmanInterface acl_cb(ini);
+        SesmanInterface sesman(ini);
         std::unique_ptr<Acl> acl;
 
         try {
@@ -823,7 +823,7 @@ public:
             ModFactory mod_factory(mod_wrapper, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
 
-            ModuleManager mm(end_session_warning, mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
+            ModuleManager mm(end_session_warning, mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, sesman, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             if (ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -999,7 +999,7 @@ public:
 
                 try {
                     if (front_is_set){
-                        this->front_incoming_data(front_trans, front, mod_wrapper, acl_cb);
+                        this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
                     }
                 } catch (Error const& e) {
                     // RemoteApp disconnection initiated by user
@@ -1075,10 +1075,10 @@ public:
                         }
                     }
 
-                    if (!acl_cb.auth_info_sent){
+                    if (!sesman.auth_info_sent){
                         LOG(LOG_INFO, "Sending ACL auth_info");
-                        acl_cb.set_acl_screen_info();
-                        acl_cb.set_acl_auth_info();
+                        sesman.set_acl_screen_info();
+                        sesman.set_acl_auth_info();
                         if (this->ini.changed_field_size()) {
                             LOG(LOG_INFO, "ACL Data to send");
                             acl->acl_serial.send_acl_data();
@@ -1087,11 +1087,11 @@ public:
                     }
 
                     if (this->last_module){
-                        run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, mod_wrapper, front, acl_cb);
+                        run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, mod_wrapper, front, sesman);
                         continue;
                     }
 
-                    run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, acl_cb);
+                    run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, sesman);
                 }
                 break;
                 } // switch

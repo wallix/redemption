@@ -804,9 +804,6 @@ public:
                     this->client_info.screen_info.width = screen_server.width;
                     this->client_info.screen_info.height = screen_server.height;
 
-                    this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
-                    this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
-
                     // TODO Why are we not calling this->flush() instead ? Looks dubious.
                     // send buffered orders
                     this->orders.graphics_update_pdu().sync();

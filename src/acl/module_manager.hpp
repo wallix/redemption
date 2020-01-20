@@ -86,6 +86,7 @@ public:
     TimerContainer& timer_events_;
     GraphicEventContainer& graphic_events_;
     SesmanEventContainer & sesman_events_;
+    SesmanInterface & sesman;
     CryptoContext & cctx;
 
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
@@ -126,6 +127,7 @@ public:
                   TimerContainer& timer_events_,
                   GraphicEventContainer& graphic_events_,
                   SesmanEventContainer & sesman_events_,
+                  SesmanInterface & sesman,
                   FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : mod_factory(mod_factory)
         , ini(ini)
@@ -135,6 +137,7 @@ public:
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman_events_(sesman_events_)
+        , sesman(sesman)
         , cctx(cctx)
         , front(front)
         , keymap(keymap)

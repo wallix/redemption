@@ -33,11 +33,15 @@
 struct SesmanInterface
 {
     bool screen_info_sent = false;
-    bool auth_info_sent = false;
     ScreenInfo screen_info;
+
+    bool auth_info_sent = false;
     std::string username;
     std::string domain;
     std::string password;
+    
+    bool server_cert_sent = false;
+    std::string blob_server_cert;
     Inifile & ini;
 
     SesmanInterface(Inifile & ini) : ini(ini)
@@ -50,14 +54,6 @@ struct SesmanInterface
         this->screen_info = screen_info;
     }
 
-    void set_auth_info(std::string username, std::string domain, std::string password)
-    {
-        this->auth_info_sent = false;
-        this->username = username;
-        this->domain = domain;
-        this->password = password;
-    }
-
     void set_acl_screen_info(){
         if (!this->screen_info_sent) {
             this->ini.set_acl<cfg::context::opt_width>(this->screen_info.width);
@@ -65,6 +61,14 @@ struct SesmanInterface
             this->ini.set_acl<cfg::context::opt_bpp>(safe_int(screen_info.bpp));
             this->screen_info_sent = true;
         }
+    }
+
+    void set_auth_info(std::string username, std::string domain, std::string password)
+    {
+        this->auth_info_sent = false;
+        this->username = username;
+        this->domain = domain;
+        this->password = password;
     }
 
     void set_acl_auth_info(){
@@ -86,6 +90,20 @@ struct SesmanInterface
                 this->ini.set_acl<cfg::context::password>(password);
             }
             this->auth_info_sent = true;
+        }
+    }
+
+    void set_server_cert(std::string blob_str){
+        this->blob_server_cert = blob_str;
+        this->server_cert_sent = false;
+    }
+
+    void set_acl_server_cert(){
+        if (!this->server_cert_sent) {
+            this->ini.set_acl<cfg::mod_rdp::server_cert>(this->blob_server_cert);
+            this->ini.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
+            this->ini.ask<cfg::mod_rdp::server_cert_response>();
+            this->server_cert_sent = true;
         }
     }
 };

@@ -194,6 +194,7 @@ public:
       , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
       , SesmanEventContainer & sesman_events_
+      , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info
@@ -218,7 +219,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
                      
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, sesman, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -775,6 +776,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
             this->timer_events_,
             this->graphic_events_,
             this->sesman_events_,
+            this->sesman,
             drawable,
             front,
             client_info,

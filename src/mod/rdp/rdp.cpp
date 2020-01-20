@@ -131,9 +131,7 @@ void mod_rdp::init_negociate_event_(
 #ifndef __EMSCRIPTEN__
     if (enable_server_cert_external_validation) {
         LOG(LOG_INFO, "Enable server cert external validation");
-        rdp_negociation.set_cert_callback([this](
-            X509& certificate
-        ) {
+        rdp_negociation.set_cert_callback([this](X509& certificate){
             auto& result = this->private_rdp_negociation->result;
 
             if (result != CertificateResult::wait) {
@@ -148,9 +146,8 @@ void mod_rdp::init_negociate_event_(
 
             // LOG(LOG_INFO, "cert pem: %s", blob_str);
 
-            this->vars.set_acl<cfg::mod_rdp::server_cert>(blob_str);
-            this->vars.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
-            this->vars.ask<cfg::mod_rdp::server_cert_response>();
+            this->sesman.set_server_cert(blob_str);
+            this->sesman.set_acl_server_cert();
 
             this->private_rdp_negociation->sesman_event = this->sesman_events_.create_action_executor(this->session_reactor)
             .on_action([&result, this](auto ctx, Inifile& ini){
@@ -169,17 +166,13 @@ void mod_rdp::init_negociate_event_(
                     throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
                 }
 
-                this->private_rdp_negociation->graphic_event
-                = this->graphic_events_.create_action_executor(this->session_reactor)
+                this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
                 .on_action(jln::one_shot([this](gdi::GraphicApi&) {
-                    RdpNegociation& rdp_negociation = this->private_rdp_negociation->rdp_negociation;
-
-                    bool const is_finish = rdp_negociation.recv_data(this->buf);
+                    bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
                     if (is_finish) {
-                        this->negociation_result = rdp_negociation.get_result();
+                        this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
                         if (this->buf.remaining()) {
-                            this->private_rdp_negociation->graphic_event 
-                            = this->graphic_events_.create_action_executor(this->session_reactor)
+                            this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
                             .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                                 this->draw_event_impl(gd);
                             }));
@@ -201,7 +194,6 @@ void mod_rdp::init_negociate_event_(
     this->fd_event = this->graphic_fd_events_.create_top_executor(this->session_reactor, this->trans.get_fd())
     .on_exit(check_error)
     .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi&){
-        LOG(LOG_INFO, "RDP Negociation recv_data");
         bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
         // RdpNego::recv_next_data set a new fd if tls
@@ -211,32 +203,31 @@ void mod_rdp::init_negociate_event_(
         }
 
         if (!is_finish) {
-            LOG(LOG_INFO, "RDP Negociation need more data");
             return ctx.need_more_data();
         }
+        else {
+            this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+            if (this->buf.remaining()){
+                this->private_rdp_negociation->graphic_event 
+                = this->graphic_events_.create_action_executor(ctx.get_reactor())
+                .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+                    this->draw_event_impl(gd);
+                }));
+            }
 
-        this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-        if (this->buf.remaining()){
-            LOG(LOG_INFO, "RDP Negociation: buf remaining");
-            this->private_rdp_negociation->graphic_event 
-            = this->graphic_events_.create_action_executor(ctx.get_reactor())
-            .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
-                this->draw_event_impl(gd);
-            }));
-        }
-
-        // TODO replace_event()
-        return ctx.disable_timeout()
-        .replace_exit(jln::propagate_exit())
-        .replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-            LOG(LOG_INFO, "RDP Negociation reset (finished nego)");
-            this->private_rdp_negociation.reset();
-            this->draw_event(gd);
-            return ctx.replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+            // TODO replace_event()
+            return ctx.disable_timeout()
+            .replace_exit(jln::propagate_exit())
+            .replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+                LOG(LOG_INFO, "RDP Negociation reset (finished nego)");
+                this->private_rdp_negociation.reset();
                 this->draw_event(gd);
-                return ctx.need_more_data();
+                return ctx.replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+                    this->draw_event(gd);
+                    return ctx.need_more_data();
+                });
             });
-        });
+        }
     })
     .set_timeout(this->private_rdp_negociation->open_session_timeout)
     .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){

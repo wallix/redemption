@@ -101,6 +101,7 @@ public:
     GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
     SesmanEventContainer & sesman_events_;
+    SesmanInterface & sesman;
 
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
@@ -247,6 +248,7 @@ public:
                      GraphicEventContainer & graphic_events_,
                      GraphicTimerContainer & graphic_timer_events_,
                      SesmanEventContainer & sesman_events_,
+                     SesmanInterface & sesman,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
@@ -258,6 +260,7 @@ public:
         , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
         , sesman_events_(sesman_events_)
+        , sesman(sesman)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(session_reactor, timer_events_, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
@@ -444,6 +447,7 @@ public:
                   , this->timer_events_
                   , this->graphic_events_
                   , this->sesman_events_
+                  , this->sesman
                   , *this
                   , *this
                   , this->config.info

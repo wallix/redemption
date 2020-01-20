@@ -41,6 +41,7 @@
 #include "utils/redemption_info_version.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
+#include "acl/sesman.hpp"
 
 #include <iostream>
 #include <string>
@@ -146,14 +147,14 @@ int main(int argc, char** argv)
 
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
+    TimeSystem system_timeobj;
     SessionReactor session_reactor;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
-    SesmanEventContainer sesman_events_;
-    TimeSystem system_timeobj;
+
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
@@ -196,6 +197,8 @@ int main(int argc, char** argv)
     if (!ini_file.empty()) {
         configuration_load(ini.configuration_holder(), ini_file);
     }
+    SesmanEventContainer sesman_events_;
+    SesmanInterface sesman(ini);
 
     UdevRandom system_gen;
     FixedRandom lcg_gen;
@@ -283,6 +286,7 @@ int main(int argc, char** argv)
                 timer_events_,
                 graphic_events_,
                 sesman_events_,
+                sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
