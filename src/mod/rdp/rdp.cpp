@@ -130,6 +130,7 @@ void mod_rdp::init_negociate_event_(
 
 #ifndef __EMSCRIPTEN__
     if (enable_server_cert_external_validation) {
+        LOG(LOG_INFO, "Enable server cert external validation");
         rdp_negociation.set_cert_callback([this](
             X509& certificate
         ) {
@@ -194,17 +195,13 @@ void mod_rdp::init_negociate_event_(
     }
 #endif
 
-        // TODO: check why we have this ctx here instead of direct access to reactor through this
-        // if it's an underlying lifetime issue the have a potential problem
-        // (but as lifetime of reactor and containers is session wide, we should not
-        // have any problem if using a pointer)
+    LOG(LOG_INFO, "Start Negociation");
     rdp_negociation.start_negociation();
 
-    this->fd_event = this->graphic_fd_events_.create_top_executor(this->session_reactor,
-                        this->trans.get_fd())
+    this->fd_event = this->graphic_fd_events_.create_top_executor(this->session_reactor, this->trans.get_fd())
     .on_exit(check_error)
-    .on_action([this](
-        JLN_TOP_CTX ctx, gdi::GraphicApi&){
+    .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi&){
+        LOG(LOG_INFO, "RDP Negociation recv_data");
         bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
         // RdpNego::recv_next_data set a new fd if tls
@@ -214,11 +211,13 @@ void mod_rdp::init_negociate_event_(
         }
 
         if (!is_finish) {
+            LOG(LOG_INFO, "RDP Negociation need more data");
             return ctx.need_more_data();
         }
 
         this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-        if (this->buf.remaining()) {
+        if (this->buf.remaining()){
+            LOG(LOG_INFO, "RDP Negociation: buf remaining");
             this->private_rdp_negociation->graphic_event 
             = this->graphic_events_.create_action_executor(ctx.get_reactor())
             .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
@@ -230,6 +229,7 @@ void mod_rdp::init_negociate_event_(
         return ctx.disable_timeout()
         .replace_exit(jln::propagate_exit())
         .replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+            LOG(LOG_INFO, "RDP Negociation reset (finished nego)");
             this->private_rdp_negociation.reset();
             this->draw_event(gd);
             return ctx.replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){

@@ -2112,7 +2112,8 @@ public:
 
         this->init_negociate_event_(
             info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,
-            mod_rdp_params.open_session_timeout, mod_rdp_params.enable_server_cert_external_validation);
+            (mod_rdp_params.open_session_timeout==0s)?mod_rdp_params.open_session_timeout:15s,
+            mod_rdp_params.enable_server_cert_external_validation);
     }   // mod_rdp
 
 
