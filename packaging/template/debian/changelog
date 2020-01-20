@@ -1,3 +1,9 @@
+redemption (7.4.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Updated conf_spec.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 20 Jan 2020 17:17:06 +0200
+
 redemption (7.4.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * [SP][BS] Detect and block user account manipulation.
