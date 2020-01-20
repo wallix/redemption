@@ -38,6 +38,7 @@
 #include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
+#include <chrono>
 
 // Uncomment the code block below to generate testing data.
 //#include "utils/netutils.hpp"
@@ -120,7 +121,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
-    //mod_rdp_params.open_session_timeout            = 0;
+    mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = true;
@@ -232,7 +233,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
-    //mod_rdp_params.open_session_timeout            = 0;
+    mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = true;

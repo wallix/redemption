@@ -129,10 +129,35 @@ struct FileValidatorService;
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
+#include "mod/rdp/rdp_negociation.hpp"
 
 #include <cstdlib>
 #include <deque>
 #include <bitset>
+
+namespace { // anonymous namespace
+    struct PrivateRdpNegociation
+    {
+        RdpNegociation rdp_negociation;
+        GraphicEventPtr graphic_event;
+        const std::chrono::seconds open_session_timeout;
+#ifndef __EMSCRIPTEN__
+        SesmanEventPtr sesman_event;
+        CertificateResult result = CertificateResult::wait;
+#endif
+
+        template<class... Ts>
+        explicit PrivateRdpNegociation(
+            std::chrono::seconds open_session_timeout,
+            char const* program, char const* directory,
+            Ts&&... xs)
+        : rdp_negociation(static_cast<Ts&&>(xs)...)
+        , open_session_timeout(open_session_timeout)
+        {
+            this->rdp_negociation.set_program(program, directory);
+        }
+    };
+};
 
 
 #ifndef __EMSCRIPTEN__
@@ -1947,7 +1972,11 @@ class mod_rdp : public mod_api, public rdp_api
 
 public:
     using Verbose = RDPVerbose;
-
+    
+    
+    
+    std::unique_ptr<PrivateRdpNegociation> private_rdp_negociation;
+    
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
@@ -2078,9 +2107,12 @@ public:
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
 
+        gdi_clear_screen(gd, this->get_dim());
+        LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+
         this->init_negociate_event_(
             info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,
-            mod_rdp_params.open_session_timeout);
+            mod_rdp_params.open_session_timeout, mod_rdp_params.enable_server_cert_external_validation);
     }   // mod_rdp
 
 
@@ -5980,7 +6012,8 @@ private:
     void init_negociate_event_(
         const ClientInfo & info, Random & gen, TimeObj & timeobj,
         const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
-        const std::chrono::seconds open_session_timeout);
+        const std::chrono::seconds open_session_timeout,
+        bool enable_server_cert_external_validation);
 };
 
 #undef IF_ENABLE_METRICS

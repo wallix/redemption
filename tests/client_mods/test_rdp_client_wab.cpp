@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
-    //mod_rdp_params.open_session_timeout            = 0;
+    mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = false;
