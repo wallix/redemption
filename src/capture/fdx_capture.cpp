@@ -202,3 +202,8 @@ void FdxCapture::close(OutCryptoTransport::HashArray& qhash, OutCryptoTransport:
 {
     this->out_crypto_transport.close(qhash, fhash);
 }
+
+bool FdxCapture::is_open() const
+{
+    return this->out_crypto_transport.is_open();
+}

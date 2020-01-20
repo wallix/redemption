@@ -37,22 +37,8 @@
 #include <type_traits>
 #include <memory>
 
-#define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
-    do {                                                    \
-        try { expr; }                                       \
-        catch (Error const& err) {                          \
-            EXIT_ON_ERROR(err);                             \
-            error_ctx.set_error(err);                       \
-            return return_err;                              \
-        }                                                   \
-        catch (...) {                                       \
-            EXIT_ON_EXCEPTION();                            \
-            error_ctx.set_error(Error{errid});              \
-            return return_err;                              \
-        }                                                   \
-    } while (0)
-
 #define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
+
 #define CREATE_HANDLE(construct) [&]()->decltype(new construct){ \
     CHECK_NOTHROW_R(                                             \
         auto handle = new (std::nothrow) construct; /*NOLINT*/   \
@@ -709,10 +695,11 @@ struct ScytaleFdxWriterHandle
         int with_encryption, int with_checksum, const char * master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         ScytaleRandomWrapper::RandomType random_type,
-        char const * record_path, char const * hash_path, int groupid, char const * sid)
+        char const * record_path, char const * hash_path, char const * fdx_file_base,
+        int groupid, char const * sid)
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
-    , fdx_capture(record_path, hash_path, sid, groupid,
+    , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid,
         this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat, ReportError())
     {
         this->qhashhex[0] = 0;
@@ -750,7 +737,7 @@ struct ScytaleFdxWriterHandle
 
     int close()
     {
-        if (this->fdx_capture.is_open())
+        if (fdx_capture.is_open())
         {
             HashArray qhash;
             HashArray fhash;
@@ -780,25 +767,27 @@ public:
 ScytaleFdxWriterHandle * scytale_fdx_writer_new(
     int with_encryption, int with_checksum, char const* master_derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        char const * record_path, char const * hash_path, int groupid, char const * sid)
+    char const * record_path, char const * hash_path, char const * fdx_file_base,
+    int groupid, char const * sid)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
         with_encryption, with_checksum, master_derivator,
         hmac_fn, trace_fn, ScytaleRandomWrapper::UDEV,
-        record_path, hash_path, groupid, sid));
+        record_path, hash_path, fdx_file_base, groupid, sid));
 }
 
 ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
     int with_encryption, int with_checksum, char const* master_derivator,
     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        char const * record_path, char const * hash_path, int groupid, char const * sid)
+    char const * record_path, char const * hash_path, char const * fdx_file_base,
+    int groupid, char const * sid)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(ScytaleFdxWriterHandle(
         with_encryption, with_checksum, master_derivator,
         hmac_fn, trace_fn, ScytaleRandomWrapper::LCG,
-        record_path, hash_path, groupid, sid));
+        record_path, hash_path, fdx_file_base, groupid, sid));
 }
 
 ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
@@ -857,7 +846,8 @@ char const * scytale_fdx_writer_get_fhashhex(ScytaleFdxWriterHandle * handle) {
 int scytale_fdx_writer_close(ScytaleFdxWriterHandle * handle)
 {
     SCOPED_TRACE;
-    CHECK_NOTHROW(return handle->close(), ERR_TRANSPORT_CLOSED);
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW_R(return handle->close(), -1, handle->error_ctx, ERR_TRANSPORT_CLOSED);
 }
 
 int scytale_fdx_writer_delete(ScytaleFdxWriterHandle * handle)

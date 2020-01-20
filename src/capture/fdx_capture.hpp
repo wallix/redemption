@@ -110,6 +110,7 @@ struct FdxCapture
         TflFile& tfl, std::string_view original_filename,
         Mwrm3::TransferedStatus transfered_status, Mwrm3::Sha256Signature sig);
 
+    bool is_open() const;
     void close(OutCryptoTransport::HashArray & qhash, OutCryptoTransport::HashArray & fhash);
 
 private:

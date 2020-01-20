@@ -23,14 +23,14 @@
 
 extern "C"
 {
-    class ScytaleWriterHandle;
-    class ScytaleReaderHandle;
-    class ScytaleMetaReaderHandle;
-    class ScytaleKeyHandle;
+    struct ScytaleWriterHandle;
+    struct ScytaleReaderHandle;
+    struct ScytaleMetaReaderHandle;
+    struct ScytaleKeyHandle;
 
-    class ScytaleFdxWriterHandle;
-    class ScytaleTflWriterHandler;
-    class ScytaleMwrm3ReaderHandle;
+    struct ScytaleFdxWriterHandle;
+    struct ScytaleTflWriterHandler;
+    struct ScytaleMwrm3ReaderHandle;
 
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
@@ -213,19 +213,21 @@ extern "C"
     //@}
 
 
-    // Tfl
+    // Fdx / Tfl
     //@{
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new(
         int with_encryption, int with_checksum, char const* master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        char const * record_path, char const * hash_path, int groupid, char const * sid);
+        char const * record_path, char const * hash_path, char const * fdx_file_base,
+        int groupid, char const * sid);
 
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
         int with_encryption, int with_checksum, char const* master_derivator,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        char const * record_path, char const * hash_path, int groupid, char const * sid);
+        char const * record_path, char const * hash_path, char const * fdx_file_base,
+        int groupid, char const * sid);
 
     /// \param direction  Mwrm3::Direction
     REDEMPTION_LIB_EXPORT

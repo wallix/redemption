@@ -433,24 +433,25 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         Data{"encryption", true, true,
 
-            "WCFM\x01\x00\x00\x00xX\xaeR\xb0\xael\x17hZ\x13\xbd\xa0Sz\xf3X\x12{\xce\x90"
-            "\x8e\xa8\xadH@\x87""1\x80\x1f""E\xb6\x10\x00\x00\x00\xbb\xa3\xde~\xaa\xe7"
-            "b\x96s8\"\x97=\xf6\xf8JMFCW\x07\x00\x00\x00"_av,
+            "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6""5\xa4(\xfe\x8b\xed`C\xf8\x13\x18"
+            "\x0e@_PV\xa2\xe6\b\x94\x0f\xd2@\xbf\xe1\xe0\x10\x00\x00\x00\xb0""CA|H"
+            "\xbb\xb3r\xbeZ\xbf\x1e\xfas\x0e\x91MFCW\x07\x00\x00\x00"_av,
 
             "WCFM\x01\x00\x00\x00\xf8O\x14.0>"_av,
 
-            "WCFM\x01\x00\x00\x00""8\xa4\xf1Kp\xc6""5\xa4(\xfe\x8b\xed`C\xf8\x13\x18"
-            "\x0e@_PV\xa2\xe6\b\x94\x0f\xd2@\xbf\xe1\xe0`\x00\x00\x00\xef\xf7rBz\x17"
-            "\x85}\xa9\x80\x14\xe4zk\x83g\xbf\x86""A4I]\xf1""F\x12""C\x9f\xfb\xc7gH"
-            "\x0c""3\xd7\xe9'\xa0""4\xba\x93$,{(3\xc2\xd5/e\xceK\xa9\xd6\xd1\"\xc3\x11"
-            "B1 \xfb/\xf4\x92@t\x98\xe2\xc4)\x06/\xd3\xbc\x1e]d\x94\xcb\xc6\x04\xc8"
-            "d\x05uz\x06&G:\xd8\x82\x04\x9f\x86`MFCW~\x00\x00\x00"_av,
+            "WCFM\x01\x00\x00\x00\xb8l\xda\xa6\xf0\xf6""0\x8d\xa8\x16\xa6n\xe0\xc3"
+            "\xe5\xcc\x98v\xdd\xf5\xd0&t_\x88L\xc2P\xc0\xdf\xc9P`\x00\x00\x00\xf0$"
+            "\x99""H\x05""d\xac\x88\xbd\t\xaa\x84""A]\x80\xbe\xadU\xae\x1d\xe7""1"
+            "\xb0\"b\xc4\x1e\xbe\xc4\xca\xc2""F\xc2\xe0J\x03\\\xf6To\x02\\+\xb8\xea"
+            "\x83""1\x11""2\xbcw\xa4\xf8\x17\x12\xe0\x8b""A\xff\xa2\xac{\xe6\x87"
+            "\xb7(\x0f^\xb6\x85\x1d*\x85w2\xad\xed""3&\xcf\xb5\xf0""8\x15\xc6,&0"
+            "\xbe\x07^/\xdej.\xbdMFCW~\x00\x00\x00"_av,
 
             "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00""D\x00\x00\x00\x00\x00\x00"
-            "\x00\x0b\t\x00\x1b\x00""file2.txt0123456789abcdef,000002.tfl\x85\xee\x12"
-            "\xe1!(\x99\xf2\x18\xc5\xc0H%~5\xf1\x8f\xfd\x9e\x0b\xe4\xc3\xd0\xdd\xb7"
-            "\x18\x7f\x8e\xc1\xec\xa1`\x85\xee\x12\xe1!(\x99\xf2\x18\xc5\xc0H%~5\xf1"
-            "\x8f\xfd\x9e\x0b\xe4\xc3\xd0\xdd\xb7\x18\x7f\x8e\xc1\xec\xa1`"_av
+            "\x00\x0b\t\x00\x1b\x00""file2.txt0123456789abcdef,000002.tfl0\xeb""e"
+            "\x8e\xa2\x83\xc0""F\x9e""4\xffm\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16"
+            "\n\xfeP\xe3\x13\x88\xd4\xf7""0\xeb""e\x8e\xa2\x83\xc0""F\x9e""4\xffm"
+            "\xd2\xd2[\xbb""7\x8a\xf9\x03\"\xdd{\x16\n\xfeP\xe3\x13\x88\xd4\xf7"_av
         },
     })
     { WorkingDirectory wd(data.name); RED_TEST_CONTEXT("wd: " << wd.dirname()) {
@@ -461,13 +462,14 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         auto wd_record = wd.create_subdirectory("record");
 
         auto sid = "0123456789abcdef"sv;
+        auto fdx_filename = "sid,blabla.fdx"sv;
 
         auto wd_fdx_record = wd_record.create_subdirectory(sid);
         auto wd_fdx_hash = wd_hash.create_subdirectory(sid);
 
         auto* fdx = scytale_fdx_writer_new_with_test_random(
             data.has_encryption, data.has_checksum, master_derivator, hmac_fn, trace_fn,
-            wd_record.dirname(), wd_hash.dirname(), 0, sid.data());
+            wd_record.dirname(), wd_hash.dirname(), fdx_filename.data(), 0, sid.data());
 
         auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt", int(Mwrm3::Direction::Unknown));
         RED_REQUIRE(tfl);
@@ -503,9 +505,8 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_fdx_writer_delete(fdx));
 
-        auto fdx_filename = str_concat(sid, ".fdx");
-        auto fdxpath = wd_fdx_record.add_file(fdx_filename);
-        (void)wd_fdx_hash.add_file(fdx_filename);
+        auto fdxpath = wd_record.add_file(fdx_filename);
+        (void)wd_hash.add_file(fdx_filename);
 
         RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
 
@@ -540,7 +541,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             RED_TEST(content.first(std::min(content.size(), tfl2_hash_content_prefix.size())) == tfl2_hash_content_prefix);
 
             RED_TEST(readall(file2path.c_str(), fname.c_str()) == "abcdefg"_av);
-            RED_TEST(readall(fdxpath.c_str(), fdx_filename.c_str()) == data.decrypted_fdx_content);
+            RED_TEST(readall(fdxpath.c_str(), fdx_filename.data()) == data.decrypted_fdx_content);
         }
 
         RED_CHECK_WORKSPACE(wd);
