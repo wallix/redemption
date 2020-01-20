@@ -470,15 +470,75 @@ namespace redemption_unit_test__
 #ifdef __clang__
         constexpr std::size_t start_type_name = 43;
         constexpr std::size_t end_type_name = 1;
+
+        constexpr std::size_t prefix_value_name = 60;
+        constexpr char end_value_name = '>';
 #elif defined(__GNUC__)
         constexpr std::size_t start_type_name = 48;
         constexpr std::size_t end_type_name = 34;
+
+        [[maybe_unused]] constexpr std::size_t prefix_value_name = 97;
+        [[maybe_unused]] constexpr char end_value_name = ';';
 #endif
     }
 
-    array_view_const_char Enum::get_type_name(char const* s, std::size_t n) noexcept
+    std::string_view Enum::get_type_name(std::string_view s) noexcept
     {
-        return {s + start_type_name, n - start_type_name - end_type_name};
+        return {s.data() + start_type_name, s.size() - start_type_name - end_type_name};
+    }
+
+    std::string_view Enum::get_value_name(
+        long long x, std::string_view name,
+        std::string_view s0, std::string_view s1, std::string_view s2,
+        std::string_view s3, std::string_view s4, std::string_view s5,
+        std::string_view s6, std::string_view s7, std::string_view s8,
+        std::string_view s9) noexcept
+    {
+        std::string_view s;
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 9)
+        switch (x)
+        {
+            case 0: s = s0; break;
+            case 1: s = s1; break;
+            case 2: s = s2; break;
+            case 3: s = s3; break;
+            case 4: s = s4; break;
+            case 5: s = s5; break;
+            case 6: s = s6; break;
+            case 7: s = s7; break;
+            case 8: s = s8; break;
+            case 9: s = s9; break;
+            default:
+                return {};
+        }
+
+        s.remove_prefix(prefix_value_name);
+
+#ifdef __clang__
+        if ('0' <= s[0] && s[0] <= '9')
+#else
+        if ('(' == s[name.size()])
+#endif
+        {
+            return {};
+        }
+
+        s.remove_prefix(name.size());
+        auto pos = s.find(end_value_name, name.size() + 2);
+        if (pos != std::string_view::npos) {
+            s.remove_suffix(s.size() - pos);
+        }
+        else {
+            s = {};
+        }
+#else
+        (void)x;
+        (void)name;
+        (void)s0; (void)s1; (void)s2; (void)s3; (void)s4;
+        (void)s5; (void)s6; (void)s7; (void)s8; (void)s9;
+#endif
+
+        return s;
     }
 } // namespace redemption_unit_test__
 
@@ -497,14 +557,20 @@ void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::ope
 
 std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::Enum const& e)
 {
-    out.write(e.name.data(), e.name.size()) << "{";
-    if (e.is_signed) {
-        out << e.x;
+    if (e.value_name.empty()) {
+        out << e.name << "{";
+        if (e.is_signed) {
+            out << e.x;
+        }
+        else {
+            out << static_cast<unsigned long long>(e.x);
+        }
+        out << "}";
     }
     else {
-        out << static_cast<unsigned long long>(e.x);
+        out << e.value_name;
     }
-    return out << "}";
+    return out;
 }
 
 std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::BytesView const& v)
