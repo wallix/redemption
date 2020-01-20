@@ -62,7 +62,7 @@ public:
     /** @} */
 
     /** inject the buffer in the automata doing all appropriate treatments
-     * @param content input data for the parser
+     * @param input data for the parser
      * @return if the processing was successful
      */
     bool parse(array_view_const_char input);

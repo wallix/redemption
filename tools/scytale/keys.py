@@ -30,7 +30,7 @@ def get_trace_key(base, lg, resbuf, flag):
     try:
         if not proxy:
             return -1
-        name = base[:lg]
+        name = ctypes.string_at(base, lg)
         trace_key = proxy.get_trace_encryption_key(name, flag == 1)
         # print "trace_key"+str(hexdumpkey(trace_key))
         ctypes.memmove(resbuf, trace_key, 32)

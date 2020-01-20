@@ -32,9 +32,9 @@
  */
 class UltraDSM {
 	/** @brief plug-in state */
-	typedef enum {
+	enum UltraDsmState {
 		DSM_WAITING_CHALLENGE,
-	} UltraDsmState;
+	};
 
 	/** various plug-in constants */
 	enum {

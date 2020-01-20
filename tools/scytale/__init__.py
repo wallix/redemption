@@ -7,7 +7,7 @@ pathlib = 'libscytale.so'
 lib = ctypes.CDLL(pathlib)
 
 GETHMACKEY = CFUNCTYPE(c_int, c_void_p)
-GETTRACEKEY = CFUNCTYPE(c_int, c_char_p, c_int, c_void_p, c_uint)
+GETTRACEKEY = CFUNCTYPE(c_int, c_void_p, c_int, c_void_p, c_uint)
 
 get_hmac_key_func = GETHMACKEY(keys.get_hmac_key)
 get_trace_key_func = GETTRACEKEY(keys.get_trace_key)
