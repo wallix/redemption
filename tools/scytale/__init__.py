@@ -220,20 +220,22 @@ lib.scytale_key_get_derivated.argtypes = [c_void_p]
 lib.scytale_key_get_derivated.restype = c_char_p
 # @}
 
-# Tfl
+# Fdx / Tfl
 # @{
 # ScytaleFdxWriterHandle * scytale_fdx_writer_new(
 #     int with_encryption, int with_checksum, char const* master_derivator,
 #     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-#     char const * record_path, char const * hash_path, int groupid, char const * sid);
-lib.scytale_fdx_writer_new.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_int, c_char_p]
+#     char const * record_path, char const * hash_path, char const * fdx_file_base,
+#     int groupid, char const * sid);
+lib.scytale_fdx_writer_new.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_char_p, c_int, c_char_p]
 lib.scytale_fdx_writer_new.restype = c_void_p
 
 # ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
 #     int with_encryption, int with_checksum, char const* master_derivator,
 #     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-#     char const * record_path, char const * hash_path, int groupid, char const * sid);
-lib.scytale_fdx_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_int, c_char_p]
+#     char const * record_path, char const * hash_path, char const * fdx_file_base,
+#     int groupid, char const * sid);
+lib.scytale_fdx_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_char_p, c_int, c_char_p]
 lib.scytale_fdx_writer_new_with_test_random.restype = c_void_p
 
 # \param direction  Mwrm3::Direction
@@ -298,6 +300,7 @@ class CType_ScytaleMwrm3ReaderData(ctypes.Structure):
         ("data", c_void_p),
     ]
 
+# return nullptr if error or truncated file (truncated if reader is No Error + eof())
 # ScytaleMwrm3ReaderData const* scytale_mwrm3_reader_read_next(
 #     ScytaleMwrm3ReaderHandle * handle);
 lib.scytale_mwrm3_reader_read_next.argtypes = [c_void_p]
