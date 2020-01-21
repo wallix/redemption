@@ -1,3 +1,10 @@
+redemption (7.3.53%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * [Approval] Button 'Back to selector' displayed when only one target is available. (Escape Key)
+  * Fix issue 'Session (Console) for administration not working'.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 21 Jan 2020 15:46:49 +0200
+
 redemption (7.3.43%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * [Session Probe] Fix 'Can't use hostnames in outbound connection monitoring rules'.
