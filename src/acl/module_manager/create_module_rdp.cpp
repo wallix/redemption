@@ -476,6 +476,8 @@ void ModuleManager::create_mod_rdp(
                         session_id, groupid, mm.cctx, mm.gen, this->fstat,
                         /* TODO should be a log (siem?)*/
                         ReportError());
+
+                    mm.ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
                 }
 
                 return this->fdx_capture.get();

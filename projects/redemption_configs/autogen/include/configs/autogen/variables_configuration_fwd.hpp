@@ -279,6 +279,7 @@ namespace cfg {
 
     struct capture {
         struct record_filebase;
+        struct fdx_path;
     };
 
     struct crypto {

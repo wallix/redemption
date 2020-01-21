@@ -572,6 +572,7 @@ void config_spec_definition(Writer && W)
     W.section("capture", [&]
     {
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "record_filebase", desc{"basename without extension"});
+        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "fdx_path");
     });
 
     W.section("crypto", [&]
