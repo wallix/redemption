@@ -508,6 +508,8 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         auto fdxpath = wd_record.add_file(fdx_filename);
         (void)wd_hash.add_file(fdx_filename);
 
+        RED_TEST(fdxpath.string() == scytale_fdx_get_path(fdx));
+
         RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
 
         if (data.has_encryption)

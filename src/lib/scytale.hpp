@@ -229,6 +229,9 @@ extern "C"
         char const * record_path, char const * hash_path, char const * fdx_file_base,
         int groupid, char const * sid);
 
+    REDEMPTION_LIB_EXPORT
+    char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle);
+
     /// \param direction  Mwrm3::Direction
     REDEMPTION_LIB_EXPORT
     ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(

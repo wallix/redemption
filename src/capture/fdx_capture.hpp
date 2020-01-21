@@ -113,6 +113,11 @@ struct FdxCapture
     bool is_open() const;
     void close(OutCryptoTransport::HashArray & qhash, OutCryptoTransport::HashArray & fhash);
 
+    [[nodiscard]] char const * get_fdx_path() const noexcept
+    {
+        return this->out_crypto_transport.get_finalname();
+    }
+
 private:
     friend TflFile;
 

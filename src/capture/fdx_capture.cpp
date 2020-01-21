@@ -93,12 +93,26 @@ std::string_view FdxNameGenerator::get_current_filename() const noexcept
     return sv;
 }
 
+namespace
+{
+    std::string_view remove_end_slash(std::string_view s)
+    {
+        assert(!s.empty());
+        if (s.back() == '/') {
+            s.remove_suffix(1);
+        }
+        return s;
+    }
+}
 
 FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,
     std::string_view fdx_basename, std::string_view sid,
     int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
-: name_generator(record_path, hash_path, sid)
+: name_generator(
+    (record_path = remove_end_slash(record_path)),
+    (hash_path = remove_end_slash(hash_path)),
+    sid)
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)

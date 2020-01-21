@@ -706,6 +706,11 @@ struct ScytaleFdxWriterHandle
         this->fhashhex[0] = 0;
     }
 
+    char const * get_fdx_path() const noexcept
+    {
+        return this->fdx_capture.get_fdx_path();
+    }
+
     ScytaleTflWriterHandler * open_tfl(char const* filename, int direction)
     {
         auto* tfl = new(std::nothrow) ScytaleTflWriterHandler{ /*NOLINT*/
@@ -788,6 +793,12 @@ ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
         with_encryption, with_checksum, master_derivator,
         hmac_fn, trace_fn, ScytaleRandomWrapper::LCG,
         record_path, hash_path, fdx_file_base, groupid, sid));
+}
+
+char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle)
+{
+    SCOPED_TRACE;
+    return handle ? handle->get_fdx_path() : nullptr;
 }
 
 ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(

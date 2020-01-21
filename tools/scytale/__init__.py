@@ -238,6 +238,10 @@ lib.scytale_fdx_writer_new.restype = c_void_p
 lib.scytale_fdx_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_char_p, c_int, c_char_p]
 lib.scytale_fdx_writer_new_with_test_random.restype = c_void_p
 
+# char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle);
+lib.scytale_fdx_get_path.argtypes = [c_void_p]
+lib.scytale_fdx_get_path.restype = c_char_p
+
 # \param direction  Mwrm3::Direction
 # ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
 #     ScytaleFdxWriterHandle * handle, char const * filename, int direction);
