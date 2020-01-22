@@ -770,10 +770,11 @@ class Session
     }
 
 
-    void acl_incoming_data(Acl & acl, Inifile& ini, SesmanEventContainer & sesman_events_)
+    void acl_incoming_data(Acl & acl, Inifile& ini, ModWrapper & mod_wrapper, SesmanEventContainer & sesman_events_)
     {
         acl.acl_serial.receive();
         if (!ini.changed_field_size()) {
+            mod_wrapper.acl_update();
             sesman_events_.exec_action(ini);
         }
     }
@@ -1024,7 +1025,7 @@ public:
                 }
 
                 if (acl_is_set) {
-                    this->acl_incoming_data(*acl.get(), ini, sesman_events_);
+                    this->acl_incoming_data(*acl.get(), ini, mod_wrapper, sesman_events_);
                 }
 
                 if (mod_is_set) {

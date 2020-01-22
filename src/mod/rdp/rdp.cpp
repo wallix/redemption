@@ -62,8 +62,7 @@ namespace
 void mod_rdp::init_negociate_event_(
     const ClientInfo & info, Random & gen, TimeObj & timeobj,
     const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
-    const std::chrono::seconds open_session_timeout,
-    bool enable_server_cert_external_validation)
+    const std::chrono::seconds open_session_timeout)
 {
     auto check_error = [this](auto /*ctx*/, jln::ExitR er, gdi::GraphicApi&){
         if (er.status != jln::ExitR::Exception) {
@@ -129,7 +128,7 @@ void mod_rdp::init_negociate_event_(
     RdpNegociation& rdp_negociation = this->private_rdp_negociation->rdp_negociation;
 
 #ifndef __EMSCRIPTEN__
-    if (enable_server_cert_external_validation) {
+    if (this->enable_server_cert_external_validation) {
         LOG(LOG_INFO, "Enable server cert external validation");
         rdp_negociation.set_cert_callback([this](X509& certificate){
             auto& result = this->private_rdp_negociation->result;
@@ -148,40 +147,6 @@ void mod_rdp::init_negociate_event_(
 
             this->sesman.set_server_cert(blob_str);
             this->sesman.set_acl_server_cert();
-
-            this->private_rdp_negociation->sesman_event = this->sesman_events_.create_action_executor(this->session_reactor)
-            .on_action([&result, this](auto ctx, Inifile& ini){
-                auto const& message = ini.get<cfg::mod_rdp::server_cert_response>();
-                if (message.empty()) {
-                    return ctx.ready();
-                }
-
-                if (message == "Ok" || message == "ok") {
-                    LOG(LOG_INFO, "certificate was valid according to authentifier");
-                    result = CertificateResult::valid;
-                }
-                else {
-                    LOG(LOG_INFO, "certificate was invalid according to authentifier: %s", message);
-                    result = CertificateResult::invalid;
-                    throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
-                }
-
-                this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
-                .on_action(jln::one_shot([this](gdi::GraphicApi&) {
-                    bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
-                    if (is_finish) {
-                        this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-                        if (this->buf.remaining()) {
-                            this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
-                            .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
-                                this->draw_event_impl(gd);
-                            }));
-                        }
-                    }
-                }));
-
-                return ctx.terminate();
-            });
 
             return result;
         });
@@ -250,4 +215,40 @@ void mod_rdp::init_negociate_event_(
             this->logon_info.hostname());
         return ctx.exception(Error(ERR_RDP_OPEN_SESSION_TIMEOUT));
     });
+}
+
+
+void mod_rdp::acl_update()
+{
+    if (this->enable_server_cert_external_validation) {
+        auto const& message = ini.get<cfg::mod_rdp::server_cert_response>();
+        if (message.empty()) {
+            return;
+        }
+
+        if (message == "Ok" || message == "ok") {
+            LOG(LOG_INFO, "certificate was valid according to authentifier");
+            result = CertificateResult::valid;
+        }
+        else {
+            LOG(LOG_INFO, "certificate was invalid according to authentifier: %s", message);
+            result = CertificateResult::invalid;
+            throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
+        }
+
+        this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
+        .on_action(jln::one_shot([this](gdi::GraphicApi&) {
+            bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+            if (is_finish) {
+                this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+                if (this->buf.remaining()) {
+                    this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
+                    .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+                        this->draw_event_impl(gd);
+                    }));
+                }
+            }
+        }));
+    }
+    return;
 }

@@ -645,6 +645,11 @@ private:
     mod_api* modi = &no_mod;
 
 public:
+    void acl_update()
+    {
+        this->get_mod()->acl_update();
+    }
+
     mod_api* get_mod()
     {
         return this->modi;

@@ -52,6 +52,7 @@ namespace
 } // namespace
 
 SelectorMod::SelectorMod(
+    Inifile & ini,
     SelectorModVariables vars,
     SessionReactor& session_reactor,
     TimerContainer& timer_events_,
@@ -98,6 +99,7 @@ SelectorMod::SelectorMod(
 
     , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
     , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/
+    , ini(ini)
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , session_reactor(session_reactor)
@@ -124,28 +126,28 @@ SelectorMod::SelectorMod(
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));
+}
 
-    this->sesman_event = sesman_events_.create_action_executor(session_reactor)
-    .on_action(jln::always_ready([this](Inifile&){
-        char buffer[16];
+void SelectorMod::acl_update()
+{
+    char buffer[16];
 
-        this->current_page = this->vars.get<cfg::context::selector_current_page>();
-        snprintf(buffer, sizeof(buffer), "%d", this->current_page);
-        this->selector.current_page.set_text(buffer);
+    this->current_page = this->ini.get<cfg::context::selector_current_page>();
+    snprintf(buffer, sizeof(buffer), "%d", this->current_page);
+    this->selector.current_page.set_text(buffer);
 
-        this->number_page = this->vars.get<cfg::context::selector_number_of_pages>();
-        snprintf(buffer, sizeof(buffer), "%d", this->number_page);
-        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+    this->number_page = this->ini.get<cfg::context::selector_number_of_pages>();
+    snprintf(buffer, sizeof(buffer), "%d", this->number_page);
+    this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
 
-        this->selector.selector_lines.clear();
+    this->selector.selector_lines.clear();
 
-        this->refresh_device();
+    this->refresh_device();
 
-        this->selector.rdp_input_invalidate(this->selector.get_rect());
+    this->selector.rdp_input_invalidate(this->selector.get_rect());
 
-        this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
-        this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
-    }));
+    this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
+    this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
 }
 
 void SelectorMod::ask_page()

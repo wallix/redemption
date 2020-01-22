@@ -49,7 +49,7 @@ using SelectorModVariables = vcfg::variables<
 >;
 
 
-class SelectorMod : public LocallyIntegrableMod, public NotifyApi, public AclApi
+class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
 
@@ -59,6 +59,7 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi, public AclApi
     int current_page;
     int number_page;
 
+    Inifile & ini; 
     SelectorModVariables vars;
     GraphicEventPtr started_copy_past_event;
     SesmanEventPtr sesman_event;
@@ -74,7 +75,7 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi, public AclApi
 
 public:
     SelectorMod(
-        SelectorModVariables vars, SessionReactor& session_reactor,
+        Inifile & ini, SelectorModVariables vars, SessionReactor& session_reactor,
         TimerContainer& timer_events_,
         GraphicEventContainer& graphic_events_,
         SesmanEventContainer & sesman_events_,
@@ -87,7 +88,7 @@ public:
         this->screen.clear();
     }
 
-    void acl_update() override {}
+    void acl_update() override;
 
     std::string module_name() override {return "Selector Mod";}
 

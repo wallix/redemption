@@ -163,6 +163,7 @@ public:
     {
         auto new_mod = new SelectorMod(
             this->ini,
+            this->ini,
             this->session_reactor,
             this->timer_events_,
             this->graphic_events_,

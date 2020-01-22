@@ -2036,6 +2036,7 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
+        , enable_server_cert_external_validation(mod_rdp_params.enable_server_cert_external_validation)
         , primary_drawing_orders_support(
             mod_rdp_params.primary_drawing_orders_support &
             [](auto& order_support){
@@ -2116,8 +2117,7 @@ public:
 
         this->init_negociate_event_(
             info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,
-            (mod_rdp_params.open_session_timeout==0s)?mod_rdp_params.open_session_timeout:15s,
-            mod_rdp_params.enable_server_cert_external_validation);
+            (mod_rdp_params.open_session_timeout!=0s)?mod_rdp_params.open_session_timeout:15s);
     }   // mod_rdp
 
 
