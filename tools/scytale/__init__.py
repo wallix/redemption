@@ -6,10 +6,8 @@ pathlib = 'libscytale.so'
 
 lib = ctypes.CDLL(pathlib)
 
-GETHMACKEY = CFUNCTYPE(c_int, c_void_p)
 GETTRACEKEY = CFUNCTYPE(c_int, c_void_p, c_int, c_void_p, c_uint)
 
-get_hmac_key_func = GETHMACKEY(keys.get_hmac_key)
 get_trace_key_func = GETTRACEKEY(keys.get_trace_key)
 
 # char const * scytale_version();
@@ -303,15 +301,11 @@ def print_version():
 
 
 scytale.encrypter.lib = lib
-scytale.encrypter.GETHMACKEY = GETHMACKEY
 scytale.encrypter.GETTRACEKEY = GETTRACEKEY
-scytale.encrypter.get_hmac_key_func = get_hmac_key_func
 scytale.encrypter.get_trace_key_func = get_trace_key_func
 
 scytale.decrypter.lib = lib
-scytale.decrypter.GETHMACKEY = GETHMACKEY
 scytale.decrypter.GETTRACEKEY = GETTRACEKEY
-scytale.decrypter.get_hmac_key_func = get_hmac_key_func
 scytale.decrypter.get_trace_key_func = get_trace_key_func
 
 scytale.meta.lib = lib

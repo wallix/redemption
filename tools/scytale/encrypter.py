@@ -15,19 +15,18 @@ class CryptoWriter:
     def __init__(self, do_encryption, do_checksum, filename,
                  derivator=None, checksums=None, random_type=None,
                  old_scheme=False, one_shot=False, hashpath=None,
-                 hmac_key_func=None, trace_key_func=None, groupid=None):
+                 hmac_key=None, trace_key_func=None, groupid=None):
         # print("CryptoWriter::__init__", id(self))
         self.closed = True
         if derivator is None:
             derivator = os.path.basename(filename)
 
-        hmac_key_func = GETHMACKEY(hmac_key_func) if hmac_key_func else get_hmac_key_func
         trace_key_func = GETTRACEKEY(trace_key_func) if trace_key_func else get_trace_key_func
 
         if random_type != "LCG":
-            self.handle = lib.scytale_writer_new(do_encryption, do_checksum, normalize(derivator), hmac_key_func, trace_key_func, old_scheme, one_shot)
+            self.handle = lib.scytale_writer_new(do_encryption, do_checksum, normalize(derivator), hmac_key, trace_key_func, old_scheme, one_shot)
         else:
-            self.handle = lib.scytale_writer_new_with_test_random(do_encryption, do_checksum, normalize(derivator), hmac_key_func, trace_key_func, old_scheme, one_shot)
+            self.handle = lib.scytale_writer_new_with_test_random(do_encryption, do_checksum, normalize(derivator), hmac_key, trace_key_func, old_scheme, one_shot)
 
         if not self.handle:
             raise IOError("Decrypter: scytale_reader_new error")
