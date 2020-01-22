@@ -14,7 +14,7 @@
 extern "C" {
     REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
-            get_hmac_key_prototype * hmac_fn,
+            uint8_t * hmac_key,
             get_trace_key_prototype * trace_fn);
 
     void clear_files_flv_meta_png(const char * path, const char * prefix);

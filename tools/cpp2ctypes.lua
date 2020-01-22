@@ -4,7 +4,6 @@ re = require're'
 typemap = {
     ['void*']='c_void_p',
     ['char*']='c_char_p',
-    ['uint8_t*']='c_char_p',
     ['char']='c_char',
     ['int']='c_int',
     ['long']='c_long',
@@ -28,6 +27,7 @@ for _,v in pairs(typemap) do
     basetype[v] = true
 end
 typemap['void'] = 'None'
+typemap['uint8_t*']='POINTER(c_char)'
 
 imported = {}
 lines = {}

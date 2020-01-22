@@ -45,7 +45,6 @@
 
 
 extern "C" {
-    using get_hmac_key_prototype = int (uint8_t *);
     using get_trace_key_prototype = int (const uint8_t *, int, uint8_t *, unsigned int);
 }
 
@@ -60,7 +59,6 @@ class CryptoContext : noncopyable
     uint8_t hmac_key[HMAC_KEY_LENGTH] {};
     std::vector<uint8_t> master_derivator;
 
-    get_hmac_key_prototype * get_hmac_key_cb = nullptr;
     get_trace_key_prototype * get_trace_key_cb = nullptr;
 
     bool master_key_loaded = false;
@@ -77,19 +75,12 @@ private:
 public:
     auto get_hmac_key() -> uint8_t const (&)[HMAC_KEY_LENGTH]
     {
-        if (!this->hmac_key_loaded){
-            if (!this->get_hmac_key_cb) {
-                LOG(LOG_ERR, "CryptoContext: undefined hmac_key callback");
-                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-            }
-            // if we have a callback ask key
-            if (int err = this->get_hmac_key_cb(this->hmac_key)) {
-                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb: callback error: %d", err);
-                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-            }
-            this->hmac_key_loaded = true;
+        if (this->hmac_key_loaded){
+            return this->hmac_key;
         }
-        return this->hmac_key;
+
+        LOG(LOG_ERR, "CryptoContext: undefined hmac_key");
+        throw Error(ERR_WRM_INVALID_INIT_CRYPT);
     }
 
     // for test only
@@ -167,8 +158,6 @@ public:
             this->load_trace_key(this->master_key, this->master_derivator);
 
             this->master_key_loaded = true;
-            //this->master_derivator.clear();
-            //this->master_derivator.shrink_to_fit();
         }
 
         if (this->one_shot_encryption_scheme){
@@ -208,6 +197,7 @@ public:
         key_data(T const & bytes32) noexcept
         : bytes_view(bytes32)
         {
+            assert(this->data());
             assert(this->size() == key_length);
         }
 
@@ -224,6 +214,11 @@ public:
         {
             static_assert(array_length == key_length);
         }
+
+        static key_data from_ptr(byte_ptr p)
+        {
+            return key_data(bytes_view{p, key_length});
+        }
     };
 
     void set_master_key(key_data key) noexcept
@@ -236,11 +231,6 @@ public:
     {
         memcpy(this->hmac_key, key.data(), sizeof(this->hmac_key));
         this->hmac_key_loaded = true;
-    }
-
-    void set_get_hmac_key_cb(get_hmac_key_prototype * get_hmac_key_cb)
-    {
-        this->get_hmac_key_cb = get_hmac_key_cb;
     }
 
     void set_get_trace_key_cb(get_trace_key_prototype * get_trace_key_cb)

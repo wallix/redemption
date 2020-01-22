@@ -44,13 +44,13 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new(
         int with_encryption, int with_checksum, const char * master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new_with_test_random(
         int with_encryption, int with_checksum, const char * master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
@@ -86,7 +86,7 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     ScytaleReaderHandle * scytale_reader_new(
         const char * master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
@@ -196,14 +196,14 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new(
         int with_encryption, int with_checksum, char const* master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         char const * record_path, char const * hash_path, char const * fdx_file_base,
         int groupid, char const * sid);
 
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
         int with_encryption, int with_checksum, char const* master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         char const * record_path, char const * hash_path, char const * fdx_file_base,
         int groupid, char const * sid);
 

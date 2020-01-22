@@ -2031,7 +2031,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 extern "C" {
     REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
-            get_hmac_key_prototype * hmac_fn,
+            uint8_t * hmac_key,
             get_trace_key_prototype * trace_fn)
     {
         ScopedCryptoInit scoped_crypto;
@@ -2058,7 +2058,9 @@ extern "C" {
         UdevRandom rnd;
         Fstat fstat;
         CryptoContext cctx;
-        cctx.set_get_hmac_key_cb(hmac_fn);
+        if (hmac_key) {
+            cctx.set_hmac_key(CryptoContext::key_data::from_ptr(hmac_key));
+        }
         cctx.set_get_trace_key_cb(trace_fn);
 
         uint8_t tmp[32] = {};

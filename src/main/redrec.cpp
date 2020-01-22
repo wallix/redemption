@@ -7,27 +7,20 @@
 
 // ./bin/gcc-5.4.0/release/redrec redver -i ./tests/includes/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -m ./tests/includes/fixtures/verifier/recorded/ -s ./tests/fixtures/verifier/hash/ --verbose 10
 
-static uint8_t g_hmac_key[CRYPTO_KEY_LENGTH] {};
-static uint8_t g_key[CRYPTO_KEY_LENGTH] {};
-
-extern "C"
+namespace
 {
-    inline int get_hmac_key(uint8_t * buffer)
-    {
-        memcpy(buffer, g_hmac_key, sizeof(g_hmac_key));
-        return 0;
-    }
+    uint8_t g_key[CRYPTO_KEY_LENGTH] {};
 
-    inline int get_trace_key(uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/)
+    int get_trace_key(uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/)
     {
         memcpy(buffer, g_key, sizeof(g_key));
         return 0;
     }
-}
 
-inline void usage()
-{
-    std::cerr << "Usage [{rec|ver|dec}] [hex-hmac_key hex-key] lib-args";
+    void usage()
+    {
+        std::cerr << "Usage [{rec|ver|dec}] [hex-hmac_key hex-key] lib-args";
+    }
 }
 
 
@@ -56,6 +49,8 @@ int main(int argc, const char** argv)
     }
 
     std::vector<char const*> new_argv;
+    uint8_t hmac_key_buffer[CRYPTO_KEY_LENGTH] {};
+    bool has_hmac_key = false;
 
     if (argv[arg_used+1][0] == '-')
     {
@@ -66,7 +61,7 @@ int main(int argc, const char** argv)
                 key[i] = uint8_t(i);
             }
         };
-        set_default_key(g_hmac_key);
+        set_default_key(hmac_key_buffer);
         set_default_key(g_key);
 
         if (arg_used)
@@ -107,11 +102,14 @@ int main(int argc, const char** argv)
             }
             return !err;
         };
-        if (!load_key(g_hmac_key, argv[arg_used+1]) || !load_key(g_key, argv[arg_used+2]))
+
+        if (!load_key(hmac_key_buffer, argv[arg_used+1]) || !load_key(g_key, argv[arg_used+2]))
         {
             std::cerr << argv[0] << ": invalid format to hmac_key or key\n";
             return 1;
         }
+
+        has_hmac_key = true;
 
         argc -= arg_used + 1;
         arg_used += 2;
@@ -121,5 +119,5 @@ int main(int argc, const char** argv)
     }
 
     openlog("redrec", LOG_PERROR, LOG_USER);
-    return do_main(argc, argv, get_hmac_key, get_trace_key);
+    return do_main(argc, argv, has_hmac_key ? hmac_key_buffer : nullptr, get_trace_key);
 }

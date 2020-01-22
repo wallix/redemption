@@ -65,15 +65,11 @@ RED_AUTO_TEST_CASE(TestErrCb)
     CryptoContext cctx;
 
     static bool visited_cb = false;
-    auto cb = [](auto... /*dummy*/){ visited_cb = true; return -1; };
 
-    cctx.set_get_hmac_key_cb(cb);
-    cctx.set_get_trace_key_cb(cb);
+    cctx.set_get_trace_key_cb([](auto... /*dummy*/){ visited_cb = true; return -1; });
     cctx.set_master_derivator(cstr_array_view("abc"));
 
-    visited_cb = false;
     RED_CHECK_EXCEPTION_ERROR_ID(cctx.get_hmac_key(), ERR_WRM_INVALID_INIT_CRYPT);
-    RED_CHECK(visited_cb);
 
     visited_cb = false;
     uint8_t trace_key[CRYPTO_KEY_LENGTH];

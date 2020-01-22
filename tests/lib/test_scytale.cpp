@@ -37,22 +37,16 @@
 using namespace std::string_view_literals;
 
 
-extern "C" {
-    inline
-    int hmac_fn(uint8_t * buffer)
-    {
-        // 86410558C495CC4E492157874774088A33B02AB865CC384120FEC2C9B872C82C
-        uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
-            0x86, 0x41, 0x05, 0x58, 0xc4, 0x95, 0xcc, 0x4e,
-            0x49, 0x21, 0x57, 0x87, 0x47, 0x74, 0x08, 0x8a,
-            0x33, 0xb0, 0x2a, 0xb8, 0x65, 0xcc, 0x38, 0x41,
-            0x20, 0xfe, 0xc2, 0xc9, 0xb8, 0x72, 0xc8, 0x2c,
-        };
-        memcpy(buffer, hmac_key, sizeof(hmac_key));
-        return 0;
-    }
+namespace
+{
+    // 86410558C495CC4E492157874774088A33B02AB865CC384120FEC2C9B872C82C
+    uint8_t hmac_key[SslSha256::DIGEST_LENGTH] = {
+        0x86, 0x41, 0x05, 0x58, 0xc4, 0x95, 0xcc, 0x4e,
+        0x49, 0x21, 0x57, 0x87, 0x47, 0x74, 0x08, 0x8a,
+        0x33, 0xb0, 0x2a, 0xb8, 0x65, 0xcc, 0x38, 0x41,
+        0x20, 0xfe, 0xc2, 0xc9, 0xb8, 0x72, 0xc8, 0x2c,
+    };
 
-    inline
     int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
@@ -69,11 +63,11 @@ extern "C" {
         memcpy(buffer, trace_key, sizeof(trace_key));
         return 0;
     }
-}
 
-inline uint8_t const * bytes(char const * p)
-{
-    return byte_ptr_cast(p);
+    uint8_t const * bytes(char const * p)
+    {
+        return byte_ptr_cast(p);
+    }
 }
 
 RED_AUTO_TEST_CASE_WD(Testscytale, wd)
@@ -87,7 +81,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
         int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-        auto * handle = scytale_writer_new_with_test_random(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
+        auto * handle = scytale_writer_new_with_test_random(with_encryption, with_checksum, finalname, hmac_key, &trace_fn, false, false);
         RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
@@ -107,7 +101,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 
     // Reader
     {
-        auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
+        auto handle = scytale_reader_new(finalname, hmac_key, &trace_fn, 0, 0);
         RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_reader_open(handle, finalname, derivator), 0);
 
@@ -147,7 +141,7 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
         int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
+        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname, hmac_key, &trace_fn, false, false);
         RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
@@ -175,7 +169,7 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
         int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname,  &hmac_fn, &trace_fn, false, false);
+        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname,  hmac_key, &trace_fn, false, false);
         RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
@@ -198,15 +192,11 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
 
 RED_AUTO_TEST_CASE(TestscytaleReaderOpenAutoDetectScheme)
 {
-    auto hmac_2016_fn = [](uint8_t * buffer) {
-        uint8_t hmac_key[32] = {
-            0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
-            0x1f , 0x12 , 0x62 , 0x39 , 0x0f , 0x10 , 0xb9 , 0x8e ,
-            0xac , 0xff , 0xbc , 0x8a , 0x8f , 0x71 , 0xfb , 0x21 ,
-            0x07 , 0x7d , 0xef , 0x9c , 0xb3 , 0x5f , 0xf9 , 0x7b ,
-        };
-        memcpy(buffer, hmac_key, 32);
-        return 0;
+    uint8_t hmac_key[32] = {
+        0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
+        0x1f , 0x12 , 0x62 , 0x39 , 0x0f , 0x10 , 0xb9 , 0x8e ,
+        0xac , 0xff , 0xbc , 0x8a , 0x8f , 0x71 , 0xfb , 0x21 ,
+        0x07 , 0x7d , 0xef , 0x9c , 0xb3 , 0x5f , 0xf9 , 0x7b ,
     };
 
     auto trace_20161025_fn = [](uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/) {
@@ -228,7 +218,7 @@ RED_AUTO_TEST_CASE(TestscytaleReaderOpenAutoDetectScheme)
         "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
         "-192304,wab-4-2-4.yourdomain,5560.mwrm";
 
-    auto handle = scytale_reader_new(derivator, hmac_2016_fn, trace_20161025_fn, 0, 0);
+    auto handle = scytale_reader_new(derivator, hmac_key, trace_20161025_fn, 0, 0);
     RED_CHECK_EQ(
         scytale_reader_open_with_auto_detect_encryption_scheme(handle, filename, filename),
         int(EncryptionSchemeTypeResult::OldScheme));
@@ -243,11 +233,11 @@ RED_AUTO_TEST_CASE(TestscytaleReaderOpenAutoDetectScheme)
 
 RED_AUTO_TEST_CASE(TestscytaleError)
 {
-    auto handle_w = scytale_writer_new(1, 1, "/", &hmac_fn, &trace_fn, false, false);
+    auto handle_w = scytale_writer_new(1, 1, "/", hmac_key, &trace_fn, false, false);
     RED_CHECK_EQ(scytale_writer_open(handle_w, "/", "/", 0), -1);
     RED_CHECK_NE(scytale_writer_get_error_message(handle_w), "No error"sv);
 
-    auto handle_r = scytale_reader_new("/", &hmac_fn, &trace_fn, 0, 0);
+    auto handle_r = scytale_reader_new("/", hmac_key, &trace_fn, 0, 0);
     RED_CHECK_EQ(scytale_reader_open(handle_r, "/", "/"), -1);
     RED_CHECK_NE(scytale_reader_get_error_message(handle_r), "No error"sv);
 
@@ -272,7 +262,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
 {
     {
         auto filename = FIXTURES_PATH "/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681.mwrm";
-        auto handle = scytale_reader_new(filename, &hmac_fn, &trace_fn, 0, 0);
+        auto handle = scytale_reader_new(filename, hmac_key, &trace_fn, 0, 0);
         RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_reader_open(handle, filename, filename), 0);
 
@@ -310,7 +300,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
     }
     {
         auto filename = FIXTURES_PATH "/sample.mwrm";
-        auto handle = scytale_reader_new(filename, &hmac_fn, &trace_fn, 0, 0);
+        auto handle = scytale_reader_new(filename, hmac_key, &trace_fn, 0, 0);
         RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_reader_open(handle, filename, filename), 0);
 
@@ -440,7 +430,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         auto wd_fdx_hash = wd_hash.create_subdirectory(sid);
 
         auto* fdx = scytale_fdx_writer_new_with_test_random(
-            data.has_encryption, data.has_checksum, master_derivator, hmac_fn, trace_fn,
+            data.has_encryption, data.has_checksum, master_derivator, hmac_key, trace_fn,
             wd_record.dirname(), wd_hash.dirname(), fdx_filename.data(), 0, sid.data());
 
         auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt", int(Mwrm3::Direction::Unknown));
@@ -491,7 +481,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
             auto readall = [&](char const* filename, char const* derivator) {
                 RED_TEST_CONTEXT("filename: " << filename << "\n    derivator: " << derivator)
                 {
-                    auto* reader = scytale_reader_new(master_derivator, hmac_fn, trace_fn, 0, 0);
+                    auto* reader = scytale_reader_new(master_derivator, hmac_key, trace_fn, 0, 0);
                     RED_REQUIRE(reader);
                     auto free_reader = finally([&]{ scytale_reader_delete(reader); });
 
