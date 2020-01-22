@@ -271,6 +271,22 @@
 "#_advanced\n"
 "recv_timeout = integer(min=100, max=10000, default=1000)\n\n"
 
+"# Disables supported drawing orders:\n"
+"#    0: DstBlt\n"
+"#    1: PatBlt\n"
+"#    2: ScrBlt\n"
+"#    3: MemBlt\n"
+"#    4: Mem3Blt\n"
+"#    8: LineTo\n"
+"#   15: MultiDstBlt\n"
+"#   16: MultiPatBlt\n"
+"#   17: MultiScrBlt\n"
+"#   18: MultiOpaqueRect\n"
+"#   22: Polyline\n"
+"# This option takes precedence over the option Extra orders of section mod_rdp.\n"
+"#_advanced\n"
+"disabled_orders = string_list(default=list())\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"

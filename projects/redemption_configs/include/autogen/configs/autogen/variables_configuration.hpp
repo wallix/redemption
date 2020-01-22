@@ -1127,6 +1127,31 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1000};
     };
+    /// Disables supported drawing orders: <br/>
+    ///    0: DstBlt <br/>
+    ///    1: PatBlt <br/>
+    ///    2: ScrBlt <br/>
+    ///    3: MemBlt <br/>
+    ///    4: Mem3Blt <br/>
+    ///    8: LineTo <br/>
+    ///   15: MultiDstBlt <br/>
+    ///   16: MultiPatBlt <br/>
+    ///   17: MultiScrBlt <br/>
+    ///   18: MultiOpaqueRect <br/>
+    ///   22: Polyline <br/>
+    /// This option takes precedence over the option Extra orders of section mod_rdp. <br/>
+    /// type: std::string <br/>
+    /// value = "" <br/>
+    struct client::disabled_orders {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "client"; }
+        static constexpr char const * name() { return "disabled_orders"; }
+        using type = std::string;
+        using sesman_and_spec_type = ::configs::spec_types::list<unsigned int>;
+        using mapped_type = sesman_and_spec_type;
+        type value = "";
+    };
 
     /// type: RdpCompression <br/>
     /// value{static_cast<type>(4)} <br/>
@@ -4916,6 +4941,7 @@ struct client
 , cfg::client::transform_glyph_to_bitmap
 , cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::recv_timeout
+, cfg::client::disabled_orders
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

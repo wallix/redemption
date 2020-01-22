@@ -290,6 +290,22 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "recv_timeout", set(1000));
+
+        W.member(advanced_in_gui, no_sesman, type_<types::list<unsigned>>(), "disabled_orders", desc{
+            "Disables supported drawing orders:\n"
+            "   0: DstBlt\n"
+            "   1: PatBlt\n"
+            "   2: ScrBlt\n"
+            "   3: MemBlt\n"
+            "   4: Mem3Blt\n"
+            "   8: LineTo\n"
+            "  15: MultiDstBlt\n"
+            "  16: MultiPatBlt\n"
+            "  17: MultiScrBlt\n"
+            "  18: MultiOpaqueRect\n"
+            "  22: Polyline\n"
+            "This option takes precedence over the option Extra orders of section mod_rdp."
+        }, set(""));
     });
 
     W.section("mod_rdp", [&]

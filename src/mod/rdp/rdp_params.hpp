@@ -157,6 +157,7 @@ struct ModRDPParams {
 
     const char * device_id = "";
 
+    const char * disabled_orders = "";
     const char * extra_orders = "";
 
     bool enable_persistent_disk_bitmap_cache = false;
@@ -370,6 +371,7 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             hide_client_name);
 
+        RDP_PARAMS_LOG("%s",     s_or_none,             disabled_orders);
         RDP_PARAMS_LOG("%s",     s_or_none,             extra_orders);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_persistent_disk_bitmap_cache);

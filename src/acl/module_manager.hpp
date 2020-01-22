@@ -1528,6 +1528,7 @@ public:
                 mod_rdp_params.password_printing_mode              = this->ini.get<cfg::debug::password>();
                 mod_rdp_params.cache_verbose                       = to_verbose_flags(this->ini.get<cfg::debug::cache>());
 
+                mod_rdp_params.disabled_orders                     = this->ini.get<cfg::client::disabled_orders>().c_str();
                 mod_rdp_params.extra_orders                        = this->ini.get<cfg::mod_rdp::extra_orders>().c_str();
 
                 mod_rdp_params.allow_channels                      = &(this->ini.get<cfg::mod_rdp::allow_channels>());

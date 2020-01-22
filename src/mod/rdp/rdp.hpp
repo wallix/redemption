@@ -455,6 +455,18 @@ protected:
     bool enable_multipatblt;
     bool enable_multiscrblt;
 
+    bool disable_dstblt          = false;
+    bool disable_patblt          = false;
+    bool disable_scrblt          = false;
+    bool disable_memblt          = false;
+    bool disable_mem3blt         = false;
+    bool disable_lineto          = false;
+    bool disable_multidstblt     = false;
+    bool disable_multipatblt     = false;
+    bool disable_multiscrblt     = false;
+    bool disable_multiopaquerect = false;
+    bool disable_polyline        = false;
+
     const bool remote_program;
     const bool remote_program_enhanced;
 
@@ -1217,6 +1229,7 @@ public:
             this->transparent_recorder = new TransparentRecorder(mod_rdp_params.transparent_recorder_transport);
         }
 
+        this->configure_disabled_orders(mod_rdp_params.disabled_orders);
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
         switch (mod_rdp_params.auth_channel) {
@@ -2059,6 +2072,102 @@ public:
             temp += 2;
         }
     }
+
+    void configure_disabled_orders(const char * disabled_orders) {
+        if (bool(this->verbose & RDPVerbose::basic_trace)) {
+            LOG(LOG_INFO, "RDP Disabled orders=\"%s\"", disabled_orders);
+        }
+
+        char * end;
+        char const * p = disabled_orders;
+        for (int order_number = std::strtol(p, &end, 0);
+            p != end;
+            order_number = std::strtol(p, &end, 0))
+        {
+            if (bool(this->verbose & RDPVerbose::capabilities)) {
+                LOG(LOG_INFO, "RDP Disabled orders number=%d", order_number);
+            }
+            switch (order_number) {
+            case RDP::DESTBLT:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=DstBlt");
+                }
+                this->disable_dstblt = true;
+                break;
+            case RDP::PATBLT:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=PatBlt");
+                }
+                this->disable_patblt = true;
+                break;
+            case RDP::SCREENBLT:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=ScrBlt");
+                }
+                this->disable_scrblt = true;
+                break;
+            case 3: // MemBlt
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=MemBlt");
+                }
+                this->disable_memblt = true;
+                break;
+            case 4: // Mem3Blt
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=Mem3Blt");
+                }
+                this->disable_mem3blt = true;
+                break;
+            case 8: //LineTo
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=LineTo");
+                }
+                this->disable_lineto = true;
+                break;
+            case RDP::MULTIDSTBLT:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=MultiDstBlt");
+                }
+                this->disable_multidstblt = true;
+                break;
+            case RDP::MULTIPATBLT:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=MultiPatBlt");
+                }
+                this->disable_multipatblt = true;
+                break;
+            case RDP::MULTISCRBLT:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=MultiScrBlt");
+                }
+                this->disable_multiscrblt = true;
+                break;
+            case RDP::MULTIOPAQUERECT:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=MultiOpaqueRect");
+                }
+                this->disable_multiopaquerect = true;
+                break;
+            case RDP::POLYLINE:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Disabled orders=Polyline");
+                }
+                this->disable_polyline = true;
+                break;
+
+            default:
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    LOG(LOG_INFO, "RDP Unknown Disabled orders");
+                }
+                break;
+            }
+
+            p = end;
+            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
+                ++p;
+            }
+        }
+    }   // configure_disabled_orders
 
     void configure_extra_orders(const char * extra_orders) {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -5051,27 +5160,27 @@ public:
                                                                         | COLORINDEXSUPPORT       /* 0x20 */
                                                                         | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
                                                                         ;
-                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]        = (this->enable_multipatblt     ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]        = (this->enable_multiscrblt     ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt         ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
+                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = (                                 !this->disable_dstblt           ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = ((this->enable_multidstblt     && !this->disable_multidstblt)     ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = ((this->enable_multiopaquerect && !this->disable_multiopaquerect) ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]        = ((this->enable_multipatblt     && !this->disable_multipatblt)     ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]        = ((this->enable_multiscrblt     && !this->disable_multiscrblt)     ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = (                                 !this->disable_patblt           ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = (                                 !this->disable_scrblt           ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = (                                 !this->disable_memblt           ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = ((this->enable_mem3blt         && !this->disable_mem3blt)         ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = (                                 !this->disable_lineto           ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
                 order_caps.orderSupport[UnusedIndex3]                    = 1;
                 order_caps.orderSupport[UnusedIndex5]                    = 1;
-                order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc       ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb       ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline        ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc                                           ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb                                           ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = ((this->enable_polyline        && !this->disable_polyline)        ? 1 : 0);
                 //order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]         = 1;
-                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc       ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc                                           ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb                                           ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
-                order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = (this->enable_ninegrid_bitmap ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX]       = (this->enable_ninegrid_bitmap                                     ? 1 : 0);
                 order_caps.textFlags                                     = 0x06a1;
                 order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
                 order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
