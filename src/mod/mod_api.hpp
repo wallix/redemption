@@ -23,11 +23,12 @@
 #include "core/callback.hpp"
 #include "core/back_event_t.hpp"
 #include "utils/log.hpp"
+#include "acl/acl_api.hpp"
 
 #include <string>
 #include <ctime>
 
-class mod_api : public Callback
+class mod_api : public Callback, public AclApi
 {
 public:
     enum : bool {
@@ -100,4 +101,6 @@ public:
     virtual void log_metrics() {}
 
     virtual void DLP_antivirus_check_channels_files() {}
+
+    virtual void acl_update() override {}
 };
