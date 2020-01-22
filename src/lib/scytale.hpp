@@ -191,28 +191,6 @@ extern "C"
     //@}
 
 
-    // Key
-    //@{
-    REDEMPTION_LIB_EXPORT
-    ScytaleKeyHandle * scytale_key_new(const char * masterkeyhex);
-
-    REDEMPTION_LIB_EXPORT
-    const char * scytale_key_derivate(
-        ScytaleKeyHandle * handle, const uint8_t * derivator, unsigned long len);
-
-    REDEMPTION_LIB_EXPORT
-    void scytale_key_delete(ScytaleKeyHandle * handle);
-
-    /// \return HashHexArray
-    REDEMPTION_LIB_EXPORT
-    const char * scytale_key_get_master(ScytaleKeyHandle * handle);
-
-    /// \return HashHexArray
-    REDEMPTION_LIB_EXPORT
-    const char * scytale_key_get_derivated(ScytaleKeyHandle * handle);
-    //@}
-
-
     // Fdx / Tfl
     //@{
     REDEMPTION_LIB_EXPORT

@@ -194,32 +194,6 @@ lib.scytale_meta_reader_get_line.argtypes = [c_void_p]
 lib.scytale_meta_reader_get_line.restype = POINTER(CType_ScytaleMwrmLine)
 # @}
 
-# Key
-# @{
-# ScytaleKeyHandle * scytale_key_new(const char * masterkeyhex);
-lib.scytale_key_new.argtypes = [c_char_p]
-lib.scytale_key_new.restype = c_void_p
-
-# const char * scytale_key_derivate(
-#     ScytaleKeyHandle * handle, const uint8_t * derivator, unsigned long len);
-lib.scytale_key_derivate.argtypes = [c_void_p, c_char_p, c_ulong]
-lib.scytale_key_derivate.restype = c_char_p
-
-# void scytale_key_delete(ScytaleKeyHandle * handle);
-lib.scytale_key_delete.argtypes = [c_void_p]
-lib.scytale_key_delete.restype = None
-
-# \return HashHexArray
-# const char * scytale_key_get_master(ScytaleKeyHandle * handle);
-lib.scytale_key_get_master.argtypes = [c_void_p]
-lib.scytale_key_get_master.restype = c_char_p
-
-# \return HashHexArray
-# const char * scytale_key_get_derivated(ScytaleKeyHandle * handle);
-lib.scytale_key_get_derivated.argtypes = [c_void_p]
-lib.scytale_key_get_derivated.restype = c_char_p
-# @}
-
 # Fdx / Tfl
 # @{
 # ScytaleFdxWriterHandle * scytale_fdx_writer_new(

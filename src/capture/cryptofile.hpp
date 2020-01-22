@@ -126,46 +126,12 @@ public:
         return this->trace_type != TraceType::localfile;
     }
 
-    // force extension to "mwrm" if it's .log
-    static array_view_const_u8 get_normalized_derivator(
-        std::unique_ptr<uint8_t[]> & normalized_derivator,
-        bytes_view derivator
-    )
-    {
-        using reverse_iterator = std::reverse_iterator<array_view_const_u8::const_iterator>;
-        reverse_iterator const first(derivator.end());
-        reverse_iterator const last(derivator.begin());
-        reverse_iterator const p = std::find(first, last, '.');
-        constexpr auto ext = cstr_array_view(".log");
-        if (derivator.end() == p.base() + ext.size() - 1
-         && std::equal(
-             p.base(), p.base() + ext.size() - 1,
-             byte_ptr_cast(ext.data() + 1)
-        )) {
-            constexpr auto extmwrm = cstr_array_view(".mwrm");
-            auto const prefix_len = (p == last ? derivator.end() : p.base() - 1) - derivator.begin();
-            auto const new_len = prefix_len + extmwrm.size();
-
-            normalized_derivator = std::make_unique<uint8_t[]>(new_len + 1);
-            memcpy(normalized_derivator.get(), derivator.data(), prefix_len);
-            memcpy(normalized_derivator.get() + prefix_len, extmwrm.data(), extmwrm.size());
-            normalized_derivator[new_len] = 0;
-
-            return array_view_const_u8{normalized_derivator.get(), new_len};
-        }
-
-        return derivator;
-    }
-
 private:
     void load_trace_key(uint8_t (&buffer)[MD_HASH::DIGEST_LENGTH], bytes_view derivator)
     {
-        std::unique_ptr<uint8_t[]> normalized_derivator_gc;
-        auto const new_derivator = get_normalized_derivator(normalized_derivator_gc, derivator);
-
         if (int err = this->get_trace_key_cb(
-            new_derivator.data()
-          , static_cast<int>(new_derivator.size())
+            derivator.data()
+          , static_cast<int>(derivator.size())
           , buffer
           , this->old_encryption_scheme ? 1 : 0
         )) {
