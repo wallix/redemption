@@ -185,7 +185,6 @@ void config_spec_definition(Writer && W)
     {
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_session_log", set(true));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_arcsight_log", set(false));
-        W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
             "Keyboard Input Masking Level:"
         }, set(KeyboardInputMaskingLevel::password_and_unidentified));

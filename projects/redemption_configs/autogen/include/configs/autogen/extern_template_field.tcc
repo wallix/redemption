@@ -16,7 +16,6 @@ template class Inifile::Field<cfg::globals::is_rec>;
 template class Inifile::Field<cfg::globals::movie_path>;
 template class Inifile::Field<cfg::globals::unicode_keyboard_event_support>;
 template class Inifile::Field<cfg::globals::mod_recv_timeout>;
-template class Inifile::Field<cfg::session_log::log_path>;
 template class Inifile::Field<cfg::session_log::keyboard_input_masking_level>;
 template class Inifile::Field<cfg::client::keyboard_layout>;
 template class Inifile::Field<cfg::client::disable_tsk_switch_shortcuts>;

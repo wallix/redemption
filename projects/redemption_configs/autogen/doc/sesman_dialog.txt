@@ -28,7 +28,6 @@ cfg::globals::movie_path ⇐ rec_path   [std::string]
 cfg::globals::unicode_keyboard_event_support ⇐ unicode_keyboard_event_support   [bool]
 cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds]
 
-cfg::session_log::log_path ⇐ session_log_path   [std::string]
 cfg::session_log::keyboard_input_masking_level ⇐ session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
     Keyboard Input Masking Level:
       0: keyboard input are not masked

@@ -57,7 +57,6 @@ namespace cfg {
     struct session_log {
         struct enable_session_log;
         struct enable_arcsight_log;
-        struct log_path;
         struct keyboard_input_masking_level;
         struct hide_non_printable_kbd_input;
     };

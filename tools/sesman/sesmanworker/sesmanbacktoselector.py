@@ -37,7 +37,6 @@ back_to_selector_default_sent = {
   u'selector_number_of_pages': 1,
   u'selector_proto_filter': u'',
   u'session_id': u'',
-  u'session_log_path': u'',
   u'shell_arguments': u'',
   u'shell_working_directory': u'',
   u'showform': False,

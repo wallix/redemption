@@ -26,7 +26,6 @@
 #include "acl/module_manager.hpp"
 #include "configs/config.hpp"
 #include "core/log_id.hpp"
-#include "core/date_dir_from_filename.hpp"
 #include "core/report_message_api.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "main/version.hpp"
@@ -497,25 +496,26 @@ void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
 
 void AclSerializer::start_session_log()
 {
-    auto& log_path = this->ini.get<cfg::session_log::log_path>();
-    DateDirFromFilename d(log_path);
-
-    LOG_IF(!d.has_date(), LOG_WARNING, "AclSerializer::start_session_log: failed to extract date");
-
     const int groupid = ini.get<cfg::video::capture_groupid>();
-    std::string hash_path = this->ini.get<cfg::video::hash_path>().as_string();
-    hash_path.append(d.date_path().begin(), d.date_path().end());
-    std::string log_dir = log_path.substr(0, log_path.size()-d.filename().size());
+    auto const& subdir = this->ini.get<cfg::capture::record_subdirectory>();
+    auto const& record_dir = this->ini.get<cfg::video::record_path>();
+    auto const& hash_dir = this->ini.get<cfg::video::hash_path>();
+    auto const& filebase = this->ini.get<cfg::capture::record_filebase>();
 
-    for (auto* s : {&log_dir, &hash_path}) {
+    std::string record_path = str_concat(record_dir.as_string(), subdir, '/');
+    std::string hash_path = str_concat(hash_dir.as_string(), subdir, '/');
+
+    for (auto* s : {&record_path, &hash_path}) {
         if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
             LOG(LOG_ERR,
                 "AclSerializer::start_session_log: Failed to create directory: \"%s\"", *s);
         }
     }
 
-    hash_path.append(d.filename().begin(), d.filename().end());
-    this->log_file.open(log_path, hash_path, groupid, d.filename());
+    std::string basename = str_concat(filebase, ".log");
+    record_path += basename;
+    hash_path += basename;
+    this->log_file.open(record_path, hash_path, groupid, /*derivator=*/basename);
 }
 
 void AclSerializer::close_session_log()

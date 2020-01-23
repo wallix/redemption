@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(191);
+constexpr authid_t MAX_AUTHID = authid_t(190);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -29,7 +29,6 @@ constexpr array_view_const_char const authstr[] = {
     "rec_path"_av,
     "unicode_keyboard_event_support"_av,
     "mod_recv_timeout"_av,
-    "session_log_path"_av,
     "session_log:keyboard_input_masking_level"_av,
     "keyboard_layout"_av,
     "disable_tsk_switch_shortcuts"_av,

@@ -130,9 +130,6 @@ enable_session_log = boolean(default=True)
 
 enable_arcsight_log = boolean(default=False)
 
-#_hidden
-log_path = string(default='')
-
 # Keyboard Input Masking Level:
 #   0: keyboard input are not masked
 #   1: only passwords are masked

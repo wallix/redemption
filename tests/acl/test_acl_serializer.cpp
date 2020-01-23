@@ -368,7 +368,8 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     auto hashdir = wd.create_subdirectory("hash");
     auto hashlog = hashdir.add_file("log5_6.log");
 
-    ini.set<cfg::session_log::log_path>(logfile.string());
+    ini.set<cfg::capture::record_filebase>("log5_6");
+    ini.set<cfg::video::record_path>(wd.dirname().string());
     ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
     GeneratorTransport trans(""_av);

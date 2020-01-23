@@ -153,9 +153,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #enable_arcsight_log = 0
 
-#_hidden
-#log_path = 
-
 # Keyboard Input Masking Level:
 # min = 0, max = 3
 #   0: keyboard input are not masked
