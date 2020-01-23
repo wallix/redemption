@@ -234,6 +234,8 @@ cfg::video::rt_display ⇐ rt_display   [bool]
 
 cfg::capture::record_filebase ⇐ record_filebase   [std::string]
     basename without extension
+cfg::capture::record_subdirectory ⇐ record_subdirectory   [std::string]
+    subdirectory of record_path (video section)
 cfg::capture::fdx_path ⇒ fdx_path   [std::string]
 
 cfg::crypto::key0 ⇐ encryption_key   [std::array<unsigned char, 32>]
