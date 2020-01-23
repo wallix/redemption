@@ -62,7 +62,6 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
     Inifile & ini; 
     SelectorModVariables vars;
     GraphicEventPtr started_copy_past_event;
-    SesmanEventPtr sesman_event;
 
     CopyPaste copy_paste;
 
@@ -71,14 +70,12 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
     SessionReactor & session_reactor;
     TimerContainer& timer_events_;
     GraphicEventContainer& graphic_events_;  
-    SesmanEventContainer & sesman_events_;
 
 public:
     SelectorMod(
         Inifile & ini, SelectorModVariables vars, SessionReactor& session_reactor,
         TimerContainer& timer_events_,
         GraphicEventContainer& graphic_events_,
-        SesmanEventContainer & sesman_events_,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);

@@ -59,7 +59,6 @@ class ModFactory
     TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
-    SesmanEventContainer & sesman_events_;
     ClientInfo & client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
@@ -77,7 +76,6 @@ public:
                TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,
                GraphicTimerContainer & graphic_timer_events_,
-               SesmanEventContainer & sesman_events_,
                ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
@@ -86,7 +84,6 @@ public:
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
-        , sesman_events_(sesman_events_)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
@@ -167,7 +164,6 @@ public:
             this->session_reactor,
             this->timer_events_,
             this->graphic_events_,
-            this->sesman_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,

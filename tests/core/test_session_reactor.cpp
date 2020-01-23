@@ -176,7 +176,6 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     GraphicEventContainer graphic_events_;
-    SesmanEventContainer sesman_events_;
     using Dt = jln::NotifyDeleteType;
 
     std::string s;
@@ -189,17 +188,9 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         s += "gd\n";
     }));
 
-    auto ini = sesman_events_.create_action_executor(session_reactor, std::ref(s))
-    .on_action([](JLN_ACTION_CTX ctx, Inifile&, std::string& s){
-        s += "ini\n";
-        return ctx.terminate();
-    });
-
     graphic_events_.exec_action(gdi::null_gd());
     graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "gd\n~gd\n");
-
-    char dummy;
 
     struct DummyCb : public mod_api
     {
@@ -215,11 +206,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     } dummy_cb;
 
 
-    sesman_events_.exec_action(*reinterpret_cast<Inifile*>(&dummy));
-    RED_CHECK_EQ(s, "gd\n~gd\nini\n");
-
     RED_CHECK(!gd);
-    RED_CHECK(!ini);
 }
 
 

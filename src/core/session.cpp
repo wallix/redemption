@@ -588,7 +588,7 @@ class Session
                               TimerContainer& timer_events_,
                               GraphicEventContainer& graphic_events_,
                               GraphicTimerContainer graphic_timer_events_, 
-                              SesmanEventContainer & sesman_events_, std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & sesman)
+                              std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & sesman)
     {
         try {
             auto const end_tv = session_reactor.get_current_time();
@@ -770,12 +770,11 @@ class Session
     }
 
 
-    void acl_incoming_data(Acl & acl, Inifile& ini, ModWrapper & mod_wrapper, SesmanEventContainer & sesman_events_)
+    void acl_incoming_data(Acl & acl, Inifile& ini, ModWrapper & mod_wrapper)
     {
         acl.acl_serial.receive();
         if (!ini.changed_field_size()) {
             mod_wrapper.acl_update();
-            sesman_events_.exec_action(ini);
         }
     }
 
@@ -796,7 +795,6 @@ public:
         GraphicFdContainer graphic_fd_events_;
         TimerContainer timer_events_;
         GraphicEventContainer graphic_events_;
-        SesmanEventContainer sesman_events_;
         GraphicTimerContainer graphic_timer_events_;
 
         TimeSystem timeobj;
@@ -821,10 +819,10 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
+            ModFactory mod_factory(mod_wrapper, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
 
-            ModuleManager mm(end_session_warning, mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, sesman, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
+            ModuleManager mm(end_session_warning, mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
 
             if (ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -1025,7 +1023,7 @@ public:
                 }
 
                 if (acl_is_set) {
-                    this->acl_incoming_data(*acl.get(), ini, mod_wrapper, sesman_events_);
+                    this->acl_incoming_data(*acl.get(), ini, mod_wrapper);
                 }
 
                 if (mod_is_set) {
@@ -1092,7 +1090,7 @@ public:
                         continue;
                     }
 
-                    run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, sesman);
+                    run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, sesman);
                 }
                 break;
                 } // switch

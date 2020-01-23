@@ -100,7 +100,6 @@ public:
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
-    SesmanEventContainer & sesman_events_;
     SesmanInterface & sesman;
 
     std::unique_ptr<Transport> _socket_in_recorder;
@@ -247,7 +246,6 @@ public:
                      TimerContainer & timer_events_,
                      GraphicEventContainer & graphic_events_,
                      GraphicTimerContainer & graphic_timer_events_,
-                     SesmanEventContainer & sesman_events_,
                      SesmanInterface & sesman,
                      ClientRedemptionConfig & config)
         : config(config)
@@ -259,7 +257,6 @@ public:
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
-        , sesman_events_(sesman_events_)
         , sesman(sesman)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(session_reactor, timer_events_, *this, *this, this->config.info.window_list_caps, false)
@@ -441,12 +438,12 @@ public:
 
                 this->unique_mod = new_mod_rdp(
                     *this->socket
+                  , this->ini
                   , this->session_reactor
                   , this->fd_events_
                   , this->graphic_fd_events_
                   , this->timer_events_
                   , this->graphic_events_
-                  , this->sesman_events_
                   , this->sesman
                   , *this
                   , *this

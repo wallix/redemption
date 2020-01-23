@@ -79,10 +79,9 @@ public:
                              TimerContainer& timer_events_,
                              GraphicEventContainer & graphic_events_,
                              GraphicTimerContainer & graphic_timer_events_,
-                             SesmanEventContainer & sesman_events_,
                              SesmanInterface & sesman,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, sesman, config)
+        : ClientRedemption(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman, config)
         , headless_socket(session_reactor, this)
     {
         this->cmd_launch_conn();
@@ -150,11 +149,10 @@ int main(int argc, char const** argv)
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
-    SesmanEventContainer sesman_events_;
     Inifile ini;
     SesmanInterface sesman(ini);
 
-    ClientRedemptionHeadless client(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman_events_, sesman, config);
+    ClientRedemptionHeadless client(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman, config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

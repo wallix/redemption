@@ -57,7 +57,6 @@ SelectorMod::SelectorMod(
     SessionReactor& session_reactor,
     TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
-    SesmanEventContainer & sesman_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
@@ -105,7 +104,6 @@ SelectorMod::SelectorMod(
     , session_reactor(session_reactor)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
-    , sesman_events_(sesman_events_)
 {
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     this->screen.add_widget(&this->selector);
@@ -175,8 +173,6 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.set<cfg::context::selector>(false);
         this->set_mod_signal(BACK_EVENT_NEXT);
 
-        this->sesman_event.reset();
-
         break;
     }
     case NOTIFY_SUBMIT: {
@@ -197,8 +193,6 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 this->vars.ask<cfg::context::target_protocol>();
 
                 this->set_mod_signal(BACK_EVENT_NEXT);
-
-                this->sesman_event.reset();
             }
         }
         else if (widget->group_id == this->selector.apply.group_id) {

@@ -217,22 +217,21 @@ void mod_rdp::init_negociate_event_(
     });
 }
 
-
 void mod_rdp::acl_update()
 {
     if (this->enable_server_cert_external_validation) {
-        auto const& message = ini.get<cfg::mod_rdp::server_cert_response>();
+        auto const& message = this->ini.get<cfg::mod_rdp::server_cert_response>();
         if (message.empty()) {
             return;
         }
 
         if (message == "Ok" || message == "ok") {
-            LOG(LOG_INFO, "certificate was valid according to authentifier");
-            result = CertificateResult::valid;
+            LOG(LOG_INFO, "Certificate was valid according to authentifier");
+//            result = CertificateResult::valid;
         }
         else {
-            LOG(LOG_INFO, "certificate was invalid according to authentifier: %s", message);
-            result = CertificateResult::invalid;
+            LOG(LOG_INFO, "Certificate was invalid according to authentifier: %s", message);
+//            result = CertificateResult::invalid;
             throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
         }
 

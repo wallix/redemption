@@ -2835,8 +2835,6 @@ namespace gdi
 
 using CallbackEventContainer = jln::ActionContainer<Callback&>;
 using CallbackEventPtr = CallbackEventContainer::Ptr;
-using SesmanEventContainer = jln::ActionContainer<Inifile&>;
-using SesmanEventPtr = SesmanEventContainer::Ptr;
 using GraphicTimerContainer = jln::TimerContainer<gdi::GraphicApi&>;
 using GraphicTimerPtr = GraphicTimerContainer::Ptr;
 using TimerContainer = jln::TimerContainer<>;

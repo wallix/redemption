@@ -143,7 +143,6 @@ namespace { // anonymous namespace
         GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
 #ifndef __EMSCRIPTEN__
-        SesmanEventPtr sesman_event;
         CertificateResult result = CertificateResult::wait;
 #endif
 
@@ -1835,6 +1834,7 @@ class mod_rdp : public mod_api, public rdp_api
     uint32_t monitor_count = 0;
 
     Transport & trans;
+    Inifile & ini;
     CryptContext encrypt {};
     RdpNegociationResult negociation_result;
 
@@ -1883,7 +1883,7 @@ class mod_rdp : public mod_api, public rdp_api
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
-
+    const bool enable_server_cert_external_validation;
     const bool enable_remotefx;
     bool haveRemoteFx{false};
     bool haveSurfaceFrameAck{false};
@@ -1911,7 +1911,6 @@ class mod_rdp : public mod_api, public rdp_api
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
-    SesmanEventContainer & sesman_events_;
     SesmanInterface & sesman;
     GraphicFdPtr fd_event;
 
@@ -1981,12 +1980,12 @@ public:
     
     explicit mod_rdp(
         Transport & trans
+      , Inifile & ini
       , SessionReactor& session_reactor
       , TopFdContainer & fd_events_
       , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
       , GraphicEventContainer & graphic_events_
-      , SesmanEventContainer & sesman_events_
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -2015,6 +2014,7 @@ public:
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
+        , ini(ini)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk
@@ -2035,8 +2035,8 @@ public:
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
-        , enable_remotefx(mod_rdp_params.enable_remotefx)
         , enable_server_cert_external_validation(mod_rdp_params.enable_server_cert_external_validation)
+        , enable_remotefx(mod_rdp_params.enable_remotefx)
         , primary_drawing_orders_support(
             mod_rdp_params.primary_drawing_orders_support &
             [](auto& order_support){
@@ -2057,7 +2057,6 @@ public:
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
-        , sesman_events_(sesman_events_)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor, fd_events_, graphic_fd_events_, timer_events_)
@@ -2152,13 +2151,13 @@ public:
         }
     }
 
+    void acl_update() override;
+
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE RECEIVED RDP MOD!!!!!!!!!!!!!!!!!!!!! cfs=%d ie=%s",
-            int(this->connection_finalization_state), this->input_event_disabled?"dis":"ena");
+//        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE RECEIVED RDP MOD!!!!!!!!!!!!!!!!!!!!! cfs=%d ie=%s",
+//            int(this->connection_finalization_state), this->input_event_disabled?"dis":"ena");
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && !this->input_event_disabled) {
-
-            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode Keyboard Event");
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
 #ifndef __EMSCRIPTEN__
@@ -2195,7 +2194,7 @@ public:
                 }
             }
 
-            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode::send_input");
+//            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode::send_input");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
 #ifndef __EMSCRIPTEN__
@@ -6017,8 +6016,7 @@ private:
     void init_negociate_event_(
         const ClientInfo & info, Random & gen, TimeObj & timeobj,
         const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
-        const std::chrono::seconds open_session_timeout,
-        bool enable_server_cert_external_validation);
+        const std::chrono::seconds open_session_timeout);
 };
 
 #undef IF_ENABLE_METRICS

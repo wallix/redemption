@@ -197,7 +197,6 @@ int main(int argc, char** argv)
     if (!ini_file.empty()) {
         configuration_load(ini.configuration_holder(), ini_file);
     }
-    SesmanEventContainer sesman_events_;
     SesmanInterface sesman(ini);
 
     UdevRandom system_gen;
@@ -280,17 +279,17 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, session_reactor,
+                trans, ini, session_reactor,
                 fd_events_,
                 graphic_fd_events_,
                 timer_events_,
                 graphic_events_,
-                sesman_events_,
                 sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, ini, nullptr, nullptr, mod_rdp_factory);
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, 
+                ini, nullptr, nullptr, mod_rdp_factory);
         });
     };
 

@@ -140,7 +140,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
-    SesmanEventContainer sesman_events_;
     SesmanInterface sesman(ini);
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -148,7 +147,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, sesman, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, ini, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
         ini, nullptr, nullptr, mod_rdp_factory);
@@ -253,7 +252,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
-    SesmanEventContainer sesman_events_;
     SesmanInterface sesman(ini);
 
 
@@ -262,7 +260,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman_events_, sesman,
+    auto mod = new_mod_rdp(t, ini, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman,
         front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
