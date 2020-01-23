@@ -466,12 +466,12 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST("No error"sv == scytale_fdx_writer_get_error_message(fdx));
 
-        RED_TEST(0 == scytale_fdx_writer_delete(fdx));
-
         auto fdxpath = wd_record.add_file(fdx_filename);
         (void)wd_hash.add_file(fdx_filename);
 
         RED_TEST(fdxpath.string() == scytale_fdx_get_path(fdx));
+
+        RED_TEST(0 == scytale_fdx_writer_delete(fdx));
 
         RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
 
