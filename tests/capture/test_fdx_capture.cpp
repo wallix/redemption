@@ -53,21 +53,24 @@ RED_AUTO_TEST_CASE(fdx_name_generator)
 
     FdxNameGenerator gen(MY_RECORD_PATH, MY_HASH_PATH, MY_SID);
 
-    RED_TEST(gen.get_current_filename() == MY_SID);
+    RED_TEST(gen.get_current_basename() == MY_SID);
+    RED_TEST(gen.get_current_relative_path() == MY_SID "/" MY_SID);
     RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID);
     RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID);
 
     gen.next_tfl();
 
     RED_TEST(gen.get_current_id() == Mwrm3::FileId(1));
-    RED_TEST(gen.get_current_filename() == MY_SID ",000001.tfl");
+    RED_TEST(gen.get_current_basename() == MY_SID ",000001.tfl");
+    RED_TEST(gen.get_current_relative_path() == MY_SID "/" MY_SID ",000001.tfl");
     RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID ",000001.tfl");
     RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID ",000001.tfl");
 
     gen.next_tfl();
 
     RED_TEST(gen.get_current_id() == Mwrm3::FileId(2));
-    RED_TEST(gen.get_current_filename() == MY_SID ",000002.tfl");
+    RED_TEST(gen.get_current_basename() == MY_SID ",000002.tfl");
+    RED_TEST(gen.get_current_relative_path() == MY_SID "/" MY_SID ",000002.tfl");
     RED_TEST(gen.get_current_record_path() == MY_RECORD_PATH "/" MY_SID "/" MY_SID ",000002.tfl");
     RED_TEST(gen.get_current_hash_path() == MY_HASH_PATH "/" MY_SID "/" MY_SID ",000002.tfl");
 
@@ -194,15 +197,19 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
 
     RED_TEST(bytes_view(file_content) ==
         "v3\n\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00,"
-        "\x05\x00\x18\x00""file4my_session_id,000004.tflabcdefghijabcdefghijabcdefghijab"
+        "\x05\x00\x26\x00"
+        "file4my_session_id/my_session_id,000004.tflabcdefghijabcdefghijabcdefghijab"
         "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00L"
-        "\x05\x00\x18\x00""file5my_session_id,000005.tflABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"
+        "\x05\x00\x26\x00"
+        "file5my_session_id/my_session_id,000005.tflABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"
         "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x0c"
-        "\x05\x00\x18\x00""file1my_session_id,000001.tfl01234567890123456789012345678901"
-        "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00""0\x05"
-        "\x00\x18\x00""file1my_session_id,000003.tfl\x04\x00\x06\x00\x00\x00\x00\x00\x00"
-        "\x00\x05\x00\x00\x00\x00\x00\x00\x00T\x05\x00\x18\x00""file6my_session_id,"
-        "000006.tflABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
+        "\x05\x00\x26\x00"
+        "file1my_session_id/my_session_id,000001.tfl01234567890123456789012345678901"
+        "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x30\x05"
+        "\x00\x26\x00"
+        "file1my_session_id/my_session_id,000003.tfl\x04\x00\x06\x00\x00\x00\x00\x00\x00"
+        "\x00\x05\x00\x00\x00\x00\x00\x00\x00\x54\x05\x00\x26\x00"
+        "file6my_session_id/my_session_id,000006.tflABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
 
     RED_CHECK_FILE_CONTENTS(hash_path.add_file(fdx_basename), str_concat(
         "v2\n\n\nsid,blabla.fdx "sv,

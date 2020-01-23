@@ -58,10 +58,11 @@ struct FdxNameGenerator
 {
     FdxNameGenerator(std::string_view record_path, std::string_view hash_path, std::string_view sid);
 
-    // before next_tfl(): is a fdx file
+    // before next_tfl(): is a partial tfl path
     // after next_tfl(): is a tfl file
     //@{
-    std::string_view get_current_filename() const noexcept;
+    std::string_view get_current_basename() const noexcept;
+    std::string_view get_current_relative_path() const noexcept;
     std::string const& get_current_record_path() const noexcept { return this->record_path; }
     std::string const& get_current_hash_path() const noexcept { return this->hash_path; }
     //@}
@@ -73,7 +74,8 @@ struct FdxNameGenerator
 private:
     std::string record_path;
     std::string hash_path;
-    uint16_t pos_start_filename;
+    uint16_t pos_start_basename;
+    uint16_t pos_start_relative_path;
     uint16_t pos_end_record_suffix;
     uint16_t pos_end_hash_suffix;
     TflSuffixGenerator tfl_suffix_generator;
@@ -99,7 +101,7 @@ struct FdxCapture
 
     explicit FdxCapture(
         std::string_view record_path, std::string_view hash_path,
-        std::string_view fdx_basename, std::string_view sid, int groupid,
+        std::string_view fdx_filebase, std::string_view sid, int groupid,
         CryptoContext& cctx, Random& rnd, Fstat& fstat,
         ReportError report_error);
 

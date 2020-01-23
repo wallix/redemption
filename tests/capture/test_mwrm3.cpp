@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(serialize_unserialize)
             [](
                 FileId file_id, FileSize file_size,
                 Direction direction, TransferedStatus transfered_status,
-                Filename original_filename, TflFilename tfl_filename,
+                Filename original_filename, TflRelativeFilename tfl_filename,
                 QuickHash qhash, FullHash fhash, Sha256Signature sig
             ){
                RED_TEST(file_id == FileId(42));
@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(mwrm3_parser)
         [](
             FileId file_id, FileSize file_size,
             Direction direction, TransferedStatus transfered_status,
-            Filename original_filename, TflFilename tfl_filename,
+            Filename original_filename, TflRelativeFilename tfl_filename,
             QuickHash qhash, FullHash fhash, Sha256Signature sig
         ){
             RED_TEST(file_id == FileId(4));

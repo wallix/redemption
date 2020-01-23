@@ -792,7 +792,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
                 RED_CHECK(av ==
                     "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                    "\x00\x00,\x03\x00\x18\x00""abcmy_session_id,000001.tfl\xd1\xb9\xc9"
+                    "\x00\x00,\x03\x00\x26\x00""abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9"
                     "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
                     "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
             }
