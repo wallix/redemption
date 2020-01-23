@@ -420,7 +420,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             FdxCapture fdx = FdxCapture{
                 record_path.dirname().string(),
                 hash_path.dirname().string(),
-                fdx_basename, sid, -1, cctx, rnd, fstat,
+                "sid,blabla", sid, -1, cctx, rnd, fstat,
                 ReportError()};
         };
 

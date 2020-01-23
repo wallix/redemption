@@ -424,6 +424,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         auto wd_record = wd.create_subdirectory("record");
 
         auto sid = "0123456789abcdef"sv;
+        auto fdx_filebase = "sid,blabla"sv;
         auto fdx_filename = "sid,blabla.fdx"sv;
 
         auto wd_fdx_record = wd_record.create_subdirectory(sid);
@@ -431,7 +432,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         auto* fdx = scytale_fdx_writer_new_with_test_random(
             data.has_encryption, data.has_checksum, master_derivator, hmac_key, trace_fn,
-            wd_record.dirname(), wd_hash.dirname(), fdx_filename.data(), 0, sid.data());
+            wd_record.dirname(), wd_hash.dirname(), fdx_filebase.data(), 0, sid.data());
 
         auto* tfl = scytale_fdx_writer_open_tfl(fdx, "file1.txt", int(Mwrm3::Direction::Unknown));
         RED_REQUIRE(tfl);

@@ -115,7 +115,7 @@ namespace
 
 FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,
-    std::string_view fdx_filebase, std::string_view sid,
+    std::string fdx_filebase, std::string_view sid,
     int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
 : name_generator(
     record_path = remove_end_slash(record_path),
@@ -141,6 +141,7 @@ FdxCapture::FdxCapture(
         }
     }
 
+    fdx_filebase += ".fdx";
     this->out_crypto_transport.open(
         str_concat(record_path, '/', fdx_filebase).c_str(),
         str_concat(hash_path, '/', fdx_filebase).c_str(),

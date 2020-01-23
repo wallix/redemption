@@ -101,7 +101,7 @@ struct FdxCapture
 
     explicit FdxCapture(
         std::string_view record_path, std::string_view hash_path,
-        std::string_view fdx_filebase, std::string_view sid, int groupid,
+        std::string fdx_filebase, std::string_view sid, int groupid,
         CryptoContext& cctx, Random& rnd, Fstat& fstat,
         ReportError report_error);
 

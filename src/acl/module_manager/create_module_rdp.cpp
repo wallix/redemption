@@ -470,7 +470,7 @@ void ModuleManager::create_mod_rdp(
                     this->fdx_capture = std::make_unique<FdxCapture>(
                         str_concat(record_dir.as_string(), subdir),
                         str_concat(hash_dir.as_string(), subdir),
-                        str_concat(filebase, ".fdx"_av),
+                        filebase,
                         session_id, groupid, mm.cctx, mm.gen, this->fstat,
                         /* TODO should be a log (siem?)*/
                         ReportError());
