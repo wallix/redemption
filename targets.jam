@@ -115,7 +115,6 @@ exe rdpproxy :
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -543,7 +542,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -685,7 +683,6 @@ test-run tests/acl/test_authentifier :
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -907,7 +904,6 @@ test-run tests/acl/test_module_manager :
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -923,7 +919,6 @@ test-run tests/acl/test_module_manager :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
-  <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -2687,7 +2682,6 @@ test-run tests/core/test_mainloop :
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -2832,7 +2826,6 @@ test-run tests/core/test_session :
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -2980,7 +2973,6 @@ test-run tests/front/test_front :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -2995,7 +2987,6 @@ test-run tests/front/test_front :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
-  <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -4863,7 +4854,6 @@ test-run tests/server/test_mstsc_client :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
@@ -4873,7 +4863,6 @@ test-run tests/server/test_mstsc_client :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -4925,7 +4914,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
@@ -4935,7 +4923,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -4987,7 +4974,6 @@ test-run tests/server/test_rdesktop_client :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
-  <library>src/capture/capture_paths_context.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
@@ -4997,7 +4983,6 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -5830,7 +5815,6 @@ obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/modu
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
-obj src/capture/capture_paths_context.o : $(REDEMPTION_SRC_PATH)/capture/capture_paths_context.cpp ;
 obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
