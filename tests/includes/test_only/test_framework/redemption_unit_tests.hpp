@@ -26,6 +26,19 @@ Author(s): Jonathan Poelen
 #include <type_traits>
 
 
+namespace ut
+{
+    struct flagged_bytes_view : bytes_view
+    {
+        char flag;
+    };
+
+    inline flagged_bytes_view ascii(bytes_view v) { return {v, 'c'}; }
+    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's'}; }
+    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b'}; }
+    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd'}; }
+}
+
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 
 namespace redemption_unit_test__
