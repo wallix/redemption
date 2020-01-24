@@ -290,6 +290,9 @@ bogus_pointer_xormask_padding = boolean(default=False)
 #_advanced
 disabled_orders = string_list(default=list())
 
+#_advanced
+wabam_uses_cache_bitmap_r2 = boolean(default=False)
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
