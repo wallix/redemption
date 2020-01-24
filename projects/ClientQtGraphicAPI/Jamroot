@@ -79,6 +79,8 @@ if $(qtversion) = 4
         <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
     ;
 }
+# for `Q_UNUSED(_a);` within moc_*.cpp
+REDEMPTION_CXXFLAGS += <toolset>clang:<cxxflags>-Wno-extra-semi-stmt ;
 
 project redemption_qt_client
     : requirements

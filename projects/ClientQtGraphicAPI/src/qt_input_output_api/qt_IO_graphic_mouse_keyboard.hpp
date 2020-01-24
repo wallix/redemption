@@ -918,7 +918,7 @@ public:
         const Rect drect = rectBmp.intersect(clipRect);
 
         const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->cache.width() - drect.x, drect.cx));
-        const int16_t mincy = std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->cache.height() - drect.y, drect.cy));;
+        const int16_t mincy = std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->cache.height() - drect.y, drect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
