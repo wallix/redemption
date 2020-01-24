@@ -629,12 +629,10 @@ class Session
                     LOG(LOG_INFO, "--------------------- Back event loop done");
                 }
 
-                // Incoming data from ACL
-                LOG(LOG_INFO, "-------------------------- enable OSD");
-                const bool enable_osd = ini.get<cfg::globals::enable_osd>();
-                if (enable_osd) {
+                if (ini.get<cfg::globals::enable_osd>()) {
                     const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
                     if (enddate && mod_wrapper.is_up_and_running()) {
+                        LOG(LOG_INFO, "--------------------- End Session OSD Warning");
                         std::string mes = end_session_warning.update_osd_state(
                             language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
                         if (!mes.empty()) {

@@ -116,13 +116,15 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToServerSender to_server_sender(t);
 
         SessionReactor session_reactor;
+        Inifile ini;
+        SesmanInterface sesman(ini);
 
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, session_reactor,
             base_params, d.cb_params, ipca_service, {nullptr, false});
 
         RED_CHECK_EXCEPTION_ERROR_ID(
-            CHECK_CHANNEL(t, clipboard_virtual_channel),
+            CHECK_CHANNEL(t, clipboard_virtual_channel, sesman),
             ERR_TRANSPORT_NO_MORE_DATA);
     }
 }
@@ -189,6 +191,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     SessionReactor session_reactor;
+    Inifile ini;
+    SesmanInterface sesman(ini);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, session_reactor,
@@ -217,7 +221,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
         /* 0000 */ "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" // ................
         /* 0010 */ "\x02\x00\x00\x00\x1e\x00\x00\x00\x00\x00\x00\x00"                 // ............
                 ""_av,
-            out_asynchronous_task);
+            out_asynchronous_task, sesman);
 
 // ClipboardVirtualChannel::process_client_message: total_length=24 flags=0x00000013 chunk_data_length=24
 // Recv done on channel (24) n bytes
@@ -295,7 +299,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
         /* 0000 */ "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00\x00\x00\x00\x00"_av,
-            out_asynchronous_task);
+            out_asynchronous_task, sesman);
 
 // ClipboardVirtualChannel::process_client_message: total_length=8 flags=0x00000013 chunk_data_length=8
 // Recv done on channel (8) n bytes
@@ -381,6 +385,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         bool always_file_record;
     };
 
+    Inifile ini;
+    SesmanInterface sesman(ini);
     using namespace std::string_view_literals;
 
     static constexpr auto sid = "my_session_id"sv;
@@ -469,7 +475,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 | CHANNELS::CHANNEL_FLAG_LAST
                 | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                 clipboard_virtual_channel.process_server_message(
-                    av.size(), flags, av, out_asynchronous_task);
+                    av.size(), flags, av, out_asynchronous_task, sesman);
             };
 
             auto process_client_message = [&](bytes_view av){

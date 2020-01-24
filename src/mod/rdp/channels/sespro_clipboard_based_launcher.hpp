@@ -171,7 +171,7 @@ public:
         return false;
     }
 
-    bool on_device_announce_responded(bool bSucceeded) override {
+    bool on_device_announce_responded(bool bSucceeded, SesmanInterface & sesman) override {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
             "SessionProbeClipboardBasedLauncher :=> on_device_announce_responded, Succeeded=%s", (bSucceeded ? "Yes" : "No"));
 
@@ -189,7 +189,7 @@ public:
                 this->drive_redirection_initialized = false;
 
                 if (this->sesprob_channel) {
-                    this->sesprob_channel->abort_launch();
+                    this->sesprob_channel->abort_launch(sesman);
                 }
             }
         }

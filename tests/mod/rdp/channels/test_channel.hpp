@@ -58,7 +58,7 @@ using TestToServerSender = TestSender<1>;
 namespace tu
 {
 
-inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
+inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel, SesmanInterface & sesman)
 {
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -97,7 +97,8 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             virtual_channel.process_server_message(
-                total_length, flags, chunk_data, out_asynchronous_task);
+                total_length, flags, chunk_data, out_asynchronous_task,
+                sesman);
 
             if (out_asynchronous_task) {
                 return false;
@@ -110,6 +111,6 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
     return true;
 }
 
-#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(tu::test_channel(t, virtual_channel));
+#define CHECK_CHANNEL(t, virtual_channel, sesman) RED_CHECK(tu::test_channel(t, virtual_channel, sesman));
 
 } // namespace tu

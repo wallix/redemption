@@ -50,7 +50,7 @@ public:
     , screen_info(screen_info)
     {}
 
-    bool can_be_start_capture() override
+    bool can_be_start_capture(SesmanInterface & sesman) override
     {
         return false;
     }

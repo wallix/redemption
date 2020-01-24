@@ -26,6 +26,7 @@
 #include "utils/uninit_checked.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/report_message_api.hpp"
+#include "acl/sesman.hpp"
 
 #include <memory>
 
@@ -100,7 +101,8 @@ public:
 
     virtual void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        SesmanInterface & sesman) = 0;
 
 public:
     void send_message_to_client(uint32_t total_length,

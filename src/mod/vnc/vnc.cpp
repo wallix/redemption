@@ -54,6 +54,7 @@ mod_vnc::mod_vnc( Transport & t
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
+           , SesmanInterface & sesman
            )
     : front(front)
     , t(t)
@@ -80,6 +81,7 @@ mod_vnc::mod_vnc( Transport & t
 	, tlsSwitch(false)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
+    , sesman(sesman)
 {
 	LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
 
@@ -93,8 +95,8 @@ mod_vnc::mod_vnc( Transport & t
     this->fd_event = graphic_fd_events_.create_top_executor(session_reactor, this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
-        .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-            this->draw_event(gd);
+        .on_action([this, &sesman](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+            this->draw_event(gd, sesman);
             return ctx.need_more_data();
         })
         .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
@@ -152,7 +154,7 @@ bool mod_vnc::ms_logon(Buf64k & buf)
     return true;
 }
 
-void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
+void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface & sesman)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
 
@@ -173,7 +175,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
     drawable.end_update();
 
     this->state = UP_AND_RUNNING;
-    this->front.can_be_start_capture();
+    this->front.can_be_start_capture(sesman);
 
     this->update_screen(screen_rect, 1);
     this->lib_open_clip_channel();
@@ -442,7 +444,7 @@ bool mod_vnc::doTlsSwitch()
 }
 
 
-void mod_vnc::draw_event(gdi::GraphicApi & gd)
+void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
 {
 	LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
@@ -484,7 +486,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
 	[[maybe_unused]]
 	uint64_t const data_server_before = this->server_data_buf.remaining();
 
-	while (this->draw_event_impl(gd) && !this->tlsSwitch) {
+	while (this->draw_event_impl(gd, sesman) && !this->tlsSwitch) {
 	}
 
 	uint64_t const data_server_after = this->server_data_buf.remaining();
@@ -708,12 +710,12 @@ bool mod_vnc::treatVeNCrypt() {
 }
 
 
-bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
+bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
 {
     switch (this->state)
     {
     case DO_INITIAL_CLEAR_SCREEN:
-        this->initial_clear_screen(gd);
+        this->initial_clear_screen(gd, sesman);
         return false;
 
     case UP_AND_RUNNING:
@@ -1984,14 +1986,14 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 }
 
 
-void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & )
+void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
 {
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
         this->state = DO_INITIAL_CLEAR_SCREEN;
         this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->session_reactor)
         .on_action([this](auto ctx, gdi::GraphicApi & drawable){
-            this->initial_clear_screen(drawable);
+            this->initial_clear_screen(drawable, this->sesman);
             return ctx.terminate();
         });
     }

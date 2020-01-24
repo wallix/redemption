@@ -185,11 +185,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
         SessionReactor session_reactor;
         TimerContainer timer_events_;
+        Inifile ini;
+        SesmanInterface sesman(ini);
         FileSystemVirtualChannel file_system_virtual_channel(
             session_reactor, timer_events_, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);
 
-        RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel, sesman), ERR_TRANSPORT_NO_MORE_DATA);
 
         RED_CHECK_WORKSPACE(wd);
     }

@@ -773,7 +773,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         }
 
         void process_server_device_announce_response(uint32_t total_length,
-            uint32_t flags, InStream& chunk
+            uint32_t flags, InStream& chunk, SesmanInterface & sesman
         ) {
             (void)total_length;
             (void)flags;
@@ -800,7 +800,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 this->file_system_drive_manager.get_session_probe_drive_id()) {
                 if (this->file_system_virtual_channel.session_probe_device_announce_responded_notifier) {
                     if (!this->file_system_virtual_channel.session_probe_device_announce_responded_notifier->on_device_announce_responded(
-                            server_device_announce_response.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS)) {
+                            (server_device_announce_response.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS), sesman)) {
                         this->file_system_virtual_channel.session_probe_device_announce_responded_notifier = nullptr;
                     }
                 }
@@ -2664,7 +2664,8 @@ public:
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
+        SesmanInterface & sesman)
             override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
@@ -2723,7 +2724,7 @@ public:
                         "Server Device Announce Response");
 
                 this->device_redirection_manager.process_server_device_announce_response(
-                    total_length, flags, chunk);
+                    total_length, flags, chunk, sesman);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:

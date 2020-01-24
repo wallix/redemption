@@ -138,7 +138,7 @@
     //    };    
     // ============================ FrontAPI
 //    public:
-//        virtual bool can_be_start_capture() = 0;
+//        virtual bool can_be_start_capture(SesmanInterface & sesman) = 0;
 //        virtual bool must_be_stop_capture() = 0;
 //        [[nodiscard]] virtual bool is_capture_in_progress() const = 0;
 

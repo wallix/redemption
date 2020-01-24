@@ -900,7 +900,8 @@ public:
     void process_cliprdr_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
         ServerTransportContext & stc,
-        FileValidatorService * file_validator_service
+        FileValidatorService * file_validator_service,
+        SesmanInterface & sesman
     ) {
         if (!this->clipboard_virtual_channel) {
             this->create_clipboard_virtual_channel(front, stc, file_validator_service);
@@ -914,7 +915,7 @@ public:
         }
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
         assert(!out_asynchronous_task);
     }   // process_cliprdr_event
 
@@ -1023,7 +1024,8 @@ public:
         const char (& client_name)[128],
         const uint32_t monitor_count,
         const bool bogus_refresh_rect,
-        const Translation::language_t & lang
+        const Translation::language_t & lang,
+        SesmanInterface & sesman
     ) {
         (void)session_probe_channel;
 #ifndef __EMSCRIPTEN__
@@ -1045,7 +1047,7 @@ public:
 #endif
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
 
         assert(!out_asynchronous_task);
     }
@@ -1055,7 +1057,8 @@ public:
             FrontAPI& front,
             ServerTransportContext & stc,
             const ModRdpVariables & vars,
-            RailCaps const & client_rail_caps
+            RailCaps const & client_rail_caps,
+            SesmanInterface & sesman
             ) {
         (void)rail_channel;
 
@@ -1067,7 +1070,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
 
         assert(!out_asynchronous_task);
     }
@@ -1115,7 +1118,8 @@ public:
     void process_drdynvc_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
                                 FrontAPI& front,
                                 ServerTransportContext & stc,
-                                AsynchronousTaskContainer & asynchronous_tasks) {
+                                AsynchronousTaskContainer & asynchronous_tasks,
+                                SesmanInterface & sesman) {
 
         if (!this->dynamic_channel_virtual_channel) {
             this->create_dynamic_channel_virtual_channel(front, stc);
@@ -1125,7 +1129,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
 
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
@@ -1149,7 +1153,8 @@ public:
                             ServerTransportContext & stc,
                             AsynchronousTaskContainer & asynchronous_tasks,
                             GeneralCaps const & client_general_caps,
-                            const char (& client_name)[128]) {
+                            const char (& client_name)[128],
+                            SesmanInterface & sesman) {
         if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
         &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
@@ -1182,7 +1187,7 @@ public:
         FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
         }
@@ -1672,7 +1677,8 @@ public:
         const uint32_t monitor_count,
         const bool bogus_refresh_rect,
         const Translation::language_t & lang,
-        FileValidatorService * file_validator_service)
+        FileValidatorService * file_validator_service,
+        SesmanInterface & sesman)
     {
         assert(this->session_probe.enable_session_probe);
         if (this->session_probe.session_probe_launcher){
@@ -1704,7 +1710,7 @@ public:
                     client_name);
             }
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
-            this->session_probe_virtual_channel->start_launch_timeout_timer();
+            this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
@@ -1734,7 +1740,7 @@ public:
                     client_name);
             }
 
-            this->session_probe_virtual_channel->start_launch_timeout_timer();
+            this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
 
             if (this->remote_app.enable_remote_program) {
                 if (!this->remote_programs_virtual_channel) {
@@ -2681,7 +2687,7 @@ public:
         }
     }
 
-    void connected_slow_path(gdi::GraphicApi & drawable, InStream & stream)
+    void connected_slow_path(gdi::GraphicApi & drawable, InStream & stream, SesmanInterface & sesman)
     {
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -2756,14 +2762,14 @@ public:
                     this->front, *this, *this, this->authentifier, stc,
                     this->asynchronous_tasks,
                     this->client_general_caps, this->client_name,
-                    this->monitor_count, this->bogus_refresh_rect, this->lang);
+                    this->monitor_count, this->bogus_refresh_rect, this->lang, sesman);
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service);
+                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service, sesman);
             }
             else if (mod_channel.name == channel_names::rail) {
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
@@ -2771,19 +2777,19 @@ public:
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_rail_event(
                     mod_channel, sec.payload, length, flags, chunk_size,
-                    this->front, stc, this->vars, this->client_rail_caps);
+                    this->front, stc, this->vars, this->client_rail_caps, sesman);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
+                this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, sesman);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks);
+                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, sesman);
             }
             else {
                 IF_ENABLE_METRICS(server_other_channel_data(length));
@@ -2887,10 +2893,21 @@ public:
                                 else {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
 
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()})){
+                                    auto resize_result = this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()});
+                                    switch (resize_result){
+                                    case FrontAPI::ResizeResult::fail:
+                                    {
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+                                    }
+                                    case FrontAPI::ResizeResult::done:
+//                                    this->front.restart_capture(sesman);
+                                    break;
+                                    case FrontAPI::ResizeResult::no_need:
+                                    break;
+                                    case FrontAPI::ResizeResult::remoteapp:
+                                    break;
                                     }
 
                                     this->connection_finalization_state = WAITING_CTL_COOPERATE;
@@ -2959,7 +2976,8 @@ public:
                                         this->monitor_count,
                                         this->bogus_refresh_rect,
                                         this->lang,
-                                        this->file_validator_service);
+                                        this->file_validator_service,
+                                        sesman);
                                 }
 #endif
                                 this->already_upped_and_running = true;
@@ -2973,7 +2991,7 @@ public:
                             }
                             else
 #endif
-                            if (this->front.can_be_start_capture()) {
+                            if (this->front.can_be_start_capture(sesman)) {
                                 if (this->bogus_refresh_rect && this->monitor_count) {
                                     this->rdp_suppress_display_updates();
                                     this->rdp_allow_display_updates(
@@ -3228,7 +3246,7 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(gdi::GraphicApi & gd)
+    void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
@@ -3239,11 +3257,11 @@ public:
 #endif
 
         this->buf.load_data(this->trans);
-        this->draw_event_impl(gd);
+        this->draw_event_impl(gd, sesman);
     }
 
 
-    void draw_event_impl(gdi::GraphicApi & gd)
+    void draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
     {
         while (this->buf.next(TpduBuffer::PDU)) {
             InStream x224_data(this->buf.current_pdu_buffer());
@@ -3262,7 +3280,7 @@ public:
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
                 }
                 else {
-                    this->connected_slow_path(drawable, x224_data);
+                    this->connected_slow_path(drawable, x224_data, sesman);
                 }
             }
             catch(Error const & e){
@@ -4818,7 +4836,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe_virtual_channel) {
-            this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
+            this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
         }
 #endif
 
@@ -4884,7 +4902,7 @@ public:
             }
 
             if (this->channels.session_probe_virtual_channel) {
-                this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
+                this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
             }
 #endif
         }
@@ -5855,11 +5873,11 @@ public:
         this->set_mod_signal(BACK_EVENT_NEXT);
     }
 
-    void sespro_launch_process_ended() override {
+    void sespro_launch_process_ended(SesmanInterface & sesman) override {
         if (this->delayed_start_capture) {
             this->delayed_start_capture = false;
 
-            if (this->front.can_be_start_capture()) {
+            if (this->front.can_be_start_capture(sesman)) {
                 if (this->bogus_refresh_rect && this->monitor_count) {
                     this->rdp_suppress_display_updates();
                     this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);

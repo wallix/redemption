@@ -21,6 +21,7 @@
 #pragma once
 
 #include "core/error.hpp"
+#include "acl/sesman.hpp"
 
 #include <cstdint>
 
@@ -40,7 +41,7 @@ public:
 
     virtual bool on_drive_redirection_initialize() = 0;
 
-    virtual bool on_device_announce_responded(bool bSucceeded) = 0;
+    virtual bool on_device_announce_responded(bool bSucceeded, SesmanInterface & sesman) = 0;
 
     virtual bool on_image_read(uint64_t offset, uint32_t length) = 0;
 

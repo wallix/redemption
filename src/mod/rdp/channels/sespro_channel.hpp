@@ -212,7 +212,7 @@ public:
         return this->session_probe_ready;
     }
 
-    void start_launch_timeout_timer()
+    void start_launch_timeout_timer(SesmanInterface & sesman)
     {
         if (this->sespro_params.effective_launch_timeout.count() > 0
          && !this->session_probe_ready
@@ -223,8 +223,8 @@ public:
                 this->session_probe_timer = this->timer_events_
                     .create_timer_executor(this->session_reactor)
                     .set_delay(this->sespro_params.effective_launch_timeout)
-                    .on_action([this](JLN_TIMER_CTX ctx){
-                        this->process_event_launch();
+                    .on_action([this, &sesman](JLN_TIMER_CTX ctx){
+                        this->process_event_launch(sesman);
                         return ctx.ready_to(this->sespro_params.effective_launch_timeout);
                     });
                 this->session_probe_launch_timeout_timer_started = true;
@@ -232,15 +232,15 @@ public:
         }
     }
 
-    void abort_launch()
+    void abort_launch(SesmanInterface & sesman)
     {
         this->launch_aborted = true;
 
         this->session_probe_timer = this->timer_events_
             .create_timer_executor(this->session_reactor)
             .set_delay(this->sespro_params.launcher_abort_delay)
-            .on_action(jln::one_shot([this](){
-                this->process_event_launch();
+            .on_action(jln::one_shot([this, &sesman](){
+                this->process_event_launch(sesman);
             }));
     }
 
@@ -286,7 +286,7 @@ private:
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
 
-    void process_event_launch()
+    void process_event_launch(SesmanInterface & sesman)
     {
         LOG(((this->sespro_params.on_launch_failure ==
                 SessionProbeOnLaunchFailure::disconnect_user) ?
@@ -323,7 +323,7 @@ private:
                 this->param_front_width, this->param_front_height));
         }
 
-        this->rdp.sespro_launch_process_ended();
+        this->rdp.sespro_launch_process_ended(sesman);
     }
 
     void process_event_ready()
@@ -401,7 +401,8 @@ private:
 public:
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask>& out_asynchronous_task) override
+        std::unique_ptr<AsynchronousTask>& out_asynchronous_task,
+        SesmanInterface & sesman) override
     {
         (void)out_asynchronous_task;
 
@@ -528,7 +529,7 @@ public:
 
                 this->session_probe_timer.reset();
 
-                this->rdp.sespro_launch_process_ended();
+                this->rdp.sespro_launch_process_ended(sesman);
 
                 if (this->sespro_params.keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {

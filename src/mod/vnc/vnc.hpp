@@ -246,6 +246,7 @@ private:
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
+    SesmanInterface & sesman;
 #endif
     /** @brief type of VNC authentication */
     enum VncAuthType : uint16_t {
@@ -296,7 +297,8 @@ public:
            , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
-           , [[maybe_unused]] VNCMetrics * metrics);
+           , [[maybe_unused]] VNCMetrics * metrics
+           , SesmanInterface & sesman);
 
     std::string module_name() override {return "VNC Mod";}
 
@@ -749,7 +751,7 @@ public:
     };
     ServerInitCtx server_init_ctx;
 
-    void initial_clear_screen(gdi::GraphicApi & drawable);
+    void initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface & sesman);
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
     void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override;
@@ -1005,7 +1007,7 @@ protected:
     bool tlsSwitch;
 
 public:
-    void draw_event(gdi::GraphicApi & gd);
+    void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman);
 
 private:
     static const char *securityTypeString(uint32_t t);
@@ -1016,7 +1018,7 @@ private:
 
     bool treatVeNCrypt();
 
-    bool draw_event_impl(gdi::GraphicApi & gd);
+    bool draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman);
 
 private:
     void check_timeout();
