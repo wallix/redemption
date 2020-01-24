@@ -89,8 +89,7 @@ static inline std::chrono::microseconds ustime() {
 // As gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.
 static inline std::chrono::microseconds difftimeval(const timeval& endtime, const timeval& starttime)
 {
-    auto d = ustime(endtime) - ustime(starttime);
-    return (d > std::chrono::microseconds(0x100000000LL)) ? std::chrono::microseconds{} : d;
+    return ustime(endtime) - ustime(starttime);
 }
 
 //static inline timeval usectotimeval(const std::chrono::microseconds time) {
