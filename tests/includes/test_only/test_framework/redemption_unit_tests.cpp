@@ -234,6 +234,8 @@ namespace redemption_unit_test__
 
             REDEMPTION_UNREACHABLE();
         }
+
+        char const * hex_table = "0123456789abcdef";
     }
 
     static bool is_printable_ascii(uint8_t c)
@@ -241,87 +243,119 @@ namespace redemption_unit_test__
         return 0x20 <= c && c < 127;
     }
 
-    static void put_char(std::ostream& out, uint8_t c, char const* newline = "\\n")
+    static bool put_unprintable_char(std::ostream& out, uint8_t c, char const* newline = "\\n")
     {
-        if (is_printable_ascii(c)) {
-            out << char(c);
+        switch (c) {
+            case '"': out << "\\\""; return false;
+            case '\b': out << "\\b"; return false;
+            case '\t': out << "\\t"; return false;
+            case '\r': out << "\\r"; return false;
+            case '\n': out << newline; return false;
         }
-        else {
-            char const * hex_table = "0123456789abcdef";
-            switch (c) {
-                case ' ':
-                case '!': out << char(c); break;
-                case '"': out << "\\\""; break;
-                case '\b': out << "\\b"; break;
-                case '\t': out << "\\t"; break;
-                case '\r': out << "\\r"; break;
-                case '\n': out << newline; break;
-                default: out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+        out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+        return true;
+    }
+
+    static bool is_hex(uint8_t c)
+    {
+        return
+            ('0' <= c && c <= '9')
+         || ('a' <= c && c <= 'f')
+         || ('A' <= c && c <= 'F')
+        ;
+    }
+
+    struct PutCharCtx
+    {
+        bool is_printable = true;
+        uint8_t previous_char;
+
+        void put(std::ostream& out, uint8_t c, char const* newline = "\\n")
+        {
+            if (is_printable_ascii(c)) {
+                if (!is_printable) {
+                    // split hexadecimal rendering "\xaaa" -> "\xaa""a"
+                    if (is_hex(c)) {
+                        out << "\"\"";
+                    }
+                    is_printable = true;
+                }
+                out << char(c);
+            }
+            else {
+                is_printable = !put_unprintable_char(out, c, newline);
+                previous_char = c;
             }
         }
-    }
+    };
 
     static std::ostream& put_dump_bytes(size_t pos, std::ostream& out, bytes_view x)
     {
         if (x.size() == 0){
             return out << "\"\"\n";
         }
-        char const * hex_table = "0123456789abcdef";
-        size_t q = 0;
-        size_t split = 16;
-        uint8_t tmpbuf[16];
-        size_t i = 0;
-        for (unsigned c : x) {
-            if (q%split == 0){
-                if (x.size()>split){
-                    out << "\n\"";
-                }
-                else {
-                    out << "\"";
-                }
+
+        constexpr size_t line_size = 16;
+        char const* empty_line
+            = "                                                                ";
+
+        auto print_hex = [&](bytes_view av){
+            for (uint8_t c : av) {
+                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
             }
-            if (q++ == pos){ out << "\x1b[35m";}
-            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-            tmpbuf[i++] = c;
-            if (q%split == 0){
-                if (x.size()>split) {
-                    out << "\" //";
-                    for (size_t v = 0 ; v < i ; v++){
-                        if (is_printable_ascii(tmpbuf[v])) {
-                            out << char(tmpbuf[v]);
-                        }
-                        else {
-                            out << ".";
-                        }
-                    }
-                    out << " !";
-                    i = 0;
-                }
-                else {
-                    out << "\"";
-                }
+        };
+
+        auto print_data = [&](bytes_view av){
+            for (uint8_t c : av) {
+                out << (is_printable_ascii(c) ? char(c) : '.');
             }
+        };
+
+        auto print_line = [&](bytes_view av){
+            out << '"';
+            print_hex(av.first(line_size));
+            out << "\" // ";
+            print_data(av.first(line_size));
+            av = av.from_offset(line_size);
+            out << "\n";
+            return av;
+        };
+
+        auto lbytes = x.first(pos);
+        auto rbytes = x.from_offset(pos);
+
+        while (lbytes.size() >= line_size) {
+            lbytes = print_line(lbytes);
         }
-        if (q%split != 0){
-            if (x.size()>split) {
-                out << "\" "
-                    << std::setfill(' ')
-                    << std::setw((split - q % split) * 4 + 2)
-                    << "//";
-                for (size_t v = 0 ; v < i ; v++){
-                    if (is_printable_ascii(tmpbuf[v])) {
-                        out << char(tmpbuf[v]);
-                    }
-                    else {
-                        out << ".";
-                    }
-                }
-                out << " !";
-            }
-            else {
-                out << "\"";
-            }
+
+        if (lbytes.empty()) {
+            out << "\x1b[35m";
         }
+        else {
+            auto partial_right_size = std::min(line_size - lbytes.size(), rbytes.size());
+            out << "\n\"";
+            print_hex(lbytes);
+            out << "\x1b[35m";
+            print_hex(rbytes.first(partial_right_size));
+            out << "\"" << &empty_line[(lbytes.size() + partial_right_size) * 4] << " // ";
+            print_data(lbytes);
+            print_data(rbytes.first(partial_right_size));
+            out << "\n";
+            rbytes = rbytes.from_offset(partial_right_size);
+        }
+
+        while (rbytes.size() >= line_size) {
+            rbytes = print_line(rbytes);
+        }
+
+        if (!rbytes.empty()) {
+            out << '"';
+            print_hex(rbytes);
+            out << "\"" << &empty_line[rbytes.size() * 4] << " // ";
+            print_data(rbytes);
+            out << "\n";
+        }
+
         return out << "\x1b[0m";
     }
 
@@ -330,27 +364,20 @@ namespace redemption_unit_test__
         auto print = [&](bytes_view x, bool is_markable){
             auto* p = x.as_u8p();
             auto* end = p + x.size();
+            PutCharCtx putc_ctx;
 
-            auto consume_char = [&](auto f0){
+            while (p < end) {
                 utf8_char_process(p, end-p, [&](std::size_t n){
-                    if (n == 0) {
-                        f0();
-                        put_char(out, *p, newline);
-                        ++p;
-                    }
-                    else if (n == 1) {
-                        put_char(out, *p, newline);
+                    if (n <= 1) {
+                        putc_ctx.put(out, *p, newline);
                         ++p;
                     }
                     else {
                         out.write(char_ptr_cast(p), n);
+                        putc_ctx.is_printable = true;
                         p += n;
                     }
                 });
-            };
-
-            while (p < end) {
-                consume_char([]{});
             }
 
             if (is_markable) {
@@ -374,13 +401,9 @@ namespace redemption_unit_test__
     static void put_ascii_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
     {
         auto print = [&](bytes_view x){
+            PutCharCtx putc_ctx;
             for (uint8_t c : x) {
-                if (is_printable_ascii(c)) {
-                    out << char(c);
-                }
-                else {
-                    put_char(out, c, newline);
-                }
+                putc_ctx.put(out, c, newline);
             }
         };
 
@@ -399,7 +422,6 @@ namespace redemption_unit_test__
 
     static void put_hex_bytes(size_t pos, std::ostream& out, bytes_view v)
     {
-        char const * hex_table = "0123456789abcdef";
         auto print = [&](bytes_view x){
             for (uint8_t c : x) {
                 out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
@@ -445,12 +467,13 @@ namespace redemption_unit_test__
 
     std::ostream & operator<<(std::ostream & out, Put2Mem const & x)
     {
-        out << "\"";
+        char const* sep = (x.pattern == 'd') ? "" : "\"";
+        out << sep;
         switch (x.pattern) {
-            #define CASE(c, print) case c:       \
-                print(x.pos, out, x.lhs);        \
-                out << "\"" << x.revert << "\""; \
-                print(x.pos, out, x.rhs);        \
+            #define CASE(c, print) case c: \
+                print(x.pos, out, x.lhs);       \
+                out << sep << x.revert << sep;  \
+                print(x.pos, out, x.rhs);       \
                 break
             CASE('c', put_ascii_bytes);
             CASE('C', put_ascii_bytes2);
@@ -462,7 +485,7 @@ namespace redemption_unit_test__
             CASE('a', put_auto_bytes);
             #undef CASE
         }
-        return out << "\"]";
+        return out << sep << "]";
     }
 
     namespace
