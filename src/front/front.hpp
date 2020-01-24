@@ -1048,6 +1048,11 @@ public:
             : Capture::RTDisplayResult::Unchanged;
     }
 
+    void force_using_cache_bitmap_r2()
+    {
+        this->orders.graphics_update_pdu().force_using_cache_bitmap_r2();
+    }
+
     static int get_appropriate_compression_type(int client_supported_type, int front_supported_type)
     {
         if (((client_supported_type < PACKET_COMPR_TYPE_8K) || (client_supported_type > PACKET_COMPR_TYPE_RDP61)) ||

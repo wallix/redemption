@@ -97,6 +97,7 @@ namespace cfg {
         struct enable_remotefx;
         struct bogus_pointer_xormask_padding;
         struct disabled_orders;
+        struct wabam_uses_cache_bitmap_r2;
     };
 
     struct mod_rdp {

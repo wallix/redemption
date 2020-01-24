@@ -1146,6 +1146,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "";
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct client::wabam_uses_cache_bitmap_r2 {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "wabam_uses_cache_bitmap_r2";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// type: RdpCompression <br/>
     /// value = static_cast<type>(4) <br/>
@@ -5360,6 +5372,7 @@ struct client
 , cfg::client::enable_remotefx
 , cfg::client::bogus_pointer_xormask_padding
 , cfg::client::disabled_orders
+, cfg::client::wabam_uses_cache_bitmap_r2
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

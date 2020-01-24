@@ -279,6 +279,8 @@ void config_spec_definition(Writer && W)
             "  22: Polyline\n"
             "This option takes precedence over the option Extra orders of section mod_rdp."
         }, set(""));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "wabam_uses_cache_bitmap_r2", set(false));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]

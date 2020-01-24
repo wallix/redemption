@@ -342,6 +342,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disabled_orders = 
 
+# value: 0 or 1
+#_advanced
+#wabam_uses_cache_bitmap_r2 = 0
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
