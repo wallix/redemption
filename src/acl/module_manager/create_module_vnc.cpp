@@ -66,6 +66,7 @@ public:
         GraphicFdContainer & graphic_fd_events_,
         TimerContainer& timer_events_,
         GraphicEventContainer& graphic_events_,
+        SesmanInterface & sesman,
         const char* username,
         const char* password,
         FrontAPI& front,
@@ -95,7 +96,7 @@ public:
           keylayout, key_flags, clipboard_up, clipboard_down, encodings, 
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported, 
-          rail_client_execute, vnc_verbose, metrics)
+          rail_client_execute, vnc_verbose, metrics, sesman)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
@@ -318,6 +319,7 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
             this->graphic_fd_events_,
             this->timer_events_,
             this->graphic_events_,
+            sesman,
             ini.get<cfg::globals::target_user>().c_str(),
             ini.get<cfg::context::target_password>().c_str(),
             front,

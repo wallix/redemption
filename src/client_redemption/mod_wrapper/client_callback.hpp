@@ -73,16 +73,16 @@ public:
         this->client->delete_replay_mod();
     }
 
-    void replay(const std::string & movie_path) {
-        this->client->replay(movie_path);
+    void replay(const std::string & movie_path, SesmanInterface & sesman) {
+        this->client->replay(movie_path, sesman);
     }
 
-    timeval reload_replay_mod(int begin, timeval now_stop) {
-        return this->client->reload_replay_mod(begin, now_stop);
+    timeval reload_replay_mod(int begin, timeval now_stop, SesmanInterface & sesman) {
+        return this->client->reload_replay_mod(begin, now_stop, sesman);
     }
 
-    bool load_replay_mod(timeval time_1, timeval time_2) {
-        return this->client->load_replay_mod(time_1, time_2);
+    bool load_replay_mod(timeval time_1, timeval time_2, SesmanInterface & sesman) {
+        return this->client->load_replay_mod(time_1, time_2, sesman);
     }
 
 

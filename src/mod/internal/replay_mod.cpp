@@ -230,7 +230,7 @@ struct ReplayMod::Reader
     }
 
     REDEMPTION_CXX_NODISCARD
-    bool server_resize(gdi::GraphicApi & drawable, FrontAPI& front)
+    bool server_resize(gdi::GraphicApi & drawable, FrontAPI& front, SesmanInterface & sesman)
     {
         bool is_resized = false;
         switch (front.server_resize(
@@ -261,6 +261,7 @@ struct ReplayMod::Reader
 ReplayMod::ReplayMod(
     SessionReactor& session_reactor
   , GraphicTimerContainer & graphic_timer_events_
+  , SesmanInterface & sesman
   , gdi::GraphicApi & drawable_
   , FrontAPI & front
   , const char * replay_path
@@ -288,8 +289,9 @@ ReplayMod::ReplayMod(
 , replay_on_loop(replay_on_loop)
 , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
 , session_reactor(session_reactor)
+, sesman(sesman)
 {
-    if (this->internal_reader->server_resize(drawable, front)) {
+    if (this->internal_reader->server_resize(drawable, front, sesman)) {
         this->front_width  = this->internal_reader->reader.info.width;
         this->front_height = this->internal_reader->reader.info.height;
     }
@@ -435,7 +437,7 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
                         this->play_video_with_corrupted_bitmap,
                         this->internal_reader->debug_capture);
 
-                    if (this->internal_reader->server_resize(this->drawable, this->front)) {
+                    if (this->internal_reader->server_resize(this->drawable, this->front, this->sesman)) {
                         this->front_width  = this->internal_reader->reader.info.width;
                         this->front_height = this->internal_reader->reader.info.height;
                     }

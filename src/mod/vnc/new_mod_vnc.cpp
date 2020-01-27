@@ -29,6 +29,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,
     GraphicEventContainer & graphic_events_,
+    SesmanInterface & sesman,
     const char* username,
     const char* password,
     FrontAPI& front,
@@ -53,5 +54,5 @@ std::unique_ptr<mod_api> new_mod_vnc(
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_apple, send_alt_ksym,
-        cursor_pseudo_encoding_supported, rail_client_execute, verbose, metrics);
+        cursor_pseudo_encoding_supported, rail_client_execute, verbose, metrics, sesman);
 }

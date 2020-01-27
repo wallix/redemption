@@ -61,9 +61,9 @@ public:
     virtual void update_keylayout() {}
 
     // Replay functions
-    virtual void replay( const std::string & /*unused*/) {}
-    virtual bool load_replay_mod(timeval /*unused*/, timeval /*unused*/) { return false; }
-    virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
+    virtual void replay( const std::string & /*unused*/, SesmanInterface & sesman) {}
+    virtual bool load_replay_mod(timeval /*unused*/, timeval /*unused*/, SesmanInterface & sesman) { return false; }
+    virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/, SesmanInterface & sesman) { return timeval{}; }
     virtual void delete_replay_mod() {}
     virtual void instant_play_client(std::chrono::microseconds /*time*/) {}
 

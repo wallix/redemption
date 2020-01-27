@@ -54,6 +54,7 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
+    SesmanInterface & sesman;
     TopFdContainer fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
@@ -71,6 +72,7 @@ class ModFactory
 public:
     ModFactory(ModWrapper & mod_wrapper, 
                SessionReactor & session_reactor,
+               SesmanInterface & sesman,
                TopFdContainer fd_events_,
                GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
@@ -79,6 +81,7 @@ public:
                ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
+        , sesman(sesman)
         , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
@@ -109,6 +112,7 @@ public:
             auto new_mod = new ReplayMod(
                 this->session_reactor,
                 this->graphic_timer_events_,
+                this->sesman,
                 this->graphics, this->front,
                 [this]{
                     auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()

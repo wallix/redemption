@@ -215,6 +215,7 @@ int main(int argc, char** argv)
               , graphic_fd_events_
               , timer_events_
               , graphic_events_
+              , sesman
               , username.c_str()
               , password.c_str()
               , front

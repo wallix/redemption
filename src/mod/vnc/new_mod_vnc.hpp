@@ -23,6 +23,7 @@ Author(s): Jonathan Poelen
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "core/session_reactor.hpp"
+#include "acl/sesman.hpp"
 
 
 #include <memory>
@@ -41,6 +42,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,
     GraphicEventContainer& graphic_events_,
+    SesmanInterface & sesman,
     const char* username,
     const char* password,
     FrontAPI& front,

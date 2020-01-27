@@ -29,6 +29,7 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
+#include "acl/sesman.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -482,6 +483,7 @@ public:
                   , this->graphic_fd_events_
                   , this->timer_events_
                   , this->graphic_events_
+                  , this->sesman
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()
                   , *this
@@ -750,11 +752,12 @@ public:
     }
 
 
-    bool load_replay_mod(timeval begin_read, timeval end_read) override {
+    bool load_replay_mod(timeval begin_read, timeval end_read, SesmanInterface & sesman) override {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->session_reactor
               , this->graphic_timer_events_
+              , sesman
               , *this
               , *this
               , this->config._movie_full_path.c_str()
@@ -789,7 +792,7 @@ public:
         return false;
     }
 
-    void replay( const std::string & movie_path) override {
+    void replay( const std::string & movie_path, SesmanInterface & sesman) override {
 
         auto const last_delimiter_it = std::find(movie_path.rbegin(), movie_path.rend(), '/');
 //         int pos = movie_path.size() - (last_delimiter_it - movie_path.rbegin());
@@ -810,7 +813,7 @@ public:
         this->config.is_replaying = true;
         this->config.is_loading_replay_mod = true;
 
-        if (this->load_replay_mod({0, 0}, {0, 0})) {
+        if (this->load_replay_mod({0, 0}, {0, 0}, sesman)) {
 
             this->config.is_loading_replay_mod = false;
             this->wrmGraphicStat.reset();
@@ -839,14 +842,14 @@ public:
 
 
 
- timeval reload_replay_mod(int begin, timeval now_stop) override {
+ timeval reload_replay_mod(int begin, timeval now_stop, SesmanInterface & sesman) override {
 
         timeval movie_time_start;
 
         switch (this->replay_mod->get_wrm_version()) {
 
                 case WrmVersion::v1:
-                    if (this->load_replay_mod({0, 0}, {0, 0})) {
+                    if (this->load_replay_mod({0, 0}, {0, 0}, sesman)) {
                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
                         movie_time_start = tvtime();
                         return movie_time_start;
@@ -857,7 +860,7 @@ public:
                 {
                     int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
                     this->config.is_loading_replay_mod = true;
-                    if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
+                    if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0}, sesman)) {
 
                         this->config.is_loading_replay_mod = false;
 
