@@ -587,8 +587,9 @@ public:
         Keylayout_r const* layout = find_keylayout_r(LCID);
         if (!layout){
             std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
-            this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
+            layout = find_keylayout_r(KEYBOARDS::EN_US_INTERNATIONAL);
         }
+        this->_keylayout_WORK = layout;
 
         this->_layoutMods[NO_MOD                              ] = this->_keylayout_WORK->getnoMod();
         this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout_WORK->getshift();
