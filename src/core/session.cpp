@@ -612,21 +612,40 @@ class Session
         try {
             try {
                 // new value incoming from authentifier
-                LOG(LOG_INFO, "--------------------- rt_display()");
-                this->rt_display(ini, mm, mod_wrapper, front);
+                if (ini.check_from_acl()) {
+                    auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
 
-                if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
-                    LOG(LOG_INFO, "--------------------- Process incoming module traffic");
-                    // Process incoming module trafic
-                    auto& gd = mod_wrapper.get_graphic_wrapper();
-                    LOG(LOG_INFO, "--------------------- Execute graphic_events actions");
-                    graphic_events_.exec_action(gd);
-                    LOG(LOG_INFO, "--------------------- Execute fd_events actions");
-                    graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                        return fd != INVALID_SOCKET 
-                            &&  ioswitch.is_set_for_reading(fd);
-                    }, gd);
-                    LOG(LOG_INFO, "--------------------- Back event loop done");
+                    if (ini.get<cfg::client::enable_osd_4_eyes>()) {
+                        Translator tr(language(ini));
+                        switch (rt_status) {
+                            case Capture::RTDisplayResult::Enabled:
+                                mm.osd_message(tr(trkeys::enable_rt_display).to_string(), true);
+                                break;
+                            case Capture::RTDisplayResult::Disabled:
+                                mm.osd_message(tr(trkeys::disable_rt_display).to_string(), true);
+                                break;
+                            case Capture::RTDisplayResult::Unchanged:
+                                break;
+                        }
+                    }
+
+                    if (ini.get<cfg::client::wabam_uses_cache_bitmap_r2>() &&
+                        ini.get<cfg::context::is_wabam>()) {
+                        front.force_using_cache_bitmap_r2();
+                    }
+
+                    mm.check_module();
+                }
+
+                try
+                {
+                    if (BACK_EVENT_NONE == session_reactor.signal) {
+                        // Process incoming module trafic
+                        auto& gd = mm.get_graphic_wrapper();
+                        session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
+                            return io_fd_isset(fd, ioswitch.rfds);
+                        }, gd);
+                    }
                 }
 
                 if (ini.get<cfg::globals::enable_osd>()) {

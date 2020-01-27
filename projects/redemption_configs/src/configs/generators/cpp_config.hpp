@@ -346,7 +346,7 @@ struct CppConfigWriterBase
         if constexpr (is_convertible_v<Pack, desc>) {
             //this->tab();
             this->out() << cpp_doxygen_comment(get_elem<cfg_attributes::desc>(infos).value, 4);
-        };
+        }
         std::string sesman_name;
         if (bool(properties)) {
             sesman_name = sesman_network_name(infos, names);

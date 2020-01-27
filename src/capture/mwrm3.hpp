@@ -95,7 +95,7 @@ namespace Mwrm3
     MWRM3_STRONG_OPTIONAL_STATIC_VIEW(name, bytes_view, bytes, len)
 
     MWRM3_STRONG_STR(Filename);
-    MWRM3_STRONG_STR(TflFilename);
+    MWRM3_STRONG_STR(TflRelativeFilename);
 
     // TODO 32 -> constante
     MWRM3_STRONG_OPTIONAL_STATIC_BYTES(QuickHash, 32);
@@ -861,7 +861,7 @@ namespace Mwrm3
             static auto serialize(
                 FileId idx, FileSize file_size,
                 Direction direction, TransferedStatus transfered_status,
-                Filename original_filename, TflFilename tfl_filename,
+                Filename original_filename, TflRelativeFilename tfl_filename,
                 QuickHash quick_hash, FullHash full_hash,
                 Sha256Signature signature,
                 F&& f)
@@ -907,7 +907,7 @@ namespace Mwrm3
                         tfl_filename.size(),
                         original_filename.data().wrap<Filename>()
                     ),
-                    group(tfl_filename.data().wrap<TflFilename>()),
+                    group(tfl_filename.data().wrap<TflRelativeFilename>()),
                     group(m.optional_for<quick_hash, 0>()),
                     group(m.optional_for<full_hash, 1>()),
                     group(m.optional_for<sha256_signature, 2>())

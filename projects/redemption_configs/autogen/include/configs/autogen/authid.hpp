@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(188);
+constexpr authid_t MAX_AUTHID = authid_t(190);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -29,7 +29,6 @@ constexpr array_view_const_char const authstr[] = {
     "rec_path"_av,
     "unicode_keyboard_event_support"_av,
     "mod_recv_timeout"_av,
-    "session_log_path"_av,
     "session_log:keyboard_input_masking_level"_av,
     "keyboard_layout"_av,
     "disable_tsk_switch_shortcuts"_av,
@@ -96,7 +95,7 @@ constexpr array_view_const_char const authstr[] = {
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,
     "vnc_bogus_clipboard_infinite_loop"_av,
-    "mod_vnc:server_is_apple"_av,
+    "mod_vnc:server_is_macos"_av,
     "mod_vnc:server_unix_alt"_av,
     "mod_vnc:support_cursor_pseudo_encoding"_av,
     "file_verification:enable_up"_av,
@@ -111,6 +110,9 @@ constexpr array_view_const_char const authstr[] = {
     "record_path"_av,
     "video:disable_keyboard_log"_av,
     "rt_display"_av,
+    "record_filebase"_av,
+    "record_subdirectory"_av,
+    "fdx_path"_av,
     "encryption_key"_av,
     "sign_key"_av,
     "allow_resize_hosted_desktop"_av,

@@ -130,9 +130,6 @@ enable_session_log = boolean(default=True)
 
 enable_arcsight_log = boolean(default=False)
 
-#_hidden
-log_path = string(default='')
-
 # Keyboard Input Masking Level:
 #   0: keyboard input are not masked
 #   1: only passwords are masked
@@ -289,6 +286,9 @@ bogus_pointer_xormask_padding = boolean(default=False)
 # This option takes precedence over the option Extra orders of section mod_rdp.
 #_advanced
 disabled_orders = string_list(default=list())
+
+#_advanced
+wabam_uses_cache_bitmap_r2 = boolean(default=False)
 
 [mod_rdp]
 
@@ -682,7 +682,7 @@ server_clipboard_encoding_type = option('utf-8', 'latin1', default='latin1')
 bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)
 
 #_hidden
-server_is_apple = boolean(default=False)
+server_is_macos = boolean(default=False)
 
 #_hidden
 server_unix_alt = boolean(default=False)

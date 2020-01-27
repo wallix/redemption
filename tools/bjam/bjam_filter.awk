@@ -24,7 +24,7 @@ BEGINFILE {
     next
   }
   # else if (/[a-z]+\.(compile\.c\+\+|link)|^testing\.unit-test|qt.?\.moc /)
-  else if (/^testing\.unit-test |^emscripten|[a-z]+\.(compile\.c\+\+|link)/)
+  else if (/^(\x1b\[0;39;49m)?testing\.unit-test |^emscripten|[a-z]+\.(compile\.c\+\+|link)/)
   {
     for (k=1; k<nb_rep; k+=2)
     {

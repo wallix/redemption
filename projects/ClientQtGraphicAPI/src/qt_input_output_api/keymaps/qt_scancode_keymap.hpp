@@ -340,7 +340,7 @@ private:
             case Qt::Key_ScrollLock           : this->scanCode = 0x46; this->qKeyName = std::string("ScrollLock"); break; //  SCROLL
             case Qt::Key_Pause                : this->scanCode = 0xE1; this->qKeyName = std::string("Pause"); break; //  PAUSE
             case Qt::Key_Tab                  : this->scanCode = 0x0F; this->qKeyName = std::string("Tab"); break; //  TAB
-            
+
             case Qt::Key_MediaStop            : this->scanCode = 0x24; this->qKeyName = std::string("MediaStop"); break; //
             case Qt::Key_MediaPrevious        : this->scanCode = 0x10; this->qKeyName = std::string("MediaPrevious"); break; //
             case Qt::Key_MediaNext            : this->scanCode = 0x19; this->qKeyName = std::string("MediaNext"); break; //
@@ -584,18 +584,12 @@ public:
 
 
     void setKeyboardLayout(int LCID) {
-        bool found = false;
-        for (uint8_t i = 0 ; i < KEYLAYOUTS_LIST_SIZE; i++) {
-            if (keylayoutsList[i]->LCID == LCID){
-                this->_keylayout_WORK = keylayoutsList[i];
-                found = true;
-                break;
-            }
-        }
-        if (!found){
+        Keylayout_r const* layout = find_keylayout_r(LCID);
+        if (!layout){
             std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
-            this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
+            layout = find_keylayout_r(KEYBOARDS::EN_US_INTERNATIONAL);
         }
+        this->_keylayout_WORK = layout;
 
         this->_layoutMods[NO_MOD                              ] = this->_keylayout_WORK->getnoMod();
         this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout_WORK->getshift();

@@ -262,6 +262,10 @@ constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
 //
 
 #include "utils/sugar/bytes_view.hpp"
+namespace ut
+{
+    struct flagged_bytes_view;
+}
 
 namespace redemption_unit_test__
 {
@@ -294,6 +298,7 @@ namespace redemption_unit_test__
     template<class T> struct is_array_view<array_view<T>>
     : std::integral_constant<bool, !is_bytes_view<array_view<T>>::value>
     {};
+    template<> struct is_array_view<::ut::flagged_bytes_view> : std::true_type {};
 
     template<class T, class U>
     struct is_array_view_comparable : std::integral_constant<bool,
@@ -479,7 +484,15 @@ struct name<T, U, std::enable_if_t<                                       \
         if constexpr (std::is_convertible_v<T, bytes_view>                \
                    && std::is_convertible_v<U, bytes_view>)               \
         {                                                                 \
-            return ::redemption_unit_test__::bytes_##name(lhs, rhs, 'a'); \
+            char flag = 'a';                                              \
+            if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {  \
+               flag = lhs.flag;                                           \
+            }                                                             \
+            if constexpr (std::is_same_v<U, ::ut::flagged_bytes_view>) {  \
+               flag = rhs.flag;                                           \
+            }                                                             \
+            return ::redemption_unit_test__                               \
+                ::bytes_##name(lhs, rhs, flag);                           \
         }                                                                 \
         else                                                              \
         {                                                                 \

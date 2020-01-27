@@ -243,8 +243,8 @@ public:
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
 
-        for (int i = 0; i < KEYLAYOUTS_LIST_SIZE; i++) {
-            this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
+        for (auto* layout : get_keylayout_r_list()) {
+            this->_languageComboBox.addItem(layout->locale_name, layout->LCID);
         }
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutKeyboard->addRow(new QLabel("", this));

@@ -28,7 +28,6 @@ cfg::globals::movie_path ⇐ rec_path   [std::string]
 cfg::globals::unicode_keyboard_event_support ⇐ unicode_keyboard_event_support   [bool]
 cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds]
 
-cfg::session_log::log_path ⇐ session_log_path   [std::string]
 cfg::session_log::keyboard_input_masking_level ⇐ session_log:keyboard_input_masking_level   [KeyboardInputMaskingLevel]
     Keyboard Input Masking Level:
       0: keyboard input are not masked
@@ -195,7 +194,7 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loo
       0: delayed
       1: duplicated
       2: continued
-cfg::mod_vnc::server_is_apple ⇐ mod_vnc:server_is_apple   [bool]
+cfg::mod_vnc::server_is_macos ⇐ mod_vnc:server_is_macos   [bool]
 cfg::mod_vnc::server_unix_alt ⇐ mod_vnc:server_unix_alt   [bool]
 cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_encoding   [bool]
 
@@ -231,6 +230,12 @@ cfg::video::disable_keyboard_log ⇐ video:disable_keyboard_log   [KeyboardLogFl
       0x4: disable keyboard log in recorded meta
     Note: values can be added (disable all: 0x1 + 0x2 + 0x4 = 0x7)
 cfg::video::rt_display ⇐ rt_display   [bool]
+
+cfg::capture::record_filebase ⇐ record_filebase   [std::string]
+    basename without extension
+cfg::capture::record_subdirectory ⇐ record_subdirectory   [std::string]
+    subdirectory of record_path (video section)
+cfg::capture::fdx_path ⇒ fdx_path   [std::string]
 
 cfg::crypto::key0 ⇐ encryption_key   [std::array<unsigned char, 32>]
 cfg::crypto::key1 ⇐ sign_key   [std::array<unsigned char, 32>]

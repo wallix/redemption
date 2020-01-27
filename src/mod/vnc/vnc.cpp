@@ -48,7 +48,7 @@ mod_vnc::mod_vnc( Transport & t
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
-           , bool server_is_apple
+           , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute
@@ -61,7 +61,7 @@ mod_vnc::mod_vnc( Transport & t
     , width(front_width)
     , height(front_height)
     , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
-    , keymapSym(keylayout, key_flags, server_is_unix, server_is_apple, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
+    , keymapSym(keylayout, key_flags, server_is_unix, server_is_macos, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
@@ -87,7 +87,7 @@ mod_vnc::mod_vnc( Transport & t
 
 	::time(&this->beginning);
 
-	// TODO init layout sym with apple layout
+	// TODO init layout sym with macos layout
 
 	std::snprintf(this->username, sizeof(this->username), "%s", username);
 	std::snprintf(this->password, sizeof(this->password), "%s", password);
@@ -277,7 +277,7 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
         return;
     }
 
-    // AltGr or Alt are catched by Apple OS
+    // AltGr or Alt are catched by Mac OS
 
     LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, keycode=%ld)", device_flags, keycode);
 

@@ -27,20 +27,43 @@ constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "''" ] ;
 constant JS_CLIENT_COPY_MODE : [ setvar copy_application_mode : "copy" ] ;
 
-rule filter_flags ( e )
+# remove -Wno-ctad-maybe-unsupported
+rule emcc_flags ( properties * )
 {
-    if $(e) = <cxxflags>-msse3
+    local fs = ;
+    for f in [ flags $(properties) ]
     {
-        return ;
+        if $(f) != <cxxflags>-Wno-ctad-maybe-unsupported
+        {
+            fs += $(f) ;
+        }
     }
-    else
-    {
-        return $(e) ;
-    }
+    return $(fs) ;
 }
 
-import sequence ;
-REDEMPTION_CXXFLAGS = [ sequence.filter filter_flags : $(REDEMPTION_CXXFLAGS) ] ;
+# remove -msse3 and transform <conditional>@flags to <conditional>@emcc_flags
+rule filter_flags ( flags * )
+{
+    local jsflags = ;
+    for f in $(flags)
+    {
+        if $(f) != <cxxflags>-msse3
+        {
+            if $(f) = <conditional>@flags
+            {
+                jsflags += <conditional>@emcc_flags ;
+            }
+            else
+            {
+                jsflags += $(f) ;
+            }
+        }
+    }
+
+    return $(jsflags) ;
+}
+
+REDEMPTION_CXXFLAGS = [ filter_flags $(REDEMPTION_CXXFLAGS) ] ;
 
 project redjs
     : requirements

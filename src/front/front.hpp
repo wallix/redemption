@@ -26,7 +26,6 @@
 #pragma once
 
 #include "core/log_id.hpp"
-#include "capture/capture_paths_context.hpp"
 #include "capture/capture.hpp"
 #include "capture/params_from_ini.hpp"
 #include "capture/capture_params.hpp"
@@ -907,13 +906,13 @@ public:
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
-        CapturePathsContext capture_paths_ctx(
-            ini.get<cfg::video::record_path>().as_string(),
-            ini.get<cfg::video::hash_path>().as_string(),
-            ini.get<cfg::session_log::log_path>()
-        );
+        auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
+        auto const& record_dir = ini.get<cfg::video::record_path>();
+        auto const& hash_dir = ini.get<cfg::video::hash_path>();
+        auto record_path = str_concat(record_dir.as_string(), subdir);
+        auto hash_path = str_concat(hash_dir.as_string(), subdir);
 
-        for (auto* s : {&capture_paths_ctx.record_path, &capture_paths_ctx.hash_path}) {
+        for (auto* s : {&record_path, &hash_path}) {
             if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
                 LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", *s);
             }
@@ -990,7 +989,7 @@ public:
             this->cctx,
             this->gen,
             this->fstat,
-            capture_paths_ctx.hash_path.c_str(),
+            hash_path.c_str(),
             ini
         );
 
@@ -998,7 +997,7 @@ public:
             this->session_reactor.get_current_time(),
             basename,
             record_tmp_path,
-            capture_paths_ctx.record_path.c_str(),
+            record_path.c_str(),
             groupid,
             &this->report_message,
             ini.get<cfg::video::smart_video_cropping>(),
@@ -1085,6 +1084,11 @@ public:
         return this->capture
             ? this->capture->set_rt_display(enable_rt_display)
             : Capture::RTDisplayResult::Unchanged;
+    }
+
+    void force_using_cache_bitmap_r2()
+    {
+        this->orders.graphics_update_pdu().force_using_cache_bitmap_r2();
     }
 
     static int get_appropriate_compression_type(int client_supported_type, int front_supported_type)

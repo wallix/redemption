@@ -1139,7 +1139,6 @@ class Sesman():
         Logger().info(u"Checking session log redirection")
 
         data_to_send = {
-            u'session_log_path' : u'',
             u'module': u'transitory'
         }
 
@@ -1149,7 +1148,6 @@ class Sesman():
         )
 
         Logger().info(u"Session log will be redirected to %s" % self.full_log_path)
-        data_to_send[u'session_log_path'] = u"%s" % self.full_log_path
         self.send_data(data_to_send)
 
         return True, u''
@@ -1526,6 +1524,9 @@ class Sesman():
                     uname,
                     start_time
                 )
+                kv['record_filebase'] = self.record_filebase
+                kv['record_subdirectory'] = date_path
+                # TODO kv[u'record_path'] = LOCAL_TRACE_PATH_RDP
                 Logger().info(u"Session will be recorded in %s" % self.record_filebase)
                 try:
                     _status, _error = self.create_record_path_directory(rec_path)

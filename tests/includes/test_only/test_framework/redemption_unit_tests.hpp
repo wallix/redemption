@@ -26,6 +26,19 @@ Author(s): Jonathan Poelen
 #include <type_traits>
 
 
+namespace ut
+{
+    struct flagged_bytes_view : bytes_view
+    {
+        char flag;
+    };
+
+    inline flagged_bytes_view ascii(bytes_view v) { return {v, 'c'}; }
+    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's'}; }
+    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b'}; }
+    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd'}; }
+}
+
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 
 namespace redemption_unit_test__
@@ -229,24 +242,49 @@ bool operator!=(bytes_view, bytes_view);
 
 namespace redemption_unit_test__
 {
+    template<class E, E value>
+    struct EnumValue
+    {
+        static std::string_view str()
+        {
+            return __PRETTY_FUNCTION__;
+        }
+    };
+
     struct Enum
     {
         template<class E, class = std::enable_if_t<std::is_enum<E>::value>>
         Enum(E e) noexcept
         : name(get_type_name(__PRETTY_FUNCTION__))
+        , value_name(
+            get_value_name(static_cast<long long>(e),
+            this->name,
+            EnumValue<E, E(0)>::str(),
+            EnumValue<E, E(1)>::str(),
+            EnumValue<E, E(2)>::str(),
+            EnumValue<E, E(3)>::str(),
+            EnumValue<E, E(4)>::str(),
+            EnumValue<E, E(5)>::str(),
+            EnumValue<E, E(6)>::str(),
+            EnumValue<E, E(7)>::str(),
+            EnumValue<E, E(8)>::str(),
+            EnumValue<E, E(9)>::str()))
         , x(static_cast<long long>(e))
         , is_signed(std::is_signed_v<std::underlying_type_t<E>>)
         {}
 
-        template<std::size_t N>
-        static array_view_const_char get_type_name(char const(&s)[N]) noexcept
-        {
-            return get_type_name(s, N-1);
-        }
+        static std::string_view get_type_name(std::string_view s) noexcept;
 
-        static array_view_const_char get_type_name(char const* s, std::size_t n) noexcept;
+        static std::string_view get_value_name(
+            long long x, std::string_view name,
+            std::string_view s0, std::string_view s1, std::string_view s2,
+            std::string_view s3, std::string_view s4, std::string_view s5,
+            std::string_view s6, std::string_view s7, std::string_view s8,
+            std::string_view s9
+        ) noexcept;
 
-        array_view_const_char name;
+        std::string_view name;
+        std::string_view value_name;
         long long x;
         bool is_signed;
     };

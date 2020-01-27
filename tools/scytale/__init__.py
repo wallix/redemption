@@ -1,4 +1,4 @@
-# ./tools/cpp2ctypes.lua 'src/lib/scytale.hpp' 'lib.' '' 'get_hmac_key_prototype*=GETHMACKEY' 'get_trace_key_prototype*=GETTRACEKEY'
+# ./tools/cpp2ctypes.lua 'src/lib/scytale.hpp' 'lib.' '' 'get_trace_key_prototype*=GETTRACEKEY'
 
 from ctypes import CFUNCTYPE, POINTER, c_char_p, c_int, c_longlong, c_uint32, c_uint64, c_ulong, c_void_p, c_uint
 
@@ -6,10 +6,8 @@ pathlib = 'libscytale.so'
 
 lib = ctypes.CDLL(pathlib)
 
-GETHMACKEY = CFUNCTYPE(c_int, c_void_p)
 GETTRACEKEY = CFUNCTYPE(c_int, c_void_p, c_int, c_void_p, c_uint)
 
-get_hmac_key_func = GETHMACKEY(keys.get_hmac_key)
 get_trace_key_func = GETTRACEKEY(keys.get_trace_key)
 
 # char const * scytale_version();
@@ -20,16 +18,16 @@ lib.scytale_version.restype = c_char_p
 # @{
 # ScytaleWriterHandle * scytale_writer_new(
 #     int with_encryption, int with_checksum, const char * master_derivator,
-#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+#     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
 #     int old_scheme, int one_shot);
-lib.scytale_writer_new.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_int, c_int]
+lib.scytale_writer_new.argtypes = [c_int, c_int, c_char_p, POINTER(c_char), GETTRACEKEY, c_int, c_int]
 lib.scytale_writer_new.restype = c_void_p
 
 # ScytaleWriterHandle * scytale_writer_new_with_test_random(
 #     int with_encryption, int with_checksum, const char * master_derivator,
-#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+#     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
 #     int old_scheme, int one_shot);
-lib.scytale_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_int, c_int]
+lib.scytale_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, POINTER(c_char), GETTRACEKEY, c_int, c_int]
 lib.scytale_writer_new_with_test_random.restype = c_void_p
 
 # char const * scytale_writer_get_error_message(ScytaleWriterHandle * handle);
@@ -44,7 +42,7 @@ lib.scytale_writer_open.restype = c_int
 
 # int scytale_writer_write(
 #     ScytaleWriterHandle * handle, uint8_t const * buffer, unsigned long len);
-lib.scytale_writer_write.argtypes = [c_void_p, c_char_p, c_ulong]
+lib.scytale_writer_write.argtypes = [c_void_p, POINTER(c_char), c_ulong]
 lib.scytale_writer_write.restype = c_int
 
 # \return HashHexArray
@@ -70,9 +68,9 @@ lib.scytale_writer_delete.restype = None
 # @{
 # ScytaleReaderHandle * scytale_reader_new(
 #     const char * master_derivator,
-#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+#     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
 #     int old_scheme, int one_shot);
-lib.scytale_reader_new.argtypes = [c_char_p, GETHMACKEY, GETTRACEKEY, c_int, c_int]
+lib.scytale_reader_new.argtypes = [c_char_p, POINTER(c_char), GETTRACEKEY, c_int, c_int]
 lib.scytale_reader_new.restype = c_void_p
 
 # char const * scytale_reader_get_error_message(ScytaleReaderHandle * handle);
@@ -100,7 +98,7 @@ lib.scytale_reader_open_with_auto_detect_encryption_scheme.restype = c_int
 # < 0: error, 0: eof, >0: length read
 # long long scytale_reader_read(ScytaleReaderHandle * handle,
 #     uint8_t * buffer, unsigned long len);
-lib.scytale_reader_read.argtypes = [c_void_p, c_char_p, c_ulong]
+lib.scytale_reader_read.argtypes = [c_void_p, POINTER(c_char), c_ulong]
 lib.scytale_reader_read.restype = c_longlong
 
 # int scytale_reader_close(ScytaleReaderHandle * handle);
@@ -194,47 +192,27 @@ lib.scytale_meta_reader_get_line.argtypes = [c_void_p]
 lib.scytale_meta_reader_get_line.restype = POINTER(CType_ScytaleMwrmLine)
 # @}
 
-# Key
-# @{
-# ScytaleKeyHandle * scytale_key_new(const char * masterkeyhex);
-lib.scytale_key_new.argtypes = [c_char_p]
-lib.scytale_key_new.restype = c_void_p
-
-# const char * scytale_key_derivate(
-#     ScytaleKeyHandle * handle, const uint8_t * derivator, unsigned long len);
-lib.scytale_key_derivate.argtypes = [c_void_p, c_char_p, c_ulong]
-lib.scytale_key_derivate.restype = c_char_p
-
-# void scytale_key_delete(ScytaleKeyHandle * handle);
-lib.scytale_key_delete.argtypes = [c_void_p]
-lib.scytale_key_delete.restype = None
-
-# \return HashHexArray
-# const char * scytale_key_get_master(ScytaleKeyHandle * handle);
-lib.scytale_key_get_master.argtypes = [c_void_p]
-lib.scytale_key_get_master.restype = c_char_p
-
-# \return HashHexArray
-# const char * scytale_key_get_derivated(ScytaleKeyHandle * handle);
-lib.scytale_key_get_derivated.argtypes = [c_void_p]
-lib.scytale_key_get_derivated.restype = c_char_p
-# @}
-
-# Tfl
+# Fdx / Tfl
 # @{
 # ScytaleFdxWriterHandle * scytale_fdx_writer_new(
 #     int with_encryption, int with_checksum, char const* master_derivator,
-#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-#     char const * record_path, char const * hash_path, int groupid, char const * sid);
-lib.scytale_fdx_writer_new.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_int, c_char_p]
+#     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
+#     char const * record_path, char const * hash_path, char const * fdx_file_base,
+#     int groupid, char const * sid);
+lib.scytale_fdx_writer_new.argtypes = [c_int, c_int, c_char_p, POINTER(c_char), GETTRACEKEY, c_char_p, c_char_p, c_char_p, c_int, c_char_p]
 lib.scytale_fdx_writer_new.restype = c_void_p
 
 # ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
 #     int with_encryption, int with_checksum, char const* master_derivator,
-#     get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-#     char const * record_path, char const * hash_path, int groupid, char const * sid);
-lib.scytale_fdx_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, GETHMACKEY, GETTRACEKEY, c_char_p, c_char_p, c_int, c_char_p]
+#     uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
+#     char const * record_path, char const * hash_path, char const * fdx_file_base,
+#     int groupid, char const * sid);
+lib.scytale_fdx_writer_new_with_test_random.argtypes = [c_int, c_int, c_char_p, POINTER(c_char), GETTRACEKEY, c_char_p, c_char_p, c_char_p, c_int, c_char_p]
 lib.scytale_fdx_writer_new_with_test_random.restype = c_void_p
+
+# char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle);
+lib.scytale_fdx_get_path.argtypes = [c_void_p]
+lib.scytale_fdx_get_path.restype = c_char_p
 
 # \param direction  Mwrm3::Direction
 # ScytaleTflWriterHandler * scytale_fdx_writer_open_tfl(
@@ -244,7 +222,7 @@ lib.scytale_fdx_writer_open_tfl.restype = c_void_p
 
 # int scytale_tfl_writer_write(
 #     ScytaleTflWriterHandler * handle, uint8_t const * buffer, unsigned long len);
-lib.scytale_tfl_writer_write.argtypes = [c_void_p, c_char_p, c_ulong]
+lib.scytale_tfl_writer_write.argtypes = [c_void_p, POINTER(c_char), c_ulong]
 lib.scytale_tfl_writer_write.restype = c_int
 
 # len should be 32
@@ -252,7 +230,7 @@ lib.scytale_tfl_writer_write.restype = c_int
 # int scytale_tfl_writer_close(
 #     ScytaleTflWriterHandler * handle, int transfered_status,
 #     uint8_t const* sig, unsigned long len);
-lib.scytale_tfl_writer_close.argtypes = [c_void_p, c_int, c_char_p, c_ulong]
+lib.scytale_tfl_writer_close.argtypes = [c_void_p, c_int, POINTER(c_char), c_ulong]
 lib.scytale_tfl_writer_close.restype = c_int
 
 # int scytale_tfl_writer_cancel(ScytaleTflWriterHandler * handle);
@@ -298,6 +276,7 @@ class CType_ScytaleMwrm3ReaderData(ctypes.Structure):
         ("data", c_void_p),
     ]
 
+# return nullptr if error or truncated file (truncated if reader is No Error + eof())
 # ScytaleMwrm3ReaderData const* scytale_mwrm3_reader_read_next(
 #     ScytaleMwrm3ReaderHandle * handle);
 lib.scytale_mwrm3_reader_read_next.argtypes = [c_void_p]
@@ -322,15 +301,11 @@ def print_version():
 
 
 scytale.encrypter.lib = lib
-scytale.encrypter.GETHMACKEY = GETHMACKEY
 scytale.encrypter.GETTRACEKEY = GETTRACEKEY
-scytale.encrypter.get_hmac_key_func = get_hmac_key_func
 scytale.encrypter.get_trace_key_func = get_trace_key_func
 
 scytale.decrypter.lib = lib
-scytale.decrypter.GETHMACKEY = GETHMACKEY
 scytale.decrypter.GETTRACEKEY = GETTRACEKEY
-scytale.decrypter.get_hmac_key_func = get_hmac_key_func
 scytale.decrypter.get_trace_key_func = get_trace_key_func
 
 scytale.meta.lib = lib

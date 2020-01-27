@@ -30,22 +30,13 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "system/ssl_sha256.hpp"
 
-#include <algorithm>
 #include <array>
-#include <iterator>
-#include <memory>
 #include <vector>
 
-#include <cerrno>
-#include <cstdio>
-#include <cstdio>
 #include <cstring>
-
-#include <unistd.h>
 
 
 extern "C" {
-    using get_hmac_key_prototype = int (uint8_t *);
     using get_trace_key_prototype = int (const uint8_t *, int, uint8_t *, unsigned int);
 }
 
@@ -60,7 +51,6 @@ class CryptoContext : noncopyable
     uint8_t hmac_key[HMAC_KEY_LENGTH] {};
     std::vector<uint8_t> master_derivator;
 
-    get_hmac_key_prototype * get_hmac_key_cb = nullptr;
     get_trace_key_prototype * get_trace_key_cb = nullptr;
 
     bool master_key_loaded = false;
@@ -77,19 +67,12 @@ private:
 public:
     auto get_hmac_key() -> uint8_t const (&)[HMAC_KEY_LENGTH]
     {
-        if (!this->hmac_key_loaded){
-            if (!this->get_hmac_key_cb) {
-                LOG(LOG_ERR, "CryptoContext: undefined hmac_key callback");
-                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-            }
-            // if we have a callback ask key
-            if (int err = this->get_hmac_key_cb(this->hmac_key)) {
-                LOG(LOG_ERR, "CryptoContext: get_hmac_key_cb: callback error: %d", err);
-                throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-            }
-            this->hmac_key_loaded = true;
+        if (this->hmac_key_loaded){
+            return this->hmac_key;
         }
-        return this->hmac_key;
+
+        LOG(LOG_ERR, "CryptoContext: undefined hmac_key");
+        throw Error(ERR_WRM_INVALID_INIT_CRYPT);
     }
 
     // for test only
@@ -126,46 +109,12 @@ public:
         return this->trace_type != TraceType::localfile;
     }
 
-    // force extension to "mwrm" if it's .log
-    static array_view_const_u8 get_normalized_derivator(
-        std::unique_ptr<uint8_t[]> & normalized_derivator,
-        bytes_view derivator
-    )
-    {
-        using reverse_iterator = std::reverse_iterator<array_view_const_u8::const_iterator>;
-        reverse_iterator const first(derivator.end());
-        reverse_iterator const last(derivator.begin());
-        reverse_iterator const p = std::find(first, last, '.');
-        constexpr auto ext = cstr_array_view(".log");
-        if (derivator.end() == p.base() + ext.size() - 1
-         && std::equal(
-             p.base(), p.base() + ext.size() - 1,
-             byte_ptr_cast(ext.data() + 1)
-        )) {
-            constexpr auto extmwrm = cstr_array_view(".mwrm");
-            auto const prefix_len = (p == last ? derivator.end() : p.base() - 1) - derivator.begin();
-            auto const new_len = prefix_len + extmwrm.size();
-
-            normalized_derivator = std::make_unique<uint8_t[]>(new_len + 1);
-            memcpy(normalized_derivator.get(), derivator.data(), prefix_len);
-            memcpy(normalized_derivator.get() + prefix_len, extmwrm.data(), extmwrm.size());
-            normalized_derivator[new_len] = 0;
-
-            return array_view_const_u8{normalized_derivator.get(), new_len};
-        }
-
-        return derivator;
-    }
-
 private:
     void load_trace_key(uint8_t (&buffer)[MD_HASH::DIGEST_LENGTH], bytes_view derivator)
     {
-        std::unique_ptr<uint8_t[]> normalized_derivator_gc;
-        auto const new_derivator = get_normalized_derivator(normalized_derivator_gc, derivator);
-
         if (int err = this->get_trace_key_cb(
-            new_derivator.data()
-          , static_cast<int>(new_derivator.size())
+            derivator.data()
+          , static_cast<int>(derivator.size())
           , buffer
           , this->old_encryption_scheme ? 1 : 0
         )) {
@@ -201,8 +150,6 @@ public:
             this->load_trace_key(this->master_key, this->master_derivator);
 
             this->master_key_loaded = true;
-            //this->master_derivator.clear();
-            //this->master_derivator.shrink_to_fit();
         }
 
         if (this->one_shot_encryption_scheme){
@@ -242,6 +189,7 @@ public:
         key_data(T const & bytes32) noexcept
         : bytes_view(bytes32)
         {
+            assert(this->data());
             assert(this->size() == key_length);
         }
 
@@ -258,6 +206,11 @@ public:
         {
             static_assert(array_length == key_length);
         }
+
+        static key_data from_ptr(byte_ptr p)
+        {
+            return key_data(bytes_view{p, key_length});
+        }
     };
 
     void set_master_key(key_data key) noexcept
@@ -270,11 +223,6 @@ public:
     {
         memcpy(this->hmac_key, key.data(), sizeof(this->hmac_key));
         this->hmac_key_loaded = true;
-    }
-
-    void set_get_hmac_key_cb(get_hmac_key_prototype * get_hmac_key_cb)
-    {
-        this->get_hmac_key_cb = get_hmac_key_cb;
     }
 
     void set_get_trace_key_cb(get_trace_key_prototype * get_trace_key_cb)

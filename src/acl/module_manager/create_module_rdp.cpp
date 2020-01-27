@@ -22,7 +22,6 @@
   find out the next module to run from context reading
 */
 
-#include "capture/capture_paths_context.hpp"
 #include "acl/module_manager.hpp"
 #include "configs/config.hpp"
 #include "core/channels_authorizations.hpp"
@@ -150,25 +149,28 @@ public:
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
 
-    FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
+    FdxCapture* get_fdx_capture(ModuleManager& mm)
     {
         if (!this->fdx_capture
-         && ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
+         && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
         ) {
             LOG(LOG_INFO, "Enable clipboard file record");
-            CapturePathsContext capture_paths_ctx(
-                ini.get<cfg::video::record_path>().as_string(),
-                ini.get<cfg::video::hash_path>().as_string(),
-                ini.get<cfg::session_log::log_path>()
-            );
-            int  const groupid = ini.get<cfg::video::capture_groupid>();
-            auto const& session_id = ini.get<cfg::context::session_id>();
+            int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
+            auto const& session_id = mm.ini.get<cfg::context::session_id>();
+            auto const& subdir = mm.ini.get<cfg::capture::record_subdirectory>();
+            auto const& record_dir = mm.ini.get<cfg::video::record_path>();
+            auto const& hash_dir = mm.ini.get<cfg::video::hash_path>();
+            auto const& filebase = mm.ini.get<cfg::capture::record_filebase>();
 
             this->fdx_capture = std::make_unique<FdxCapture>(
-                capture_paths_ctx.record_path, capture_paths_ctx.hash_path,
-                session_id, groupid, cctx, gen, this->fstat,
+                str_concat(record_dir.as_string(), subdir),
+                str_concat(hash_dir.as_string(), subdir),
+                filebase,
+                session_id, groupid, mm.cctx, mm.gen, this->fstat,
                 /* TODO should be a log (siem?)*/
                 ReportError());
+
+            mm.ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
         }
 
         return this->fdx_capture.get();

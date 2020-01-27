@@ -84,6 +84,7 @@ void config_spec_definition(Writer && W)
             "mod_replay",
             "ocr",
             "video",
+            "capture",
             "crypto",
             "websocket",
             "debug",
@@ -184,7 +185,6 @@ void config_spec_definition(Writer && W)
     {
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_session_log", set(true));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_arcsight_log", set(false));
-        W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
             "Keyboard Input Masking Level:"
         }, set(KeyboardInputMaskingLevel::password_and_unidentified));
@@ -279,6 +279,8 @@ void config_spec_definition(Writer && W)
             "  22: Polyline\n"
             "This option takes precedence over the option Extra orders of section mod_rdp."
         }, set(""));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "wabam_uses_cache_bitmap_r2", set(false));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
@@ -309,7 +311,7 @@ void config_spec_definition(Writer && W)
         }, set(false));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "cipher_string", desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."});
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "cipher_string", desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."}, set("ALL"));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persistent_disk_bitmap_cache", desc{"Persistent Disk Bitmap Cache on the mod side."}, set(true));
@@ -499,7 +501,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<VncBogusClipboardInfiniteLoop>(), "bogus_clipboard_infinite_loop", sesman::name{"vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed));
 
-        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_is_apple", set(false));
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_is_macos", set(false));
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_unix_alt", set(false));
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "support_cursor_pseudo_encoding", set(true));
@@ -566,6 +568,14 @@ void config_spec_definition(Writer && W)
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update.\nNote: Useless with mpv and mplayer."}, set(false));
+    });
+
+    W.section("capture", [&]
+    {
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "record_filebase", desc{"basename without extension"});
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "record_subdirectory", desc{"subdirectory of record_path (video section)"});
+
+        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "fdx_path");
     });
 
     W.section("crypto", [&]

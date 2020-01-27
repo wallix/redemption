@@ -31,38 +31,6 @@
 using namespace std::string_view_literals;
 
 
-extern "C" {
-    inline int hmac_fn(uint8_t * buffer)
-    {
-        // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
-        uint8_t hmac_key[] = {
-            0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
-            0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
-            0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
-            0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH );
-        memcpy(buffer, hmac_key, sizeof(hmac_key));
-        return 0;
-    }
-
-    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
-    {
-        // in real uses actual trace_key is derived from base and some master key
-        (void)base;
-        (void)len;
-        (void)oldscheme;
-        // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
-        uint8_t trace_key[] = {
-            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
-            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
-            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
-            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
-        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH );
-        memcpy(buffer, trace_key, sizeof(trace_key));
-        return 0;
-    }
-}
-
 constexpr auto is_encrypted = InCryptoTransport::EncryptionMode::Encrypted;
 constexpr auto is_not_encrypted = InCryptoTransport::EncryptionMode::NotEncrypted;
 
@@ -211,16 +179,14 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"_av);
 }
 
-inline int hmac_2016_fn(uint8_t * buffer)
+namespace
 {
-    uint8_t hmac_key[32] = {
+    uint8_t hmac_key_2016[32] = {
         0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
         0x1f , 0x12 , 0x62 , 0x39 , 0x0f , 0x10 , 0xb9 , 0x8e ,
         0xac , 0xff , 0xbc , 0x8a , 0x8f , 0x71 , 0xfb , 0x21 ,
         0x07 , 0x7d , 0xef , 0x9c , 0xb3 , 0x5f , 0xf9 , 0x7b ,
     };
-    memcpy(buffer, hmac_key, 32);
-    return 0;
 }
 
 inline int trace_20161025_fn(uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/)
@@ -239,7 +205,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
 {
     Fstat fstat;
     CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_2016_fn);
+    cctx.set_hmac_key(hmac_key_2016);
     cctx.set_get_trace_key_cb(trace_20161025_fn);
     cctx.old_encryption_scheme = true;
 
@@ -283,10 +249,36 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
 }
 
+namespace
+{
+    uint8_t hmac_key[] = {
+        0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
+        0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
+        0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
+        0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
+
+    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
+    {
+        // in real uses actual trace_key is derived from base and some master key
+        (void)base;
+        (void)len;
+        (void)oldscheme;
+        // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
+        uint8_t trace_key[] = {
+            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
+            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
+            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
+            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
+        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH );
+        memcpy(buffer, trace_key, sizeof(trace_key));
+        return 0;
+    }
+}
+
 RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 {
     CryptoContext cctx;
-    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_hmac_key(hmac_key);
     cctx.set_get_trace_key_cb(trace_fn);
     cctx.set_master_derivator(cstr_array_view(
         "toto@10.10.43.13,Administrateur@QA@cible,"

@@ -278,14 +278,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "log_path")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::session_log::log_path&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "keyboard_input_masking_level")) {
             ::configs::parse_and_log(
                 context, key,
@@ -578,6 +570,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::client::disabled_orders&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::list<unsigned int>>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "wabam_uses_cache_bitmap_r2")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::wabam_uses_cache_bitmap_r2&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 av
             );
         }
@@ -1259,10 +1259,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "server_is_apple")) {
+        else if (0 == strcmp(key, "server_is_macos")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_vnc::server_is_apple&>(this->variables).value,
+                static_cast<cfg::mod_vnc::server_is_macos&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

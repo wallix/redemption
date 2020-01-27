@@ -292,7 +292,7 @@ public:
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
-           , bool server_is_apple
+           , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute

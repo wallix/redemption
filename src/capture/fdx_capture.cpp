@@ -66,15 +66,14 @@ std::string TflSuffixGenerator::name_at(uint64_t i)
 FdxNameGenerator::FdxNameGenerator(
     std::string_view record_path, std::string_view hash_path, std::string_view sid)
 {
-    constexpr array_view_const_char fdx_suffix = ".fdx"_av;
-
-    str_append(this->record_path, record_path, '/', sid, '/', sid, fdx_suffix);
+    str_append(this->record_path, record_path, '/', sid, '/', sid);
     str_append(this->hash_path, hash_path,
         array_view(this->record_path).drop_front(record_path.size()));
 
-    this->pos_end_record_suffix = this->record_path.size() - fdx_suffix.size();
-    this->pos_end_hash_suffix = this->hash_path.size() - fdx_suffix.size();
-    this->pos_start_filename = this->pos_end_record_suffix - sid.size();
+    this->pos_end_record_suffix = checked_int(this->record_path.size());
+    this->pos_end_hash_suffix = checked_int(this->hash_path.size());
+    this->pos_start_basename = checked_int(this->pos_end_record_suffix - sid.size());
+    this->pos_start_relative_path = checked_int(this->pos_start_basename - sid.size() - 1);
 }
 
 void FdxNameGenerator::next_tfl()
@@ -88,56 +87,53 @@ void FdxNameGenerator::next_tfl()
     this->hash_path += suffix_filename;
 }
 
-std::string_view FdxNameGenerator::get_current_filename() const noexcept
+std::string_view FdxNameGenerator::get_current_relative_path() const noexcept
 {
     std::string_view sv = this->record_path;
-    sv.remove_prefix(this->pos_start_filename);
+    sv.remove_prefix(this->pos_start_relative_path);
     return sv;
 }
 
+std::string_view FdxNameGenerator::get_current_basename() const noexcept
+{
+    std::string_view sv = this->record_path;
+    sv.remove_prefix(this->pos_start_basename);
+    return sv;
+}
 
 namespace
 {
-    void open_crypto_transport(
-        OutCryptoTransport& crypto_trans,
-        FdxNameGenerator const& gen,
-        int groupid)
+    std::string_view remove_end_slash(std::string_view& s)
     {
-        auto derivator = gen.get_current_filename();
-        crypto_trans.open(
-            gen.get_current_record_path().c_str(),
-            gen.get_current_hash_path().c_str(),
-            groupid, derivator);
+        assert(not s.empty());
+        if (s.back() == '/') {
+            s.remove_suffix(1);
+        }
+        return s;
     }
-} // anonymous namespace
-
+}
 
 FdxCapture::FdxCapture(
-    std::string_view record_path, std::string_view hash_path, std::string_view sid, int groupid,
-    CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
-: name_generator(record_path, hash_path, sid)
+    std::string_view record_path, std::string_view hash_path,
+    std::string fdx_filebase, std::string_view sid,
+    int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
+: name_generator(
+    record_path = remove_end_slash(record_path),
+    hash_path = remove_end_slash(hash_path),
+    sid)
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)
 , report_error(std::move(report_error))
 , groupid(groupid)
-, fdx_basename_len(this->name_generator.get_current_filename().size())
-, record_fdx_path(this->name_generator.get_current_record_path())
-, hash_fdx_path(this->name_generator.get_current_hash_path())
-{}
-
-void FdxCapture::_create_dir()
+, out_crypto_transport(this->cctx, this->rnd, this->fstat, this->report_error)
 {
-    if (this->fdx_basename_len < 0) {
-        return;
-    }
-
+    // create directory
     std::string directory;
 
-    for (std::string* path : {&this->record_fdx_path, &this->hash_fdx_path}) {
-        directory.assign(path->begin(), path->begin() + (path->size() - this->fdx_basename_len));
-
-        if (recursive_create_directory(directory.data(), S_IRWXU | S_IRGRP | S_IXGRP, this->groupid) != 0) {
+    for (std::string_view path : {record_path, hash_path}) {
+        str_assign(directory, path, '/', sid);
+        if (recursive_create_directory(directory.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, this->groupid) != 0) {
             auto err = errno;
             LOG(LOG_ERR, "FdxCapture: Failed to create directory: \"%s\": %s",
                 directory, strerror(err));
@@ -145,34 +141,14 @@ void FdxCapture::_create_dir()
         }
     }
 
-    // disable _create_dir
-    this->fdx_basename_len = -this->fdx_basename_len;
-}
-
-bool FdxCapture::is_open() const noexcept
-{
-    return bool(this->out_crypto_transport);
-}
-
-void FdxCapture::_open_fdx()
-{
-    if (this->is_open()) {
-        return;
-    }
-
-    this->out_crypto_transport.emplace(this->cctx, this->rnd, this->fstat, this->report_error);
-
-    assert(this->fdx_basename_len < 0);
-    bytes_view derivator = array_view(this->record_fdx_path)
-        .last(-this->fdx_basename_len);
-
-    this->out_crypto_transport->open(
-        this->record_fdx_path.c_str(),
-        this->hash_fdx_path.c_str(),
+    fdx_filebase += ".fdx";
+    this->out_crypto_transport.open(
+        str_concat(record_path, '/', fdx_filebase).c_str(),
+        str_concat(hash_path, '/', fdx_filebase).c_str(),
         this->groupid,
-        derivator);
+        /*derivator=*/fdx_filebase);
 
-    this->out_crypto_transport->send(Mwrm3::header_compatibility_packet);
+    this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
 }
 
 FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
@@ -180,12 +156,15 @@ FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
 , trans(fdx.cctx, fdx.rnd, fdx.fstat, fdx.report_error)
 , direction(direction)
 {
-    open_crypto_transport(this->trans, fdx.name_generator, fdx.groupid);
+    auto derivator = fdx.name_generator.get_current_basename();
+    this->trans.open(
+        fdx.name_generator.get_current_record_path().c_str(),
+        fdx.name_generator.get_current_hash_path().c_str(),
+        fdx.groupid, derivator);
 }
 
 FdxCapture::TflFile FdxCapture::new_tfl(Mwrm3::Direction direction)
 {
-    this->_create_dir();
     this->name_generator.next_tfl();
 
     return TflFile{*this, direction};
@@ -200,8 +179,6 @@ void FdxCapture::close_tfl(
     FdxCapture::TflFile& tfl, std::string_view original_filename,
     Mwrm3::TransferedStatus transfered_status, Mwrm3::Sha256Signature sig)
 {
-    this->_open_fdx();
-
     OutCryptoTransport::HashArray qhash;
     OutCryptoTransport::HashArray fhash;
     tfl.trans.close(qhash, fhash);
@@ -224,24 +201,26 @@ void FdxCapture::close_tfl(
     bool const with_checksum = this->cctx.get_with_checksum();
 
     auto const dirname_len = this->name_generator.get_current_record_path().size()
-        - this->name_generator.get_current_filename().size();
+        - this->name_generator.get_current_relative_path().size();
 
     Mwrm3::tfl_new.serialize(
         tfl.file_id, Mwrm3::FileSize(stat.st_size), tfl.direction, transfered_status,
         Mwrm3::Filename{original_filename},
-        Mwrm3::TflFilename{std::string_view(filename + dirname_len)},
+        Mwrm3::TflRelativeFilename{std::string_view(filename + dirname_len)},
         Mwrm3::QuickHash{with_checksum ? make_array_view(qhash) : bytes_view{"", 0}},
         Mwrm3::FullHash{with_checksum ? make_array_view(fhash) : bytes_view{"", 0}},
         sig,
         write_in_buf);
 
-    this->out_crypto_transport->send(out.get_bytes());
+    this->out_crypto_transport.send(out.get_bytes());
 }
 
 void FdxCapture::close(OutCryptoTransport::HashArray& qhash, OutCryptoTransport::HashArray& fhash)
 {
-    if (this->out_crypto_transport) {
-        this->out_crypto_transport->close(qhash, fhash);
-        this->out_crypto_transport.reset();
-    }
+    this->out_crypto_transport.close(qhash, fhash);
+}
+
+bool FdxCapture::is_open() const
+{
+    return this->out_crypto_transport.is_open();
 }

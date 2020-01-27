@@ -237,26 +237,37 @@ TEST(a < b +- 2_percent); // a < b + b * 2 / 100
 
 \begin{exampleblock}{}<only@2>
 \begin{lstlisting}
+// modificateur d'affichage (pour un type compatible avec bytes_view)
+TEST(ut::ascii(x), y); // les caractères non ascii sont en héxadécimal
+TEST(ut::utf8(x), y); // les caractères non utf8 sont en héxadécimal
+TEST(ut::hex(x), y); // tout afficher en héxadécimal
+TEST(ut::dump(x), y); // affichage de hexdump
+// TEST(ut::ascii(x), y) == TEST(y, ut::ascii(y));
+\end{lstlisting}
+\end{exampleblock}
+
+\begin{exampleblock}{}<only@3>
+\begin{lstlisting}
 // seulement pour nombre flottant
 CHECK_CLOSE(v1, v2, 0.0001); // 0.0001%
 CHECK_CLOSE_FRACTION(v1, v2, 0.0008999);
 \end{lstlisting}
 \end{exampleblock}
 
-\begin{exampleblock}{}<only@3>
+\begin{exampleblock}{}<only@4>
 \begin{lstlisting}
 CHECK_MESSAGE(a[i], "a[" << i << "] = " << a[i]);
 \end{lstlisting}
 {\color{f7}tests/utils/test.cpp(8)}: \textbf{\color{f1}error} in "{\color{f5}Test}": {\color{f4}a[1]}
 \end{exampleblock}
 
-\begin{exampleblock}{}<only@4>
+\begin{exampleblock}{}<only@5>
 \begin{lstlisting}
 CHECK_EQ(a, b); // CHECK(a == b)
 \end{lstlisting}
 \end{exampleblock}
 
-\begin{exampleblock}{}<only@5>
+\begin{exampleblock}{}<only@6>
 \begin{lstlisting}
 #include "test_only/get_file_contents.hpp"
 CHECK_FILE_CONTENTS("recorder-chunk.pgs",

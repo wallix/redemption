@@ -19,7 +19,7 @@ def normalize(filename):
 class CryptoReader:
     def __init__(self, filename, derivator=None,
                  old_scheme=False, one_shot=False, auto_scheme=False,
-                 hmac_key_func=None, trace_key_func=None):
+                 hmac_key=None, trace_key_func=None):
         # print("CryptoReader::__init__")
         self.filename = normalize(filename)
         self.derivator = normalize(derivator) if derivator else self.filename
@@ -29,11 +29,10 @@ class CryptoReader:
         if not old_scheme and master_derivator[-4:] == '.wrm':
             master_derivator = "%s.mwrm" % master_derivator[:-11]
 
-        hmac_key_func = GETHMACKEY(hmac_key_func) if hmac_key_func else get_hmac_key_func
         trace_key_func = GETTRACEKEY(trace_key_func) if trace_key_func else get_trace_key_func
 
         self.handle = lib.scytale_reader_new(os.path.basename(master_derivator),
-                                             hmac_key_func, trace_key_func,
+                                             hmac_key, trace_key_func,
                                              [0, 1][old_scheme], [0, 1][one_shot])
 
         if not self.handle:

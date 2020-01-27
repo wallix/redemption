@@ -153,9 +153,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #enable_arcsight_log = 0
 
-#_hidden
-#log_path = 
-
 # Keyboard Input Masking Level:
 # min = 0, max = 3
 #   0: keyboard input are not masked
@@ -344,6 +341,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This option takes precedence over the option Extra orders of section mod_rdp.
 #_advanced
 #disabled_orders = 
+
+# value: 0 or 1
+#_advanced
+#wabam_uses_cache_bitmap_r2 = 0
 
 [mod_rdp]
 
@@ -808,7 +809,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
-#server_is_apple = 0
+#server_is_macos = 0
 
 # value: 0 or 1
 #_hidden

@@ -57,7 +57,6 @@ namespace cfg {
     struct session_log {
         struct enable_session_log;
         struct enable_arcsight_log;
-        struct log_path;
         struct keyboard_input_masking_level;
         struct hide_non_printable_kbd_input;
     };
@@ -98,6 +97,7 @@ namespace cfg {
         struct enable_remotefx;
         struct bogus_pointer_xormask_padding;
         struct disabled_orders;
+        struct wabam_uses_cache_bitmap_r2;
     };
 
     struct mod_rdp {
@@ -196,7 +196,7 @@ namespace cfg {
         struct encodings;
         struct server_clipboard_encoding_type;
         struct bogus_clipboard_infinite_loop;
-        struct server_is_apple;
+        struct server_is_macos;
         struct server_unix_alt;
         struct support_cursor_pseudo_encoding;
     };
@@ -275,6 +275,12 @@ namespace cfg {
         struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
+    };
+
+    struct capture {
+        struct record_filebase;
+        struct record_subdirectory;
+        struct fdx_path;
     };
 
     struct crypto {
