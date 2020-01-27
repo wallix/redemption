@@ -2142,7 +2142,7 @@ namespace cfg {
     /// type: SessionProbeDisabledFeature <br/>
     /// connpolicy -> proxy    [name: session_probe::disabled_features] <br/>
     /// sesman::name: mod_rdp:session_probe_disabled_features <br/>
-    /// value = static_cast<type>(352) <br/>
+    /// value = static_cast<type>(864) <br/>
     struct mod_rdp::session_probe_disabled_features {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2154,7 +2154,7 @@ namespace cfg {
         using type = SessionProbeDisabledFeature;
         using sesman_and_spec_type = SessionProbeDisabledFeature;
         using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(352);
+        type value = static_cast<type>(864);
     };
     /// If enabled, disconnected session can be recovered by a different primary user. <br/>
     /// type: bool <br/>

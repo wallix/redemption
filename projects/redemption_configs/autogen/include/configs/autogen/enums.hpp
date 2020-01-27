@@ -523,11 +523,13 @@ enum class SessionProbeDisabledFeature : unsigned short
     ie_monitoring = 128,
     // Inspect group membership of user
     group_membership = 256,
+    // BestSafe integration
+    bestsafe_integration = 512,
 };
 
 inline bool is_valid_enum_value(SessionProbeDisabledFeature e)
 {
-    return static_cast<unsigned long>(e) <= 511;
+    return static_cast<unsigned long>(e) <= 1023;
 }
 
 inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
@@ -535,7 +537,7 @@ inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, Se
 inline SessionProbeDisabledFeature operator & (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
 { return static_cast<SessionProbeDisabledFeature>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline SessionProbeDisabledFeature operator ~ (SessionProbeDisabledFeature x)
-{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(511)); }
+{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1023)); }
 inline SessionProbeDisabledFeature operator + (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x | y; }
 inline SessionProbeDisabledFeature operator - (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x & ~y; }
 inline SessionProbeDisabledFeature & operator |= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x | y; }
