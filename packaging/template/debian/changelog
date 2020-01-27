@@ -1,3 +1,8 @@
+redemption (7.4.13%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 27 Jan 2020 16:03:55 +0200
+
 redemption (7.4.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Updated conf_spec.
