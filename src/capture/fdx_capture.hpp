@@ -22,11 +22,14 @@
 
 #include "core/report_error.hpp"
 #include "capture/mwrm3.hpp"
+#include "transport/crypto_transport.hpp"
 
 #include <vector>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <memory>
 
 #include <cstdint>
 
@@ -51,18 +54,15 @@ private:
 };
 
 
-#include "transport/crypto_transport.hpp"
-#include <utility>
-#include <memory>
-
 struct FdxNameGenerator
 {
     FdxNameGenerator(std::string_view record_path, std::string_view hash_path, std::string_view sid);
 
-    // before next_tfl(): is a fdx file
+    // before next_tfl(): is a partial tfl path
     // after next_tfl(): is a tfl file
     //@{
-    std::string_view get_current_filename() const noexcept;
+    std::string_view get_current_basename() const noexcept;
+    std::string_view get_current_relative_path() const noexcept;
     std::string const& get_current_record_path() const noexcept { return this->record_path; }
     std::string const& get_current_hash_path() const noexcept { return this->hash_path; }
     //@}
@@ -74,11 +74,13 @@ struct FdxNameGenerator
 private:
     std::string record_path;
     std::string hash_path;
-    uint16_t pos_start_filename;
+    uint16_t pos_start_basename;
+    uint16_t pos_start_relative_path;
     uint16_t pos_end_record_suffix;
     uint16_t pos_end_hash_suffix;
     TflSuffixGenerator tfl_suffix_generator;
 };
+
 
 struct FdxCapture
 {
@@ -99,7 +101,7 @@ struct FdxCapture
 
     explicit FdxCapture(
         std::string_view record_path, std::string_view hash_path,
-        std::string_view sid, int groupid,
+        std::string fdx_filebase, std::string_view sid, int groupid,
         CryptoContext& cctx, Random& rnd, Fstat& fstat,
         ReportError report_error);
 
@@ -110,15 +112,16 @@ struct FdxCapture
         TflFile& tfl, std::string_view original_filename,
         Mwrm3::TransferedStatus transfered_status, Mwrm3::Sha256Signature sig);
 
+    bool is_open() const;
     void close(OutCryptoTransport::HashArray & qhash, OutCryptoTransport::HashArray & fhash);
 
-    bool is_open() const noexcept;
+    [[nodiscard]] char const * get_fdx_path() const noexcept
+    {
+        return this->out_crypto_transport.get_finalname();
+    }
 
 private:
     friend TflFile;
-
-    void _open_fdx();
-    void _create_dir();
 
     FdxNameGenerator name_generator;
 
@@ -128,9 +131,5 @@ private:
     ReportError report_error;
     int groupid;
 
-    std::optional<OutCryptoTransport> out_crypto_transport;
-
-    long fdx_basename_len;
-    std::string record_fdx_path;
-    std::string hash_fdx_path;
+    OutCryptoTransport out_crypto_transport;
 };

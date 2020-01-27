@@ -23,14 +23,14 @@
 
 extern "C"
 {
-    class ScytaleWriterHandle;
-    class ScytaleReaderHandle;
-    class ScytaleMetaReaderHandle;
-    class ScytaleKeyHandle;
+    struct ScytaleWriterHandle;
+    struct ScytaleReaderHandle;
+    struct ScytaleMetaReaderHandle;
+    struct ScytaleKeyHandle;
 
-    class ScytaleFdxWriterHandle;
-    class ScytaleTflWriterHandler;
-    class ScytaleMwrm3ReaderHandle;
+    struct ScytaleFdxWriterHandle;
+    struct ScytaleTflWriterHandler;
+    struct ScytaleMwrm3ReaderHandle;
 
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
@@ -44,13 +44,13 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new(
         int with_encryption, int with_checksum, const char * master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     ScytaleWriterHandle * scytale_writer_new_with_test_random(
         int with_encryption, int with_checksum, const char * master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
@@ -86,7 +86,7 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     ScytaleReaderHandle * scytale_reader_new(
         const char * master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
         int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
@@ -191,41 +191,24 @@ extern "C"
     //@}
 
 
-    // Key
-    //@{
-    REDEMPTION_LIB_EXPORT
-    ScytaleKeyHandle * scytale_key_new(const char * masterkeyhex);
-
-    REDEMPTION_LIB_EXPORT
-    const char * scytale_key_derivate(
-        ScytaleKeyHandle * handle, const uint8_t * derivator, unsigned long len);
-
-    REDEMPTION_LIB_EXPORT
-    void scytale_key_delete(ScytaleKeyHandle * handle);
-
-    /// \return HashHexArray
-    REDEMPTION_LIB_EXPORT
-    const char * scytale_key_get_master(ScytaleKeyHandle * handle);
-
-    /// \return HashHexArray
-    REDEMPTION_LIB_EXPORT
-    const char * scytale_key_get_derivated(ScytaleKeyHandle * handle);
-    //@}
-
-
-    // Tfl
+    // Fdx / Tfl
     //@{
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new(
         int with_encryption, int with_checksum, char const* master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        char const * record_path, char const * hash_path, int groupid, char const * sid);
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
+        char const * record_path, char const * hash_path, char const * fdx_file_base,
+        int groupid, char const * sid);
 
     REDEMPTION_LIB_EXPORT
     ScytaleFdxWriterHandle * scytale_fdx_writer_new_with_test_random(
         int with_encryption, int with_checksum, char const* master_derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        char const * record_path, char const * hash_path, int groupid, char const * sid);
+        uint8_t const * hmac_key, get_trace_key_prototype * trace_fn,
+        char const * record_path, char const * hash_path, char const * fdx_file_base,
+        int groupid, char const * sid);
+
+    REDEMPTION_LIB_EXPORT
+    char const * scytale_fdx_get_path(ScytaleFdxWriterHandle * handle);
 
     /// \param direction  Mwrm3::Direction
     REDEMPTION_LIB_EXPORT

@@ -2288,21 +2288,16 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
     RED_CHECK_WORKSPACE(record_wd);
 }
 
-extern "C" {
-    inline int hmac_fn(uint8_t * buffer)
-    {
-        // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
-        uint8_t hmac_key[] = {
-            0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
-            0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
-            0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
-            0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH );
-        memcpy(buffer, hmac_key, sizeof(hmac_key));
-        return 0;
-    }
+namespace
+{
+    // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
+    uint8_t hmac_key[] = {
+        0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
+        0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
+        0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
+        0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
 
-    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
+    int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
     {
         // in real uses actual trace_key is derived from base and some master key
         (void)base;
@@ -2384,15 +2379,15 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
 
-#define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output, output_error) do { \
-    int argc = sizeof(argv)/sizeof(char*);                                           \
-    tu::ostream_buffered cout_buf;                                                   \
-    tu::ostream_buffered cerr_buf(std::cerr);                                        \
-    int res = do_main(argc, argv, hmac_fn, trace_fn);                                \
-    EVP_cleanup();                                                                   \
-    RED_CHECK_SMEM(cout_buf.str(), output);                                          \
-    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                    \
-    RED_TEST(res_result == res);                                                     \
+#define TEST_DO_MAIN(argv, res_result, hmac_key, trace_fn, output, output_error) do { \
+    int argc = sizeof(argv)/sizeof(char*);                                            \
+    tu::ostream_buffered cout_buf;                                                    \
+    tu::ostream_buffered cerr_buf(std::cerr);                                         \
+    int res = do_main(argc, argv, hmac_key, trace_fn);                                \
+    EVP_cleanup();                                                                    \
+    RED_CHECK_SMEM(cout_buf.str(), output);                                           \
+    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                     \
+    RED_TEST(res_result == res);                                                      \
 } while (0)
 
     {
@@ -2410,7 +2405,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "--json-pgs",
         };
 
-        TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
             str_concat("Output file is \"", output_prefix1, "\".\n\n"), ""_av);
 
         RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
@@ -2443,7 +2438,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "--json-pgs",
         };
 
-        TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
             str_concat("Output file is \"", output_prefix2, "\".\n\n"), ""_av);
 
         RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
