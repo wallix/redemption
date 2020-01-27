@@ -328,6 +328,11 @@ public:
                                 }
                             }
 
+                            if (ini.get<cfg::client::wabam_uses_cache_bitmap_r2>() &&
+                                ini.get<cfg::context::is_wabam>()) {
+                                front.force_using_cache_bitmap_r2();
+                            }
+
                             mm.check_module();
                         }
 

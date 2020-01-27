@@ -133,7 +133,7 @@ protected:
     const BitsPerPixel capture_bpp;
 
 private:
-    const int bitmap_cache_version;
+          int bitmap_cache_version;
     const bool use_bitmap_comp;
     const bool use_compact_packets;
     const size_t max_data_block_size;
@@ -207,6 +207,10 @@ public:
 
     size_t get_max_data_block_size() const {
         return (this->max_data_block_size - SERIALIZER_HEADER_SIZE);
+    }
+
+    void force_using_cache_bitmap_r2() {
+        this->bitmap_cache_version = 2;
     }
 
 protected:
