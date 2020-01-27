@@ -611,7 +611,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
-# min = 0, max = 511
+# min = 0, max = 1023
 #   0x000: none
 #   0x001: Java Access Bridge
 #   0x002: MS Active Accessbility
@@ -621,10 +621,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+#   0x200: BestSafe integration
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
 #_hidden
 #_hex
-#session_probe_disabled_features = 352
+#session_probe_disabled_features = 864
 
 # If enabled, disconnected session can be recovered by a different primary user.
 # value: 0 or 1
