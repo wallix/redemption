@@ -110,7 +110,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
         throw Error(ERR_TRANSPORT_TLS_SERVER);
     }
 
-    LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
+    LOG(LOG_INFO, "SocketTransport::enable_server_tls() done (%s)", this->name);
 }
 
 Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
@@ -211,7 +211,7 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
     ssize_t const res = this->tls ? this->tls->privpartial_recv_tls(buffer, len) : socket_recv_partial(this->sck, buffer, len);
 
     if (res < 0){
-        LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket!");
+        LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket %s!", this->name);
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
     }
 
