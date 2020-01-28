@@ -1,3 +1,10 @@
+redemption (7.3.55%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Create BitmapCache compatibility mode for AM.
+  * Fix issue 'Gray RDP 4eyes window'.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 28 Jan 2020 15:22:32 +0200
+
 redemption (7.3.53%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * [Approval] Button 'Back to selector' displayed when only one target is available. (Escape Key)
