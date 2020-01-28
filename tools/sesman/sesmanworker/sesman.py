@@ -1792,7 +1792,7 @@ class Sesman():
                             self.rtmanager.check(current_time)
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data([
-                                    "width", "height", "rt_ready"
+                                    "width", "height", "rt_ready", "fdx_path"
                                 ])
 
                                 if self._changed_keys:
@@ -2148,7 +2148,8 @@ class Sesman():
         # exchange key : (acl key, type)
         'height': ('video_height', 'int'),
         'width': ('video_width', 'int'),
-        'rt_ready': ('rt', 'bool')
+        'rt_ready': ('rt', 'bool'),
+        'fdx_path': ('fdx_path', 'str')
     }
 
     @staticmethod
