@@ -1,3 +1,9 @@
+redemption (1.1.183%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix issue 'Gray RDP 4eyes window'.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 28 Jan 2020 15:43:02 +0200
+
 redemption (1.1.181%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * [Session Probe] Fix issue 'Latest Microsoft Windows 10 Update may cause Session Probe to crash'.
