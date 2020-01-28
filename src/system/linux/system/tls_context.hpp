@@ -669,6 +669,8 @@ public:
 
     ssize_t privpartial_recv_tls(uint8_t * data, size_t len)
     {
+        int i = 0;
+
         for (;;) {
             int rcvd = ::SSL_read(this->io, data, len);
             if (rcvd > 0) {
@@ -681,8 +683,10 @@ public:
                     return rcvd;
 
                 case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "recv_tls WANT READ");
-                    return 0;
+                    if (++i % 50 == 0) {
+                        LOG(LOG_INFO, "recv_tls WANT READ");
+                    }
+                    continue;
 
                 case SSL_ERROR_WANT_WRITE:
                     LOG(LOG_INFO, "recv_tls WANT WRITE");
@@ -721,6 +725,8 @@ public:
 
     ssize_t privpartial_send_tls(const uint8_t * data, size_t len)
     {
+        int i = 0;
+
         const uint8_t * const buffer = data;
         size_t remaining_len = len;
         for (;;){
@@ -739,8 +745,10 @@ public:
                     continue;
 
                 case SSL_ERROR_WANT_WRITE:
-                    LOG(LOG_INFO, "send_tls WANT WRITE");
-                    return 0;
+                    if (++i % 50 == 0) {
+                        LOG(LOG_INFO, "send_tls WANT WRITE");
+                    }
+                    continue;
 
                 default:
                 {
