@@ -423,9 +423,10 @@ namespace X224
     };
 
     inline Tpkt Tpkt_Recv(InStream & stream) {
-        uint16_t length = stream.get_capacity();
+        uint16_t length = stream.in_remain();
         if (length < 4){
             LOG(LOG_ERR, "Truncated TPKT: stream=%u", length);
+            throw Error(ERR_X224);
         }
 
         // TPKT
@@ -435,6 +436,7 @@ namespace X224
         if (length < tpkt_len){
             LOG(LOG_ERR, "Truncated TPKT: stream=%u tpkt=%u",
                 length, tpkt_len);
+            throw Error(ERR_X224);
         }
         return Tpkt{tpkt_version, tpkt_len};
     }
