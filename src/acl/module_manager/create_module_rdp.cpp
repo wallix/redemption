@@ -149,28 +149,28 @@ public:
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
 
-    FdxCapture* get_fdx_capture(ModuleManager& mm)
+    FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
     {
         if (!this->fdx_capture
-         && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
+         && ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
         ) {
             LOG(LOG_INFO, "Enable clipboard file record");
-            int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
-            auto const& session_id = mm.ini.get<cfg::context::session_id>();
-            auto const& subdir = mm.ini.get<cfg::capture::record_subdirectory>();
-            auto const& record_dir = mm.ini.get<cfg::video::record_path>();
-            auto const& hash_dir = mm.ini.get<cfg::video::hash_path>();
-            auto const& filebase = mm.ini.get<cfg::capture::record_filebase>();
+            int  const groupid = ini.get<cfg::video::capture_groupid>();
+            auto const& session_id = ini.get<cfg::context::session_id>();
+            auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
+            auto const& record_dir = ini.get<cfg::video::record_path>();
+            auto const& hash_dir = ini.get<cfg::video::hash_path>();
+            auto const& filebase = ini.get<cfg::capture::record_filebase>();
 
             this->fdx_capture = std::make_unique<FdxCapture>(
                 str_concat(record_dir.as_string(), subdir),
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
-                session_id, groupid, mm.cctx, mm.gen, this->fstat,
+                session_id, groupid, cctx, gen, this->fstat,
                 /* TODO should be a log (siem?)*/
                 ReportError());
 
-            mm.ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
+            ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
         }
 
         return this->fdx_capture.get();

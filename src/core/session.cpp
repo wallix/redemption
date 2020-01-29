@@ -612,41 +612,25 @@ class Session
         try {
             try {
                 // new value incoming from authentifier
+                this->rt_display(ini, mm, mod_wrapper, front);
+
                 if (ini.check_from_acl()) {
-                    auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
-
-                    if (ini.get<cfg::client::enable_osd_4_eyes>()) {
-                        Translator tr(language(ini));
-                        switch (rt_status) {
-                            case Capture::RTDisplayResult::Enabled:
-                                mm.osd_message(tr(trkeys::enable_rt_display).to_string(), true);
-                                break;
-                            case Capture::RTDisplayResult::Disabled:
-                                mm.osd_message(tr(trkeys::disable_rt_display).to_string(), true);
-                                break;
-                            case Capture::RTDisplayResult::Unchanged:
-                                break;
-                        }
-                    }
-
                     if (ini.get<cfg::client::wabam_uses_cache_bitmap_r2>() &&
                         ini.get<cfg::context::is_wabam>()) {
                         front.force_using_cache_bitmap_r2();
                     }
-
-                    mm.check_module();
                 }
 
-                try
-                {
-                    if (BACK_EVENT_NONE == session_reactor.signal) {
-                        // Process incoming module trafic
-                        auto& gd = mm.get_graphic_wrapper();
-                        session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
-                            return io_fd_isset(fd, ioswitch.rfds);
-                        }, gd);
-                    }
-                }
+//                try
+//                {
+//                    if (BACK_EVENT_NONE == session_reactor.signal) {
+//                        // Process incoming module trafic
+//                        auto& gd = mm.get_graphic_wrapper();
+//                        session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
+//                            return io_fd_isset(fd, ioswitch.rfds);
+//                        }, gd);
+//                    }
+//                }
 
                 if (ini.get<cfg::globals::enable_osd>()) {
                     const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
@@ -686,7 +670,7 @@ class Session
     {
         timeval timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
                     - std::chrono::seconds(now.tv_sec) - std::chrono::microseconds(now.tv_usec));
-        LOG(LOG_INFO, "%s %d.%d s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
+        LOG(LOG_INFO, "%s %ld.%ld s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
     }
 
     timeval prepare_timeout(timeval ultimatum, timeval now,
