@@ -429,11 +429,6 @@
                "description": "MS UI Automation"
             },
             {
-               "value": 8,
-               "label": "r1",
-               "description": "Reserved (do not use)"
-            },
-            {
                "value": 16,
                "label": "edge_inspection",
                "description": "Inspect Edge location URL"

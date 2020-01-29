@@ -251,25 +251,28 @@ namespace json
             char const* prefix = "\n";
             int d = 0;
             for (type_enumeration::Value const & v : e.values) {
-                out << prefix <<
-                    "            {\n"
-                ;
-                if (e.is_string_parser) {
-                    out <<
-                        "               \"value\": \"" << (v.alias ? v.alias : v.name) << "\",\n"
+                auto f = (1ull << d >> 1);
+                if (!(f & e.exclude_flag)) {
+                    out << prefix <<
+                        "            {\n"
+                        "               \"value\": "
                     ;
-                }
-                else {
-                    out <<
-                        "               \"value\": " << (is_autoinc ? d : (1 << d >> 1)) << ",\n"
+                    if (e.is_string_parser) {
+                        out << '"' << (v.alias ? v.alias : v.name) << '"';
+                    }
+                    else if (is_autoinc) {
+                        out << d;
+                    }
+                    else {
+                        out << f;
+                    }
+                    out << ",\n"
+                        "               \"label\": \"" << v.name << "\",\n"
+                        "               \"description\": \"" << io_quoted(v.desc ? v.desc : "") << "\"\n"
+                        "            }"
                     ;
+                    prefix = ",\n";
                 }
-                out <<
-                    "               \"label\": \"" << v.name << "\",\n"
-                    "               \"description\": \"" << io_quoted(v.desc ? v.desc : "") << "\"\n"
-                    "            }"
-                ;
-                prefix = ",\n";
                 ++d;
             }
             out << "\n          ],\n";
