@@ -3026,6 +3026,7 @@ public:
                                 default:
                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                     // TODO CGR: Data should actually be consumed
+                                    hexdump(sdata.payload.remaining_bytes());
                                     sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 }
