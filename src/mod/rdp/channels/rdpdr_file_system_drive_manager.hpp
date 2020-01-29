@@ -33,6 +33,7 @@
 #include "transport/file_transport.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/winpr/pattern.hpp"
 
 #include <sys/types.h>
@@ -98,7 +99,7 @@ public:
     virtual void process_server_create_drive_request(
         rdpdr::DeviceIORequest const & device_io_request,
         rdpdr::DeviceCreateRequest const & device_create_request,
-        int drive_access_mode, const char * path, InStream & in_stream,
+        int drive_access_mode, std::string_view path, InStream & in_stream,
         bool & out_drive_created,
         VirtualChannelDataSender & to_server_sender,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
@@ -839,7 +840,7 @@ public:
     void process_server_create_drive_request(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
-            int drive_access_mode, const char * path, InStream & in_stream,
+            int drive_access_mode, std::string_view path, InStream & in_stream,
             bool & out_drive_created,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
@@ -852,11 +853,7 @@ public:
 
         out_drive_created = false;
 
-        {
-            this->full_path = path;
-            auto av = device_create_request.Path();
-            this->full_path.append(av.data(), av.size());
-        }
+        this->full_path = str_concat(path, device_create_request.Path());
 
         LOG_IF(bool(verbose & RDPVerbose::fsdrvmgr), LOG_INFO,
             "ManagedDirectory::ProcessServerCreateDriveRequest: "
@@ -1225,7 +1222,7 @@ public:
     void process_server_create_drive_request(
             rdpdr::DeviceIORequest const & device_io_request,
             rdpdr::DeviceCreateRequest const & device_create_request,
-            int drive_access_mode, const char * path, InStream & in_stream,
+            int drive_access_mode, std::string_view path, InStream & in_stream,
             bool & out_drive_created,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
@@ -1239,11 +1236,7 @@ public:
 
         this->is_session_probe_image_flag = is_session_probe_image_flag;
 
-        {
-            this->full_path = path;
-            auto av = device_create_request.Path();
-            this->full_path.append(av.data(), av.size());
-        }
+        this->full_path = str_concat(path, device_create_request.Path());
 
         LOG_IF(bool(verbose & RDPVerbose::fsdrvmgr), LOG_INFO,
             "ManagedFile::process_server_create_drive_request: "
@@ -1889,7 +1882,7 @@ private:
         bool drive_created = false;
         managed_file_system_object->process_server_create_drive_request(
                 device_io_request, device_create_request, drive_access_mode,
-                path.c_str(), in_stream, drive_created, to_server_sender,
+                path, in_stream, drive_created, to_server_sender,
                 out_asynchronous_task, is_session_probe_image_flag, verbose);
         if (drive_created) {
             this->managed_file_system_objects.push_back({

@@ -1104,13 +1104,13 @@ private:
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->send_kbd();
         }
-        this->kbd_stream.out_copy_bytes(bytes.data(), bytes.size());
+        this->kbd_stream.out_copy_bytes(bytes);
     }
 
     void send_data(time_t rawtime, array_view_const_char data, char sep) {
         this->send_date(rawtime, sep);
-        this->trans.send(data.data(), data.size());
-        this->trans.send("\n", 1);
+        this->trans.send(data);
+        this->trans.send("\n"_av);
         this->last_time = rawtime;
     }
 

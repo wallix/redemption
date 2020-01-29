@@ -1221,7 +1221,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
 
         OutCryptoTransport ct(cctx, rnd, fstat, ReportError());
         ct.open(encrypted_file, hash_encrypted_file, 0);
-        ct.send(original_contents.data(), original_contents.size());
+        ct.send(original_contents);
     }
 
     char buffer[original_filesize];
@@ -1273,7 +1273,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
 
         OutCryptoTransport ct(cctx, rnd, fstat, ReportError());
         ct.open(encrypted_file, hash_encrypted_file, 0);
-        ct.send(original_contents.data(), original_contents.size());
+        ct.send(original_contents);
         ct.close(qhash, fhash);
     }
 

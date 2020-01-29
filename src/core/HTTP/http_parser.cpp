@@ -114,7 +114,7 @@ bool HttpParser::parse(array_view_const_char input) {
 					return false;
 			}
 
-			impl->buffer = impl->buffer.substr(pos + 2);
+			impl->buffer.erase(0, pos + 2);
 			break;
 		}
 		case HTTP_TREATING_BODY: {
@@ -122,10 +122,9 @@ bool HttpParser::parse(array_view_const_char input) {
 			if (!toEat)
 				return true;
 
-			std::string bodyPiece = impl->buffer.substr(0, toEat);
-			bool ret = this->onBodyContent(array_view_const_char{bodyPiece.data(), bodyPiece.size()});
+			bool ret = this->onBodyContent(array_view(impl->buffer).first(toEat));
 			impl->remainingBody -= toEat;
-			impl->buffer = impl->buffer.substr(toEat);
+			impl->buffer.erase(0, toEat);
 			if (!ret)
 				return false;
 

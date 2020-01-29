@@ -74,7 +74,7 @@ namespace
         auto first = values.begin();
         for (auto name : restriction_names) {
             assert(name.back() == ',');
-            name = {name.data(), name.size()-1u};
+            name = name.first(name.size()-1u);
             for (auto && av : large_ids) {
                 if (av.size() == name.size() && std::equal(av.begin(), av.end(), name.begin())) {
                     *first = set;

@@ -456,8 +456,8 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
 
 				ostream.out_uint32_be(strlen(this->username));
 				ostream.out_uint32_be(strlen(this->password));
-				ostream.out_copy_bytes(byte_ptr_cast(this->username), strlen(this->username));
-				ostream.out_copy_bytes(byte_ptr_cast(this->password), strlen(this->password));
+				ostream.out_copy_bytes(this->username, strlen(this->username));
+				ostream.out_copy_bytes(this->password, strlen(this->password));
 
 				this->t.send(ostream.get_data(), ostream.get_offset());
 				this->state = WAIT_SECURITY_RESULT;

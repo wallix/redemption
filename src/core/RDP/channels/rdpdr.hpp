@@ -895,9 +895,9 @@ struct DeviceAnnounceHeaderPrinterSpecificData_Send {
         stream.out_uint32_le(this->DriverNameLen);
         stream.out_uint32_le(this->PrintNameLen);
         stream.out_uint32_le(this->CachedFieldsLen);
-        stream.out_copy_bytes(byte_ptr_cast(this->PnPName), this->PnPNameLen);
-        stream.out_copy_bytes(byte_ptr_cast(this->DriverName), this->DriverNameLen);
-        stream.out_copy_bytes(byte_ptr_cast(this->PrinterName), this->PrintNameLen);
+        stream.out_copy_bytes(this->PnPName, this->PnPNameLen);
+        stream.out_copy_bytes(this->DriverName, this->DriverNameLen);
+        stream.out_copy_bytes(this->PrinterName, this->PrintNameLen);
         stream.out_copy_bytes(this->CachedPrinterConfigData, this->CachedFieldsLen);
     }
 
@@ -2648,7 +2648,7 @@ public:
             this->ComputerName[this->ComputerNameLen] = '\0';
             this->ComputerNameLen += 1;
             stream.out_uint32_le(this->ComputerNameLen);
-            stream.out_copy_bytes(byte_ptr_cast(this->ComputerName), this->ComputerNameLen);
+            stream.out_copy_bytes(this->ComputerName, this->ComputerNameLen);
         }
     }
 
@@ -3804,7 +3804,7 @@ public:
             const size_t FileName_utf8_len = ::UTF16toUTF8(
                 FileName_unicode_data,
                 this->FileNameLength / 2,
-                byte_ptr_cast (this->FileName_),
+                byte_ptr_cast(this->FileName_),
                 sizeof(this->FileName_));
 
             this->FileName_[FileName_utf8_len] = '\0';

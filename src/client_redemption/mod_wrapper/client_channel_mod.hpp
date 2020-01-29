@@ -149,7 +149,7 @@ public:
 
         } else {
 
-            out_stream_first_part.out_copy_bytes(data.data(), data.size());
+            out_stream_first_part.out_copy_bytes(data);
             InStream chunk(out_stream_first_part.get_bytes());
 
             this->send_to_mod_channel( front_channel_name

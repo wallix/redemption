@@ -356,8 +356,8 @@ public:
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
         //LOG(LOG_INFO, "xorMaskData=%zu", av_data.size());
-        //hexdump(av_data.data(), av_data.size());
-        stream.out_copy_bytes(av_data.data(), av_data.size());
+        //hexdump(av_data);
+        stream.out_copy_bytes(av_data);
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
@@ -366,8 +366,8 @@ public:
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
         //LOG(LOG_INFO, "andMaskData=%zu", av_mask.size());
-        //hexdump(av_mask.data(), av_mask.size());
-        stream.out_copy_bytes(av_mask.data(), av_mask.size()); /* mask */
+        //hexdump(av_mask);
+        stream.out_copy_bytes(av_mask); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
@@ -557,8 +557,7 @@ public:
 
             stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
 
-            auto av = this->cursor.get_monochrome_and_mask();
-            stream.out_copy_bytes(av.data(), av.size()); /* mask */
+            stream.out_copy_bytes(this->cursor.get_monochrome_and_mask()); /* mask */
         }
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,

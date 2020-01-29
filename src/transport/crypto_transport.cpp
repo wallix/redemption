@@ -753,7 +753,7 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
     this->groupid = groupid;
 
     ocrypto::Result res = this->encrypter.open(derivator);
-    this->out_file.send(res.buf.data(), res.buf.size());
+    this->out_file.send(res.buf);
 }
 
 // derivator implicitly basename(finalname)
@@ -777,7 +777,7 @@ void OutCryptoTransport::close(HashArray & qhash, HashArray & fhash)
         throw Error(ERR_TRANSPORT_CLOSED);
     }
     const ocrypto::Result res = this->encrypter.close(qhash, fhash);
-    this->out_file.send(res.buf.data(), res.buf.size());
+    this->out_file.send(res.buf);
     this->out_file.close();
     if (this->tmpname[0] != 0){
         if (::rename(this->tmpname, this->finalname) < 0) {
@@ -801,7 +801,7 @@ namespace
         auto to_send = len;
         while (to_send > 0) {
             const ocrypto::Result res = encrypter.write({data, to_send});
-            out_file.send(res.buf.data(), res.buf.size());
+            out_file.send(res.buf);
             to_send -= res.consumed;
             data += res.consumed;
         }
@@ -832,7 +832,7 @@ void OutCryptoTransport::create_hash_file(HashArray const & qhash, HashArray con
     // open
     {
         const ocrypto::Result res = hash_encrypter.open(this->derivator);
-        hash_out_file.send(res.buf.data(), res.buf.size());
+        hash_out_file.send(res.buf);
     }
 
     // write
@@ -862,7 +862,7 @@ void OutCryptoTransport::create_hash_file(HashArray const & qhash, HashArray con
         HashArray qhash;
         HashArray fhash;
         const ocrypto::Result res = hash_encrypter.close(qhash, fhash);
-        hash_out_file.send(res.buf.data(), res.buf.size());
+        hash_out_file.send(res.buf);
         hash_out_file.close();
     }
 }
