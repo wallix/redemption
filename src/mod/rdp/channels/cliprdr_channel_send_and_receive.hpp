@@ -264,7 +264,8 @@ public:
         for (auto& file : this->file_contents_list) {
             if (file.file_group_id == file_group_id
              && file.file_data.file_offset == offset
-             && file.status == FileContent::Status::WaitContinuation
+             && (file.status == FileContent::Status::WaitContinuation ||
+                 file.status == FileContent::Status::WaitContinuationWithId)
             ) {
                 return &file;
             }
