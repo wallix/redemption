@@ -101,7 +101,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
         // TODO this should be an error, no need to commute two times to TLS
         return;
     }
-    this->tls = std::make_unique<TLSContext>();
+    this->tls = std::make_unique<TLSContext>(bool(this->verbose & Verbose::basic));
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
