@@ -42,7 +42,7 @@ namespace
         std::chrono::milliseconds recv_timeout);
     ssize_t socket_recv_partial(int sck, uint8_t * data, size_t const len);
     // ssize_t socket_send_all(int sck, const uint8_t * data, size_t len);
-    ssize_t socket_send_partial(int sck, const uint8_t * data, size_t len);
+    ssize_t socket_send_partial(TLSContext* tls, int sck, const uint8_t * data, size_t len);
 }
 
 SocketTransport::SocketTransport(
@@ -290,11 +290,9 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
         LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
     }
 
-    ssize_t res = (this->tls)
-        ? this->tls->privpartial_send_tls(buffer, len)
-        : socket_send_partial(this->sck, buffer, len);
+    ssize_t res = socket_send_partial(this->tls.get(), this->sck, buffer, len);
 
-    if (this->tls ? (res < 0) : (res <= 0)) {
+    if (res < 0) {
         LOG(LOG_WARNING,
             "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
             this->name, this->sck, errno, strerror(errno));
@@ -310,20 +308,21 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
 
 void SocketTransport::send_waiting_data()
 {
+    assert(not this->async_buffers.empty());
+
     auto first = begin(this->async_buffers);
     auto last = end(this->async_buffers);
 
     for (; first != last; ++first) {
         size_t const len = first->e - first->p;
-        ssize_t res = (this->tls)
-            ? this->tls->privpartial_send_tls(first->p, len)
-            : socket_send_partial(this->sck, first->p, len);
+        ssize_t res = socket_send_partial(this->tls.get(), this->sck, first->p, len);
 
-        if (this->tls && res == 0) {
-            break;
+        // socket closed
+        if (res == 0 && first == this->async_buffers.begin()) {
+            res = -1;
         }
 
-        if (res <= 0) {
+        if (res < 0) {
             LOG(LOG_WARNING,
                 "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
                 this->name, this->sck, errno, strerror(errno));
@@ -429,41 +428,12 @@ namespace
         }
     }
 
-    // ssize_t socket_send_all(int sck, const uint8_t* data, size_t len)
-    // {
-    //     size_t total = 0;
-    //     while (total < len) {
-    //         ssize_t sent = ::send(sck, data + total, len - total, 0);
-    //         switch (sent) {
-    //             case -1:
-    //                 if (try_again(errno)) {
-    //                     fd_set wfds;
-    //                     struct timeval time = { 0, 10000 };
-    //                     io_fd_zero(wfds);
-    //                     io_fd_set(sck, wfds);
-    //                     select(sck + 1, nullptr, &wfds, nullptr, &time);
-    //                     continue;
-    //                 }
-    //                 return -1;
-    //             case 0:
-    //                 return -1;
-    //             default:
-    //                 total += sent;
-    //         }
-    //     }
-    //     return len;
-    // }
-
-    ssize_t socket_send_partial(int sck, const uint8_t* data, size_t len)
+    ssize_t socket_send_partial(TLSContext* tls, int sck, const uint8_t* data, size_t len)
     {
-        ssize_t const sent = ::send(sck, data, len, 0);
-        switch (sent) {
-            case -1:
-                return try_again(errno) ? sent : -1;
-            case 0:
-                return 0;
-            default:
-                return sent;
+        if (tls) {
+            return tls->privpartial_send_tls(data, len);
         }
+        ssize_t const sent = ::send(sck, data, len, 0);
+        return sent == -1 && try_again(errno) ? 0 : sent;
     }
 } // anonymous namespace
