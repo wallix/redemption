@@ -116,8 +116,12 @@ class TLSContext
     using X509UniquePtr = std::unique_ptr<X509, X509_deleter>;
     X509UniquePtr cert_external_validation_wait_ctx;
 
+    bool verbose;
+
 public:
-    TLSContext() = default;
+    TLSContext(bool verbose = false)
+    : verbose(verbose)
+    {}
 
     ~TLSContext()
     {
@@ -735,11 +739,11 @@ public:
                     return ret;
 
                 case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "send_tls WANT READ");
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT READ");
                     return 0;
 
                 case SSL_ERROR_WANT_WRITE:
-                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT WRITE");
                     return 0;
 
                 default:
@@ -771,11 +775,11 @@ public:
                     break;
 
                 case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "send_tls WANT READ");
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT READ");
                     continue;
 
                 case SSL_ERROR_WANT_WRITE:
-                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT WRITE");
                     continue;
 
                 default:
