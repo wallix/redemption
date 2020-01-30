@@ -563,6 +563,7 @@ class Session
         LOG(LOG_INFO, "module_sequencing");
         int i = 0;
         do {
+            sleep(1);
             if (++i == 11) {
                 LOG(LOG_INFO, "module_sequencing: emergency exit");
                 break;
@@ -862,6 +863,7 @@ public:
                         ioswitch.set_write_sck(mod_wrapper.get_mod_transport()->sck);
                     }
 
+                    sleep(1);
                     int num = ioswitch.select(now);
                     if (num < 0) {
 
