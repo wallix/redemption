@@ -210,6 +210,7 @@ public:
     }
 
     void force_using_cache_bitmap_r2() {
+        LOG(LOG_INFO, "RDPSerializer::force_using_cache_bitmap_r2");
         this->bitmap_cache_version = 2;
     }
 
