@@ -1175,45 +1175,45 @@ public:
 
 
 
-    // 2.2.5.4 File Contents Response PDU (CLIPRDR_FILECONTENTS_RESPONSE)
+// 2.2.5.4 File Contents Response PDU (CLIPRDR_FILECONTENTS_RESPONSE)
 
-    // The File Contents Response PDU is sent as a reply to the File Contents Request PDU.
-    // It is used to indicate whether processing of the File Contents Request PDU
-    // was successful. If the processing was successful, the File Contents Response PDU
-    // includes either a file size or extracted file data, based on the operation
-    // requested in the corresponding File Contents Request PDU.
+// The File Contents Response PDU is sent as a reply to the File Contents Request PDU.
+// It is used to indicate whether processing of the File Contents Request PDU
+// was successful. If the processing was successful, the File Contents Response PDU
+// includes either a file size or extracted file data, based on the operation
+// requested in the corresponding File Contents Request PDU.
 
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                          clipHeader                           |
-    // +---------------------------------------------------------------+
-    // |                             ...                               |
-    // +---------------------------------------------------------------+
-    // |                           streamId                            |
-    // +---------------------------------------------------------------+
-    // |              requestedFileContentsData (variable)             |
-    // +---------------------------------------------------------------+
-    // |                             ...                               |
-    // +---------------------------------------------------------------+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                          clipHeader                           |
+// +---------------------------------------------------------------+
+// |                             ...                               |
+// +---------------------------------------------------------------+
+// |                           streamId                            |
+// +---------------------------------------------------------------+
+// |              requestedFileContentsData (variable)             |
+// +---------------------------------------------------------------+
+// |                             ...                               |
+// +---------------------------------------------------------------+
 
-    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
-    // Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009).
-    // The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set
-    // in the msgFlags field of the Clipboard PDU Header.
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+// Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009).
+// The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set
+// in the msgFlags field of the Clipboard PDU Header.
 
-    // streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the
-    // File Contents Response PDU with the corresponding File Contents Request PDU.
-    // The File Contents Request PDU that triggered the response MUST contain an
-    // identical value in the streamId field.
+// streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the
+// File Contents Response PDU with the corresponding File Contents Request PDU.
+// The File Contents Request PDU that triggered the response MUST contain an
+// identical value in the streamId field.
 
-    // requestedFileContentsData (variable): This field contains a variable
-    // number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001)
-    // operation, the requestedFileContentsData field holds a 64-bit, unsigned
-    // integer containing the size of the file. In the case of a
-    // FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData
-    // field contains a byte-stream of data extracted from the file.
+// requestedFileContentsData (variable): This field contains a variable
+// number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001)
+// operation, the requestedFileContentsData field holds a 64-bit, unsigned
+// integer containing the size of the file. In the case of a
+// FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData
+// field contains a byte-stream of data extracted from the file.
 
 struct FileContentsResponseSize
 {
