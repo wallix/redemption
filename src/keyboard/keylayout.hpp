@@ -57,7 +57,7 @@ struct Keylayout
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
 
-    using KeyLayout_t = int[MAX_LAYOUT_CHARS];
+    using KeyLayout_t = uint32_t[MAX_LAYOUT_CHARS];
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
