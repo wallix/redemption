@@ -2846,6 +2846,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Enable storage of transferred files (via RDP Clipboard) <br/>
     /// type: RdpFileRecord <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:file_record <br/>

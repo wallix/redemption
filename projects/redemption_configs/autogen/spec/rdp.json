@@ -737,7 +737,7 @@
                "description": ""
             }
           ],
-          "description": ""
+          "description": "Enable storage of transferred files (via RDP Clipboard)"
         },
         {
           "name": "log_if_accepted",

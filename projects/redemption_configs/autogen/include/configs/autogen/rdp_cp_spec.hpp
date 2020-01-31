@@ -301,6 +301,7 @@ clipboard_text_up = boolean(default=False)
 # File verification on download must be enabled via option Enable down
 clipboard_text_down = boolean(default=False)
 
+# Enable storage of transferred files (via RDP Clipboard)
 file_record = option('never', 'always', 'on_verification_failure', default='never')
 
 #_advanced
