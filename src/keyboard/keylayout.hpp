@@ -52,7 +52,7 @@ struct Keylayout
     enum {
           MAX_DEADKEYS = 35
         , MAX_SECOND_KEYS = 35
-        , MAX_LAYOUT_CHARS = 256
+        , MAX_LAYOUT_CHARS = 128
     };
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
