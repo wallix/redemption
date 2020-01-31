@@ -45,11 +45,12 @@ TestCardMod::TestCardMod(
 , unit_test(unit_test)
 , session_reactor(session_reactor)
 , graphic_events_(graphic_events_)
-, gd_event(graphic_events_.create_action_executor(session_reactor, std::ref(*this))
-    .on_action(jln::one_shot([](gdi::GraphicApi& gd, TestCardMod& mod){
-        mod.draw_event(gd);
-    })))
-{}
+{
+    this->graphic_event = graphic_events_.create_action_executor(session_reactor)
+    .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+        this->draw_event(gd);
+    }));
+}
 
 Rect TestCardMod::get_screen_rect() const
 {
