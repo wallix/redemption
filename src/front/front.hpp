@@ -4995,7 +4995,6 @@ public:
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
-        LOG(LOG_INFO, "Input event scancode");
         bool tsk_switch_shortcuts;
 
         struct KeyboardFlags {
@@ -5026,8 +5025,6 @@ private:
                         && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
                         && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
                 if (send_to_mod) {
-                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE SENT BY FRONT!!!!!!!!!!!!!!!!!!!!!");
-
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }
                 this->has_user_activity = true;

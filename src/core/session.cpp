@@ -217,35 +217,31 @@ class Session
         Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
         time_t now, bool & has_user_activity)
     {
-        LOG(LOG_INFO, "check_acl enddate");
         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
-            LOG(LOG_INFO, "Close by enddate reached");
+            LOG(LOG_INFO, "check_acl: close by enddate");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
             return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
         }
 
-        LOG(LOG_INFO, "check_acl rejected");
         // Close by rejeted message received
         if (!this->ini.get<cfg::context::rejected>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
-            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
+            LOG(LOG_INFO, "check_acl: close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
             return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
         }
 
-        LOG(LOG_INFO, "check_acl keepalive");
         // Keep Alive
         if (acl->keepalive.check(now, this->ini)) {
-            LOG(LOG_INFO, "Close by Missed keepalive");
+            LOG(LOG_INFO, "check_acl: close by Missed keepalive");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
             return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
         }
 
-        LOG(LOG_INFO, "check_acl inactivity");
         // Inactivity management
         if (acl->inactivity.check_user_activity(now, has_user_activity)) {
-            LOG(LOG_INFO, "Close by user Inactivity");
+            LOG(LOG_INFO, "check_acl: close by user Inactivity");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
             return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
         }
@@ -268,8 +264,8 @@ class Session
         }
 
         // There are modified fields to send to sesman
-        LOG(LOG_INFO, "check_acl data to send to sesman");
         if (this->ini.changed_field_size()) {
+            LOG(LOG_INFO, "check_acl: data to send to sesman");
             if (mm.connected) {
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc, xup ...) and something changed.
@@ -560,16 +556,13 @@ class Session
         Authentifier & authentifier, ModWrapper & mod_wrapper,
         timeval now, Front & front)
     {
-        LOG(LOG_INFO, "module_sequencing");
         int i = 0;
         do {
-            sleep(1);
             if (++i == 11) {
                 LOG(LOG_INFO, "module_sequencing: emergency exit");
                 break;
             }
             if (!this->last_module) {
-                LOG(LOG_INFO, "module_sequencing: not last module");
                 bool run_session = this->check_acl(mm, acl,
                     authentifier, authentifier, mod_wrapper,
                     now.tv_sec, front.has_user_activity
@@ -614,6 +607,19 @@ class Session
             try {
                 // new value incoming from authentifier
                 this->rt_display(ini, mm, mod_wrapper, front);
+
+               if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
+                    LOG(LOG_INFO, "--------------------- Process incoming module traffic");
+                    auto& gd = mod_wrapper.get_graphic_wrapper();
+                    LOG(LOG_INFO, "--------------------- Execute graphic_events actions");
+                    graphic_events_.exec_action(gd);
+                    LOG(LOG_INFO, "--------------------- Execute fd_events actions");
+                    graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
+                        return fd != INVALID_SOCKET 
+                            &&  ioswitch.is_set_for_reading(fd);
+                    }, gd);
+                    LOG(LOG_INFO, "--------------------- Back event loop done");
+                }
 
                 if (ini.check_from_acl()) {
                     if (ini.get<cfg::client::wabam_uses_cache_bitmap_r2>() &&
