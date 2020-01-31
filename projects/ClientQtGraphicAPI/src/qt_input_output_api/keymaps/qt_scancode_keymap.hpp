@@ -99,6 +99,7 @@
 
 
 #include <iostream>
+#include <unordered_map>
 #include "reversed_keymaps/keylayouts_r.hpp"
 #include <QtGui/QKeyEvent>
 
@@ -114,10 +115,10 @@ private:
     const Keylayout_r::KeyLayoutMap_t * _layoutMods[9];
     const Keylayout_r::KeyLayoutMap_t * _layout;
 
-    Keylayout_r::KeyLayoutMap_t         _customNoExtended;
-    Keylayout_r::KeyLayoutMap_t         _customExtended;
-    Keylayout_r::KeyLayoutMap_t         _customNoExtendedKeylayoutApplied;
-    Keylayout_r::KeyLayoutMap_t         _customExtendedKeylayoutApplied;
+    std::unordered_map<int, int> _customNoExtended;
+    std::unordered_map<int, int> _customExtended;
+    std::unordered_map<int, int> _customNoExtendedKeylayoutApplied;
+    std::unordered_map<int, int> _customExtendedKeylayoutApplied;
 
     bool                                _deadKeys;
     bool                                _unvalidScanCode;
@@ -150,17 +151,17 @@ private:
 
 
 
-    void applyCharTable() {
-        try {
-            if (this->_deadKeys) {
-                const Keylayout_r::KeyLayoutMap_t & layout = this->_keylayout_WORK->deadkeys;
-                this->scanCode = layout.at(scanCode);
-                this->_deadKeys = false;
-            } else {
-                const Keylayout_r::KeyLayoutMap_t & layout = *(this->_layout);
-                this->scanCode = layout.at(scanCode);
-            }
-        } catch (const std::exception &) {
+    void applyCharTable()
+    {
+        Keylayout_r::KeyLayoutMap_t const& layout = this->_deadKeys
+            ? this->_keylayout_WORK->deadkeys
+            : *this->_layout;
+        this->_deadKeys = false;
+
+        if (auto scancode = layout.find(scanCode)) {
+            this->scanCode = scancode;
+        }
+        else {
             std::cerr << std::hex << "Unknown key(0x" << this->scanCode << ") to current layout 0x" << this->_keylayout_WORK->LCID << " " << this->_keylayout_WORK->locale_name << "." << std::endl;
             this->_unvalidScanCode = true;
         }
@@ -489,15 +490,13 @@ private:
         if (this->qKeyCode == 0) {
             return false;
         }
-        try {
-            this->scanCode = this->_customNoExtendedKeylayoutApplied.at(this->qKeyCode);
 
-            //-----------------------------
-            //    Keyboard Layout apply
-            //-----------------------------
-            this->applyCharTable();
+        auto p = this->_customNoExtendedKeylayoutApplied.find(scanCode);
+        if (p != this->_customNoExtendedKeylayoutApplied.end()) {
+            this->scanCode = p->second;
             return true;
-        } catch (const std::exception &) {
+        }
+        else {
             return false;
         }
     }//------------------------------------------------------------------------
@@ -506,10 +505,13 @@ private:
         if (this->qKeyCode == 0) {
             return false;
         }
-        try {
-            this->scanCode = this->_customNoExtended.at(this->qKeyCode);
+
+        auto p = this->_customNoExtended.find(scanCode);
+        if (p != this->_customNoExtended.end()) {
+            this->scanCode = p->second;
             return true;
-        } catch (const std::exception &) {
+        }
+        else {
             return false;
         }
     }//========================================================================
@@ -522,16 +524,18 @@ private:
         if (this->qKeyCode == 0) {
             return false;
         }
-        try {
-            this->scanCode = this->_customExtendedKeylayoutApplied.at(this->qKeyCode);
 
+        auto p = this->_customExtendedKeylayoutApplied.find(scanCode);
+        if (p != this->_customExtendedKeylayoutApplied.end()) {
+            this->scanCode = p->second;
             //-----------------------------
             //    Keyboard Layout apply
             //-----------------------------
             this->applyCharTable();
             this->flag = this->flag | KBD_FLAGS_EXTENDED;
             return true;
-        } catch (const std::exception &) {
+        }
+        else {
             this->scanCode = 0;
             return false;
         }
@@ -541,11 +545,15 @@ private:
         if (this->qKeyCode == 0) {
             return false;
         }
-        try {
-            this->scanCode = this->_customExtended.at(this->qKeyCode);
+
+        auto p = this->_customExtended.find(scanCode);
+        if (p != this->_customExtended.end()) {
+            this->scanCode = p->second;
             this->flag = this->flag | KBD_FLAGS_EXTENDED;
             return true;
-        } catch (const std::exception &) {
+        }
+        else {
+            this->scanCode = 0;
             return false;
         }
     }//============================================================================================================

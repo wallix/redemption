@@ -23,7 +23,8 @@
 
 #pragma once
 
-#include <unordered_map>
+#include "utils/sugar/array_view.hpp"
+#include <algorithm>
 
 //====================================
 // SCANCODES PHYSICAL LAYOUT REFERENCE
@@ -55,7 +56,30 @@ struct Keylayout_r
         , MAX_LAYOUT_CHARS = 128
     };
 
-    typedef std::unordered_map<int, int> KeyLayoutMap_t;
+    struct KeyLayoutMap_t
+    {
+        using uchar_type = uint32_t;
+        using scancode_type = uint8_t;
+
+        uchar_type const* uchar_list;
+        scancode_type const* scancode_list;
+        uint16_t len;
+
+        struct Cursor
+        {
+            KeyLayoutMap_t* map;
+            uint16_t len;
+        };
+
+        scancode_type find(uchar_type uchar) const
+        {
+            auto it = std::lower_bound(this->uchar_list, this->uchar_list + this->len, uchar);
+            if (it != this->uchar_list + this->len) {
+                return this->scancode_list[it - this->uchar_list];
+            }
+            return 0;
+        }
+    };
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
     char const * locale_name;
@@ -63,16 +87,16 @@ struct Keylayout_r
     // keylayout working tables (X11 mode : begins in 8e position.)
     // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
 
-    KeyLayoutMap_t const & noMod;
-    KeyLayoutMap_t const & shift;
-    KeyLayoutMap_t const & altGr;
-    KeyLayoutMap_t const & shiftAltGr;
-    KeyLayoutMap_t const & ctrl;
-    KeyLayoutMap_t const & capslock_noMod;
-    KeyLayoutMap_t const & capslock_shift;
-    KeyLayoutMap_t const & capslock_altGr;
-    KeyLayoutMap_t const & capslock_shiftAltGr;
-    KeyLayoutMap_t const & deadkeys;
+    KeyLayoutMap_t noMod;
+    KeyLayoutMap_t shift;
+    KeyLayoutMap_t altGr;
+    KeyLayoutMap_t shiftAltGr;
+    KeyLayoutMap_t ctrl;
+    KeyLayoutMap_t capslock_noMod;
+    KeyLayoutMap_t capslock_shift;
+    KeyLayoutMap_t capslock_altGr;
+    KeyLayoutMap_t capslock_shiftAltGr;
+    KeyLayoutMap_t deadkeys;
 
 
 
