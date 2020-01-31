@@ -99,7 +99,7 @@
 
 
 #include <iostream>
-#include "keyboard/reversed_keymaps/keylayouts_r.hpp"
+#include "reversed_keymaps/keylayouts_r.hpp"
 #include <QtGui/QKeyEvent>
 
 class Qt_ScanCode_KeyMap

@@ -22,7 +22,7 @@
 
 */
 
-#include "keyboard/reversed_keymaps/keylayouts_r.hpp"
+#include "reversed_keymaps/keylayouts_r.hpp"
 #include "keylayout_x8000201a.hpp" // Bosnian (Cyrillic) (Bosnia and Herzegovina))
 #include "keylayout_x80030402.hpp" // Bulgarian (Bulgaria)
 #include "keylayout_x80010402.hpp" // Bulgarian (Bulgaria) - latin

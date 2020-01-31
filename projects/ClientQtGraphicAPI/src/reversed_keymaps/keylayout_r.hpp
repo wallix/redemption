@@ -21,8 +21,6 @@
    header file. Keylayout_r object, used by keymap managers
 */
 
-
-
 #pragma once
 
 #include <unordered_map>
@@ -48,7 +46,7 @@
 
 
 //##############################################################################
-struct Keylayout_r 
+struct Keylayout_r
 //##############################################################################
 {
     enum {
@@ -56,7 +54,7 @@ struct Keylayout_r
         , MAX_SECOND_KEYS = 35
         , MAX_LAYOUT_CHARS = 128
     };
-    
+
     typedef std::unordered_map<int, int> KeyLayoutMap_t;
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
@@ -64,7 +62,7 @@ struct Keylayout_r
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
-    
+
     KeyLayoutMap_t const & noMod;
     KeyLayoutMap_t const & shift;
     KeyLayoutMap_t const & altGr;
@@ -76,7 +74,7 @@ struct Keylayout_r
     KeyLayoutMap_t const & capslock_shiftAltGr;
     KeyLayoutMap_t const & deadkeys;
 
-    
+
 
     /*typedef struct dkk {
         uint16_t secondKey;
@@ -96,8 +94,8 @@ struct Keylayout_r
 
     uint32_t verbose;
 
-    
-    
+
+
     // Constructor
     //==============================================================================
     Keylayout_r ( int LCID
@@ -132,10 +130,10 @@ struct Keylayout_r
     //==============================================================================
     {} // END Constructor
 
-    
+
     Keylayout_r (Keylayout_r const &) = delete;
     Keylayout_r & operator=(Keylayout_r const &) = delete;
-    
+
 
     /*//==============================================================================
     bool isDeadkey(uint32_t uchar, uint8_t extendedKeyCode) const
@@ -156,44 +154,44 @@ struct Keylayout_r
         return resu;
 
     } // END METHOD - isDeadkey*/
-    
-    
+
+
     const KeyLayoutMap_t *  getnoMod() const {
         return &(this->noMod);
     }
-    
+
     const KeyLayoutMap_t *  getshift() const {
         return &(this->shift);
     }
-    
+
     const KeyLayoutMap_t *  getaltGr() const {
         return &(this->altGr);
     }
-    
+
     const KeyLayoutMap_t *  getshiftAltGr() const {
         return &(this->shiftAltGr);
     }
-    
+
     const KeyLayoutMap_t *  getctrl() const {
         return &(this->ctrl);
     }
-    
+
     const KeyLayoutMap_t *  getcapslock_noMod() const {
         return &(this->capslock_noMod);
     }
-    
+
     const KeyLayoutMap_t *  getcapslock_shift() const {
         return &(this->capslock_shift);
     }
-    
+
     const KeyLayoutMap_t *  getcapslock_altGr() const {
         return &(this->capslock_altGr);
     }
-    
+
     const KeyLayoutMap_t *  getcapslock_shiftAltGr() const {
         return &(this->capslock_shiftAltGr);
     }
-    
+
     const KeyLayoutMap_t * getDeadKeys() const {
         return &(this->deadkeys);
     }
