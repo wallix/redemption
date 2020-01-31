@@ -223,7 +223,7 @@ int main(int argc, char** argv)
         "Copyright (C) WALLIX 2010-2018.\n"
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou,\n"
-        "Meng Tan, Clement Moroldo and Jennifer Inthavongh.";
+        "Meng Tan, Jennifer Inthavong and Clement Moroldo.";
 
     setlocale(LC_CTYPE, "C");
 
