@@ -4836,7 +4836,6 @@ test-run tests/server/test_mstsc_client :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
@@ -4896,7 +4895,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
@@ -4956,7 +4954,6 @@ test-run tests/server/test_rdesktop_client :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
@@ -5842,6 +5839,7 @@ obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
+obj src/keyboard/reversed_keymaps/keylayouts_r.o : $(REDEMPTION_SRC_PATH)/keyboard/reversed_keymaps/keylayouts_r.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/files_validator_api.o : $(REDEMPTION_SRC_PATH)/lib/files_validator_api.cpp ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;

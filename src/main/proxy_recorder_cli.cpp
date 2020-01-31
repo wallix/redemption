@@ -23,6 +23,8 @@
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
 #include "utils/select.hpp"
+#include "system/scoped_ssl_init.hpp"
+
 
 using PacketType = RecorderFile::PacketType;
 
@@ -355,7 +357,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    SSL_library_init();
+    ScopedSslInit scoped_ssl;
 
     openlog("ProxyRecorder", LOG_CONS | LOG_PERROR, LOG_USER);
 

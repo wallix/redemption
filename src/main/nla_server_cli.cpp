@@ -40,6 +40,7 @@
 #include "utils/netutils.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/utf.hpp"
+#include "system/scoped_ssl_init.hpp"
 
 #include <vector>
 #include <chrono>
@@ -411,7 +412,7 @@ int main(int argc, char *argv[])
             return -1;
     }
 
-    SSL_library_init();
+    ScopedSslInit scoped_ssl;
 
     openlog("NLAServer", LOG_CONS | LOG_PERROR, LOG_USER);
 

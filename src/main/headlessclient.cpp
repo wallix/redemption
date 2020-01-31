@@ -29,6 +29,7 @@
 #include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
+#include "system/scoped_ssl_init.hpp"
 
 #pragma GCC diagnostic pop
 
@@ -139,6 +140,8 @@ int main(int argc, char const** argv)
 
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
+
+    ScopedSslInit scoped_ssl;
 
     ClientRedemptionHeadless client(session_reactor, config);
 

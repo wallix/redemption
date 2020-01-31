@@ -111,7 +111,6 @@
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "core/stream_throw_helpers.hpp"
 
-#include "system/tls_context.hpp"
 #include "proxy_recorder/nego_server.hpp"
 
 
@@ -663,8 +662,6 @@ public:
             });
         }
 
-        init_TLS();
-
         // --------------------------------------------------------
 
         for (bool& x : this->palette_memblt_sent) {
@@ -716,9 +713,8 @@ public:
         }
     }
 
-    ~Front() override {
-        ERR_free_strings();
-
+    ~Front() override
+    {
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }

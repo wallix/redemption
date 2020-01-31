@@ -251,9 +251,6 @@ public:
         , primary_connection_finished(false)
         , local_IP("unknown_local_IP")
     {
-        SSL_load_error_strings();
-        SSL_library_init();
-
         this->rail_client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
     }
 
