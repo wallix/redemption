@@ -740,6 +740,7 @@ clipboard_text_up = boolean(default=False)
 #_hidden
 clipboard_text_down = boolean(default=False)
 
+# Enable storage of transferred files (via RDP Clipboard)
 #_hidden
 file_record = option('never', 'always', 'on_verification_failure', default='never')
 
