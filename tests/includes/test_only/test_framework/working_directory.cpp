@@ -26,7 +26,9 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/scope_exit.hpp"
 #include "cxx/compiler_version.hpp"
 #include "cxx/cxx.hpp"
+#include "std17/charconv.hpp"
 
+#include <vector>
 #include <numeric>
 #include <algorithm>
 #include <stdexcept>
@@ -315,6 +317,13 @@ std::string WorkingDirectory::unmached_files()
     Path path(this->dirname_, 0);
     Path filename;
     std::string err;
+    std::vector<std::string> unknwon_list;
+    std::vector<std::string> not_found_list;
+    std::vector<std::string> unmatching_file_type_list;
+
+    auto get_relative_path = [&](std::string_view const& s){
+        return std::string(s.substr(this->dirname_.size()));
+    };
 
     auto unmached_files_impl = [&](auto recursive) -> bool
     {
@@ -351,19 +360,14 @@ std::string WorkingDirectory::unmached_files()
 
             auto it = this->paths_.find(filename);
             if (it == this->paths_.end()) {
-                if (type == Type::Directory) {
-                    if (!recursive(recursive)) {
-                        str_append(err, path.name, " unknown\n");
-                    }
-                }
-                else {
-                    str_append(err, path.name, " unknown\n");
+                if (type != Type::Directory || !recursive(recursive)) {
+                    unknwon_list.push_back(get_relative_path(path.name));
                 }
             }
             else {
                 it->counter_id = this->counter_id_;
                 if (it->type != type) {
-                    str_append(err, path.name, " unmatching file type\n");
+                    unmatching_file_type_list.push_back(get_relative_path(path.name));
                 }
                 else if (type == Type::Directory){
                     recursive(recursive);
@@ -381,11 +385,50 @@ std::string WorkingDirectory::unmached_files()
 
     for (auto const& p : this->paths_) {
         if (p.counter_id != this->counter_id_) {
-            str_append(err, p.name, ' ', this->path_of(p.name), " not found\n");
+            not_found_list.push_back(p.name);
         }
     }
 
-    this->has_error_ = this->has_error_ || !err.empty();
+    bool not_empty_lists
+      = !unknwon_list.empty()
+     || !not_found_list.empty()
+     || !unmatching_file_type_list.empty();
+
+    this->has_error_ = this->has_error_ || !err.empty() || not_empty_lists;
+
+    if (not_empty_lists) {
+        struct P {
+            std::string_view header;
+            std::vector<std::string>& file_list;
+        };
+        using namespace std::string_view_literals;
+
+        for (auto prefix : {""sv, std::string_view(this->dirname_)}) {
+            if (prefix.empty()) {
+                str_append(err, "\n(relative path)"sv);
+            }
+            else {
+                str_append(err, "\n\n(full path)\n", prefix);
+            }
+
+            for (P const& p : {
+                P{"\n-> unknown ", unknwon_list},
+                P{"\n-> not found ", not_found_list},
+                P{"\n-> unmatching file type ", unmatching_file_type_list},
+            }) {
+                if (!p.file_list.empty()) {
+                    char buf[16];
+                    auto beg = std::begin(buf);
+                    auto end = std::to_chars(beg, std::end(buf), p.file_list.size()).ptr;
+                    str_append(err, p.header, '(', std::string_view(beg, end-beg), "):");
+                    for (auto& file : p.file_list) {
+                        str_append(err, "\n - ", prefix, file);
+                    }
+                }
+            }
+        }
+        err += '\n';
+    }
 
     return err;
 }
