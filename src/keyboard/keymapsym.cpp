@@ -246,7 +246,7 @@ void KeymapSym::putback_modifiers()
 void KeymapSym::key_event(int device_flags, long keycode) {
 
     KeySym ks = this->get_key(device_flags, keycode);
-    int key = ks.sym;
+    uint32_t key = ks.sym;
     uint8_t downflag = ks.down;
 
     if (this->is_unix
