@@ -1089,7 +1089,6 @@ private:
     bool is_apple;
     // TODO should be a Verbose enum class
     uint32_t verbose;
-    int last_sym;
 
     using KeyLayout_t = uint32_t[128];
 

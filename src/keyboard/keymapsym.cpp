@@ -38,7 +38,6 @@ KeymapSym::KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, 
 , is_unix(is_unix)
 , is_apple(is_apple)
 , verbose(verbose)
-, last_sym(0)
 , keylayout_WORK_noshift_sym{}
 , keylayout_WORK_shift_sym{}
 , keylayout_WORK_altgr_sym{}
