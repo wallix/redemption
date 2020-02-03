@@ -593,6 +593,7 @@ private:
 
     SessionReactor& session_reactor;
     TimerContainer& timer_events_;
+    SesmanInterface & sesman;
     TimerPtr handshake_timeout;
     TimerPtr capture_timer;
     TimerPtr flow_control_timer;
@@ -666,6 +667,7 @@ public:
 public:
     Front( SessionReactor& session_reactor
          , TimerContainer& timer_events_
+         , SesmanInterface & sesman
          , Transport & trans
          , Random & gen
          , Inifile & ini
@@ -693,6 +695,7 @@ public:
     , report_message(report_message)
     , session_reactor(session_reactor)
     , timer_events_(timer_events_)
+    , sesman(sesman)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
              (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
@@ -777,6 +780,7 @@ public:
 
     ResizeResult server_resize(ScreenInfo screen_server) override
     {
+        LOG(LOG_INFO, "Server Resize");
         ResizeResult res = ResizeResult::no_need;
 
         this->mod_bpp = screen_server.bpp;
@@ -807,16 +811,15 @@ public:
                     // send buffered orders
                     this->orders.graphics_update_pdu().sync();
 
-//                  void restart_capture(Sesman & sesman)
-//                    if (this->capture) {
-//                        if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
-//                            this->capture->resize(screen_server.width, screen_server.height);
-//                        }
-//                        else {
-//                            this->must_be_stop_capture();
-//                            this->can_be_start_capture(sesman);
-//                        }
-//                    }
+                    if (this->capture) {
+                        if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
+                            this->capture->resize(screen_server.width, screen_server.height);
+                        }
+                        else {
+                            this->must_be_stop_capture();
+                            this->can_be_start_capture(this->sesman);
+                        }
+                    }
 
                     // clear all pending orders, caches data, and so on and
                     // start a send_deactive, send_deman_active process with

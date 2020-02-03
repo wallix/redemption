@@ -170,7 +170,7 @@ RED_AUTO_TEST_CASE(TestFront)
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        session_reactor, timer_events_, front_trans, gen1, ini , cctx,
+        session_reactor, timer_events_, sesman, front_trans, gen1, ini , cctx,
         report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 
@@ -332,8 +332,9 @@ RED_AUTO_TEST_CASE(TestFront2)
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
-
-    MyFront front(session_reactor, timer_events_, front_trans, gen1, ini
+    
+    SesmanInterface sesman(ini);
+    MyFront front(session_reactor, timer_events_, sesman, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 

@@ -103,10 +103,10 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     SessionReactor session_reactor;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
-    FrontWrapper front(session_reactor, timer_events_, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
+    SesmanInterface sesman(ini);
+    FrontWrapper front(session_reactor, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
-    SesmanInterface sesman(ini);
 
     while (!front.is_up_and_running()) {
         front.incoming(no_mod, sesman);

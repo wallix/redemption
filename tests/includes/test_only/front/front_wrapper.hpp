@@ -43,6 +43,7 @@ public:
     FrontWrapper(
         SessionReactor& session_reactor,
         TimerContainer& timer_events_,
+        SesmanInterface & sesman,
         Transport & trans,
         Random & gen,
         Inifile & ini,

@@ -808,10 +808,10 @@ public:
         TimeSystem timeobj;
 
         session_reactor.set_current_time(tvtime());
-        Front front(session_reactor, timer_events_, front_trans, rnd, ini, cctx, authentifier,
+        SesmanInterface sesman(ini);
+        Front front(session_reactor, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>(), mem3blt_support
         );
-        SesmanInterface sesman(ini);
         std::unique_ptr<Acl> acl;
 
         try {

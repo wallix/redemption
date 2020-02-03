@@ -2902,7 +2902,7 @@ public:
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                     }
                                     case FrontAPI::ResizeResult::done:
-//                                    this->front.restart_capture(sesman);
+//                                        this->front.restart_capture(sesman);
                                     break;
                                     case FrontAPI::ResizeResult::no_need:
                                     break;

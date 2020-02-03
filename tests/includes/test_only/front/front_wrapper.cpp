@@ -145,6 +145,7 @@ CHANNELS::ChannelDefArray & FrontWrapper::get_mutable_channel_list()
 FrontWrapper::FrontWrapper(
     SessionReactor& session_reactor,
     TimerContainer& timer_events_,
+    SesmanInterface & sesman,
     Transport & trans,
     Random & gen,
     Inifile & ini,
@@ -156,6 +157,7 @@ FrontWrapper::FrontWrapper(
 : d(new D{FrontWrapper::D::MyFront{
     session_reactor,
     timer_events_,
+    sesman,
     trans, gen, ini, cctx, report_message,
     fp_support, mem3blt_support, std::move(server_capabilities_filename)
 }})
