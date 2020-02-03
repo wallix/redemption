@@ -28,6 +28,7 @@
 #include "test_only/transport/test_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
+#include "test_only/replay_time.hpp"
 
 RED_TEST_DELEGATE_PRINT_ENUM(credssp::State);
 
