@@ -1022,15 +1022,19 @@ struct KeymapSym
          , RIGHT_ALT   = 0xB8
     };
 
-
-
+private:
     // keyboard info
-    int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
+    // TODO __uint256_t + mask
+    bool keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
 
+#ifdef RED_TEST_MODULE
+public:
+# endif
     int key_flags;          // scroll_lock = 1, num_lock = 2, caps_lock = 4,
                             // shift = 8, ctrl = 16, Alt = 32,
                             // Windows = 64, AltGr = 128
 
+private:
     enum {
         SIZE_KEYBUF_SYM = 200 // we are sending along many modifiers and the actual number of keys can become large
     };
@@ -1096,6 +1100,7 @@ struct KeymapSym
     KeyLayout_t keylayout_WORK_capslock_sym;
     KeyLayout_t keylayout_WORK_shiftcapslock_sym;
 
+public:
     explicit KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, int verbose);
 
     void synchronize(uint16_t param1);
@@ -1175,6 +1180,7 @@ struct KeymapSym
 
     [[nodiscard]] bool is_alt_pressed() const;
 
+private:
     void init_layout_sym(int keyb);
 
     const KeyLayout_t * select_layout();
