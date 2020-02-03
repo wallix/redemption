@@ -1090,7 +1090,7 @@ private:
     // TODO should be a Verbose enum class
     uint32_t verbose;
 
-    using KeyLayout_t = uint32_t[128];
+    using KeyLayout_t = uint16_t[128];
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     KeyLayout_t keylayout_WORK_noshift_sym;
