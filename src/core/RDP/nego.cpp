@@ -59,6 +59,8 @@ RdpNego::RdpNego(
 , enabled_protocols(RdpNegoProtocols::Rdp
     | (this->tls ? RdpNegoProtocols::Tls : 0)
     | (this->nla ? RdpNegoProtocols::Nla : 0))
+, hostname{}
+, password{}
 , target_host(target_host)
 , current_password(nullptr)
 , rand(rand)
@@ -77,9 +79,6 @@ RdpNego::RdpNego(
 
     strncpy(this->username, username, 127);
     this->username[127] = 0;
-
-    memset(this->hostname, 0, sizeof(this->hostname));
-    memset(this->password, 0, sizeof(this->password));
 }
 
 RdpNego::~RdpNego() = default;

@@ -1245,8 +1245,7 @@ namespace LIC
     {
         NewLicenseRequest_Send(OutStream & stream, uint8_t version, const char * username, const char * hostname)
         {
-            uint8_t null_data[SEC_MODULUS_SIZE];
-            memset(null_data, 0, sizeof(null_data));
+            uint8_t null_data[SEC_MODULUS_SIZE] {};
 
             int userlen = strlen(username) + 1;
             int hostlen = strlen(hostname) + 1;
@@ -1971,8 +1970,7 @@ namespace LIC
             uint16_t length = 12 + SEC_RANDOM_SIZE + 4 + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                      4 + license_size + 4 + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
 
-            uint8_t null_data[SEC_MODULUS_SIZE];
-            memset(null_data, 0, sizeof(null_data));
+            uint8_t null_data[SEC_MODULUS_SIZE] {};
 
             stream.out_uint8(LIC::LICENSE_INFO);
             stream.out_uint8(version); /* version */

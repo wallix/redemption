@@ -29,8 +29,7 @@
 
 RED_AUTO_TEST_CASE(TestSendShareControlAndData)
 {
-    StaticOutStream<65536> stream;
-    memset(stream.get_data(), 0, 65536);
+    StaticOutStream<65536> stream {};
 
     ShareData sdata(stream);
     sdata.emit_begin(PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);

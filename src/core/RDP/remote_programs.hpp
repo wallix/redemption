@@ -3017,8 +3017,7 @@ public:
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->WindowId_);
 
-        uint8_t ApplicationId_unicode_data[512];
-        ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
+        uint8_t ApplicationId_unicode_data[512] {};
         /*const size_t size_of_ApplicationId_unicode_data = */::UTF8toUTF16(
             this->application_id,
             ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data) - 2 /* null-terminator */);

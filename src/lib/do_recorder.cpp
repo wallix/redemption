@@ -500,8 +500,7 @@ static inline int check_file(const std::string & filename, const MetaLine & meta
                       uint8_t const (&hmac_key)[HMAC_KEY_LENGTH], bool update_stat_info, out_is_mismatch has_mismatch_stat)
 {
     has_mismatch_stat.is_mismatch = false;
-    struct stat64 sb;
-    memset(&sb, 0, sizeof(sb));
+    struct stat64 sb {};
     if (lstat64(filename.c_str(), &sb) < 0){
         std::cerr << "File \"" << filename << "\" is invalid! (can't stat file)\n" << std::endl;
         return false;

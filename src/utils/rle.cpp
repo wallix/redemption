@@ -1271,8 +1271,7 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
                     }
                 }
                 else if (raw_bytes > 15) {
-                    uint8_t rb[16];
-                    memset(rb, 0, sizeof(rb));
+                    uint8_t rb[16]{};
                     memcpy(rb, xpos, 15);
                     outbuffer.out_uint8((15 << 4) | 0); // Control byte
                     //LOG(LOG_INFO, "controlByte(6): (15, 0); rawValues: %s", rb);
@@ -1283,8 +1282,7 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
                     raw_bytes   -= 15;
                 }
                 else/* if (raw_bytes < 16)*/ {
-                    uint8_t rb[16];
-                    memset(rb, 0, sizeof(rb));
+                    uint8_t rb[16] {};
                     memcpy(rb, xpos, raw_bytes);
                     if (run_length > 15) {
                         outbuffer.out_uint8((raw_bytes << 4) | 15        ); // Control byte

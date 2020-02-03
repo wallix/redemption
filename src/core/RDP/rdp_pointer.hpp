@@ -79,8 +79,8 @@ inline void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t con
     }
 }
 
-struct Pointer {
-
+struct Pointer
+{
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
     friend Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
@@ -159,10 +159,6 @@ public:
     [[nodiscard]] Hotspot get_hotspot() const
     {
         return this->hotspot;
-    }
-
-    void set_mask_to_FF(){
-        ::memset(this->mask, 0xFF, sizeof(this->mask));
     }
 
     [[nodiscard]] array_view_const_u8 get_monochrome_and_mask() const

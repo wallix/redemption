@@ -212,18 +212,13 @@ struct SaveSessionInfoPDUData_Send {
 
 struct LogonInfoVersion1_Recv {
     // uint32_t cbDomain;
-    uint8_t  Domain[256];
+    uint8_t  Domain[256] {};
     // uint32_t cbUserName;
-    uint8_t  UserName[2048];
-    uint32_t SessionId;
+    uint8_t  UserName[2048] {};
+    uint32_t SessionId = 0;
 
-    explicit LogonInfoVersion1_Recv(InStream & stream) :
-    // cbDomain(0),
-    // cbUserName(0),
-    SessionId(0) {
-        memset(Domain,   0, sizeof(Domain));
-        memset(UserName, 0, sizeof(UserName));
-
+    explicit LogonInfoVersion1_Recv(InStream & stream)
+    {
         // TODO duplication
         auto in_uni_to_ascii_str = [&](auto& text, uint32_t& sz) {
             auto utf8 = UTF16toUTF8_buf(
@@ -280,16 +275,14 @@ struct LogonInfoVersion1_Send
     LogonInfoVersion1_Send(OutStream & stream, std::string_view Domain,
         std::string_view UserName, uint32_t sessionId)
     {
-        uint8_t utf16_Domain[52];
-        uint8_t utf16_UserName[512];
+        uint8_t utf16_Domain[52] {};
+        uint8_t utf16_UserName[512] {};
 
-        memset(utf16_Domain,   0, sizeof(utf16_Domain));
         uint32_t cbDomain   = UTF8toUTF16(
             Domain,
             utf16_Domain, sizeof(utf16_Domain) - sizeof(uint16_t)
         ) + 2;
 
-        memset(utf16_UserName, 0, sizeof(utf16_UserName));
         uint32_t cbUserName = UTF8toUTF16(
             UserName,
             utf16_UserName,
@@ -385,26 +378,17 @@ enum {
 //  in bytes is given by the cbUserName field.
 
 struct LogonInfoVersion2_Recv {
-    uint16_t Version;
-    uint32_t Size;
-    uint32_t SessionId;
+    uint16_t Version = 0;
+    uint32_t Size = 0;
+    uint32_t SessionId = 0;
     // uint32_t cbDomain;
     // uint32_t cbUserName;
-    uint8_t  Pad[558];
-    uint8_t  Domain[512];
-    uint8_t  UserName[4096];
+    uint8_t  Pad[558] {};
+    uint8_t  Domain[512] {};
+    uint8_t  UserName[4096] {};
 
-    explicit LogonInfoVersion2_Recv(InStream & stream) :
-    Version(0),
-    Size(0),
-    SessionId(0)
-    // cbDomain(0),
-    // cbUserName(0)
+    explicit LogonInfoVersion2_Recv(InStream & stream)
     {
-        memset(Pad,      0, sizeof(Pad));
-        memset(Domain,   0, sizeof(Domain));
-        memset(UserName, 0, sizeof(UserName));
-
         // TODO duplication
         auto in_uni_to_ascii_str = [&](auto& text, uint32_t& sz) {
             auto utf8 = UTF16toUTF8_buf(

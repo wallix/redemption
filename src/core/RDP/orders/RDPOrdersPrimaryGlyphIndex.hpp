@@ -316,7 +316,8 @@ public:
     , brush(brush)
     , glyph_x(glyph_x)
     , glyph_y(glyph_y)
-    , data_len(data_len) {
+    , data_len(data_len)
+    {
         memcpy(this->data, data, data_len);
         memset(this->data + data_len, 0, sizeof(this->data) - data_len);
     }
@@ -333,7 +334,8 @@ public:
     , brush(gi.brush)
     , glyph_x(gi.glyph_x)
     , glyph_y(gi.glyph_y)
-    , data_len(gi.data_len) {
+    , data_len(gi.data_len)
+    {
         memcpy(this->data, gi.data, gi.data_len);
         memset(this->data + gi.data_len, 0, sizeof(this->data) - gi.data_len);
     }
