@@ -24,8 +24,12 @@
 
 #include "configs/config_access.hpp"
 #include "core/session_reactor.hpp"
-#include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_wab_close.hpp"
+#include "core/session_reactor.hpp"
+#include "mod/mod_api.hpp"
+#include "mod/internal/dvc_manager.hpp"
+#include "mod/internal/widget/screen.hpp"
+#include "RAIL/client_execute.hpp"
 
 using CloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,          vcfg::accessmode::get | vcfg::accessmode::is_asked>,

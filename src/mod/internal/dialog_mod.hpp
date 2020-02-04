@@ -29,6 +29,7 @@
 #include "mod/mod_api.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "RAIL/client_execute.hpp"
 
 
 using DialogModVariables = vcfg::variables<
