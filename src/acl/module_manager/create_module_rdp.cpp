@@ -542,14 +542,15 @@ void ModuleManager::create_mod_rdp(
                 });
             }
             else {
-                enable_validator = false;
-                LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
+                LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
                 file_verification_error(
                     front, session_reactor, report_message,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
                     "Unable to connect to FileValidator service"_av
                 );
+                // enable_validator = false;
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
         }
 
