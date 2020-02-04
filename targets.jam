@@ -3397,7 +3397,6 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
