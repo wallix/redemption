@@ -696,48 +696,48 @@
           "name": "enable_up",
           "type": "bool",
           "default": false,
-          "description": "Enable use of ICAP service for file verification on upload"
+          "description": "Enable use of ICAP service for file verification on upload."
         },
         {
           "name": "enable_down",
           "type": "bool",
           "default": false,
-          "description": "Enable use of ICAP service for file verification on download"
+          "description": "Enable use of ICAP service for file verification on download."
         },
         {
           "name": "clipboard_text_up",
           "type": "bool",
           "default": false,
-          "description": "Verify text data via clipboard from client to server\nFile verification on upload must be enabled via option Enable up"
+          "description": "Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."
         },
         {
           "name": "clipboard_text_down",
           "type": "bool",
           "default": false,
-          "description": "Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down"
+          "description": "Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."
         },
         {
-          "name": "file_record",
+          "name": "file_storage",
           "type": "option",
           "default": "never",
           "values": [
             {
                "value": "never",
                "label": "never",
-               "description": ""
+               "description": "Never store transferred files."
             },
             {
                "value": "always",
                "label": "always",
-               "description": ""
+               "description": "Always store transferred files."
             },
             {
-               "value": "on_verification_failure",
-               "label": "on_verification_failure",
-               "description": ""
+               "value": "on_invalid_verification",
+               "label": "on_invalid_verification",
+               "description": "Transferred files are stored only if file verification is invalid. File verification must be enabled (up or down)."
             }
           ],
-          "description": "Enable storage of transferred files (via RDP Clipboard)"
+          "description": "Enable storage of transferred files (via RDP Clipboard)."
         },
         {
           "name": "log_if_accepted",

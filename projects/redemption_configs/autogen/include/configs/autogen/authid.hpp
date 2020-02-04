@@ -102,7 +102,7 @@ constexpr array_view_const_char const authstr[] = {
     "file_verification:enable_down"_av,
     "file_verification:clipboard_text_up"_av,
     "file_verification:clipboard_text_down"_av,
-    "file_verification:file_record"_av,
+    "file_verification:file_storage"_av,
     "file_verification:log_if_accepted"_av,
     "replay_on_loop"_av,
     "hash_path"_av,

@@ -283,22 +283,25 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 
 [file_verification]
 
-# Enable use of ICAP service for file verification on upload
+# Enable use of ICAP service for file verification on upload.
 enable_up = boolean(default=False)
 
-# Enable use of ICAP service for file verification on download
+# Enable use of ICAP service for file verification on download.
 enable_down = boolean(default=False)
 
-# Verify text data via clipboard from client to server
-# File verification on upload must be enabled via option Enable up
+# Verify text data via clipboard from client to server.
+# File verification on upload must be enabled via option Enable up.
 clipboard_text_up = boolean(default=False)
 
 # Verify text data via clipboard from server to client
-# File verification on download must be enabled via option Enable down
+# File verification on download must be enabled via option Enable down.
 clipboard_text_down = boolean(default=False)
 
-# Enable storage of transferred files (via RDP Clipboard)
-file_record = option('never', 'always', 'on_verification_failure', default='never')
+# Enable storage of transferred files (via RDP Clipboard).
+#   never: Never store transferred files.
+#   always: Always store transferred files.
+#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification must be enabled (up or down).
+file_storage = option('never', 'always', 'on_invalid_verification', default='never')
 
 #_advanced
 log_if_accepted = boolean(default=True)

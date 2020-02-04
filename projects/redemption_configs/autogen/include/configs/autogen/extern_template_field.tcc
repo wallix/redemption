@@ -89,7 +89,7 @@ template class Inifile::Field<cfg::file_verification::enable_up>;
 template class Inifile::Field<cfg::file_verification::enable_down>;
 template class Inifile::Field<cfg::file_verification::clipboard_text_up>;
 template class Inifile::Field<cfg::file_verification::clipboard_text_down>;
-template class Inifile::Field<cfg::file_verification::file_record>;
+template class Inifile::Field<cfg::file_verification::file_storage>;
 template class Inifile::Field<cfg::file_verification::log_if_accepted>;
 template class Inifile::Field<cfg::mod_replay::replay_on_loop>;
 template class Inifile::Field<cfg::video::hash_path>;

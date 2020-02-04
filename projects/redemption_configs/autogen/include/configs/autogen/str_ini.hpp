@@ -851,32 +851,35 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
 
-# Enable use of ICAP service for file verification on upload
+# Enable use of ICAP service for file verification on upload.
 # value: 0 or 1
 #_hidden
 #enable_up = 0
 
-# Enable use of ICAP service for file verification on download
+# Enable use of ICAP service for file verification on download.
 # value: 0 or 1
 #_hidden
 #enable_down = 0
 
-# Verify text data via clipboard from client to server
-# File verification on upload must be enabled via option Enable up
+# Verify text data via clipboard from client to server.
+# File verification on upload must be enabled via option Enable up.
 # value: 0 or 1
 #_hidden
 #clipboard_text_up = 0
 
 # Verify text data via clipboard from server to client
-# File verification on download must be enabled via option Enable down
+# File verification on download must be enabled via option Enable down.
 # value: 0 or 1
 #_hidden
 #clipboard_text_down = 0
 
-# Enable storage of transferred files (via RDP Clipboard)
-# values: 'never', 'always', 'on_verification_failure', 
+# Enable storage of transferred files (via RDP Clipboard).
+# values: 'never', 'always', 'on_invalid_verification', 
+#   never: Never store transferred files.
+#   always: Always store transferred files.
+#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification must be enabled (up or down).
 #_hidden
-#file_record = never
+#file_storage = never
 
 # value: 0 or 1
 #_hidden

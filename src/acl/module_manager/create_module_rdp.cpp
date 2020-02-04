@@ -457,7 +457,7 @@ void ModuleManager::create_mod_rdp(
             FdxCapture* get_fdx_capture(ModuleManager& mm)
             {
                 if (!this->fdx_capture
-                 && mm.ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
+                 && mm.ini.get<cfg::file_verification::file_storage>() != RdpFileStorage::never
                 ) {
                     LOG(LOG_INFO, "Enable clipboard file record");
                     int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
@@ -632,7 +632,7 @@ void ModuleManager::create_mod_rdp(
         if (new_mod) {
             assert(&ini == &this->ini);
             new_mod->get_rdp_factory().always_file_record
-              = (ini.get<cfg::file_verification::file_record>() == RdpFileRecord::always);
+              = (ini.get<cfg::file_verification::file_storage>() == RdpFileStorage::always);
             new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
                 return mod->get_fdx_capture(*this);
             };

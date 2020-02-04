@@ -2772,7 +2772,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_VALIDATOR_PATH;
     };
-    /// Enable use of ICAP service for file verification on upload <br/>
+    /// Enable use of ICAP service for file verification on upload. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:enable_up <br/>
@@ -2790,7 +2790,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Enable use of ICAP service for file verification on download <br/>
+    /// Enable use of ICAP service for file verification on download. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:enable_down <br/>
@@ -2808,8 +2808,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Verify text data via clipboard from client to server <br/>
-    /// File verification on upload must be enabled via option Enable up <br/>
+    /// Verify text data via clipboard from client to server. <br/>
+    /// File verification on upload must be enabled via option Enable up. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:clipboard_text_up <br/>
@@ -2828,7 +2828,7 @@ namespace cfg {
         type value{};
     };
     /// Verify text data via clipboard from server to client <br/>
-    /// File verification on download must be enabled via option Enable down <br/>
+    /// File verification on download must be enabled via option Enable down. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:clipboard_text_down <br/>
@@ -2846,21 +2846,21 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Enable storage of transferred files (via RDP Clipboard) <br/>
-    /// type: RdpFileRecord <br/>
+    /// Enable storage of transferred files (via RDP Clipboard). <br/>
+    /// type: RdpFileStorage <br/>
     /// connpolicy -> proxy <br/>
-    /// sesman::name: file_verification:file_record <br/>
+    /// sesman::name: file_verification:file_storage <br/>
     /// value = static_cast<type>(0) <br/>
-    struct file_verification::file_record {
+    struct file_verification::file_storage {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "file_verification";
-        static constexpr char const * name = "file_record";
+        static constexpr char const * name = "file_storage";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(91);
-        using type = RdpFileRecord;
-        using sesman_and_spec_type = RdpFileRecord;
+        using type = RdpFileStorage;
+        using sesman_and_spec_type = RdpFileStorage;
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
@@ -5492,7 +5492,7 @@ struct file_verification
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
-, cfg::file_verification::file_record
+, cfg::file_verification::file_storage
 , cfg::file_verification::log_if_accepted
 { static constexpr bool is_section = true; };
 
@@ -5815,7 +5815,7 @@ using VariablesAclPack = Pack<
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
-, cfg::file_verification::file_record
+, cfg::file_verification::file_storage
 , cfg::file_verification::log_if_accepted
 , cfg::mod_replay::replay_on_loop
 , cfg::video::hash_path

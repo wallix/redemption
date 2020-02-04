@@ -201,10 +201,10 @@ inline void config_type_definition(type_enumerations & e)
       .value("bestsafe_integration", "BestSafe integration")
     ;
 
-    e.enumeration_list("RdpFileRecord")
-      .value("never")
-      .value("always")
-      .value("on_verification_failure")
+    e.enumeration_list("RdpFileStorage")
+      .value("never", "Never store transferred files.")
+      .value("always", "Always store transferred files.")
+      .value("on_invalid_verification", "Transferred files are stored only if file verification is invalid. File verification must be enabled (up or down).")
       .set_string_parser()
     ;
 

@@ -1385,11 +1385,11 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "file_record")) {
+        else if (0 == strcmp(key, "file_storage")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::file_verification::file_record&>(this->variables).value,
-                ::configs::spec_type<RdpFileRecord>{},
+                static_cast<cfg::file_verification::file_storage&>(this->variables).value,
+                ::configs::spec_type<RdpFileStorage>{},
                 av
             );
         }

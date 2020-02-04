@@ -269,15 +269,15 @@ array_view_const_char assign_zbuf_from_cfg(
 parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
 ;
 
-template<> struct zstr_buffer_traits<RdpFileRecord> : zstr_buffer_traits<void> {};
+template<> struct zstr_buffer_traits<RdpFileStorage> : zstr_buffer_traits<void> {};
 
 array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<RdpFileRecord> & buf,
-    cfg_s_type<RdpFileRecord> /*type*/,
-    RdpFileRecord x
+    zstr_buffer_from<RdpFileStorage> & buf,
+    cfg_s_type<RdpFileStorage> /*type*/,
+    RdpFileStorage x
 );
 
-parse_error parse(RdpFileRecord & x, spec_type<RdpFileRecord> /*type*/, array_view_const_char value)
+parse_error parse(RdpFileStorage & x, spec_type<RdpFileStorage> /*type*/, array_view_const_char value)
 ;
 
 template<> struct zstr_buffer_traits<SessionProbeOnAccountManipulation> : zstr_buffer_traits<unsigned long> {};
