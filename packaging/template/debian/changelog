@@ -1,3 +1,9 @@
+redemption (7.3.57%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix clipboard file copy issues
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 04 Feb 2020 11:53:29 +0200
+
 redemption (7.3.55%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Create BitmapCache compatibility mode for AM.
