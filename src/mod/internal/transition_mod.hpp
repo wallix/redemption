@@ -25,7 +25,6 @@
 #pragma once
 
 #include "configs/config_access.hpp"
-#include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/tooltip.hpp"
 #include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
