@@ -456,10 +456,8 @@ void ModuleManager::create_mod_rdp(
 
             FdxCapture* get_fdx_capture(ModuleManager& mm)
             {
-                if (!this->fdx_capture
-                 && mm.ini.get<cfg::file_verification::file_storage>() != RdpFileStorage::never
-                ) {
-                    LOG(LOG_INFO, "Enable clipboard file record");
+                if (!this->fdx_capture) {
+                    LOG(LOG_INFO, "Enable clipboard file storage");
                     int  const groupid = mm.ini.get<cfg::video::capture_groupid>();
                     auto const& session_id = mm.ini.get<cfg::context::session_id>();
                     auto const& subdir = mm.ini.get<cfg::capture::record_subdirectory>();
@@ -631,11 +629,22 @@ void ModuleManager::create_mod_rdp(
 
         if (new_mod) {
             assert(&ini == &this->ini);
-            new_mod->get_rdp_factory().always_file_record
+            new_mod->get_rdp_factory().always_file_storage
               = (ini.get<cfg::file_verification::file_storage>() == RdpFileStorage::always);
-            new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
-                return mod->get_fdx_capture(*this);
-            };
+            switch (ini.get<cfg::file_verification::file_storage>())
+            {
+                case RdpFileStorage::never:
+                    break;
+                case RdpFileStorage::on_invalid_verification:
+                    if (!enable_validator) {
+                        break;
+                    }
+                    [[fallthrough]];
+                case RdpFileStorage::always:
+                    new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
+                        return mod->get_fdx_capture(*this);
+                    };
+            }
         }
 
         if (host_mod_in_widget) {

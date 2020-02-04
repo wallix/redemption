@@ -384,7 +384,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     {
         bool with_validator;
         bool with_fdx_capture;
-        bool always_file_record;
+        bool always_file_storage;
     };
 
     using namespace std::string_view_literals;
@@ -394,7 +394,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_TEST_CONTEXT_DATA(D const& d,
           "with validator: " << d.with_validator <<
         "  with fdx: " << d.with_fdx_capture <<
-        "  always_file_record: " << d.always_file_record, {
+        "  always_file_storage: " << d.always_file_storage, {
         D{true, false, true},
         D{true, true, false},
         D{true, true, true},
@@ -427,7 +427,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         auto fdx_ctx = [&]{
             if (d.with_fdx_capture) {
                 return std::make_unique<DataTest>(
-                    &"abcdefgh"[d.with_validator * 2 + d.always_file_record]
+                    &"abcdefgh"[d.with_validator * 2 + d.always_file_storage]
                 );
             }
             return std::unique_ptr<DataTest>();
@@ -461,9 +461,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 &to_client_sender, &to_server_sender, session_reactor,
                 base_params, clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
-                ClipboardVirtualChannel::FileRecord{
+                ClipboardVirtualChannel::FileStorage{
                     fdx_ctx ? &fdx_ctx->fdx : nullptr,
-                    d.always_file_record
+                    d.always_file_storage
                 }
             );
 
@@ -690,7 +690,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av);
             RED_CHECK_SMEM(buf_trans.buf, ""_av);
 
-            if (fdx_ctx && d.always_file_record) {
+            if (fdx_ctx && d.always_file_storage) {
                 auto basename = str_concat(sid, ",000001.tfl");
                 auto tfl_path = fdx_ctx->fdx_record_path.add_file(basename);
                 (void)fdx_ctx->fdx_hash_path.add_file(basename);
@@ -786,7 +786,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
             RED_CHECK_WORKSPACE(fdx_ctx->wd);
 
-            if (d.always_file_record) {
+            if (d.always_file_storage) {
                 std::string file_content = RED_CHECK_GET_FILE_CONTENTS(fdx_path);
                 bytes_view av = file_content;
 

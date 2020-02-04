@@ -63,7 +63,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     FileValidatorService * file_validator;
 
     FdxCapture * fdx_capture;
-    bool always_file_record;
+    bool always_file_storage;
 
     enum class Direction : bool
     {
@@ -72,10 +72,10 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     };
 
 public:
-    struct FileRecord
+    struct FileStorage
     {
         FdxCapture * fdx_capture;
-        bool always_file_record;
+        bool always_file_storage;
     };
 
     ClipboardVirtualChannel(
@@ -85,7 +85,7 @@ public:
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
-        FileRecord filre_record)
+        FileStorage file_storage)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
@@ -100,8 +100,8 @@ public:
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
     , file_validator(file_validator_service)
-    , fdx_capture(filre_record.fdx_capture)
-    , always_file_record(filre_record.always_file_record)
+    , fdx_capture(file_storage.fdx_capture)
+    , always_file_storage(file_storage.always_file_storage)
     {}
 
     ~ClipboardVirtualChannel()
@@ -459,7 +459,7 @@ public:
 
             if (file->is_wait_validator()) {
                 if (file_data.tfl_file) {
-                    if (this->always_file_record
+                    if (this->always_file_storage
                      || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
                     ) {
                         this->_close_tfl(file_data);
@@ -603,7 +603,7 @@ private:
                 }
                 else {
                     if (file_data.tfl_file) {
-                        if (this->always_file_record || file_data.on_failure) {
+                        if (this->always_file_storage || file_data.on_failure) {
                             this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
                                 Mwrm3::TransferedStatus::Completed,
                                 Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
