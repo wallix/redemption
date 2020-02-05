@@ -1,3 +1,24 @@
+1. [Add/Modify variable](#addmodify-variable)
+    1. [Ini (spec::*)](#ini-spec)
+        1. [log_policy (spec::constants::*)](#log_policy-specconstants)
+        2. [spec_attr (spec::constants::*)](#spec_attr-specconstants)
+    2. [Sesman (sesman::*)](#sesman-sesman)
+        1. [sesman_io (sesman::constants::*)](#sesman_io-sesmanconstants)
+        2. [is_target_context (sesman::constants::*)](#is_target_context-sesmanconstants)
+    3. [Connection Policy (connpolicy::*)](#connection-policy-connpolicy)
+        1. [connpolicy_attr (connpolicy::constants::*)](#connpolicy_attr-connpolicyconstants)
+    4. [Cpp (cpp::*)](#cpp-cpp)
+    5. [type](#type)
+        1. [special cpp_type](#special-cpp_type)
+    6. [name](#name)
+    7. [desc](#desc)
+    8. [default_value](#default_value)
+    9. [prefix](#prefix)
+2. [Add/Modify enumeration type](#addmodify-enumeration-type)
+3. [Build](#build)
+4. [JSON spec format](#json-spec-format)
+
+
 # Add/Modify variable
 
 Edit `configs_specs/configs/specs/config_spec.hpp`
@@ -181,4 +202,85 @@ or
 ```bash
 bjam generate_cpp_enumeration
 bjam generate_config_spec
+```
+
+
+# JSON spec format
+
+Format for `autogen/spec/*.json`.
+
+Note: `(a | b c | d)` is a value with `a`, `b c` or `d`.
+
+
+```ini
+Configspec := {
+  sections=[Section]    [Optional]
+  members=[Member]      [Optional]
+}
+
+Section := {
+  name=String           [Mandatory]
+  sections=[Section]    [Optional]
+  members=[Member]      [Optional]
+}
+
+Member := {
+    name=String            [Mandatory]
+    description=String     [Mandatory]
+    default=Any            [Mandatory]
+    advanced=Boolean       [Optional]
+    label=String           [Optional]
+    (
+        type="integer"       [Mandatory]
+        min=Integer          [Optional]
+        max=Integer          [Optional]
+        (
+            prefered_representation={"hex"| ...}         [Optional]
+           |
+            subtype="duration"                           [Mandatory]
+            unit={'ms'|'cs'|'ds'|'s'|'min'|'h'}          [Mandatory]
+           |
+            subtype="size"                               [Mandatory]
+            unit={'Ki'|'Mi'|'Gi'|'Ti'|'k'|'M'|'G'|'T'}   [Mandatory]
+           |
+            subtype="bitset"                             [Mandatory]
+            values=[{
+                value=Integer,                           [Mandatory]
+                label=String,                            [Mandatory]
+                description=String                       [Optional]
+            }]                                           [Mandatory]
+
+        )                    [Optional]
+       |
+        type="string"        [Mandatory]
+        minlen=Integer       [Optional]
+        maxlen=Integer       [Optional]
+        multiline=Boolean    [Optional]
+       |
+        type="binary"     [Mandatory]
+        minlen=Integer    [Optional]
+        maxlen=Integer    [Optional]
+       |
+        type="bool"    [Mandatory]
+       |
+        type="option"                [Mandatory]
+        values=[{
+            value=(String|Integer),  [Mandatory]
+            label=String,            [Mandatory]
+            description=String       [Optional]
+        }]                           [Mandatory]
+       |
+        type="dirpath"    [Mandatory]
+       |
+        type="filepath"    [Mandatory]
+    )    [Mandatory]
+
+    (
+        multivalue=Boolean    [Mandatory]
+        ordered=Boolean       [Optional]
+        cardmin=Integer       [Optional]
+        cardmax=Integer       [Optional]
+    )    [Optional]
+
+}
 ```
