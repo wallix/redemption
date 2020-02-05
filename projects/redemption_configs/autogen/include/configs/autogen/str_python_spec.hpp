@@ -929,7 +929,7 @@ framerate = integer(min=0, default=5)
 
 # FFmpeg options for video codec.
 #_advanced
-ffmpeg_options = string(default='profile=baseline preset=ultrafast flags=+qscale b=30000')
+ffmpeg_options = string(default='profile=baseline preset=ultrafast flags=+qscale b=80000')
 
 #_advanced
 notimestamp = boolean(default=False)
