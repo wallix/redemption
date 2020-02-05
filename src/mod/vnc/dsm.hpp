@@ -65,15 +65,16 @@ class UltraDSM {
 		RC4_DROP_BYTES 				= 3072,
 	};
 
-
 public:
 	UltraDSM(char *password);
 
 	~UltraDSM();
 
-
-	bool handleChallenge(InStream &instream);
+	void reset();
+	bool handleChallenge(InStream &instream, uint16_t &challengeLen);
 	bool getResponse(OutStream &out);
+	bool encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out);
+	bool decrypt(const uint8_t *buffer, size_t len, writable_bytes_view & out);
 
 public:
 	static uint32_t checkBestSupportedFlags(uint32_t dwFlags);
