@@ -85,18 +85,20 @@ struct BasicStaticBuffer
     // because the input buffer will have to be filled from outside by websocket code.
     // web socket implementation also suggest it is risky to copy data from a part of buffer to another
     // (because of asynchronous access). And should we find a way to lock len and idx ?
-    void read_from(InTransport trans)
+    size_type read_from(InTransport trans)
     {
-        read_with([&](uint8_t* data, size_t n){
+        return read_with([&](uint8_t* data, size_t n){
             return trans.partial_read(data, n);
         });
     }
 
     template<class PartialReader>
-    void read_with(PartialReader && partial_read)
+    size_type read_with(PartialReader && partial_read)
     {
+    	size_type readLen;
+
         if (this->idx == this->len) {
-            this->len = partial_read(this->buf, max_len);
+            this->len = readLen = partial_read(this->buf, max_len);
             this->idx = 0;
         }
         else {
@@ -105,8 +107,10 @@ struct BasicStaticBuffer
                 this->len -= this->idx;
                 this->idx = 0;
             }
-            this->len += partial_read(this->buf + this->len, max_len - this->len);
+            readLen = partial_read(this->buf + this->len, max_len - this->len);
+            this->len += readLen;
         }
+        return readLen;
     }
 
 
