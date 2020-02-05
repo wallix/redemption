@@ -76,10 +76,13 @@ class VNCMetrics;
 #include "mod/vnc/newline_convert.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
-
+class UltraDSM;
+class mod_vnc;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
+
+
 
 class mod_vnc : public mod_api
 {
@@ -97,14 +100,134 @@ class mod_vnc : public mod_api
     FrontAPI& front;
 
 public:
+
+    /** @brief transport for VNC */
+    class VncTransport {
+    public:
+    	VncTransport(mod_vnc & mod, Transport & t)
+    	: m_trans(t)
+    	, m_mod(mod)
+    	{
+    	}
+
+    	void send(byte_ptr buffer, size_t len) {
+    		send(bytes_view(buffer, len));
+    	}
+
+        void send(bytes_view buffer) {
+    		if (m_mod.dsmEncryption) {
+    			BufMaker<0x10000> tmpBuf;
+    			StaticOutStream<2> lenStream;
+    			writable_bytes_view tmp = tmpBuf.dyn_array(buffer.size());
+
+    			m_mod.dsm->encrypt(buffer.data(), buffer.size(), tmp);
+    			lenStream.out_uint16_le(buffer.size());
+    			//m_trans.send(lenStream.get_bytes());
+    			m_trans.send(tmp);
+    		} else {
+    			m_trans.send(buffer);
+    		}
+        }
+
+        Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) {
+        	return m_trans.enable_client_tls(server_notifier, tls_client_params);
+        }
+
+        int get_fd() const {
+        	return m_trans.get_fd();
+        }
+
+        Transport &getTransport() const { return m_trans; }
+
+    protected:
+    	Transport & m_trans;
+    	mod_vnc & m_mod;
+    };
+
+    /** @brief a custom Vnc Buf64k */
+    struct VncBuf64k : public Buf64k {
+    	VncBuf64k(mod_vnc &mod)
+    		: m_mod(mod)
+    		, m_dsmWaitingLen(true)
+    		, m_dsmExpectedLen(2)
+    		, m_dsmReadPtr(m_dsmLenBuffer)
+    		, m_packetPayload(nullptr)
+    		, m_dsmRemainingInBuffer(0)
+    		, m_dsmRemainingPtr(nullptr)
+    	{
+    	}
+
+    	size_type read_from(VncTransport vncTrans) {
+			Transport & trans = vncTrans.getTransport();
+
+			if (!m_mod.dsmEncryption)
+    			return Buf64k::read_from(trans);
+
+    		// must read using DSM
+    		if (m_dsmExpectedLen) {
+				size_t readBytes = trans.partial_read(m_dsmReadPtr, m_dsmExpectedLen);
+				m_dsmExpectedLen -= readBytes;
+				m_dsmReadPtr += readBytes;
+    		}
+
+    		if (m_dsmExpectedLen)
+    			return 0;
+
+    		if (m_dsmWaitingLen) {
+    			InStream ins({m_dsmLenBuffer, sizeof(m_dsmLenBuffer)});
+
+    			m_dsmExpectedLen = m_dsmRemainingInBuffer = ins.in_uint16_le();
+    			if (m_dsmExpectedLen) {
+    				m_packetPayload = m_dsmReadPtr = m_dsmRemainingPtr = new uint8_t[m_dsmExpectedLen]();
+    				m_dsmWaitingLen = false;
+    			} else {
+    				// TODO: handle empty packet
+    			}
+    		} else {
+    			size_t retFunc = Buf64k::read_with([&](uint8_t* data, size_t n) {
+    				size_t ret = (m_dsmRemainingInBuffer > n) ? n : m_dsmRemainingInBuffer;
+    				memcpy(data, m_dsmRemainingPtr, ret);
+
+    				m_dsmRemainingPtr += ret;
+    				m_dsmRemainingInBuffer -= ret;
+    				return ret;
+    			});
+
+    			if (!m_dsmRemainingInBuffer) {
+					delete [] m_packetPayload;
+					m_packetPayload = nullptr;
+					m_dsmReadPtr = m_dsmLenBuffer;
+					m_dsmWaitingLen = true;
+					m_dsmExpectedLen = 2;
+    			}
+    			return retFunc;
+    		}
+
+    		return 0;
+    	}
+
+    	mod_vnc & m_mod;
+
+    	bool m_dsmWaitingLen;
+        size_t m_dsmExpectedLen;
+    	uint8_t m_dsmLenBuffer[2];
+    	uint8_t * m_dsmReadPtr;
+    	uint8_t * m_packetPayload;
+    	size_t m_dsmRemainingInBuffer;
+    	uint8_t * m_dsmRemainingPtr;
+    };
+
+    /**
+     *
+     */
     struct Mouse {
-        void move(Transport & t, int x, int y) {
+        void move(VncTransport & t, int x, int y) {
             this->x = x;
             this->y = y;
             this->send(t);
         }
 
-        void click(Transport & t, int x, int y, int mask, bool set) {
+        void click(VncTransport & t, int x, int y, int mask, bool set) {
             if (set) {
                 this->mod_mouse_state |= mask;
             }
@@ -116,7 +239,7 @@ public:
             this->send(t);
         }
 
-        void scroll(Transport & t, int mask) const {
+        void scroll(VncTransport & t, int mask) const {
             StaticOutStream<12> stream;
             this->write(stream, this->mod_mouse_state | mask);
             this->write(stream, this->mod_mouse_state);
@@ -135,15 +258,19 @@ public:
             stream.out_uint16_be(this->y);
         }
 
-        void send(Transport & t) const {
+        void send(VncTransport & t) const {
             StaticOutStream<6> stream;
             this->write(stream, this->mod_mouse_state);
             t.send(stream.get_bytes());
         }
     } mouse;
 
-private:
-    Transport & t;
+
+
+protected:
+    VncTransport t;
+    UltraDSM *dsm;
+    bool dsmEncryption;
 
     uint16_t width;
     uint16_t height;
@@ -164,6 +291,7 @@ private:
 
 public:
     VNCVerbose verbose;
+
 
 private:
     KeymapSym  keymapSym;
@@ -214,6 +342,7 @@ private:
     };
 
 public:
+    /** @brief VNC clipboard encoding */
     enum class ClipboardEncodingType : uint8_t {
         UTF8   = 0,
         Latin1 = 1
@@ -993,7 +1122,7 @@ protected:
 
     UpAndRunningCtx up_and_running_ctx;
 
-    Buf64k server_data_buf;
+    VncBuf64k server_data_buf;
     int spokenProtocol;
     bool tlsSwitch;
 
@@ -1461,7 +1590,11 @@ private:
 
     public:
         explicit ClipboardDataCtx(VNCVerbose verbose)
-          : verbose(verbose)
+          : state(State::Header)
+		  , verbose(verbose)
+          , clipboard_down_is_really_enabled(false)
+          , data_length(0)
+          , remaining_data_length(0)
           , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
           , to_rdp_clipboard_data_is_utf8_encoded(false)
         {}

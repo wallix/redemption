@@ -33,10 +33,12 @@
 SCOPED_EVP_CONTEXT(ScopedEvpMd, EVP_MD_CTX, EVP_MD_CTX_new, EVP_MD_CTX_free);
 SCOPED_EVP_CONTEXT(ScopedEvpCipher, EVP_CIPHER_CTX, EVP_CIPHER_CTX_new, EVP_CIPHER_CTX_free);
 
-static void cipherDelete(EVP_CIPHER_CTX *ctx) {
+static void cipherDelete(EVP_CIPHER_CTX **pctx) {
+	EVP_CIPHER_CTX *ctx = *pctx;
 	if (ctx) {
 		EVP_CIPHER_CTX_cleanup(ctx);
 		EVP_CIPHER_CTX_free(ctx);
+		*pctx = nullptr;
 	}
 }
 
@@ -220,7 +222,7 @@ const EVP_CIPHER* UltraDSM::getCipher(uint32_t dwFlags, int &nKeyLength) {
 	}
 }
 
-EVP_CIPHER_CTX *initCipher(const EVP_CIPHER* cipher, bool encrypt, int keyLen) {
+static EVP_CIPHER_CTX *initCipher(const EVP_CIPHER* cipher, bool encrypt, int keyLen) {
 	EVP_CIPHER_CTX *ret = EVP_CIPHER_CTX_new();
 
 	EVP_CipherInit(ret, cipher, nullptr, nullptr, encrypt);
@@ -247,28 +249,38 @@ UltraDSM::UltraDSM(char *password)
 }
 
 UltraDSM::~UltraDSM() {
-	if (m_rsa)
-		RSA_free(m_rsa);
-
-	cipherDelete(m_contextVS1);
-	cipherDelete(m_contextSV1);
-
-	cipherDelete(m_contextVS2);
-	cipherDelete(m_contextSV2);
-
-	cipherDelete(m_contextVS3);
-	cipherDelete(m_contextSV3);
+	reset();
 }
 
-bool UltraDSM::handleChallenge(InStream &instream) {
+void UltraDSM::reset() {
+	if (m_rsa) {
+		RSA_free(m_rsa);
+		m_rsa = nullptr;
+	}
+
+	cipherDelete(&m_contextVS1);
+	cipherDelete(&m_contextSV1);
+
+	cipherDelete(&m_contextVS2);
+	cipherDelete(&m_contextSV2);
+
+	cipherDelete(&m_contextVS3);
+	cipherDelete(&m_contextSV3);
+}
+
+bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 	if (!instream.in_check_rem(2))
 		return false;
 
-	uint16_t challengeLen = instream.in_uint16_le();
-	if (!instream.in_check_rem(challengeLen))
+	challengeLen = instream.in_uint16_le();
+	if (!instream.in_check_rem(challengeLen + 1))
 		return false;
 
 	InStream s({instream.get_current(), challengeLen});
+	instream.in_skip_bytes(challengeLen);
+
+	uint8_t passphraseused = instream.in_uint8();
+
 	if (!s.in_check_rem(1 + 1 + 4)) {
 		LOG(LOG_ERR, "Invalid challengeLen");
 		//throw Error(ERR_VNC_CONNECTION_ERROR);
@@ -413,7 +425,7 @@ bool UltraDSM::handleChallenge(InStream &instream) {
 	}
 	m_nRSASize = RSA_size(m_rsa);
 
-	LOG(LOG_DEBUG, "Handshake packet !");
+	LOG(LOG_DEBUG, "Handshake packet, passphraseUsed=%d", passphraseused);
 	return true;
 }
 
@@ -589,23 +601,12 @@ bool UltraDSM::getResponse(OutStream &out) {
 		uint16_t wClientAuthSigLength = nClientAuthSigLength;
 
 		nResponseLength = sizeof(m_responseFlags) + sizeof(wEncryptedSize) + nEncryptedSize + sizeof(wClientAuthSigLength) + nClientAuthSigLength;
-		uint8_t *pResponse = new uint8_t[nResponseLength];
-		uint8_t *pResponseData = pResponse;
 
-		memcpy(pResponseData, &m_responseFlags, sizeof(m_responseFlags));
-		pResponseData += sizeof(m_responseFlags);
-
-		memcpy(pResponseData, &wEncryptedSize, sizeof(wEncryptedSize));
-		pResponseData += sizeof(wEncryptedSize);
-
-		memcpy(pResponseData, blobEncryptedKeysBuffer.data(), nEncryptedSize);
-		pResponseData += nEncryptedSize;
-
-		memcpy(pResponseData, &wClientAuthSigLength, sizeof(wClientAuthSigLength));
-		pResponseData += sizeof(wClientAuthSigLength);
-
-		memcpy(pResponseData, blobClientAuthSig.data(), nClientAuthSigLength);
-		pResponseData += nClientAuthSigLength;
+		out.out_uint32_le(m_responseFlags);
+		out.out_uint16_le(wEncryptedSize);
+		out.out_copy_bytes(blobEncryptedKeysBuffer.data(), nEncryptedSize);
+		out.out_uint16_le(wClientAuthSigLength);
+		out.out_copy_bytes(blobClientAuthSig.data(), nClientAuthSigLength);
 
 		if (m_responseFlags & svncCipherARC4) {
 			BufMaker<0x1000> blobFlotsamBuf;
@@ -618,16 +619,30 @@ bool UltraDSM::getResponse(OutStream &out) {
 			EVP_CipherUpdate(m_contextVS1, blobFlotsam.as_u8p(), &nDummyByteCount, blobJetsam.data(), RC4_DROP_BYTES);
 		}
 
-		if (!out.has_room(nResponseLength + 2)) {
-			LOG(LOG_ERR, "not enough room in OutStream");
-			return false;
-		}
-
-		out.out_uint16_le(nResponseLength);
-		out.out_copy_bytes(pResponse, nResponseLength);
 
 		LOG(LOG_ERR, "GetResponse OK.");
 		return true;
 }
 
 
+bool UltraDSM::encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out) {
+	int nEncryptedLength = 0;
+
+	if (m_bTriple) {
+#if 0
+		EVP_CipherUpdate(&m_ContextVS1, pOutputBuffer, &nEncryptedLength, pDataBuffer, nDataLen);
+		EVP_CipherUpdate(&m_ContextVS2, pTempBuffer, &nEncryptedLength2, pOutputBuffer, nEncryptedLength);
+		EVP_CipherUpdate(&m_ContextVS3, pOutputBuffer, &nEncryptedLength3, pTempBuffer, nEncryptedLength2);
+#endif
+	} else {
+		EVP_CipherUpdate(m_contextVS1, out.as_u8p(), &nEncryptedLength, buffer.as_u8p(), len);
+	}
+
+	return true;
+}
+
+bool UltraDSM::decrypt(const uint8_t *buffer, size_t len, writable_bytes_view & out) {
+	int nEncryptedLength;
+	EVP_CipherUpdate(m_contextSV1, out.as_u8p(), &nEncryptedLength, buffer, len);
+	return true;
+}
