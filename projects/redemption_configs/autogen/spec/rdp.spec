@@ -308,11 +308,16 @@ clipboard_text_up = boolean(default=False)
 # File verification on download must be enabled via option Enable down
 clipboard_text_down = boolean(default=False)
 
-# Enable storage of transferred files (via RDP Clipboard)
-file_record = option('never', 'always', 'on_verification_failure', default='never')
-
 #_advanced
 log_if_accepted = boolean(default=True)
+
+[file_storage]
+
+# Enable storage of transferred files (via RDP Clipboard).
+#   never: Never store transferred files.
+#   always: Always store transferred files.
+#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+store_file = option('never', 'always', 'on_invalid_verification', default='never')
 
 [video]
 

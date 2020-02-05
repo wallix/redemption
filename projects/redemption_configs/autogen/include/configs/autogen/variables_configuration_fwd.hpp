@@ -219,8 +219,11 @@ namespace cfg {
         struct enable_down;
         struct clipboard_text_up;
         struct clipboard_text_down;
-        struct file_record;
         struct log_if_accepted;
+    };
+
+    struct file_storage {
+        struct store_file;
     };
 
     struct icap_server_down {

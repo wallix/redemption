@@ -201,11 +201,13 @@ cp_spec = {
         u'file_verification:clipboard_text_down': (
             'clipboard_text_down', False
         ),
-        u'file_verification:file_record': (
-            'file_record', 0
-        ),
         u'file_verification:log_if_accepted': (
             'log_if_accepted', True
+        ),
+    },
+    'file_storage': {
+        u'file_storage:store_file': (
+            'store_file', 0
         ),
     },
     'video': {

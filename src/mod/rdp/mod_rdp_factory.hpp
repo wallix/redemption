@@ -28,5 +28,5 @@ struct ModRdpFactory
 {
     std::function<FdxCapture*()> get_fdx_capture;
     // should be within get_clipboard_channel()
-    bool always_file_record = false;
+    bool always_file_storage = false;
 };

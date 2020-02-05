@@ -734,34 +734,39 @@
           "description": "Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down"
         },
         {
-          "name": "file_record",
+          "name": "log_if_accepted",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "file_storage",
+      "members": [
+        {
+          "name": "store_file",
           "type": "option",
           "default": "never",
           "values": [
             {
                "value": "never",
                "label": "never",
-               "description": ""
+               "description": "Never store transferred files."
             },
             {
                "value": "always",
                "label": "always",
-               "description": ""
+               "description": "Always store transferred files."
             },
             {
-               "value": "on_verification_failure",
-               "label": "on_verification_failure",
-               "description": ""
+               "value": "on_invalid_verification",
+               "label": "on_invalid_verification",
+               "description": "Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification)."
             }
           ],
-          "description": "Enable storage of transferred files (via RDP Clipboard)"
-        },
-        {
-          "name": "log_if_accepted",
-          "type": "bool",
-          "default": true,
-          "advanced": true,
-          "description": ""
+          "description": "Enable storage of transferred files (via RDP Clipboard)."
         }
       ]
     },
