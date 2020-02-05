@@ -149,7 +149,6 @@ exe rdpproxy :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -608,7 +607,6 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -839,7 +837,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -2636,7 +2633,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -2778,7 +2774,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -3145,7 +3140,6 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/close_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/flat_wab_close.o
@@ -3223,7 +3217,6 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/dialog_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/flat_button.o
@@ -3313,7 +3306,6 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/login_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3457,7 +3449,6 @@ test-run tests/mod/internal/test_wait_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -5869,7 +5860,6 @@ obj src/mod/internal/close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/close_mod
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 obj src/mod/internal/dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/dialog_mod.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
-obj src/mod/internal/locally_integrable_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/locally_integrable_mod.cpp ;
 obj src/mod/internal/login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/login_mod.cpp ;
 obj src/mod/internal/rail_module_host_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/rail_module_host_mod.cpp ;
 obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;

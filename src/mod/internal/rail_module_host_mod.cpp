@@ -23,6 +23,59 @@
 #include "RAIL/client_execute.hpp"
 #include "configs/config.hpp"
 #include "core/front_api.hpp"
+#include "core/RDP/slowpath.hpp"
+
+
+void RailModuleHostMod::rdp_input_invalidate(Rect r)
+{
+    this->screen.rdp_input_invalidate(r);
+
+    if (this->rail_enabled) {
+        this->rail_client_execute.input_invalidate(r);
+    }
+}
+
+void RailModuleHostMod::rdp_input_scancode(
+    long param1, long param2, long param3, long param4, Keymap2 * keymap)
+{
+    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+
+    if (this->rail_enabled) {
+        if (!this->alt_key_pressed) {
+            if ((param1 == 56) && !(param3 & SlowPath::KBDFLAGS_RELEASE)) {
+                this->alt_key_pressed = true;
+            }
+        }
+        else {
+//            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
+            if ((param1 == 56) && (param3 & SlowPath::KBDFLAGS_RELEASE)) {
+                this->alt_key_pressed = false;
+            }
+            else if ((param1 == 62) && !param3) {
+                LOG(LOG_INFO, "RailModuleHostMod::rdp_input_scancode: Close by user (Alt+F4)");
+                throw Error(ERR_WIDGET);    // F4 key pressed
+            }
+        }
+    }
+}
+
+void RailModuleHostMod::refresh(Rect r)
+{
+    this->screen.refresh(r);
+
+    if (this->rail_enabled) {
+        this->rail_client_execute.input_invalidate(r);
+    }
+}
+
+void RailModuleHostMod::cancel_double_click_detection()
+{
+    assert(this->rail_enabled);
+
+    this->first_click_down_timer.reset();
+
+    this->dc_state = DCState::Wait;
+}
 
 RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
@@ -33,16 +86,41 @@ RailModuleHostMod::RailModuleHostMod(
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
     const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
-: LocallyIntegrableMod(session_reactor, timer_events_, graphic_events_, drawable, front, width, height, font,
-    rail_client_execute, theme)
-, rail_module_host(drawable, widget_rect.x, widget_rect.y,
-                   widget_rect.cx, widget_rect.cy,
-                   this->screen, this, std::move(managed_mod),
-                   font, cs_monitor, width, height)
-, vars(vars)
-, can_resize_hosted_desktop(can_resize_hosted_desktop)
-, rail_client_execute(rail_client_execute)
+    : front_width(front_width)
+    , front_height(front_height)
+    , front(front)
+    , screen(drawable, font, nullptr, theme)
+    , rail_client_execute(rail_client_execute)
+    , dvc_manager(false)
+    , dc_state(DCState::Wait)
+    , rail_enabled(rail_client_execute.is_rail_enabled())
+    , current_mouse_owner(MouseOwner::WidgetModule)
+    , session_reactor(session_reactor)
+    , timer_events_(timer_events_)
+    , graphic_events_(graphic_events_)
+    , rail_module_host(drawable, widget_rect.x, widget_rect.y,
+                       widget_rect.cx, widget_rect.cy,
+                       this->screen, this, std::move(managed_mod),
+                       font, cs_monitor, width, height)
+    , vars(vars)
+    , can_resize_hosted_desktop(can_resize_hosted_desktop)
 {
+    {
+        this->screen.set_wh(front_width, front_height);
+        if (this->rail_enabled) {
+            this->graphic_event = graphic_events_.create_action_executor(session_reactor)
+            .on_action(jln::one_shot([this](gdi::GraphicApi&){
+                if (!this->rail_client_execute) {
+                    this->rail_client_execute.ready(
+                        *this, this->front_width, this->front_height, this->font(),
+                        this->is_resizing_hosted_desktop_allowed());
+
+                    this->dvc_manager.ready(this->front);
+                }
+            }));
+        }
+    }
+
     this->screen.move_xy(widget_rect.x, widget_rect.y);
 
     this->screen.add_widget(&this->rail_module_host);
@@ -79,7 +157,104 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
         mod.rdp_input_mouse(device_flags, x, y, keymap);
     }
     else {
-        LocallyIntegrableMod::rdp_input_mouse(device_flags, x, y, keymap);
+        if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
+            x = this->old_mouse_x;
+            y = this->old_mouse_y;
+        }
+        else {
+            this->old_mouse_x = x;
+            this->old_mouse_y = y;
+        }
+
+        if (!this->rail_enabled) {
+            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+        }
+        else {
+            bool out_mouse_captured = false;
+            if (!this->rail_client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
+                switch (this->dc_state) {
+                    case DCState::Wait:
+                        if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                            this->dc_state = DCState::FirstClickDown;
+
+                            if (this->first_click_down_timer) {
+                                this->first_click_down_timer->set_delay(std::chrono::seconds(1));
+                            }
+                            else {
+                                this->first_click_down_timer = timer_events_
+                                .create_timer_executor(this->session_reactor)
+                                .set_delay(std::chrono::seconds(1))
+                                .on_action(jln::one_shot([this]{
+                                    this->dc_state = DCState::Wait;
+                                }));
+                            }
+                        }
+                    break;
+
+                    case DCState::FirstClickDown:
+                        if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                            this->dc_state = DCState::FirstClickRelease;
+                        }
+                        else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                        }
+                        else {
+                            this->cancel_double_click_detection();
+                        }
+                    break;
+
+                    case DCState::FirstClickRelease:
+                        if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                            this->dc_state = DCState::SecondClickDown;
+                        }
+                        else {
+                            this->cancel_double_click_detection();
+                        }
+                    break;
+
+                    case DCState::SecondClickDown:
+                        if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                            this->dc_state = DCState::Wait;
+
+                            bool out_mouse_captured_2 = false;
+
+                            this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
+
+                            this->cancel_double_click_detection();
+                        }
+                        else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                        }
+                        else {
+                            this->cancel_double_click_detection();
+                        }
+                    break;
+
+                    default:
+                        assert(false);
+
+                        this->cancel_double_click_detection();
+                    break;
+                }
+
+                if (out_mouse_captured) {
+                    this->allow_mouse_pointer_change(false);
+
+                    this->current_mouse_owner = MouseOwner::ClientExecute;
+                }
+                else {
+                    if (MouseOwner::WidgetModule != this->current_mouse_owner) {
+                        this->redo_mouse_pointer_change(x, y);
+                    }
+
+                    this->current_mouse_owner = MouseOwner::WidgetModule;
+                }
+            }
+
+            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+
+            if (out_mouse_captured) {
+                this->allow_mouse_pointer_change(true);
+            }
+        }
     }
 }
 
@@ -89,8 +264,14 @@ void RailModuleHostMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name,
     InStream& chunk, size_t length, uint32_t flags)
 {
-    LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk,
-        length, flags);
+    if (this->rail_enabled && this->rail_client_execute){
+        if (front_channel_name == CHANNELS::channel_names::rail) {
+            this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
+        }
+        else if (front_channel_name == CHANNELS::channel_names::drdynvc) {
+            this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
+        }
+    }
 
     if (front_channel_name == channel_names::rail) { return; }
 
