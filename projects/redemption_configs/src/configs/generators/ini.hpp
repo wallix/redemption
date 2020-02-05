@@ -52,8 +52,10 @@ namespace impl
     {
         if (e.is_string_parser) {
             out << "values: ";
+            char const* comma = "";
             for (type_enumeration::Value const & v : e.values) {
-                out << "'" << (v.alias ? v.alias : v.name) << "', ";
+                out << comma << "'" << (v.alias ? v.alias : v.name) << "'";
+                comma = ", ";
             }
             out << "\n";
         }

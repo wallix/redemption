@@ -20,7 +20,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #nomouse = 0
 
-# values: 'low', 'medium', 'high', 
+# values: 'low', 'medium', 'high'
 #_advanced
 #encryptionLevel = low
 
@@ -797,7 +797,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #encodings = 
 
 # VNC server clipboard data encoding type.
-# values: 'utf-8', 'latin1', 
+# values: 'utf-8', 'latin1'
 #_advanced
 #server_clipboard_encoding_type = latin1
 
@@ -880,7 +880,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-# values: 'never', 'always', 'on_invalid_verification', 
+# values: 'never', 'always', 'on_invalid_verification'
 #   never: Never store transferred files.
 #   always: Always store transferred files.
 #   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
@@ -957,7 +957,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: v2
 #version = 2
 
-# values: 'latin', 'cyrillic', 
+# values: 'latin', 'cyrillic'
 #locale = latin
 
 # (is in 1/100 second)
@@ -1245,7 +1245,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [translation]
 
-# values: 'en', 'fr', 
+# values: 'en', 'fr'
 #_advanced
 #language = en
 
