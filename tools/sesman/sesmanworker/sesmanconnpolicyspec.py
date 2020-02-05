@@ -75,8 +75,10 @@ cp_spec = {
     u'file_verification:enable_down': ('enable_down', False),
     u'file_verification:clipboard_text_up': ('clipboard_text_up', False),
     u'file_verification:clipboard_text_down': ('clipboard_text_down', False),
-    u'file_verification:file_storage': ('file_storage', 0),
     u'file_verification:log_if_accepted': ('log_if_accepted', True),
+  },
+  'file_storage': {
+    u'file_storage:store_file': ('store_file', 0),
   },
   'video': {
     u'video:disable_keyboard_log': ('disable_keyboard_log', 1),

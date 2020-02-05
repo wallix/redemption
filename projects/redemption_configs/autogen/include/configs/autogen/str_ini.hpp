@@ -873,17 +873,19 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #clipboard_text_down = 0
 
+# value: 0 or 1
+#_hidden
+#log_if_accepted = 1
+
+[file_storage]
+
 # Enable storage of transferred files (via RDP Clipboard).
 # values: 'never', 'always', 'on_invalid_verification', 
 #   never: Never store transferred files.
 #   always: Always store transferred files.
-#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification must be enabled (up or down).
+#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
 #_hidden
-#file_storage = never
-
-# value: 0 or 1
-#_hidden
-#log_if_accepted = 1
+#store_file = never
 
 [icap_server_down]
 

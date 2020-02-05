@@ -479,9 +479,9 @@ void ModuleManager::create_mod_rdp(
                 return this->fdx_capture.get();
             }
 
-            ModRdpFactory& get_rdp_factory() noexcept
+            ModRdpFactory& get_rdp_factory()
             {
-                return static_cast<ModRdpFactory&>(*this);
+                return *this;
             }
 
             explicit ModRDPWithMetrics(
@@ -631,17 +631,17 @@ void ModuleManager::create_mod_rdp(
         if (new_mod) {
             assert(&ini == &this->ini);
             new_mod->get_rdp_factory().always_file_storage
-              = (ini.get<cfg::file_verification::file_storage>() == RdpFileStorage::always);
-            switch (ini.get<cfg::file_verification::file_storage>())
+              = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
+            switch (ini.get<cfg::file_storage::store_file>())
             {
-                case RdpFileStorage::never:
+                case RdpStoreFile::never:
                     break;
-                case RdpFileStorage::on_invalid_verification:
+                case RdpStoreFile::on_invalid_verification:
                     if (!enable_validator) {
                         break;
                     }
                     [[fallthrough]];
-                case RdpFileStorage::always:
+                case RdpStoreFile::always:
                     new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
                         return mod->get_fdx_capture(*this);
                     };

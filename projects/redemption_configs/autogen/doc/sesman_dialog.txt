@@ -210,12 +210,13 @@ cfg::file_verification::clipboard_text_up ⇐ file_verification:clipboard_text_u
 cfg::file_verification::clipboard_text_down ⇐ file_verification:clipboard_text_down   [bool]
     Verify text data via clipboard from server to client
     File verification on download must be enabled via option Enable down.
-cfg::file_verification::file_storage ⇐ file_verification:file_storage   [RdpFileStorage]
+cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   [bool]
+
+cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile]
     Enable storage of transferred files (via RDP Clipboard).
       never: Never store transferred files.
       always: Always store transferred files.
-      on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification must be enabled (up or down).
-cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   [bool]
+      on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
 
 
 

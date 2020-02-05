@@ -2846,24 +2846,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Enable storage of transferred files (via RDP Clipboard). <br/>
-    /// type: RdpFileStorage <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesman::name: file_verification:file_storage <br/>
-    /// value = static_cast<type>(0) <br/>
-    struct file_verification::file_storage {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "file_verification";
-        static constexpr char const * name = "file_storage";
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(91);
-        using type = RdpFileStorage;
-        using sesman_and_spec_type = RdpFileStorage;
-        using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(0);
-    };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:log_if_accepted <br/>
@@ -2875,11 +2857,30 @@ namespace cfg {
         static constexpr char const * name = "log_if_accepted";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(92);
+        static constexpr authid_t index = authid_t(91);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
+    };
+
+    /// Enable storage of transferred files (via RDP Clipboard). <br/>
+    /// type: RdpStoreFile <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesman::name: file_storage:store_file <br/>
+    /// value = static_cast<type>(0) <br/>
+    struct file_storage::store_file {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "file_storage";
+        static constexpr char const * name = "store_file";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(92);
+        using type = RdpStoreFile;
+        using sesman_and_spec_type = RdpStoreFile;
+        using mapped_type = sesman_and_spec_type;
+        type value = static_cast<type>(0);
     };
 
     /// Ip or fqdn of ICAP server <br/>
@@ -5492,8 +5493,11 @@ struct file_verification
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
-, cfg::file_verification::file_storage
 , cfg::file_verification::log_if_accepted
+{ static constexpr bool is_section = true; };
+
+struct file_storage
+: cfg::file_storage::store_file
 { static constexpr bool is_section = true; };
 
 struct icap_server_down
@@ -5708,6 +5712,7 @@ struct VariablesConfiguration
 , cfg_section::mod_vnc
 , cfg_section::metrics
 , cfg_section::file_verification
+, cfg_section::file_storage
 , cfg_section::icap_server_down
 , cfg_section::icap_server_up
 , cfg_section::mod_replay
@@ -5815,8 +5820,8 @@ using VariablesAclPack = Pack<
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
-, cfg::file_verification::file_storage
 , cfg::file_verification::log_if_accepted
+, cfg::file_storage::store_file
 , cfg::mod_replay::replay_on_loop
 , cfg::video::hash_path
 , cfg::video::record_tmp_path

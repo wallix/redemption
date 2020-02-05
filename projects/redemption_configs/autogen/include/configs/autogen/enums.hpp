@@ -551,22 +551,22 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeDisabledFeature e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class RdpFileStorage : unsigned char
+enum class RdpStoreFile : unsigned char
 {
     // Never store transferred files.
     never = 0,
     // Always store transferred files.
     always = 1,
-    // Transferred files are stored only if file verification is invalid. File verification must be enabled (up or down).
+    // Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
     on_invalid_verification = 2,
 };
 
-inline bool is_valid_enum_value(RdpFileStorage e)
+inline bool is_valid_enum_value(RdpStoreFile e)
 { return static_cast<unsigned long>(e) <= 2; }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, RdpFileStorage e)
+operator << (std::basic_ostream<Ch, Tr> & os, RdpStoreFile e)
 { return os << static_cast<unsigned long>(e); }
 
 
