@@ -41,22 +41,22 @@
           "values": [
             {
                "value": 0,
-               "label": "unmasked",
+               "label": "Unmasked",
                "description": "keyboard input are not masked"
             },
             {
                "value": 1,
-               "label": "password_only",
+               "label": "Password only",
                "description": "only passwords are masked"
             },
             {
                "value": 2,
-               "label": "password_and_unidentified",
+               "label": "Password and unidentified",
                "description": "passwords and unidentified texts are masked"
             },
             {
                "value": 3,
-               "label": "fully_masked",
+               "label": "Fully masked",
                "description": "keyboard inputs are not logged"
             }
           ],
@@ -193,17 +193,17 @@
           "values": [
             {
                "value": 0,
-               "label": "ignore_and_continue",
+               "label": "Ignore and continue",
                "description": "ignore failure and continue."
             },
             {
                "value": 1,
-               "label": "disconnect_user",
+               "label": "Disconnect user",
                "description": "disconnect user."
             },
             {
                "value": 2,
-               "label": "retry_without_session_probe",
+               "label": "Retry without session probe",
                "description": "reconnect without Session Probe."
             }
           ],
@@ -249,17 +249,17 @@
           "values": [
             {
                "value": 0,
-               "label": "ignore_and_continue",
+               "label": "Ignore and continue",
                "description": ""
             },
             {
                "value": 1,
-               "label": "disconnect_user",
+               "label": "Disconnect user",
                "description": ""
             },
             {
                "value": 2,
-               "label": "freeze_connection_and_wait",
+               "label": "Freeze connection and wait",
                "description": ""
             }
           ],
@@ -410,52 +410,52 @@
           "values": [
             {
                "value": 0,
-               "label": "none",
+               "label": "None",
                "description": ""
             },
             {
                "value": 1,
-               "label": "jab",
+               "label": "Jab",
                "description": "Java Access Bridge"
             },
             {
                "value": 2,
-               "label": "msaa",
+               "label": "Msaa",
                "description": "MS Active Accessbility"
             },
             {
                "value": 4,
-               "label": "msuia",
+               "label": "Msuia",
                "description": "MS UI Automation"
             },
             {
                "value": 16,
-               "label": "edge_inspection",
+               "label": "Edge inspection",
                "description": "Inspect Edge location URL"
             },
             {
                "value": 32,
-               "label": "chrome_inspection",
+               "label": "Chrome inspection",
                "description": "Inspect Chrome Address/Search bar"
             },
             {
                "value": 64,
-               "label": "firefox_inspection",
+               "label": "Firefox inspection",
                "description": "Inspect Firefox Address/Search bar"
             },
             {
                "value": 128,
-               "label": "ie_monitoring",
+               "label": "Ie monitoring",
                "description": "Monitor Internet Explorer event"
             },
             {
                "value": 256,
-               "label": "group_membership",
+               "label": "Group membership",
                "description": "Inspect group membership of user"
             },
             {
                "value": 512,
-               "label": "bestsafe_integration",
+               "label": "Bestsafe integration",
                "description": "BestSafe integration"
             }
           ],
@@ -476,17 +476,17 @@
           "values": [
             {
                "value": 0,
-               "label": "allow",
+               "label": "Allow",
                "description": "User action will be accepted"
             },
             {
                "value": 1,
-               "label": "notify",
+               "label": "Notify",
                "description": "(Same thing as 'allow') "
             },
             {
                "value": 2,
-               "label": "deny",
+               "label": "Deny",
                "description": "User action will be rejected"
             }
           ],
@@ -534,22 +534,22 @@
           "values": [
             {
                "value": 0,
-               "label": "fails_if_no_match_or_missing",
+               "label": "Fails if no match or missing",
                "description": "fails if certificates doesn't match or miss."
             },
             {
                "value": 1,
-               "label": "fails_if_no_match_and_succeed_if_no_know",
+               "label": "Fails if no match and succeed if no know",
                "description": "fails if certificate doesn't match, succeed if no known certificate."
             },
             {
                "value": 2,
-               "label": "succeed_if_exists_and_fails_if_missing",
+               "label": "Succeed if exists and fails if missing",
                "description": "succeed if certificates exists (not checked), fails if missing."
             },
             {
                "value": 3,
-               "label": "always_succeed",
+               "label": "Always succeed",
                "description": "always succeed."
             }
           ],
@@ -565,22 +565,22 @@
           "values": [
             {
                "value": 0,
-               "label": "nobody",
+               "label": "Nobody",
                "description": ""
             },
             {
                "value": 1,
-               "label": "syslog",
+               "label": "Syslog",
                "description": "message sent to syslog"
             },
             {
                "value": 2,
-               "label": "user",
+               "label": "User",
                "description": "User notified (through proxy interface)"
             },
             {
                "value": 4,
-               "label": "admin",
+               "label": "Admin",
                "description": "admin notified (wab notification)"
             }
           ],
@@ -598,22 +598,22 @@
           "values": [
             {
                "value": 0,
-               "label": "nobody",
+               "label": "Nobody",
                "description": ""
             },
             {
                "value": 1,
-               "label": "syslog",
+               "label": "Syslog",
                "description": "message sent to syslog"
             },
             {
                "value": 2,
-               "label": "user",
+               "label": "User",
                "description": "User notified (through proxy interface)"
             },
             {
                "value": 4,
-               "label": "admin",
+               "label": "Admin",
                "description": "admin notified (wab notification)"
             }
           ],
@@ -631,22 +631,22 @@
           "values": [
             {
                "value": 0,
-               "label": "nobody",
+               "label": "Nobody",
                "description": ""
             },
             {
                "value": 1,
-               "label": "syslog",
+               "label": "Syslog",
                "description": "message sent to syslog"
             },
             {
                "value": 2,
-               "label": "user",
+               "label": "User",
                "description": "User notified (through proxy interface)"
             },
             {
                "value": 4,
-               "label": "admin",
+               "label": "Admin",
                "description": "admin notified (wab notification)"
             }
           ],
@@ -664,22 +664,22 @@
           "values": [
             {
                "value": 0,
-               "label": "nobody",
+               "label": "Nobody",
                "description": ""
             },
             {
                "value": 1,
-               "label": "syslog",
+               "label": "Syslog",
                "description": "message sent to syslog"
             },
             {
                "value": 2,
-               "label": "user",
+               "label": "User",
                "description": "User notified (through proxy interface)"
             },
             {
                "value": 4,
-               "label": "admin",
+               "label": "Admin",
                "description": "admin notified (wab notification)"
             }
           ],
@@ -735,17 +735,17 @@
           "values": [
             {
                "value": "never",
-               "label": "never",
+               "label": "Never",
                "description": "Never store transferred files."
             },
             {
                "value": "always",
-               "label": "always",
+               "label": "Always",
                "description": "Always store transferred files."
             },
             {
                "value": "on_invalid_verification",
-               "label": "on_invalid_verification",
+               "label": "On invalid verification",
                "description": "Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification)."
             }
           ],
@@ -766,17 +766,17 @@
           "values": [
             {
                "value": 0,
-               "label": "none",
+               "label": "None",
                "description": ""
             },
             {
                "value": 1,
-               "label": "syslog",
+               "label": "Syslog",
                "description": "keyboard log in syslog"
             },
             {
                "value": 2,
-               "label": "wrm",
+               "label": "Wrm",
                "description": "keyboard log in recorded sessions"
             }
           ],

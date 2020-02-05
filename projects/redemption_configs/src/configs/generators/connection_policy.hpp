@@ -223,6 +223,29 @@ namespace json
 
     namespace impl
     {
+        // uppercase for first letter and replace '_' by ' '
+        struct io_label
+        {
+            char const* label;
+
+            friend std::ostream & operator<<(std::ostream & out, io_label const & q)
+            {
+                auto toupper = [](char c){
+                    return ('a' <= c && c <= 'z') ? char(c + ('A' - 'a')) : c;
+                };
+
+                auto label = q.label;
+
+                out << toupper(label[0]);
+
+                while (*++label) {
+                    out << (*label == '_' ? ' ' : *label);
+                }
+
+                return out;
+            }
+        };
+
         template<class T>
         void write_enum_value(std::ostream& out, type_enumeration const & e, T default_value)
         {
@@ -267,7 +290,7 @@ namespace json
                         out << f;
                     }
                     out << ",\n"
-                        "               \"label\": \"" << v.name << "\",\n"
+                        "               \"label\": \"" << io_label{v.name} << "\",\n"
                         "               \"description\": \"" << io_quoted(v.desc ? v.desc : "") << "\"\n"
                         "            }"
                     ;
