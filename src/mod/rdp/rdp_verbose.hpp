@@ -51,7 +51,7 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     sesprobe_repetitive = 0x00008000,
 
     drdynvc             = 0x00010000,
-	surfaceCmd			= 0x00020000,
+    surfaceCmd          = 0x00020000,
 
     drdynvc_dump        = 0x00100000,
     printer             = 0x00200000,
