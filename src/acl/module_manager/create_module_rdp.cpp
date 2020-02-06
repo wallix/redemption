@@ -348,6 +348,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started
                                                        = ini.get<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started>();
 
+    mod_rdp_params.enable_restricted_admin_mode = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
+
     try {
         using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
 

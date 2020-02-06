@@ -189,6 +189,7 @@ namespace cfg {
         struct use_license_store;
         struct enable_remotefx;
         struct accept_monitor_layout_change_if_capture_is_not_started;
+        struct enable_restricted_admin_mode;
     };
 
     struct mod_vnc {

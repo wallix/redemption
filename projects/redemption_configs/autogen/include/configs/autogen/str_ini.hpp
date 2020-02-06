@@ -780,6 +780,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #accept_monitor_layout_change_if_capture_is_not_started = 0
 
+# Connect to the remote computer in Restricted Admin mode.
+# value: 0 or 1
+#_hidden
+#enable_restricted_admin_mode = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

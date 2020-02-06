@@ -76,6 +76,9 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 # Enables support of the remoteFX codec.
 enable_remotefx = boolean(default=False)
 
+# Connect to the remote computer in Restricted Admin mode.
+enable_restricted_admin_mode = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced

@@ -658,6 +658,10 @@ enable_remotefx = boolean(default=False)
 #_advanced
 accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
 
+# Connect to the remote computer in Restricted Admin mode.
+#_hidden
+enable_restricted_admin_mode = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
