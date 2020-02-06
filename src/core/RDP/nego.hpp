@@ -93,7 +93,7 @@ private:
     State state = State::Negociate;
 
 public:
-    const TLSClientParams & tls_client_params;
+    TLSClientParams tls_client_params;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
