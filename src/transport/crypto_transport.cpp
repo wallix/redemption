@@ -111,60 +111,69 @@ bool InCryptoTransport::is_open() const
     return this->fd != -1;
 }
 
-InCryptoTransport::HASH InCryptoTransport::qhash(const char * pathname)
+bool InCryptoTransport::read_qhash(
+    const char * pathname, uint8_t const (&hmac_key)[HMAC_KEY_LENGTH], HASH& result_hash)
 {
-    SslHMAC_Sha256 hm4k(make_array_view(this->cctx.get_hmac_key()));
+    unique_fd file{pathname};
 
-    {
-        int fd = ::open(pathname, O_RDONLY);
-        if (fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-        unique_fd auto_close(fd);
-
-        constexpr std::size_t buffer_size = 4096;
-        uint8_t buffer[buffer_size];
-        size_t total_length = 0;
-        do {
-            size_t const remaining_size = buffer_size - total_length;
-            ssize_t res = ::read(fd, buffer, remaining_size);
-            if (res == 0) { break; }
-            if (res < 0 && errno == EINTR) { continue; }
-            if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
-            hm4k.update({buffer, size_t(res)});
-            total_length += res;
-        } while (total_length != buffer_size);
+    if (!file) {
+        return false;
     }
 
-    HASH qhash;
-    hm4k.final(qhash.hash);
-    return qhash;
+    SslHMAC_Sha256 hm4k(make_array_view(hmac_key));
+
+    constexpr std::size_t buffer_size = 4096;
+    uint8_t buffer[buffer_size];
+    size_t total_length = 0;
+    do {
+        size_t const remaining_size = buffer_size - total_length;
+        ssize_t res = ::read(file.fd(), buffer, remaining_size);
+        if (res <= 0) {
+            if (res == 0) {
+                break;
+            }
+            if (errno == EINTR) {
+                continue;
+            }
+            return false;
+        }
+        hm4k.update({buffer, size_t(res)});
+        total_length += res;
+    } while (total_length != buffer_size);
+
+    hm4k.final(result_hash.hash);
+    return true;
 }
 
-InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
+bool InCryptoTransport::read_fhash(
+    const char * pathname, uint8_t const (&hmac_key)[HMAC_KEY_LENGTH], HASH& result_hash)
 {
-    SslHMAC_Sha256 hm(make_array_view(this->cctx.get_hmac_key()));
+    unique_fd file{pathname};
 
-    {
-        int fd = ::open(pathname, O_RDONLY);
-        if (fd < 0) {
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-        unique_fd auto_close(fd);
-
-        uint8_t buffer[4096];
-        do {
-            ssize_t res = ::read(fd, &buffer[0], sizeof(buffer));
-            if (res == 0) { break; }
-            if (res < 0 && errno == EINTR) { continue; }
-            if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
-            hm.update({buffer, size_t(res)});
-        } while (true);
+    if (!file) {
+        return false;
     }
 
-    HASH fhash;
-    hm.final(fhash.hash);
-    return fhash;
+    SslHMAC_Sha256 hm4k(make_array_view(hmac_key));
+
+    constexpr std::size_t buffer_size = 4096;
+    uint8_t buffer[buffer_size];
+    do {
+        ssize_t res = ::read(file.fd(), &buffer[0], sizeof(buffer));
+        if (res <= 0) {
+            if (res == 0) {
+                break;
+            }
+            if (errno == EINTR) {
+                continue;
+            }
+            return false;
+        }
+        hm4k.update({buffer, size_t(res)});
+    } while (true);
+
+    hm4k.final(result_hash.hash);
+    return true;
 }
 
 void InCryptoTransport::open(const char * const pathname, bytes_view derivator)

@@ -77,51 +77,6 @@ enum {
 };
 
 
-
-enum { QUICK_CHECK_LENGTH = 4096 };
-
-
-// Compute HmacSha256
-// up to check_size or end of file whicherver happens first
-// if check_size == 0, checks to eof
-// return 0 on success and puts signature in provided buffer
-// return -1 if some system error occurs, errno contains actual error
-static inline int file_start_hmac_sha256(const char * filename,
-                     uint8_t const (&crypto_key)[HMAC_KEY_LENGTH],
-                     size_t          check_size,
-                     uint8_t (& hash)[SslSha256::DIGEST_LENGTH])
-{
-    unique_fd file(filename, O_RDONLY);
-    int fd = file.fd();
-    if (fd < 0) {
-        return fd;
-    }
-
-    SslHMAC_Sha256 hmac(make_array_view(crypto_key));
-
-    ssize_t ret = 0;
-    uint8_t buf[4096] = {};
-    size_t  number_of_bytes_read = 0;
-
-    while ((ret = ::read(fd, buf, sizeof(buf)))) {
-        if (ret < 0){
-            // interruption signal, not really an error
-            if (errno == EINTR){
-                continue;
-            }
-            return -1;
-        }
-        if (check_size && number_of_bytes_read + ret >= check_size){
-            hmac.update({buf, check_size - number_of_bytes_read});
-            break;
-        }
-        hmac.update({buf, size_t(ret)});
-        number_of_bytes_read += ret;
-    }
-    hmac.final(hash);
-    return 0;
-}
-
 void clear_files_flv_meta_png(const char * path, const char * prefix)
 {
     DIR * d{opendir(path)};
@@ -512,13 +467,16 @@ static inline int check_file(const std::string & filename, const MetaLine & meta
             return false;
         }
 
-        uint8_t hash[MD_HASH::DIGEST_LENGTH]{};
-        if (file_start_hmac_sha256(filename.c_str(), hmac_key, quick?QUICK_CHECK_LENGTH:0, hash) < 0) {
+        InCryptoTransport::HASH hash;
+        bool read_is_ok = quick
+            ? InCryptoTransport::read_qhash(filename.c_str(), hmac_key, hash)
+            : InCryptoTransport::read_fhash(filename.c_str(), hmac_key, hash);
+        if (!read_is_ok) {
             std::cerr << "Error reading file \"" << filename << "\"\n" << std::endl;
             return false;
         }
 
-        if (0 != memcmp(hash, quick?metadata.hash1:metadata.hash2, MD_HASH::DIGEST_LENGTH)){
+        if (0 != memcmp(hash.hash, quick?metadata.hash1:metadata.hash2, MD_HASH::DIGEST_LENGTH)){
             std::cerr << "Error checking file \"" << filename << "\" (invalid checksum)\n" << std::endl;
             return false;
         }

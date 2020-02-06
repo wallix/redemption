@@ -445,28 +445,39 @@ char const * scytale_reader_get_error_message(ScytaleReaderHandle * handle)
     return handle->error_ctx.message();
 }
 
-int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * file)
+namespace
 {
-    SCOPED_TRACE;
-    CHECK_HANDLE(handle);
-    CHECK_NOTHROW(
-        InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
-        hash_to_hashhex(fhash.hash, handle->fhashhex.data()),
-        ERR_TRANSPORT_READ_FAILED
-    );
-    return 0;
+    int reader_hash(
+        ScytaleReaderHandle * handle, const char * filename,
+        bool is_quick, HashHex& hash_hex)
+    {
+        InCryptoTransport::HASH hash;
+
+        bool read_is_ok = is_quick
+            ? InCryptoTransport::read_qhash(filename, handle->cctxw.cctx.get_hmac_key(), hash)
+            : InCryptoTransport::read_fhash(filename, handle->cctxw.cctx.get_hmac_key(), hash);
+        if (!read_is_ok) {
+            handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED});
+            return -1;
+        }
+
+        hash_to_hashhex(hash.hash, hash_hex.data());
+        return 0;
+    }
 }
 
-int scytale_reader_qhash(ScytaleReaderHandle * handle, const char * file)
+int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * filename)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    CHECK_NOTHROW(
-        InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
-        hash_to_hashhex(qhash.hash, handle->qhashhex.data()),
-        ERR_TRANSPORT_READ_FAILED
-    );
-    return 0;
+    return reader_hash(handle, filename, false, handle->fhashhex);
+}
+
+int scytale_reader_qhash(ScytaleReaderHandle * handle, const char * filename)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    return reader_hash(handle, filename, true, handle->qhashhex);
 }
 
 

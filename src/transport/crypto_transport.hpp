@@ -56,9 +56,12 @@ public:
         uint8_t hash[MD_HASH::DIGEST_LENGTH];
     };
 
-    HASH qhash(const char * pathname);
-
-    HASH fhash(const char * pathname);
+    // is noexcept
+    [[nodiscard]] static bool read_qhash(
+        const char * pathname, uint8_t const (&hmac_key)[HMAC_KEY_LENGTH], HASH& result_hash);
+    // is noexcept
+    [[nodiscard]] static bool read_fhash(
+        const char * pathname, uint8_t const (&hmac_key)[HMAC_KEY_LENGTH], HASH& result_hash);
 
     void open(const char * const pathname, bytes_view derivator);
 

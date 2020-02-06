@@ -120,10 +120,10 @@ extern "C"
     void scytale_reader_delete(ScytaleReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * file);
+    int scytale_reader_fhash(ScytaleReaderHandle * handle, const char * filename);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_reader_qhash(ScytaleReaderHandle * handle, const char * file);
+    int scytale_reader_qhash(ScytaleReaderHandle * handle, const char * filename);
 
     /// \return HashHexArray
     REDEMPTION_LIB_EXPORT

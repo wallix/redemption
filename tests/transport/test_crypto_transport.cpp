@@ -414,7 +414,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     hmac.update({result, offset});
     hmac.final(fhash2);
 
-    InCryptoTransport::HASH fh = decrypter.fhash(wf);
+    InCryptoTransport::HASH fh;
+    RED_TEST(InCryptoTransport::read_fhash(wf.c_str(), cctx.get_hmac_key(), fh));
     RED_CHECK_MEM_AA(fh.hash, fhash);
     RED_CHECK_MEM_AA(fh.hash, fhash2);
 
@@ -895,9 +896,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
 
-        auto qh = ct.qhash(finalname);
-        auto fh = ct.qhash(finalname);
-
+        InCryptoTransport::HASH fh;
+        InCryptoTransport::HASH qh;
+        RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
+        RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
         RED_CHECK_MEM_AA(qh.hash, expected_hash);
         RED_CHECK_MEM_AA(fh.hash, expected_hash);
 
@@ -964,9 +966,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         ct.close();
         RED_CHECK_MEM_AA(buffer, randomSample);
 
-        auto qh = ct.qhash(finalname);
-        auto fh = ct.fhash(finalname);
-
+        InCryptoTransport::HASH fh;
+        InCryptoTransport::HASH qh;
+        RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
+        RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
         RED_CHECK_MEM_AA(qh.hash, expected_qhash);
         RED_CHECK_MEM_AA(fh.hash, expected_fhash);
     }
@@ -1036,11 +1039,12 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
 
-        auto ct_qhash = ct.qhash(finalname);
-        auto ct_fhash = ct.fhash(finalname);
-
-        RED_CHECK_MEM_AA(ct_qhash.hash, qhash);
-        RED_CHECK_MEM_AA(ct_fhash.hash, fhash);
+        InCryptoTransport::HASH fh;
+        InCryptoTransport::HASH qh;
+        RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
+        RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
+        RED_CHECK_MEM_AA(qh.hash, qhash);
+        RED_CHECK_MEM_AA(fh.hash, fhash);
     }
     {
         Fstat fstat;
@@ -1120,8 +1124,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
             );
         RED_CHECK_MEM_AA(qhash, expected_qhash);
         RED_CHECK_MEM_AA(fhash, expected_fhash);
-        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
-        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
+
+        InCryptoTransport::HASH fh;
+        InCryptoTransport::HASH qh;
+        RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
+        RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
+        RED_CHECK_MEM_AA(qh.hash, expected_qhash);
+        RED_CHECK_MEM_AA(fh.hash, expected_fhash);
 
         RED_CHECK_FILE_CONTENTS(hash_finalname,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
@@ -1184,9 +1193,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         ct.close();
         RED_CHECK_MEM_AA(buffer, clearSample);
 
-        auto qh = ct.qhash(finalname);
-        auto fh = ct.fhash(finalname);
-
+        InCryptoTransport::HASH fh;
+        InCryptoTransport::HASH qh;
+        RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
+        RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
         RED_CHECK_MEM_AA(qh.hash, expected_qhash);
         RED_CHECK_MEM_AA(fh.hash, expected_fhash);
 
@@ -1287,8 +1297,11 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
         ct.close();
-        InCryptoTransport::HASH qhash2 = ct.qhash(encrypted_file);
-        InCryptoTransport::HASH fhash2 = ct.fhash(encrypted_file);
+
+        InCryptoTransport::HASH fhash2;
+        InCryptoTransport::HASH qhash2;
+        RED_TEST(InCryptoTransport::read_fhash(encrypted_file, cctx.get_hmac_key(), fhash2));
+        RED_TEST(InCryptoTransport::read_qhash(encrypted_file, cctx.get_hmac_key(), qhash2));
 
         RED_CHECK_MEM_AA(qhash2.hash, qhash);
         RED_CHECK_MEM_AA(qhash, qhash2.hash);
