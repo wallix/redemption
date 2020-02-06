@@ -865,8 +865,8 @@ public:
         auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
         auto const& record_dir = ini.get<cfg::video::record_path>();
         auto const& hash_dir = ini.get<cfg::video::hash_path>();
-        auto record_path = str_concat(record_dir.as_string(), subdir);
-        auto hash_path = str_concat(hash_dir.as_string(), subdir);
+        auto record_path = str_concat(record_dir.as_string(), subdir, '/');
+        auto hash_path = str_concat(hash_dir.as_string(), subdir, '/');
 
         for (auto* s : {&record_path, &hash_path}) {
             if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
