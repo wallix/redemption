@@ -42,6 +42,7 @@
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
 #include "acl/sesman.hpp"
+#include "system/scoped_ssl_init.hpp"
 
 #include <iostream>
 #include <string>
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
         is_vnc ? "VNC Server" : "RDP Server", std::move(sck), target_device.c_str(),
         target_port, std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
 
-    SSL_library_init();
+    ScopedSslInit scoped_ssl;
 
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;

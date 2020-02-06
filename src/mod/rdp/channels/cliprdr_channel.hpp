@@ -63,7 +63,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     FileValidatorService * file_validator;
 
     FdxCapture * fdx_capture;
-    bool always_file_record;
+    bool always_file_storage;
 
     enum class Direction : bool
     {
@@ -72,10 +72,10 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     };
 
 public:
-    struct FileRecord
+    struct FileStorage
     {
         FdxCapture * fdx_capture;
-        bool always_file_record;
+        bool always_file_storage;
     };
 
     ClipboardVirtualChannel(
@@ -85,7 +85,7 @@ public:
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
-        FileRecord filre_record)
+        FileStorage file_storage)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
@@ -100,8 +100,8 @@ public:
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
     , file_validator(file_validator_service)
-    , fdx_capture(filre_record.fdx_capture)
-    , always_file_record(filre_record.always_file_record)
+    , fdx_capture(file_storage.fdx_capture)
+    , always_file_storage(file_storage.always_file_storage)
     {}
 
     ~ClipboardVirtualChannel()
@@ -460,7 +460,7 @@ public:
 
             if (file->is_wait_validator()) {
                 if (file_data.tfl_file) {
-                    if (this->always_file_record
+                    if (this->always_file_storage
                      || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
                     ) {
                         this->_close_tfl(file_data);
@@ -604,7 +604,7 @@ private:
                 }
                 else {
                     if (file_data.tfl_file) {
-                        if (this->always_file_record || file_data.on_failure) {
+                        if (this->always_file_storage || file_data.on_failure) {
                             this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
                                 Mwrm3::TransferedStatus::Completed,
                                 Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
@@ -622,6 +622,11 @@ private:
             if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
                     " Unsupported partial FILECONTENTS_SIZE packet");
+                throw Error(ERR_RDP_UNSUPPORTED);
+            }
+            if (size_t(file->file_group_id) >= this->file_descr_list.size()) {
+                LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
+                    " Invalid lindex");
                 throw Error(ERR_RDP_UNSUPPORTED);
             }
             check_throw(chunk, 8, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
@@ -751,66 +756,64 @@ private:
         auto requested_format_id = this->clip_data.requestedFormatId;
         auto file_list_format_id = side_data.file_list_format_id;
 
-        if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
-            if (file_list_format_id && requested_format_id == file_list_format_id) {
-                FormatDataResponseReceiveFileList receiver(
-                    this->file_descr_list,
-                    chunk,
-                    in_header,
-                    this->params.dont_log_data_into_syslog,
-                    side_data.file_list_format_id,
-                    flags,
-                    side_data.file_descriptor_stream,
-                    this->verbose,
-                    is_from_remote_session ? "client" : "server"
-                );
+        if (file_list_format_id && requested_format_id == file_list_format_id) {
+            FormatDataResponseReceiveFileList receiver(
+                this->file_descr_list,
+                chunk,
+                in_header,
+                this->params.dont_log_data_into_syslog,
+                side_data.file_list_format_id,
+                flags,
+                side_data.file_descriptor_stream,
+                this->verbose,
+                is_from_remote_session ? "client" : "server"
+            );
 
-                this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
-            }
-            else {
-                auto original_chunk = chunk.clone();
-                FormatDataResponseReceive receiver(requested_format_id, chunk, flags);
+            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
+        }
+        else {
+            auto original_chunk = chunk.clone();
+            FormatDataResponseReceive receiver(requested_format_id, chunk, flags);
 
-                this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
 
-                std::string const& target_name = is_from_remote_session
-                    ? this->params.validator_params.down_target_name
-                    : this->params.validator_params.up_target_name;
+            std::string const& target_name = is_from_remote_session
+                ? this->params.validator_params.down_target_name
+                : this->params.validator_params.up_target_name;
 
-                if (!target_name.empty()) {
-                    switch (requested_format_id) {
-                        case RDPECLIP::CF_TEXT:
-                        case RDPECLIP::CF_UNICODETEXT: {
-                            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                                if (bool(side_data.clip_text_id)) {
-                                    this->file_validator->send_eof(side_data.clip_text_id);
-                                    side_data.push_clip_text_to_list();
-                                }
-                                side_data.clip_text_id = this->file_validator->open_text(
-                                    RDPECLIP::CF_TEXT == requested_format_id
-                                        ? 0u : side_data.clip_text_locale_identifier,
-                                    target_name);
-                            }
-                            uint8_t utf8_buf[32*1024];
-                            auto utf8_av = UTF16toUTF8_buf(
-                                original_chunk.remaining_bytes(),
-                                make_array_view(utf8_buf));
-                            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                                if (not utf8_av.empty() && utf8_av.back() == '\0') {
-                                    utf8_av = utf8_av.drop_back(1);
-                                }
-                            }
-                            this->file_validator->send_data(side_data.clip_text_id, utf8_av);
-                            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            if (!target_name.empty()) {
+                switch (requested_format_id) {
+                    case RDPECLIP::CF_TEXT:
+                    case RDPECLIP::CF_UNICODETEXT: {
+                        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                            if (bool(side_data.clip_text_id)) {
                                 this->file_validator->send_eof(side_data.clip_text_id);
                                 side_data.push_clip_text_to_list();
                             }
-                            break;
+                            side_data.clip_text_id = this->file_validator->open_text(
+                                RDPECLIP::CF_TEXT == requested_format_id
+                                    ? 0u : side_data.clip_text_locale_identifier,
+                                target_name);
                         }
-                        case RDPECLIP::CF_LOCALE:
-                            side_data.clip_text_locale_identifier = original_chunk.in_uint32_le();
-                            break;
+                        uint8_t utf8_buf[32*1024];
+                        auto utf8_av = UTF16toUTF8_buf(
+                            original_chunk.remaining_bytes(),
+                            make_array_view(utf8_buf));
+                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            if (not utf8_av.empty() && utf8_av.back() == '\0') {
+                                utf8_av = utf8_av.drop_back(1);
+                            }
+                        }
+                        this->file_validator->send_data(side_data.clip_text_id, utf8_av);
+                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            this->file_validator->send_eof(side_data.clip_text_id);
+                            side_data.push_clip_text_to_list();
+                        }
+                        break;
                     }
+                    case RDPECLIP::CF_LOCALE:
+                        side_data.clip_text_locale_identifier = original_chunk.in_uint32_le();
+                        break;
                 }
             }
         }

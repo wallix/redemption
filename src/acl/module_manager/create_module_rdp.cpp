@@ -151,9 +151,7 @@ public:
 
     FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
     {
-        if (!this->fdx_capture
-         && ini.get<cfg::file_verification::file_record>() != RdpFileRecord::never
-        ) {
+        if (!this->fdx_capture) {
             LOG(LOG_INFO, "Enable clipboard file record");
             int  const groupid = ini.get<cfg::video::capture_groupid>();
             auto const& session_id = ini.get<cfg::context::session_id>();
@@ -719,14 +717,15 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                 });
             }
             else {
-                enable_validator = false;
-                LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
+                LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
                 file_verification_error(
                     front, session_reactor, report_message,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
                     "Unable to connect to FileValidator service"_av
                 );
+                // enable_validator = false;
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
         }
         // ================== End FileValidator =========================
@@ -819,11 +818,22 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
 
         if (new_mod) {
             assert(&ini == &this->ini);
-            new_mod->get_rdp_factory().always_file_record
-              = (ini.get<cfg::file_verification::file_record>() == RdpFileRecord::always);
-            new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
-                return mod->get_fdx_capture(this->gen, this->ini, this->cctx);
-            };
+            new_mod->get_rdp_factory().always_file_storage
+              = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
+            switch (ini.get<cfg::file_storage::store_file>())
+            {
+                case RdpStoreFile::never:
+                    break;
+                case RdpStoreFile::on_invalid_verification:
+                    if (!enable_validator) {
+                        break;
+                    }
+                    [[fallthrough]];
+                case RdpStoreFile::always:
+                    new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
+                        return mod->get_fdx_capture(this->gen, this->ini, this->cctx);
+                    };
+            }
         }
 
         if (host_mod_in_widget) {

@@ -34,6 +34,7 @@
 #include "main/version.hpp"
 #include "program_options/program_options.hpp"
 #include "system/scoped_crypto_init.hpp"
+#include "system/scoped_ssl_init.hpp"
 #include "transport/file_transport.hpp"
 #include "transport/file_transport.hpp"
 
@@ -223,7 +224,7 @@ int main(int argc, char** argv)
         "Copyright (C) WALLIX 2010-2018.\n"
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou,\n"
-        "Meng Tan, Clement Moroldo and Jennifer Inthavongh.";
+        "Meng Tan, Jennifer Inthavong, Clement Moroldo and David Fort.";
 
     setlocale(LC_CTYPE, "C");
 
@@ -419,6 +420,7 @@ int main(int argc, char** argv)
     configuration_load(ini.configuration_holder(), config_filename);
 
     ScopedCryptoInit scoped_crypto;
+    ScopedSslInit scoped_ssl;
 
     if (!ini.get<cfg::globals::enable_transparent_mode>()) {
         if (setgid(egid) != 0){

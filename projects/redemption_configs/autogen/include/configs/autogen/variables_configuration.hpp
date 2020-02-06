@@ -2125,7 +2125,7 @@ namespace cfg {
     /// type: SessionProbeDisabledFeature <br/>
     /// connpolicy -> proxy    [name: session_probe::disabled_features] <br/>
     /// sesman::name: mod_rdp:session_probe_disabled_features <br/>
-    /// value = static_cast<type>(352) <br/>
+    /// value = static_cast<type>(864) <br/>
     struct mod_rdp::session_probe_disabled_features {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2137,7 +2137,7 @@ namespace cfg {
         using type = SessionProbeDisabledFeature;
         using sesman_and_spec_type = SessionProbeDisabledFeature;
         using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(352);
+        type value = static_cast<type>(864);
     };
     /// If enabled, disconnected session can be recovered by a different primary user. <br/>
     /// type: bool <br/>
@@ -2772,7 +2772,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_VALIDATOR_PATH;
     };
-    /// Enable use of ICAP service for file verification on upload <br/>
+    /// Enable use of ICAP service for file verification on upload. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:enable_up <br/>
@@ -2790,7 +2790,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Enable use of ICAP service for file verification on download <br/>
+    /// Enable use of ICAP service for file verification on download. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:enable_down <br/>
@@ -2808,8 +2808,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Verify text data via clipboard from client to server <br/>
-    /// File verification on upload must be enabled via option Enable up <br/>
+    /// Verify text data via clipboard from client to server. <br/>
+    /// File verification on upload must be enabled via option Enable up. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:clipboard_text_up <br/>
@@ -2828,7 +2828,7 @@ namespace cfg {
         type value{};
     };
     /// Verify text data via clipboard from server to client <br/>
-    /// File verification on download must be enabled via option Enable down <br/>
+    /// File verification on download must be enabled via option Enable down. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:clipboard_text_down <br/>
@@ -2846,23 +2846,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: RdpFileRecord <br/>
-    /// connpolicy -> proxy <br/>
-    /// sesman::name: file_verification:file_record <br/>
-    /// value = static_cast<type>(0) <br/>
-    struct file_verification::file_record {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "file_verification";
-        static constexpr char const * name = "file_record";
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(91);
-        using type = RdpFileRecord;
-        using sesman_and_spec_type = RdpFileRecord;
-        using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(0);
-    };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: file_verification:log_if_accepted <br/>
@@ -2874,11 +2857,30 @@ namespace cfg {
         static constexpr char const * name = "log_if_accepted";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(92);
+        static constexpr authid_t index = authid_t(91);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
+    };
+
+    /// Enable storage of transferred files (via RDP Clipboard). <br/>
+    /// type: RdpStoreFile <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesman::name: file_storage:store_file <br/>
+    /// value = static_cast<type>(0) <br/>
+    struct file_storage::store_file {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "file_storage";
+        static constexpr char const * name = "store_file";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(92);
+        using type = RdpStoreFile;
+        using sesman_and_spec_type = RdpStoreFile;
+        using mapped_type = sesman_and_spec_type;
+        type value = static_cast<type>(0);
     };
 
     /// Ip or fqdn of ICAP server <br/>
@@ -3395,7 +3397,7 @@ namespace cfg {
     };
     /// FFmpeg options for video codec. <br/>
     /// type: std::string <br/>
-    /// value = "profile=baseline preset=ultrafast flags=+qscale b=30000" <br/>
+    /// value = "profile=baseline preset=ultrafast flags=+qscale b=80000" <br/>
     struct video::ffmpeg_options {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3404,7 +3406,7 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "profile=baseline preset=ultrafast flags=+qscale b=30000";
+        type value = "profile=baseline preset=ultrafast flags=+qscale b=80000";
     };
     /// type: bool <br/>
     /// value{false} <br/>
@@ -5491,8 +5493,11 @@ struct file_verification
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
-, cfg::file_verification::file_record
 , cfg::file_verification::log_if_accepted
+{ static constexpr bool is_section = true; };
+
+struct file_storage
+: cfg::file_storage::store_file
 { static constexpr bool is_section = true; };
 
 struct icap_server_down
@@ -5707,6 +5712,7 @@ struct VariablesConfiguration
 , cfg_section::mod_vnc
 , cfg_section::metrics
 , cfg_section::file_verification
+, cfg_section::file_storage
 , cfg_section::icap_server_down
 , cfg_section::icap_server_up
 , cfg_section::mod_replay
@@ -5814,8 +5820,8 @@ using VariablesAclPack = Pack<
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
-, cfg::file_verification::file_record
 , cfg::file_verification::log_if_accepted
+, cfg::file_storage::store_file
 , cfg::mod_replay::replay_on_loop
 , cfg::video::hash_path
 , cfg::video::record_tmp_path

@@ -198,12 +198,13 @@ inline void config_type_definition(type_enumerations & e)
       .value("firefox_inspection", "Inspect Firefox Address/Search bar")
       .value("ie_monitoring", "Monitor Internet Explorer event")
       .value("group_membership", "Inspect group membership of user")
+      .value("bestsafe_integration", "BestSafe integration")
     ;
 
-    e.enumeration_list("RdpFileRecord")
-      .value("never")
-      .value("always")
-      .value("on_verification_failure")
+    e.enumeration_list("RdpStoreFile")
+      .value("never", "Never store transferred files.")
+      .value("always", "Always store transferred files.")
+      .value("on_invalid_verification", "Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).")
       .set_string_parser()
     ;
 

@@ -130,7 +130,8 @@ cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled
       0x040: Inspect Firefox Address/Search bar
       0x080: Monitor Internet Explorer event
       0x100: Inspect group membership of user
-    Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+      0x200: BestSafe integration
+    Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
 cfg::mod_rdp::session_probe_public_session ⇐ mod_rdp:session_probe_public_session   [bool]
     If enabled, disconnected session can be recovered by a different primary user.
 cfg::mod_rdp::session_probe_on_account_manipulation ⇐ mod_rdp:session_probe_on_account_manipulation   [SessionProbeOnAccountManipulation]
@@ -200,17 +201,22 @@ cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_e
 
 
 cfg::file_verification::enable_up ⇐ file_verification:enable_up   [bool]
-    Enable use of ICAP service for file verification on upload
+    Enable use of ICAP service for file verification on upload.
 cfg::file_verification::enable_down ⇐ file_verification:enable_down   [bool]
-    Enable use of ICAP service for file verification on download
+    Enable use of ICAP service for file verification on download.
 cfg::file_verification::clipboard_text_up ⇐ file_verification:clipboard_text_up   [bool]
-    Verify text data via clipboard from client to server
-    File verification on upload must be enabled via option Enable up
+    Verify text data via clipboard from client to server.
+    File verification on upload must be enabled via option Enable up.
 cfg::file_verification::clipboard_text_down ⇐ file_verification:clipboard_text_down   [bool]
     Verify text data via clipboard from server to client
-    File verification on download must be enabled via option Enable down
-cfg::file_verification::file_record ⇐ file_verification:file_record   [RdpFileRecord]
+    File verification on download must be enabled via option Enable down.
 cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   [bool]
+
+cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile]
+    Enable storage of transferred files (via RDP Clipboard).
+      never: Never store transferred files.
+      always: Always store transferred files.
+      on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
 
 
 

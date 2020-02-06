@@ -362,29 +362,29 @@ array_view_const_char assign_zbuf_from_cfg(
 
 parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
 {
-    return parse_enum_u(x, value, std::integral_constant<unsigned long, 511>());
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 1023>());
 }
 
 array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<RdpFileRecord> & buf,
-    cfg_s_type<RdpFileRecord> /*type*/,
-    RdpFileRecord x
+    zstr_buffer_from<RdpStoreFile> & buf,
+    cfg_s_type<RdpStoreFile> /*type*/,
+    RdpStoreFile x
 ){
     (void)buf;    static constexpr array_view_const_char arr[]{
         cstr_array_view("never"),
         cstr_array_view("always"),
-        cstr_array_view("on_verification_failure"),
+        cstr_array_view("on_invalid_verification"),
     };
     assert(is_valid_enum_value(x));
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(RdpFileRecord & x, spec_type<RdpFileRecord> /*type*/, array_view_const_char value)
+parse_error parse(RdpStoreFile & x, spec_type<RdpStoreFile> /*type*/, array_view_const_char value)
 {
     return parse_enum_str(x, value, {
-        {cstr_array_view("never"), RdpFileRecord::never},
-        {cstr_array_view("always"), RdpFileRecord::always},
-        {cstr_array_view("on_verification_failure"), RdpFileRecord::on_verification_failure},
+        {cstr_array_view("never"), RdpStoreFile::never},
+        {cstr_array_view("always"), RdpStoreFile::always},
+        {cstr_array_view("on_invalid_verification"), RdpStoreFile::on_invalid_verification},
     });
 }
 

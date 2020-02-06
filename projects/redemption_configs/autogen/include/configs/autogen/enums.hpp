@@ -523,11 +523,13 @@ enum class SessionProbeDisabledFeature : unsigned short
     ie_monitoring = 128,
     // Inspect group membership of user
     group_membership = 256,
+    // BestSafe integration
+    bestsafe_integration = 512,
 };
 
 inline bool is_valid_enum_value(SessionProbeDisabledFeature e)
 {
-    return static_cast<unsigned long>(e) <= 511;
+    return static_cast<unsigned long>(e) <= 1023;
 }
 
 inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
@@ -535,7 +537,7 @@ inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, Se
 inline SessionProbeDisabledFeature operator & (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
 { return static_cast<SessionProbeDisabledFeature>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline SessionProbeDisabledFeature operator ~ (SessionProbeDisabledFeature x)
-{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(511)); }
+{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1023)); }
 inline SessionProbeDisabledFeature operator + (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x | y; }
 inline SessionProbeDisabledFeature operator - (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x & ~y; }
 inline SessionProbeDisabledFeature & operator |= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x | y; }
@@ -549,19 +551,22 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeDisabledFeature e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class RdpFileRecord : unsigned char
+enum class RdpStoreFile : unsigned char
 {
+    // Never store transferred files.
     never = 0,
+    // Always store transferred files.
     always = 1,
-    on_verification_failure = 2,
+    // Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+    on_invalid_verification = 2,
 };
 
-inline bool is_valid_enum_value(RdpFileRecord e)
+inline bool is_valid_enum_value(RdpStoreFile e)
 { return static_cast<unsigned long>(e) <= 2; }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, RdpFileRecord e)
+operator << (std::basic_ostream<Ch, Tr> & os, RdpStoreFile e)
 { return os << static_cast<unsigned long>(e); }
 
 

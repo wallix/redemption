@@ -59,7 +59,7 @@ public:
     {
         char* name;
         krb5_error_code ret;
-        krb5_creds creds;
+        krb5_creds creds {};
         krb5_principal client_princ;
         krb5_ccache ccache;
         if (cache_name) {
@@ -74,9 +74,7 @@ public:
                 LOG(LOG_ERR, "CC Default resolve ");
             }
         }
-        memset(&creds, 0, sizeof(creds));
-        
-        
+
         /** krb5_parse_name (from krb5.h)
          * Convert a string principal name to a krb5_principal structure.
          *
@@ -109,7 +107,7 @@ public:
          * @return
          * Kerberos error codes
          */
-        
+
         ret = krb5_parse_name(this->ctx, princname, &client_princ);
         LOG(LOG_INFO, "Parse name %s", princname);
         if (ret) {

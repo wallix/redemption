@@ -52,7 +52,7 @@ static inline void send_data_indication_ex( Transport & trans
     X224::DT_TPDU_Send(x224_header, stream.get_packet().size() + mcs_header.get_offset());
 
     auto packet = stream.copy_to_head(x224_header, mcs_header);
-    trans.send(packet.data(), packet.size());
+    trans.send(packet);
 }
 
 template<class... DataWriter>
@@ -290,7 +290,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
             auto packet = fragmentPayload->get_packet();
 
-            trans.send(packet.data(), packet.size());
+            trans.send(packet);
 
             fragmentId++;
             remaining -= fragmentSize;

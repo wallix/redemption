@@ -111,7 +111,6 @@
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "core/stream_throw_helpers.hpp"
 
-#include "system/tls_context.hpp"
 #include "proxy_recorder/nego_server.hpp"
 #include "acl/sesman.hpp"
 
@@ -711,13 +710,6 @@ public:
             });
         }
 
-        auto tvtmp = this->session_reactor.get_current_time() + this->ini.get<cfg::globals::handshake_timeout>();
-
-        LOG(LOG_INFO, "set front connection timeout at %u s %u us", unsigned(tvtmp.tv_sec), unsigned(tvtmp.tv_usec));
-
-
-        init_TLS();
-
         // --------------------------------------------------------
 
         for (bool& x : this->palette_memblt_sent) {
@@ -770,9 +762,8 @@ public:
         }
     }
 
-    ~Front() override {
-        ERR_free_strings();
-
+    ~Front() override
+    {
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
@@ -912,8 +903,8 @@ public:
         auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
         auto const& record_dir = ini.get<cfg::video::record_path>();
         auto const& hash_dir = ini.get<cfg::video::hash_path>();
-        auto record_path = str_concat(record_dir.as_string(), subdir);
-        auto hash_path = str_concat(hash_dir.as_string(), subdir);
+        auto record_path = str_concat(record_dir.as_string(), subdir, '/');
+        auto hash_path = str_concat(hash_dir.as_string(), subdir, '/');
 
         for (auto* s : {&record_path, &hash_path}) {
             if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
@@ -2812,13 +2803,13 @@ public:
         break;
 
         case ACTIVATE_AND_PROCESS_DATA:
-//            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-//                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
+            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
             this->activate_and_process_data(tpdu, current_pdu_type, cb, sesman);
         break;
         case FRONT_UP_AND_RUNNING:
-//            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-//                "Front::incoming: FRONT_UP_AND_RUNNING");
+            LOG_IF(true||bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                "Front::incoming: FRONT_UP_AND_RUNNING");
             this->up_and_running(tpdu, current_pdu_type, cb, sesman);
         break;
         }

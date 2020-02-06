@@ -55,7 +55,7 @@ void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t hei
         unsigned(height),
         has_checksum  ? "checksum" : "nochecksum"
     );
-    RED_CHECK_EQ(writer.write(header1, len), len);
+    RED_CHECK_EQ(writer.write({header1, size_t(len)}), len);
 }
 
 
@@ -297,7 +297,7 @@ int wrmcapture_write_meta_file(
     mwrm_buf.write_line(filename, stat, start_sec, stop_sec, false, dummy_hash, dummy_hash);
 
     auto buf = mwrm_buf.buffer();
-    ssize_t res = writer.write(byte_ptr(buf.data()), buf.size());
+    ssize_t res = writer.write(buf);
     if (res < static_cast<ssize_t>(buf.size())) {
         return res < 0 ? int(res) : 1;
     }
@@ -378,8 +378,8 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     struct {
         size_t len = 0;
-        ssize_t write(char const * /*unused*/, size_t len) {
-            this->len += len;
+        ssize_t write(array_view_const_char d) {
+            this->len += d.size();
             return len;
         }
     } meta_len_writer;
@@ -441,8 +441,8 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     struct {
         size_t len = 0;
-        ssize_t write(char const * /*unused*/, size_t len) {
-            this->len += len;
+        ssize_t write(array_view_const_char d) {
+            this->len += d.size();
             return len;
         }
     } meta_len_writer;

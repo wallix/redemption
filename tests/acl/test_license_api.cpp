@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ ;");
 
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ const uint8_t license_data[%zu] = {", in.size());
-                    hexdump_d(in.data(), in.size());
+                    hexdump_d(in);
                     LOG(LOG_INFO, "/*CaptureLicenseStore */ };");
 
                     return true;

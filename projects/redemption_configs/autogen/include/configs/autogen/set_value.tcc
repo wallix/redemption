@@ -1385,19 +1385,26 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "file_record")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_verification::file_record&>(this->variables).value,
-                ::configs::spec_type<RdpFileRecord>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "log_if_accepted")) {
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "file_storage")) {
+        if (0) {}
+        else if (0 == strcmp(key, "store_file")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_storage::store_file&>(this->variables).value,
+                ::configs::spec_type<RdpStoreFile>{},
                 av
             );
         }

@@ -23,6 +23,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/frozen_time.hpp"
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
 

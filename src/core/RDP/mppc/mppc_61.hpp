@@ -560,7 +560,7 @@ private:
         this->Level2ComprFlags = 0;
 
 
-        ::memset(this->level_1_output_buffer, 0, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE);
+        ::memset(this->level_1_output_buffer, 0, sizeof(this->level_1_output_buffer));
         this->level_1_compressed_data_size = 0;
         this->outputBuffer                 = nullptr;
         this->bytes_in_output_buffer       = 0;
@@ -581,7 +581,7 @@ private:
             LOG_IF(this->verbose, LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
             this->historyOffset = 0;
 
-            ::memset(this->historyBuffer, 0, RDP_61_HISTORY_BUFFER_LENGTH * sizeof(uint8_t));
+            ::memset(this->historyBuffer, 0, sizeof(this->historyBuffer));
             this->match_finder.process_packet_at_front();
         }
 

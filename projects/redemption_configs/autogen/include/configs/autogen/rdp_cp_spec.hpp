@@ -201,10 +201,11 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+#   0x200: BestSafe integration
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
 #_advanced
 #_hex
-disabled_features = integer(min=0, max=511, default=352)
+disabled_features = integer(min=0, max=1023, default=864)
 
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
@@ -286,24 +287,30 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 
 [file_verification]
 
-# Enable use of ICAP service for file verification on upload
+# Enable use of ICAP service for file verification on upload.
 enable_up = boolean(default=False)
 
-# Enable use of ICAP service for file verification on download
+# Enable use of ICAP service for file verification on download.
 enable_down = boolean(default=False)
 
-# Verify text data via clipboard from client to server
-# File verification on upload must be enabled via option Enable up
+# Verify text data via clipboard from client to server.
+# File verification on upload must be enabled via option Enable up.
 clipboard_text_up = boolean(default=False)
 
 # Verify text data via clipboard from server to client
-# File verification on download must be enabled via option Enable down
+# File verification on download must be enabled via option Enable down.
 clipboard_text_down = boolean(default=False)
-
-file_record = option('never', 'always', 'on_verification_failure', default='never')
 
 #_advanced
 log_if_accepted = boolean(default=True)
+
+[file_storage]
+
+# Enable storage of transferred files (via RDP Clipboard).
+#   never: Never store transferred files.
+#   always: Always store transferred files.
+#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+store_file = option('never', 'always', 'on_invalid_verification', default='never')
 
 [video]
 

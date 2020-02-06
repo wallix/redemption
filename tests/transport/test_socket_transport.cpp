@@ -54,8 +54,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     unique_fd sck_server = create_server(inet_addr("127.0.0.1"), port, EnableTransparentMode::No);
 
     int nb_inbuffer = 0;
-    uint8_t buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
+    uint8_t buffer[1024] {};
     uint8_t * p = buffer;
 
     int nb_recv_sck = 0;

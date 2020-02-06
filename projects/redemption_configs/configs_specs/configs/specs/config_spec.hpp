@@ -79,6 +79,7 @@ void config_spec_definition(Writer && W)
             "mod_vnc",
             "metrics",
             "file_verification",
+            "file_storage",
             "icap_server_down",
             "icap_server_up",
             "mod_replay",
@@ -408,7 +409,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
 
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership | SessionProbeDisabledFeature::bestsafe_integration));
 
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
@@ -561,7 +562,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "codec_id", set("mp4"));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "framerate", set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{"FFmpeg options for video codec."}, set("profile=baseline preset=ultrafast flags=+qscale b=30000"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{"FFmpeg options for video codec."}, set("profile=baseline preset=ultrafast flags=+qscale b=80000"));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "notimestamp", set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));
@@ -644,14 +645,17 @@ void config_spec_definition(Writer && W)
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up", desc{"Enable use of ICAP service for file verification on upload"});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down", desc{"Enable use of ICAP service for file verification on download"});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server\nFile verification on upload must be enabled via option Enable up"});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down"});
-
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<RdpFileRecord>(), "file_record", set(RdpFileRecord::never));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up", desc{"Enable use of ICAP service for file verification on upload."});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down", desc{"Enable use of ICAP service for file verification on download."});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
+    });
+
+    W.section("file_storage", [&]
+    {
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<RdpStoreFile>(), "store_file", set(RdpStoreFile::never), desc{"Enable storage of transferred files (via RDP Clipboard)."});
     });
 
     for (char const* section_name : {"icap_server_up", "icap_server_down"}) {

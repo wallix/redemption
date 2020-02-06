@@ -29,6 +29,7 @@
 #include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
+#include "system/scoped_ssl_init.hpp"
 
 #pragma GCC diagnostic pop
 
@@ -151,8 +152,18 @@ int main(int argc, char const** argv)
     GraphicTimerContainer graphic_timer_events_;
     Inifile ini;
     SesmanInterface sesman(ini);
+    ScopedSslInit scoped_ssl;
 
-    ClientRedemptionHeadless client(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman, config);
+                             
+
+    ClientRedemptionHeadless client(session_reactor,
+                                    fd_events_,
+                                    graphic_fd_events_,
+                                    timer_events_,
+                                    graphic_events_,
+                                    graphic_timer_events_,
+                                    sesman,
+                                    config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

@@ -62,6 +62,21 @@ namespace re {
 
         REDEMPTION_NON_COPYABLE(StateMachine2);
 
+        struct AlignementCtx
+        {
+            size_t total_size = 0;
+
+            template<class T>
+            size_t next(size_t n)
+            {
+                size_t align_val = alignof(T) - 1u;
+                this->total_size = (this->total_size + align_val) & ~align_val;
+                auto start = this->total_size;
+                this->total_size += sizeof(T) * n;
+                return start;
+            }
+        };
+
         void initialize_memory_with_capture(size_t nb_st_list,
                                             size_t nb_st_range_list,
                                             size_t nb_idx_trace_free,
@@ -69,53 +84,36 @@ namespace re {
                                             size_t nb_traces,
                                             size_t byte_mini_sts, size_t byte_mini_sts_seq)
         {
-            nb_st_list *= sizeof(StateList);
-            nb_st_list += nb_st_list % sizeof(intmax_t);
+            AlignementCtx alignement_ctx;
 
-            nb_st_range_list *= sizeof(RangeList);
-            nb_st_range_list += nb_st_range_list % sizeof(intmax_t);
-
-            size_t nb_step_range_list = this->nodes * sizeof(StepRangeList::StepRange);
-            nb_step_range_list += nb_step_range_list % sizeof(intmax_t);
-
-            nb_traces *= sizeof(char*);
-            nb_traces += nb_traces % sizeof(intmax_t);
-
-            nb_idx_trace_free *= sizeof(unsigned);
-            nb_reindex_trace *= sizeof(unsigned);
-            size_t nb_nums = this->nb_states * sizeof(unsigned);
-            nb_nums += (nb_nums + nb_idx_trace_free + nb_reindex_trace) % sizeof(unsigned);
-
-            size_t nb_cap_type = this->nb_capture * sizeof(bool);
-            nb_cap_type += nb_cap_type % sizeof(intmax_t);
-
-            byte_mini_sts += byte_mini_sts % sizeof(intmax_t);
+            size_t pos_st_list = alignement_ctx.next<StateList>(nb_st_list);
+            size_t pos_st_rng_list = alignement_ctx.next<RangeList>(nb_st_range_list);
+            size_t pos_step_rng_list1 = alignement_ctx.next<StepRangeList::StepRange>(this->nodes);
+            size_t pos_step_rng_list2 = alignement_ctx.next<StepRangeList::StepRange>(this->nodes);
+            size_t pos_trace = alignement_ctx.next<char*>(nb_traces);
+            size_t pos_idx_trace_free = alignement_ctx.next<unsigned>(nb_idx_trace_free);
+            size_t pos_reindex_trace = alignement_ctx.next<unsigned>(nb_reindex_trace);
+            size_t pos_nb_nums = alignement_ctx.next<unsigned>(this->nb_states);
+            size_t pos_nb_cap_type = alignement_ctx.next<bool>(this->nb_capture);
+            size_t pos_byte_mini_sts = alignement_ctx.next<MinimalState>(byte_mini_sts);
 
             char * mem = static_cast<char*>(::operator new(
-                nb_st_list + nb_st_range_list + nb_step_range_list * 2
-                + nb_traces + nb_idx_trace_free + nb_reindex_trace + nb_nums
-                + nb_cap_type + byte_mini_sts + byte_mini_sts_seq
+                alignement_ctx.total_size + byte_mini_sts_seq,
+                std::align_val_t(alignof(StateList))
             ));
 
-            this->st_list = reinterpret_cast<StateList*>(mem); /*NOLINT*/
-            mem += nb_st_list;
-            this->st_range_list = reinterpret_cast<RangeList*>(mem); /*NOLINT*/
-            mem += nb_st_range_list;
-            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
-            mem += nb_step_range_list;
-            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
-            mem += nb_step_range_list;
-            this->traces = reinterpret_cast<const char**>(mem); /*NOLINT*/
-            mem += nb_traces;
-            this->idx_trace_free = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
-            mem += nb_idx_trace_free;
-            this->reindex_trace = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
-            mem += nb_reindex_trace;
-            this->nums = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
-            mem += nb_nums;
-            this->caps_type = reinterpret_cast<bool*>(mem); /*NOLINT*/
-            mem += nb_cap_type;
-            this->mini_sts = reinterpret_cast<MinimalState*>(mem); /*NOLINT*/
+            assert(pos_st_list == 0);
+
+            this->st_list = reinterpret_cast<StateList*>(mem + pos_st_list); /*NOLINT*/
+            this->st_range_list = reinterpret_cast<RangeList*>(mem + pos_st_rng_list); /*NOLINT*/
+            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem + pos_step_rng_list1)); /*NOLINT*/
+            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem + pos_step_rng_list2)); /*NOLINT*/
+            this->traces = reinterpret_cast<const char**>(mem + pos_trace); /*NOLINT*/
+            this->idx_trace_free = reinterpret_cast<unsigned*>(mem + pos_idx_trace_free); /*NOLINT*/
+            this->reindex_trace = reinterpret_cast<unsigned*>(mem + pos_reindex_trace); /*NOLINT*/
+            this->nums = reinterpret_cast<unsigned*>(mem + pos_nb_nums); /*NOLINT*/
+            this->caps_type = reinterpret_cast<bool*>(mem + pos_nb_cap_type); /*NOLINT*/
+            this->mini_sts = reinterpret_cast<MinimalState*>(mem + pos_byte_mini_sts); /*NOLINT*/
 
 #ifndef NDEBUG
             this->l1.nodes = this->nodes;
@@ -126,36 +124,28 @@ namespace re {
         void initialize_memory_without_capture(size_t nb_st_list, size_t nb_st_range_list,
                                                size_t byte_mini_sts, size_t byte_mini_sts_seq)
         {
-            nb_st_list *= sizeof(StateList);
-            nb_st_list += nb_st_list % sizeof(intmax_t);
+            AlignementCtx alignement_ctx;
 
-            nb_st_range_list *= sizeof(RangeList);
-            nb_st_range_list += nb_st_range_list % sizeof(intmax_t);
-
-            size_t nb_step_range_list = this->nodes * sizeof(StepRangeList::StepRange);
-            nb_step_range_list += nb_step_range_list % sizeof(intmax_t);
-
-            size_t nb_nums = this->nb_states * sizeof(unsigned);
-            nb_nums += nb_nums % sizeof(intmax_t);
-
-            byte_mini_sts += byte_mini_sts % sizeof(intmax_t);
+            size_t pos_st_list = alignement_ctx.next<StateList>(nb_st_list);
+            size_t pos_st_rng_list = alignement_ctx.next<RangeList>(nb_st_range_list);
+            size_t pos_step_rng_list1 = alignement_ctx.next<StepRangeList::StepRange>(this->nodes);
+            size_t pos_step_rng_list2 = alignement_ctx.next<StepRangeList::StepRange>(this->nodes);
+            size_t pos_nb_nums = alignement_ctx.next<unsigned>(this->nb_states);
+            size_t pos_byte_mini_sts = alignement_ctx.next<MinimalState>(byte_mini_sts);
 
             char * mem = static_cast<char*>(::operator new(
-                nb_st_list + nb_st_range_list + nb_step_range_list * 2
-                + nb_nums + byte_mini_sts + byte_mini_sts_seq
+                alignement_ctx.total_size + byte_mini_sts_seq,
+                std::align_val_t(alignof(StateList))
             ));
 
-            this->st_list = reinterpret_cast<StateList*>(mem); /*NOLINT*/
-            mem += nb_st_list;
-            this->st_range_list = reinterpret_cast<RangeList*>(mem); /*NOLINT*/
-            mem += nb_st_range_list;
-            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
-            mem += nb_step_range_list;
-            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
-            mem += nb_step_range_list;
-            this->nums = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
-            mem += nb_nums;
-            this->mini_sts = reinterpret_cast<MinimalState*>(mem); /*NOLINT*/
+            assert(pos_st_list == 0);
+
+            this->st_list = reinterpret_cast<StateList*>(mem + pos_st_list); /*NOLINT*/
+            this->st_range_list = reinterpret_cast<RangeList*>(mem + pos_st_rng_list); /*NOLINT*/
+            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem + pos_step_rng_list1)); /*NOLINT*/
+            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem + pos_step_rng_list2)); /*NOLINT*/
+            this->nums = reinterpret_cast<unsigned*>(mem + pos_nb_nums); /*NOLINT*/
+            this->mini_sts = reinterpret_cast<MinimalState*>(mem + pos_byte_mini_sts); /*NOLINT*/
 
 #ifndef NDEBUG
             this->l1.nodes = this->nodes;
@@ -165,23 +155,22 @@ namespace re {
 
         void initialize_minimal_memory(size_t nb_st_list, unsigned nb_st)
         {
-            nb_st_list *= sizeof(StateList);
-            nb_st_list += nb_st_list % sizeof(intmax_t);
+            AlignementCtx alignement_ctx;
 
-            size_t nb_st_range_list = nb_st * sizeof(RangeList);
-            nb_st_range_list += nb_st_range_list % sizeof(intmax_t);
-
-            size_t nb_nums = this->nb_states * sizeof(unsigned);
+            size_t pos_st_list = alignement_ctx.next<StateList>(nb_st_list);
+            size_t pos_st_rng_list = alignement_ctx.next<RangeList>(nb_st);
+            size_t pos_nb_nums = alignement_ctx.next<unsigned>(this->nb_states);
 
             char * mem = static_cast<char*>(::operator new(
-                nb_st_list + nb_st_range_list + nb_nums
+                alignement_ctx.total_size,
+                std::align_val_t(alignof(StateList))
             ));
 
-            this->st_list = reinterpret_cast<StateList*>(mem); /*NOLINT*/
-            mem += nb_st_list;
-            this->st_range_list = reinterpret_cast<RangeList*>(mem); /*NOLINT*/
-            mem += nb_st_range_list;
-            this->nums = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
+            assert(pos_st_list == 0);
+
+            this->st_list = reinterpret_cast<StateList*>(mem + pos_st_list); /*NOLINT*/
+            this->st_range_list = reinterpret_cast<RangeList*>(mem + pos_st_rng_list); /*NOLINT*/
+            this->nums = reinterpret_cast<unsigned*>(mem + pos_nb_nums); /*NOLINT*/
         }
 
         void initialize_memory(size_t nb_st_list, size_t nb_st_range_list,
@@ -365,26 +354,36 @@ namespace re {
 
             if (this->st_range_list == this->st_range_list_last && !root->out1 && !root->out2) {
                 if (minimal_mem) {
-                    ::operator delete(this->st_list);
+                    ::operator delete(this->st_list, std::align_val_t(alignof(StateList)));
                     if (copy_states) {
-                        void * const mem = ::operator new(sizeof(MinimalState) + this->nb_states * sizeof * this->nums);
-                        this->st_list = static_cast<StateList*>(mem);
-                        this->nums = reinterpret_cast<unsigned*>(static_cast<MinimalState*>(mem) + 1); /*NOLINT*/
-                        this->root = static_cast<State*>(mem);
-                        this->mini_sts = static_cast<MinimalState*>(mem);
+                        AlignementCtx alignement_ctx;
+
+                        size_t pos_mini_st = alignement_ctx.next<MinimalState>(1);
+                        size_t pos_nb_states = alignement_ctx.next<unsigned>(this->nb_states);
+
+                        char * mem = static_cast<char*>(::operator new(
+                            alignement_ctx.total_size, std::align_val_t(alignof(StateList))
+                        ));
+
+                        assert(pos_mini_st == 0);
+
+                        this->st_list = reinterpret_cast<StateList*>(mem + pos_mini_st); /*NOLINT*/
+                        this->nums = reinterpret_cast<unsigned*>(mem + pos_nb_states); /*NOLINT*/
+                        this->root = reinterpret_cast<State*>(mem + pos_mini_st); /*NOLINT*/
+                        this->mini_sts = reinterpret_cast<MinimalState*>(mem + pos_mini_st); /*NOLINT*/
                         this->mini_sts->type = 0;
                         this->mini_sts->num = 0;
                         this->mini_sts_last = this->mini_sts + 1;
                     }
                     else {
-                        void * const mem = ::operator new(this->nb_states * sizeof * this->nums);
+                        void * const mem = ::operator new(this->nb_states * sizeof(unsigned), std::align_val_t(alignof(StateList)));
                         this->st_list = static_cast<StateList*>(mem);
                         this->nums = static_cast<unsigned*>(mem);
                     }
                 }
                 else if (copy_states) {
-                    ::operator delete(this->st_list);
-                    void * const mem = ::operator new(sizeof(MinimalState));
+                    ::operator delete(this->st_list, std::align_val_t(alignof(StateList)));
+                    void * const mem = ::operator new(sizeof(MinimalState), std::align_val_t(alignof(StateList)));
                     this->st_list = static_cast<StateList*>(mem);
                     this->root = static_cast<State*>(mem);
                     this->mini_sts = static_cast<MinimalState*>(mem);
@@ -442,7 +441,7 @@ namespace re {
                 }
                 this->st_range_beginning.last = slfirst;
 
-                ::operator delete(tmp_st_list);
+                ::operator delete(tmp_st_list, std::align_val_t(alignof(StateList)));
             }
 
             if (this->nb_capture) {
@@ -565,7 +564,7 @@ namespace re {
 
         ~StateMachine2()
         {
-            ::operator delete(this->st_list);
+            ::operator delete(this->st_list, std::align_val_t(alignof(StateList)));
         }
 
         [[nodiscard]] unsigned mark_count() const

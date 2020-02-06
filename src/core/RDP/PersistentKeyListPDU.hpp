@@ -331,7 +331,7 @@ struct PersistentKeyListPDUData {
         std::fill(begin(numEntriesCache), end(numEntriesCache), 0);
         std::fill(begin(totalEntriesCache), end(totalEntriesCache), 0);
         this->bBitMask = 0;
-        ::memset(entries, 0, sizeof(entries));
+        std::fill(begin(entries), end(entries), BitmapCachePersistentListEntry{});
     }
 
     void log(int level, const char * message) const {

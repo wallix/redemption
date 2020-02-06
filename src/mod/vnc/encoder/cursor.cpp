@@ -110,7 +110,7 @@ namespace
             buf.advance(sz_pixel_array + sz_bitmask);
 
             // TODO: special dot cursor  if cx=1 cy=1 ? : a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead ?
-            // Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Hotspot{this->x, this->y}, {this->mask.data(), this->mask.size()}, {this->data.data(), this->data.size()}, false);
+            // Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Hotspot{this->x, this->y}, this->mask, this->data, false);
 
             if (bool(this->verbose & VNCVerbose::cursor_encoder)) {
                 LOG(LOG_INFO, "VNC Cursor(%hd, %hd, %hu, %hu) %u %zu",

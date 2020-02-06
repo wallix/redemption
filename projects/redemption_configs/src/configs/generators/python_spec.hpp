@@ -257,13 +257,23 @@ namespace impl
     template<class T, class V>
     void write_value_(std::ostream& out, T const & name, V const & v, char const * prefix)
     {
+        auto pos = out.tellp();
         out << "  " << name;
         if (v.desc) {
             out << ": ";
+            unsigned pad = out.tellp() - pos;
             if (prefix) {
                 out << prefix << " ";
             }
-            out << v.desc;
+
+            char const* desc = v.desc;
+            // add padding after new line for align the description
+            while (char* nl = strchr(desc, '\n')) {
+                out.write(desc, nl - desc + 1);
+                out << std::setw(pad) << "";
+                desc = nl+1;
+            }
+            out << desc;
         }
         else if (std::is_integral<T>::value || std::is_same<T, HexFlag>::value) {
             out << ": " << io_replace(v.name, '_', ' ');

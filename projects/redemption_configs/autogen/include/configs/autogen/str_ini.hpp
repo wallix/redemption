@@ -20,7 +20,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #nomouse = 0
 
-# values: 'low', 'medium', 'high', 
+# values: 'low', 'medium', 'high'
 #_advanced
 #encryptionLevel = low
 
@@ -611,7 +611,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
-# min = 0, max = 511
+# min = 0, max = 1023
 #   0x000: none
 #   0x001: Java Access Bridge
 #   0x002: MS Active Accessbility
@@ -621,10 +621,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
+#   0x200: BestSafe integration
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
 #_hidden
 #_hex
-#session_probe_disabled_features = 352
+#session_probe_disabled_features = 864
 
 # If enabled, disconnected session can be recovered by a different primary user.
 # value: 0 or 1
@@ -796,7 +797,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #encodings = 
 
 # VNC server clipboard data encoding type.
-# values: 'utf-8', 'latin1', 
+# values: 'utf-8', 'latin1'
 #_advanced
 #server_clipboard_encoding_type = latin1
 
@@ -850,35 +851,41 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
 
-# Enable use of ICAP service for file verification on upload
+# Enable use of ICAP service for file verification on upload.
 # value: 0 or 1
 #_hidden
 #enable_up = 0
 
-# Enable use of ICAP service for file verification on download
+# Enable use of ICAP service for file verification on download.
 # value: 0 or 1
 #_hidden
 #enable_down = 0
 
-# Verify text data via clipboard from client to server
-# File verification on upload must be enabled via option Enable up
+# Verify text data via clipboard from client to server.
+# File verification on upload must be enabled via option Enable up.
 # value: 0 or 1
 #_hidden
 #clipboard_text_up = 0
 
 # Verify text data via clipboard from server to client
-# File verification on download must be enabled via option Enable down
+# File verification on download must be enabled via option Enable down.
 # value: 0 or 1
 #_hidden
 #clipboard_text_down = 0
 
-# values: 'never', 'always', 'on_verification_failure', 
-#_hidden
-#file_record = never
-
 # value: 0 or 1
 #_hidden
 #log_if_accepted = 1
+
+[file_storage]
+
+# Enable storage of transferred files (via RDP Clipboard).
+# values: 'never', 'always', 'on_invalid_verification'
+#   never: Never store transferred files.
+#   always: Always store transferred files.
+#   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
+#_hidden
+#store_file = never
 
 [icap_server_down]
 
@@ -950,7 +957,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: v2
 #version = 2
 
-# values: 'latin', 'cyrillic', 
+# values: 'latin', 'cyrillic'
 #locale = latin
 
 # (is in 1/100 second)
@@ -1091,7 +1098,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # FFmpeg options for video codec.
 #_advanced
-#ffmpeg_options = profile=baseline preset=ultrafast flags=+qscale b=30000
+#ffmpeg_options = profile=baseline preset=ultrafast flags=+qscale b=80000
 
 # value: 0 or 1
 #_advanced
@@ -1238,7 +1245,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [translation]
 
-# values: 'en', 'fr', 
+# values: 'en', 'fr'
 #_advanced
 #language = en
 

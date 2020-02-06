@@ -37,7 +37,7 @@ namespace ut
     inline flagged_bytes_view utf8(bytes_view v) { return {v, 's'}; }
     inline flagged_bytes_view hex(bytes_view v) { return {v, 'b'}; }
     inline flagged_bytes_view dump(bytes_view v) { return {v, 'd'}; }
-}
+} // namespace ut
 
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 

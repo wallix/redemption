@@ -115,7 +115,7 @@ bool configuration_load(ConfigurationHolder & configuration_holder, std::istream
 
         if (err_msg) {
             LOG(LOG_ERR, "%s in configuration file at line %u", err_msg, num_line);
-            hexdump(line.data(), line.size());
+            hexdump(line);
             has_err = true;
         }
     }

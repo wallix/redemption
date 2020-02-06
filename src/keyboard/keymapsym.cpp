@@ -29,29 +29,26 @@
 // using namespace std;
 
 KeymapSym::KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, int verbose)
-: ibuf_sym(0)
+// Initial state of keys (at least lock keys) is copied from Keymap2
+: keys_down{}
+, key_flags(key_flags)
+, ibuf_sym(0)
 , nbuf_sym(0)
 , dead_key(DEADKEY_NONE)
 , is_unix(is_unix)
 , is_apple(is_apple)
 , verbose(verbose)
+, keylayout_WORK_noshift_sym{}
+, keylayout_WORK_shift_sym{}
+, keylayout_WORK_altgr_sym{}
+, keylayout_WORK_capslock_sym{}
+, keylayout_WORK_shiftcapslock_sym{}
 {
-    memset(this->keys_down, 0, 256 * sizeof(int));
-    memset(&this->keylayout_WORK_noshift_sym,       0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_shift_sym,         0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_altgr_sym,         0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_capslock_sym,      0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_shiftcapslock_sym, 0, 128 * sizeof(int));
-
-    this->last_sym = 0;
-
     if (is_apple) {
         this->init_layout_sym(0x0409);
     } else {
         this->init_layout_sym(keylayout);
     }
-    // Initial state of keys (at least lock keys) is copied from Keymap2
-    this->key_flags = key_flags;
 }
 
 // [MS-RDPBCGR] - 2.2.8.1.2.2.5 Fast-Path Synchronize Event
@@ -246,7 +243,7 @@ void KeymapSym::putback_modifiers()
 void KeymapSym::key_event(int device_flags, long keycode) {
 
     KeySym ks = this->get_key(device_flags, keycode);
-    int key = ks.sym;
+    uint32_t key = ks.sym;
     uint8_t downflag = ks.down;
 
     if (this->is_unix

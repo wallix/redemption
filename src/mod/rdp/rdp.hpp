@@ -609,9 +609,9 @@ private:
             base_params,
             std::move(cvc_params),
             file_validator_service,
-            ClipboardVirtualChannel::FileRecord{
+            ClipboardVirtualChannel::FileStorage{
                 this->mod_rdp_factory.get_fdx_capture(),
-                this->mod_rdp_factory.always_file_record
+                this->mod_rdp_factory.always_file_storage
             }
         );
     }
@@ -2589,6 +2589,7 @@ public:
                 setSurface.recv(stream);
 
                 if (setSurface.codecId == this->remoteFx_codec_id) {
+                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: remoteFX codec");
                     setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
 
                     InStream remoteFxStream(bytes_view(stream.get_current(), setSurface.bitmapDataLength));
@@ -2635,6 +2636,9 @@ public:
 
                 uint16_t frameAction = stream.in_uint16_le();
                 uint32_t frameId = stream.in_uint32_le();
+                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: frameMarker action=%d frameId=%d",
+                        frameAction, frameId);
+
                 switch(frameAction) {
                 case SURFACECMD_FRAMEACTION_BEGIN:
                     LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
@@ -3120,6 +3124,7 @@ public:
                                 default:
                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                     // TODO CGR: Data should actually be consumed
+                                    hexdump(sdata.payload.remaining_bytes());
                                     sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 }

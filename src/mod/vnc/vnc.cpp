@@ -286,8 +286,7 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
     keymapSym.event(device_flags, keycode);
 
     uint8_t downflag = 0;
-    int key = this->keymapSym.get_sym(downflag);
-    while (key){
+    while (uint32_t key = this->keymapSym.get_sym(downflag)){
         if (bool(this->verbose & VNCVerbose::keymap_stack)) {
             LOG(LOG_INFO, "keyloop::key=%d (%x) %s param1=%u nbsym=%u",
                 key, static_cast<unsigned>(key), downflag?"DOWN":"UP",
@@ -295,7 +294,6 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
                 this->keymapSym.nb_sym_available());
         }
         this->send_keyevent(downflag, key);
-        key = this->keymapSym.get_sym(downflag);
     }
 }
 
@@ -463,8 +461,8 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
 
 				ostream.out_uint32_be(strlen(this->username));
 				ostream.out_uint32_be(strlen(this->password));
-				ostream.out_copy_bytes(byte_ptr_cast(this->username), strlen(this->username));
-				ostream.out_copy_bytes(byte_ptr_cast(this->password), strlen(this->password));
+				ostream.out_copy_bytes(this->username, strlen(this->username));
+				ostream.out_copy_bytes(this->password, strlen(this->password));
 
 				this->t.send(ostream.get_data(), ostream.get_offset());
 				this->state = WAIT_SECURITY_RESULT;

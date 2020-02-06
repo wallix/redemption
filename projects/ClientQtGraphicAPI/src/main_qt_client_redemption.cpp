@@ -31,6 +31,7 @@
 #include "qt_input_output_api/qt_input_socket.hpp"
 #include "qt_input_output_api/IO_disk.hpp"
 #include "qt_input_output_api/keymaps/qt_client_rdp_keylayout.hpp"
+#include "system/scoped_ssl_init.hpp"
 
 
 
@@ -343,6 +344,8 @@ int main(int argc, char** argv)
     RDPVerbose verbose = to_verbose_flags(0x0); //RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
+
+    ScopedSslInit scoped_init;
 
     ClientRedemptionQt client_qt(session_reactor, config);
 

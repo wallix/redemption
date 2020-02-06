@@ -25,8 +25,6 @@
 #include "utils/timeval_ops.hpp"
 
 #include <chrono>
-#include <vector>
-
 
 class TimeObj {
 public:
@@ -45,35 +43,7 @@ public:
     }
 };
 
-class FrozenTime : public TimeObj {
-    timeval tv;
-public:
-    explicit FrozenTime(std::chrono::microseconds ustime = 1533211681s) /*NOLINT*/
-    {
-        tv.tv_sec = ustime.count()/1000000;
-        tv.tv_usec = ustime.count()%1000000;
-    }
-
-    timeval get_time() override {
-        return tv;
-    }
-};
-
-
-class ReplayTime : public TimeObj {
-    std::vector<timeval> tvvec;
-    uint32_t index = 0;
-public:
-    explicit ReplayTime(std::vector<timeval> tvv)
-       : tvvec(std::move(tvv))
-    {}
-
-    timeval get_time() override {
-        return this->tvvec[index++];
-    }
-};
-
-
+// TODO should be to test_only/
 class LCGTime : public TimeObj
 {
     uint32_t seed = 7984813;

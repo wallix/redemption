@@ -49,39 +49,6 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
 
-inline void init_TLS()
-{
-        // init TLS
-
-        // -------- Start of system wide SSL_Ctx option ------------------------------
-
-        // ERR_load_crypto_strings() registers the error strings for all libcrypto
-        // functions. SSL_load_error_strings() does the same, but also registers the
-        // libssl error strings.
-
-        // One of these functions should be called before generating textual error
-        // messages. However, this is not required when memory usage is an issue.
-
-        // ERR_free_strings() frees all previously loaded error strings.
-
-        SSL_load_error_strings();
-
-        // SSL_library_init() registers the available SSL/TLS ciphers and digests.
-        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
-        // for SSL_library_init().
-
-        // - SSL_library_init() must be called before any other action takes place.
-        // - SSL_library_init() is not reentrant.
-        // - SSL_library_init() always returns "1", so it is safe to discard the return
-        // value.
-
-        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
-        // SSL_library_init(). Applications which need to use SHA2 in earlier versions
-        // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
-
-        SSL_library_init();
-}
-
 inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std::string* error_message)
 {
     LOG(LOG_ERR, "TLSContext::%s: %s", funcname, error_msg);
@@ -116,8 +83,12 @@ class TLSContext
     using X509UniquePtr = std::unique_ptr<X509, X509_deleter>;
     X509UniquePtr cert_external_validation_wait_ctx;
 
+    bool verbose;
+
 public:
-    TLSContext() = default;
+    TLSContext(bool verbose = false)
+    : verbose(verbose)
+    {}
 
     ~TLSContext()
     {
@@ -680,12 +651,12 @@ public:
                     LOG(LOG_INFO, "recv_tls SSL_ERROR_NONE");
                     return rcvd;
 
-                case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "recv_tls WANT READ");
-                    return 0;
-
                 case SSL_ERROR_WANT_WRITE:
                     LOG(LOG_INFO, "recv_tls WANT WRITE");
+                    return 0;
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "recv_tls WANT READ");
                     return 0;
 
                 case SSL_ERROR_WANT_CONNECT:
@@ -735,11 +706,11 @@ public:
                     return ret;
 
                 case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "send_tls WANT READ");
-                    continue;
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT READ");
+                    return 0;
 
                 case SSL_ERROR_WANT_WRITE:
-                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT WRITE");
                     return 0;
 
                 default:
@@ -771,11 +742,11 @@ public:
                     break;
 
                 case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "send_tls WANT READ");
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT READ");
                     continue;
 
                 case SSL_ERROR_WANT_WRITE:
-                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    LOG_IF(this->verbose, LOG_INFO, "send_tls WANT WRITE");
                     continue;
 
                 default:
