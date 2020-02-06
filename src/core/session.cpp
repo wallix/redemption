@@ -94,9 +94,9 @@ class Session
                     - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
             }
 
-            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us", 
-                now.tv_sec, now.tv_usec, this->timeout.tv_sec, this->timeout.tv_usec, 
-                timeoutastv.tv_sec, timeoutastv.tv_usec);
+//            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us", 
+//                now.tv_sec, now.tv_usec, this->timeout.tv_sec, this->timeout.tv_usec, 
+//                timeoutastv.tv_sec, timeoutastv.tv_usec);
             return ::select(
                 this->max + 1, &this->rfds,
                 this->want_write ? &this->wfds : nullptr,
@@ -590,11 +590,7 @@ class Session
             fd_events_.exec_timeout(end_tv);
             graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
             graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
-            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
-                                {
-                                    return fd != INVALID_SOCKET 
-                                        && ioswitch.is_set_for_reading(fd);
-                                });
+            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){ return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
         } catch (Error const& e) {
             if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini)) {
                 return false;
@@ -609,16 +605,12 @@ class Session
                 this->rt_display(ini, mm, mod_wrapper, front);
 
                if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
-                    LOG(LOG_INFO, "--------------------- Process incoming module traffic");
                     auto& gd = mod_wrapper.get_graphic_wrapper();
-                    LOG(LOG_INFO, "--------------------- Execute graphic_events actions");
                     graphic_events_.exec_action(gd);
-                    LOG(LOG_INFO, "--------------------- Execute fd_events actions");
                     graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                         return fd != INVALID_SOCKET 
                             &&  ioswitch.is_set_for_reading(fd);
                     }, gd);
-                    LOG(LOG_INFO, "--------------------- Back event loop done");
                 }
 
                 if (ini.check_from_acl()) {
@@ -627,17 +619,6 @@ class Session
                         front.force_using_cache_bitmap_r2();
                     }
                 }
-
-//                try
-//                {
-//                    if (BACK_EVENT_NONE == session_reactor.signal) {
-//                        // Process incoming module trafic
-//                        auto& gd = mm.get_graphic_wrapper();
-//                        session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
-//                            return io_fd_isset(fd, ioswitch.rfds);
-//                        }, gd);
-//                    }
-//                }
 
                 if (ini.get<cfg::globals::enable_osd>()) {
                     const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
@@ -656,7 +637,6 @@ class Session
                     }
                 }
 
-                LOG(LOG_INFO, "-------------------------- module sequencing");
                 return this->module_sequencing(mm, acl, authentifier, mod_wrapper, now, front);
             } catch (Error const& e) {
                 LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
@@ -677,7 +657,9 @@ class Session
     {
         timeval timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
                     - std::chrono::seconds(now.tv_sec) - std::chrono::microseconds(now.tv_usec));
-        LOG(LOG_INFO, "%s %ld.%ld s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
+        if (timeoutastv.tv_sec == 0 && timeoutastv.tv_usec == 0){
+            LOG(LOG_INFO, "%s %ld.%ld s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
+        }
     }
 
     timeval prepare_timeout(timeval ultimatum, timeval now,
@@ -962,7 +944,7 @@ public:
                 ioswitch.set_timeout(ultimatum);
 
                 int num = ioswitch.select(now);
-                LOG(LOG_INFO, " Select num = %d", num);
+//                LOG(LOG_INFO, " Select num = %d", num);
 
                 if (num < 0) {
                     if (errno != EINTR) {
@@ -972,8 +954,8 @@ public:
                         // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
                         LOG(LOG_ERR, "Proxy data wait loop raised error %d : %s", errno, strerror(errno));
                         run_session = false;
-                        continue;
                     }
+                    continue;
                 }
 
                 now = tvtime();
@@ -1103,7 +1085,7 @@ public:
                 }
                 break;
                 } // switch
-                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");
+//                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");
             } // loop
 
             if (mod_wrapper.get_mod()) {

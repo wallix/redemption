@@ -34,8 +34,7 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBar)
 
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -75,8 +74,7 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBar)
 
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -116,8 +114,7 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
 
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -157,8 +154,7 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
 
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;

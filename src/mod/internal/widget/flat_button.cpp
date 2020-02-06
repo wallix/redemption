@@ -167,6 +167,7 @@ void WidgetFlatButton::draw(
 
 void WidgetFlatButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
+    LOG(LOG_INFO, "WidgetFlatButton::rdp_input_mouse()");
     if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
         this->state |= 1;
         this->rdp_input_invalidate(this->get_rect());

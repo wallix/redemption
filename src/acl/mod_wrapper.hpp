@@ -479,7 +479,6 @@ public:
 
     gdi::GraphicApi & get_graphics() 
     {
-        LOG(LOG_INFO, "get_graphics()");
         return this->gfilter;
     }
 
@@ -487,10 +486,8 @@ public:
     // finding out the actual internal graphics interface should never be necessary
     gdi::GraphicApi & get_graphic_wrapper()
     {
-        LOG(LOG_INFO, "get_graphic_wrapper()");
         gdi::GraphicApi& gd = this->get_graphics();
         if (this->rail_module_host_mod_ptr) {
-            LOG(LOG_INFO, "Rail module host_mod_ptr()");
             return this->rail_module_host_mod_ptr->proxy_gd(gd);
         }
         return gd;

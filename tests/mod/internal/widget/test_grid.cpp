@@ -36,8 +36,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;

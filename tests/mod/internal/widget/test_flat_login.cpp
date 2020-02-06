@@ -37,8 +37,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
 
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
@@ -61,8 +60,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
     WidgetFlatButton * extra_button = nullptr;
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -100,8 +98,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
 
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
                          nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
@@ -144,8 +141,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
 
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
@@ -179,8 +175,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 
 
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
@@ -206,8 +201,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
 
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
@@ -232,8 +226,7 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
     TestGraphic drawable(800, 600);
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     struct Notify : NotifyApi {
         Widget* sender = nullptr;
@@ -263,8 +256,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
 
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;

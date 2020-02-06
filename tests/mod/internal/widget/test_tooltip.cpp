@@ -35,8 +35,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     TestGraphic drawable(800, 600);
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -79,8 +78,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     int y = 20;
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     WidgetLabel label(drawable, parent, &parent, "TOOLTIPTEST",
                       0, BLACK, WHITE, global_font_lato_light_16());

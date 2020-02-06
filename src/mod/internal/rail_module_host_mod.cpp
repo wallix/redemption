@@ -86,10 +86,10 @@ RailModuleHostMod::RailModuleHostMod(
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
     const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
-    : front_width(front_width)
-    , front_height(front_height)
+    : front_width(width)
+    , front_height(height)
     , front(front)
-    , screen(drawable, font, nullptr, theme)
+    , screen(drawable, width, height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , dc_state(DCState::Wait)
@@ -106,7 +106,7 @@ RailModuleHostMod::RailModuleHostMod(
     , can_resize_hosted_desktop(can_resize_hosted_desktop)
 {
     {
-        this->screen.set_wh(front_width, front_height);
+        this->screen.set_wh(width, height);
         if (this->rail_enabled) {
             this->graphic_event = graphic_events_.create_action_executor(session_reactor)
             .on_action(jln::one_shot([this](gdi::GraphicApi&){

@@ -35,8 +35,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -98,8 +97,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(640, 480);
+    WidgetScreen parent(drawable, 648, 480, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -170,8 +168,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -202,8 +199,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -238,8 +234,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -273,8 +268,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -402,8 +396,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();

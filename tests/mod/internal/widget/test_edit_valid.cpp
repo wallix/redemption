@@ -39,8 +39,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
 
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLACK;
@@ -78,8 +77,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLACK;
@@ -151,8 +149,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -227,8 +224,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -327,8 +323,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -457,8 +452,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
     } notifier;
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     int16_t x = 0;
     int16_t y = 0;

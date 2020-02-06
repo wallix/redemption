@@ -39,8 +39,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -75,8 +74,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword2)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -107,8 +105,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword3)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -139,8 +136,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword4)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -171,8 +167,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword5)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -203,8 +198,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword6)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -235,8 +229,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -267,8 +260,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -309,8 +301,7 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     // Widget* parent = 0;
     int16_t x = 0;
@@ -462,8 +453,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     TestGraphic drawable(800, 600);
 
     // WidgetPassword is a password widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -545,8 +535,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     // Widget* parent = 0;
     int16_t x = 0;
@@ -623,8 +612,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     // Widget* parent = 0;
     int16_t x = 0;
@@ -709,8 +697,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     // Widget* parent = 0;
     int16_t x = 0;

@@ -35,8 +35,7 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
 
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -95,8 +94,7 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;

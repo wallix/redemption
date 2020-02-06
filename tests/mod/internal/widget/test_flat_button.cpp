@@ -36,8 +36,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton)
     TestGraphic drawable(800, 600);
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -69,8 +68,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
 
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -104,8 +102,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton3)
 
 
     // WidgetFlatButton is a button widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -139,8 +136,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton4)
 
 
     // WidgetFlatButton is a button widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -174,8 +170,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton5)
 
 
     // WidgetFlatButton is a button widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -209,8 +204,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton6)
 
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -244,8 +238,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
 
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -279,8 +272,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
 
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -312,8 +304,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     TestGraphic drawable(800, 600);
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -459,8 +450,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 
 
     // WidgetFlatButton is a button widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -535,8 +525,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     TestGraphic drawable(72, 40);
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -596,8 +585,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
 
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -635,8 +623,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
 
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;

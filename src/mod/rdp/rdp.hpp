@@ -2901,6 +2901,8 @@ public:
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                     }
+                                    case FrontAPI::ResizeResult::instant_done:
+                                    break;
                                     case FrontAPI::ResizeResult::done:
 //                                        this->front.restart_capture(sesman);
                                     break;

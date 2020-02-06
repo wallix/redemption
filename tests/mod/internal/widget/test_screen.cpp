@@ -47,8 +47,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     TestGraphic drawable(800, 600);
     Theme colors;
 
-    WidgetScreen wscreen(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    wscreen.set_wh(drawable.width(), drawable.height());
+    WidgetScreen wscreen(drawable, drawable.width(), drawable.height(), global_font_lato_light_16(), nullptr, Theme{});
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     wscreen.tab_flag = Widget::NORMAL_TAB;

@@ -38,14 +38,14 @@ LoginMod::LoginMod(
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme
 )
-    : front_width(front_width)
-    , front_height(front_height)
+    : front_width(width)
+    , front_height(height)
     , front(front)
-    , screen(drawable, font, nullptr, theme)
+    , screen(drawable, width, height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
+    , rail_enabled(rail_client_execute.is_rail_enabled())
     , dvc_manager(false)
     , dc_state(DCState::Wait)
-    , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , session_reactor(session_reactor)
     , timer_events_(timer_events_)
@@ -96,7 +96,6 @@ LoginMod::LoginMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    LOG(LOG_INFO, "set timer()");
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         this->timeout_timer = timer_events_
         .create_timer_executor(session_reactor)
@@ -131,6 +130,7 @@ void LoginMod::rdp_input_invalidate(Rect r)
 
 void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
+    LOG(LOG_INFO, "LoginMod::rdp_input_mouse()");
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;
         y = this->old_mouse_y;
@@ -141,99 +141,101 @@ void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     }
 
     if (!this->rail_enabled) {
+        LOG(LOG_INFO, "LoginMod::propagate rdp_input_mouse() to screen");
         this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+        return;
     }
-    else {
-        bool out_mouse_captured = false;
-        if (!this->rail_client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
-            switch (this->dc_state) {
-                case DCState::Wait:
-                    if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                        this->dc_state = DCState::FirstClickDown;
 
-                        if (this->first_click_down_timer) {
-                            this->first_click_down_timer->set_delay(std::chrono::seconds(1));
-                        }
-                        else {
-                            this->first_click_down_timer = timer_events_
-                            .create_timer_executor(this->session_reactor)
-                            .set_delay(std::chrono::seconds(1))
-                            .on_action(jln::one_shot([this]{
-                                this->dc_state = DCState::Wait;
-                            }));
-                        }
-                    }
-                break;
+    bool out_mouse_captured = false;
+    if (!this->rail_client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
+        switch (this->dc_state) {
+            case DCState::Wait:
+                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    this->dc_state = DCState::FirstClickDown;
 
-                case DCState::FirstClickDown:
-                    if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                        this->dc_state = DCState::FirstClickRelease;
-                    }
-                    else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    if (this->first_click_down_timer) {
+                        this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                     }
                     else {
-                        this->cancel_double_click_detection();
+                        this->first_click_down_timer = timer_events_
+                        .create_timer_executor(this->session_reactor)
+                        .set_delay(std::chrono::seconds(1))
+                        .on_action(jln::one_shot([this]{
+                            this->dc_state = DCState::Wait;
+                        }));
                     }
-                break;
+                }
+            break;
 
-                case DCState::FirstClickRelease:
-                    if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                        this->dc_state = DCState::SecondClickDown;
-                    }
-                    else {
-                        this->cancel_double_click_detection();
-                    }
-                break;
+            case DCState::FirstClickDown:
+                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                    this->dc_state = DCState::FirstClickRelease;
+                }
+                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                }
+                else {
+                    this->cancel_double_click_detection();
+                }
+            break;
 
-                case DCState::SecondClickDown:
-                    if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                        this->dc_state = DCState::Wait;
+            case DCState::FirstClickRelease:
+                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    this->dc_state = DCState::SecondClickDown;
+                }
+                else {
+                    this->cancel_double_click_detection();
+                }
+            break;
 
-                        bool out_mouse_captured_2 = false;
+            case DCState::SecondClickDown:
+                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                    this->dc_state = DCState::Wait;
 
-                        this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
+                    bool out_mouse_captured_2 = false;
 
-                        this->cancel_double_click_detection();
-                    }
-                    else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                    }
-                    else {
-                        this->cancel_double_click_detection();
-                    }
-                break;
-
-                default:
-                    assert(false);
+                    this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
 
                     this->cancel_double_click_detection();
-                break;
-            }
-
-            if (out_mouse_captured) {
-                this->allow_mouse_pointer_change(false);
-
-                this->current_mouse_owner = MouseOwner::ClientExecute;
-            }
-            else {
-                if (MouseOwner::WidgetModule != this->current_mouse_owner) {
-                    this->redo_mouse_pointer_change(x, y);
                 }
+                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                }
+                else {
+                    this->cancel_double_click_detection();
+                }
+            break;
 
-                this->current_mouse_owner = MouseOwner::WidgetModule;
-            }
+            default:
+                assert(false);
+
+                this->cancel_double_click_detection();
+            break;
         }
-
-        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
 
         if (out_mouse_captured) {
-            this->allow_mouse_pointer_change(true);
+            this->allow_mouse_pointer_change(false);
+
+            this->current_mouse_owner = MouseOwner::ClientExecute;
         }
+        else {
+            if (MouseOwner::WidgetModule != this->current_mouse_owner) {
+                this->redo_mouse_pointer_change(x, y);
+            }
+
+            this->current_mouse_owner = MouseOwner::WidgetModule;
+        }
+    }
+
+    this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+
+    if (out_mouse_captured) {
+        this->allow_mouse_pointer_change(true);
     }
 }
 
-void LoginMod::rdp_input_scancode(
-    long param1, long param2, long param3, long param4, Keymap2 * keymap)
+void LoginMod::rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
 {
+    LOG(LOG_INFO, "rdp_input_scancode()");
+
     this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
 
     if (this->rail_enabled) {

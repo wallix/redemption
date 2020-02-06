@@ -157,8 +157,7 @@ RED_AUTO_TEST_CASE(TestPaste)
 
     CopyPasteProcess notifier(copy_paste);
 
-    WidgetScreen parent(gd, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(screen_info.width, screen_info.height);
+    WidgetScreen parent(gd, screen_info.width, screen_info.height, global_font_lato_light_16(), nullptr, Theme{});
 
     WidgetEdit edit(gd, parent, &notifier, "", 0, PINK, ORANGE, RED, global_font_lato_light_16());
     Dimension dim = edit.get_optimal_dim();

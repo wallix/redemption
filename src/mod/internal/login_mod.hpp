@@ -51,69 +51,6 @@ using LoginModVariables = vcfg::variables<
 
 class LoginMod : public mod_api, public NotifyApi
 {
-public:
-    [[nodiscard]] Font const & font() const
-    {
-        return this->screen.font;
-    }
-
-    [[nodiscard]] Theme const & theme() const
-    {
-        return this->screen.theme;
-    }
-
-    [[nodiscard]] Rect get_screen_rect() const
-    {
-        return this->screen.get_rect();
-    }
-
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
-
-    void rdp_gdi_down() override {}
-
-    void rdp_input_invalidate(Rect r) override;
-
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
-
-    void rdp_input_scancode(long param1, long param2, long param3, long param4,
-            Keymap2 * keymap) override;
-
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
-    {
-        this->screen.rdp_input_unicode(unicode, flag);
-    }
-
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-    {
-        (void)time;
-        (void)device_flags;
-        (void)param1;
-        (void)param2;
-    }
-
-    void refresh(Rect r) override;
-
-    [[nodiscard]] Dimension get_dim() const override
-    {
-        return Dimension(this->front_width, this->front_height);
-    }
-
-    void allow_mouse_pointer_change(bool allow)
-    {
-        this->screen.allow_mouse_pointer_change(allow);
-    }
-
-    void redo_mouse_pointer_change(int x, int y)
-    {
-        this->screen.redo_mouse_pointer_change(x, y);
-    }
-
-private:
-    void cancel_double_click_detection();
-
-    [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
-
-protected:
     uint16_t front_width;
     uint16_t front_height;
 
@@ -121,11 +58,9 @@ protected:
 
     WidgetScreen screen;
 
-private:
     ClientExecute & rail_client_execute;
+    const bool rail_enabled;
     DVCManager dvc_manager;
-
-    bool alt_key_pressed = false;
 
     enum class DCState
     {
@@ -137,10 +72,6 @@ private:
 
     DCState dc_state;
 
-    TimerPtr first_click_down_timer;
-
-    const bool rail_enabled;
-
     enum class MouseOwner
     {
         ClientExecute,
@@ -149,25 +80,34 @@ private:
 
     MouseOwner current_mouse_owner;
 
-    int old_mouse_x = 0;
-    int old_mouse_y = 0;
-
-protected:
     SessionReactor& session_reactor;
     TimerContainer& timer_events_;
     GraphicEventContainer& graphic_events_;
 
-private:
-    GraphicEventPtr graphic_event;
     LanguageButton language_button;
-
     FlatLogin login;
-    TimerPtr timeout_timer;
-    GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 
     LoginModVariables vars;
+
+    // Not initialized in constructor
+    bool alt_key_pressed = false;
+
+    TimerPtr first_click_down_timer;
+
+    int old_mouse_x = 0;
+    int old_mouse_y = 0;
+
+    GraphicEventPtr graphic_event;
+
+    TimerPtr timeout_timer;
+    GraphicEventPtr started_copy_past_event;
+
+private:
+    void cancel_double_click_detection();
+
+    [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
 
 public:
     LoginMod(
@@ -195,4 +135,33 @@ public:
     {
         this->login.move_size_widget(left, top, width, height);
     }
+
+public:
+    [[nodiscard]] Font const & font() const { return this->screen.font; }
+
+    [[nodiscard]] Theme const & theme() const { return this->screen.theme; }
+
+    [[nodiscard]] Rect get_screen_rect() const { return this->screen.get_rect(); }
+
+    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+
+    void rdp_gdi_down() override {}
+
+    void rdp_input_invalidate(Rect r) override;
+
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
+
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override;
+
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override { this->screen.rdp_input_unicode(unicode, flag); }
+
+    void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/, int16_t /*param1*/, int16_t /*param2*/) override {}
+
+    void refresh(Rect r) override;
+
+    [[nodiscard]] Dimension get_dim() const override { return Dimension(this->front_width, this->front_height); }
+
+    void allow_mouse_pointer_change(bool allow) { this->screen.allow_mouse_pointer_change(allow); }
+
+    void redo_mouse_pointer_change(int x, int y) { this->screen.redo_mouse_pointer_change(x, y); }
 };

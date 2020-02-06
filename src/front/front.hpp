@@ -713,7 +713,7 @@ public:
 
         auto tvtmp = this->session_reactor.get_current_time() + this->ini.get<cfg::globals::handshake_timeout>();
 
-        LOG(LOG_INFO, "set front connection timeout at %lu s %lu us", tvtmp.tv_sec, tvtmp.tv_usec);
+        LOG(LOG_INFO, "set front connection timeout at %u s %u us", unsigned(tvtmp.tv_sec), unsigned(tvtmp.tv_usec));
 
 
         init_TLS();

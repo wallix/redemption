@@ -34,8 +34,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage)
 
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -61,8 +60,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage2)
 
 
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -88,8 +86,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage3)
 
 
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -115,8 +112,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage4)
 
 
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -142,8 +138,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage5)
 
 
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -169,8 +164,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage6)
 
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -196,8 +190,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImageClip)
 
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -223,8 +216,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImageClip2)
 
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 

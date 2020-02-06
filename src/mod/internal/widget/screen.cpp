@@ -27,7 +27,7 @@
 
 
 WidgetScreen::WidgetScreen(
-    gdi::GraphicApi & drawable, Font const & font,
+    gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
     NotifyApi * notifier, Theme theme
 )
     : WidgetParent(drawable, *this, notifier)
@@ -38,6 +38,7 @@ WidgetScreen::WidgetScreen(
     , edit_pointer(::edit_pointer())
     , font(font)
 {
+    this->set_wh(width, height);
     this->impl = &composite_array;
 
     this->tab_flag = IGNORE_TAB;

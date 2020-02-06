@@ -35,8 +35,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -80,8 +79,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -118,8 +116,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -156,8 +153,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -194,8 +190,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -232,8 +227,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -270,8 +264,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -308,8 +301,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;
@@ -346,8 +338,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = BLUE;

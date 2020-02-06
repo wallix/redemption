@@ -38,8 +38,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -76,8 +75,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel2)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -108,8 +106,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel3)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -140,8 +137,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel4)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -172,8 +168,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel5)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -204,8 +199,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel6)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -236,8 +230,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -268,8 +261,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -348,8 +340,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     TestGraphic drawable(800, 600);
 
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -425,8 +416,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelMax)
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;

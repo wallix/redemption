@@ -35,8 +35,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose)
 
 
     // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -60,8 +59,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
 
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -99,8 +97,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose3)
 
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -124,8 +121,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -149,8 +145,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
@@ -188,8 +183,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     const char* extra_message = nullptr;
 

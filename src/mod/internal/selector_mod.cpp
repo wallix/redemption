@@ -202,10 +202,10 @@ SelectorMod::SelectorMod(
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
-    : front_width(front_width)
-    , front_height(front_height)
+    : front_width(width)
+    , front_height(height)
     , front(front)
-    , screen(drawable, font, nullptr, theme)
+    , screen(drawable, width, height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , dc_state(DCState::Wait)

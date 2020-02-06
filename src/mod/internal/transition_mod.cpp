@@ -175,10 +175,10 @@ TransitionMod::TransitionMod(
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
     Theme const& theme
 )
-    : front_width(front_width)
-    , front_height(front_height)
+    : front_width(width)
+    , front_height(height)
     , front(front)
-    , screen(drawable, font, nullptr, theme)
+    , screen(drawable, width, height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , dc_state(DCState::Wait)
@@ -193,7 +193,7 @@ TransitionMod::TransitionMod(
                 theme.tooltip.border_color, font)
     , vars(vars)
 {
-    this->screen.set_wh(front_width, front_height);
+    this->screen.set_wh(width, height);
     if (this->rail_enabled) {
         this->graphic_event = graphic_events_.create_action_executor(session_reactor)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){

@@ -37,8 +37,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog)
 
 
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -67,8 +66,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog2)
 
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -100,8 +98,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog3)
 
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -133,8 +130,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog4)
 
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(1280, 1024);
+    WidgetScreen parent(drawable, 1280, 1024, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -166,8 +162,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog5)
 
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(640, 480);
+    WidgetScreen parent(drawable, 640, 480, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -199,8 +194,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog6)
 
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(300, 600);
+    WidgetScreen parent(drawable, 300, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -232,8 +226,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip)
 
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -265,8 +258,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
 
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     Theme colors;
@@ -297,8 +289,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     TestGraphic drawable(800, 600);
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     struct Notify : NotifyApi {
         Widget* sender = nullptr;
@@ -391,8 +382,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     TestGraphic drawable(800, 600);
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     struct Notify : NotifyApi {
         Widget* sender = nullptr;

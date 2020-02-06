@@ -38,8 +38,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         TestGraphic drawable(800, 600);
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-        parent.set_wh(800, 600);
+        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
         NotifyApi * notifier = nullptr;
         Theme colors;
@@ -62,8 +61,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         TestGraphic drawable(800, 600);
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-        parent.set_wh(800, 600);
+        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -85,8 +83,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         TestGraphic drawable(800, 600);
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-        parent.set_wh(800, 600);
+        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -108,8 +105,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         TestGraphic drawable(800, 600);
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-        parent.set_wh(800, 600);
+        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;
@@ -131,8 +127,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         TestGraphic drawable(800, 600);
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-        WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-        parent.set_wh(800, 600);
+        WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
         NotifyApi * notifier = nullptr;
         Theme colors;
         colors.global.bgcolor = DARK_BLUE_BIS;

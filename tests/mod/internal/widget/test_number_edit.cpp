@@ -44,8 +44,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         }
     } notifier;
 
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     // Widget* parent = 0;
     int16_t x = 0;

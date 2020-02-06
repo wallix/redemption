@@ -80,7 +80,7 @@ CloseMod::CloseMod(
     , front_width(width)
     , front_height(height)
     , front(front)
-    , screen(drawable, font, nullptr, theme)
+    , screen(drawable, front_width, front_height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , dc_state(DCState::Wait)
