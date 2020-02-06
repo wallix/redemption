@@ -184,6 +184,8 @@ cfg::mod_rdp::server_cert_response ⇐ server_cert_response   [std::string]
     empty string for wait, 'Ok' or error message
 cfg::mod_rdp::enable_remotefx ⇐ mod_rdp:enable_remotefx   [bool]
     Enables support of the remoteFX codec.
+cfg::mod_rdp::enable_restricted_admin_mode ⇐ mod_rdp:enable_restricted_admin_mode   [bool]
+    Connect to the remote computer in Restricted Admin mode.
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).

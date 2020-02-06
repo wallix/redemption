@@ -64,6 +64,9 @@ struct ModRDPParams
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
 
+    bool enable_restricted_admin_mode = false;
+
+
     ValidatorParams validator_params;
 
     struct ClipboardParams
@@ -263,6 +266,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_restricted_admin_mode);
 
 #ifndef __EMSCRIPTEN__
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_session_probe);

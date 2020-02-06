@@ -470,6 +470,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "accept_monitor_layout_change_if_capture_is_not_started", set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_restricted_admin_mode", desc{"Connect to the remote computer in Restricted Admin mode."}, set(false));
     });
 
     W.section("metrics", [&]
