@@ -2509,6 +2509,7 @@ public:
                 setSurface.recv(stream);
 
                 if (setSurface.codecId == this->remoteFx_codec_id) {
+                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: remoteFX codec");
                     setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
 
                     InStream remoteFxStream(bytes_view(stream.get_current(), setSurface.bitmapDataLength));
@@ -2555,6 +2556,9 @@ public:
 
                 uint16_t frameAction = stream.in_uint16_le();
                 uint32_t frameId = stream.in_uint32_le();
+                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: frameMarker action=%d frameId=%d",
+                        frameAction, frameId);
+
                 switch(frameAction) {
                 case SURFACECMD_FRAMEACTION_BEGIN:
                     LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
