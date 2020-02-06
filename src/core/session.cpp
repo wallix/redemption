@@ -79,7 +79,7 @@ class Session
         Select(timeval timeout)
         : timeout{timeout}
         {
-            LOG(LOG_INFO, "set initial timeout at %u s %u us", this->timeout.tv_sec, this->timeout.tv_usec);
+//            LOG(LOG_INFO, "set initial timeout at %u s %u us", this->timeout.tv_sec, this->timeout.tv_usec);
             io_fd_zero(this->rfds);
             io_fd_zero(this->wfds);
         }
@@ -105,7 +105,7 @@ class Session
 
         void set_timeout(timeval next_timeout)
         {
-            LOG(LOG_INFO, "set timeout at %u s %u us", next_timeout.tv_sec, next_timeout.tv_usec);
+//            LOG(LOG_INFO, "set timeout at %u s %u us", next_timeout.tv_sec, next_timeout.tv_usec);
             this->timeout = next_timeout;
         }
 
