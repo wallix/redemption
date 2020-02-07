@@ -208,6 +208,8 @@ public:
     {
         const bool enable_session_probe;
         const bool enable_launch_mask;
+        const bool start_launch_timeout_timer_only_after_logon;
+
 
     private:
         const bool used_to_launch_remote_program;
@@ -230,6 +232,7 @@ public:
         SessionProbe(ModRdpSessionProbeParams const& sespro_params)
         : enable_session_probe(sespro_params.enable_session_probe)
         , enable_launch_mask(sespro_params.enable_launch_mask && this->enable_session_probe)
+        , start_launch_timeout_timer_only_after_logon(sespro_params.start_launch_timeout_timer_only_after_logon)
         , used_to_launch_remote_program(sespro_params.used_to_launch_remote_program)
         , session_probe_channel_params(sespro_params.vc_params)
         {}
@@ -1663,7 +1666,9 @@ public:
                     client_name);
             }
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
-            this->session_probe_virtual_channel->start_launch_timeout_timer();
+            if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
+                this->session_probe_virtual_channel->start_launch_timeout_timer();
+            }
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
@@ -1693,7 +1698,9 @@ public:
                     client_name);
             }
 
-            this->session_probe_virtual_channel->start_launch_timeout_timer();
+            if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
+                this->session_probe_virtual_channel->start_launch_timeout_timer();
+            }
 
             if (this->remote_app.enable_remote_program) {
                 if (!this->remote_programs_virtual_channel) {
@@ -1920,6 +1927,10 @@ class mod_rdp : public mod_api, public rdp_api
     bool const accept_monitor_layout_change_if_capture_is_not_started;
 
 #ifndef __EMSCRIPTEN__
+    bool const session_probe_start_launch_timeout_timer_only_after_logon;
+#endif
+
+#ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
     FileValidatorService * file_validator_service;
 #endif
@@ -2016,6 +2027,7 @@ public:
         , vars(vars)
         , accept_monitor_layout_change_if_capture_is_not_started(mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started)
         #ifndef __EMSCRIPTEN__
+        , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
         , metrics(metrics)
         , file_validator_service(file_validator_service)
         #endif
@@ -4747,7 +4759,8 @@ public:
         }
 
 #ifndef __EMSCRIPTEN__
-        if (this->channels.session_probe_virtual_channel) {
+        if (this->channels.session_probe_virtual_channel &&
+            this->session_probe_start_launch_timeout_timer_only_after_logon) {
             this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
 #endif
@@ -4813,7 +4826,8 @@ public:
                     disable_input_event, disable_graphics_update);
             }
 
-            if (this->channels.session_probe_virtual_channel) {
+            if (this->channels.session_probe_virtual_channel &&
+                this->session_probe_start_launch_timeout_timer_only_after_logon) {
                 this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
 #endif
