@@ -848,7 +848,7 @@ public:
 
     FileSystemVirtualChannel(
         SessionReactor& session_reactor,
-        TimerContainer timer_events_,
+        TimerContainer& timer_events_,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,

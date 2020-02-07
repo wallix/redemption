@@ -2034,6 +2034,7 @@ namespace jln
 
     public:
         using Ptr = TopSharedPtr<Ts...>;
+        TopContainer(const TopContainer&) = delete;
 
     private:
         template<class Tuple>
@@ -2073,6 +2074,7 @@ namespace jln
                 return detail::add_shared_ptr_from_data<TopSharedPtr<Ts...>>(
                     this->cont.node_executors, std::move(this->data_ptr));
             }
+            
         };
 
     public:
@@ -2259,6 +2261,8 @@ namespace jln
             };
         }
 
+        TimerContainer(const TimerContainer&) = delete;
+        
         TimerContainer() noexcept
         {
             this->node_executors.next = nullptr;
@@ -2351,6 +2355,7 @@ namespace jln
 
     public:
         using Ptr = ActionSharedPtr<Ts...>;
+        ActionContainer(const ActionContainer&) = delete;
 
     private:
         template<class ActionData, class Tuple>

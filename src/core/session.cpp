@@ -579,9 +579,9 @@ class Session
                               SessionReactor& session_reactor,
                               TopFdContainer & fd_events_,
                               GraphicFdContainer & graphic_fd_events_,
-                              TimerContainer& timer_events_,
-                              GraphicEventContainer& graphic_events_,
-                              GraphicTimerContainer graphic_timer_events_, 
+                              TimerContainer & timer_events_,
+                              GraphicEventContainer & graphic_events_,
+                              GraphicTimerContainer & graphic_timer_events_, 
                               std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & sesman)
     {
         try {

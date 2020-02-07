@@ -55,7 +55,7 @@ class ModFactory
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
     SesmanInterface & sesman;
-    TopFdContainer fd_events_;
+    TopFdContainer & fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -73,7 +73,7 @@ public:
     ModFactory(ModWrapper & mod_wrapper, 
                SessionReactor & session_reactor,
                SesmanInterface & sesman,
-               TopFdContainer fd_events_,
+               TopFdContainer & fd_events_,
                GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,

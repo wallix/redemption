@@ -109,7 +109,7 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     SessionReactor& session_reactor;
-    TimerContainer timer_events_;
+    TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
     GraphicEventPtr freeze_mod_screen;
@@ -161,7 +161,7 @@ public:
 
     explicit SessionProbeVirtualChannel(
         SessionReactor& session_reactor,
-        TimerContainer timer_events_,
+        TimerContainer& timer_events_,
         GraphicEventContainer & graphic_events_,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
