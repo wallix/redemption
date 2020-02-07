@@ -30,9 +30,13 @@
 Bouncer2Mod::Bouncer2Mod(
     SessionReactor& session_reactor,
     GraphicTimerContainer & graphic_timer_events_,
+    SesmanInterface & sesman,
+    FrontAPI & front,
     uint16_t width, uint16_t height)
 : front_width(width)
 , front_height(height)
+, front(front)
+, sesman(sesman)
 , dancing_rect(0,0,100,100)
 , session_reactor(session_reactor)
 , timer(graphic_timer_events_
@@ -101,6 +105,11 @@ int Bouncer2Mod::interaction()
 // This should come from BACK!
 void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
+    if (!this->capture_started && this->front.can_be_start_capture(this->sesman)){
+        this->capture_started = true;
+        LOG(LOG_INFO, "Bouncer Mod : capture started");
+    }
+
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     auto const green = encode_color24()(GREEN);

@@ -26,12 +26,18 @@
 #include "mod/mod_api.hpp"
 #include "core/session_reactor.hpp"
 #include "utils/colors.hpp"
+#include "core/front_api.hpp"
+#include "acl/sesman.hpp"
 
 
 class Bouncer2Mod : public mod_api
 {
+    bool capture_started = false;
+    
     uint16_t front_width;
     uint16_t front_height;
+    FrontAPI & front;
+    SesmanInterface & sesman;
 
     int speedx = 2;
     int speedy = 2;
@@ -52,6 +58,8 @@ public:
     Bouncer2Mod(
          SessionReactor& session_reactor,
          GraphicTimerContainer & graphic_timer_events_,
+         SesmanInterface & sesman,
+         FrontAPI & front,
          uint16_t width, uint16_t height);
 
     std::string module_name() override {return "Bouncer2 Mod";}

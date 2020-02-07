@@ -28,7 +28,8 @@ int main()
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-
+    Inifile ini;
+    SesmanInterface sesman(ini);
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -36,6 +37,6 @@ int main()
 
     SessionReactor session_reactor;
     GraphicTimerContainer graphic_timer_events_;
-    Bouncer2Mod d(session_reactor, graphic_timer_events_, screen_info.width, screen_info.height);
+    Bouncer2Mod d(session_reactor, graphic_timer_events_, sesman, front, screen_info.width, screen_info.height);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

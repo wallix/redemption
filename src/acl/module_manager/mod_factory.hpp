@@ -102,6 +102,8 @@ public:
         auto new_mod = new Bouncer2Mod(
                             this->session_reactor,
                             this->graphic_timer_events_,
+                            this->sesman,
+                            this->front,
                             this->client_info.screen_info.width,
                             this->client_info.screen_info.height);
         return new_mod;

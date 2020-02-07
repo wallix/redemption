@@ -72,9 +72,10 @@ class ModuleManager
 {
     ModFactory & mod_factory;
 
-public:
+private:
     bool connected{false};
 
+public:
     bool is_connected() {
         return this->connected;
     }
@@ -352,7 +353,6 @@ public:
         LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
 
         if (this->connected && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
-            LOG(LOG_INFO, "===========> Connection close asked by admin while connected");
             if (this->ini.get<cfg::context::auth_error_message>().empty()) {
                 this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
             }

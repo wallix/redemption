@@ -259,14 +259,14 @@ class Session
         };
         LOG(LOG_INFO, "check_acl mod_signal=%s", signal_name(signal));
 
-        if (!acl->keepalive.is_started() && mm.connected) {
+        if (!acl->keepalive.is_started() && mm.is_connected()) {
             acl->keepalive.start(now);
         }
 
         // There are modified fields to send to sesman
         if (this->ini.changed_field_size()) {
             LOG(LOG_INFO, "check_acl: data to send to sesman");
-            if (mm.connected) {
+            if (mm.is_connected()) {
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc, xup ...) and something changed.
                 // used for authchannel and keepalive.
@@ -390,7 +390,7 @@ class Session
 
         // LOG(LOG_INFO, "connect=%s check=%s", this->connected?"Y":"N", check()?"Y":"N");
 
-        if (mm.connected) {
+        if (mm.is_connected()) {
             // AuthCHANNEL CHECK
             // if an answer has been received, send it to
             // rdp serveur via mod (should be rdp module)
@@ -759,7 +759,6 @@ class Session
         }
     }
 
-
     void acl_incoming_data(Acl & acl, Inifile& ini, ModWrapper & mod_wrapper)
     {
         acl.acl_serial.receive();
@@ -767,7 +766,6 @@ class Session
             mod_wrapper.acl_update();
         }
     }
-
 
 public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
