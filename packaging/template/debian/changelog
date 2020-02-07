@@ -1,3 +1,9 @@
+redemption (7.3.59%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix 'Starting SP launch timeout only after user logon'.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 07 Feb 2020 14:31:42 +0200
+
 redemption (7.3.57%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * fix clipboard file copy issues
