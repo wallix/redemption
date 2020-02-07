@@ -616,7 +616,7 @@ class Sesman():
         return _status, _error
 
 
-    def complete_target_info(self, kv, allow_interactive_password = True):
+    def complete_target_info(self, kv, allow_interactive_password, target_login_password_are_ignored):
         """
         This procedure show interactive screen to enter target host, target login
         and target password if needed:
@@ -633,9 +633,10 @@ class Sesman():
             tries -= 1
             interactive_data = {}
             if (not extkv[u'target_password'] and
-                allow_interactive_password):
+                allow_interactive_password and
+                not target_login_password_are_ignored):
                 interactive_data[u'target_password'] = MAGICASK
-            if not extkv.get(u'target_login'):
+            if not extkv.get(u'target_login') and not target_login_password_are_ignored:
                 interactive_data[u'target_login'] = MAGICASK
                 if allow_interactive_password:
                     interactive_data[u'target_password'] = MAGICASK
@@ -1617,6 +1618,8 @@ class Sesman():
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
                 application = self.engine.get_application(selected_target)
                 conn_opts = self.engine.get_target_conn_options(physical_target)
+                smartcard_passthrough = conn_opts[u'rdp'][u'smartcard_passthrough']
+                Logger().info("smartcard_passthrough = %s" % smartcard_passthrough)
                 if physical_proto_info.protocol == u'RDP' or physical_proto_info.protocol == u'VNC':
                     if physical_proto_info.protocol == u'RDP':
                         kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
@@ -1701,7 +1704,7 @@ class Sesman():
                     kv[u'target_password'] = target_password
                     is_interactive_login = not bool(kv.get('target_login'))
                     extra_kv, _status, _error = self.complete_target_info(
-                        kv, allow_interactive_password)
+                        kv, allow_interactive_password, smartcard_passthrough)
                     kv.update(extra_kv)
 
                     if self.target_context.host:

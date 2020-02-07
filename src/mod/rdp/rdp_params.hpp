@@ -81,6 +81,7 @@ struct ModRDPParams
         bool disable_log_syslog = false;
         bool bogus_ios_rdpdr_virtual_channel = true;
         bool enable_rdpdr_data_analysis = true;
+        bool smartcard_passthrough = false;
     };
 
     FileSystemParams file_system_params;
@@ -413,6 +414,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.bogus_ios_rdpdr_virtual_channel);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.enable_rdpdr_data_analysis);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.smartcard_passthrough);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_timeout);

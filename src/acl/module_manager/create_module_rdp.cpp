@@ -111,12 +111,12 @@ void ModuleManager::create_mod_rdp(
     }
     // END READ PROXY_OPT
 
-
+    const bool smartcard_passthrough = ini.get<cfg::mod_rdp::smartcard_passthrough>();
 
     ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
     ModRDPParams mod_rdp_params(
-        ini.get<cfg::globals::target_user>().c_str()
-      , ini.get<cfg::context::target_password>().c_str()
+        (smartcard_passthrough ? "" : ini.get<cfg::globals::target_user>().c_str())
+      , (smartcard_passthrough ? "" : ini.get<cfg::context::target_password>().c_str())
       , ini.get<cfg::context::target_host>().c_str()
       , "0.0.0.0"   // client ip is silenced
       , key_flags
@@ -353,6 +353,7 @@ void ModuleManager::create_mod_rdp(
                                                        = ini.get<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started>();
 
     mod_rdp_params.enable_restricted_admin_mode = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
+    mod_rdp_params.file_system_params.smartcard_passthrough        = smartcard_passthrough;
 
     try {
         using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
