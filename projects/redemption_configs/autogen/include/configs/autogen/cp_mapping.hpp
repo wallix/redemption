@@ -29,6 +29,7 @@ cp_spec = {
     u'mod_rdp:wabam_uses_translated_remoteapp': ('wabam_uses_translated_remoteapp', False),
     u'mod_rdp:enable_remotefx': ('enable_remotefx', False),
     u'mod_rdp:enable_restricted_admin_mode': ('enable_restricted_admin_mode', False),
+    u'mod_rdp:smartcard_passthrough': ('smartcard_passthrough', False),
     u'context:rail_disconnect_message_delay': ('remote_programs_disconnect_message_delay', 3000),
     u'context:use_session_probe_to_launch_remote_program': ('use_session_probe_to_launch_remote_program', True),
   },

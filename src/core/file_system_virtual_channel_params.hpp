@@ -22,7 +22,7 @@
 
 struct FileSystemVirtualChannelParams {
 
-    bool file_system_read_authorized = false;
+    bool file_system_read_authorized  = false;
     bool file_system_write_authorized = false;
 
     bool parallel_port_authorized     = false;
@@ -31,6 +31,8 @@ struct FileSystemVirtualChannelParams {
     bool smart_card_authorized        = false;
 
     bool dont_log_data_into_syslog    = false;
+
+    bool smartcard_passthrough        = false;
 
     explicit FileSystemVirtualChannelParams() = default;
 };

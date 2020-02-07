@@ -785,6 +785,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_restricted_admin_mode = 0
 
+# If enabled, NLA will be disabled automatically.
+# value: 0 or 1
+#_hidden
+#smartcard_passthrough = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

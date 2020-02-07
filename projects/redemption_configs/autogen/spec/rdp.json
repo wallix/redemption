@@ -154,6 +154,12 @@
           "description": "Connect to the remote computer in Restricted Admin mode."
         },
         {
+          "name": "smartcard_passthrough",
+          "type": "bool",
+          "default": false,
+          "description": "If enabled, NLA will be disabled automatically."
+        },
+        {
           "name": "remote_programs_disconnect_message_delay",
           "type": "integer",
           "min": 3000,

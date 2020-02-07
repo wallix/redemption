@@ -118,6 +118,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         {
             std::size_t length;
             std::unique_ptr<uint8_t[]> data;
+
+            bool can_be_removed;
         };
         using device_announce_collection_type = std::deque<virtual_channel_data_type>;
         device_announce_collection_type device_announces;
@@ -171,7 +173,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                     this->device_announces.push_back({
                         this->device_announce_stream.get_offset(),
-                        std::move(this->device_announce_data)
+                        std::move(this->device_announce_data),
+                        false
                     });
 
                     this->device_announce_stream = OutStream();
@@ -208,6 +211,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         FileSystemVirtualChannel& file_system_virtual_channel;
 
+        const bool smartcard_passthrough;
+
         const RDPVerbose verbose;
 
     public:
@@ -223,6 +228,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             bool serial_port_authorized,
             bool smart_card_authorized,
             uint32_t channel_chunk_length,
+            bool smartcard_passthrough,
             RDPVerbose verbose)
         : file_system_drive_manager(file_system_drive_manager)
         , user_logged_on(user_logged_on)
@@ -237,6 +243,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         , remaining_device_announce_request_header_stream(
               this->remaining_device_announce_request_header_data)
         , file_system_virtual_channel(file_system_virtual_channel)
+        , smartcard_passthrough(smartcard_passthrough)
         , verbose(verbose) {
             (void)channel_chunk_length;
         }
@@ -338,13 +345,19 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             }
         }
 
-        void announce_device() {
-            while (!this->waiting_for_server_device_announce_response &&
-                   !this->device_announces.empty()) {
+        void announce_device(bool user_is_logged_on) {
+            if (this->waiting_for_server_device_announce_response) {
+                return;
+            }
+
+            for (auto iter = this->device_announces.begin();
+                 !this->waiting_for_server_device_announce_response &&
+                     (this->device_announces.end() != iter);
+                 ++iter) {
                 assert(this->to_server_sender);
 
-                const uint32_t total_length = this->device_announces.front().length;
-                uint8_t const * chunk_data = this->device_announces.front().data.get();
+                const uint32_t   total_length = iter->length;
+                const uint8_t  * chunk_data = iter->data.get();
 
                 uint32_t remaining_data_length = total_length;
 
@@ -371,12 +384,19 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
                     device_announce_header.receive(chunk);
 
+                    const rdpdr::RDPDR_DTYP DeviceType = device_announce_header.DeviceType();
+                    if (!user_is_logged_on &&
+                        (rdpdr::RDPDR_DTYP::RDPDR_DTYP_SERIAL != DeviceType) &&
+                        (rdpdr::RDPDR_DTYP::RDPDR_DTYP_SMARTCARD != DeviceType)) {
+                        continue;
+                    }
+
                     if (!this->add_known_device(
                             device_announce_header.DeviceId(),
                             device_announce_header.DeviceType(),
                             device_announce_header.PreferredDosName())) {
 
-                        this->device_announces.pop_front();
+                        iter->can_be_removed = true;
 
                         continue;
                     }
@@ -412,14 +432,19 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 }
                 while (remaining_data_length);
 
-                this->device_announces.pop_front();
+                iter->can_be_removed = true;
 
                 this->waiting_for_server_device_announce_response = true;
-            }   // while (!this->waiting_for_server_device_announce_response &&
-                //        this->device_announces.size())
+            }
+
+            this->device_announces.erase(
+                std::remove_if(this->device_announces.begin(),
+                               this->device_announces.end(),
+                               [](const auto& device_announce) { return device_announce.can_be_removed; }),
+                this->device_announces.end());
 
             this->effective_disable_session_probe_drive();
-        }   // void announce_device()
+        }   // void announce_device(bool user_is_logged_on)
 
     public:
         void process_client_device_list_announce_request(
@@ -655,7 +680,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
                         this->device_announces.push_back({
                             data_length,
-                            std::move(this->current_device_announce_data)
+                            std::move(this->current_device_announce_data),
+                            false
                         });
                     }
                 }
@@ -671,8 +697,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 }
             }   // while (chunk.in_remain())
 
-            if (this->user_logged_on) {
-                this->announce_device();
+            if (this->smartcard_passthrough || this->user_logged_on) {
+                this->announce_device(this->user_logged_on);
             }
         }   // process_client_device_list_announce_request()
 
@@ -769,7 +795,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             (void)total_length;
             (void)flags;
             (void)chunk;
-            this->announce_device();
+            this->announce_device(this->user_logged_on);
         }
 
         void process_server_device_announce_response(uint32_t total_length,
@@ -779,7 +805,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             (void)flags;
             this->waiting_for_server_device_announce_response = false;
 
-            this->announce_device();
+            this->announce_device(this->user_logged_on);
 
             rdpdr::ServerDeviceAnnounceResponse
                 server_device_announce_response;
@@ -881,6 +907,7 @@ public:
           params.serial_port_authorized,
           params.smart_card_authorized,
           CHANNELS::CHANNEL_CHUNK_LENGTH,
+          params.smartcard_passthrough,
           base_params.verbose)
     , session_reactor(session_reactor)
     , channel_filter_on(channel_filter_on)

@@ -294,10 +294,13 @@ private:
 
         const bool enable_rdpdr_data_analysis;
 
+        const bool smartcard_passthrough;
+
         FileSystem(ModRDPParams::FileSystemParams const& file_system_params)
         : disable_log_syslog(file_system_params.disable_log_syslog)
         , bogus_ios_rdpdr_virtual_channel(file_system_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(file_system_params.enable_rdpdr_data_analysis)
+        , smartcard_passthrough(file_system_params.smartcard_passthrough)
         {}
     } file_system;
 
@@ -725,6 +728,7 @@ private:
         fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
         fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
         fsvc_params.dont_log_data_into_syslog = this->file_system.disable_log_syslog;
+        fsvc_params.smartcard_passthrough = this->file_system.smartcard_passthrough;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.session_reactor,
