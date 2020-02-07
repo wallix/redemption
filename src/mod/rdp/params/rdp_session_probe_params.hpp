@@ -41,6 +41,8 @@ struct ModRdpSessionProbeParams
     bool used_to_launch_remote_program = true;
     bool used_clipboard_based_launcher = false;
 
+    bool start_launch_timeout_timer_only_after_logon = true;
+
     bool customize_executable_name = false;
 
     bool fix_too_long_cookie = true;
