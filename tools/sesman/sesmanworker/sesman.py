@@ -616,7 +616,7 @@ class Sesman():
         return _status, _error
 
 
-    def complete_target_info(self, kv, allow_interactive_password, target_login_password_are_ignored):
+    def complete_target_info(self, kv, allow_interactive_password, allow_interactive_login):
         """
         This procedure show interactive screen to enter target host, target login
         and target password if needed:
@@ -633,10 +633,9 @@ class Sesman():
             tries -= 1
             interactive_data = {}
             if (not extkv[u'target_password'] and
-                allow_interactive_password and
-                not target_login_password_are_ignored):
+                allow_interactive_password):
                 interactive_data[u'target_password'] = MAGICASK
-            if not extkv.get(u'target_login') and not target_login_password_are_ignored:
+            if not extkv.get(u'target_login') and allow_interactive_login:
                 interactive_data[u'target_login'] = MAGICASK
                 if allow_interactive_password:
                     interactive_data[u'target_password'] = MAGICASK
@@ -1704,7 +1703,8 @@ class Sesman():
                     kv[u'target_password'] = target_password
                     is_interactive_login = not bool(kv.get('target_login'))
                     extra_kv, _status, _error = self.complete_target_info(
-                        kv, allow_interactive_password, smartcard_passthrough)
+                        kv, allow_interactive_password and not smartcard_passthrough,
+                        not smartcard_passthrough)
                     kv.update(extra_kv)
 
                     if self.target_context.host:
@@ -1795,7 +1795,7 @@ class Sesman():
                             self.rtmanager.check(current_time)
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data([
-                                    "width", "height", "rt_ready", "fdx_path"
+                                    "width", "height", "rt_ready", "fdx_path", "smartcard_login"
                                 ])
 
                                 if self._changed_keys:
@@ -2152,7 +2152,8 @@ class Sesman():
         'height': ('video_height', 'int'),
         'width': ('video_width', 'int'),
         'rt_ready': ('rt', 'bool'),
-        'fdx_path': ('fdx_path', 'str')
+        'fdx_path': ('fdx_path', 'str'),
+        'smartcard_login': ('effective_login', 'str')
     }
 
     @staticmethod
