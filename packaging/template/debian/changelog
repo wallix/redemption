@@ -1,3 +1,14 @@
+redemption (7.4.25%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix 'Starting SP launch timeout only after user logon'.
+  * SmartCard passthrough.
+  * Support of Restricted Admin mode on target connection.
+  * Fix 'Disconnection when user sends more than 2 files through clipboard'.
+  * Fix 'Downloaded videos quality from session history is deteriotated'.
+  * Fix 'High CPU usage'.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 07 Feb 2020 14:39:53 +0200
+
 redemption (7.4.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * [SP][BS] Detect and block user account manipulation.
