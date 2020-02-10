@@ -5316,6 +5316,22 @@ namespace cfg {
         using mapped_type = type;
         type value{false};
     };
+    /// type: std::string <br/>
+    /// sesman ⇐ proxy <br/>
+    /// value{} <br/>
+    struct context::smartcard_login {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "smartcard_login";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(192);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
 
 } // namespace cfg
 
@@ -5703,6 +5719,7 @@ struct context
 , cfg::context::rd_shadow_invitation_error_message
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
+, cfg::context::smartcard_login
 , cfg::context::selector_current_page
 , cfg::context::selector_lines_per_page
 , cfg::context::selector_number_of_pages
@@ -5959,11 +5976,12 @@ using VariablesAclPack = Pack<
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::rd_shadow_invitation_port
+, cfg::context::smartcard_login
 >;
 
 
 struct BitFlags {
-  uint64_t bits_[3];
+  uint64_t bits_[4];
   bool operator()(unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }
 };
 
@@ -5971,10 +5989,12 @@ constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111011111111111
 , 0b0111110111111111111111001111111111111111111111111111111111111111
 , 0b1111111111111110111111111111111111111111111111111111111111111011
+, 0b0000000000000000000000000000000000000000000000000000000000000001
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000100
+, 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs
