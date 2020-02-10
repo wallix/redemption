@@ -67,4 +67,5 @@ back_to_selector_default_reinit = {
   u'rd_shadow_invitation_id': u'',
   u'rd_shadow_invitation_port': 0,
   u'recording_started': False,
+  u'smartcard_login': u'',
 }

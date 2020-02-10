@@ -191,3 +191,4 @@ template class Inifile::Field<cfg::context::rd_shadow_invitation_error_message>;
 template class Inifile::Field<cfg::context::rd_shadow_invitation_id>;
 template class Inifile::Field<cfg::context::rd_shadow_invitation_addr>;
 template class Inifile::Field<cfg::context::rd_shadow_invitation_port>;
+template class Inifile::Field<cfg::context::smartcard_login>;

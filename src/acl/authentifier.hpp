@@ -213,4 +213,11 @@ public:
             this->acl_serial->ini.set_acl<cfg::context::rd_shadow_invitation_port>(port);
         }
     }
+
+    void set_smartcard_login(const char * login)
+    {
+        if (this->acl_serial){
+            this->acl_serial->ini.set_acl<cfg::context::smartcard_login>(login);
+        }
+    }
 };

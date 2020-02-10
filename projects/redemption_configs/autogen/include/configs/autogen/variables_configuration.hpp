@@ -5332,6 +5332,22 @@ namespace cfg {
         using mapped_type = type;
         type value{false};
     };
+    /// type: std::string <br/>
+    /// sesman ⇐ proxy <br/>
+    /// value{} <br/>
+    struct context::smartcard_login {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "smartcard_login";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(193);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
 
 } // namespace cfg
 
@@ -5717,6 +5733,7 @@ struct context
 , cfg::context::rd_shadow_invitation_error_message
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
+, cfg::context::smartcard_login
 , cfg::context::selector_current_page
 , cfg::context::selector_lines_per_page
 , cfg::context::selector_number_of_pages
@@ -5973,6 +5990,7 @@ using VariablesAclPack = Pack<
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::rd_shadow_invitation_port
+, cfg::context::smartcard_login
 >;
 
 
@@ -5985,7 +6003,7 @@ constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111011111111111
 , 0b1111101111111111111110011111111111111111111111111111111111111111
 , 0b1111111111111101111111111111111111111111111111111111111111110110
-, 0b0000000000000000000000000000000000000000000000000000000000000001
+, 0b0000000000000000000000000000000000000000000000000000000000000011
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000

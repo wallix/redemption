@@ -287,6 +287,7 @@ private:
         {}
     } clipboard;
 
+public:
     struct FileSystem
     {
         const bool disable_log_syslog;
@@ -304,7 +305,6 @@ private:
         {}
     } file_system;
 
-public:
     class Drive
     {
         const bool use_application_driver;
@@ -4735,6 +4735,10 @@ public:
         //LOG(LOG_INFO,
         //    "Domain username format 0=(%s) Domain username format 1=(%s)",
         //    domain_username_format_0, domain_username_format_0);
+
+        if (this->channels.file_system.smartcard_passthrough) {
+            this->authentifier.set_smartcard_login(domain_username_format_0);
+        }
 
         if (this->disconnect_on_logon_user_change
             && ((0 != ::strcasecmp(domain, this->logon_info.domain().c_str())

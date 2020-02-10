@@ -422,6 +422,7 @@ namespace cfg {
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
+        struct smartcard_login;
     };
 
 } // namespace cfg
