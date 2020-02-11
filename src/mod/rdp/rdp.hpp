@@ -4737,9 +4737,11 @@ public:
         //    "Domain username format 0=(%s) Domain username format 1=(%s)",
         //    domain_username_format_0, domain_username_format_0);
 
+#ifndef __EMSCRIPTEN__
         if (this->channels.file_system.smartcard_passthrough) {
             this->authentifier.set_smartcard_login(domain_username_format_0);
         }
+#endif
 
         if (this->disconnect_on_logon_user_change
             && ((0 != ::strcasecmp(domain, this->logon_info.domain().c_str())
