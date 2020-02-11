@@ -3540,13 +3540,13 @@ RED_AUTO_TEST_CASE(TestConvertBitmap)
     RED_CHECK_EQUAL(0xFF, outbuf[5]);
 
     // TODO We should force to black uninitialized parts of bitmap. For now it is random
-    RED_CHECK_EQUAL(outbuf[6], outbuf[6]);
-    RED_CHECK_EQUAL(outbuf[7], outbuf[7]);
-    RED_CHECK_EQUAL(outbuf[8], outbuf[8]);
-
-    RED_CHECK_EQUAL(outbuf[9], outbuf[9]);
-    RED_CHECK_EQUAL(outbuf[10], outbuf[10]);
-    RED_CHECK_EQUAL(outbuf[11], outbuf[11]);
+    // RED_CHECK_EQUAL(outbuf[6], outbuf[6]);
+    // RED_CHECK_EQUAL(outbuf[7], outbuf[7]);
+    // RED_CHECK_EQUAL(outbuf[8], outbuf[8]);
+    //
+    // RED_CHECK_EQUAL(outbuf[9], outbuf[9]);
+    // RED_CHECK_EQUAL(outbuf[10], outbuf[10]);
+    // RED_CHECK_EQUAL(outbuf[11], outbuf[11]);
 
     // ---------------------------------
 
@@ -3559,13 +3559,13 @@ RED_AUTO_TEST_CASE(TestConvertBitmap)
     RED_CHECK_EQUAL(0xFF, outbuf[17]);
 
     // TODO We should force to black uninitialized parts of bitmap. For now it is random
-    RED_CHECK_EQUAL(outbuf[18], outbuf[18]);
-    RED_CHECK_EQUAL(outbuf[19], outbuf[19]);
-    RED_CHECK_EQUAL(outbuf[20], outbuf[20]);
-
-    RED_CHECK_EQUAL(outbuf[21], outbuf[21]);
-    RED_CHECK_EQUAL(outbuf[22], outbuf[22]);
-    RED_CHECK_EQUAL(outbuf[23], outbuf[23]);
+    // RED_CHECK_EQUAL(outbuf[18], outbuf[18]);
+    // RED_CHECK_EQUAL(outbuf[19], outbuf[19]);
+    // RED_CHECK_EQUAL(outbuf[20], outbuf[20]);
+    //
+    // RED_CHECK_EQUAL(outbuf[21], outbuf[21]);
+    // RED_CHECK_EQUAL(outbuf[22], outbuf[22]);
+    // RED_CHECK_EQUAL(outbuf[23], outbuf[23]);
 
     // ---------------------------------
 
@@ -3578,14 +3578,13 @@ RED_AUTO_TEST_CASE(TestConvertBitmap)
     RED_CHECK_EQUAL(0xFF, outbuf[29]);
 
     // TODO We should force to black uninitialized parts of bitmap. For now it is random
-    RED_CHECK_EQUAL(outbuf[30], outbuf[30]);
-    RED_CHECK_EQUAL(outbuf[31], outbuf[31]);
-    RED_CHECK_EQUAL(outbuf[32], outbuf[32]);
-
-    RED_CHECK_EQUAL(outbuf[33], outbuf[33]);
-    RED_CHECK_EQUAL(outbuf[34], outbuf[34]);
-    RED_CHECK_EQUAL(outbuf[35], outbuf[35]);
-
+    // RED_CHECK_EQUAL(outbuf[30], outbuf[30]);
+    // RED_CHECK_EQUAL(outbuf[31], outbuf[31]);
+    // RED_CHECK_EQUAL(outbuf[32], outbuf[32]);
+    //
+    // RED_CHECK_EQUAL(outbuf[33], outbuf[33]);
+    // RED_CHECK_EQUAL(outbuf[34], outbuf[34]);
+    // RED_CHECK_EQUAL(outbuf[35], outbuf[35]);
 }
 
 
