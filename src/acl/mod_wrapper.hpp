@@ -122,35 +122,25 @@ struct ModWrapper
         void draw_impl(Command const & cmd, Rect clip, Args const &... args)
         {
             auto const & clip_rect = clip_from_cmd(cmd).intersect(clip);
-
-            LOG(LOG_INFO, "gfilter:draw_impl(cmd) clip_rect=%s clip_from_cms=%s clip=%s protected_rect=%s",
-                clip_rect, clip_from_cmd(cmd), clip, this->protected_rect);
-
             if (this->protected_rect.contains(clip_rect) || clip_rect.isempty()) {
                 // nada: leave the OSD message rect untouched
-                LOG(LOG_INFO, "gfilter:draw_impl(cmd) LEAVE OSD Untouched");
             }
             else if (clip_rect.has_intersection(this->protected_rect)) {
-                LOG(LOG_INFO, "gfilter:draw_impl(cmd) DRAW SCREEN OUTSIDE OSD");
                 // draw the parts of the screen outside OSD message rect
-                this->sink.begin_update();
                 for (const Rect & subrect : gdi::subrect4(clip_rect, this->protected_rect)) {
                     if (!subrect.isempty()) {
                         this->sink.draw(cmd, subrect, args...);
                     }
                 }
-                this->sink.end_update();
             }
             else {
                 // The drawing order is fully ouside OSD message rect
-                LOG(LOG_INFO, "gfilter:draw_impl(cmd) ORDER OUTSIDE OSD");
                 this->sink.draw(cmd, clip, args...);
             }
         }
 
         void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
         {
-            LOG(LOG_INFO, "gfilter:draw_impl(RDPBitmapData)");
             Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                         , bitmap_data.dest_right - bitmap_data.dest_left + 1
                         , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
@@ -159,7 +149,6 @@ struct ModWrapper
                 // nada: leave the OSD message rect untouched
             }
             if (rectBmp.has_intersection(this->protected_rect)) {
-                this->sink.begin_update();
                 for (const Rect & subrect : gdi::subrect4(rectBmp, this->protected_rect)) {
                     if (!subrect.isempty()) {
                         // draw the parts of the screen outside OSD message rect
@@ -182,7 +171,6 @@ struct ModWrapper
                         this->sink.draw(sub_bmp_data, sub_bmp);
                     }
                 }
-                this->sink.end_update();
             }
             else {
                 // The drawing order is fully ouside OSD message rect
@@ -192,7 +180,6 @@ struct ModWrapper
 
         void draw_impl(const RDPScrBlt & cmd, const Rect clip)
         {
-            LOG(LOG_INFO, "gfilter:draw_impl(RDPScrBlt)");
             const Rect drect = cmd.rect.intersect(clip);
             const int deltax = cmd.srcx - cmd.rect.x;
             const int deltay = cmd.srcy - cmd.rect.y;
@@ -208,14 +195,21 @@ struct ModWrapper
                 this->sink.draw(cmd, clip);
             }
             else {
-                // We don't have src data, ask it to server, no choice
-                // FIXME: if only drect has intersection we could perform scr_blt, no real need to ask data to server
-                this->sink.begin_update();
-                gdi::subrect4_t rects = gdi::subrect4(drect, this->protected_rect);
-                auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
-                auto av = make_array_view(rects.begin(), e);
-                this->mod->rdp_input_invalidate2(av);
-                this->sink.end_update();
+                if (has_src_intersec_fg){
+                    // We don't have src data, ask it to server, no choice
+                    gdi::subrect4_t rects = gdi::subrect4(drect, this->protected_rect);
+                    auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
+                    auto av = make_array_view(rects.begin(), e);
+                    this->mod->rdp_input_invalidate2(av);
+                }
+                else {
+                    // only drect has intersection, src rect is available
+                    for (const Rect & subrect : gdi::subrect4(drect, this->protected_rect)) {
+                        if (!subrect.isempty()) {
+                            this->sink.draw(cmd, subrect);
+                        }
+                    }
+                }
             }
         }
     } gfilter;
@@ -358,21 +352,18 @@ public:
 
     void draw_osd_message()
     {
-        LOG(LOG_INFO, "draw_osd_message");
         auto rect = this->get_protected_rect();
         this->set_protected_rect(Rect{});
         this->get_graphics().begin_update();
         this->draw_osd_message_impl(this->get_graphics(), rect);
         this->get_graphics().end_update();
         this->set_protected_rect(rect);
-        LOG(LOG_INFO, "draw_osd_message");
     }
 
 
 private:
     void draw_osd_message_impl(gdi::GraphicApi & drawable, Rect osd_rect)
     {
-        LOG(LOG_INFO, "draw_osd_message_impl %s", this->clip);
         if (this->clip.isempty()) {
             return ;
         }
