@@ -116,29 +116,29 @@ class Session
 
         bool is_set_for_writing(int fd){
             bool res = io_fd_isset(fd, this->wfds);
-            if (res){
-                LOG(LOG_INFO, "is set for writing fd=%u", fd);
-            }
+//            if (res){
+//                LOG(LOG_INFO, "is set for writing fd=%u", fd);
+//            }
             return res;
         };
 
         bool is_set_for_reading(int fd){
             bool res = io_fd_isset(fd, this->rfds);
-            if (res){
-                LOG(LOG_INFO, "is set for reading fd=%u", fd);
-            }
+//            if (res){
+//                LOG(LOG_INFO, "is set for reading fd=%u", fd);
+//            }
             return res;
         };
 
         void set_read_sck(int sck)
         {
-            LOG(LOG_INFO, "--> set for reading fd=%u", sck);
+//            LOG(LOG_INFO, "--> set for reading fd=%u", sck);
             this->max = prepare_fds(sck, this->max, this->rfds);
         }
 
         void set_write_sck(int sck)
         {
-            LOG(LOG_INFO, "--> set for writing fd=%u", sck);
+//            LOG(LOG_INFO, "--> set for writing fd=%u", sck);
             if (!this->want_write) {
                 this->want_write = true;
                 io_fd_zero(this->wfds);
@@ -866,13 +866,11 @@ public:
                     if (mod_wrapper.has_mod() 
                     && mod_wrapper.get_mod_transport() 
                     && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
-                        LOG(LOG_INFO, "Send waiting mod data");
                         mod_wrapper.get_mod_transport()->send_waiting_data();
                     }
 
                     if (front_trans.sck != INVALID_SOCKET
                     && ioswitch.is_set_for_writing(front_trans.sck)) {
-                        LOG(LOG_INFO, "Send waiting front data");
                         front_trans.send_waiting_data();
                     }
                     if (num > 0) { continue; }
@@ -887,21 +885,21 @@ public:
                 // sockets for mod or front aren't managed using fd events
                 if (mod_wrapper.has_mod() && mod_wrapper.get_mod_transport()) {
                     int fd = mod_wrapper.get_mod_transport()->sck;
-                    LOG(LOG_INFO, "Wait for read event on mod fd=%d", fd);
+//                    LOG(LOG_INFO, "Wait for read event on mod fd=%d", fd);
                     if (fd != INVALID_SOCKET) {
                         ioswitch.set_read_sck(fd);
                     }
                 }
                 
                 if (front_trans.sck != INVALID_SOCKET) {
-                    LOG(LOG_INFO, "Wait for read event on front fd=%d", front_trans.sck);
+//                    LOG(LOG_INFO, "Wait for read event on front fd=%d", front_trans.sck);
                     ioswitch.set_read_sck(front_trans.sck);
                 }
 
                 // if event lists are waiting for incoming data 
                 fd_events_.for_each(
                     [&](int fd, auto& /*top*/){ 
-                        LOG(LOG_INFO, "Wait for read event on fd=%d", fd);
+//                        LOG(LOG_INFO, "Wait for read event on fd=%d", fd);
                         if (fd != INVALID_SOCKET){
                             ioswitch.set_read_sck(fd);
                         }
@@ -910,7 +908,7 @@ public:
                 if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
                     graphic_fd_events_.for_each(
                     [&](int fd, auto& /*top*/){ 
-                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
+//                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
                         if (fd != INVALID_SOCKET){
                             ioswitch.set_read_sck(fd);
                         }
@@ -918,7 +916,7 @@ public:
                 }
 
                 if (acl) {
-                    LOG(LOG_INFO, "Wait for read event on acl fd=%d", acl->auth_trans.sck);
+//                    LOG(LOG_INFO, "Wait for read event on acl fd=%d", acl->auth_trans.sck);
                     if (acl->auth_trans.sck != INVALID_SOCKET){
                         ioswitch.set_read_sck(acl->auth_trans.sck);
                     }
@@ -977,13 +975,13 @@ public:
                     && mod_wrapper.get_mod_transport()->sck != INVALID_SOCKET
                     && ioswitch.is_set_for_reading(mod_wrapper.get_mod_transport()->sck));
 
-                LOG(LOG_INFO, "SELECT LOOP: %s front_data_incoming=%s %s acl_data_incoming=%s mod_data_incoming=%s [%s]",
-                    front.state_name(),
-                    front_is_set?"yes":"no",
-                    acl?"ACL Connected":"ACL not connected",
-                    acl_is_set?"yes":"no",
-                    mod_is_set?"yes":"no",
-                    mod_wrapper.module_name());
+//                LOG(LOG_INFO, "SELECT LOOP: %s front_data_incoming=%s %s acl_data_incoming=%s mod_data_incoming=%s [%s]",
+//                    front.state_name(),
+//                    front_is_set?"yes":"no",
+//                    acl?"ACL Connected":"ACL not connected",
+//                    acl_is_set?"yes":"no",
+//                    mod_is_set?"yes":"no",
+//                    mod_wrapper.module_name());
 
                 try {
                     if (front_is_set){
@@ -1055,7 +1053,6 @@ public:
                 case Front::FRONT_UP_AND_RUNNING:
                 {
                     if (!acl && !this->last_module) {
-                        LOG(LOG_INFO, "start_acl_running");
                         this->start_acl_running(mod_wrapper, acl, cctx, rnd, now, ini, mm, authentifier, fstat);
                         if (this->last_module && !ini.get<cfg::globals::enable_close_box>()) {
                             run_session = false;
@@ -1064,11 +1061,9 @@ public:
                     }
 
                     if (!sesman.auth_info_sent){
-                        LOG(LOG_INFO, "Sending ACL auth_info");
                         sesman.set_acl_screen_info();
                         sesman.set_acl_auth_info();
                         if (this->ini.changed_field_size()) {
-                            LOG(LOG_INFO, "ACL Data to send");
                             acl->acl_serial.send_acl_data();
                             continue;
                         }
@@ -1101,7 +1096,7 @@ public:
         }
         catch(...) {
             disconnection_message_error = "Exception in Session::Session";
-            LOG(LOG_INFO, "Session::Session other exception in Init");
+            LOG(LOG_ERR, "Session::Session other exception in Init");
         }
         // silent message for localhost for watchdog
         if (ini.get<cfg::globals::host>() != "127.0.0.1") {

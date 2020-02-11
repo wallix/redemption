@@ -230,7 +230,7 @@ public:
                 this->get_mod()->disconnect();
             }
             catch (Error const& e) {
-                LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
+                LOG(LOG_ERR, "MMIni::invoke_close_box exception = %u!", e.id);
             }
         }
         this->remove_mod();
@@ -245,7 +245,6 @@ public:
     // finding out the actual internal graphics interface should never be necessary
     gdi::GraphicApi & get_graphic_wrapper()
     {
-        LOG(LOG_INFO, "get_graphic_wraper()");
         gdi::GraphicApi& gd = this->get_graphics();
         if (this->rail_module_host_mod_ptr) {
             return this->rail_module_host_mod_ptr->proxy_gd(gd);
@@ -309,7 +308,6 @@ public:
 
     void set_message(std::string message, bool is_disable_by_input)
     {
-        LOG(LOG_INFO, "set_message=%s", message);
         this->osd_message = std::move(message);
         this->is_disable_by_input = is_disable_by_input;
         this->bogus_refresh_rect_ex = (this->ini.get<cfg::globals::bogus_refresh_rect>()
@@ -408,30 +406,25 @@ private:
 public:
     void acl_update()
     {
-        LOG(LOG_INFO, "acl_update()");
         this->get_mod()->acl_update();
     }
 
     mod_api* get_mod()
     {
-        LOG(LOG_INFO, "get_mod()");
         return this->modi;
     }
 
     [[nodiscard]] mod_api const* get_mod() const
     {
-        LOG(LOG_INFO, "const get_mod()");
         return this->modi;
     }
 
     bool has_mod() const {
-        LOG(LOG_INFO, "has_mod()");
         return (this->modi != &this->no_mod);
     }
 
     void remove_mod()
     {
-        LOG(LOG_INFO, "remove_mod()");
         if (this->has_mod()){
             this->clear_osd_message();
             delete this->modi;
@@ -448,7 +441,6 @@ public:
 
     void set_mod_transport(SocketTransport * psocket_transport)
     {
-        LOG(LOG_INFO, "XXXXXXXXXXXXXX set_mod_transport %p", psocket_transport);
         this->psocket_transport = psocket_transport;
     }
 
@@ -462,13 +454,11 @@ public:
     
     [[nodiscard]] SocketTransport* get_mod_transport() const noexcept
     {
-//        LOG(LOG_INFO, "get_mod_transport %p", psocket_transport);
         return this->psocket_transport;
     }
 
     void disable_osd()
     {
-        LOG(LOG_INFO, "disable_osd");
         this->is_disable_by_input = false;
         auto const protected_rect = this->get_protected_rect();
         this->set_protected_rect(Rect{});
@@ -489,7 +479,6 @@ public:
 
     void clear_osd_message()
     {
-        LOG(LOG_INFO, "clear_osd_message");
         if (!this->get_protected_rect().isempty()) {
             this->disable_osd();
         }
@@ -497,7 +486,6 @@ public:
 
     void osd_message_fn(std::string message, bool is_disable_by_input)
     {
-        LOG(LOG_INFO, "osd_message_fn %s %s", message, this->get_message());
         if (message != this->get_message()) {
             this->clear_osd_message();
         }
@@ -625,7 +613,6 @@ public:
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
         std::size_t length, uint32_t flags)
     {
-        LOG(LOG_INFO, ">>>>>>>>++++++++++++ send_to_mod_channel");
         this->get_mod()->send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 

@@ -887,8 +887,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
             const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
             size_t num_channels = channel_list.size();
-            if ((num_channels > 0) || this->enable_auth_channel || this->has_managed_drive ||
-                this->checkout_channel.c_str()[0]) {
+            if ((num_channels > 0) 
+            || this->enable_auth_channel 
+            || this->has_managed_drive 
+            || this->checkout_channel.c_str()[0]) {
                 /* Here we need to put channel information in order
                 to redirect channel data
                 from client to server passing through the "proxy" */
@@ -897,8 +899,13 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 bool has_cliprdr_channel = false;
                 bool has_rdpdr_channel   = false;
                 bool has_rdpsnd_channel  = false;
+                
+                
+                
                 for (size_t index = 0, adjusted_index = 0; index < num_channels; index++) {
                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
+
+                    channel_item.log(index);
 
                     if (!this->remote_program && channel_item.name == channel_names::rail) {
                         continue;
@@ -933,6 +940,8 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for file system virtual channel (rdpdr)
                 if (!has_rdpdr_channel && this->has_managed_drive) {
+                    LOG(LOG_INFO, "Inject rdpdr");
+
                     ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::rdpdr.c_str());
@@ -951,6 +960,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for clipboard channel (cliprdr)
                 if (!has_cliprdr_channel && this->enable_session_probe && this->session_probe_use_clipboard_based_launcher) {
+                    LOG(LOG_INFO, "Inject cliprdr");
                     ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::cliprdr.c_str());
@@ -971,6 +981,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 // The RDPDR channel advertised by the client is ONLY accepted by the RDP
                 //  server 2012 if the RDPSND channel is also advertised.
                 if (!has_rdpsnd_channel && this->has_managed_drive) {
+                    LOG(LOG_INFO, "Inject rdpsnd");
                     ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::rdpsnd.c_str());
@@ -989,6 +1000,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for auth_channel virtual channel (wablauncher)
                 if (this->enable_auth_channel) {
+                    LOG(LOG_INFO, "Inject auth_channel");
                     assert(this->auth_channel.c_str()[0]);
                     memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel.c_str(), 8);
                     cs_net.channelDefArray[cs_net.channelCount].options =
@@ -1005,6 +1017,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for checkout_channel virtual channel
                 if (this->checkout_channel.c_str()[0]) {
+                    LOG(LOG_INFO, "Inject checkout channel");
                     memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->checkout_channel.c_str(), 8);
                     cs_net.channelDefArray[cs_net.channelCount].options =
                         GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
@@ -1019,6 +1032,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 }
 
                 if (this->enable_session_probe) {
+                    LOG(LOG_INFO, "Enable session probe");
                     memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::sespro.c_str(), 8);
                     cs_net.channelDefArray[cs_net.channelCount].options =
                         GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
@@ -1033,6 +1047,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 }
 
                 if (this->convert_remoteapp_to_desktop) {
+                    LOG(LOG_INFO, "Convert remote app to desktop");
                     {
                         memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail.c_str(), 8);
                         cs_net.channelDefArray[cs_net.channelCount].options =

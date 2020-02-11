@@ -891,6 +891,7 @@ private:
 public:
     // TODO: make that private again when callers will be moved to channels
     static void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
+        LOG(LOG_INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> send_to_front_channel");
         const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
@@ -1617,6 +1618,9 @@ public:
         RailCaps const & client_rail_caps,
         const char (& client_name)[128]
     ) {
+    
+        LOG(LOG_INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>> send_to_mod_channel()");
+    
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         if (!mod_channel) {
             return;
