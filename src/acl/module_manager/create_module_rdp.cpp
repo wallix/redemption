@@ -256,7 +256,7 @@ public:
         Inifile const& ini = this->ini;
 
         if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
-            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: F12");
+            LOG(LOG_INFO, "*****************mod_rdp::rdp_input_scancode: F12****************");
             bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
             if (this->target_info_is_shown && f12_released) {
                 LOG(LOG_INFO, "Hide info");
