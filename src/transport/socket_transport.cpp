@@ -243,13 +243,9 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
         return Read::Eof;
     }
 
-    if (res < 0){
-        LOG(LOG_ERR, "SocketTransport::do_atomic_read: Failed to read from socket!");
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
-    }
-
-    if (static_cast<size_t>(res) < len){
-        LOG(LOG_ERR, "SocketTransport::do_atomic_read: Insufficient data to read!");
+    if (res < 0 || static_cast<size_t>(res) < len) {
+        LOG(LOG_ERR, "SocketTransport::do_atomic_read: %s to read from socket %s!",
+            (res < 0) ? "Failed" : "Insufficient data", this->name);
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
     }
 
