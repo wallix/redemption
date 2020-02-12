@@ -35,6 +35,18 @@
 #include <vector>
 #include <string>
 
+/*
+
+        Client                      Server
+
+ CB_FORMAT_LIST           ->
+                          <- CB_LOCK_CLIPDATA (id = 1)
+                          <- CB_UNLOCK_CLIPDATA (id = 0)
+                          <- CB_FORMAT_LIST_RESPONSE
+                          <- CB_FORMAT_DATA_REQUEST
+ CB_FORMAT_DATA_RESPONSE  ->
+
+*/
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
