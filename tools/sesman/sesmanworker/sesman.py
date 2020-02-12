@@ -1818,8 +1818,12 @@ class Sesman():
                                 self.target_context.login or ""
                         if u'${PASSWORD}' in app_params.params:
                             kv[u'target_application_password'] = (
-                                self.engine.get_target_password(selected_target)
-                                or self.engine.get_primary_password(selected_target)
+                                self.engine.get_target_password(
+                                    selected_target
+                                )
+                                or self.engine.get_primary_password(
+                                    selected_target
+                                )
                                 or ''
                             )
                     self.target_app_rights[kv[u'target_application']] = (
@@ -1846,8 +1850,6 @@ class Sesman():
 
                 kv[u'target_port'] = physical_info.service_port
                 kv[u'device_id'] = physical_info.device_id
-
-                release_reason = u''
 
                 try:
                     auth_policy_methods = self.engine.get_target_auth_methods(
@@ -2002,215 +2004,44 @@ class Sesman():
                                 self.check_session_parameters = False
                             self.rtmanager.check(current_time)
                             if self.proxy_conx in r:
-                                _status, _error = self.receive_data([
-                                    "width", "height", "rt_ready", "fdx_path", "smartcard_login"
-                                ])
+                                _status, _error = self.receive_data(
+                                    Sesman.EXPECTING_KEYS
+                                )
 
                                 if self._changed_keys:
                                     self.update_session_data(
                                         self._changed_keys
                                     )
                                 if self.shared.get(u'auth_notify'):
-                                    if self.shared.get(u'auth_notify') == u'rail_exec':
-                                        Logger().info(
-                                            u"rail_exec flags=\"%s\" exe_of_file=\"%s\"" %
-                                            (self.shared.get(u'auth_notify_rail_exec_flags'),
-                                             self.shared.get(u'auth_notify_rail_exec_exe_or_file'))
-                                        )
-                                        auth_command_kv = self.check_application(
-                                            physical_target,
-                                            self.shared.get(u'auth_notify_rail_exec_flags'),
-                                            self.shared.get(u'auth_notify_rail_exec_exe_or_file')
-                                        )
-                                        self.send_data(auth_command_kv)
-
-                                        self.shared[u'auth_notify_rail_exec_flags'] = u''
-                                        self.shared[u'auth_notify_rail_exec_exe_or_file'] = u''
-
+                                    self.handle_auth_notify(physical_target)
                                     self.shared[u'auth_notify'] = u''
 
                                 if (not trace_written
                                     and (self.shared.get('recording_started')
                                          == 'True')):
-                                    # write mwrm path to rdptrc (allow real time display)
+                                    _status, _error = \
+                                        self.handle_recording_started()
                                     trace_written = True
-                                    Logger().info(u"Call write trace")
-                                    _status, _error = self.engine.write_trace(self.full_path)
-                                    if not _status:
-                                        _error = TR("Trace writer failed for %s") % self.full_path
-                                        Logger().info(u"Failed accessing recording path (%s)" % self.full_path)
-                                        self.send_data({u'rejected': TR(u'error_getting_record_path')})
 
                                 if self.shared.get("pm_request"):
                                     self._manage_pm()
 
-                                if self.shared.get("rd_shadow_available") == 'True':
-                                    update_args = {}
-                                    update_args["shadow_allow"] = True
-                                    self.engine.update_session(**update_args)
-                                    self.shared["rd_shadow_available"] = 'False'
-
-                                if self.shared.get("rd_shadow_invitation_error_code"):
-                                    shadow_token = {
-                                        "shadow_id":
-                                        self.shared.get("rd_shadow_invitation_id"),
-                                        "shadow_ip":
-                                        self.shared.get("rd_shadow_invitation_addr"),
-                                        "shadow_port":
-                                        self.shared.get("rd_shadow_invitation_port"),
-                                    }
-                                    self.engine.shadow_response(
-                                        errcode=self.shared.get("rd_shadow_invitation_error_code"),
-                                        errmsg=self.shared.get("rd_shadow_invitation_error_message"),
-                                        token=shadow_token,
-                                        userdata=self.shared.get("rd_shadow_userdata")
-                                    )
-                                    self.shared["rd_shadow_available"] = 'False'
-
-                                    self.shared["rd_shadow_userdata"] = None
-                                    self.shared["rd_shadow_invitation_error_code"] = 0
-                                    self.shared["rd_shadow_invitation_error_message"] = None
-                                    self.shared["rd_shadow_invitation_id"] = None
-                                    self.shared["rd_shadow_invitation_addr"] = None
-                                    self.shared["rd_shadow_invitation_port"] = None
-
-                                if self.shared.get("native_session_id"):
-                                    update_args = {}
-                                    update_args["native_session_id"] = self.shared.get("native_session_id")
-                                    self.engine.update_session(**update_args)
-                                    Logger().info(u"NativeSessionId=%s" % self.shared.get("native_session_id"))
-                                    self.shared["native_session_id"] = u""
+                                self.handle_shadowing()
 
                                 if self.shared.get(u'reporting'):
-                                    _reporting = self.shared.get(u'reporting')
-                                    _reporting_reason, _, _remains = \
-                                        _reporting.partition(':')
-                                    _reporting_target, _, _reporting_message = \
-                                        _remains.partition(':')
-                                    self.shared[u'reporting'] = u''
-
-                                    Logger().info(u"Reporting: reason=\"%s\" "
-                                                  "target=\"%s\" message=\"%s\"" %
-                                                  (_reporting_reason,
-                                                   _reporting_target,
-                                                   _reporting_message))
-
-                                    self.process_report(_reporting_reason,
-                                                        _reporting_target,
-                                                        _reporting_message)
-
-                                    if _reporting_reason == u'CONNECTION_FAILED':
-                                        self.reporting_reason = _reporting_reason
-                                        self.reporting_target = _reporting_target
-                                        self.reporting_message = _reporting_message
-
+                                    report_status = self.handle_reporting()
+                                    if not report_status:
                                         try_next = True
-                                        release_reason = u'Connection failed'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
                                         break
-                                    elif _reporting_reason == u'FINDPATTERN_KILL':
-                                        Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
-                                        release_reason = u'Kill pattern detected'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        self.send_data({u'disconnect_reason': TR(u"pattern_kill")})
-                                    elif _reporting_reason == u'SERVER_REDIRECTION':
-                                        (redir_login, _, redir_host) = \
-                                            _reporting_message.rpartition('@')
-                                        update_args = {}
-                                        if redir_host:
-                                            update_args["target_host"] = redir_host
-                                        if redir_login:
-                                            update_args["target_account"] = redir_login
-                                        self.engine.update_session(**update_args)
-                                    elif _reporting_reason == u'SESSION_EXCEPTION':
-                                        Logger().info(u"RDP connection terminated. Reason: Session exception")
-                                        release_reason = u'Session exception: ' + _reporting_message
-                                        self.engine.set_session_status(
-                                            diag=release_reason)
-                                    elif _reporting_reason == u'SESSION_EXCEPTION_NO_RECORD':
-                                        Logger().info(u"RDP connection terminated. Reason: Session exception (no record)")
-                                        release_reason = u'Session exception: ' + _reporting_message
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                    elif _reporting_reason == u'SESSION_PROBE_LAUNCH_FAILED':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe launch failed')
-                                        release_reason = u'Interrupt: Session Probe launch failed'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        if self.shared.get(u'session_probe_launch_error_message'):
-                                            self.send_data({u'disconnect_reason': self.shared.get(u'session_probe_launch_error_message')})
-                                            self.shared[u'session_probe_launch_error_message'] = u''
-                                        else:
-                                            self.send_data({u'disconnect_reason': TR(u"session_probe_launch_failed")})
-                                    elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe keepalive missed')
-                                        release_reason = u'Interrupt: Session Probe keepalive missed'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        self.send_data({u'disconnect_reason': TR(u"session_probe_keepalive_missed")})
-                                    elif _reporting_reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block outbound connection')
-                                        release_reason = u'Interrupt: Session Probe failed to block outbound connection'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        self.send_data({u'disconnect_reason': TR(u"session_probe_outbound_connection_blocking_failed")})
-                                    elif _reporting_reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block process')
-                                        release_reason = u'Interrupt: Session Probe failed to block process'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        self.send_data({u'disconnect_reason': TR(u"session_probe_process_blocking_failed")})
-                                    elif _reporting_reason == u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to run startup application')
-                                        release_reason = u'Interrupt: Session Probe failed to run startup application'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        self.send_data({u'disconnect_reason': TR(u"session_probe_failed_to_run_startup_application")})
-                                    elif _reporting_reason == u'SESSION_PROBE_RECONNECTION':
-                                        Logger().info(u'RDP connection terminated. Reason: Session Probe reconnection without disconnection')
-                                        release_reason = u'Interrupt: Session Probe reconnection without disconnection'
-                                        self.engine.set_session_status(
-                                            result=False, diag=release_reason)
-                                        self.send_data({u'disconnect_reason': TR(u"session_probe_reconnection")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break
 
                                 if self.shared.get(u'auth_channel_target'):
-                                    Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
-
-                                    if self.shared.get(u'auth_channel_target').startswith(u'GetWabSessionParameters'):
-                                        app_target = selected_target
-                                        _prefix, _sep, _val = self.shared.get(u'auth_channel_target').partition(':')
-                                        if _sep:
-                                            app_right_params = self.target_app_rights.get(_val)
-                                            if app_right_params is not None:
-                                                app_target, _app_param = app_right_params
-                                        app_info = self.engine.get_target_login_info(app_target)
-                                        account_login = app_info.account_login
-                                        application_password = \
-                                            self.engine.get_target_password(app_target) \
-                                            or self.engine.get_primary_password(app_target) \
-                                            or ''
-                                        _message = {
-                                            'user': account_login,
-                                            'password': application_password
-                                        }
-
-                                        # Logger().info(
-                                        #     u"GetWabSessionParameters (response):" %
-                                        #     json.dumps(_message)
-                                        # )
-                                        self.send_data({u'auth_channel_answer': json.dumps(_message)})
-                                        Logger().info(
-                                            u"Sending of auth channel "
-                                            u"answer ok "
-                                            "(GetWabSessionParameters)"
-                                        )
-
-                                self.shared[u'auth_channel_target'] = u''
+                                    self.handle_auth_channel_target(
+                                        selected_target
+                                    )
+                                    self.shared[u'auth_channel_target'] = u''
                                 if self.shared.get(u'module') == u"close":
                                     break
                                 if self.shared.get(u'keepalive') == MAGICASK:
@@ -2221,7 +2052,6 @@ class Sesman():
                                 if not self.internal_target and not got_signal:
                                     Logger().info(u'Missing Keepalive')
                                     Logger().error(u'break connection')
-                                    release_reason = u'Break connection'
                                     break
                         if self.shared.get(u'module') == u"close":
                             close_box = True
@@ -2234,9 +2064,6 @@ class Sesman():
                                 u"RDP/VNC connection terminated by client"
                             )
                             Logger().info("<<<%s>>>" % traceback.format_exc())
-                        release_reason = (
-                            u"RDP/VNC connection terminated by client"
-                        )
                     except Exception:
                         if DEBUG:
                             import traceback
@@ -2244,13 +2071,7 @@ class Sesman():
                                 u"RDP/VNC connection terminated by client"
                             )
                             Logger().info("<<<%s>>>" % traceback.format_exc())
-                        release_reason = (u"RDP/VNC connection terminated "
-                                          u"by client: Exception")
-
                     if not try_next:
-                        release_reason = (
-                            u"RDP/VNC connection terminated by client"
-                        )
                         break
                 finally:
                     self.engine.release_target(physical_target)
@@ -2292,6 +2113,156 @@ class Sesman():
                 Logger().info(u"Close connection: Exception")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc())
         return False, "End of Session"
+
+    def handle_reporting(self):
+        _reporting = self.shared.get(u'reporting')
+        _reporting_reason, _, _remains = \
+            _reporting.partition(':')
+        _reporting_target, _, _reporting_message = \
+            _remains.partition(':')
+        self.shared[u'reporting'] = u''
+
+        Logger().info(u"Reporting: reason=\"%s\" "
+                      "target=\"%s\" message=\"%s\"" %
+                      (_reporting_reason,
+                       _reporting_target,
+                       _reporting_message))
+
+        self.process_report(_reporting_reason,
+                            _reporting_target,
+                            _reporting_message)
+
+        if _reporting_reason == u'CONNECTION_FAILED':
+            self.reporting_reason = _reporting_reason
+            self.reporting_target = _reporting_target
+            self.reporting_message = _reporting_message
+
+            release_reason = u'Connection failed'
+            self.engine.set_session_status(
+                result=False, diag=release_reason)
+            return False
+        elif _reporting_reason == u'FINDPATTERN_KILL':
+            Logger().info(
+                u"RDP connection terminated. Reason: Kill pattern detected"
+            )
+            release_reason = u'Kill pattern detected'
+            self.engine.set_session_status(
+                result=False, diag=release_reason)
+            self.send_data({u'disconnect_reason': TR(u"pattern_kill")})
+        elif _reporting_reason == u'SERVER_REDIRECTION':
+            (redir_login, _, redir_host) = \
+                _reporting_message.rpartition('@')
+            update_args = {}
+            if redir_host:
+                update_args["target_host"] = redir_host
+            if redir_login:
+                update_args["target_account"] = redir_login
+            self.engine.update_session(**update_args)
+        elif _reporting_reason == u'SESSION_EXCEPTION':
+            Logger().info(
+                u"RDP connection terminated. Reason: Session exception"
+            )
+            release_reason = u'Session exception: ' + _reporting_message
+            self.engine.set_session_status(
+                diag=release_reason)
+        elif _reporting_reason == u'SESSION_EXCEPTION_NO_RECORD':
+            Logger().info(
+                u"RDP connection terminated. Reason: Session exception "
+                u"(no record)"
+            )
+            release_reason = u'Session exception: ' + _reporting_message
+            self.engine.set_session_status(
+                result=False, diag=release_reason)
+        elif _reporting_reason == u'SESSION_PROBE_LAUNCH_FAILED':
+            Logger().info(
+                u"RDP connection terminated. Reason: Session Probe "
+                u"launch failed"
+            )
+            release_reason = u'Interrupt: Session Probe launch failed'
+            self.engine.set_session_status(
+                result=False, diag=release_reason)
+            if self.shared.get(u'session_probe_launch_error_message'):
+                self.send_data({
+                    u'disconnect_reason':
+                    self.shared.get(u'session_probe_launch_error_message')
+                })
+                self.shared[u'session_probe_launch_error_message'] = u''
+            else:
+                self.send_data({
+                    u'disconnect_reason': TR(u"session_probe_launch_failed")
+                })
+        elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
+            Logger().info(
+                u'RDP connection terminated. Reason: Session Probe '
+                u'keepalive missed'
+            )
+            release_reason = u'Interrupt: Session Probe keepalive missed'
+            self.engine.set_session_status(
+                result=False, diag=release_reason)
+            self.send_data({
+                u'disconnect_reason': TR(u"session_probe_keepalive_missed")
+            })
+        elif (_reporting_reason ==
+              u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
+            Logger().info(
+                u'RDP connection terminated. Reason: Session Probe failed '
+                u'to block outbound connection'
+            )
+            release_reason = (
+                u'Interrupt: Session Probe failed to block outbound connection'
+            )
+            self.engine.set_session_status(
+                result=False, diag=release_reason)
+            self.send_data({
+                u'disconnect_reason':
+                TR(u"session_probe_outbound_connection_blocking_failed")
+            })
+        elif _reporting_reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
+            Logger().info(
+                u'RDP connection terminated. Reason: Session Probe failed '
+                u'to block process'
+            )
+            release_reason = (
+                u'Interrupt: Session Probe failed to block process'
+            )
+            self.engine.set_session_status(
+                result=False, diag=release_reason
+            )
+            self.send_data({
+                u'disconnect_reason':
+                TR(u"session_probe_process_blocking_failed")
+            })
+        elif (_reporting_reason ==
+              u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
+            Logger().info(
+                u'RDP connection terminated. Reason: Session Probe failed '
+                u'to run startup application'
+            )
+            release_reason = (
+                u'Interrupt: Session Probe failed to run startup application'
+            )
+            self.engine.set_session_status(
+                result=False, diag=release_reason
+            )
+            self.send_data({
+                u'disconnect_reason':
+                TR(u"session_probe_failed_to_run_startup_application")
+            })
+        elif _reporting_reason == u'SESSION_PROBE_RECONNECTION':
+            Logger().info(
+                u'RDP connection terminated. Reason: Session Probe '
+                u'reconnection without disconnection'
+            )
+            release_reason = (
+                u'Interrupt: Session Probe reconnection without disconnection'
+            )
+            self.engine.set_session_status(
+                result=False, diag=release_reason
+            )
+            self.send_data({
+                u'disconnect_reason': TR(u"session_probe_reconnection")
+            })
+        return True
 
     def process_report(self, reason, target, message):
         if reason == u'CLOSE_SESSION_SUCCESSFUL':
@@ -2393,14 +2364,113 @@ class Sesman():
                 u"Unexpected reporting reason: "
                 "\"%s\" \"%s\" \"%s\"" % (reason, target, message))
 
+    def handle_auth_channel_target(self, selected_target):
+        Logger().info(
+            u"Auth channel target=\"%s\"" %
+            self.shared.get(u'auth_channel_target')
+        )
+        if self.shared.get(u'auth_channel_target').startswith(
+                u'GetWabSessionParameters'
+        ):
+            app_target = selected_target
+            _prefix, _sep, _val = self.shared.get(
+                u'auth_channel_target'
+            ).partition(':')
+            if _sep:
+                app_right_params = self.target_app_rights.get(_val)
+                if app_right_params is not None:
+                    app_target, _app_param = app_right_params
+            app_info = self.engine.get_target_login_info(app_target)
+            account_login = app_info.account_login
+            application_password = \
+                self.engine.get_target_password(app_target) \
+                or self.engine.get_primary_password(app_target) \
+                or ''
+            _message = {
+                'user': account_login,
+                'password': application_password
+            }
+
+            # Logger().info(
+            #     u"GetWabSessionParameters (response):" %
+            #     json.dumps(_message)
+            # )
+            self.send_data({u'auth_channel_answer': json.dumps(_message)})
+            Logger().info(
+                u"Sending of auth channel "
+                u"answer ok "
+                "(GetWabSessionParameters)"
+            )
+
+    def handle_shadowing(self):
+        if self.shared.get("rd_shadow_available") == 'True':
+            update_args = {}
+            update_args["shadow_allow"] = True
+            self.engine.update_session(**update_args)
+            self.shared["rd_shadow_available"] = 'False'
+
+        if self.shared.get("rd_shadow_invitation_error_code"):
+            shadow_token = {
+                "shadow_id":
+                self.shared.get("rd_shadow_invitation_id"),
+                "shadow_ip":
+                self.shared.get("rd_shadow_invitation_addr"),
+                "shadow_port":
+                self.shared.get("rd_shadow_invitation_port"),
+            }
+            self.engine.shadow_response(
+                errcode=self.shared.get("rd_shadow_invitation_error_code"),
+                errmsg=self.shared.get("rd_shadow_invitation_error_message"),
+                token=shadow_token,
+                userdata=self.shared.get("rd_shadow_userdata")
+            )
+            self.shared["rd_shadow_available"] = 'False'
+
+            self.shared["rd_shadow_userdata"] = None
+            self.shared["rd_shadow_invitation_error_code"] = 0
+            self.shared["rd_shadow_invitation_error_message"] = None
+            self.shared["rd_shadow_invitation_id"] = None
+            self.shared["rd_shadow_invitation_addr"] = None
+            self.shared["rd_shadow_invitation_port"] = None
+
+    def handle_auth_notify(self, physical_target):
+        if self.shared.get(u'auth_notify') == u'rail_exec':
+            Logger().info(
+                u"rail_exec flags=\"%s\" exe_of_file=\"%s\"" %
+                (self.shared.get(u'auth_notify_rail_exec_flags'),
+                 self.shared.get(u'auth_notify_rail_exec_exe_or_file'))
+            )
+            auth_command_kv = self.check_application(
+                physical_target,
+                self.shared.get(u'auth_notify_rail_exec_flags'),
+                self.shared.get(u'auth_notify_rail_exec_exe_or_file')
+            )
+            self.send_data(auth_command_kv)
+
+            self.shared[u'auth_notify_rail_exec_flags'] = u''
+            self.shared[u'auth_notify_rail_exec_exe_or_file'] = u''
+
+    def handle_recording_started(self):
+        # write mwrm path to rdptrc (allow real time display)
+        Logger().info(u"Call write trace")
+        _status, _error = self.engine.write_trace(self.full_path)
+        if not _status:
+            _error = TR("Trace writer failed for %s") % self.full_path
+            Logger().info(u"Failed accessing recording path (%s)" %
+                          self.full_path)
+            self.send_data({u'rejected': TR(u'error_getting_record_path')})
+        return _status, _error
+
     KEYMAPPING = {
         # exchange key : (acl key, type)
         'height': ('video_height', 'int'),
         'width': ('video_width', 'int'),
         'rt_ready': ('rt', 'bool'),
         'fdx_path': ('fdx_path', 'str'),
-        'smartcard_login': ('effective_login', 'str')
+        'smartcard_login': ('effective_login', 'str'),
+        'native_session_id': ('native_session_id', 'str'),
     }
+    EXPECTING_KEYS = KEYMAPPING.keys()
 
     @staticmethod
     def convert_value(value, cotype):
