@@ -51,8 +51,10 @@ public:
 
 private:
     bool krb;
+public:
     const bool restricted_admin_mode;
 
+private:
     bool nla_tried = false;
 
 public:
