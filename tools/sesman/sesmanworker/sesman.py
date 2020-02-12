@@ -1786,8 +1786,6 @@ class Sesman():
                 conn_opts = self.engine.get_target_conn_options(
                     physical_target
                 )
-                smartcard_passthrough = conn_opts[u'rdp'][u'smartcard_passthrough']
-                Logger().info("smartcard_passthrough = %s" % smartcard_passthrough)
                 if (physical_proto_info.protocol == u'RDP'
                     or physical_proto_info.protocol == u'VNC'):
                     if physical_proto_info.protocol == u'RDP':
@@ -1882,16 +1880,28 @@ class Sesman():
                             or ''
                         )
 
-                    allow_interactive_password = (
-                        self.passthrough_mode or
-                        PASSWORD_INTERACTIVE in auth_policy_methods
+                    smartcard_passthrough = conn_opts.get(
+                        u'rdp', {}
+                    ).get(
+                        u'smartcard_passthrough', False
                     )
+                    Logger().info("smartcard_passthrough = %s" %
+                                  smartcard_passthrough)
+                    allow_interactive_password = (
+                        (PASSWORD_INTERACTIVE in auth_policy_methods
+                         or self.passthrough_mode)
+                        and not smartcard_passthrough
+                    )
+                    allow_interactive_login = not smartcard_passthrough
 
                     kv[u'target_password'] = target_password
-                    is_interactive_login = not bool(kv.get('target_login'))
+                    is_interactive_login = (
+                        not bool(kv.get('target_login'))
+                        and not smartcard_passthrough
+                    )
                     extra_kv, _status, _error = self.complete_target_info(
-                        kv, allow_interactive_password and not smartcard_passthrough,
-                        not smartcard_passthrough)
+                        kv, allow_interactive_password,
+                        allow_interactive_login)
                     kv.update(extra_kv)
 
                     if self.target_context.host:
