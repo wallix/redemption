@@ -14,6 +14,7 @@ class RDPGraphics
         this.ecusorCanvas = document.createElement('canvas')
         this.cusorCanvas = this.ecusorCanvas.getContext('2d');
         this.cachePointers = [];
+        this.cacheImages = [];
 
         this.canvas.imageSmoothingEnabled = false;
     }
@@ -28,9 +29,22 @@ class RDPGraphics
         }
     }
 
-    drawImage(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight, rop) {
+    setCachedImageSize(n) {
+        this.cacheImages.length = n;
+    }
+
+    cachedImage(imageData, imageIdx) {
+        this.cacheImages[imageIdx] = imageData;
+    }
+
+    drawCachedImage(imageIdx, rop, ...args) {
         // rop supposed to 0xCC
-        this.canvas.putImageData(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
+        this.canvas.putImageData(this.cacheImages[imageIdx], ...args);
+    }
+
+    drawImage(imageData, rop, ...args) {
+        // rop supposed to 0xCC
+        this.canvas.putImageData(imageData, ...args);
     }
 
     drawRect(x, y, w, h, color) {

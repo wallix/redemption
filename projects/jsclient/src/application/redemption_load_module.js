@@ -28,7 +28,11 @@ const redemptionLoadModule = function(Module, window)
 
     // { funcname: [wrapCreator, defaultFunction], ... }
     const wrappersGd = {
+        setCachedImageSize: identity,
+        cachedImage: wCb_em2js_ImageData,
+        drawCachedImage: identity,
         drawImage: wCb_em2js_ImageData,
+
         drawRect: identity,
         drawSrcBlt: identity,
         drawLineTo: identity,
