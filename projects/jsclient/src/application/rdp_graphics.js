@@ -2,6 +2,10 @@ const rgbToCss = function(color) {
     return '#'+color.toString(16).padStart(6, '0');
 };
 
+// const has_intersection = (x1,y1,w1,h1,x2,y2,w2,h2) =>
+//     ((x2 >= x1 && x2 < x1 + w1) || (x1 >= x2 && x1 < x2 + w2))
+//  && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
+
 class RDPGraphics
 {
     constructor(canvasElement) {
@@ -45,21 +49,14 @@ class RDPGraphics
             let op;
             switch (rop) {
                 case 0x00: op = 'darken'; break;
-                case 0xF0: op = 'source-over'; break;
+                // case 0xF0: op = 'source-over'; break;
                 case 0x55: op = 'xor'; break;
                 case 0xFF: op = 'lighten'; break;
+                default: op = 'source-over'; break;
             }
-            if (op) {
-                if (has_intersection(sx,sy,w,h,dx,dy,w,h)) {
-                    // console.log(sx,sy,dx,dy,w,h);
-                    this.canvas.globalCompositeOperation = op
-                    this.canvas.putImageData(sourceImageData, 0, 0, w, h, dx, dy, w, h);
-                    this.canvas.globalCompositeOperation = 'source-over'
-                }
-                else {
-                    this.canvas.putImageData(sourceImageData, dx, dy);
-                }
-            }
+            this.canvas.globalCompositeOperation = op;
+            this.canvas.putImageData(sourceImageData, dx, dy);
+            this.canvas.globalCompositeOperation = 'source-over';
         }
     }
 
