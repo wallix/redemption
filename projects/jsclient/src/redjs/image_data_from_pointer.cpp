@@ -58,6 +58,7 @@ namespace
 
     void apply_transparency(uint8_t* data)
     {
+        // ignore invisible pixels
         // data[0] = 0;
         // data[1] = 0;
         // data[2] = 0;
@@ -77,7 +78,11 @@ ImageData image_data_from_pointer(Pointer const& pointer)
     auto const w4 = width * 4;
     auto const decrement_next_line = w4 * 2 - is_empty_mask * 8;
 
-    uint8_t* pdata = new uint8_t[width * height * 4];
+    uint8_t* pdata = is_empty_mask
+        // zero initialization
+        ? new uint8_t[width * height * 4]{}
+        // default initialization (apply_transparency is used)
+        : new uint8_t[width * height * 4];
     ImageData img{width, height, std::unique_ptr<uint8_t[]>(pdata)};
     pdata += width * height * 4 - w4 + is_empty_mask * (4 - w4);
 
@@ -119,10 +124,6 @@ ImageData image_data_from_pointer(Pointer const& pointer)
                 apply_reversed_color(data + w4 - 4, data);
                 apply_reversed_color(data + w4, data);
                 apply_reversed_color(data + w4 + 4, data);
-            }
-            else
-            {
-                apply_transparency(data);
             }
         });
     }
