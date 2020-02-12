@@ -161,11 +161,13 @@ public:
         return this->hotspot;
     }
 
+    // size is a multiple of 2
     [[nodiscard]] array_view_const_u8 get_monochrome_and_mask() const
     {
         return {this->mask, this->bit_mask_size()};
     }
 
+    // size is a multiple of 2
     [[nodiscard]] array_view_const_u8 get_24bits_xor_mask() const
     {
         return {this->data, this->xor_data_size()};

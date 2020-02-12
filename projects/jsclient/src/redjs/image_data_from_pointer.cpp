@@ -55,13 +55,21 @@ namespace
         data[2] = pointer_data[2];
         data[3] = 255;
     }
+
+    void apply_transparency(uint8_t* data)
+    {
+        // data[0] = 0;
+        // data[1] = 0;
+        // data[2] = 0;
+        data[3] = 0;
+    }
 }
 
 ImageData image_data_from_pointer(Pointer const& pointer)
 {
     auto const dimensions = pointer.get_dimensions();
     auto const av_and_1byte = pointer.get_monochrome_and_mask();
-    auto const av_xor = pointer.get_24bits_xor_mask();
+    auto const av_xor_mask = pointer.get_24bits_xor_mask();
     bool const is_empty_mask = redjs::is_empty_mask(av_and_1byte);
     auto const width = dimensions.width + is_empty_mask * 2;
     auto const height = dimensions.height + is_empty_mask * 2;
@@ -69,13 +77,13 @@ ImageData image_data_from_pointer(Pointer const& pointer)
     auto const w4 = width * 4;
     auto const decrement_next_line = w4 * 2 - is_empty_mask * 8;
 
-    uint8_t* pdata = new uint8_t[width * height * 4]{};
+    uint8_t* pdata = new uint8_t[width * height * 4];
     ImageData img{width, height, std::unique_ptr<uint8_t[]>(pdata)};
     pdata += width * height * 4 - w4 + is_empty_mask * (4 - w4);
 
     auto for_each_pixel = [&](auto f)
     {
-        for (auto pointer_data = av_xor.begin(), pointer_data_end = av_xor.end();
+        for (auto pointer_data = av_xor_mask.begin(), pointer_data_end = av_xor_mask.end();
              pointer_data < pointer_data_end;
         )
         {
@@ -85,6 +93,7 @@ ImageData image_data_from_pointer(Pointer const& pointer)
             {
                 f(pdata, pointer_data);
             }
+            // pointer_data is aligned on 2 bytes
             pointer_data += (d3 & 1);
             pdata -= decrement_next_line;
         }
@@ -111,6 +120,10 @@ ImageData image_data_from_pointer(Pointer const& pointer)
                 apply_reversed_color(data + w4, data);
                 apply_reversed_color(data + w4 + 4, data);
             }
+            else
+            {
+                apply_transparency(data);
+            }
         });
     }
     else
@@ -121,6 +134,10 @@ ImageData image_data_from_pointer(Pointer const& pointer)
             if (!(av_and_1byte[i / 8u] & (1u << (7u - (i % 8u)))))
             {
                 apply_color(data, pointer_data);
+            }
+            else
+            {
+                apply_transparency(data);
             }
             ++i;
         });
