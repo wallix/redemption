@@ -447,7 +447,7 @@ struct ConnectionPolicyWriterBase
 
             if constexpr (is_convertible_v<Pack, sesman::deprecated_names>) {
                 for (auto&& old_name : get_elem<sesman::deprecated_names>(infos).names) {
-                    update_sesman_contains(sec.sesman_contains, old_name, member_name, "None", " # Deprecated, for compatibility only.");
+                    update_sesman_contains(sec.sesman_contains, old_name, member_name, "None", "  # Deprecated, for compatibility only.");
                 }
             }
             buf.str("");
@@ -461,7 +461,10 @@ struct ConnectionPolicyWriterBase
         std::string const value,
         char const* extra = "")
     {
-        str_append(s, "    u'", sesman_name, "': ('", connpolicy_name, "', ", value, "),", extra, '\n');
+        str_append(s,
+                   "        u'", sesman_name, "': (\n"
+                   "            '", connpolicy_name, "', ", value, "\n"
+                   "        ),", extra, '\n');
     }
 
     void do_start_section(Names const& /*names*/, std::string const & /*section_name*/)
@@ -558,8 +561,8 @@ vault_transformation_rule = string(default='')
                         "    }"
                     ;
                     out_sesman
-                        << "  '" << section_name << "': {\n"
-                        << section_it->second.sesman_contains << "  },\n"
+                        << "    '" << section_name << "': {\n"
+                        << section_it->second.sesman_contains << "    },\n"
                     ;
                 }
             }

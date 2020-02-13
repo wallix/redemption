@@ -111,7 +111,7 @@ public:
         if constexpr (is_convertible_v<Pack, decltype(sesman::constants::is_target_ctx)>)
         {
             auto sesman_type = get_type<sesman::type_>(infos);
-            this->buf << "  u'" << get_name<sesman::name>(infos) << "': ";
+            this->buf << "    u'" << get_name<sesman::name>(infos) << "': ";
             python::write_type(this->buf, sesman_type, get_default(sesman_type, infos));
             this->buf << ",\n";
             if (sesman::constants::proxy_to_sesman == value_or<sesman_io_t>(infos,
@@ -155,7 +155,7 @@ public:
             }
             out << "}\n";
         };
-        write("back_to_selector_default_sent", this->values_sent);\
+        write("back_to_selector_default_sent", this->values_sent);
         write("back_to_selector_default_reinit", this->values_reinit);
         out.flush();
         int errnum = 0;
