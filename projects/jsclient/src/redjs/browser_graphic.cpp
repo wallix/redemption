@@ -329,6 +329,7 @@ void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_en
     this->image_data_index[2] = this->image_data_index[1] + nb_entries[1];
     this->nb_image_datas = this->image_data_index[2] + nb_entries[2];
     emval_call(this->callbacks, jsnames::set_cached_image_size, this->nb_image_datas);
+    this->image_bounds = std::unique_ptr<Bounds[]>(new Bounds[this->nb_image_datas]);
 }
 
 void BrowserGraphic::draw(RDPBmpCache const & cmd)
@@ -340,6 +341,8 @@ void BrowserGraphic::draw(RDPBmpCache const & cmd)
     }
 
     auto img = image_data_from_bitmap(cmd.bmp);
+    this->image_bounds[image_idx] = {checked_int(img.width()), checked_int(img.height())};
+
     emval_call(this->callbacks, jsnames::set_cached_image,
         img.data(),
         img.width(),
@@ -369,29 +372,29 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
     uint16_t const srcx = cmd.srcx + (rect.x - cmd.rect.x);
     uint16_t const srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-    // ImageData const& image = this->image_datas[image_idx];
-    //
-    // if (image.width() < srcx || image.height() < srcy) {
-    //     return ;
-    // }
-    //
-    // const int mincx = std::min<int>(image.width() - srcx, std::min<int>(this->width - rect.x, rect.cx));
-    // const int mincy = std::min<int>(image.height() - srcy, std::min<int>(this->height - rect.y, rect.cy));
-    //
-    // if (mincx <= 0 || mincy <= 0) {
-    //     return;
-    // }
+    Bounds bounds = this->image_bounds[image_idx];
+
+    const int mincx = std::min<int>(int32_t(bounds.w) - int32_t(srcx),
+        std::min(int32_t(this->width) - int32_t(rect.x), int32_t(rect.cx)));
+    const int mincy = std::min<int>(int32_t(bounds.h) - int32_t(srcy),
+        std::min(int32_t(this->height) - int32_t(rect.y), int32_t(rect.cy)));
+
+    if (mincx <= 0 || mincy <= 0) {
+        return;
+    }
 
     // cmd.rop == 0xCC
     emval_call(this->callbacks, jsnames::draw_memblt,
         image_idx,
         cmd_.rop,
-        rect.x,
-        rect.y,
         srcx,
         srcy,
-        rect.cx,
-        rect.cy
+        mincx,
+        mincy,
+        rect.x,
+        rect.y,
+        mincx,
+        mincy
     );
 
     // switch (cmd.rop) {
@@ -406,7 +409,7 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
     // default:
     //     // should not happen
     //     //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
-    // break;
+    //     break;
     // }
 }
 

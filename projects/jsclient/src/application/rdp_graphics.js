@@ -15,6 +15,8 @@ class RDPGraphics
         this.cusorCanvas = this.ecusorCanvas.getContext('2d');
         this.cachePointers = [];
         this.cacheImages = [];
+        // this.promise;
+        this.orderStack = [];
 
         this.canvas.imageSmoothingEnabled = false;
     }
@@ -34,17 +36,34 @@ class RDPGraphics
     }
 
     cachedImage(imageData, imageIdx) {
-        this.cacheImages[imageIdx] = imageData;
+        const p = createImageBitmap(imageData);
+        const setImg = (img) => { this.cacheImages[imageIdx] = img };
+        this.promise = (this.promise ? this.promise.then(() => p) : p).then(setImg);
     }
 
-    drawCachedImage(imageIdx, rop, ...args) {
+    drawCachedImage(imageIdx, rop, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
         // rop supposed to 0xCC
-        this.canvas.putImageData(this.cacheImages[imageIdx], ...args);
+        if (this.promise) {
+            this.promise = this.promise.then(() => {
+                this.canvas.drawImage(this.cacheImages[imageIdx], sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+            })
+        }
+        else {
+            this.canvas.drawImage(this.cacheImages[imageIdx], sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        }
     }
 
     drawImage(imageData, rop, ...args) {
         // rop supposed to 0xCC
-        this.canvas.putImageData(imageData, ...args);
+        if (this.promise) {
+            this.promise = this.promise.then(() => {
+                this.canvas.putImageData(imageData, ...args);
+            })
+            // TODO clone imageData or move ownership (return true + free) ?
+        }
+        else {
+            this.canvas.putImageData(imageData, ...args);
+        }
     }
 
     drawRect(x, y, w, h, color) {

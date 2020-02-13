@@ -100,6 +100,8 @@ private:
     uint16_t width;
     uint16_t height;
     emscripten::val callbacks;
+    struct Bounds { uint16_t w, h; };
+    std::unique_ptr<Bounds[]> image_bounds;
     std::array<uint32_t, 3> image_data_index {0};
     uint32_t nb_image_datas {0};
 
