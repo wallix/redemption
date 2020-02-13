@@ -12,7 +12,8 @@
 ##
 import unittest
 
-def cut_message(message, width = 75, in_cr = '\n', out_cr = '<br>', margin = 6):
+
+def cut_message(message, width=75, in_cr='\n', out_cr='<br>', margin=6):
     result = []
     for line in message.split(in_cr):
         while len(line) > width:
@@ -28,7 +29,6 @@ def cut_message(message, width = 75, in_cr = '\n', out_cr = '<br>', margin = 6):
             line = ' '.join(end)
 
         result.append(line.rstrip())
-
     return out_cr.join(result)
 
 
@@ -66,7 +66,7 @@ class TestMotd(unittest.TestCase):
     def test_cutTwoLine(self):
         message = cut_message(
             "My first sentence is long.\n"
-            "My second one is long also.", 20,'\n', '<br>')
+            "My second one is long also.", 20, '\n', '<br>')
         self.assertEquals(
             'My first sentence is<br>'
             'long.<br>'
@@ -83,34 +83,45 @@ class TestMotd(unittest.TestCase):
     def test_cut_too_long_word(self):
         message = cut_message(
             "This sentence contains a looooooooooooooonnnnnnnngggggg word.",
-                30, '\n', '<br>', 5)
+            30, '\n', '<br>', 5)
         self.assertEquals(
             "This sentence contains a looooooooo-<br>"
             "-oooooonnnnnnnngggggg word.", message)
 
     def test_with_motd_en(self):
         message = cut_message(
-          "Welcome on WALLIX Bastion\n"
-          "--\n"
-          "Your actions could be recorded and stored in electronic format.\n"
-          "Please contact your Bastion administrator for more information.\n")
+            "Welcome on WALLIX Bastion\n"
+            "--\n"
+            "Your actions could be recorded and stored in electronic format.\n"
+            "Please contact your Bastion administrator for more information.\n"
+        )
         self.assertEquals(
             "Welcome on WALLIX Bastion<br>"
             "--<br>"
-            "Your actions could be recorded and stored in electronic format.<br>"
-            "Please contact your Bastion administrator for more information.<br>",
-            message)
+            "Your actions could be recorded and stored in electronic format."
+            "<br>"
+            "Please contact your Bastion administrator for more information."
+            "<br>",
+            message
+        )
 
     def test_with_motd_fr(self):
         message = cut_message(
             u"Bienvenue sur WALLIX Bastion\n"
             u"--\n"
-            u"Vos actions sont susceptibles d'être enregistrées et conservées sous format électronique.\n"
-            u"Merci de contacter l'administrateur Bastion pour plus d'informations.\n", 75)
+            u"Vos actions sont susceptibles d'être enregistrées et conservées "
+            u"sous format électronique.\n"
+            u"Merci de contacter l'administrateur Bastion pour plus "
+            u"d'informations.\n",
+            75
+        )
         self.assertEquals(
             u"Bienvenue sur WALLIX Bastion<br>"
             u"--<br>"
-            u"Vos actions sont susceptibles d'être enregistrées et conservées sous format<br>"
+            u"Vos actions sont susceptibles d'être enregistrées et conservées "
+            u"sous format<br>"
             u"électronique.<br>"
-            u"Merci de contacter l'administrateur Bastion pour plus d'informations.<br>",
-            message)
+            u"Merci de contacter l'administrateur Bastion pour plus "
+            u"d'informations.<br>",
+            message
+        )

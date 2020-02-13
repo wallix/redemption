@@ -104,16 +104,6 @@ def rvalue(value):
 DEBUG = False
 
 
-def mdecode(item):
-    if not item:
-        return ""
-    try:
-        item = item.decode('utf8')
-    except:
-        pass
-    return item
-
-
 def truncat_string(item, maxsize=20):
     return (item[:maxsize] + '..') if len(item) > maxsize else item
 
@@ -136,21 +126,19 @@ def parse_auth(username):
     no ambiguity)
 
     """
-    user_at_dev_service_group, sep, primary = username.rpartition(':')
+    user_dev_service_group, sep, primary = username.rpartition(':')
     if not sep:
-        user_at_dev_service_group, sep, primary = username.rpartition('+')
+        user_dev_service_group, sep, primary = username.rpartition('+')
     if sep:
-        user_at_dev_service, sep, group = user_at_dev_service_group.rpartition(
-            sep
-        )
+        user_dev_service, sep, group = user_dev_service_group.rpartition(sep)
         if not sep:
             # service and group not provided
-            user_at_dev, service, group = user_at_dev_service_group, '', ''
+            user_at_dev, service, group = user_dev_service_group, '', ''
         else:
-            user_at_dev, sep, service = user_at_dev_service.rpartition(sep)
+            user_at_dev, sep, service = user_dev_service.rpartition(sep)
             if not sep:
                 # group not provided
-                user_at_dev, service, group = user_at_dev_service, group, ''
+                user_at_dev, service, group = user_dev_service, group, ''
         user, sep, dev = user_at_dev.rpartition('@')
         if sep:
             return primary, (user, dev, service, group)
@@ -1166,7 +1154,7 @@ class Sesman():
             'session_id': session_id,
             'username': user,
             'source_ip': self.shared.get(u'ip_client'),
-            'account': mdecode(account),
+            'account': account,
             'device': self.shared.get(u'target_device'),
             'timestamp': start_time.strftime("%Y%m%d-%H%M%S"),
             'host': gethostname(),
@@ -1624,13 +1612,6 @@ class Sesman():
             kv[u'proto_dest'] = proto_info.protocol
             kv[u'target_str'] = target_login_info.get_target_str()
 
-            # Depecrated, credentials checkout is made by check_target
-            _status, _error = self.engine.checkout_target(selected_target)
-            if not _status:
-                self.send_data({
-                    u'rejected': mdecode(_error) or TR(u"start_session_failed")
-                })
-
         if _status:
             kv['password'] = 'pass'
 
@@ -1644,7 +1625,7 @@ class Sesman():
             Logger().info(u"Starting Session, effective login='%s'" %
                           self.effective_login)
 
-            user = mdecode(self.engine.get_username())
+            user = self.engine.get_username()
             uname = self.effective_login or target_login_info.account_login
 
             # Add connection to the observer
