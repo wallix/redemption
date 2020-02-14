@@ -151,7 +151,7 @@
           "name": "enable_restricted_admin_mode",
           "type": "bool",
           "default": false,
-          "description": "Connect to the remote computer in Restricted Admin mode."
+          "description": "Connect to the server in Restricted Admin mode.\nThis mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.\nNLA must be enabled."
         },
         {
           "name": "smartcard_passthrough",

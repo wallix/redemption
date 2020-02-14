@@ -1545,7 +1545,7 @@ void RdpNegociation::send_client_info_pdu()
     InfoPacket infoPacket( this->negociation_result.use_rdp5
                             , this->logon_info.domain().c_str()
                             , this->logon_info.username().c_str()
-                            , this->password
+                            , (this->nego.restricted_admin_mode ? "" : this->password)
                             , this->program
                             , this->directory
                             , this->performanceFlags

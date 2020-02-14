@@ -51,11 +51,10 @@ public:
 
 private:
     bool krb;
-    const bool restricted_admin_mode;
-
     bool nla_tried = false;
 
 public:
+    const bool restricted_admin_mode;
     uint32_t selected_protocol;
 
 private:

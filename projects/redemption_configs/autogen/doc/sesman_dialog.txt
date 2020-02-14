@@ -186,7 +186,9 @@ cfg::mod_rdp::server_cert_response ⇐ server_cert_response   [std::string]
 cfg::mod_rdp::enable_remotefx ⇐ mod_rdp:enable_remotefx   [bool]
     Enables support of the remoteFX codec.
 cfg::mod_rdp::enable_restricted_admin_mode ⇐ mod_rdp:enable_restricted_admin_mode   [bool]
-    Connect to the remote computer in Restricted Admin mode.
+    Connect to the server in Restricted Admin mode.
+    This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+    NLA must be enabled.
 cfg::mod_rdp::smartcard_passthrough ⇐ mod_rdp:smartcard_passthrough   [bool]
     If enabled, NLA will be disabled automatically.
 

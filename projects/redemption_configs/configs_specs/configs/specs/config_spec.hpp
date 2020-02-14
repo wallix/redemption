@@ -471,7 +471,14 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "accept_monitor_layout_change_if_capture_is_not_started", set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_restricted_admin_mode", desc{"Connect to the remote computer in Restricted Admin mode."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+                 "enable_restricted_admin_mode",
+                 desc{"Connect to the server in Restricted Admin mode.\n"
+                         "This mode must be supported by the server "
+                         "(available from Windows Server 2012 R2), "
+                         "otherwise, connection will fail.\n"
+                         "NLA must be enabled."},
+                 set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "smartcard_passthrough", desc{"If enabled, NLA will be disabled automatically."}, set(false));
     });
