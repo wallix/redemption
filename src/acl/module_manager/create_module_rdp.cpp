@@ -111,7 +111,7 @@ void ModuleManager::create_mod_rdp(
     }
     // END READ PROXY_OPT
 
-    const bool smartcard_passthrough = ini.get<cfg::mod_rdp::smartcard_passthrough>();
+    const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
 
     ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
     ModRDPParams mod_rdp_params(

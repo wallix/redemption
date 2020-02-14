@@ -1863,24 +1863,24 @@ class Sesman():
                             or ''
                         )
 
-                    smartcard_passthrough = conn_opts.get(
+                    force_sc_auth = conn_opts.get(
                         u'rdp', {}
                     ).get(
-                        u'smartcard_passthrough', False
+                        u'force_smartcard_authentication', False
                     )
-                    Logger().info("smartcard_passthrough = %s" %
-                                  smartcard_passthrough)
+                    Logger().info("force_smartcard_authentication = %s" %
+                                  force_sc_auth)
                     allow_interactive_password = (
                         (PASSWORD_INTERACTIVE in auth_policy_methods
                          or self.passthrough_mode)
-                        and not smartcard_passthrough
+                        and not force_sc_auth
                     )
-                    allow_interactive_login = not smartcard_passthrough
+                    allow_interactive_login = not force_sc_auth
 
                     kv[u'target_password'] = target_password
                     is_interactive_login = (
                         not bool(kv.get('target_login'))
-                        and not smartcard_passthrough
+                        and not force_sc_auth
                     )
                     extra_kv, _status, _error = self.complete_target_info(
                         kv, allow_interactive_password,

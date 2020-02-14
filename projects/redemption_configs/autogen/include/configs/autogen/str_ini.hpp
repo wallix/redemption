@@ -784,10 +784,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_restricted_admin_mode = 0
 
-# If enabled, NLA will be disabled automatically.
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 # value: 0 or 1
 #_hidden
-#smartcard_passthrough = 0
+#force_smartcard_authentication = 0
 
 [mod_vnc]
 

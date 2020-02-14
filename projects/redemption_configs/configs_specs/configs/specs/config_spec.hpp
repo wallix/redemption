@@ -480,7 +480,13 @@ void config_spec_definition(Writer && W)
                          "NLA must be enabled."},
                  set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "smartcard_passthrough", desc{"If enabled, NLA will be disabled automatically."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+                 "force_smartcard_authentication",
+                 desc{"NLA will be disabled.\n"
+                         "Target must be set for interactive login, otherwise server connection may not be guaranteed.\n"
+                         "Smartcard device must be available on client desktop.\n"
+                         "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
+                 set(false));
     });
 
     W.section("metrics", [&]

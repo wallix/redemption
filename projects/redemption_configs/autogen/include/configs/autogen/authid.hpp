@@ -92,7 +92,7 @@ constexpr array_view_const_char const authstr[] = {
     "server_cert_response"_av,
     "mod_rdp:enable_remotefx"_av,
     "mod_rdp:enable_restricted_admin_mode"_av,
-    "mod_rdp:smartcard_passthrough"_av,
+    "mod_rdp:force_smartcard_authentication"_av,
     "clipboard_up"_av,
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,

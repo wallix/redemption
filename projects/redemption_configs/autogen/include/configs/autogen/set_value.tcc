@@ -1220,10 +1220,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "smartcard_passthrough")) {
+        else if (0 == strcmp(key, "force_smartcard_authentication")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_rdp::smartcard_passthrough&>(this->variables).value,
+                static_cast<cfg::mod_rdp::force_smartcard_authentication&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

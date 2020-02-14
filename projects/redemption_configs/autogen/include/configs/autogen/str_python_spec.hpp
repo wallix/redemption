@@ -661,9 +661,12 @@ accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
 #_hidden
 enable_restricted_admin_mode = boolean(default=False)
 
-# If enabled, NLA will be disabled automatically.
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 #_hidden
-smartcard_passthrough = boolean(default=False)
+force_smartcard_authentication = boolean(default=False)
 
 [mod_vnc]
 
