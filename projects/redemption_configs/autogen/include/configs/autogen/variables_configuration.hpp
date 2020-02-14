@@ -2583,16 +2583,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// If enabled, NLA will be disabled automatically. <br/>
+    /// NLA will be disabled. <br/>
+    /// Target must be set for interactive login, otherwise server connection may not be guaranteed. <br/>
+    /// Smartcard device must be available on client desktop. <br/>
+    /// Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
-    /// sesman::name: mod_rdp:smartcard_passthrough <br/>
+    /// sesman::name: mod_rdp:force_smartcard_authentication <br/>
     /// value{false} <br/>
-    struct mod_rdp::smartcard_passthrough {
+    struct mod_rdp::force_smartcard_authentication {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "mod_rdp";
-        static constexpr char const * name = "smartcard_passthrough";
+        static constexpr char const * name = "force_smartcard_authentication";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(82);
@@ -5537,7 +5540,7 @@ struct mod_rdp
 , cfg::mod_rdp::enable_remotefx
 , cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started
 , cfg::mod_rdp::enable_restricted_admin_mode
-, cfg::mod_rdp::smartcard_passthrough
+, cfg::mod_rdp::force_smartcard_authentication
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -5881,7 +5884,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::server_cert_response
 , cfg::mod_rdp::enable_remotefx
 , cfg::mod_rdp::enable_restricted_admin_mode
-, cfg::mod_rdp::smartcard_passthrough
+, cfg::mod_rdp::force_smartcard_authentication
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type

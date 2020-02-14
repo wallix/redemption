@@ -81,8 +81,11 @@ enable_remotefx = boolean(default=False)
 # NLA must be enabled.
 enable_restricted_admin_mode = boolean(default=False)
 
-# If enabled, NLA will be disabled automatically.
-smartcard_passthrough = boolean(default=False)
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
+force_smartcard_authentication = boolean(default=False)
 
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)

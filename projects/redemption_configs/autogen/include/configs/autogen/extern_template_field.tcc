@@ -80,7 +80,7 @@ template class Inifile::Field<cfg::mod_rdp::server_cert>;
 template class Inifile::Field<cfg::mod_rdp::server_cert_response>;
 template class Inifile::Field<cfg::mod_rdp::enable_remotefx>;
 template class Inifile::Field<cfg::mod_rdp::enable_restricted_admin_mode>;
-template class Inifile::Field<cfg::mod_rdp::smartcard_passthrough>;
+template class Inifile::Field<cfg::mod_rdp::force_smartcard_authentication>;
 template class Inifile::Field<cfg::mod_vnc::clipboard_up>;
 template class Inifile::Field<cfg::mod_vnc::clipboard_down>;
 template class Inifile::Field<cfg::mod_vnc::server_clipboard_encoding_type>;
