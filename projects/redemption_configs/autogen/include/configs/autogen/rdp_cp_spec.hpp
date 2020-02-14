@@ -80,7 +80,9 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 # Enables support of the remoteFX codec.
 enable_remotefx = boolean(default=False)
 
-# Connect to the remote computer in Restricted Admin mode.
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
 enable_restricted_admin_mode = boolean(default=False)
 
 # If enabled, NLA will be disabled automatically.

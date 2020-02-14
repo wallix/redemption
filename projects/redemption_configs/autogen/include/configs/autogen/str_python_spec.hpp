@@ -655,7 +655,9 @@ enable_remotefx = boolean(default=False)
 #_advanced
 accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
 
-# Connect to the remote computer in Restricted Admin mode.
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
 #_hidden
 enable_restricted_admin_mode = boolean(default=False)
 

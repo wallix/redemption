@@ -2546,7 +2546,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// Connect to the remote computer in Restricted Admin mode. <br/>
+    /// Connect to the server in Restricted Admin mode. <br/>
+    /// This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail. <br/>
+    /// NLA must be enabled. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:enable_restricted_admin_mode <br/>
