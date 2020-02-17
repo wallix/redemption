@@ -77,6 +77,12 @@ RdpNego::RdpNego(
         (this->restricted_admin_mode ? "Enabled" : "Disabled")
         );
 
+    if (this->restricted_admin_mode
+        && !(this->enabled_protocols & RdpNegoProtocols::Nla)) {
+        LOG(LOG_ERR, "NLA disabled. Restricted admin mode requires NLA.");
+        throw Error(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE);
+    }
+
     strncpy(this->username, username, 127);
     this->username[127] = 0;
 }
@@ -480,6 +486,10 @@ RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
     if (!trans.connect()){
         LOG(LOG_ERR, "Failed to disconnect transport");
         throw Error(ERR_SOCKET_CONNECT_FAILED);
+    }
+    if (this->restricted_admin_mode) {
+        LOG(LOG_ERR, "NLA failed. Restricted admin mode requires NLA.");
+        throw Error(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE);
     }
 
     this->current_password += (strlen(char_ptr_cast(this->current_password)) + 1);
