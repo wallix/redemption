@@ -2533,7 +2533,7 @@ public:
                     this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
                 }
                 else {
-                    LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
+                    LOG(LOG_INFO, "unknown codecId=%u", unsigned(setSurface.codecId));
                 }
                 stream.in_skip_bytes(setSurface.bitmapDataLength);
                 break;
