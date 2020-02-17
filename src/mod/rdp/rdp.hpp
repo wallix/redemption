@@ -2508,7 +2508,7 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-        LOG(LOG_INFO, "============ SURFACE COMMAND ==========================");
+        LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "SURFACE COMMAND");
 
         while (stream.in_check_rem(2)) {
             ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
@@ -2525,7 +2525,7 @@ public:
                 setSurface.recv(stream);
 
                 if (setSurface.codecId == this->remoteFx_codec_id) {
-                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: remoteFX codec");
+                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "setSurfaceBits: remoteFX codec");
                     setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
 
                     InStream remoteFxStream(bytes_view(stream.get_current(), setSurface.bitmapDataLength));
@@ -2572,19 +2572,19 @@ public:
 
                 uint16_t frameAction = stream.in_uint16_le();
                 uint32_t frameId = stream.in_uint32_le();
-                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: frameMarker action=%d frameId=%d",
+                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "setSurfaceBits: frameMarker action=%d frameId=%d",
                         frameAction, frameId);
 
                 switch(frameAction) {
                 case SURFACECMD_FRAMEACTION_BEGIN:
-                    LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
+                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
                     if (this->frameInProgress) {
                         // some servers don't send frame end markers, so send acks when we receive
                         // a new frame and the previous one was not acked
                         drawable.end_update();
 
                         if (this->haveSurfaceFrameAck) {
-                            LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
+                            LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
                             uint32_t localLastFrame = this->currentFrameId;
                             this->send_pdu_type2(
                                 PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
@@ -2600,7 +2600,7 @@ public:
                     drawable.begin_update();
                     break;
                 case SURFACECMD_FRAMEACTION_END:
-                    LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
+                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
                     this->frameInProgress = false;
                     drawable.end_update();
 
