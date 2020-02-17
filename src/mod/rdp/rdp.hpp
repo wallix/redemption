@@ -2572,8 +2572,8 @@ public:
 
                 uint16_t frameAction = stream.in_uint16_le();
                 uint32_t frameId = stream.in_uint32_le();
-                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "setSurfaceBits: frameMarker action=%d frameId=%d",
-                        frameAction, frameId);
+                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "setSurfaceBits: frameMarker action=%u frameId=%u",
+                        unsigned(frameAction), frameId);
 
                 switch(frameAction) {
                 case SURFACECMD_FRAMEACTION_BEGIN:
