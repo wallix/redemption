@@ -1,3 +1,9 @@
+redemption (7.4.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix clipboard file copy issues, smartcard and restricted admin mode
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 17 Feb 2020 17:14:03 +0200
+
 redemption (7.4.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix behavior when client is configured for 32bits color depth
