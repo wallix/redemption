@@ -268,7 +268,7 @@
     f(ERR_NEGO_SSL_CERT_NOT_ON_SERVER)                           \
     f(ERR_NEGO_INCONSISTENT_FLAGS)                               \
     f(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER)                        \
-                                                                 \
+    f(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE)            \
     fv(ERR_WRM, 20000)                                           \
     f(ERR_WRM_INVALID_FILE)                                      \
     f(ERR_NATIVE_CAPTURE_OPEN_FAILED)                            \

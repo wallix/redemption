@@ -222,6 +222,9 @@ const char * Error::errmsg(bool with_id) const noexcept
     case ERR_RDP_SERVER_REDIR:
         return "The computer that you are trying to connect to is redirecting you to another computer.";
 
+    case ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE:
+        return "NLA failed or disabled. It is required in restricted admin mode.";
+
     default:
         #define MAKE_CASE_V(e, x) case e:                 \
             return with_id                                \

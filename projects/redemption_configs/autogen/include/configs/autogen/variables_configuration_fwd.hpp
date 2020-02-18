@@ -177,6 +177,7 @@ namespace cfg {
         struct wabam_uses_translated_remoteapp;
         struct use_license_store;
         struct accept_monitor_layout_change_if_capture_is_not_started;
+        struct enable_restricted_admin_mode;
     };
 
     struct metrics {

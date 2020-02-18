@@ -48,15 +48,6 @@ disable_clipboard_log = integer(min=0, max=7, default=1)
 #_advanced
 disable_file_system_log = integer(min=0, max=7, default=1)
 
-[session_log]
-
-# Keyboard Input Masking Level:
-#   0: keyboard input are not masked
-#   1: only passwords are masked
-#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
-#   3: keyboard inputs are not logged
-keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
-
 [rdp]
 
 # NLA authentication in secondary target.
@@ -83,6 +74,11 @@ use_native_remoteapp_capability = boolean(default=True)
 
 wabam_uses_translated_remoteapp = boolean(default=False)
 
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
+enable_restricted_admin_mode = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced
@@ -90,6 +86,15 @@ remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default
 
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
+
+[session_log]
+
+# Keyboard Input Masking Level:
+#   0: keyboard input are not masked
+#   1: only passwords are masked
+#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
+#   3: keyboard inputs are not logged
+keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [server_cert]
 
@@ -139,13 +144,6 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 # Note: values can be added (enable all: 0x1 + 0x2 + 0x4 = 0x7)
 #_advanced
 server_cert_failure_message = integer(min=0, max=7, default=1)
-
-[session]
-
-# No traffic auto disconnection.
-# If value is 0, global value (session_timeout) is used.
-# (is in second)
-inactivity_timeout = integer(min=0, default=0)
 
 [session_probe]
 
@@ -283,4 +281,11 @@ extra_system_processes = string(default='')
 
 # Comma-separated processes (Ex.: chrome.exe,ngf.exe)
 windows_of_these_applications_as_unidentified_input_field = string(default='')
+
+[session]
+
+# No traffic auto disconnection.
+# If value is 0, global value (session_timeout) is used.
+# (is in second)
+inactivity_timeout = integer(min=0, default=0)
 

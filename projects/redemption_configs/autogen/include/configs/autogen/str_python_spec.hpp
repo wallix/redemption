@@ -617,6 +617,12 @@
 "#_advanced\n"
 "accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)\n\n"
 
+"# Connect to the server in Restricted Admin mode.\n"
+"# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.\n"
+"# NLA must be enabled.\n"
+"#_hidden\n"
+"enable_restricted_admin_mode = boolean(default=False)\n\n"
+
 "[metrics]\n\n"
 
 "#_advanced\n"

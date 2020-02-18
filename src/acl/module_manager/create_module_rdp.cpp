@@ -117,7 +117,6 @@ void ModuleManager::create_mod_rdp(
     //mod_rdp_params.enable_mem3blt                      = true;
     //mod_rdp_params.enable_new_pointer                  = true;
     mod_rdp_params.enable_glyph_cache                  = ini.get<cfg::globals::glyph_cache>();
-
     mod_rdp_params.enable_session_probe                = ini.get<cfg::mod_rdp::enable_session_probe>();
     mod_rdp_params.session_probe_enable_launch_mask    = ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>();
 
@@ -299,6 +298,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started
                                                        = ini.get<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started>();
+    mod_rdp_params.enable_restricted_admin_mode        = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
 
     try {
         const char * const name = "RDP Target";
