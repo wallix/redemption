@@ -271,7 +271,7 @@
     f(ERR_NEGO_SSL_CERT_NOT_ON_SERVER)                           \
     f(ERR_NEGO_INCONSISTENT_FLAGS)                               \
     f(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER)                        \
-                                                                 \
+    f(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE)            \
     fv(ERR_WRM, 20000)                                           \
     f(ERR_WRM_INVALID_FILE)                                      \
     f(ERR_NATIVE_CAPTURE_OPEN_FAILED)                            \
@@ -428,6 +428,9 @@ public:
 
         case ERR_RDP_SERVER_REDIR:
             return "The computer that you are trying to connect to is redirecting you to another computer.";
+
+        case ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE:
+            return "NLA failed or disabled. It is required in restricted admin mode.";
 
         default:
             if (this->has_msg && this->with_id == with_id) {

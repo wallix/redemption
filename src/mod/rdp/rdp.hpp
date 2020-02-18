@@ -1019,8 +1019,9 @@ public:
         , report_message(report_message)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , nego( mod_rdp_params.enable_tls, mod_rdp_params.target_user
-              , mod_rdp_params.enable_nla, mod_rdp_params.target_host
-              , mod_rdp_params.enable_krb, gen, timeobj
+              , mod_rdp_params.enable_nla, mod_rdp_params.enable_restricted_admin_mode
+              , mod_rdp_params.target_host, mod_rdp_params.enable_krb
+              , gen, timeobj
               , this->close_box_extra_message_ref, mod_rdp_params.lang
               , static_cast<RdpNego::Verbose>(mod_rdp_params.verbose))
         , trans(trans)
@@ -8117,7 +8118,7 @@ private:
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
                              , this->username
-                             , this->password
+                             , (this->nego.restricted_admin_mode ? "" : this->password)
                              , this->program
                              , this->directory
                              , this->performanceFlags

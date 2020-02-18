@@ -492,6 +492,14 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "wabam_uses_translated_remoteapp", set(false));
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "use_license_store", desc{"Stores CALs issued by the terminal servers."}, set(true));
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(),
+                 "enable_restricted_admin_mode",
+                 desc{"Connect to the server in Restricted Admin mode.\n"
+                         "This mode must be supported by the server "
+                         "(available from Windows Server 2012 R2), "
+                         "otherwise, connection will fail.\n"
+                         "NLA must be enabled."},
+                 set(false));
     });
 
     W.section("metrics", [&]

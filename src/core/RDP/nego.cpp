@@ -45,14 +45,14 @@ struct RdpNegoProtocols
 };
 
 RdpNego::RdpNego(
-    const bool tls, const char * username, bool nla,
+    const bool tls, const char * username, bool nla, bool admin_mode,
     const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
     std::string& extra_message, Translation::language_t lang,
     const Verbose verbose)
 : tls(nla || tls)
 , nla(nla)
 , krb(nla && krb)
-, restricted_admin_mode(false)
+, restricted_admin_mode(admin_mode)
 , selected_protocol(RdpNegoProtocols::Rdp)
 , target_host(target_host)
 , current_password(nullptr)
@@ -69,11 +69,16 @@ RdpNego::RdpNego(
         | (this->tls ? RdpNegoProtocols::Tls : 0)
         | (this->nla ? RdpNegoProtocols::Nla : 0);
 
-    LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s",
+    LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",
         ((this->enabled_protocols & RdpNegoProtocols::Tls) ? "Enabled" : "Disabled"),
-        ((this->enabled_protocols & RdpNegoProtocols::Nla) ? "Enabled" : "Disabled")
+        ((this->enabled_protocols & RdpNegoProtocols::Nla) ? "Enabled" : "Disabled"),
+        (this->restricted_admin_mode ? "Enabled" : "Disabled")
         );
-
+    if (this->restricted_admin_mode
+        && !(this->enabled_protocols & RdpNegoProtocols::Nla)) {
+        LOG(LOG_ERR, "NLA disabled. Restricted admin mode requires NLA.");
+        throw Error(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE);
+    }
     strncpy(this->username, username, 127);
     this->username[127] = 0;
 
@@ -430,6 +435,10 @@ RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
         LOG(LOG_ERR, "Failed to disconnect transport");
         throw Error(ERR_SOCKET_CONNECT_FAILED);
     }
+    if (this->restricted_admin_mode) {
+        LOG(LOG_ERR, "NLA failed. Restricted admin mode requires NLA.");
+        throw Error(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE);
+    }
 
     this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
 
@@ -498,8 +507,8 @@ void RdpNego::send_negotiation_request(OutTransport trans)
     StaticOutStream<65536> stream;
     X224::CR_TPDU_Send(stream, cookie_or_token,
                        this->tls ? (X224::RDP_NEG_REQ) : (X224::RDP_NEG_NONE),
-                       // X224::RESTRICTED_ADMIN_MODE_REQUIRED,
-                       0,
+                       this->restricted_admin_mode
+                       ? X224::RESTRICTED_ADMIN_MODE_REQUIRED : 0,
                        rdp_neg_requestedProtocols);
     trans.send(stream.get_data(), stream.get_offset());
     LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");

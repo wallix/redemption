@@ -1923,7 +1923,8 @@ class Sesman():
                 u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
                 u'enable_nla': 'enable_nla',
                 u'enable_kerberos': 'enable_kerberos',
-                u'wabam_uses_translated_remoteapp': 'wabam_uses_translated_remoteapp'
+                u'wabam_uses_translated_remoteapp': 'wabam_uses_translated_remoteapp',
+                u'enable_restricted_admin_mode': 'enable_restricted_admin_mode',
                 },
             'session_log': {
                 u'keyboard_input_masking_level': 'keyboard_input_masking_level'

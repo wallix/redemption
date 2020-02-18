@@ -63,6 +63,7 @@ struct ModRDPParams {
     bool enable_mem3blt = true;
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
+    bool enable_restricted_admin_mode = false;
     bool enable_session_probe = false;
     bool session_probe_enable_launch_mask = true;
     bool enable_ninegrid_bitmap = false;
@@ -284,6 +285,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_mem3blt);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_restricted_admin_mode);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_launch_mask);
 

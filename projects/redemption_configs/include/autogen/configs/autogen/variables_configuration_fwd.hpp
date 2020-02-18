@@ -174,6 +174,7 @@ namespace cfg {
         struct split_domain;
         struct wabam_uses_translated_remoteapp;
         struct use_license_store;
+        struct enable_restricted_admin_mode;
     };
 
     struct metrics {
