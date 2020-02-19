@@ -20,8 +20,10 @@
 */
 
 #include "dsm.hpp"
+#include "vnc.hpp"
 
 #include "utils/log.hpp"
+#include "core/error.hpp"
 
 #define SCOPED_EVP_CONTEXT(TYPENAME, T, INIT, DESTROY) \
     struct TYPENAME { \
@@ -268,7 +270,7 @@ void UltraDSM::reset() {
 	cipherDelete(&m_contextSV3);
 }
 
-bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
+bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8_t &passphraseused) {
 	if (!instream.in_check_rem(2))
 		return false;
 
@@ -279,29 +281,29 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 	InStream s({instream.get_current(), challengeLen});
 	instream.in_skip_bytes(challengeLen);
 
-	uint8_t passphraseused = instream.in_uint8();
+	passphraseused = instream.in_uint8();
 
 	if (!s.in_check_rem(1 + 1 + 4)) {
 		LOG(LOG_ERR, "Invalid challengeLen");
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 
 	uint8_t pluginId = s.in_uint8();
 	if (pluginId != 1) {
 		LOG(LOG_ERR, "Invalid pluginId 0x%0.2x", pluginId);
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 
 	uint8_t pluginVersion = s.in_uint8();
 	if (pluginVersion > 3) {
 		LOG(LOG_ERR, "Invalid pluginVersion %d", pluginVersion);
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 
 	uint32_t serverIdentificationLen = s.in_uint32_le();
 	if (!s.in_check_rem(serverIdentificationLen)) {
 		LOG(LOG_ERR, "Invalid challengeLen for serverIdentification");
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 	const uint8_t *serverIdentification = s.get_current();
 	if (serverIdentificationLen > 0) {
@@ -310,7 +312,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 
 	if (!s.in_check_rem(4 + 2)) {
 		LOG(LOG_ERR, "Invalid challengeLen for challenge and wClientAuthPublicKeyIdentifierLength");
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 
 	m_challengeFlags = s.in_uint32_le();
@@ -319,7 +321,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 	uint16_t clientAuthPublicKeyIdentifierLen = s.in_uint16_le();
 	if (!s.in_check_rem(clientAuthPublicKeyIdentifierLen)) {
 		LOG(LOG_ERR, "Invalid challengeLen for clientAuthPublicKeyIdentifierLen");
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 
 	const uint8_t *clientAuthPublicKeyIdentifier = s.get_current();
@@ -363,7 +365,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 
 	if (!s.in_check_rem(nIVLength + 2)) {
 		LOG(LOG_ERR, "Invalid challengeLen for IV and publicKeyLength");
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 	const uint8_t *blobInitialKeyIV = s.get_current();
 	s.in_skip_bytes(nIVLength);
@@ -378,13 +380,15 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 	size_t passwdLen;
 	char *passwd;
 
-	if (this->m_password && strlen(this->m_password)) {
+#if 0
+	if (this->m_password && strlen(this->m_password) && false) {
 		passwd = this->m_password;
 		passwdLen = strlen(this->m_password);
 	} else {
-		passwd = char_ptr_cast(g_DefaultPassword);
-		passwdLen = sizeof(g_DefaultPassword);
-	}
+#endif
+    passwd = char_ptr_cast(g_DefaultPassword);
+    passwdLen = sizeof(g_DefaultPassword);
+
 
 	if (m_challengeFlags & svncNewKey) {
 		PKCS5_PBKDF2_HMAC_SHA1(passwd, passwdLen, salt, 8, 0x1001, keySize, blobInitialKey);
@@ -399,7 +403,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 	uint16_t publicKeyLength = s.in_uint16_le();
 	if (!s.in_check_rem(publicKeyLength)) {
 		LOG(LOG_ERR, "Invalid challengeLen publicKeyLen=%d", publicKeyLength);
-		// throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 
 	const uint8_t *publicKeyRaw = s.get_current();
@@ -415,13 +419,13 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen) {
 	const uint8_t *packetHash = s.get_current();
 	if (memcmp(blobMessageDigest, packetHash, EVP_MD_size(EVP_sha1())) != 0) {
 		LOG(LOG_ERR, "Invalid handshake hash");
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 
 	m_rsa = d2i_RSAPublicKey(nullptr, const_cast<const uint8_t **>(&m_pPublicKeyRaw), m_nPublicKeyRawLength);
 	if (m_rsa == nullptr) {
 		LOG(LOG_ERR, "Failed to load public key.");
-		//throw Error(ERR_VNC_CONNECTION_ERROR);
+		throw Error(ERR_VNC_CONNECTION_ERROR);
 	}
 	m_nRSASize = RSA_size(m_rsa);
 
@@ -641,7 +645,7 @@ bool UltraDSM::encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out) {
 	return true;
 }
 
-bool UltraDSM::decrypt(const uint8_t *buffer, size_t len, writable_bytes_view & out) {
+bool UltraDSM::decrypt(const uint8_t *buffer, size_t len, writable_bytes_view out) {
 	int nEncryptedLength;
 	EVP_CipherUpdate(m_contextSV1, out.as_u8p(), &nEncryptedLength, buffer, len);
 	return true;
