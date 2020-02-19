@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestErrCb)
 
     static bool visited_cb = false;
 
-    cctx.set_get_trace_key_cb([](auto... /*dummy*/){ visited_cb = true; return -1; });
+    cctx.set_get_trace_key_cb([]([[maybe_unused]]auto... dummy){ visited_cb = true; return -1; });
     cctx.set_master_derivator(cstr_array_view("abc"));
 
     RED_CHECK_EXCEPTION_ERROR_ID(cctx.get_hmac_key(), ERR_WRM_INVALID_INIT_CRYPT);
