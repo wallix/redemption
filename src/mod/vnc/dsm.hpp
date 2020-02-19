@@ -71,10 +71,10 @@ public:
 	~UltraDSM();
 
 	void reset();
-	bool handleChallenge(InStream &instream, uint16_t &challengeLen);
+	bool handleChallenge(InStream &instream, uint16_t &challengeLen, uint8_t &passphraseused);
 	bool getResponse(OutStream &out);
 	bool encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out);
-	bool decrypt(const uint8_t *buffer, size_t len, writable_bytes_view & out);
+	bool decrypt(const uint8_t *buffer, size_t len, writable_bytes_view out);
 
 public:
 	static uint32_t checkBestSupportedFlags(uint32_t dwFlags);

@@ -114,7 +114,7 @@ struct BasicStaticBuffer
     }
 
 
-private:
+protected:
     static constexpr std::size_t max_len = Capacity;
     uint8_t buf[max_len];
     size_type len = 0;

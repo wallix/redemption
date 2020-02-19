@@ -476,9 +476,6 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
 
 	}
 	size_t readBytes = this->server_data_buf.read_from(this->t);
-	if (this->dsmEncryption) {
-		LOG(LOG_ERR, "should decrypt");
-	}
 
 	[[maybe_unused]]
 	uint64_t const data_server_before = this->server_data_buf.remaining();
@@ -1060,15 +1057,16 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         }
 
     case WAIT_SECURITY_ULTRA_CHALLENGE: {
+        uint8_t passPhraseUsed;
     	if (!this->dsm)
     		dsm = new UltraDSM(this->password);
 
     	InStream challenge(this->server_data_buf.av());
     	uint16_t challengeLen;
-    	if (!dsm->handleChallenge(challenge, challengeLen))
+        if (!dsm->handleChallenge(challenge, challengeLen, passPhraseUsed))
     		return false;
 
-    	this->server_data_buf.advance(challengeLen + 2);
+        this->server_data_buf.advance(challengeLen + 1 + 2);
 
     	StaticOutStream<2> lenStream;
     	StaticOutReservedStreamHelper<2, 65535> out;
@@ -1079,9 +1077,19 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
     	out.copy_to_head(lenStream);
     	writable_bytes_view packet = out.get_packet();
     	this->t.send(packet.begin(), packet.size());
+
     	this->dsmEncryption = true;
-    	this->state = SERVER_INIT;
-    	REDEMPTION_CXX_FALLTHROUGH;
+
+        if (passPhraseUsed != 2) {
+            lenStream.rewind(0);
+            uint16_t passLen = strlen(this->password);
+            lenStream.out_uint16_le(passLen);
+
+            this->t.send(lenStream.get_data(), 2);
+            this->t.send(this->password, passLen);
+        }
+        this->state = WAIT_SECURITY_RESULT;
+        break;
     }
 
     case SERVER_INIT:
