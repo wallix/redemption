@@ -117,12 +117,9 @@ public:
         void send(bytes_view buffer) {
     		if (m_mod.dsmEncryption) {
     			BufMaker<0x10000> tmpBuf;
-    			StaticOutStream<2> lenStream;
     			writable_bytes_view tmp = tmpBuf.dyn_array(buffer.size());
 
     			m_mod.dsm->encrypt(buffer.data(), buffer.size(), tmp);
-    			lenStream.out_uint16_le(buffer.size());
-    			//m_trans.send(lenStream.get_bytes());
     			m_trans.send(tmp);
     		} else {
     			m_trans.send(buffer);
@@ -148,12 +145,6 @@ public:
     struct VncBuf64k : public Buf64k {
     	VncBuf64k(mod_vnc &mod)
     		: m_mod(mod)
-    		, m_dsmWaitingLen(true)
-    		, m_dsmExpectedLen(2)
-    		, m_dsmReadPtr(m_dsmLenBuffer)
-    		, m_packetPayload(nullptr)
-    		, m_dsmRemainingInBuffer(0)
-    		, m_dsmRemainingPtr(nullptr)
     	{
     	}
 
@@ -163,58 +154,27 @@ public:
 			if (!m_mod.dsmEncryption)
     			return Buf64k::read_from(trans);
 
-    		// must read using DSM
-    		if (m_dsmExpectedLen) {
-				size_t readBytes = trans.partial_read(m_dsmReadPtr, m_dsmExpectedLen);
-				m_dsmExpectedLen -= readBytes;
-				m_dsmReadPtr += readBytes;
-    		}
+			BufMaker<0x10000> buf;
 
-    		if (m_dsmExpectedLen)
-    			return 0;
-
-    		if (m_dsmWaitingLen) {
-    			InStream ins({m_dsmLenBuffer, sizeof(m_dsmLenBuffer)});
-
-    			m_dsmExpectedLen = m_dsmRemainingInBuffer = ins.in_uint16_le();
-    			if (m_dsmExpectedLen) {
-    				m_packetPayload = m_dsmReadPtr = m_dsmRemainingPtr = new uint8_t[m_dsmExpectedLen]();
-    				m_dsmWaitingLen = false;
-    			} else {
-    				// TODO: handle empty packet
-    			}
-    		} else {
-    			size_t retFunc = Buf64k::read_with([&](uint8_t* data, size_t n) {
-    				size_t ret = (m_dsmRemainingInBuffer > n) ? n : m_dsmRemainingInBuffer;
-    				memcpy(data, m_dsmRemainingPtr, ret);
-
-    				m_dsmRemainingPtr += ret;
-    				m_dsmRemainingInBuffer -= ret;
-    				return ret;
-    			});
-
-    			if (!m_dsmRemainingInBuffer) {
-					delete [] m_packetPayload;
-					m_packetPayload = nullptr;
-					m_dsmReadPtr = m_dsmLenBuffer;
-					m_dsmWaitingLen = true;
-					m_dsmExpectedLen = 2;
-    			}
-    			return retFunc;
-    		}
-
-    		return 0;
+			size_t readBytes;
+			if (this->idx == this->len) {
+				this->len = readBytes = trans.partial_read(writable_byte_ptr(buf.static_array().data()), this->max_len);
+				this->idx = 0;
+				m_mod.dsm->decrypt(buf.static_array().data(), readBytes, writable_bytes_view(this->buf, this->max_len));
+			} else {
+				if (this->idx) {
+					std::memmove(this->buf, this->buf + this->idx, this->remaining());
+					this->len -= this->idx;
+					this->idx = 0;
+				}
+				readBytes = trans.partial_read(writable_byte_ptr(buf.static_array().data()), this->max_len - this->len);
+				m_mod.dsm->decrypt(buf.static_array().data(), readBytes, writable_bytes_view(this->buf + this->len, this->max_len - this->len));
+				this->len += readBytes;
+			}
+			return readBytes;
     	}
 
     	mod_vnc & m_mod;
-
-    	bool m_dsmWaitingLen;
-        size_t m_dsmExpectedLen;
-    	uint8_t m_dsmLenBuffer[2];
-    	uint8_t * m_dsmReadPtr;
-    	uint8_t * m_packetPayload;
-    	size_t m_dsmRemainingInBuffer;
-    	uint8_t * m_dsmRemainingPtr;
     };
 
     /**
@@ -1368,6 +1328,7 @@ private:
                 }
                 this->state = r;
             }
+            return true;
         }
 
     private:
