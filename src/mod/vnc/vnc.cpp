@@ -243,27 +243,34 @@ void mod_vnc::rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keyma
         return;
     }
 
+    StaticOutStream<32> out_stream;
+
     if (device_flags & MOUSE_FLAG_MOVE) {
-        this->mouse.move(this->t, x, y);
+        this->mouse.move(out_stream, x, y);
         IF_ENABLE_METRICS(mouse_move(x, y));
     }
     else if (device_flags & MOUSE_FLAG_BUTTON1) {
-        this->mouse.click(this->t, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
+        this->mouse.click(out_stream, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
         IF_ENABLE_METRICS(right_click());
     }
     else if (device_flags & MOUSE_FLAG_BUTTON2) {
-        this->mouse.click(this->t, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
+        this->mouse.click(out_stream, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
         IF_ENABLE_METRICS(left_click());
     }
     else if (device_flags & MOUSE_FLAG_BUTTON3) {
-        this->mouse.click(this->t, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
+        this->mouse.click(out_stream, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
     }
     else if (device_flags == MOUSE_FLAG_BUTTON4 || device_flags == 0x0278) {
-        this->mouse.scroll(this->t, 1 << 3);
+        this->mouse.scroll(out_stream, 1 << 3);
     }
     else if (device_flags == MOUSE_FLAG_BUTTON5 || device_flags == 0x0388) {
-        this->mouse.scroll(this->t, 1 << 4);
+        this->mouse.scroll(out_stream, 1 << 4);
     }
+    else {
+        return ;
+    }
+
+    this->t.send(out_stream.get_bytes());
 }
 
 void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/,
