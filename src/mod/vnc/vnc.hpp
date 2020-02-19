@@ -181,13 +181,13 @@ public:
      *
      */
     struct Mouse {
-        void move(VncTransport & t, int x, int y) {
+        void move(OutStream & out_stream, int x, int y) {
             this->x = x;
             this->y = y;
-            this->send(t);
+            this->send(out_stream);
         }
 
-        void click(VncTransport & t, int x, int y, int mask, bool set) {
+        void click(OutStream & out_stream, int x, int y, int mask, bool set) {
             if (set) {
                 this->mod_mouse_state |= mask;
             }
@@ -196,14 +196,12 @@ public:
             }
             this->x = x;
             this->y = y;
-            this->send(t);
+            this->send(out_stream);
         }
 
-        void scroll(VncTransport & t, int mask) const {
-            StaticOutStream<12> stream;
-            this->write(stream, this->mod_mouse_state | mask);
-            this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_bytes());
+        void scroll(OutStream & out_stream, int mask) const {
+            this->write(out_stream, this->mod_mouse_state | mask);
+            this->write(out_stream, this->mod_mouse_state);
         }
 
     private:
@@ -218,10 +216,8 @@ public:
             stream.out_uint16_be(this->y);
         }
 
-        void send(VncTransport & t) const {
-            StaticOutStream<6> stream;
-            this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_bytes());
+        void send(OutStream & out_stream) const {
+            this->write(out_stream, this->mod_mouse_state);
         }
     } mouse;
 
