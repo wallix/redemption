@@ -1302,11 +1302,16 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         hash_buf[len] = 0;
         ct.close();
 
-        #if SNAPPY_VERSION < (1<<16|1<<8|4)
+        #if SNAPPY_VERSION < (1<<16|1<<8|3)
             RED_CHECK(hash_buf ==
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
                 " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n"sv);
+        #elif SNAPPY_VERSION < (1<<16|1<<8|4)
+            RED_CHECK(hash_buf ==
+                "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
+                " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
+                " 27fa17cac1feda21f9b134d503e6292548a35925f0137474d896a3461b777b5a\n"sv);
         #else
             RED_CHECK(hash_buf ==
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
