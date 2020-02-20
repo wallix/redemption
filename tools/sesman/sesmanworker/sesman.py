@@ -18,6 +18,7 @@ import signal
 import traceback
 import json
 import re
+import sys
 from logger import Logger
 
 from .cutmessage import cut_message
@@ -51,12 +52,48 @@ from .engine import TargetContext
 import syslog
 
 
-def to_utf8(item):
-    if not item:
-        return ""
-    if isinstance(item, unicode):
-        return item.encode('utf8')
-    return item
+# Python 2.7 compatibility layer
+if sys.version_info[0] < 3:
+    def bytes(data, encoding="utf-8"):
+        return data.encode(encoding)
+    text_type = unicode
+    binary_type = str
+    def iterable_bytes(data):
+        return data
+    def to_syslog(data):
+        return to_utf8(data)
+else:
+    from struct import unpack
+    text_type = str
+    binary_type = (bytes, bytearray)
+    unicode = None
+    def iterable_bytes(data):
+        return unpack('%sc' % len(data), data)
+    def to_syslog(data):
+        return to_unicode(data)
+
+
+def to_utf8(string):
+    if isinstance(string, text_type):
+        return bytes(string, "utf-8")
+    return string
+
+
+def to_unicode(string):
+    if isinstance(string, binary_type):
+        return string.decode("utf-8")
+    return string
+
+
+def print_exception_caught(func):
+    def method_wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            import traceback
+            Logger().info(traceback.format_exc())
+            raise
+    return method_wrapper
 
 
 class RdpProxyLog(object):
@@ -69,14 +106,14 @@ class RdpProxyLog(object):
 
     def log(self, type, **kwargs):
         target = kwargs.pop('target', None)
-        arg_list = kwargs.items()
+        arg_list = list(kwargs.items())
         if target:
             arg_list[:0] = [('target', target)]
         arg_list[:0] = [('type', type)]
         args = ' '.join(('%s="%s"' % (k, self.escape_bs_dq(v)))
                         for (k, v) in arg_list if v)
         line = to_utf8(' '.join((self._context, args)))
-        syslog.syslog(syslog.LOG_INFO, line)
+        syslog.syslog(syslog.LOG_INFO, to_syslog(line))
 
     @staticmethod
     def escape_bs_dq(string):
@@ -393,7 +430,7 @@ class Sesman():
         self.internal_target = False
         self.target_app_rights = {}
         # Should set context values back to default
-        for key, value in back_to_selector_default_reinit.iteritems():
+        for key, value in back_to_selector_default_reinit.items():
             self.shared[key] = value
         back_to_selector_default_sent[u"module"] = u'transitory'
         self.send_data(back_to_selector_default_sent)
@@ -447,7 +484,7 @@ class Sesman():
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []
-        for key, value in data.iteritems():
+        for key, value in data.items():
             self.shared[key] = value
             if value != MAGICASK:
                 _pair = u"%s\n!%s\n" % (key, value)
@@ -466,7 +503,7 @@ class Sesman():
         _len = len(_r_data)
 
         _chunk_size = 1024 * 64 - 1
-        _chunks = _len / _chunk_size
+        _chunks = _len // _chunk_size
 
         if _chunks == 0:
             self.proxy_conx.sendall(pack(">L", _len))
@@ -488,7 +525,7 @@ class Sesman():
         """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
 
         _status, _error = True, u''
-        _data = ''
+        _data = b''
         self._changed_keys = []
         try:
             # Fetch Data from Redemption
@@ -1413,7 +1450,7 @@ class Sesman():
         flag = 0
         if not request_fields:
             return flag
-        for key, value in request_fields.iteritems():
+        for key, value in request_fields.items():
             bitset = Sesman.MAP_FIELD_FLAG.get(key)
             if bitset is not None:
                 flag += bitset
@@ -2482,10 +2519,10 @@ class Sesman():
     def fetch_connectionpolicy(self, conn_opts):
         connectionpolicy_kv = {}
         # Logger().info(u"%s" % conn_opts)
-        for (section, matches) in cp_spec.iteritems():
+        for (section, matches) in cp_spec.items():
             section_values = conn_opts.get(section)
             if section_values is not None:
-                for (config_key, (cp_key, cp_value)) in matches.iteritems():
+                for (config_key, (cp_key, cp_value)) in matches.items():
                     value = section_values.get(cp_key)
                     if value is not None:
                         connectionpolicy_kv[config_key] = value
