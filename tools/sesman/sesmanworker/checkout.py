@@ -26,7 +26,7 @@ except Exception as e:
     import traceback
     tracelog = traceback.format_exc()
     try:
-        from fake.const import (
+        from .fake.const import (
             APPROVAL_PENDING as S_PENDING,
             APPROVAL_NONE as S_NONE,
             APPROVAL_ACCEPTED as SHADOW_ACCEPTED,
