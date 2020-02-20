@@ -37,6 +37,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase1)
 
     auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
     RED_CHECK_EQUAL(value, 114178754);
+    (void)queue;
 }
 
 RED_AUTO_TEST_CASE(TestBERIntegerCase2)
@@ -45,7 +46,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase2)
     RED_CHECK_EQUAL(r.size(), 3);
 
     auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
-
+    (void)queue;
     RED_CHECK_EQUAL(value, 1);
 }
 
@@ -55,7 +56,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase3)
     RED_CHECK_EQUAL(r.size(), 5);
 
     auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
-
+    (void)queue;
     RED_CHECK_EQUAL(value, 52165);
 }
 
@@ -65,7 +66,7 @@ RED_AUTO_TEST_CASE(TestBERIntegerCase4)
     RED_CHECK_EQUAL(r.size(), 4);
 
     auto [value, queue] = BER::pop_integer(r, "Integer", ERR_CREDSSP_TS_REQUEST);
-
+    (void)queue;
     RED_CHECK_EQUAL(value, 0x0FFF);
 }
 
@@ -77,6 +78,7 @@ RED_AUTO_TEST_CASE(TestBEROctetString)
     r.insert(r.end(), oct_str, oct_str+sizeof(oct_str));
 
     auto [length, queue] = BER::pop_tag_length(r, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TestOctetString", ERR_CREDSSP_TS_REQUEST);
+    (void)queue;
     RED_CHECK_EQUAL(length, 7);
 }
 
@@ -93,6 +95,7 @@ RED_AUTO_TEST_CASE(TestBERContextual)
 
     RED_CHECK_EQUAL(true, BER::check_ber_ctxt_tag(v, tag));
     auto [length, queue] = BER::pop_length(bytes_view(v).drop_front(1), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
+    (void)queue;
     RED_CHECK_EQUAL(length, sizeof(data));
 }
 
@@ -1229,4 +1232,3 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
 //rdpproxy: INFO (3129/3129) -- 0000 90 c2 62 1b 68 2b db 4f c1 18 ed b0 86 fa 57 59  ..b.h+.O......WY
 //rdpproxy: INFO (3129/3129) -- Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x0
 //rdpproxy: INFO (3129/3129) -- mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
-
