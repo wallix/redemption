@@ -59,6 +59,9 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
 
     Cliprdr::FormatNameInventory format_name_inventory;
 
+    class D;
+    std::unique_ptr<D> d;
+
 
     const ClipboardVirtualChannelParams params;
 
@@ -97,46 +100,9 @@ public:
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
-        FileStorage file_storage)
-    : BaseVirtualChannel(to_client_sender_,
-                         to_server_sender_,
-                         base_params)
-    , params([&]{
-        auto p = params;
-        if (!file_validator_service) {
-            p.validator_params.up_target_name.clear();
-            p.validator_params.down_target_name.clear();
-        }
-        return p;
-    }())
-    , proxy_managed(to_client_sender_ == nullptr)
-    , session_reactor(session_reactor)
-    , file_validator(file_validator_service)
-    , fdx_capture(file_storage.fdx_capture)
-    , always_file_storage(file_storage.always_file_storage)
-    {}
+        FileStorage file_storage);
 
-    ~ClipboardVirtualChannel()
-    {
-        try {
-            for (ClipboardSideData* side_data : {
-                &this->clip_data.client_data,
-                &this->clip_data.server_data
-            }) {
-                for (auto& file : side_data->get_file_contents_list()) {
-                    auto& file_data = file.file_data;
-                    if (file_data.tfl_file) {
-                        if (file_data.tfl_file->trans.is_open()) {
-                            this->_close_tfl(file_data);
-                        }
-                    }
-                }
-            }
-        }
-        catch (Error const& err) {
-            LOG(LOG_ERR, "ClipboardVirtualChannel: error on close tfls: %s", err.errmsg());
-        }
-    }
+    ~ClipboardVirtualChannel();
 
     void empty_client_clipboard() {
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
@@ -164,79 +130,7 @@ public:
 
 public:
     void process_client_message(uint32_t total_length,
-        uint32_t flags, bytes_view chunk_data) override
-    {
-        this->log_process_message(total_length, flags, chunk_data, Direction::FileFromClient);
-
-        InStream chunk(chunk_data);
-        RDPECLIP::CliprdrHeader header;
-        bool send_message_to_server = true;
-
-        switch (this->process_header_message(
-            this->clip_data.client_data, flags, chunk, header, Direction::FileFromClient
-        ))
-        {
-            case RDPECLIP::CB_FORMAT_LIST:
-                send_message_to_server = this->process_format_list_pdu(
-                    flags, chunk, header,
-                    this->to_client_sender_ptr(),
-                    this->clip_data.client_data,
-                    this->params.clipboard_down_authorized || this->params.clipboard_up_authorized || this->format_list_response_notifier);
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-                FormatDataRequestReceive receiver(this->clip_data, this->verbose, chunk);
-                if (!this->params.clipboard_down_authorized) {
-                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                            "Server to client Clipboard operation is not allowed.");
-
-                    FormatDataRequestSendBack sender(this->to_client_sender_ptr());
-                }
-                send_message_to_server = this->params.clipboard_down_authorized;
-            }
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                const bool is_from_remote_session = false;
-                send_message_to_server = this->process_format_data_response_pdu(
-                    flags, chunk, header, is_from_remote_session);
-            }
-            break;
-
-            case RDPECLIP::CB_CLIP_CAPS:
-            {
-                ClipboardCapabilitiesReceive(this->clip_data.client_data, chunk, this->verbose);
-                send_message_to_server = true;
-            }
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                send_message_to_server = this->process_filecontents_request_pdu(
-                    flags, chunk, this->to_client_sender_ptr(),
-                    this->clip_data.client_data, Direction::FileFromServer);
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                const bool is_from_remote_session = false;
-                send_message_to_server = this->process_filecontents_response_pdu(
-                    flags, chunk, header, this->clip_data.server_data, is_from_remote_session);
-            }
-            break;
-
-            case RDPECLIP::CB_LOCK_CLIPDATA:
-                this->process_lock_pdu(chunk, this->clip_data.client_data);
-            break;
-
-            case RDPECLIP::CB_UNLOCK_CLIPDATA:
-                this->process_unlock_pdu(chunk, this->clip_data.client_data);
-            break;
-        }   // switch (this->client_message_type)
-
-        if (send_message_to_server) {
-            this->send_message_to_server(total_length, flags, chunk_data);
-        }
-    }   // process_client_message
+        uint32_t flags, bytes_view chunk_data) override;
 
     bool process_server_format_data_request_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & /*in_header*/)
@@ -269,108 +163,8 @@ public:
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override
-    {
-        (void)out_asynchronous_task;
-
-        this->log_process_message(total_length, flags, chunk_data, Direction::FileFromServer);
-
-        InStream chunk(chunk_data);
-        RDPECLIP::CliprdrHeader header;
-        bool send_message_to_client = true;
-
-        switch (this->process_header_message(
-            this->clip_data.server_data, flags, chunk, header, Direction::FileFromServer
-        ))
-        {
-            case RDPECLIP::CB_MONITOR_READY: {
-                if (this->proxy_managed) {
-                    this->clip_data.server_data.use_long_format_names = true;
-                    ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
-                }
-
-                if (this->clipboard_monitor_ready_notifier) {
-                    if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
-                        this->clipboard_monitor_ready_notifier = nullptr;
-                    }
-                }
-
-                send_message_to_client = !this->proxy_managed;
-            }
-            break;
-
-            case RDPECLIP::CB_FORMAT_LIST:
-                send_message_to_client = this->process_format_list_pdu(
-                    flags, chunk, header,
-                    this->to_server_sender_ptr(),
-                    this->clip_data.server_data,
-                    this->params.clipboard_down_authorized || this->params.clipboard_up_authorized);
-
-                if (this->format_list_notifier) {
-                    if (!this->format_list_notifier->on_server_format_list()) {
-                        this->format_list_notifier = nullptr;
-                    }
-                }
-            break;
-
-            case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-                if (this->clipboard_initialize_notifier) {
-                    if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
-                        this->clipboard_initialize_notifier = nullptr;
-                    }
-                }
-                else if (this->format_list_response_notifier) {
-                    if (!this->format_list_response_notifier->on_server_format_list_response()) {
-                        this->format_list_response_notifier = nullptr;
-                    }
-                }
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                send_message_to_client = this->process_server_format_data_request_pdu(
-                    total_length, flags, chunk, header);
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                const bool is_from_remote_session = true;
-                send_message_to_client = this->process_format_data_response_pdu(
-                    flags, chunk, header, is_from_remote_session);
-            }
-            break;
-
-            case RDPECLIP::CB_CLIP_CAPS:
-            {
-                ClipboardCapabilitiesReceive(this->clip_data.server_data, chunk, this->verbose);
-                send_message_to_client = !this->proxy_managed;
-            }
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                send_message_to_client = this->process_filecontents_request_pdu(
-                    flags, chunk, this->to_server_sender_ptr(),
-                    this->clip_data.server_data, Direction::FileFromClient);
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                const bool from_remote_session = true;
-                send_message_to_client = this->process_filecontents_response_pdu(
-                    flags, chunk, header, this->clip_data.client_data, from_remote_session);
-            }
-            break;
-
-            case RDPECLIP::CB_LOCK_CLIPDATA:
-                this->process_lock_pdu(chunk, this->clip_data.server_data);
-            break;
-
-            case RDPECLIP::CB_UNLOCK_CLIPDATA:
-                this->process_unlock_pdu(chunk, this->clip_data.server_data);
-            break;
-        }   // switch (this->server_message_type)
-
-        if (send_message_to_client) {
-            this->send_message_to_client(total_length, flags, chunk_data);
-        }   // switch (this->server_message_type)
-    }   // process_server_message
+        // process_server_message
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override;
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->clipboard_monitor_ready_notifier = launcher;
@@ -780,13 +574,13 @@ private:
                 is_from_remote_session ? "client" : "server"
             );
 
-            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
+            this->log_siem_info(flags, in_header, requested_format_id, std::string{}, is_from_remote_session);
         }
         else {
             auto original_chunk = chunk.clone();
             FormatDataResponseReceive receiver(requested_format_id, chunk, flags);
 
-            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+            this->log_siem_info(flags, in_header, requested_format_id, receiver.data_to_dump, is_from_remote_session);
 
             std::string const& target_name = is_from_remote_session
                 ? this->params.validator_params.down_target_name

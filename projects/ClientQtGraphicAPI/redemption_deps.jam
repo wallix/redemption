@@ -29,6 +29,7 @@ add_obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/repl
 add_obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
 add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
 add_obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
+add_obj src/mod/rdp/channels/cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel.cpp ;
 add_obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 add_obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 add_obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
@@ -112,6 +113,7 @@ requirement_list += <library>src/mod/internal/replay_mod.o ;
 requirement_list += <library>src/mod/internal/widget/flat_button.o ;
 requirement_list += <library>src/mod/internal/widget/label.o ;
 requirement_list += <library>src/mod/metrics.o ;
+requirement_list += <library>src/mod/rdp/channels/cliprdr_channel.o ;
 requirement_list += <library>src/mod/rdp/channels/sespro_channel_params.o ;
 requirement_list += <library>src/mod/rdp/new_mod_rdp.o ;
 requirement_list += <library>src/mod/rdp/rdp_negociation_data.o ;

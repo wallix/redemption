@@ -561,16 +561,15 @@ struct FormatDataResponseReceiveFileList
 
 struct FormatDataResponseReceive
 {
-    std::string data_to_dump;
+    static constexpr size_t const max_length_of_data_to_dump = 256;
+    char data_to_dump_buf[max_length_of_data_to_dump * maximum_length_of_utf8_character_in_bytes];
+    std::string_view utf8_string{};
 
     FormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const uint32_t flags)
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-
-            constexpr size_t const max_length_of_data_to_dump = 256;
-
             switch (requestedFormatId) {
-    /*
+                /*
                 case RDPECLIP::CF_TEXT:
                 {
                     const size_t length_of_data_to_dump = std::min(
@@ -580,7 +579,7 @@ struct FormatDataResponseReceive
                         length_of_data_to_dump);
                 }
                 break;
-    */
+                */
                 case RDPECLIP::CF_UNICODETEXT:
                 {
                     assert(!(chunk.in_remain() & 1));
@@ -588,26 +587,20 @@ struct FormatDataResponseReceive
                     const size_t length_of_data_to_dump = std::min(
                         chunk.in_remain(), max_length_of_data_to_dump * 2);
 
-                    constexpr size_t size_of_utf8_string =
-                        max_length_of_data_to_dump *
-                            maximum_length_of_utf8_character_in_bytes;
-
-                    uint8_t utf8_string[size_of_utf8_string + 1] {};
-                    const size_t length_of_utf8_string = ::UTF16toUTF8(
-                        chunk.get_current(), length_of_data_to_dump / 2,
-                        utf8_string, size_of_utf8_string);
-                    this->data_to_dump.assign(
-                        ::char_ptr_cast(utf8_string),
-                        ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
-                            length_of_utf8_string - 1 :
-                            length_of_utf8_string));
+                    auto av = ::UTF16toUTF8_buf(
+                        {chunk.get_current(), length_of_data_to_dump / 2u},
+                        make_array_view(this->data_to_dump_buf));
+                    this->utf8_string = {av.as_charp(), av.size()};
+                    if (not this->utf8_string.empty() && not this->utf8_string.back()) {
+                        this->utf8_string.remove_suffix(1);
+                    }
                 }
                 break;
 
                 case RDPECLIP::CF_LOCALE:
                 {
-                    const uint32_t locale_identifier = chunk.in_uint32_le();
-                    this->data_to_dump = std::to_string(locale_identifier);
+                    int len = std::sprintf(this->data_to_dump_buf, "%u", chunk.in_uint32_le());
+                    this->utf8_string = {this->data_to_dump_buf, checked_cast<std::size_t>(len)};
                 }
                 break;
             }
