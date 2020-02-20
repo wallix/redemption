@@ -499,8 +499,6 @@ class Sesman():
                 if not _is_multi_packet:
                     break
             _data = _data.decode('utf-8')
-        except AuthentifierSocketClosed as e:
-            raise
         except Exception as e:
             # Logger().info("%s <<<%s>>>" % (
             #     u"Failed to read data from rdpproxy authentifier socket",
