@@ -22,7 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "proxy_recorder/extract_user_domain.hpp"
 
-using std::string_view_literals::operator""sv;
+using namespace std::string_view_literals;
 
 RED_AUTO_TEST_CASE(TestExtractUserDomainFull)
 {
