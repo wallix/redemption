@@ -16,7 +16,6 @@ WAB RDP Authentifier server launcher
 import socket
 import sys
 
-#from sys import stdin
 
 from socket import fromfd
 from socket import AF_UNIX
@@ -31,20 +30,21 @@ import signal
 
 socket_path = '/tmp/redemption-sesman-sock'
 
+
 def standalone():
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
-    
+
     try:
-      os.remove(socket_path)
+        os.remove(socket_path)
     except:
-      pass
+        pass
     # create socket from bounded port
     s = socket.socket(AF_UNIX, SOCK_STREAM)
     s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     s.bind(socket_path)
     s.listen(100)
 
-    #create alternative socket for watchdog
+    # create alternative socket for watchdog
     sw = socket.socket(AF_INET, SOCK_STREAM)
     sw.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     sw.bind(('127.0.0.1', 3351))
@@ -66,8 +66,11 @@ def standalone():
                         try:
                             from sesmanworker import Sesman
                             from sesmanworker.sesman import AuthentifierSocketClosed
-                        except Exception, e:
-                            raise RuntimeError(u"WABRDPAuthentifier importing Sesman : %s" % e)
+                        except Exception as e:
+                            raise RuntimeError(
+                                u"WABRDPAuthentifier importing Sesman : %s" %
+                                e
+                            )
 
                         server = Sesman(client_socket, client_addr)
 
@@ -75,23 +78,26 @@ def standalone():
                             watchdog = True
                         try:
                             server.start()
-                        except AuthentifierSocketClosed, e:
+                        except AuthentifierSocketClosed as e:
                             if not watchdog:
-                                Logger().info("WABRDPAuthentifier socket closed")
+                                Logger().info(
+                                    "WABRDPAuthentifier socket closed"
+                                )
                         sys.exit(0)
                     else:
                         client_socket.close()
-                        #os.waitpid(child_pid, 0)
+                        # os.waitpid(child_pid, 0)
 
     except KeyboardInterrupt:
         if client_socket:
             client_socket.close()
         sys.exit(1)
-    except socket.error, e:
+    except socket.error as e:
         pass
-    except Exception, e:
+    except Exception as e:
         if not watchdog:
             Logger().exception("%s" % e)
+
 
 if __name__ == '__main__':
     standalone()
