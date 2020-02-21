@@ -87,7 +87,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
     NullReportMessage report_message;
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     struct D
     {
@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullReportMessage report_message;
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -178,7 +178,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullReportMessage report_message;
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -444,7 +444,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             BufTransport buf_trans;
             FileValidatorService file_validator_service(buf_trans);
 
-            BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+            BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
             ClipboardVirtualChannelParams clipboard_virtual_channel_params;
             clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -519,7 +519,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 StaticOutStream<1600> out;
                 Cliprdr::format_list_serialize_with_header(
                     out,
-                    Cliprdr::IsLongFormat(use_long_format),
+                    use_long_format,
                     std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
 
                 process_client_message(out.get_bytes());
@@ -613,16 +613,15 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
                 ""_av);
             RED_REQUIRE(report_message.messages.size() == 1);
-            RED_CHECK_SMEM(report_message.messages[0],
+            RED_CHECK(report_message.messages[0] ==
                 "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=FileGroupDescriptorW(49262) size=596"_av);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+            RED_CHECK(buf_trans.buf == ""_av);
 
             {
                 using namespace RDPECLIP;
                 Buffer buf;
                 auto av = buf.build(CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, [&](OutStream& out){
                     FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 0, 0, 12, 0, false).emit(out);
-                    out.out_uint32_le(file_group_id);
                 });
                 process_server_message(av);
             }
