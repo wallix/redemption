@@ -110,7 +110,7 @@ namespace
 
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
 
-            Sig sig;
+            Sig sig = Sig();
 
             bool on_failure = false;
         };
@@ -127,7 +127,6 @@ namespace
         Cliprdr::FormatNameInventory current_format_list;
 
         std::vector<FileValidatorId> clip_text_validator_id_list;
-        FileValidatorId clip_text_validator_id = FileValidatorId(0);
         uint32_t clip_text_locale_identifier = 0;
 
         std::string validator_target_name;
@@ -141,16 +140,31 @@ namespace
 
         uint32_t requested_format_id;
 
-        // TODO Unicode
-        enum class TransferState :  uint8_t { Empty, Size, Range, WaitingContinuationRange, };
+        enum class TransferState :  uint8_t {
+            Empty,
+            Size,
+            Range,
+            WaitingContinuationRange,
+            Text,
+        };
 
         TransferState transfer_state = TransferState::Empty;
+
+        struct TextData
+        {
+            FileValidatorId file_validator_id;
+            bool is_unicode;
+        };
 
         union FileContentsData
         {
             char dummy;
             FileContentsSize size;
             FileContentsRange range;
+            TextData text;
+
+            FileContentsData() {}
+            ~FileContentsData() {}
         };
 
         FileContentsData file_contents_data;
@@ -270,13 +284,20 @@ struct ClipboardVirtualChannel::D
         FileValidatorId file_validator_id;
         Direction direction;
         bool on_failure;
-        bool is_text;
         std::unique_ptr<FdxCapture::TflFile> tfl_file;
         std::string file_name;
         ClipCtx::Sig sig;
     };
 
     std::vector<FileValidatorDataList> file_validator_list;
+
+    struct TextValidatorDataList
+    {
+        FileValidatorId file_validator_id;
+        Direction direction;
+    };
+
+    std::vector<TextValidatorDataList> text_validator_list {};
 
     FileValidatorDataList* search_file_validator_by_id(FileValidatorId id)
     {
@@ -293,9 +314,30 @@ struct ClipboardVirtualChannel::D
         vector_fast_erase(this->file_validator_list, p);
     }
 
+    TextValidatorDataList* search_text_validator_by_id(FileValidatorId id)
+    {
+        for (auto& r : this->text_validator_list) {
+            if (r.file_validator_id == id) {
+                return &r;
+            }
+        }
+        return nullptr;
+    }
+
+    void remove_text_validator(TextValidatorDataList* p)
+    {
+        vector_fast_erase(this->text_validator_list, p);
+    }
+
     D(ClipboardVirtualChannel& self)
     : self(self)
     {}
+
+    // ~D()
+    // {
+    //     TODO remove {client, server}.file_contents_data
+    //     and other lists
+    // }
 
     bool format_list(
         uint32_t flags, RDPECLIP::CliprdrHeader const& in_header,
@@ -309,14 +351,14 @@ struct ClipboardVirtualChannel::D
             return false;
         }
 
+        clip.current_format_list.clear();
+
         // TODO
-        if (!clip_enabled) {
+        if (!clip_enabled || clip.transfer_state != ClipCtx::TransferState::Empty) {
             LOG(LOG_WARNING, "Clipboard is fully disabled.");
             FormatListSendBack pdu(sender);
             return false;
         }
-
-        clip.current_format_list.clear();
 
         InStream in_stream(chunk_data);
         FormatListReceive receiver(
@@ -329,13 +371,14 @@ struct ClipboardVirtualChannel::D
         clip.current_file_list_format_id = receiver.file_list_format_id;
         clip.has_current_lock = false;
         clip.files.clear();
-        clip.transfer_state = ClipCtx::TransferState::Empty;
+        // clip.transfer_state = ClipCtx::TransferState::Empty;
 
         return true;
     }
 
-    void format_list_response(ClipCtx& clip)
+    void format_list_response(ClipCtx& /*clip*/)
     {
+        // TODO check error
     }
 
     void lock(ClipCtx& clip, bytes_view chunk_data)
@@ -453,24 +496,34 @@ struct ClipboardVirtualChannel::D
                 : this->self.params.validator_params.down_target_name;
 
             if (!target_name.empty()) {
-                auto push_clip_text_to_list = [&]{
-                    this->self.file_validator->send_eof(clip.clip_text_validator_id);
-                    clip.clip_text_validator_id_list.push_back(clip.clip_text_validator_id);
-                    clip.clip_text_validator_id = FileValidatorId();
-                    // TODO push to file_validator_list
-                };
-
                 switch (clip.requested_format_id) {
                     case RDPECLIP::CF_TEXT:
                     case RDPECLIP::CF_UNICODETEXT: {
                         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                            if (bool(clip.clip_text_validator_id)) {
-                                push_clip_text_to_list();
+                            switch (clip.transfer_state)
+                            {
+                                case ClipCtx::TransferState::WaitingContinuationRange:
+                                    // TODO move to file_validator_list
+                                    clip.file_contents_data.range.~FileContentsRange();
+                                    clip.transfer_state = ClipCtx::TransferState::Empty;
+                                    [[fallthrough]];
+                                case ClipCtx::TransferState::Empty:
+                                    new (&clip.file_contents_data.text) ClipCtx::TextData{
+                                        this->self.file_validator->open_text(
+                                            RDPECLIP::CF_TEXT == clip.requested_format_id
+                                                ? 0u : clip.clip_text_locale_identifier,
+                                            target_name),
+                                        RDPECLIP::CF_UNICODETEXT == clip.requested_format_id
+                                    };
+                                    clip.transfer_state = ClipCtx::TransferState::Text;
+                                    break;
+                                case ClipCtx::TransferState::Size:
+                                case ClipCtx::TransferState::Range:
+                                case ClipCtx::TransferState::Text:
+                                    LOG(LOG_ERR, "ClipboardVirtualChannel::process_format_data_response_pdu:"
+                                        " invalid state");
+                                    throw Error(ERR_RDP_PROTOCOL);
                             }
-                            clip.clip_text_validator_id = this->self.file_validator->open_text(
-                                RDPECLIP::CF_TEXT == clip.requested_format_id
-                                    ? 0u : clip.clip_text_locale_identifier,
-                                target_name);
                         }
                         InStream in_stream(chunk_data);
                         uint8_t utf8_buf[32*1024];
@@ -489,10 +542,22 @@ struct ClipboardVirtualChannel::D
                                 LogSiemDataType::Utf8, utf8_av, not is_client_to_server);
                         }
 
-                        this->self.file_validator->send_data(clip.clip_text_validator_id, utf8_av);
+                        if (clip.transfer_state == ClipCtx::TransferState::Text) {
+                            this->self.file_validator->send_data(
+                                clip.file_contents_data.text.file_validator_id, utf8_av);
 
-                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                            push_clip_text_to_list();
+                            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                                this->self.file_validator->send_eof(
+                                    clip.file_contents_data.text.file_validator_id);
+                                this->text_validator_list.push_back({
+                                    clip.file_contents_data.text.file_validator_id,
+                                    (&clip == &this->server)
+                                        ? Direction::FileFromClient
+                                        : Direction::FileFromServer,
+                                });
+                                clip.file_contents_data.text.~TextData();
+                                clip.transfer_state = ClipCtx::TransferState::Empty;
+                            }
                         }
 
                         break;
@@ -608,6 +673,18 @@ struct ClipboardVirtualChannel::D
 
             switch (clip.transfer_state)
             {
+                case ClipCtx::TransferState::WaitingContinuationRange:
+                    if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE
+                     && file_contents_request_pdu.position() != 0
+                    ) {
+                        update_continuation_range(clip.file_contents_data.range);
+                        break;
+                    }
+                    else {
+                        clip.file_contents_data.range.~FileContentsRange();
+                        clip.transfer_state = ClipCtx::TransferState::Empty;
+                        [[fallthrough]];
+                    }
                 case ClipCtx::TransferState::Empty:
                     if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
                         if (file_contents_request_pdu.position() != 0) {
@@ -628,12 +705,10 @@ struct ClipboardVirtualChannel::D
                     break;
                 case ClipCtx::TransferState::Size:
                 case ClipCtx::TransferState::Range:
+                case ClipCtx::TransferState::Text:
                     LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                         " double request");
                     throw Error(ERR_RDP_PROTOCOL);
-                case ClipCtx::TransferState::WaitingContinuationRange:
-                    update_continuation_range(clip.file_contents_data.range);
-                    break;
             }
         }
         else {
@@ -745,13 +820,6 @@ struct ClipboardVirtualChannel::D
             file_contents_range.file_offset += data.size();
             file_contents_range.file_size_requested -= data.size();
 
-            if (0 == file_contents_range.file_size_requested
-             && file_contents_range.file_offset == file_contents_range.file_size
-            ) {
-                file_contents_range.sig.final();
-                file_contents_range.set_wait_validator();
-            }
-
             if (bool(file_contents_range.tfl_file)) {
                 file_contents_range.tfl_file->trans.send(data);
             }
@@ -763,7 +831,7 @@ struct ClipboardVirtualChannel::D
         ){
             clip.has_current_file_contents_stream_id = false;
 
-            if (file_contents_range.file_offset != file_contents_range.file_size) {
+            if (file_contents_range.file_offset < file_contents_range.file_size) {
                 // TODO disable file_contents_range
                 return false;
             }
@@ -771,6 +839,7 @@ struct ClipboardVirtualChannel::D
             this->log_file_info(files, file_contents_range, (&clip == &this->server));
 
             if (bool(file_contents_range.file_validator_id)) {
+                file_contents_range.sig.final();
                 this->self.file_validator->send_eof(file_contents_range.file_validator_id);
                 this->file_validator_list.push_back({
                     file_contents_range.file_validator_id,
@@ -778,13 +847,13 @@ struct ClipboardVirtualChannel::D
                         ? Direction::FileFromClient
                         : Direction::FileFromServer,
                     file_contents_range.on_failure,
-                    false,
                     std::move(file_contents_range.tfl_file),
                     files[size_t(file_contents_range.lindex)].file_name,
                     file_contents_range.sig
                 });
             }
             else if (file_contents_range.tfl_file) {
+                file_contents_range.sig.final();
                 if (this->self.always_file_storage || file_contents_range.on_failure) {
                     this->self.fdx_capture->close_tfl(
                         *file_contents_range.tfl_file,
@@ -803,13 +872,18 @@ struct ClipboardVirtualChannel::D
 
         switch (clip.transfer_state)
         {
+        case ClipCtx::TransferState::Text:
         case ClipCtx::TransferState::Empty:
+            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
+                " invalid state");
+            throw Error(ERR_RDP_PROTOCOL);
         case ClipCtx::TransferState::Size:
             // TODO check flag = last
             if (clip.file_contents_data.size.stream_id == stream_id) {
                 update_file_size_or_throw(
                     clip.files, clip.file_contents_data.size, flags, chunk_data);
                 clip.transfer_state = ClipCtx::TransferState::Empty;
+                clip.file_contents_data.size.~FileContentsSize();
                 clip.has_current_file_contents_stream_id = false;
                 return ;
             }
@@ -820,16 +894,22 @@ struct ClipboardVirtualChannel::D
                     auto& rng = clip.file_contents_data.range;
                     update_file_range_data(rng, chunk_data);
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
-                        clip.transfer_state = ClipCtx::TransferState::Empty;
                         finalize_transfer(clip.files, rng);
+                        clip.transfer_state = ClipCtx::TransferState::Empty;
+                        clip.file_contents_data.range.~FileContentsRange();
                     }
                 }
                 else {
                     auto& rng = clip.file_contents_data.range;
                     clip.has_current_file_contents_stream_id = false;
-                    clip.transfer_state = ClipCtx::TransferState::WaitingContinuationRange;
                     rng.sig.final();
-                    finalize_transfer(clip.files, rng);
+                    if (finalize_transfer(clip.files, rng)) {
+                        clip.file_contents_data.range.~FileContentsRange();
+                        clip.transfer_state = ClipCtx::TransferState::Empty;
+                    }
+                    else {
+                        clip.transfer_state = ClipCtx::TransferState::WaitingContinuationRange;
+                    }
                 }
                 return ;
             }
@@ -839,8 +919,9 @@ struct ClipboardVirtualChannel::D
                 auto& rng = clip.file_contents_data.range;
                 update_file_range_data(rng, chunk_data);
                 if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
-                    clip.transfer_state = ClipCtx::TransferState::Empty;
                     finalize_transfer(clip.files, rng);
+                    clip.transfer_state = ClipCtx::TransferState::Empty;
+                    clip.file_contents_data.range.~FileContentsRange();
                 }
             }
             break;
@@ -1102,80 +1183,126 @@ struct ClipboardVirtualChannel::D
             auto file_validator_id = this->self.file_validator->last_file_id();
             auto& result_content = this->self.file_validator->get_content();
 
-            if (auto* validator_data = this->search_file_validator_by_id(file_validator_id)) {
-                auto str_direction
-                    = (validator_data->direction == Direction::FileFromClient)
+            auto process_text = [&](Direction direction){
+                auto str_direction = (direction == Direction::FileFromClient)
                     ? "UP"_av
                     : "DOWN"_av;
 
                 if (!is_accepted || this->self.params.validator_params.log_if_accepted) {
-                    if (validator_data->is_text) {
-                        char buf[24];
-                        unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
-                            underlying_cast(file_validator_id));
-                        this->self.report_message.log6(LogId::TEXT_VERIFICATION,
-                            this->self.session_reactor.get_current_time(), {
-                            KVLog("direction"_av, str_direction),
-                            KVLog("copy_id"_av, {buf, n}),
-                            KVLog("status"_av, result_content),
-                        });
-                    }
-                    else {
-                        this->self.report_message.log6(LogId::FILE_VERIFICATION,
-                            this->self.session_reactor.get_current_time(), {
-                            KVLog("direction"_av, str_direction),
-                            KVLog("file_name"_av, validator_data->file_name),
-                            KVLog("status"_av, result_content),
-                        });
-                    }
+                    char buf[24];
+                    unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
+                        underlying_cast(file_validator_id));
+                    this->self.report_message.log6(LogId::TEXT_VERIFICATION,
+                        this->self.session_reactor.get_current_time(), {
+                        KVLog("direction"_av, str_direction),
+                        KVLog("copy_id"_av, {buf, n}),
+                        KVLog("status"_av, result_content),
+                    });
                 }
+            };
 
-                if (validator_data->tfl_file) {
+            auto process_file = [&](Direction direction, std::string_view file_name){
+                auto str_direction = (direction == Direction::FileFromClient)
+                    ? "UP"_av
+                    : "DOWN"_av;
+
+                if (!is_accepted || this->self.params.validator_params.log_if_accepted) {
+                    this->self.report_message.log6(LogId::FILE_VERIFICATION,
+                        this->self.session_reactor.get_current_time(), {
+                        KVLog("direction"_av, str_direction),
+                        KVLog("file_name"_av, file_name),
+                        KVLog("status"_av, result_content),
+                    });
+                }
+            };
+
+            if (auto* text_validator_data = this->search_text_validator_by_id(file_validator_id)) {
+                process_text(text_validator_data->direction);
+                text_validator_data->file_validator_id = FileValidatorId();
+                this->remove_text_validator(text_validator_data);
+            }
+            else if (auto* file_validator_data = this->search_file_validator_by_id(file_validator_id)) {
+                process_file(file_validator_data->direction, file_validator_data->file_name);
+
+                if (file_validator_data->tfl_file) {
                     if (this->self.always_file_storage
                      || this->self.file_validator->last_result_flag() != ValidationResult::IsAccepted
                     ) {
                         auto status = Mwrm3::TransferedStatus::Completed;
-                        if (!validator_data->sig.has_digest()) {
-                            validator_data->sig.broken();
+                        if (!file_validator_data->sig.has_digest()) {
+                            file_validator_data->sig.broken();
                             status = Mwrm3::TransferedStatus::Broken;
                         }
                         this->self.fdx_capture->close_tfl(
-                            *validator_data->tfl_file, validator_data->file_name,
-                            status, Mwrm3::Sha256Signature{validator_data->sig.digest_as_av()});
+                            *file_validator_data->tfl_file,
+                            file_validator_data->file_name,
+                            status, Mwrm3::Sha256Signature{
+                                file_validator_data->sig.digest_as_av()
+                            });
                     }
                     else {
-                        this->self.fdx_capture->cancel_tfl(*validator_data->tfl_file);
+                        this->self.fdx_capture->cancel_tfl(*file_validator_data->tfl_file);
                     }
-                    validator_data->tfl_file.reset();
+                    file_validator_data->tfl_file.reset();
                 }
 
-                this->remove_file_validator(validator_data);
+                this->remove_file_validator(file_validator_data);
             }
             else {
-                // TODO
-                switch (this->client.transfer_state)
-                {
-                case ClipCtx::TransferState::Empty:
-                case ClipCtx::TransferState::Size:
-                    break;
-                case ClipCtx::TransferState::Range:
-                case ClipCtx::TransferState::WaitingContinuationRange:
+                auto process_clip = [&](ClipCtx& clip){
+                    switch (clip.transfer_state)
+                    {
+                    case ClipCtx::TransferState::Empty:
+                    case ClipCtx::TransferState::Size:
+                        break;
 
-                    break;
-                }
+                    case ClipCtx::TransferState::Text:
+                        if (clip.file_contents_data.text.file_validator_id == file_validator_id) {
+                            process_text((&clip == &this->server)
+                                ? Direction::FileFromClient
+                                : Direction::FileFromServer);
+                            clip.file_contents_data.text.~TextData();
+                            clip.transfer_state = ClipCtx::TransferState::Empty;
+                            return true;
+                        }
+                        break;
 
-                if (auto* r = this->client.search_range_by_validator_id(file_validator_id)) {
-                    r->file_contents_range.file_validator_id = FileValidatorId();
-                }
-                else if (auto* r = this->server.search_range_by_validator_id(file_validator_id)) {
-                    r->file_contents_range.file_validator_id = FileValidatorId();
+                    case ClipCtx::TransferState::Range:
+                    case ClipCtx::TransferState::WaitingContinuationRange:
+                        if (clip.file_contents_data.range.file_validator_id == file_validator_id) {
+                            auto& rng = clip.file_contents_data.range;
+                            process_file(
+                                (&clip == &this->server)
+                                    ? Direction::FileFromClient
+                                    : Direction::FileFromServer,
+                                clip.files[size_t(rng.lindex)].file_name);
+                            rng.on_failure
+                                = this->self.file_validator->last_result_flag() != ValidationResult::IsAccepted;
+                            rng.file_validator_id = FileValidatorId();
+                            return true;
+                        }
+                        break;
+                    }
+
+                    if (auto* r = clip.search_range_by_validator_id(file_validator_id)) {
+                        not_null_ptr lock_data = clip.search_lock_by_id(r->lock_id);
+                        process_file(
+                            Direction::FileFromServer,
+                            lock_data->files[size_t(r->file_contents_range.lindex)].file_name);
+                        r->file_contents_range.file_validator_id = FileValidatorId();
+                        return true;
+                    }
+
+                    return false;
+                };
+
+                if (not process_clip(this->client) && not process_clip(this->server)) {
+                    LOG(LOG_ERR, "ClipboardVirtualChannel::DLP_antivirus_check_channels_files:"
+                        " unknown validatorId(%u)", file_validator_id);
                 }
             }
         }
     }
-
-    // void process_client_message(uint32_t total_length, uint32_t flags, bytes_view chunk_data) {}
-    // void process_server_message(uint32_t total_length, uint32_t flags, bytes_view chunk_data) {}
 };
 
 ClipboardVirtualChannel::ClipboardVirtualChannel(
@@ -1208,6 +1335,7 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()
 {
+    // TODO close tfl
     try {
         for (ClipboardSideData* side_data : {
             &this->clip_data.client_data,
@@ -1217,7 +1345,8 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                 auto& file_data = file.file_data;
                 if (file_data.tfl_file) {
                     if (file_data.tfl_file->trans.is_open()) {
-                        this->_close_tfl(file_data);
+                        // TODO close tfl
+                        // this->_close_tfl(file_data);
                     }
                 }
             }
@@ -1245,6 +1374,7 @@ void ClipboardVirtualChannel::process_server_message(
     ))
     {
         case RDPECLIP::CB_MONITOR_READY: {
+            // TODO reset clip
             if (this->proxy_managed) {
                 this->clip_data.server_data.use_long_format_names = true;
                 ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
@@ -1262,20 +1392,16 @@ void ClipboardVirtualChannel::process_server_message(
 
         case RDPECLIP::CB_FORMAT_LIST: {
             auto pkt_data = chunk.remaining_bytes();
-            send_message_to_client = this->process_format_list_pdu(
-                flags, chunk, header,
-                this->to_server_sender_ptr(),
-                this->clip_data.server_data,
-                this->params.clipboard_down_authorized || this->params.clipboard_up_authorized);
+            send_message_to_client = this->d->format_list(
+                flags, header, this->to_server_sender_ptr(),
+                this->params.clipboard_down_authorized || this->params.clipboard_up_authorized,
+                this->d->server,
+                pkt_data);
 
             if (this->format_list_notifier) {
                 if (!this->format_list_notifier->on_server_format_list()) {
                     this->format_list_notifier = nullptr;
                 }
-            }
-
-            if (send_message_to_client) {
-                this->d->format_list(flags, header, this->d->server, pkt_data);
             }
         }
         break;
@@ -1296,59 +1422,64 @@ void ClipboardVirtualChannel::process_server_message(
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
             auto pkt_data = chunk.remaining_bytes();
-            send_message_to_client = this->process_server_format_data_request_pdu(
-                total_length, flags, chunk, header);
+            this->d->format_data_request(this->d->server, pkt_data);
 
-            if (send_message_to_client) {
-                this->d->format_data_request(this->d->server, pkt_data);
+            if (this->format_data_request_notifier
+             && this->clip_data.requestedFormatId == RDPECLIP::CF_TEXT
+            ) {
+                if (!this->format_data_request_notifier->on_server_format_data_request()) {
+                    this->format_data_request_notifier = nullptr;
+                }
+
+                send_message_to_client = false;
+            }
+            else if (!this->params.clipboard_up_authorized) {
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                        "Client to server Clipboard operation is not allowed.");
+
+                FormatDataRequestSendBack sender(this->to_server_sender_ptr());
+
+                send_message_to_client = false;
             }
         }
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
             auto pkt_data = chunk.remaining_bytes();
-            const bool is_from_remote_session = true;
-            send_message_to_client = this->process_format_data_response_pdu(
-                flags, chunk, header, is_from_remote_session);
-
-            if (send_message_to_client) {
-                this->d->format_data_response(header, this->d->client, flags, pkt_data);
-            }
+            this->d->format_data_response(header, this->d->client, flags, pkt_data);
         }
         break;
 
         case RDPECLIP::CB_CLIP_CAPS: {
             ClipboardCapabilitiesReceive(this->clip_data.server_data, chunk, this->verbose);
             send_message_to_client = !this->proxy_managed;
+            // TODO reset clip
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
             auto pkt_data = chunk.remaining_bytes();
-            send_message_to_client = this->process_filecontents_request_pdu(
-                flags, chunk, this->to_server_sender_ptr(),
-                this->clip_data.server_data, Direction::FileFromClient);
-
-            if (send_message_to_client) {
-                this->d->filecontents_request(this->d->server, flags, pkt_data);
-            }
+            send_message_to_client = this->d->filecontents_request(this->d->server, flags, pkt_data, this->to_server_sender_ptr());
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            const bool from_remote_session = true;
-            send_message_to_client = this->process_filecontents_response_pdu(
-                flags, chunk, header, this->clip_data.client_data, from_remote_session);
+            auto pkt_data = chunk.remaining_bytes();
+            this->d->filecontents_response(header, this->d->client, flags, pkt_data);
         }
         break;
 
-        case RDPECLIP::CB_LOCK_CLIPDATA:
-            this->process_lock_pdu(chunk, this->clip_data.server_data);
+        case RDPECLIP::CB_LOCK_CLIPDATA: {
+            auto pkt_data = chunk.remaining_bytes();
+            this->d->lock(this->d->server, pkt_data);
+        }
         break;
 
-        case RDPECLIP::CB_UNLOCK_CLIPDATA:
-            this->process_unlock_pdu(chunk, this->clip_data.server_data);
-        break;
+        case RDPECLIP::CB_UNLOCK_CLIPDATA: {
+            auto pkt_data = chunk.remaining_bytes();
+            this->d->unlock(this->d->server, pkt_data);
+        }
     }   // switch (this->server_message_type)
 
     if (send_message_to_client) {
@@ -1369,18 +1500,18 @@ void ClipboardVirtualChannel::process_client_message(
         this->clip_data.client_data, flags, chunk, header, Direction::FileFromClient
     ))
     {
+        // case RDPECLIP::CB_MONITOR_READY: {
+        //     // TODO reset clip
+        // }
         case RDPECLIP::CB_FORMAT_LIST: {
             auto pkt_data = chunk.remaining_bytes();
-            send_message_to_server = this->process_format_list_pdu(
-                flags, chunk, header,
-                this->to_client_sender_ptr(),
-                this->clip_data.client_data,
-                this->params.clipboard_down_authorized || this->params.clipboard_up_authorized || this->format_list_response_notifier);
-
-
-            if (send_message_to_server) {
-                this->d->format_list(header, this->d->client, pkt_data);
-            }
+            send_message_to_server = this->d->format_list(
+                flags, header, this->to_client_sender_ptr(),
+                this->params.clipboard_down_authorized
+                || this->params.clipboard_up_authorized
+                || this->format_list_response_notifier,
+                this->d->client,
+                pkt_data);
         }
         break;
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
@@ -1389,7 +1520,8 @@ void ClipboardVirtualChannel::process_client_message(
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
             auto pkt_data = chunk.remaining_bytes();
-            FormatDataRequestReceive receiver(this->clip_data, this->verbose, chunk);
+            this->d->format_data_request(this->d->client, pkt_data);
+            send_message_to_server = this->params.clipboard_down_authorized;
             if (!this->params.clipboard_down_authorized) {
                 LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                     "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
@@ -1397,60 +1529,53 @@ void ClipboardVirtualChannel::process_client_message(
 
                 FormatDataRequestSendBack sender(this->to_client_sender_ptr());
             }
-            send_message_to_server = this->params.clipboard_down_authorized;
-
-            if (send_message_to_server) {
-                this->d->format_data_request(this->d->client, pkt_data);
-            }
         }
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
             auto pkt_data = chunk.remaining_bytes();
-            const bool is_from_remote_session = false;
-            send_message_to_server = this->process_format_data_response_pdu(
-                flags, chunk, header, is_from_remote_session);
-            if (send_message_to_server) {
-                this->d->format_data_response(header, this->d->server, flags, pkt_data);
-            }
+            this->d->format_data_response(header, this->d->server, flags, pkt_data);
         }
         break;
 
         case RDPECLIP::CB_CLIP_CAPS: {
             ClipboardCapabilitiesReceive(this->clip_data.client_data, chunk, this->verbose);
             send_message_to_server = true;
+            // TODO reset clip
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
             auto pkt_data = chunk.remaining_bytes();
-            send_message_to_server = this->process_filecontents_request_pdu(
-                flags, chunk, this->to_client_sender_ptr(),
-                this->clip_data.client_data, Direction::FileFromServer);
-
-            if (send_message_to_server) {
-                this->d->filecontents_request(this->d->client, flags, pkt_data);
-            }
+            send_message_to_server = this->d->filecontents_request(this->d->client, flags, pkt_data, this->to_client_sender_ptr());
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            const bool is_from_remote_session = false;
-            send_message_to_server = this->process_filecontents_response_pdu(
-                flags, chunk, header, this->clip_data.server_data, is_from_remote_session);
+            auto pkt_data = chunk.remaining_bytes();
+            this->d->filecontents_response(header, this->d->server, flags, pkt_data);
         }
         break;
 
-        case RDPECLIP::CB_LOCK_CLIPDATA:
-            this->process_lock_pdu(chunk, this->clip_data.client_data);
+        case RDPECLIP::CB_LOCK_CLIPDATA: {
+            auto pkt_data = chunk.remaining_bytes();
+            this->d->lock(this->d->client, pkt_data);
+        }
         break;
 
-        case RDPECLIP::CB_UNLOCK_CLIPDATA:
-            this->process_unlock_pdu(chunk, this->clip_data.client_data);
+        case RDPECLIP::CB_UNLOCK_CLIPDATA: {
+            auto pkt_data = chunk.remaining_bytes();
+            this->d->unlock(this->d->client, pkt_data);
+        }
         break;
     }   // switch (this->client_message_type)
 
     if (send_message_to_server) {
         this->send_message_to_server(total_length, flags, chunk_data);
     }
+}
+
+void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
+{
+    this->d->DLP_antivirus_check_channels_files();
 }
