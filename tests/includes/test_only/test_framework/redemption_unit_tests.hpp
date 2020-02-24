@@ -330,12 +330,47 @@ namespace std /*NOLINT*/
     #type << "{" << +::std::underlying_type_t<type>(x) << "}")
 
 
+#ifdef IN_IDE_PARSER
 #define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
     for (type_value : __VA_ARGS__)                        \
         RED_TEST_CONTEXT(iocontext) /*NOLINT*/
+#else
+#define RED_TEST_CONTEXT_DATA_II(cont, i, n, type_value, iocontext, ...) \
+    if (auto&& cont = __VA_ARGS__; 1)                                    \
+        if (::std::size_t i = 0,                                         \
+            n = ::redemption_unit_test__::cont_size(cont, 1); 1          \
+        )                                                                \
+            for (type_value : cont)                                      \
+                if (++i)                                                 \
+                    RED_TEST_CONTEXT(                                    \
+                        "[" << i << "/" << n << "] " << iocontext) /*NOLINT*/
+#define RED_TEST_CONTEXT_DATA_I(cont, i, n, type_value, iocontext, ...) \
+    RED_TEST_CONTEXT_DATA_II(cont, i, n, type_value, iocontext, __VA_ARGS__)
+
+#define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
+    RED_TEST_CONTEXT_DATA_I(                              \
+        BOOST_PP_CAT(ctx_cont__, __LINE__),               \
+        BOOST_PP_CAT(ctx_cont_i__, __LINE__),             \
+        BOOST_PP_CAT(ctx_cont_n__, __LINE__),             \
+        type_value, iocontext, __VA_ARGS__)
+#endif
 
 namespace redemption_unit_test__
 {
+
+template<class T>
+auto cont_size(T const& cont, int) -> decltype(std::size_t(cont.size()))
+{
+    return cont.size();
+}
+
+template<class T>
+std::size_t cont_size(T const& cont, char)
+{
+    using std::begin;
+    using std::end;
+    return end(cont) - cont(begin);
+}
 
 unsigned long current_count_error();
 
@@ -519,4 +554,4 @@ namespace redemption_unit_test__
     RED_REQUIRE_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 //@}
 
-#define RED_ERROR_COUNT redemption_unit_test__::current_count_error()
+#define RED_ERROR_COUNT() redemption_unit_test__::current_count_error()

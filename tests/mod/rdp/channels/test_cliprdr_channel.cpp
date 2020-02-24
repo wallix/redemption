@@ -403,6 +403,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         D{false, true, true}
     })
     {
+        auto const err_count = RED_ERROR_COUNT();
+
         struct DataTest
         {
             DataTest(char const* name)
@@ -628,9 +630,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK_MEM(to_client_sender.bytes(2),
-                "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x08\x00\x01\x00\x18\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00" //................ !
-                "\x6e\xc0\x00\x00" //n...
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
 
@@ -795,6 +796,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                     "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
                     "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
             }
+        }
+
+        if (err_count != RED_ERROR_COUNT()) {
+            break;
         }
     }
 }

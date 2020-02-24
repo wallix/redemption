@@ -418,7 +418,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
     })
     { WorkingDirectory wd(data.name); RED_TEST_CONTEXT("wd: " << wd.dirname()) {
 
-        auto count_error = RED_ERROR_COUNT;
+        auto count_error = RED_ERROR_COUNT();
 
         auto wd_hash = wd.create_subdirectory("hash");
         auto wd_record = wd.create_subdirectory("record");
@@ -511,7 +511,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_CHECK_WORKSPACE(wd);
 
-        if (count_error != RED_ERROR_COUNT) {
+        if (count_error != RED_ERROR_COUNT()) {
             break;
         }
     } }
