@@ -19,7 +19,15 @@
 */
 
 #include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/sespro_launcher.hpp"
+#include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "core/error.hpp"
+#include "core/session_reactor.hpp"
+#include "core/log_id.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
+#include "capture/fdx_capture.hpp"
 
 
 namespace
@@ -90,8 +98,8 @@ namespace
             Status status = Status::Update;
         };
 
-        using StreamId = ClipboardSideData::StreamId;
-        using FileGroupId = ClipboardSideData::FileGroupId;
+        using StreamId = ClipboardVirtualChannel::StreamId;
+        using FileGroupId = ClipboardVirtualChannel::FileGroupId;
 
         struct FileContentsSize
         {
@@ -116,7 +124,9 @@ namespace
             bool on_failure = false;
         };
 
-        bool use_long_format_names = true;
+        uint16_t message_type = 0;
+
+        bool use_long_format_names = false;
         bool has_current_lock = false;
         // if true, current_lock_id id pushed to lock_list (avoid duplication)
         // TODO enum with has_current_lock
@@ -337,6 +347,56 @@ namespace
             KVLog("file_name"_av, file_name),
             KVLog("status"_av, result_content),
         });
+    }
+
+    // TODO enum message type
+    [[nodiscard]]
+    uint16_t process_header_message(
+        uint16_t current_message_type, uint32_t flags, InStream& chunk,
+        RDPECLIP::CliprdrHeader& header, Direction direction, RDPVerbose verbose)
+    {
+        char const* funcname = (direction == Direction::FileFromClient)
+            ? "ClipboardVirtualChannel::process_client_message"
+            : "ClipboardVirtualChannel::process_server_message";
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            /* msgType(2) + msgFlags(2) + dataLen(4) */
+            ::check_throw(chunk, 8, funcname, ERR_RDP_DATA_TRUNCATED);
+            header.recv(chunk);
+            current_message_type = header.msgType();
+        }
+
+        if (bool(verbose & RDPVerbose::cliprdr)) {
+            const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+            LOG(LOG_INFO, "%s: %s (%u)%s)",
+                funcname,
+                RDPECLIP::get_msgType_name(current_message_type),
+                current_message_type,
+                ((flags & first_last) == first_last) ? " FIRST|LAST"
+                : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? "FIRST"
+                : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? "LAST"
+                : "");
+        }
+
+        return current_message_type;
+    }
+
+    void log_process_message(
+        uint32_t total_length, uint32_t flags, bytes_view chunk_data,
+        Direction direction, RDPVerbose verbose)
+    {
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_%s_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            (direction == Direction::FileFromClient)
+                ? "client" : "server",
+            total_length, flags, chunk_data.size());
+
+        if (bool(verbose & RDPVerbose::cliprdr_dump)) {
+            const bool send              = false;
+            const bool from_or_to_client = (direction == Direction::FileFromClient);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
+        }
     }
 }
 
@@ -1533,15 +1593,17 @@ void ClipboardVirtualChannel::process_server_message(
 {
     (void)out_asynchronous_task;
 
-    this->log_process_message(total_length, flags, chunk_data, Direction::FileFromServer);
+    log_process_message(total_length, flags, chunk_data, Direction::FileFromServer, this->verbose);
 
     InStream chunk(chunk_data);
     RDPECLIP::CliprdrHeader header;
     bool send_message_to_client = true;
 
-    switch (this->process_header_message(
-        this->clip_data.server_data, flags, chunk, header, Direction::FileFromServer
-    ))
+    this->d->server.message_type = process_header_message(
+        this->d->server.message_type, flags, chunk, header,
+        Direction::FileFromServer, this->verbose);
+
+    switch (this->d->server.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
             auto pkt_data = chunk.remaining_bytes();
@@ -1554,7 +1616,7 @@ void ClipboardVirtualChannel::process_server_message(
         case RDPECLIP::CB_MONITOR_READY: {
             // TODO reset clip
             if (this->proxy_managed) {
-                this->clip_data.server_data.use_long_format_names = true;
+                this->d->server.use_long_format_names = true;
                 ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
             }
 
@@ -1603,7 +1665,7 @@ void ClipboardVirtualChannel::process_server_message(
             this->d->format_data_request(this->d->client, pkt_data);
 
             if (this->format_data_request_notifier
-             && this->clip_data.requestedFormatId == RDPECLIP::CF_TEXT
+             && this->d->client.requested_format_id == RDPECLIP::CF_TEXT
             ) {
                 if (!this->format_data_request_notifier->on_server_format_data_request()) {
                     this->format_data_request_notifier = nullptr;
@@ -1661,15 +1723,17 @@ void ClipboardVirtualChannel::process_server_message(
 void ClipboardVirtualChannel::process_client_message(
     uint32_t total_length, uint32_t flags, bytes_view chunk_data)
 {
-    this->log_process_message(total_length, flags, chunk_data, Direction::FileFromClient);
+    log_process_message(total_length, flags, chunk_data, Direction::FileFromClient, this->verbose);
 
     InStream chunk(chunk_data);
     RDPECLIP::CliprdrHeader header;
     bool send_message_to_server = true;
 
-    switch (this->process_header_message(
-        this->clip_data.client_data, flags, chunk, header, Direction::FileFromClient
-    ))
+    this->d->client.message_type = process_header_message(
+        this->d->client.message_type, flags, chunk, header,
+        Direction::FileFromServer, this->verbose);
+
+    switch (this->d->client.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
             auto pkt_data = chunk.remaining_bytes();
@@ -1758,4 +1822,24 @@ bool ClipboardVirtualChannel::use_long_format_names() const
 {
     return (this->d->client.use_long_format_names
         && this->d->server.use_long_format_names);
+}
+
+void ClipboardVirtualChannel::empty_client_clipboard()
+{
+    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+        "ClipboardVirtualChannel::empty_client_clipboard");
+
+    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+        RDPECLIP::CB_RESPONSE__NONE_, 0);
+
+    StaticOutStream<256> out_s;
+
+    clipboard_header.emit(out_s);
+
+    const size_t totalLength = out_s.get_offset();
+
+    this->send_message_to_server(
+        totalLength,
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+        out_s.get_bytes());
 }

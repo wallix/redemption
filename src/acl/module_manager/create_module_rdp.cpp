@@ -38,6 +38,7 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
+#include "capture/fdx_capture.hpp"
 
 namespace
 {

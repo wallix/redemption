@@ -20,20 +20,12 @@
 
 #pragma once
 
-#include "core/error.hpp"
-#include "core/session_reactor.hpp"
-#include "core/log_id.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
-#include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-#include "mod/rdp/channels/sespro_launcher.hpp"
-#include "utils/difftimeval.hpp"
-#include "utils/log.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "utils/sugar/cast.hpp"
+#include "core/RDP/clipboard/format_name.hpp"
 
 #include <vector>
-#include <string>
+#include <memory>
 
 /*
 
@@ -48,13 +40,19 @@
 
 */
 
+class FileValidatorService;
+class FdxCapture;
+class CliprdFileInfo;
+class SessionProbeLauncher;
+
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
-    using StreamId = ClipboardSideData::StreamId;
-    using FileGroupId = ClipboardSideData::FileGroupId;
+    // TODO private
+public:
+    enum class StreamId : uint32_t;
+    enum class FileGroupId : uint32_t;
 
-    ClipboardData clip_data;
-
+private:
     std::vector<CliprdFileInfo> file_descr_list;
 
     Cliprdr::FormatNameInventory format_name_inventory;
@@ -106,25 +104,7 @@ public:
 
     ~ClipboardVirtualChannel();
 
-    void empty_client_clipboard()
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::empty_client_clipboard");
-
-        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_, 0);
-
-        StaticOutStream<256> out_s;
-
-        clipboard_header.emit(out_s);
-
-        const size_t totalLength = out_s.get_offset();
-
-        this->send_message_to_server(
-            totalLength,
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
-    }
+    void empty_client_clipboard();
 
     [[nodiscard]] bool use_long_format_names() const;
 
@@ -146,52 +126,4 @@ public:
     }
 
     void DLP_antivirus_check_channels_files();
-
-private:
-    void log_process_message(
-        uint32_t total_length, uint32_t flags, bytes_view chunk_data, Direction direction)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_%s_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%zu",
-            (direction == Direction::FileFromClient)
-                ? "client" : "server",
-            total_length, flags, chunk_data.size());
-
-        if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
-            const bool send              = false;
-            const bool from_or_to_client = (direction == Direction::FileFromClient);
-            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
-        }
-    }
-
-    uint16_t process_header_message(
-        ClipboardSideData& side_data,
-        uint32_t flags, InStream& chunk, RDPECLIP::CliprdrHeader& header, Direction direction)
-    {
-        char const* funcname = (direction == Direction::FileFromClient)
-            ? "ClipboardVirtualChannel::process_client_message"
-            : "ClipboardVirtualChannel::process_server_message";
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            /* msgType(2) + msgFlags(2) + dataLen(4) */
-            ::check_throw(chunk, 8, funcname, ERR_RDP_DATA_TRUNCATED);
-            header.recv(chunk);
-            side_data.current_message_type = header.msgType();
-        }
-
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-            LOG(LOG_INFO, "%s: %s (%u)%s)",
-                funcname,
-                RDPECLIP::get_msgType_name(side_data.current_message_type),
-                side_data.current_message_type,
-                ((flags & first_last) == first_last) ? " FIRST|LAST"
-                : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? "FIRST"
-                : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? "LAST"
-                : "");
-        }
-
-        return side_data.current_message_type;
-    }
 };  // class ClipboardVirtualChannel

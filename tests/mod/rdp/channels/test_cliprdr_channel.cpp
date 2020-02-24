@@ -28,6 +28,13 @@
 #include "test_only/lcg_random.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/session_reactor.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "capture/cryptofile.hpp"
+#include "core/log_id.hpp"
+#include "capture/fdx_capture.hpp"
+#include "mod/file_validator_service.hpp"
 
 #include "./test_channel.hpp"
 
