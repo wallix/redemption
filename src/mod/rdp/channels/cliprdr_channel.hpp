@@ -80,6 +80,8 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     FdxCapture * fdx_capture;
     bool always_file_storage;
 
+public:
+    // TODO private
     enum class Direction : bool
     {
         FileFromServer,
@@ -104,7 +106,8 @@ public:
 
     ~ClipboardVirtualChannel();
 
-    void empty_client_clipboard() {
+    void empty_client_clipboard()
+    {
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::empty_client_clipboard");
 
@@ -123,10 +126,7 @@ public:
             out_s.get_bytes());
     }
 
-    [[nodiscard]] bool use_long_format_names() const {
-        return (this->clip_data.client_data.use_long_format_names &&
-            this->clip_data.server_data.use_long_format_names);
-    }
+    [[nodiscard]] bool use_long_format_names() const;
 
 public:
     void process_client_message(uint32_t total_length,

@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     FormatDataResponseReceive receiver(clip_data.requestedFormatId, stream, flags);
     clip_data.requestedFormatId = 0;
 
-    RED_CHECK_EQUAL(receiver.data_to_dump, "text de test");
+    RED_CHECK_EQUAL(receiver.data_to_dump_buf, "text de test");
     }
 
     {

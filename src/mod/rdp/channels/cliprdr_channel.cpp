@@ -297,6 +297,47 @@ namespace
             return this->lengthCapability - 4u;
         }
     };
+
+    using Direction = ClipboardVirtualChannel::Direction;
+
+    void dlpav_report_text(
+        FileValidatorId file_validator_id,
+        ReportMessageApi& report_message,
+        timeval time,
+        Direction direction,
+        std::string_view result_content)
+    {
+        auto str_direction = (direction == Direction::FileFromClient)
+            ? "UP"_av
+            : "DOWN"_av;
+
+        char buf[24];
+        unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
+            underlying_cast(file_validator_id));
+        report_message.log6(LogId::TEXT_VERIFICATION, time, {
+            KVLog("direction"_av, str_direction),
+            KVLog("copy_id"_av, {buf, n}),
+            KVLog("status"_av, result_content),
+        });
+    }
+
+    void dlpav_report_file(
+        std::string_view file_name,
+        ReportMessageApi& report_message,
+        timeval time,
+        Direction direction,
+        std::string_view result_content)
+    {
+        auto str_direction = (direction == Direction::FileFromClient)
+            ? "UP"_av
+            : "DOWN"_av;
+
+        report_message.log6(LogId::FILE_VERIFICATION, time, {
+            KVLog("direction"_av, str_direction),
+            KVLog("file_name"_av, file_name),
+            KVLog("status"_av, result_content),
+        });
+    }
 }
 
 struct ClipboardVirtualChannel::D
@@ -1267,35 +1308,22 @@ struct ClipboardVirtualChannel::D
             auto& result_content = this->self.file_validator->get_content();
 
             auto process_text = [&](Direction direction){
-                auto str_direction = (direction == Direction::FileFromClient)
-                    ? "UP"_av
-                    : "DOWN"_av;
-
                 if (!is_accepted || this->self.params.validator_params.log_if_accepted) {
-                    char buf[24];
-                    unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
-                        underlying_cast(file_validator_id));
-                    this->self.report_message.log6(LogId::TEXT_VERIFICATION,
-                        this->self.session_reactor.get_current_time(), {
-                        KVLog("direction"_av, str_direction),
-                        KVLog("copy_id"_av, {buf, n}),
-                        KVLog("status"_av, result_content),
-                    });
+                    dlpav_report_text(
+                        file_validator_id,
+                        this->self.report_message,
+                        this->self.session_reactor.get_current_time(),
+                        direction, result_content);
                 }
             };
 
             auto process_file = [&](Direction direction, std::string_view file_name){
-                auto str_direction = (direction == Direction::FileFromClient)
-                    ? "UP"_av
-                    : "DOWN"_av;
-
                 if (!is_accepted || this->self.params.validator_params.log_if_accepted) {
-                    this->self.report_message.log6(LogId::FILE_VERIFICATION,
-                        this->self.session_reactor.get_current_time(), {
-                        KVLog("direction"_av, str_direction),
-                        KVLog("file_name"_av, file_name),
-                        KVLog("status"_av, result_content),
-                    });
+                    dlpav_report_file(
+                        file_name,
+                        this->self.report_message,
+                        this->self.session_reactor.get_current_time(),
+                        direction, result_content);
                 }
             };
 
@@ -1422,22 +1450,77 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()
 {
-    // TODO close tfl
     try {
-        for (ClipboardSideData* side_data : {
-            &this->clip_data.client_data,
-            &this->clip_data.server_data
-        }) {
-            for (auto& file : side_data->get_file_contents_list()) {
-                auto& file_data = file.file_data;
-                if (file_data.tfl_file) {
-                    if (file_data.tfl_file->trans.is_open()) {
-                        // TODO close tfl
-                        // this->_close_tfl(file_data);
-                    }
-                }
-            }
+        using namespace std::string_view_literals;
+
+        auto status = "Connexion closed"sv;
+
+        for (auto& text_validator : this->d->text_validator_list) {
+            dlpav_report_text(
+                text_validator.file_validator_id,
+                this->report_message,
+                this->session_reactor.get_current_time(),
+                text_validator.direction, status);
         }
+
+        for (auto& file_validator : this->d->file_validator_list) {
+            dlpav_report_file(
+                file_validator.file_name,
+                this->report_message,
+                this->session_reactor.get_current_time(),
+                file_validator.direction, status);
+        }
+
+        auto close_clip = [&](ClipCtx& clip){
+            auto direction = (&clip == &this->d->server)
+                ? Direction::FileFromServer
+                : Direction::FileFromClient;
+
+            switch (clip.transfer_state)
+            {
+            case ClipCtx::TransferState::Empty:
+            case ClipCtx::TransferState::Size:
+
+            case ClipCtx::TransferState::Text:
+                if (bool(clip.file_contents_data.text.file_validator_id)) {
+                    dlpav_report_text(
+                        clip.file_contents_data.text.file_validator_id,
+                        this->report_message,
+                        this->session_reactor.get_current_time(),
+                        direction, status);
+                }
+                break;
+
+            case ClipCtx::TransferState::Range:
+            case ClipCtx::TransferState::WaitingContinuationRange: {
+                auto& rng = clip.file_contents_data.range;
+                auto& file_name = clip.files[size_t(rng.lindex)].file_name;
+
+                if (rng.tfl_file) {
+                    rng.sig.broken();
+                    this->fdx_capture->close_tfl(
+                        *rng.tfl_file,
+                        file_name,
+                        Mwrm3::TransferedStatus::Broken,
+                        Mwrm3::Sha256Signature{rng.sig.digest_as_av()});
+                }
+
+                if (bool(rng.file_validator_id)) {
+                    dlpav_report_file(
+                        file_name,
+                        this->report_message,
+                        this->session_reactor.get_current_time(),
+                        direction, status);
+                    rng.~FileContentsRange();
+                }
+
+                break;
+            }
+            }
+        };
+
+        close_clip(this->d->client);
+        close_clip(this->d->server);
     }
     catch (Error const& err) {
         LOG(LOG_ERR, "ClipboardVirtualChannel: error on close tfls: %s", err.errmsg());
@@ -1669,4 +1752,10 @@ void ClipboardVirtualChannel::process_client_message(
 void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
 {
     this->d->DLP_antivirus_check_channels_files();
+}
+
+bool ClipboardVirtualChannel::use_long_format_names() const
+{
+    return (this->d->client.use_long_format_names
+        && this->d->server.use_long_format_names);
 }
