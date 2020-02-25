@@ -916,7 +916,7 @@ public:
         LOG_IF(bool(this->verbose & Verbose::surface_commands), LOG_INFO,
             "GraphicsUpdatePDU::send_surface_command");
 
-        DynamicOutReservedStreamHelper stream(1024, 65535 + 1024 + cmd.bitmapDataLength);
+        DynamicOutReservedStreamHelper stream(1024, 65536 - 1024 + cmd.bitmapDataLength);
         stream.get_data_stream().out_uint16_le(0x0001); // CMDTYPE_SET_SURFACE_BITS
         cmd.emit(stream.get_data_stream());
 
