@@ -243,10 +243,14 @@ private:
                         );
                     const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(new_bmp.bpp()));
 
+                    /*LOG(LOG_DEBUG, "draw(RDPBitmapData,Bitmap): x=%d y=%d max_w=%d max_h=%d", new_bmp.cx(), new_bmp.cy(),
+                    		max_image_width, max_image_height);*/
+
                     contiguous_sub_rect_f(
                         CxCy{new_bmp.cx(), new_bmp.cy()},
                         SubCxCy{max_image_width, max_image_height},
                         [&](Rect subrect){
+                            /*LOG(LOG_INFO, " *subrect: (%d,%d)-%dx%d", subrect.x, subrect.y, subrect.width(), subrect.height());*/
                             Bitmap sub_image(new_bmp, subrect);
 
                             StaticOutStream<65535> bmp_stream;
@@ -390,18 +394,12 @@ private:
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
           , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : false
-          , ( (ini.get<cfg::debug::primary_orders>()
-                ? RDPSerializer::Verbose::primary_orders   : RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::secondary_orders>()
-                ? RDPSerializer::Verbose::secondary_orders : RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::bitmap_update>()
-                ? RDPSerializer::Verbose::bitmap_update    : RDPSerializer::Verbose::none)
-            | (bool(verbose & Verbose::bmp_cache)
-                ? RDPSerializer::Verbose::bmp_cache        : RDPSerializer::Verbose::none)
-            | (bool(verbose & Verbose::internal_buffer)
-                ? RDPSerializer::Verbose::internal_buffer  : RDPSerializer::Verbose::none)
-            | (bool(verbose & Verbose::basic_trace4)
-                ? RDPSerializer::Verbose::pointer          : RDPSerializer::Verbose::none)
+          , ( (ini.get<cfg::debug::primary_orders>() ? RDPSerializer::Verbose::primary_orders : RDPSerializer::Verbose::none)
+            | (ini.get<cfg::debug::secondary_orders>() ? RDPSerializer::Verbose::secondary_orders : RDPSerializer::Verbose::none)
+            | (ini.get<cfg::debug::bitmap_update>() ? RDPSerializer::Verbose::bitmap_update : RDPSerializer::Verbose::none)
+            | (bool(verbose & Verbose::bmp_cache) ? RDPSerializer::Verbose::bmp_cache : RDPSerializer::Verbose::none)
+            | (bool(verbose & Verbose::internal_buffer) ? RDPSerializer::Verbose::internal_buffer : RDPSerializer::Verbose::none)
+            | (bool(verbose & Verbose::basic_trace4) ? RDPSerializer::Verbose::pointer : RDPSerializer::Verbose::none)
             )
         )
         {}
@@ -654,8 +652,52 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
-    void draw(RDPSetSurfaceCommand const & cmd) override { this->draw_impl(cmd); }
-    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override { this->draw_impl(cmd, content); }
+    void draw(RDPSetSurfaceCommand const & cmd) override {
+    
+        if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec 
+        || (cmd.codec != RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) 
+        || !cmd.bitmapData 
+        || !cmd.bitmapDataLength){
+            return;
+        }
+
+        if (bool(this->verbose & Verbose::basic_trace5)){
+            LOG(LOG_INFO, "RDPSetSurfaceCommand command forwarding");
+            cmd.log(LOG_INFO, false);
+        }
+
+        this->orders.graphics_update_pdu().send_set_surface_command(cmd);
+    }
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
+        if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec
+        && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
+            // only notifies capture callbacks, don't send anything to the front client, it has already been done by
+            // a previous draw_impl(RDPSetSurfaceCommand const & cmd) call (with raw blob)
+            this->graphics_update->draw(cmd, content);
+            return;
+        }
+
+        /* no front remoteFx support, fallback and transcode to bitmapUpdates */
+        for (const Rect & rect : content.region.rects) {
+
+            Bitmap bitmap(content.data, content.stride, rect);
+            RDPBitmapData bitmap_data;
+            const Rect &base = cmd.destRect;
+
+            bitmap_data.dest_left = base.x + rect.ileft();
+            bitmap_data.dest_right = base.x + rect.eright()-1;
+            bitmap_data.dest_top = base.y + rect.itop();
+            bitmap_data.dest_bottom = base.y + rect.ebottom()-1;
+            
+            bitmap_data.width = bitmap.cx();
+            bitmap_data.height = bitmap.cy();
+            bitmap_data.bits_per_pixel = 32;
+            bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
+            bitmap_data.bitmap_length = bitmap.bmp_size();
+
+            this->draw_impl(bitmap_data, bitmap);
+        }
+    }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -821,7 +863,7 @@ public:
                     }
 
                     // clear all pending orders, caches data, and so on and
-                    // start a send_deactive, send_deman_active process with
+                    // start a send_deactive, send_demand_active process with
                     // the new resolution setting
                     /* shut down the rdp client */
                     this->state = ACTIVATE_AND_PROCESS_DATA;
@@ -2981,6 +3023,8 @@ private:
     /*****************************************************************************/
     void send_demand_active()
     {
+        LOG(LOG_INFO, "Front::send_demand_active()");
+
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::send_demand_active");
 
@@ -3164,22 +3208,30 @@ private:
                     send_multifrag_caps = true;
                 }
 
-                if (this->ini.get<cfg::client::enable_remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
-                    BitmapCodecCaps bitmap_codec_caps(false);
-
+                if (this->ini.get<cfg::client::enable_remotefx>() 
+                    && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
+                    Emit_SC_BitmapCodecCaps bitmap_codec_caps;
                     ScreenInfo &screen_info = this->client_info.screen_info;
                     maxRequestSize = std::max(maxRequestSize, static_cast<uint32_t>(screen_info.width * screen_info.height * 4));
 
-                    bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
-                    bitmap_codec_caps.emit(stream);
+                    std::vector<uint8_t> supported_codecs = {CODEC_GUID_REMOTEFX};
+                    bitmap_codec_caps.emit(stream, supported_codecs);
+
+                    if (bool(this->verbose)) {
+                        bitmap_codec_caps.log("Front::send_demand_active: Sending to client");
+                    }
+
+                    send_multifrag_caps = true;
                     caps_count++;
                 }
 
                 if (send_multifrag_caps) {
+                    multifrag_caps.MaxRequestSize = maxRequestSize;
+
                     if (bool(this->verbose)) {
                         multifrag_caps.log("Front::send_demand_active: Sending to client");
                     }
-                    multifrag_caps.MaxRequestSize = maxRequestSize;
+
                     multifrag_caps.emit(stream);
                     caps_count++;
                 }
@@ -3208,6 +3260,7 @@ private:
 
     void process_confirm_active(InStream & stream)
     {
+        LOG(LOG_INFO, "Front::process_confirm_active()");
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::process_confirm_active");
         // TODO We should separate the parts relevant to caps processing and the part relevant to actual confirm active
@@ -4468,53 +4521,6 @@ protected:
         }
         else {
             LOG(LOG_WARNING, "Front::draw_impl(RDPPatBlt): This Primary Drawing Order is not supported by client!");
-        }
-    }
-
-    void draw_impl(RDPSetSurfaceCommand const & cmd) {
-        if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec || (cmd.codec != RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) ||
-                !cmd.bitmapData || !cmd.bitmapDataLength)
-            return;
-
-        RDPSetSurfaceCommand newCmd = cmd;
-        newCmd.codecId = this->client_info.bitmap_codec_caps.bitmapCodecArray[0].codecID;
-        this->orders.graphics_update_pdu().send_set_surface_command(newCmd);
-    }
-
-    void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
-        if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
-            // only notifies capture callbacks, don't send anything to the front client, it has already been done by
-            // a previous draw_impl(RDPSetSurfaceCommand const & cmd) call (with raw blob)
-            this->graphics_update->draw(cmd, content);
-            return;
-        }
-
-        /* no front remoteFx support, fallback and transcode to bitmapUpdates */
-        for (const Rect & rect1 : content.region.rects) {
-        	int16_t x1 = rect1.x & ~3;
-        	int16_t y1 = rect1.y & ~3;
-        	int16_t x2 = align4(rect1.eright());
-        	int16_t y2 = align4(rect1.ebottom());
-            Rect rect(x1, y1, x2-x1, y2-y1);
-
-            Bitmap bitmap(content.data, content.stride, rect);
-
-            LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
-                    rect1.ileft(), rect1.itop(), rect1.width(), rect1.height(),
-                    rect.ileft(), rect.itop(), rect.width(), rect.height());
-            RDPBitmapData bitmap_data;
-            const Rect &base = cmd.destRect;
-            bitmap_data.dest_left = base.x + rect.ileft();
-            bitmap_data.dest_right = base.x + rect.eright() - 1;
-            bitmap_data.dest_top = base.y + rect.itop();
-            bitmap_data.dest_bottom = base.y + rect.ebottom() - 1;
-            bitmap_data.width = rect.width();
-            bitmap_data.height = rect.height();
-            bitmap_data.bits_per_pixel = 32;
-            bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
-            bitmap_data.bitmap_length = bitmap.bmp_size();
-
-            this->draw_impl(bitmap_data, bitmap);
         }
     }
 

@@ -589,7 +589,7 @@ public:
                 switch (header.orderType) {
                     case RDP::AltsecDrawingOrderType::SwitchSurface: {
                         uint16_t bitmapId = stream.in_uint16_le();
-                        LOG(LOG_INFO, "switchSurface bitmapId=0x%x", bitmapId);
+                        LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "switchSurface bitmapId=0x%x", bitmapId);
                         break;
                     }
                     case RDP::AltsecDrawingOrderType::FrameMarker:
@@ -600,7 +600,7 @@ public:
                     break;
                     case RDP::AltsecDrawingOrderType::CreateNinegridBitmap:
                         this->process_ninegrid_bmpcache(stream, header);
-                        LOG(LOG_INFO, "CREATE_NINEGRID_BITMAP !!!!!!!!!!!!!!!!!");
+                        LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "AltsecDrawingOrderType::CreateNinegridBitmap");
                     break;
                     default:
                         LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);

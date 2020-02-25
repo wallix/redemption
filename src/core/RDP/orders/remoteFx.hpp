@@ -58,7 +58,10 @@ enum {
 
 /** @brief a TS_RFX_RECT */
 struct TS_RFX_RECT {
-    uint16_t x, y, width, height;
+    uint16_t x;
+    uint16_t y;
+    uint16_t width;
+    uint16_t height;
 
     void recv(InStream & stream);
     void send(OutStream & stream);
@@ -67,9 +70,6 @@ struct TS_RFX_RECT {
 
 /** @brief a TS_RFX_SYNC packet */
 struct TS_RFX_SYNC {
-    uint32_t magic;
-    uint16_t version;
-
     void recv(InStream & stream);
     void send(OutStream & stream);
 };
@@ -154,7 +154,16 @@ struct TS_RFX_REGION : public TS_RFX_CODEC_CHANNELT {
 
 /** @brief a TS_RFX_CODEC_QUANT */
 struct TS_RFX_CODEC_QUANT {
-    uint8_t ll3, lh3, hl3, hh3, lh2, hl2, hh2, lh1, hl1, hh1;
+    uint8_t ll3;
+    uint8_t lh3;
+    uint8_t hl3;
+    uint8_t hh3;
+    uint8_t lh2;
+    uint8_t hl2;
+    uint8_t hh2;
+    uint8_t lh1;
+    uint8_t hl1;
+    uint8_t hh1;
 
     void recv(InStream & stream);
     void send(OutStream & stream);
@@ -173,9 +182,9 @@ struct TS_RFX_TILE {
     uint8_t *CrData{nullptr};
 
     virtual ~TS_RFX_TILE() {
-        delete []YData;
-        delete []CbData;
-        delete []CrData;
+        delete [] this->YData;
+        delete [] this->CbData;
+        delete [] this->CrData;
     }
 
     void recv(InStream & stream);
