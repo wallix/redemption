@@ -655,107 +655,105 @@ struct ClipboardVirtualChannel::D
                 current_format_list, flags, in_header, true, clip.requested_format_id,
                 LogSiemDataType::NoData, bytes_view{}, is_client_to_server);
         }
-        else {
-            if (!clip.validator_target_name.empty()) {
-                switch (clip.requested_format_id) {
-                    case RDPECLIP::CF_TEXT:
-                    case RDPECLIP::CF_UNICODETEXT: {
-                        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                            switch (clip.transfer_state)
-                            {
-                                case ClipCtx::TransferState::WaitingContinuationRange:
-                                    // TODO move to file_validator_list
-                                    clip.file_contents_data.range.~FileContentsRange();
-                                    clip.transfer_state = ClipCtx::TransferState::Empty;
-                                    [[fallthrough]];
-                                case ClipCtx::TransferState::Empty:
-                                    new (&clip.file_contents_data.text) ClipCtx::TextData{
-                                        this->self.file_validator->open_text(
-                                            RDPECLIP::CF_TEXT == clip.requested_format_id
-                                                ? 0u : clip.clip_text_locale_identifier,
-                                            clip.validator_target_name),
-                                        RDPECLIP::CF_UNICODETEXT == clip.requested_format_id
-                                    };
-                                    clip.transfer_state = ClipCtx::TransferState::Text;
-                                    break;
-                                case ClipCtx::TransferState::Size:
-                                case ClipCtx::TransferState::Range:
-                                case ClipCtx::TransferState::Text:
-                                    LOG(LOG_ERR, "ClipboardVirtualChannel::process_format_data_response_pdu:"
-                                        " invalid state");
-                                    throw Error(ERR_RDP_PROTOCOL);
-                            }
-                        }
-                        InStream in_stream(chunk_data);
-                        uint8_t utf8_buf[32*1024];
-                        auto utf8_av = UTF16toUTF8_buf(
-                            in_stream.remaining_bytes(), make_array_view(utf8_buf));
-
-                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                            if (not utf8_av.empty() && utf8_av.back() == '\0') {
-                                utf8_av = utf8_av.drop_back(1);
-                            }
-                        }
-
-                        if (clip.requested_format_id == RDPECLIP::CF_UNICODETEXT) {
-                            this->log_siem_info(
-                                current_format_list, flags, in_header, false, clip.requested_format_id,
-                                LogSiemDataType::Utf8, utf8_av, is_client_to_server);
-                        }
-                        else {
-                            this->log_siem_info(
-                                current_format_list, flags, in_header, false, clip.requested_format_id,
-                                LogSiemDataType::NoData, {}, is_client_to_server);
-                        }
-
-                        if (clip.transfer_state == ClipCtx::TransferState::Text) {
-                            this->self.file_validator->send_data(
-                                clip.file_contents_data.text.file_validator_id, utf8_av);
-
-                            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                                this->self.file_validator->send_eof(
-                                    clip.file_contents_data.text.file_validator_id);
-                                this->text_validator_list.push_back({
-                                    clip.file_contents_data.text.file_validator_id,
-                                    is_client_to_server
-                                        ? Direction::FileFromClient
-                                        : Direction::FileFromServer,
-                                });
-                                clip.file_contents_data.text.~TextData();
+        else if (!clip.validator_target_name.empty()) {
+            switch (clip.requested_format_id) {
+                case RDPECLIP::CF_TEXT:
+                case RDPECLIP::CF_UNICODETEXT: {
+                    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                        switch (clip.transfer_state)
+                        {
+                            case ClipCtx::TransferState::WaitingContinuationRange:
+                                // TODO move to file_validator_list
+                                clip.file_contents_data.range.~FileContentsRange();
                                 clip.transfer_state = ClipCtx::TransferState::Empty;
-                            }
+                                [[fallthrough]];
+                            case ClipCtx::TransferState::Empty:
+                                new (&clip.file_contents_data.text) ClipCtx::TextData{
+                                    this->self.file_validator->open_text(
+                                        RDPECLIP::CF_TEXT == clip.requested_format_id
+                                            ? 0u : clip.clip_text_locale_identifier,
+                                        clip.validator_target_name),
+                                    RDPECLIP::CF_UNICODETEXT == clip.requested_format_id
+                                };
+                                clip.transfer_state = ClipCtx::TransferState::Text;
+                                break;
+                            case ClipCtx::TransferState::Size:
+                            case ClipCtx::TransferState::Range:
+                            case ClipCtx::TransferState::Text:
+                                LOG(LOG_ERR, "ClipboardVirtualChannel::process_format_data_response_pdu:"
+                                    " invalid state");
+                                throw Error(ERR_RDP_PROTOCOL);
                         }
+                    }
+                    InStream in_stream(chunk_data);
+                    uint8_t utf8_buf[32*1024];
+                    auto utf8_av = UTF16toUTF8_buf(
+                        in_stream.remaining_bytes(), make_array_view(utf8_buf));
 
-                        break;
-                    }
-                    case RDPECLIP::CF_LOCALE: {
-                        if (flags & CHANNELS::CHANNEL_FLAG_LAST && chunk_data.size() >= 4) {
-                            this->log_siem_info(
-                                current_format_list, flags, in_header, false, clip.requested_format_id,
-                                LogSiemDataType::FormatData, chunk_data,
-                                is_client_to_server);
-                            InStream in_stream(chunk_data);
-                            clip.clip_text_locale_identifier = in_stream.in_uint32_le();
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        if (not utf8_av.empty() && utf8_av.back() == '\0') {
+                            utf8_av = utf8_av.drop_back(1);
                         }
-                        else {
-                            LOG(LOG_ERR, "ClipboardVirtualChannel::format_data_response:"
-                                " CF_LOCALE invalid format");
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                        break;
                     }
-                    default:
+
+                    if (clip.requested_format_id == RDPECLIP::CF_UNICODETEXT) {
                         this->log_siem_info(
                             current_format_list, flags, in_header, false, clip.requested_format_id,
-                            LogSiemDataType::FormatData, chunk_data, is_client_to_server);
-                        break;
+                            LogSiemDataType::Utf8, utf8_av, is_client_to_server);
+                    }
+                    else {
+                        this->log_siem_info(
+                            current_format_list, flags, in_header, false, clip.requested_format_id,
+                            LogSiemDataType::NoData, {}, is_client_to_server);
+                    }
+
+                    if (clip.transfer_state == ClipCtx::TransferState::Text) {
+                        this->self.file_validator->send_data(
+                            clip.file_contents_data.text.file_validator_id, utf8_av);
+
+                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            this->self.file_validator->send_eof(
+                                clip.file_contents_data.text.file_validator_id);
+                            this->text_validator_list.push_back({
+                                clip.file_contents_data.text.file_validator_id,
+                                is_client_to_server
+                                    ? Direction::FileFromClient
+                                    : Direction::FileFromServer,
+                            });
+                            clip.file_contents_data.text.~TextData();
+                            clip.transfer_state = ClipCtx::TransferState::Empty;
+                        }
+                    }
+
+                    break;
                 }
+                case RDPECLIP::CF_LOCALE: {
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST && chunk_data.size() >= 4) {
+                        this->log_siem_info(
+                            current_format_list, flags, in_header, false, clip.requested_format_id,
+                            LogSiemDataType::FormatData, chunk_data,
+                            is_client_to_server);
+                        InStream in_stream(chunk_data);
+                        clip.clip_text_locale_identifier = in_stream.in_uint32_le();
+                    }
+                    else {
+                        LOG(LOG_ERR, "ClipboardVirtualChannel::format_data_response:"
+                            " CF_LOCALE invalid format");
+                        throw Error(ERR_RDP_PROTOCOL);
+                    }
+                    break;
+                }
+                default:
+                    this->log_siem_info(
+                        current_format_list, flags, in_header, false, clip.requested_format_id,
+                        LogSiemDataType::FormatData, chunk_data, is_client_to_server);
+                    break;
             }
-            else {
-                this->log_siem_info(
-                    current_format_list, flags, in_header, false, clip.requested_format_id,
-                    LogSiemDataType::FormatData, chunk_data, is_client_to_server);
-            }
+        }
+        else {
+            this->log_siem_info(
+                current_format_list, flags, in_header, false, clip.requested_format_id,
+                LogSiemDataType::FormatData, chunk_data, is_client_to_server);
         }
 
         if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
