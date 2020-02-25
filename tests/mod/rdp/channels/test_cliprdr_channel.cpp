@@ -630,16 +630,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 using namespace RDPECLIP;
                 Buffer buf;
                 auto av = buf.build(CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, [&](OutStream& out){
-                    FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 0, 0, 12, 0, false).emit(out);
+                    FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 0, 0, 12, 0, true).emit(out);
                 });
                 process_server_message(av);
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK_MEM(to_client_sender.bytes(2),
-                "\x08\x00\x01\x00\x18\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+                "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00" //................ !
-                ""_av);
+                "\x00\x00\x00\x00"_av);
             RED_CHECK(report_message.messages.size() == 1);
 
             if (d.with_validator) {

@@ -50,7 +50,6 @@ namespace
         {
             void update(bytes_view data)
             {
-                hexdump(data);
                 this->sha256.update(data);
             }
 
@@ -127,6 +126,7 @@ namespace
         uint16_t message_type = 0;
 
         bool use_long_format_names = false;
+        bool has_lock_support = false;
         bool has_current_lock = false;
         // if true, current_lock_id id pushed to lock_list (avoid duplication)
         // TODO enum with has_current_lock
@@ -475,6 +475,7 @@ struct ClipboardVirtualChannel::D
         caps.recv(in_stream);
 
         clip.use_long_format_names = false;
+        clip.has_lock_support = false;
 
         for (uint16_t i = 0; i < caps.cCapabilitiesSets(); ++i) {
             CapabilitySet cap(in_stream);
@@ -495,6 +496,7 @@ struct ClipboardVirtualChannel::D
                         generalFlags, RDPECLIP::generalFlags_to_string(generalFlags));
                 }
 
+                clip.has_lock_support = bool(generalFlags & RDPECLIP::CB_CAN_LOCK_CLIPDATA);
                 clip.use_long_format_names
                     = bool(generalFlags & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
 
@@ -838,7 +840,11 @@ struct ClipboardVirtualChannel::D
             };
         };
 
-        if (not file_contents_request_pdu.has_optional_clipDataId()) {
+
+        // ignore lock if don't have CB_CAN_LOCK_CLIPDATA
+        if (not clip.has_lock_support
+         || not file_contents_request_pdu.has_optional_clipDataId()
+        ) {
             if (lindex >= clip.files.size()) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " Invalid lindex %u", lindex);
@@ -1731,7 +1737,7 @@ void ClipboardVirtualChannel::process_client_message(
 
     this->d->client.message_type = process_header_message(
         this->d->client.message_type, flags, chunk, header,
-        Direction::FileFromServer, this->verbose);
+        Direction::FileFromClient, this->verbose);
 
     switch (this->d->client.message_type)
     {
