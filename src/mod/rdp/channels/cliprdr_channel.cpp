@@ -461,12 +461,6 @@ struct ClipboardVirtualChannel::D
     : self(self)
     {}
 
-    // ~D()
-    // {
-    //     TODO remove {client, server}.file_contents_data
-    //     and other lists
-    // }
-
     void clip_caps(ClipCtx& clip, bytes_view chunk_data, RDPVerbose verbose)
     {
         InStream in_stream(chunk_data);
@@ -662,11 +656,7 @@ struct ClipboardVirtualChannel::D
                 LogSiemDataType::NoData, bytes_view{}, is_client_to_server);
         }
         else {
-            std::string const& target_name = is_client_to_server
-                ? this->self.params.validator_params.up_target_name
-                : this->self.params.validator_params.down_target_name;
-
-            if (!target_name.empty()) {
+            if (!clip.validator_target_name.empty()) {
                 switch (clip.requested_format_id) {
                     case RDPECLIP::CF_TEXT:
                     case RDPECLIP::CF_UNICODETEXT: {
@@ -683,7 +673,7 @@ struct ClipboardVirtualChannel::D
                                         this->self.file_validator->open_text(
                                             RDPECLIP::CF_TEXT == clip.requested_format_id
                                                 ? 0u : clip.clip_text_locale_identifier,
-                                            target_name),
+                                            clip.validator_target_name),
                                         RDPECLIP::CF_UNICODETEXT == clip.requested_format_id
                                     };
                                     clip.transfer_state = ClipCtx::TransferState::Text;
@@ -1074,6 +1064,7 @@ struct ClipboardVirtualChannel::D
                     auto& rng = clip.file_contents_data.range;
                     update_file_range_data(rng, in_stream.remaining_bytes());
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                        // TODO or WaitingContinuationRange
                         finalize_transfer(clip.files, rng);
                         clip.transfer_state = ClipCtx::TransferState::Empty;
                         clip.file_contents_data.range.~FileContentsRange();
@@ -1099,6 +1090,7 @@ struct ClipboardVirtualChannel::D
                 auto& rng = clip.file_contents_data.range;
                 update_file_range_data(rng, in_stream.remaining_bytes());
                 if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                    // TODO or WaitingContinuationRange
                     finalize_transfer(clip.files, rng);
                     clip.transfer_state = ClipCtx::TransferState::Empty;
                     clip.file_contents_data.range.~FileContentsRange();
@@ -1115,6 +1107,7 @@ struct ClipboardVirtualChannel::D
                 --lock_data->count_ref;
                 clip.has_current_file_contents_stream_id = false;
                 rng.sig.final();
+                // TODO or WaitingContinuationRange
                 finalize_transfer(lock_data->files, rng);
                 clip.remove_locked_file_contents_range(locked_contents_range);
             }
@@ -1516,6 +1509,7 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()
 {
+    // TODO move to D::~D()
     try {
         using namespace std::string_view_literals;
 
