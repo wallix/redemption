@@ -796,6 +796,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
 
         if (enable_validator) {
             new_mod->file_validator = std::move(file_validator);
+            LOG(LOG_INFO, "create_module_rdp::fd_events_.create_top_executor");
             new_mod->file_validator->validator_event = this->fd_events_.create_top_executor(this->session_reactor, validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
@@ -807,6 +808,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
 
         if (enable_metrics) {
             new_mod->metrics = std::move(metrics);
+            LOG(LOG_INFO, "create_module_rdp::timer_events_.create_timer_executor");
             new_mod->metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
                 .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){

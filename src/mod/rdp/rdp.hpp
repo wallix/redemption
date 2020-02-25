@@ -904,6 +904,8 @@ public:
         FileValidatorService * file_validator_service,
         SesmanInterface & sesman
     ) {
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! process_cliprdr_event");
+
         if (!this->clipboard_virtual_channel) {
             this->create_clipboard_virtual_channel(front, stc, file_validator_service);
         }
@@ -1082,6 +1084,8 @@ public:
                     const ModRdpVariables & vars,
                     RailCaps const & client_rail_caps) {
 
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! send_to_mod_rail_channel");
+
         if (!this->remote_programs_virtual_channel) {
             this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
         }
@@ -1096,6 +1100,8 @@ public:
     void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
                             FrontAPI& front,
                             ServerTransportContext & stc) {
+
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! send_to_mod_cliprdr_channel");
 
         if (!this->clipboard_virtual_channel) {
             this->create_clipboard_virtual_channel(front, stc, this->file_validator_service);
@@ -1488,6 +1494,9 @@ public:
                                     GeneralCaps const & client_general_caps,
                                     const char (& client_name)[128])
     {
+    
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! send_to_mod_rdpdr_channel");
+
         if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
         &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
@@ -1545,6 +1554,8 @@ public:
         bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! mod_rdp::send_to_channel");
+
 #ifndef __EMSCRIPTEN__
         if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
             InStream clone(chunk);
@@ -5951,7 +5962,6 @@ private:
 
     std::size_t send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2)
     {
-        LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         std::size_t channel_data_size = 0;
 
         LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
@@ -5998,24 +6008,18 @@ private:
 
                 switch (message_type) {
                 case RDP_INPUT_SCANCODE:
-                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Scancode");
                     FastPath::KeyboardEvent_Send(stream, device_flags, param1);
                     break;
 
                 case RDP_INPUT_UNICODE:
-                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Unicode");
                     FastPath::UniCodeKeyboardEvent_Send(stream, device_flags, param1);
                     break;
 
                 case RDP_INPUT_SYNCHRONIZE:
-                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x%X",
-                        static_cast<unsigned>(param1));
-
                     FastPath::SynchronizeEvent_Send(stream, param1);
                     break;
 
                 case RDP_INPUT_MOUSE:
-                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Input Mouse");
                     FastPath::MouseEvent_Send(stream, device_flags, param1, param2);
                     break;
 

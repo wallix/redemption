@@ -116,6 +116,7 @@ public:
     void configure_event(SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& /*timer_events_*/, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
+        LOG(LOG_INFO, "rdpdr_asynchronous_task::fd_events_.create_top_executor");
         this->fdobject = fd_events_.create_top_executor(session_reactor,
             this->file_descriptor, std::ref(*this), terminate_notifier)
         .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
@@ -231,6 +232,7 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
+        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor");
         this->timer_ptr = timer_events_
         .create_timer_executor(session_reactor, 
             std::ref(*this), terminate_notifier)
@@ -310,6 +312,7 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
+        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor");
         this->timer_ptr = timer_events_
         .create_timer_executor(session_reactor,
             std::ref(*this), terminate_notifier)

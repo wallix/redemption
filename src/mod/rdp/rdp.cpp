@@ -156,6 +156,7 @@ void mod_rdp::init_negociate_event_(
     LOG(LOG_INFO, "Start Negociation");
     rdp_negociation.start_negociation();
 
+    LOG(LOG_INFO, "rdp::graphic_fd_events_.create_top_executor");
     this->fd_event = this->graphic_fd_events_.create_top_executor(this->session_reactor, this->trans.get_fd())
     .on_exit(check_error)
     .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi&){
@@ -173,6 +174,7 @@ void mod_rdp::init_negociate_event_(
         else {
             this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
             if (this->buf.remaining()){
+                LOG(LOG_INFO, "rdp::graphic_events_.create_action_executor");
                 this->private_rdp_negociation->graphic_event 
                 = this->graphic_events_.create_action_executor(ctx.get_reactor())
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
@@ -235,12 +237,14 @@ void mod_rdp::acl_update()
             throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
         }
 
+        LOG(LOG_INFO, "rdp::graphic_events_.create_action_executor");
         this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
         .on_action(jln::one_shot([this](gdi::GraphicApi&) {
             bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
             if (is_finish) {
                 this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
                 if (this->buf.remaining()) {
+                    LOG(LOG_INFO, "rdp::lambda::graphic_events_.create_action_executor");
                     this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->session_reactor)
                     .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                         this->draw_event_impl(gd, sesman);

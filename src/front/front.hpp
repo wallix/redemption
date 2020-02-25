@@ -756,6 +756,7 @@ public:
           )
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
+            LOG(LOG_INFO, "front::timer_events_.create_timer_executor");
             this->handshake_timeout = this->timer_events_.create_timer_executor(this->session_reactor)
             .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
             .on_action([](JLN_TIMER_CTX ctx){

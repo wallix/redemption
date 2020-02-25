@@ -257,7 +257,7 @@ class Session
            :sig == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
            :"BACK_EVENT_UNKNOWN";
         };
-        LOG(LOG_INFO, "check_acl mod_signal=%s", signal_name(signal));
+//        LOG(LOG_INFO, "check_acl mod_signal=%s", signal_name(signal));
 
         if (!acl->keepalive.is_started() && mm.is_connected()) {
             acl->keepalive.start(now);
