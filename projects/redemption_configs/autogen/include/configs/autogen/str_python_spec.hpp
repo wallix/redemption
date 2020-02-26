@@ -655,6 +655,19 @@ enable_remotefx = boolean(default=False)
 #_advanced
 accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
 
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
+#_hidden
+enable_restricted_admin_mode = boolean(default=False)
+
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
+#_hidden
+force_smartcard_authentication = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

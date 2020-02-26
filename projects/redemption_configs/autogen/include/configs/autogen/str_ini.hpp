@@ -777,6 +777,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #accept_monitor_layout_change_if_capture_is_not_started = 0
 
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
+# value: 0 or 1
+#_hidden
+#enable_restricted_admin_mode = 0
+
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
+# value: 0 or 1
+#_hidden
+#force_smartcard_authentication = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

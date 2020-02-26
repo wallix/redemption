@@ -66,6 +66,8 @@ struct ModRDPParams
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
 
+    bool enable_restricted_admin_mode = false;
+
     ValidatorParams validator_params;
 
     struct ClipboardParams
@@ -81,6 +83,7 @@ struct ModRDPParams
         bool disable_log_syslog = false;
         bool bogus_ios_rdpdr_virtual_channel = true;
         bool enable_rdpdr_data_analysis = true;
+        bool smartcard_passthrough = false;
     };
 
     FileSystemParams file_system_params;
@@ -249,12 +252,14 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_restricted_admin_mode);
 
 #ifndef __EMSCRIPTEN__
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_session_probe);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_launch_mask);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_clipboard_based_launcher);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.start_launch_timeout_timer_only_after_logon);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.effective_launch_timeout);
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.on_launch_failure);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.keepalive_timeout);
@@ -395,6 +400,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.bogus_ios_rdpdr_virtual_channel);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.enable_rdpdr_data_analysis);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.smartcard_passthrough);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_timeout);

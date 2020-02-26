@@ -37,25 +37,25 @@
 // -----------
 // Only the 4 first patterns are canonical,
 // next 4 are using non packed integer length encoding (pretty inefficient)
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 01 XX] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 02 HH LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 03 HH MM LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 04 HH MM LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 01 XX] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 02 HH LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 03 HH MM LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 04 HH MM LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 01 XX] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 02 HH LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 03 HH MM LL] 
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 04 HH MM LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 01 XX]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 02 HH LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 03 HH MM LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 04 HH MM LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 01 XX]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 02 HH LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 03 HH MM LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 04 HH MM LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 01 XX]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 02 HH LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 03 HH MM LL]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 04 HH MM LL]
 
 // BER OCTET STRING
 // ----------------
 // [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ ll ] [ XX .. XX ]
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 81 LL ] [ XX .. XX]  
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 82 LH LL ] [ XX .. XX]  
-// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 83 LH LM LL ] [ XX .. XX]  
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 81 LL ] [ XX .. XX]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 82 LH LL ] [ XX .. XX]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 83 LH LM LL ] [ XX .. XX]
 // ll = length of string <= 127
 // LL = length of string <= 255
 // LHLL = length of string <= 65535
@@ -327,7 +327,7 @@ namespace BER {
         return pop_length(pop_check_tag(s, tag, message, eid), message, eid);
     }
 
-    inline std::pair<int, bytes_view> pop_integer(bytes_view s, const char * message, error_type eid) 
+    inline std::pair<int, bytes_view> pop_integer(bytes_view s, const char * message, error_type eid)
     {
         auto [byte, queue] = pop_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
 
@@ -354,7 +354,7 @@ namespace BER {
         return {in_s.in_uint32_be(), queue.drop_front(4)};
     }
 
-    inline std::pair<int, bytes_view> pop_integer_field(bytes_view s, uint8_t tag, const char * message, error_type eid) 
+    inline std::pair<int, bytes_view> pop_integer_field(bytes_view s, uint8_t tag, const char * message, error_type eid)
     {
         auto [length, queue] = pop_tag_length(s, CLASS_CTXT|PC_CONSTRUCT|tag, "TS Request", ERR_CREDSSP_TS_REQUEST);
         if (queue.size() < length) {
@@ -368,6 +368,7 @@ namespace BER {
     {
         auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
         stream.in_skip_bytes(stream.in_remain()-queue1.size());
+        (void)length1;
 
         auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message, eid);
         stream.in_skip_bytes(stream.in_remain()-queue2.size());
@@ -650,12 +651,12 @@ struct ClientNonce {
 // 2.2.1 TSRequest
 // ===============
 
-// The TSRequest structure is the top-most structure used by the CredSSP client and 
-// CredSSP server. It contains the SPNEGO tokens and MAY<6> contain Kerberos/NTLM 
-// messages that are passed between the client and server, and either the public 
-// key authentication messages that are used to bind to the TLS session or the 
-// client credentials that are delegated to the server. The TSRequest message is 
-// always sent over the TLS-encrypted channel between the client and server in a 
+// The TSRequest structure is the top-most structure used by the CredSSP client and
+// CredSSP server. It contains the SPNEGO tokens and MAY<6> contain Kerberos/NTLM
+// messages that are passed between the client and server, and either the public
+// key authentication messages that are used to bind to the TLS session or the
+// client credentials that are delegated to the server. The TSRequest message is
+// always sent over the TLS-encrypted channel between the client and server in a
 // CredSSP Protocol exchange (see step 1 in section 3.1.5).
 
 //     TSRequest ::= SEQUENCE {
@@ -667,14 +668,14 @@ struct ClientNonce {
 //             clientNonce [5] OCTET STRING OPTIONAL
 //     }
 
-// version: This field specifies the supported version of the CredSSP Protocol. 
-// Valid values for this field are 2, 3, 4, 5, and 6.<7> If the version received is 
-// greater than the implementation understands, treat the peer as one that is 
-// compatible with the version of the CredSSP Protocol that the implementation 
+// version: This field specifies the supported version of the CredSSP Protocol.
+// Valid values for this field are 2, 3, 4, 5, and 6.<7> If the version received is
+// greater than the implementation understands, treat the peer as one that is
+// compatible with the version of the CredSSP Protocol that the implementation
 // understands.
 
-// negoTokens: A NegoData structure, as defined in section 2.2.1.1, that contains 
-// the SPNEGO tokens or Kerberos/NTLM messages that are passed between the client 
+// negoTokens: A NegoData structure, as defined in section 2.2.1.1, that contains
+// the SPNEGO tokens or Kerberos/NTLM messages that are passed between the client
 // and server.
 
 // * NegoData ::= SEQUENCE OF NegoDataItem
@@ -683,10 +684,10 @@ struct ClientNonce {
 // *     negoToken [0] OCTET STRING
 // * }
 
-// authInfo: A TSCredentials structure, as defined in section 2.2.1.2, that 
-// contains the user's credentials that are delegated to the server. The authInfo 
-// field MUST be encrypted under the encryption key that is negotiated under the 
-// SPNEGO package. The authInfo field carries the message signature and then the 
+// authInfo: A TSCredentials structure, as defined in section 2.2.1.2, that
+// contains the user's credentials that are delegated to the server. The authInfo
+// field MUST be encrypted under the encryption key that is negotiated under the
+// SPNEGO package. The authInfo field carries the message signature and then the
 // encrypted data.
 
 // * TSCredentials ::= SEQUENCE {
@@ -695,25 +696,25 @@ struct ClientNonce {
 // * }
 
 
-// pubKeyAuth: This field is used to assure that the public key that is used by the 
-// server during the TLS handshake belongs to the target server and not to a 
-// man-in-the-middle. This TLS session-binding is specified in section 3.1.5. After 
-// the client completes the SPNEGO phase of the CredSSP Protocol, it uses 
-// GSS_WrapEx() for the negotiated protocol to encrypt the server's public key. 
-// With version 4 or lower, the pubKeyAuth field carries the message signature and 
-// then the encrypted public key to the server. In response, the server uses the 
-// pubKeyAuth field to transmit to the client a modified version of the public key 
-// (as specified in section 3.1.5) that is encrypted under the encryption key that 
-// is negotiated under SPNEGO. In version 5 or higher, this field stores a computed 
+// pubKeyAuth: This field is used to assure that the public key that is used by the
+// server during the TLS handshake belongs to the target server and not to a
+// man-in-the-middle. This TLS session-binding is specified in section 3.1.5. After
+// the client completes the SPNEGO phase of the CredSSP Protocol, it uses
+// GSS_WrapEx() for the negotiated protocol to encrypt the server's public key.
+// With version 4 or lower, the pubKeyAuth field carries the message signature and
+// then the encrypted public key to the server. In response, the server uses the
+// pubKeyAuth field to transmit to the client a modified version of the public key
+// (as specified in section 3.1.5) that is encrypted under the encryption key that
+// is negotiated under SPNEGO. In version 5 or higher, this field stores a computed
 // hash of the public key.<8>
 
-// errorCode: If the negotiated protocol version is 3, 4, or 6, and the SPNEGO 
-// exchange fails on the server, this field SHOULD<9> be used to send the NTSTATUS 
-// failure code ([MS-ERREF] section 2.3) to the client so that it knows what failed 
+// errorCode: If the negotiated protocol version is 3, 4, or 6, and the SPNEGO
+// exchange fails on the server, this field SHOULD<9> be used to send the NTSTATUS
+// failure code ([MS-ERREF] section 2.3) to the client so that it knows what failed
 // and be able to display a descriptive error to the user.
 
-// clientNonce: A 32-byte array of cryptographically random bytes used to provide 
-// sufficient entropy during hash computation. This value is only used in version 5 
+// clientNonce: A 32-byte array of cryptographically random bytes used to provide
+// sufficient entropy during hash computation. This value is only used in version 5
 // or higher of this protocol.
 
 
@@ -755,7 +756,7 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
                                           bool nonce_initialized,
                                           bool verbose)
 {
-    
+
 
     // version    [0] INTEGER,
     auto ber_version_field = BER::mkSmallIntegerField(version, 0);
@@ -778,19 +779,19 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
           + ber_nego_tokens_header.size()  + negoTokens.size()
           + ber_auth_info_header.size()    + authInfo.size()
           + ber_pub_key_auth_header.size() + pubKeyAuth.size()
-          + ber_error_code_field.size()    
+          + ber_error_code_field.size()
           + (version >= 5 && nonce_initialized)*(ber_nonce_header.size()+clientNonce.size());
 
     auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
-    std::vector<uint8_t> result = std::vector<uint8_t>{} 
+    std::vector<uint8_t> result = std::vector<uint8_t>{}
            << ber_ts_request_header
-           << ber_version_field 
+           << ber_version_field
            << ber_nego_tokens_header << negoTokens
            << ber_auth_info_header << authInfo
            << ber_pub_key_auth_header << pubKeyAuth
            << ber_error_code_field;
-           
+
     if (version >= 5 && nonce_initialized){
        result << ber_nonce_header << clientNonce;
     }
@@ -829,21 +830,21 @@ inline std::vector<uint8_t> emitTSRequest(uint32_t version,
     return result;
 }
 
-inline TSRequest recvTSRequest(bytes_view data, bool verbose) 
+inline TSRequest recvTSRequest(bytes_view data, bool verbose)
 {
     if (verbose) {
         LOG(LOG_INFO, "recv TSRequest full dump++++++++++++++++++++++++++++++++");
         hexdump_d(data);
         LOG(LOG_INFO, "recv TSRequest hexdump - START PARSING DATA+++++++++++++");
     }
-    
+
     InStream stream(data);
     TSRequest self(6);
 
     /* TSRequest */
     auto [length, queue] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request",    ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue.size());
-
+    (void)length;
 
     // version    [0] INTEGER,
     auto [value8, queue8] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
@@ -858,6 +859,7 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
         stream.in_skip_bytes(1);
         auto [len0, queue0] = BER::pop_length(stream.remaining_bytes(), "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
         stream.in_skip_bytes(stream.in_remain()-queue0.size());
+        (void)len0;
 
         // * NegoData ::= SEQUENCE OF NegoDataItem
         // *
@@ -868,11 +870,12 @@ inline TSRequest recvTSRequest(bytes_view data, bool verbose)
         // NegoData ::= SEQUENCE OF NegoDataItem
         auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData", ERR_CREDSSP_TS_REQUEST);
         stream.in_skip_bytes(stream.in_remain()-queue1.size());
-
+        (void)length1;
 
         // NegoDataItem ::= SEQUENCE {
         auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData NegoDataItem", ERR_CREDSSP_TS_REQUEST);
         stream.in_skip_bytes(stream.in_remain()-queue2.size());
+        (void)length2;
 
         self.negoTokens = BER::read_mandatory_octet_string(stream, 0, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
     }
@@ -919,7 +922,7 @@ struct TSPasswordCreds {
 };
 
 
-inline TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose) 
+inline TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
 {
     if (verbose) {
         LOG(LOG_INFO, "recvTSPasswordCreds full dump--------------------------------");
@@ -932,11 +935,12 @@ inline TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
     /* TSPasswordCreds (SEQUENCE) */
     auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSPasswordCreds", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue1.size());
-
+    (void)length1;
 
     /* [0] domainName (OCTET STRING) */
     auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue2.size());
+    (void)length2;
 
     auto [length3, queue3] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::domainName", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue3.size());
@@ -947,6 +951,7 @@ inline TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
     /* [1] userName (OCTET STRING) */
     auto [length4, queue4] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue4.size());
+    (void)length4;
 
     auto [length5, queue5] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::userName", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue5.size());
@@ -957,9 +962,10 @@ inline TSPasswordCreds recvTSPasswordCreds(bytes_view data, bool verbose)
     /* [2] password (OCTET STRING) */
     auto [length6, queue6] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|2, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue6.size());
+    (void)length6;
 
     auto [length7, queue7] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSPasswordCreds::password", ERR_CREDSSP_TS_REQUEST);
-    
+
     stream.in_skip_bytes(stream.in_remain()-queue7.size());
 
     self.password.resize(length7);
@@ -985,16 +991,16 @@ inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view us
     auto ber_ts_password_creds_header = BER::mkSequenceHeader(uint32_t(ts_password_creds_length));
 
     std::vector<uint8_t> result = std::move(ber_ts_password_creds_header);
-    result << ber_domain_name_header << domain 
+    result << ber_domain_name_header << domain
            << ber_user_name_header << user
            << ber_password_header << password;
-           
+
     if (verbose) {
         LOG(LOG_INFO, "emitPasswordsCreds full dump ------------");
         hexdump_d(result);
         LOG(LOG_INFO, "emitPasswordsCreds hexdump done ---------");
     }
-           
+
     return result;
 }
 
@@ -1017,13 +1023,14 @@ struct TSCspDataDetail {
 };
 
 
-inline TSCspDataDetail recvTSCspDataDetail(bytes_view data) 
+inline TSCspDataDetail recvTSCspDataDetail(bytes_view data)
 {
     InStream stream(data);
     TSCspDataDetail self;
     // TSCspDataDetail ::= SEQUENCE
     auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue1.size());
+    (void)length1;
 
     auto [value2, queue2] = BER::pop_integer_field(queue1, 0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue2.size());
@@ -1037,7 +1044,7 @@ inline TSCspDataDetail recvTSCspDataDetail(bytes_view data)
 }
 
 
-inline std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec, 
+inline std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
                                                 bytes_view cardName,
                                                 bytes_view readerName,
                                                 bytes_view containerName,
@@ -1060,7 +1067,7 @@ inline std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
 
     std::vector<uint8_t> result = std::move(sequence_header);
     result << ber_keySpec_Field
-           << ber_cardName_Header      << cardName 
+           << ber_cardName_Header      << cardName
            << ber_readerName_Header    << readerName
            << ber_containerName_Header << containerName
            << ber_cspName_Header       << cspName;
@@ -1085,24 +1092,25 @@ struct TSSmartCardCreds {
     std::vector<uint8_t> domainHint;
 };
 
-inline TSSmartCardCreds recvTSSmartCardCreds(bytes_view data, bool verbose) 
+inline TSSmartCardCreds recvTSSmartCardCreds(bytes_view data, bool verbose)
 {
     if (verbose) {
         LOG(LOG_INFO, "recvTSSmartCardCreds full dump--------------------------------");
         hexdump_d(data);
         LOG(LOG_INFO, "recvTSSmartCardCreds hexdump - START PARSING DATA-------------");
     }
-    
+
     InStream stream(data);
     TSSmartCardCreds self;
     /* TSSmartCardCreds (SEQUENCE) */
     auto [length0, queue0] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSSmartCardCreds", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue0.size());
-
+    (void)length0;
 
     /* [0] pin (OCTET STRING) */
     auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSSmartCardCreds [0] pin", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue1.size());
+    (void)length1;
 
     auto [length2, queue2] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [0] pin", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue2.size());
@@ -1126,7 +1134,7 @@ inline TSSmartCardCreds recvTSSmartCardCreds(bytes_view data, bool verbose)
 
 inline std::vector<uint8_t> emitTSSmartCardCreds(
                   buffer_view pin, buffer_view userHint, bytes_view domainHint,
-                  uint32_t keySpec, 
+                  uint32_t keySpec,
                   bytes_view cardName,
                   bytes_view readerName,
                   bytes_view containerName,
@@ -1153,13 +1161,13 @@ inline std::vector<uint8_t> emitTSSmartCardCreds(
                   ;
 
     auto ber_ts_smartcards_creds_header = BER::mkSequenceHeader(ts_smartcards_creds_length);
-    
+
     std::vector<uint8_t> result = std::move(ber_ts_smartcards_creds_header);
     result << ber_pin_header           << pin
            << ber_CspDataDetail_header << ber_TSCspDataDetail
            << ber_userHint_header      << userHint
            << ber_domainHint_header    << domainHint;
-           
+
     return result;
 }
 
@@ -1178,7 +1186,7 @@ struct TSCredentials
     // For now, TSCredentials only contains TSPasswordCreds (not TSSmartCardCreds)
 };
 
-inline TSCredentials recvTSCredentials(bytes_view data, bool verbose) 
+inline TSCredentials recvTSCredentials(bytes_view data, bool verbose)
 {
     if (verbose) {
         LOG(LOG_INFO, "recvTSCredentials full dump--------------------------------");
@@ -1192,7 +1200,7 @@ inline TSCredentials recvTSCredentials(bytes_view data, bool verbose)
     // TSCredentials (SEQUENCE)
     auto [length1, queue1] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue1.size());
-
+    (void)length1;
 
     // [0] credType (INTEGER)
     auto [value2, queue2] = BER::pop_integer_field(stream.remaining_bytes(), 0, "TSCredentials [0] credType ", ERR_CREDSSP_TS_REQUEST);
@@ -1203,6 +1211,7 @@ inline TSCredentials recvTSCredentials(bytes_view data, bool verbose)
     // [1] credentials (OCTET STRING)
     auto [length3, queue3] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue3.size());
+    (void)length3;
 
     auto [creds_length, queue4] = BER::pop_tag_length(stream.remaining_bytes(), BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
     stream.in_skip_bytes(stream.in_remain()-queue4.size());
@@ -1218,7 +1227,7 @@ inline TSCredentials recvTSCredentials(bytes_view data, bool verbose)
     return self;
 }
 
-inline std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName, bytes_view userName, bytes_view password, bool verbose) 
+inline std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName, bytes_view userName, bytes_view password, bool verbose)
 {
     // [0] credType (INTEGER) : 1 means password
     auto ber_credtype_field = BER::mkSmallIntegerField(1, 0);
@@ -1240,18 +1249,18 @@ inline std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName, byt
         hexdump_d(result);
         LOG(LOG_INFO, "emitTSCredentialsPassword hexdump done----------");
     }
-           
+
     return result;
 }
 
 inline std::vector<uint8_t> emitTSCredentialsSmartCard(
                   buffer_view pin, buffer_view userHint, bytes_view domainHint,
-                  uint32_t keySpec, 
+                  uint32_t keySpec,
                   bytes_view cardName,
                   bytes_view readerName,
                   bytes_view containerName,
                   bytes_view cspName,
-                  bool verbose) 
+                  bool verbose)
 {
     // [0] credType (INTEGER): 2 means SmartCard
     auto ber_credtype_field = BER::mkSmallIntegerField(2, 0);
@@ -1276,5 +1285,3 @@ inline std::vector<uint8_t> emitTSCredentialsSmartCard(
 
     return result;
 }
-
-

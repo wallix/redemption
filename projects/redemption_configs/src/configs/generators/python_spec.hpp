@@ -268,7 +268,7 @@ namespace impl
 
             char const* desc = v.desc;
             // add padding after new line for align the description
-            while (char* nl = strchr(desc, '\n')) {
+            while (const char* nl = strchr(desc, '\n')) {
                 out.write(desc, nl - desc + 1);
                 out << std::setw(pad) << "";
                 desc = nl+1;

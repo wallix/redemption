@@ -470,6 +470,23 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_remotefx", desc{"Enables support of the remoteFX codec."}, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "accept_monitor_layout_change_if_capture_is_not_started", set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+                 "enable_restricted_admin_mode",
+                 desc{"Connect to the server in Restricted Admin mode.\n"
+                         "This mode must be supported by the server "
+                         "(available from Windows Server 2012 R2), "
+                         "otherwise, connection will fail.\n"
+                         "NLA must be enabled."},
+                 set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+                 "force_smartcard_authentication",
+                 desc{"NLA will be disabled.\n"
+                         "Target must be set for interactive login, otherwise server connection may not be guaranteed.\n"
+                         "Smartcard device must be available on client desktop.\n"
+                         "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
+                 set(false));
     });
 
     W.section("metrics", [&]
@@ -824,6 +841,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_port");
 
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
+
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
     });
 }
 

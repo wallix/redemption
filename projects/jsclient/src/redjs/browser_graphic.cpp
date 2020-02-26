@@ -93,12 +93,16 @@ namespace
     {
         constexpr char const* draw_rect = "drawRect";
         constexpr char const* draw_scr_blt = "drawSrcBlt";
-        constexpr char const* draw_memblt = "drawImage";
         constexpr char const* draw_line_to = "drawLineTo";
         constexpr char const* draw_polyline = "drawPolyline";
         constexpr char const* draw_pat_blt = "drawPatBlt";
         constexpr char const* draw_pat_blt_ex = "drawPatBltEx";
         constexpr char const* draw_dest_blt = "drawDestBlt";
+
+        constexpr char const* draw_image = "drawImage";
+        constexpr char const* draw_memblt = "drawCachedImage";
+        constexpr char const* set_cached_image = "cachedImage";
+        constexpr char const* set_cached_image_size = "setCachedImageSize";
 
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
@@ -324,22 +328,39 @@ void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_en
     this->image_data_index[1] = nb_entries[0];
     this->image_data_index[2] = this->image_data_index[1] + nb_entries[1];
     this->nb_image_datas = this->image_data_index[2] + nb_entries[2];
-    this->image_datas = std::make_unique<ImageData[]>(this->nb_image_datas);
+    emval_call(this->callbacks, jsnames::set_cached_image_size, this->nb_image_datas);
+    this->image_bounds = std::unique_ptr<Bounds[]>(new Bounds[this->nb_image_datas]);
 }
 
 void BrowserGraphic::draw(RDPBmpCache const & cmd)
 {
-    size_t const image_idx = this->image_data_index[cmd.id & 0b11] + cmd.idx;
+    uint32_t const image_idx = this->image_data_index[cmd.id & 0b11] + cmd.idx;
     if (image_idx >= this->nb_image_datas) {
         LOG(LOG_INFO, "BrowserGraphic::RDPBmpCache: out of range");
         return ;
     }
-    image_datas[image_idx] = image_data_from_bitmap(cmd.bmp);
+
+    auto img = image_data_from_bitmap(cmd.bmp);
+    this->image_bounds[image_idx] = {checked_int(img.width()), checked_int(img.height())};
+
+    emval_call(this->callbacks, jsnames::set_cached_image,
+        img.data(),
+        img.width(),
+        img.height(),
+        image_idx
+    );
 }
 
 void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPMemBlt");
+
+    uint32_t const image_idx = this->image_data_index[cmd_.cache_id & 0b11] + cmd_.cache_idx;
+    if (image_idx >= this->nb_image_datas) {
+        LOG(LOG_ERR, "BrowserGraphic::RDPMemBlt: out of range (%" PRIu16 " %" PRIu16 ")",
+            cmd_.cache_id, cmd_.cache_idx);
+        return ;
+    }
 
     RDPMemBlt cmd(cmd_);
 
@@ -351,21 +372,12 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
     uint16_t const srcx = cmd.srcx + (rect.x - cmd.rect.x);
     uint16_t const srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-    size_t const image_idx = this->image_data_index[cmd.cache_id & 0b11] + cmd.cache_idx;
-    if (image_idx >= this->nb_image_datas) {
-        LOG(LOG_ERR, "BrowserGraphic::RDPMemBlt: out of range (%" PRIu16 " %" PRIu16 ")",
-            cmd.cache_id, cmd.cache_idx);
-        return ;
-    }
+    Bounds bounds = this->image_bounds[image_idx];
 
-    ImageData const& image = this->image_datas[image_idx];
-
-    if (image.width() < srcx || image.height() < srcy) {
-        return ;
-    }
-
-    const int mincx = std::min<int>(image.width() - srcx, std::min<int>(this->width - rect.x, rect.cx));
-    const int mincy = std::min<int>(image.height() - srcy, std::min<int>(this->height - rect.y, rect.cy));
+    const int mincx = std::min<int>(int32_t(bounds.w) - int32_t(srcx),
+        std::min(int32_t(this->width) - int32_t(rect.x), int32_t(rect.cx)));
+    const int mincy = std::min<int>(int32_t(bounds.h) - int32_t(srcy),
+        std::min(int32_t(this->height) - int32_t(rect.y), int32_t(rect.cy)));
 
     if (mincx <= 0 || mincy <= 0) {
         return;
@@ -373,16 +385,16 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
 
     // cmd.rop == 0xCC
     emval_call(this->callbacks, jsnames::draw_memblt,
-        image.data(),
-        image.width(),
-        image.height(),
-        rect.x,
-        rect.y,
+        image_idx,
+        cmd_.rop,
         srcx,
         srcy,
         mincx,
         mincy,
-        cmd.rop
+        rect.x,
+        rect.y,
+        mincx,
+        mincy
     );
 
     // switch (cmd.rop) {
@@ -397,7 +409,7 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
     // default:
     //     // should not happen
     //     //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
-    // break;
+    //     break;
     // }
 }
 
@@ -479,17 +491,13 @@ void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx co
         draw_pos, offset_y, cmd.bk.x + offset_x, cmd.bk.y,
         clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
 
-    emval_call(this->callbacks, jsnames::draw_memblt,
+    emval_call(this->callbacks, jsnames::draw_image,
         img_data.get(),
         clipped_glyph_fragment_rect.width(),
         clipped_glyph_fragment_rect.height(),
+        0xCC,
         clipped_glyph_fragment_rect.x,
-        clipped_glyph_fragment_rect.y,
-        0,
-        0,
-        clipped_glyph_fragment_rect.width(),
-        clipped_glyph_fragment_rect.height(),
-        0xCC
+        clipped_glyph_fragment_rect.y
     );
 }
 
@@ -550,17 +558,17 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 
     redjs::ImageData image = image_data_from_bitmap(bmp);
 
-    emval_call(this->callbacks, jsnames::draw_memblt,
+    emval_call(this->callbacks, jsnames::draw_image,
         image.data(),
         image.width(),
         image.height(),
+        0xCC,
         cmd.dest_left,
         cmd.dest_top,
         0,
         0,
         cmd.dest_right - cmd.dest_left + 1,
-        cmd.dest_bottom - cmd.dest_top + 1,
-        0xCC
+        cmd.dest_bottom - cmd.dest_top + 1
     );
 }
 

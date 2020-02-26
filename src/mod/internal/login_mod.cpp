@@ -101,7 +101,6 @@ LoginMod::LoginMod(
         .create_timer_executor(session_reactor)
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
         .on_action([this](JLN_TIMER_CTX ctx){
-            LOG(LOG_INFO, "execute timer()");
             this->set_mod_signal(BACK_EVENT_STOP);
             return ctx.terminate();
         });
@@ -130,7 +129,6 @@ void LoginMod::rdp_input_invalidate(Rect r)
 
 void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
-    LOG(LOG_INFO, "LoginMod::rdp_input_mouse()");
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;
         y = this->old_mouse_y;
@@ -141,7 +139,6 @@ void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     }
 
     if (!this->rail_enabled) {
-        LOG(LOG_INFO, "LoginMod::propagate rdp_input_mouse() to screen");
         this->screen.rdp_input_mouse(device_flags, x, y, keymap);
         return;
     }
@@ -234,8 +231,6 @@ void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 
 void LoginMod::rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
 {
-    LOG(LOG_INFO, "rdp_input_scancode()");
-
     this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
 
     if (this->rail_enabled) {

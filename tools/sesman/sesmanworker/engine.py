@@ -881,11 +881,12 @@ class Engine(object):
         if filtered_subnet:
             self.displaytargets = filtered_subnet
 
-    def filter_app_rights(self, app_rights, account_name, domain_name, app_name):
+    def filter_app_rights(self, app_rights, account_name, domain_name,
+                          app_name):
         _rs = [r for r in app_rights if (
             r['account_name'] == account_name
             and (not domain_name or r['domain_cn'] == domain_name)
-            and r['application_cn'] == app_name) ]
+            and r['application_cn'] == app_name)]
         return _rs
 
     def get_proxy_rights(self, protocols, target_device=None,
@@ -1321,8 +1322,11 @@ class Engine(object):
     def stop_session(self, title=u"End session"):
         try:
             if self.session_id:
-                # Logger().info("Engine stop_session: result='%s', diag='%s', title='%s'" %
-                #               (self.session_result, self.session_diag, title))
+                # Logger().info(
+                #     "Engine stop_session: result='%s', diag='%s', "
+                #     "title='%s'" %
+                #     (self.session_result, self.session_diag, title)
+                # )
                 self.wabengine.stop_session(
                     self.session_id,
                     result=self.session_result,
@@ -1342,14 +1346,16 @@ class Engine(object):
     # RESTRICTIONS
     def get_all_restrictions(self, auth, proxytype):
         if proxytype == u"RDP":
-            matchproto = lambda x: x == u"RDP"
+            def matchproto(x):
+                return x == u"RDP"
         elif proxytype == u"SSH":
-            matchproto = lambda x: x in ["SSH_SHELL_SESSION",
-                                         "SSH_REMOTE_COMMAND",
-                                         "SSH_SCP_UP",
-                                         "SSH_SCP_DOWN",
-                                         "SFTP_SESSION",
-                                         "RLOGIN", "TELNET"]
+            def matchproto(x):
+                return x in ["SSH_SHELL_SESSION",
+                             "SSH_REMOTE_COMMAND",
+                             "SSH_SCP_UP",
+                             "SSH_SCP_DOWN",
+                             "SFTP_SESSION",
+                             "RLOGIN", "TELNET"]
         else:
             return {}, {}
         try:
@@ -1388,16 +1394,18 @@ class Engine(object):
         if self.is_shadow_session(auth):
             return None, None
         if proxytype == "RDP":
+            def matchproto(x):
+                return x == u"RDP"
             separator = u"\x01"
-            matchproto = lambda x: x == u"RDP"
         elif proxytype == u"SSH":
+            def matchproto(x):
+                return x in ["SSH_SHELL_SESSION",
+                             "SSH_REMOTE_COMMAND",
+                             "SSH_SCP_UP",
+                             "SSH_SCP_DOWN",
+                             "SFTP_SESSION",
+                             "RLOGIN", "TELNET"]
             separator = u"|"
-            matchproto = lambda x: x in ["SSH_SHELL_SESSION",
-                                         "SSH_REMOTE_COMMAND",
-                                         "SSH_SCP_UP",
-                                         "SSH_SCP_DOWN",
-                                         "SFTP_SESSION",
-                                         "RLOGIN", "TELNET"]
         else:
             return None, None
         try:

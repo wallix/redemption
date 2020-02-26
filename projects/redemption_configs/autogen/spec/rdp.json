@@ -148,6 +148,18 @@
           "description": "Enables support of the remoteFX codec."
         },
         {
+          "name": "enable_restricted_admin_mode",
+          "type": "bool",
+          "default": false,
+          "description": "Connect to the server in Restricted Admin mode.\nThis mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.\nNLA must be enabled."
+        },
+        {
+          "name": "force_smartcard_authentication",
+          "type": "bool",
+          "default": false,
+          "description": "NLA will be disabled.\nTarget must be set for interactive login, otherwise server connection may not be guaranteed.\nSmartcard device must be available on client desktop.\nSmartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
+        },
+        {
           "name": "remote_programs_disconnect_message_delay",
           "type": "integer",
           "min": 3000,

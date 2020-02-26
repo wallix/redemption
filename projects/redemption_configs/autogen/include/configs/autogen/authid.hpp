@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(190);
+constexpr authid_t MAX_AUTHID = authid_t(193);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -91,6 +91,8 @@ constexpr array_view_const_char const authstr[] = {
     "server_cert"_av,
     "server_cert_response"_av,
     "mod_rdp:enable_remotefx"_av,
+    "mod_rdp:enable_restricted_admin_mode"_av,
+    "mod_rdp:force_smartcard_authentication"_av,
     "clipboard_up"_av,
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,
@@ -201,4 +203,5 @@ constexpr array_view_const_char const authstr[] = {
     "rd_shadow_invitation_id"_av,
     "rd_shadow_invitation_addr"_av,
     "rd_shadow_invitation_port"_av,
+    "smartcard_login"_av,
 };

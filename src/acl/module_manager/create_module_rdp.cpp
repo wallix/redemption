@@ -245,7 +245,6 @@ public:
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", unsigned(param1), unsigned(param3), this);
         if (this->mod_wrapper.try_input_scancode(param1, param2, param3, param4, keymap)) {
             this->target_info_is_shown = false;
             return ;
@@ -256,7 +255,6 @@ public:
         Inifile const& ini = this->ini;
 
         if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
-            LOG(LOG_INFO, "*****************mod_rdp::rdp_input_scancode: F12****************");
             bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
             if (this->target_info_is_shown && f12_released) {
                 LOG(LOG_INFO, "Hide info");
@@ -510,10 +508,12 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     ChannelsAuthorizations channels_authorizations(allow, deny);
     // END READ PROXY_OPT
 
+    const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
+
     ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
     ModRDPParams mod_rdp_params(
-        ini.get<cfg::globals::target_user>().c_str()
-      , ini.get<cfg::context::target_password>().c_str()
+        (smartcard_passthrough ? "" : ini.get<cfg::globals::target_user>().c_str())
+      , (smartcard_passthrough ? "" : ini.get<cfg::context::target_password>().c_str())
       , ini.get<cfg::context::target_host>().c_str()
       , "0.0.0.0"   // client ip is silenced
       , key_flags
@@ -547,10 +547,32 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     //mod_rdp_params.enable_new_pointer                  = true;
     mod_rdp_params.enable_glyph_cache                  = ini.get<cfg::globals::glyph_cache>();
 
-    mod_rdp_params.clipboard_params.disable_log_syslog =
-        bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
+    mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
+    mod_rdp_params.file_system_params.disable_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
 
     mod_rdp_params.session_probe_params = get_session_probe_params(ini);
+
+    mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
+    mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
+    mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
+    mod_rdp_params.application_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
+    mod_rdp_params.application_params.shell_arguments                     = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
+    mod_rdp_params.application_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+    mod_rdp_params.application_params.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
+    mod_rdp_params.application_params.target_application_account          = ini.get<cfg::globals::target_application_account>().c_str();
+    mod_rdp_params.application_params.target_application_password         = ini.get<cfg::globals::target_application_password>().c_str();
+    mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
+    mod_rdp_params.error_message                       = &ini.get_mutable_ref<cfg::context::auth_error_message>();
+    mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
+    mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
+
+    mod_rdp_params.server_cert_store                   = ini.get<cfg::mod_rdp::server_cert_store>();
+    mod_rdp_params.server_cert_check                   = ini.get<cfg::mod_rdp::server_cert_check>();
+    mod_rdp_params.server_access_allowed_message       = ini.get<cfg::mod_rdp::server_access_allowed_message>();
+    mod_rdp_params.server_cert_create_message          = ini.get<cfg::mod_rdp::server_cert_create_message>();
+    mod_rdp_params.server_cert_success_message         = ini.get<cfg::mod_rdp::server_cert_success_message>();
+    mod_rdp_params.server_cert_failure_message         = ini.get<cfg::mod_rdp::server_cert_failure_message>();
+    mod_rdp_params.server_cert_error_message           = ini.get<cfg::mod_rdp::server_cert_error_message>();
 
     mod_rdp_params.ignore_auth_channel = ini.get<cfg::mod_rdp::ignore_auth_channel>();
     mod_rdp_params.auth_channel = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
@@ -649,6 +671,9 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     mod_rdp_params.use_license_store = ini.get<cfg::mod_rdp::use_license_store>();
     mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started
         = ini.get<cfg::mod_rdp::accept_monitor_layout_change_if_capture_is_not_started>();
+
+    mod_rdp_params.enable_restricted_admin_mode = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
+    mod_rdp_params.file_system_params.smartcard_passthrough        = smartcard_passthrough;
 
     try {
         using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;

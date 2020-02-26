@@ -188,6 +188,8 @@ namespace cfg {
         struct use_license_store;
         struct enable_remotefx;
         struct accept_monitor_layout_change_if_capture_is_not_started;
+        struct enable_restricted_admin_mode;
+        struct force_smartcard_authentication;
     };
 
     struct mod_vnc {
@@ -422,6 +424,7 @@ namespace cfg {
         struct rd_shadow_invitation_addr;
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
+        struct smartcard_login;
     };
 
 } // namespace cfg

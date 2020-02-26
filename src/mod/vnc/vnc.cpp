@@ -57,7 +57,9 @@ mod_vnc::mod_vnc( Transport & t
            , SesmanInterface & sesman
            )
     : front(front)
-    , t(t)
+    , t(VncTransport(*this, t))
+	, dsm(nullptr)
+	, dsmEncryption(false)
     , width(front_width)
     , height(front_height)
     , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
@@ -78,6 +80,7 @@ mod_vnc::mod_vnc( Transport & t
 #endif
 	, choosenAuth(VNC_AUTH_INVALID)
     , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
+	, server_data_buf(*this)
 	, tlsSwitch(false)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
@@ -247,27 +250,34 @@ void mod_vnc::rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keyma
         return;
     }
 
+    StaticOutStream<32> out_stream;
+
     if (device_flags & MOUSE_FLAG_MOVE) {
-        this->mouse.move(this->t, x, y);
+        this->mouse.move(out_stream, x, y);
         IF_ENABLE_METRICS(mouse_move(x, y));
     }
     else if (device_flags & MOUSE_FLAG_BUTTON1) {
-        this->mouse.click(this->t, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
+        this->mouse.click(out_stream, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
         IF_ENABLE_METRICS(right_click());
     }
     else if (device_flags & MOUSE_FLAG_BUTTON2) {
-        this->mouse.click(this->t, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
+        this->mouse.click(out_stream, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
         IF_ENABLE_METRICS(left_click());
     }
     else if (device_flags & MOUSE_FLAG_BUTTON3) {
-        this->mouse.click(this->t, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
+        this->mouse.click(out_stream, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
     }
     else if (device_flags == MOUSE_FLAG_BUTTON4 || device_flags == 0x0278) {
-        this->mouse.scroll(this->t, 1 << 3);
+        this->mouse.scroll(out_stream, 1 << 3);
     }
     else if (device_flags == MOUSE_FLAG_BUTTON5 || device_flags == 0x0388) {
-        this->mouse.scroll(this->t, 1 << 4);
+        this->mouse.scroll(out_stream, 1 << 4);
     }
+    else {
+        return ;
+    }
+
+    this->t.send(out_stream.get_bytes());
 }
 
 void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/,
@@ -479,7 +489,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
 		}
 
 	}
-	this->server_data_buf.read_from(this->t);
+	size_t readBytes = this->server_data_buf.read_from(this->t);
 
 	[[maybe_unused]]
 	uint64_t const data_server_before = this->server_data_buf.remaining();
@@ -525,7 +535,7 @@ void mod_vnc::updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, si
     static VncAuthType preferedAuthTypes[] = {
     	VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
     	//VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,     TLS not handled for now
-		//VNC_AUTH_ULTRA_SecureVNCPluginAuth_new, VNC_AUTH_ULTRA_SecureVNCPluginAuth,
+		VNC_AUTH_ULTRA_SecureVNCPluginAuth_new, VNC_AUTH_ULTRA_SecureVNCPluginAuth,
 		VNC_AUTH_VENCRYPT, VNC_AUTH_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
     };
 
@@ -1061,11 +1071,41 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         }
 
     case WAIT_SECURITY_ULTRA_CHALLENGE: {
-    	UltraDSM dsm(this->password);
+        uint8_t passPhraseUsed;
+    	if (!this->dsm)
+    		dsm = new UltraDSM(this->password);
+
     	InStream challenge(this->server_data_buf.av());
-    	dsm.handleChallenge(challenge);
-    	break;
+    	uint16_t challengeLen;
+        if (!dsm->handleChallenge(challenge, challengeLen, passPhraseUsed))
+    		return false;
+
+        this->server_data_buf.advance(challengeLen + 1 + 2);
+
+    	StaticOutStream<2> lenStream;
+    	StaticOutReservedStreamHelper<2, 65535> out;
+    	OutStream &outPacket = out.get_data_stream();
+    	dsm->getResponse(outPacket);
+
+    	lenStream.out_uint16_le(outPacket.get_offset());
+    	out.copy_to_head(lenStream);
+    	writable_bytes_view packet = out.get_packet();
+    	this->t.send(packet.begin(), packet.size());
+
+    	this->dsmEncryption = true;
+
+        if (passPhraseUsed != 2) {
+            lenStream.rewind(0);
+            uint16_t passLen = strlen(this->password);
+            lenStream.out_uint16_le(passLen);
+
+            this->t.send(lenStream.get_data(), 2);
+            this->t.send(this->password, passLen);
+        }
+        this->state = WAIT_SECURITY_RESULT;
+        break;
     }
+
     case SERVER_INIT:
         this->t.send("\x01", 1); // share flag
         IF_ENABLE_METRICS(data_from_client(1));

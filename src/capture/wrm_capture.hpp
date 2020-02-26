@@ -687,22 +687,20 @@ public:
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
     }
 
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &content) override {
-        for (const Rect & rect1 : content.region.rects) {
-            Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
-
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) override {
+        /* no remoteFx support in recording, transcode to bitmapUpdates */
+        for (const Rect & rect : content.region.rects) {
+//            LOG(LOG_INFO, "draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
+//                content.stride, rect);
             Bitmap bitmap(content.data, content.stride, rect);
-
-            LOG(LOG_DEBUG, "WrmCapture::draw(RDPSurfaceContent, content): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
-                    rect1.ileft(), rect1.itop(), rect1.width(), rect1.height(),
-                    rect.ileft(), rect.itop(), rect.width(), rect.height());
             RDPBitmapData bitmap_data;
-            bitmap_data.dest_left = rect.ileft();
-            bitmap_data.dest_right = rect.eright() - 1;
-            bitmap_data.dest_top = rect.itop();
-            bitmap_data.dest_bottom = rect.ebottom() - 1;
-            bitmap_data.width = rect.width();
-            bitmap_data.height = rect.height();
+            bitmap_data.dest_left = cmd.destRect.x + rect.ileft();
+            bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;
+            bitmap_data.dest_top = cmd.destRect.y + rect.itop();
+            bitmap_data.dest_bottom = cmd.destRect.y + rect.ebottom()-1;
+            
+            bitmap_data.width = bitmap.cx();
+            bitmap_data.height = bitmap.cy();
             bitmap_data.bits_per_pixel = 32;
             bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
             bitmap_data.bitmap_length = bitmap.bmp_size();

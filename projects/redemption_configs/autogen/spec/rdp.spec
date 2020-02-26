@@ -76,6 +76,17 @@ wabam_uses_translated_remoteapp = boolean(default=False)
 # Enables support of the remoteFX codec.
 enable_remotefx = boolean(default=False)
 
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
+enable_restricted_admin_mode = boolean(default=False)
+
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
+force_smartcard_authentication = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced

@@ -237,6 +237,8 @@ public:
     {
         const bool enable_session_probe;
         const bool enable_launch_mask;
+        const bool start_launch_timeout_timer_only_after_logon;
+
 
     private:
         const bool used_to_launch_remote_program;
@@ -259,6 +261,7 @@ public:
         SessionProbe(ModRdpSessionProbeParams const& sespro_params)
         : enable_session_probe(sespro_params.enable_session_probe)
         , enable_launch_mask(sespro_params.enable_launch_mask && this->enable_session_probe)
+        , start_launch_timeout_timer_only_after_logon(sespro_params.start_launch_timeout_timer_only_after_logon)
         , used_to_launch_remote_program(sespro_params.used_to_launch_remote_program)
         , session_probe_channel_params(sespro_params.vc_params)
         {}
@@ -313,6 +316,7 @@ private:
         {}
     } clipboard;
 
+public:
     struct FileSystem
     {
         const bool disable_log_syslog;
@@ -320,14 +324,16 @@ private:
 
         const bool enable_rdpdr_data_analysis;
 
+        const bool smartcard_passthrough;
+
         FileSystem(ModRDPParams::FileSystemParams const& file_system_params)
         : disable_log_syslog(file_system_params.disable_log_syslog)
         , bogus_ios_rdpdr_virtual_channel(file_system_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(file_system_params.enable_rdpdr_data_analysis)
+        , smartcard_passthrough(file_system_params.smartcard_passthrough)
         {}
     } file_system;
 
-public:
     class Drive
     {
         const bool use_application_driver;
@@ -759,6 +765,7 @@ private:
         fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
         fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
         fsvc_params.dont_log_data_into_syslog = this->file_system.disable_log_syslog;
+        fsvc_params.smartcard_passthrough = this->file_system.smartcard_passthrough;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.session_reactor,
@@ -904,10 +911,14 @@ public:
         FileValidatorService * file_validator_service,
         SesmanInterface & sesman
     ) {
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! process_cliprdr_event");
+        LOG(LOG_INFO, "mod_rdp::process_cliprdr_event(%u %u)", length, chunk_size);
 
         if (!this->clipboard_virtual_channel) {
+            LOG(LOG_INFO, "mod_rdp::process_cliprdr_event::create_clipboard_virtual_channel");
             this->create_clipboard_virtual_channel(front, stc, file_validator_service);
+        }
+        else {
+            LOG(LOG_INFO, "mod_rdp::process_cliprdr_event virtual channel already created");
         }
 
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
@@ -1725,7 +1736,9 @@ public:
                     client_name);
             }
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
-            this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+            if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
+                this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+            }
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
@@ -1755,7 +1768,9 @@ public:
                     client_name);
             }
 
-            this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+            if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
+                this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+            }
 
             if (this->remote_app.enable_remote_program) {
                 if (!this->remote_programs_virtual_channel) {
@@ -1849,6 +1864,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     const bool disconnect_on_logon_user_change;
     const RdpLogonInfo logon_info;
+    const Recv_CS_BitmapCodecCaps front_bitmap_codec_caps;
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
@@ -1908,7 +1924,7 @@ class mod_rdp : public mod_api, public rdp_api
     const bool enable_remotefx;
     bool haveRemoteFx{false};
     bool haveSurfaceFrameAck{false};
-    uint8_t remoteFx_codec_id;
+    std::vector<uint8_t> remoteFx_codec_id;
 
     const PrimaryDrawingOrdersSupport primary_drawing_orders_support;
 
@@ -1988,6 +2004,10 @@ class mod_rdp : public mod_api, public rdp_api
     bool const accept_monitor_layout_change_if_capture_is_not_started;
 
 #ifndef __EMSCRIPTEN__
+    bool const session_probe_start_launch_timeout_timer_only_after_logon;
+#endif
+
+#ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
     FileValidatorService * file_validator_service;
 #endif
@@ -2032,6 +2052,7 @@ public:
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
+        , front_bitmap_codec_caps(info.bitmap_codec_caps)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
@@ -2101,6 +2122,7 @@ public:
         , vars(vars)
         , accept_monitor_layout_change_if_capture_is_not_started(mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started)
         #ifndef __EMSCRIPTEN__
+        , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_params.start_launch_timeout_timer_only_after_logon)
         , metrics(metrics)
         , file_validator_service(file_validator_service)
         #endif
@@ -2201,7 +2223,7 @@ public:
                        && this->channels.session_probe.session_probe_launcher->is_keyboard_sequences_started())
                      || this->channels.session_probe_virtual_channel->has_been_launched()
                     ) {
-                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
+//                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
                     }
@@ -2209,7 +2231,7 @@ public:
                 else
 #endif
                 {
-                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
+//                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
                 }
@@ -2603,8 +2625,8 @@ public:
 
                 setSurface.recv(stream);
 
-                if (setSurface.codecId == this->remoteFx_codec_id) {
-                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: remoteFX codec");
+                if (std::find(this->remoteFx_codec_id.begin(), this->remoteFx_codec_id.end(), setSurface.codecId) != this->remoteFx_codec_id.end()) {
+                    LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_INFO, "setSurfaceBits: remoteFX codec");
                     setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
 
                     InStream remoteFxStream(bytes_view(stream.get_current(), setSurface.bitmapDataLength));
@@ -3154,50 +3176,8 @@ public:
                                 LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
 
                             this->orders.reset();
-
-// 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
-// ==========================================================
-
-//    shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1 ) containing information
-//  about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to
-// PDUTYPE_DEMANDACTIVEPDU (1).
-
-//    shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128]
-// section 8.4.2 for more information regarding share IDs).
-
-                            this->share_id = sctrl.payload.in_uint32_le();
-
-//    lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor
-// field.
-                            uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
-
-//    lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the
-// numberCapabilities, pad2Octets, and capabilitySets fields.
-
-                            uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
-
-//    sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see
-// [T128] section 8.4.1 for more information regarding source descriptors).
-
-                            // TODO before skipping we should check we do not go outside current stream
-                            sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
-
-// numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
-// Demand Active PDU.
-
-// pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
-
-// capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number
-//  of capability sets is specified by the numberCapabilities field.
-
-                            this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
-
-
-// sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
-
-                            uint32_t sessionId = sctrl.payload.in_uint32_le();
-
-                            (void)sessionId;
+                            
+                            this->process_demand_active(sctrl);
                             this->send_confirm_active(drawable);
                             this->send_synchronise();
                             this->send_control(RDP_CTL_COOPERATE);
@@ -3429,6 +3409,7 @@ public:
     // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
     void send_confirm_active(gdi::GraphicApi& drawable) {
+        LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         LOG_IF(bool(this->verbose & RDPVerbose::capabilities),
             LOG_INFO, "mod_rdp::send_confirm_active");
         this->send_data_request_ex(
@@ -3697,7 +3678,6 @@ public:
                     }
                 }
 
-                BitmapCodecCaps bitmap_codec_caps(true);
                 if (this->enable_remotefx && this->haveRemoteFx) {
                     /**
                      * for remoteFx we need:
@@ -3707,7 +3687,35 @@ public:
                      *     * largePointer
                      *     * a multi_fragment_update that is big enough (at least the value returned by the server)
                      */
-                    this->remoteFx_codec_id = bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
+                    Emit_CS_BitmapCodecCaps bitmap_codec_caps;
+                    
+                    if (this->front_bitmap_codec_caps.haveRemoteFxCodec) {
+                        for (uint8_t i = 0 ; i < this->front_bitmap_codec_caps.bitmapCodecCount ; i++){
+                            if (this->front_bitmap_codec_caps.bitmapCodecArray[i].codecType == CODEC_REMOTEFX){
+                                auto id = this->front_bitmap_codec_caps.bitmapCodecArray[i].codecID;
+                                auto codecGUID = this->front_bitmap_codec_caps.bitmapCodecArray[i].codecGUID;
+                                // CODEC_GUID_IMAGE_REMOTEFX
+                                if (memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0) {
+                                    bitmap_codec_caps.addCodec(id, CODEC_GUID_IMAGE_REMOTEFX);
+                                    this->remoteFx_codec_id.push_back(id);
+                                } else 
+                                // CODEC_GUID_REMOTEFX
+                                if(memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0) {
+                                    bitmap_codec_caps.addCodec(id, CODEC_GUID_REMOTEFX);
+                                    this->remoteFx_codec_id.push_back(id);
+                                } else {
+                                    // CODEC_REMOTEFX: "\xA6\x51\x43\x9C\x35\x35\xAE\x42\x91\x0C\xCD\xFC\xE5\x76\x0B\x58"
+                                    // NSCODEC: "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6"
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        bitmap_codec_caps.addCodec(3, CODEC_GUID_REMOTEFX);
+                        this->remoteFx_codec_id.push_back(3);
+                        bitmap_codec_caps.addCodec(5, CODEC_GUID_IMAGE_REMOTEFX);
+                        this->remoteFx_codec_id.push_back(5);
+                    }
 
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bitmap_codec_caps.log("Sending to server");
@@ -4830,6 +4838,12 @@ public:
         //    "Domain username format 0=(%s) Domain username format 1=(%s)",
         //    domain_username_format_0, domain_username_format_0);
 
+#ifndef __EMSCRIPTEN__
+        if (this->channels.file_system.smartcard_passthrough) {
+            this->authentifier.set_smartcard_login(domain_username_format_0);
+        }
+#endif
+
         if (this->disconnect_on_logon_user_change
             && ((0 != ::strcasecmp(domain, this->logon_info.domain().c_str())
              || 0 != ::strcasecmp(username, this->logon_info.username().c_str()))
@@ -4857,7 +4871,8 @@ public:
         }
 
 #ifndef __EMSCRIPTEN__
-        if (this->channels.session_probe_virtual_channel) {
+        if (this->channels.session_probe_virtual_channel &&
+            this->session_probe_start_launch_timeout_timer_only_after_logon) {
             this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
         }
 #endif
@@ -4923,7 +4938,8 @@ public:
                     disable_input_event, disable_graphics_update);
             }
 
-            if (this->channels.session_probe_virtual_channel) {
+            if (this->channels.session_probe_virtual_channel &&
+                this->session_probe_start_launch_timeout_timer_only_after_logon) {
                 this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
             }
 #endif
@@ -5030,7 +5046,57 @@ public:
         return caps;
     }
 
+// 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
+// ==========================================================
 
+//    shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
+// containing information about the packet. The type subfield of the pduType
+// field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
+
+//    shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for
+// the packet (see [T128] section 8.4.2 for more information regarding share
+// IDs).
+
+//    lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size
+//  in bytes of the sourceDescriptor field.
+
+//    lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. 
+// The combined size in bytes of the numberCapabilities, pad2Octets, and
+// capabilitySets fields.
+
+//    sourceDescriptor (variable): A variable-length array of bytes containing 
+// a source descriptor (see [T128] section 8.4.1 for more information regarding
+// source descriptors).
+
+// numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
+// Demand Active PDU.
+
+// pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+// capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number
+//  of capability sets is specified by the numberCapabilities field.
+
+// sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
+
+    void process_demand_active(ShareControl_Recv & sctrl)
+    {
+        LOG(LOG_INFO, "mod_rdp::recv_demand_active");
+
+        this->share_id = sctrl.payload.in_uint32_le();
+
+        uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
+        uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
+
+        // TODO before skipping we should check we do not go outside current stream
+        sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
+
+        // Read number of capabilities and capabilities content
+        this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
+
+        uint32_t sessionId = sctrl.payload.in_uint32_le();
+        (void)sessionId;
+    }
+    
     void process_server_caps(InStream & stream, uint16_t len) {
         // TODO check stream consumed and len
         (void)len;
@@ -5126,12 +5192,12 @@ public:
                 break;
             case CAPSETTYPE_BITMAP_CODECS:
             {
-                BitmapCodecCaps caps(false);
-                caps.recv(stream, capset_length);
+                Recv_SC_BitmapCodecCaps bitmap_codecs_caps;
+                bitmap_codecs_caps.recv(stream, capset_length);
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    caps.log("Receiving from server");
+                    bitmap_codecs_caps.log("Receiving from server");
                 }
-                this->haveRemoteFx = caps.haveRemoteFxCodec;
+                this->haveRemoteFx = bitmap_codecs_caps.haveRemoteFxCodec;
                 if (this->haveRemoteFx){
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         LOG(LOG_INFO, "RemoteFx Enabled on server ++++++++++++++++");

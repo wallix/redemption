@@ -43,6 +43,8 @@ struct AuthApi : noncopyable
 
     virtual void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * request, const char * id, const char * addr, uint16_t port) = 0;
 
+    virtual void set_smartcard_login(const char * login) = 0;
+
     virtual ~AuthApi() = default;
 };
 
@@ -89,5 +91,10 @@ struct NullAuthentifier : AuthApi
         (void)id;
         (void)addr;
         (void)port;
+    }
+
+    void set_smartcard_login(const char * login) override
+    {
+        (void)login;
     }
 };
