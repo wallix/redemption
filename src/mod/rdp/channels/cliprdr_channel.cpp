@@ -30,6 +30,9 @@
 #include "capture/fdx_capture.hpp"
 
 
+// TODO add timer on file
+// TODO add limit on file transfered
+
 namespace
 {
     enum LockId : uint32_t;
@@ -120,7 +123,7 @@ namespace
 
             Sig sig = Sig();
 
-            bool on_failure = false;
+            bool dlp_failure = false;
         };
 
         uint16_t message_type = 0;
@@ -398,6 +401,19 @@ namespace
             ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
     }
+
+    bool check_header_response(
+        RDPECLIP::CliprdrHeader const& in_header, uint32_t flags, char const* fname)
+    {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            auto mask = RDPECLIP::CB_RESPONSE_FAIL | RDPECLIP::CB_RESPONSE_OK;
+            if ((in_header.msgFlags() & mask) != RDPECLIP::CB_RESPONSE_OK) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 struct ClipboardVirtualChannel::D
@@ -411,7 +427,7 @@ struct ClipboardVirtualChannel::D
     {
         FileValidatorId file_validator_id;
         Direction direction;
-        bool on_failure;
+        bool dlp_failure;
         std::unique_ptr<FdxCapture::TflFile> tfl_file;
         std::string file_name;
         ClipCtx::Sig sig;
@@ -517,7 +533,6 @@ struct ClipboardVirtualChannel::D
         clip.current_format_list.clear();
         clip.current_file_list_format_id = 0;
         clip.has_current_lock = false;
-        clip.files.clear();
 
         // TODO
         if (!clip_enabled || clip.transfer_state != ClipCtx::TransferState::Empty) {
@@ -525,6 +540,59 @@ struct ClipboardVirtualChannel::D
             FormatListSendBack pdu(sender);
             return false;
         }
+
+        auto break_transfer = [&clip, this](ClipCtx::FileContentsRange& rng){
+            rng.sig.broken();
+
+            if (bool(rng.file_validator_id)) {
+                this->self.file_validator->send_eof(rng.file_validator_id);
+                this->file_validator_list.push_back({
+                    rng.file_validator_id,
+                    (&clip == &this->server)
+                        ? Direction::FileFromClient
+                        : Direction::FileFromServer,
+                    rng.dlp_failure,
+                    std::move(rng.tfl_file),
+                    clip.files[size_t(rng.lindex)].file_name,
+                    rng.sig
+                });
+            }
+            else if (rng.tfl_file) {
+                if (this->self.always_file_storage || rng.dlp_failure) {
+                    this->self.fdx_capture->close_tfl(
+                        *rng.tfl_file,
+                        clip.files[size_t(rng.lindex)].file_name,
+                        Mwrm3::TransferedStatus::Broken,
+                        Mwrm3::Sha256Signature{rng.sig.digest_as_av()});
+                }
+                else {
+                    this->self.fdx_capture->cancel_tfl(*rng.tfl_file);
+                }
+                rng.tfl_file.reset();
+            }
+
+            clip.file_contents_data.range.~FileContentsRange();
+            clip.transfer_state = ClipCtx::TransferState::Empty;
+        };
+
+        switch (clip.transfer_state)
+        {
+            case ClipCtx::TransferState::WaitingContinuationRange:
+                break_transfer(clip.file_contents_data.range);
+                break;
+
+            case ClipCtx::TransferState::Size:
+            case ClipCtx::TransferState::Range:
+            case ClipCtx::TransferState::Text:
+                LOG(LOG_ERR, "ClipboardVirtualChannel::process_format_list_pdu:"
+                    " invalid state");
+                throw Error(ERR_RDP_PROTOCOL);
+
+            case ClipCtx::TransferState::Empty:
+                break;
+        }
+
+        clip.files.clear();
 
         InStream in_stream(chunk_data);
         FormatListReceive receiver(
@@ -541,9 +609,14 @@ struct ClipboardVirtualChannel::D
         return true;
     }
 
-    void format_list_response(ClipCtx& /*clip*/)
+    void format_list_response(
+        RDPECLIP::CliprdrHeader const& in_header, uint32_t flags, ClipCtx& clip)
     {
-        // TODO check error
+        // TODO check previously to last
+        if (not check_header_response(in_header, flags, "process_format_list_response_pdu")) {
+            clip.current_file_list_format_id = 0;
+            return ;
+        }
     }
 
     void lock(ClipCtx& clip, bytes_view chunk_data)
@@ -612,9 +685,11 @@ struct ClipboardVirtualChannel::D
         RDPECLIP::CliprdrHeader const& in_header,
         ClipCtx& clip, uint32_t flags, bytes_view chunk_data)
     {
-        // TODO reset other fields
-
-        // TODO check flags: start / done / wait, exception file_contents_* ?
+        // TODO check previously to last
+        if (not check_header_response(in_header, flags, "process_format_data_response_pdu")) {
+            clip.requested_format_id = 0;
+            return ;
+        }
 
         bool is_client_to_server = (&clip == &this->client);
 
@@ -622,13 +697,64 @@ struct ClipboardVirtualChannel::D
             ? this->client.current_format_list
             : this->server.current_format_list;
 
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            clip.files.clear();
-        }
+        auto break_transfer = [&clip, this](ClipCtx::FileContentsRange& rng){
+            rng.sig.broken();
+
+            if (bool(rng.file_validator_id)) {
+                this->self.file_validator->send_eof(rng.file_validator_id);
+                this->file_validator_list.push_back({
+                    rng.file_validator_id,
+                    (&clip == &this->server)
+                        ? Direction::FileFromClient
+                        : Direction::FileFromServer,
+                    rng.dlp_failure,
+                    std::move(rng.tfl_file),
+                    clip.files[size_t(rng.lindex)].file_name,
+                    rng.sig
+                });
+            }
+            else if (rng.tfl_file) {
+                if (this->self.always_file_storage || rng.dlp_failure) {
+                    this->self.fdx_capture->close_tfl(
+                        *rng.tfl_file,
+                        clip.files[size_t(rng.lindex)].file_name,
+                        Mwrm3::TransferedStatus::Broken,
+                        Mwrm3::Sha256Signature{rng.sig.digest_as_av()});
+                }
+                else {
+                    this->self.fdx_capture->cancel_tfl(*rng.tfl_file);
+                }
+                rng.tfl_file.reset();
+            }
+
+            clip.file_contents_data.range.~FileContentsRange();
+            clip.transfer_state = ClipCtx::TransferState::Empty;
+        };
 
         if (clip.current_file_list_format_id
          && clip.current_file_list_format_id == clip.requested_format_id
         ) {
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                switch (clip.transfer_state)
+                {
+                    case ClipCtx::TransferState::WaitingContinuationRange:
+                        break_transfer(clip.file_contents_data.range);
+                        break;
+
+                    case ClipCtx::TransferState::Size:
+                    case ClipCtx::TransferState::Range:
+                    case ClipCtx::TransferState::Text:
+                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_format_data_response_pdu:"
+                            " invalid state");
+                        throw Error(ERR_RDP_PROTOCOL);
+
+                    case ClipCtx::TransferState::Empty:
+                        break;
+                }
+
+                clip.files.clear();
+            }
+
             InStream in_stream(chunk_data);
             FormatDataResponseReceiveFileList receiver(
                 clip.files,
@@ -663,10 +789,9 @@ struct ClipboardVirtualChannel::D
                         switch (clip.transfer_state)
                         {
                             case ClipCtx::TransferState::WaitingContinuationRange:
-                                // TODO move to file_validator_list
-                                clip.file_contents_data.range.~FileContentsRange();
-                                clip.transfer_state = ClipCtx::TransferState::Empty;
+                                break_transfer(clip.file_contents_data.range);
                                 [[fallthrough]];
+
                             case ClipCtx::TransferState::Empty:
                                 new (&clip.file_contents_data.text) ClipCtx::TextData{
                                     this->self.file_validator->open_text(
@@ -677,6 +802,7 @@ struct ClipboardVirtualChannel::D
                                 };
                                 clip.transfer_state = ClipCtx::TransferState::Text;
                                 break;
+
                             case ClipCtx::TransferState::Size:
                             case ClipCtx::TransferState::Range:
                             case ClipCtx::TransferState::Text:
@@ -685,6 +811,7 @@ struct ClipboardVirtualChannel::D
                                 throw Error(ERR_RDP_PROTOCOL);
                         }
                     }
+
                     InStream in_stream(chunk_data);
                     uint8_t utf8_buf[32*1024];
                     auto utf8_av = UTF16toUTF8_buf(
@@ -802,6 +929,7 @@ struct ClipboardVirtualChannel::D
             rng.file_size_requested = file_contents_request_pdu.cbRequested();
         };
 
+        // TODO move to response
         auto new_range = [&](std::vector<CliprdFileInfo> const& files){
             FileValidatorId file_validator_id{};
             if (!clip.validator_target_name.empty()) {
@@ -846,9 +974,11 @@ struct ClipboardVirtualChannel::D
                      && file_contents_request_pdu.position() != 0
                     ) {
                         update_continuation_range(clip.file_contents_data.range);
+                        clip.transfer_state = ClipCtx::TransferState::Range;
                         break;
                     }
                     else {
+                        // TODO move tfl and validator
                         clip.file_contents_data.range.~FileContentsRange();
                         clip.transfer_state = ClipCtx::TransferState::Empty;
                         [[fallthrough]];
@@ -930,9 +1060,37 @@ struct ClipboardVirtualChannel::D
         RDPECLIP::CliprdrHeader const& in_header,
         ClipCtx& clip, uint32_t flags, bytes_view chunk_data)
     {
-        InStream in_stream(chunk_data);
+        // TODO check previously to last
+        if (not check_header_response(in_header, flags, "process_filecontents_response_pdu")) {
+            clip.has_current_file_contents_stream_id = false;
+            // TODO disable range or size
 
-        // TODO check first / cont / last status (otherwise, invalid current_file_contents_stream_id)
+            switch (clip.transfer_state)
+            {
+                case ClipCtx::TransferState::Text:
+                case ClipCtx::TransferState::Empty:
+                case ClipCtx::TransferState::WaitingContinuationRange:
+                    // TODO error ?
+                    break;
+
+                case ClipCtx::TransferState::Size:
+                    clip.file_contents_data.size.~FileContentsSize();
+                    clip.transfer_state = ClipCtx::TransferState::Empty;
+                    break;
+
+                case ClipCtx::TransferState::Range:
+                    auto& rng = clip.file_contents_data.range;
+                    // TODO if position() == 0 ?
+                    rng.sig.broken();
+                    clip.file_contents_data.size.~FileContentsSize();
+                    clip.transfer_state = ClipCtx::TransferState::Empty;
+                    break;
+            }
+
+            return ;
+        }
+
+        InStream in_stream(chunk_data);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             ::check_throw(in_stream, 4, "FileContentsResponse::receive", ERR_RDP_DATA_TRUNCATED);
@@ -1015,14 +1173,14 @@ struct ClipboardVirtualChannel::D
                     (&clip == &this->server)
                         ? Direction::FileFromClient
                         : Direction::FileFromServer,
-                    file_contents_range.on_failure,
+                    file_contents_range.dlp_failure,
                     std::move(file_contents_range.tfl_file),
                     files[size_t(file_contents_range.lindex)].file_name,
                     file_contents_range.sig
                 });
             }
             else if (file_contents_range.tfl_file) {
-                if (this->self.always_file_storage || file_contents_range.on_failure) {
+                if (this->self.always_file_storage || file_contents_range.dlp_failure) {
                     this->self.fdx_capture->close_tfl(
                         *file_contents_range.tfl_file,
                         files[size_t(file_contents_range.lindex)].file_name,
@@ -1046,7 +1204,6 @@ struct ClipboardVirtualChannel::D
                 " invalid state");
             throw Error(ERR_RDP_PROTOCOL);
         case ClipCtx::TransferState::Size:
-            // TODO check flag = last
             if (clip.file_contents_data.size.stream_id == stream_id) {
                 update_file_size_or_throw(
                     clip.files, clip.file_contents_data.size, flags, in_stream.remaining_bytes());
@@ -1066,15 +1223,18 @@ struct ClipboardVirtualChannel::D
                         finalize_transfer(clip.files, rng);
                         clip.transfer_state = ClipCtx::TransferState::Empty;
                         clip.file_contents_data.range.~FileContentsRange();
+                        clip.has_current_file_contents_stream_id = false;
                     }
                 }
                 else {
+                    // TODO already to top function
                     auto& rng = clip.file_contents_data.range;
                     clip.has_current_file_contents_stream_id = false;
                     rng.sig.final();
                     if (finalize_transfer(clip.files, rng)) {
                         clip.file_contents_data.range.~FileContentsRange();
                         clip.transfer_state = ClipCtx::TransferState::Empty;
+                        clip.has_current_file_contents_stream_id = false;
                     }
                     else {
                         clip.transfer_state = ClipCtx::TransferState::WaitingContinuationRange;
@@ -1083,6 +1243,7 @@ struct ClipboardVirtualChannel::D
                 return ;
             }
             break;
+        // TODO error ? should be a range
         case ClipCtx::TransferState::WaitingContinuationRange:
             if (clip.file_contents_data.range.stream_id == stream_id) {
                 auto& rng = clip.file_contents_data.range;
@@ -1093,6 +1254,7 @@ struct ClipboardVirtualChannel::D
                     clip.transfer_state = ClipCtx::TransferState::Empty;
                     clip.file_contents_data.range.~FileContentsRange();
                 }
+                return ;
             }
             break;
         }
@@ -1444,7 +1606,7 @@ struct ClipboardVirtualChannel::D
                                     ? Direction::FileFromServer
                                     : Direction::FileFromClient,
                                 clip.files[size_t(rng.lindex)].file_name);
-                            rng.on_failure
+                            rng.dlp_failure
                                 = this->self.file_validator->last_result_flag() != ValidationResult::IsAccepted;
                             rng.file_validator_id = FileValidatorId();
                             return true;
@@ -1655,7 +1817,7 @@ void ClipboardVirtualChannel::process_server_message(
                     this->format_list_response_notifier = nullptr;
                 }
             }
-            this->d->format_list_response(this->d->client);
+            this->d->format_list_response(header, flags, this->d->client);
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
@@ -1758,7 +1920,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-            this->d->format_list_response(this->d->server);
+            this->d->format_list_response(header, flags, this->d->server);
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
