@@ -450,8 +450,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             session_reactor.set_current_time(time_test);
 
             ReportMessage report_message;
-            BufTransport buf_trans;
-            FileValidatorService file_validator_service(buf_trans);
+            BufTransport validator_transport;
+            FileValidatorService file_validator_service(validator_transport);
 
             BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -500,7 +500,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             const auto file_group_id = 49262;
 
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+            RED_CHECK_SMEM(validator_transport.buf, ""_av);
 
             {
                 using namespace RDPECLIP;
@@ -522,7 +522,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 "\x01\x00\x00\x00\x02\x00\x00\x00" //........
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+            RED_CHECK_SMEM(validator_transport.buf, ""_av);
 
             {
                 StaticOutStream<1600> out;
@@ -542,7 +542,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 "\x72\x00\x57\x00\x00\x00" //r.W... !
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+            RED_CHECK_SMEM(validator_transport.buf, ""_av);
 
             // skip format list response
 
@@ -559,7 +559,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+            RED_CHECK_SMEM(validator_transport.buf, ""_av);
 
             {
                 using namespace Cliprdr;
@@ -624,7 +624,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             RED_REQUIRE(report_message.messages.size() == 1);
             RED_CHECK(report_message.messages[0] ==
                 "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=FileGroupDescriptorW(49262) size=596"_av);
-            RED_CHECK(buf_trans.buf == ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 using namespace RDPECLIP;
@@ -642,38 +642,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 "\x00\x00\x00\x00"_av);
             RED_CHECK(report_message.messages.size() == 1);
 
-            if (d.with_validator) {
-                RED_CHECK_SMEM(buf_trans.buf,
-                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b""filename\x00\x03""abc"
-                    ""_av);
-            }
-
-            buf_trans.buf.clear();
-            StaticOutStream<256> out;
-            auto status = "ok"_av;
-
-            using namespace LocalFileValidatorProtocol;
-            FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
-            FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
-                checked_int(status.size())}.emit(out);
-            out.out_copy_bytes(status);
-            auto av = out.get_bytes().as_chars();
-
-            buf_trans.buf.assign(av.data(), av.size());
-            clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-            buf_trans.buf.clear();
-
-            size_t expected_report_messages_size = 1;
-
-            if (d.with_validator) {
-                ++expected_report_messages_size;
-            }
-            RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
-            if (d.with_validator) {
-                RED_CHECK_SMEM(report_message.messages[expected_report_messages_size-1u],
-                    "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av);
-            }
-
             // file content
 
             {
@@ -690,12 +658,43 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             RED_CHECK_MEM(to_server_sender.bytes(3),
                 "\t\x00\x01\x00\x10\x00\x00\x00\x00\x00\x00\x00""data_abcdefg"
                 ""_av);
-            ++expected_report_messages_size;
-            RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
-            RED_CHECK_SMEM(report_message.messages[expected_report_messages_size-1u],
+            RED_REQUIRE(report_message.messages.size() == 2);
+            RED_CHECK_SMEM(report_message.messages[1],
                 "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=abc size=12"
                 " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+
+
+            size_t expected_report_messages_size = 2;
+
+            if (d.with_validator) {
+                RED_CHECK_SMEM(validator_transport.buf,
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b""filename\x00\x03""abc\x03\x00\x00\x00\x04\x00\x00\x00\x01"
+                    ""_av);
+
+                validator_transport.buf.clear();
+                StaticOutStream<256> out;
+                auto status = "ok"_av;
+
+                using namespace LocalFileValidatorProtocol;
+                FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
+                FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
+                    checked_int(status.size())}.emit(out);
+                out.out_copy_bytes(status);
+                auto av = out.get_bytes().as_chars();
+
+                validator_transport.buf.assign(av.data(), av.size());
+                clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+                validator_transport.buf.clear();
+
+                ++expected_report_messages_size;
+            }
+
+            RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
+
+            if (d.with_validator) {
+                RED_CHECK_SMEM(report_message.messages[expected_report_messages_size-1u],
+                    "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av);
+            }
 
             if (fdx_ctx && d.always_file_storage) {
                 auto basename = str_concat(sid, ",000001.tfl");
@@ -722,7 +721,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == expected_report_messages_size);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+            RED_CHECK_SMEM(validator_transport.buf, ""_av);
 
             // skip format list response
 
@@ -739,7 +738,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
                 "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == expected_report_messages_size);
-            RED_CHECK_SMEM(buf_trans.buf, ""_av);
+            RED_CHECK_SMEM(validator_transport.buf, ""_av);
 
             {
                 using namespace Cliprdr;
@@ -758,22 +757,24 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             RED_CHECK_SMEM(report_message.messages[expected_report_messages_size-1u],
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av);
             if (d.with_validator) {
-                RED_CHECK_SMEM(buf_trans.buf,
+                RED_CHECK_SMEM(validator_transport.buf,
                     "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up\x00\x01\x00\x13microsoft_locale_id\x00\x01"
                     "0\x01\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av);
-                buf_trans.buf.clear();
-            }
+                validator_transport.buf.clear();
 
-            out.rewind();
-            FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
-            FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(2),
-                checked_int(status.size())}.emit(out);
-            out.out_copy_bytes(status);
-            av = out.get_bytes().as_chars();
-            buf_trans.buf.assign(av.data(), av.size());
+                StaticOutStream<256> out;
+                auto status = "ok"_av;
 
-            clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-            if (d.with_validator) {
+                using namespace LocalFileValidatorProtocol;
+                FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
+                FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(2),
+                    checked_int(status.size())}.emit(out);
+                out.out_copy_bytes(status);
+                auto av = out.get_bytes().as_chars();
+                validator_transport.buf.assign(av.data(), av.size());
+
+                clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+
                 ++expected_report_messages_size;
             }
             RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
