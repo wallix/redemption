@@ -295,8 +295,9 @@ void TS_RFX_CHANNELS::send(OutStream & stream) {
     stream.out_uint16_le(6 + this->numChannels * 6);
 
     stream.out_uint8(this->numChannels); /* numChannels (1 byte) */
-    for (int i = 0; i < this->numChannels; i++)
+    for (int i = 0; i < this->numChannels; i++){
         this->channels[i].send(stream);
+    }
 }
 
 //
@@ -716,8 +717,9 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
     ::check_throw(stream, tileDataSize, "TS_RFX_TILESET::recv invalid TS_RFX_TILESET tileDataSize", ERR_MCS_PDU_TRUNCATED);
 
     InStream tilesStream({stream.get_current(), this->tileDataSize});
-    for (int i = 0; i < this->numTiles; i++)
+    for (int i = 0; i < this->numTiles; i++){
         this->tiles[i].recv(tilesStream);
+    }
 
     uint16_t width = roundTo(cmd.width, 64);
     uint16_t height = roundTo(cmd.height, 64);
