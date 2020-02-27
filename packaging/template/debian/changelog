@@ -1,3 +1,9 @@
+redemption (7.4.39%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Change option for bitmapcache v2 compatibility with AM
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 27 Feb 2020 10:43:06 +0200
+
 redemption (7.4.35%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix RemoteFx passthrough support + graphic artifacts
