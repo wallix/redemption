@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
     FakeDataSender data_sender;
 
-    FormatListSendBack sender(&data_sender);
+    format_list_send_back(&data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
     RED_CHECK_MEM(data_sender.streams[0].av(), "\x03\x00\x01\x00\x00\x00\x00\x00"_av);

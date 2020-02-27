@@ -257,26 +257,23 @@ struct FormatListReceive
     }
 };
 
-struct FormatListSendBack
+inline void format_list_send_back(VirtualChannelDataSender* sender)
 {
-    FormatListSendBack(VirtualChannelDataSender* sender)
-    {
-        if (!sender) {
-            return ;
-        }
-
-        RDPECLIP::FormatListResponsePDU pdu;
-
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, pdu.size());
-
-        StaticOutStream<256> out_stream;
-
-        header.emit(out_stream);
-        pdu.emit(out_stream);
-
-        sender->operator()(
-            out_stream.get_offset(),
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_bytes());
+    if (!sender) {
+        return ;
     }
-};
+
+    RDPECLIP::FormatListResponsePDU pdu;
+
+    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, pdu.size());
+
+    StaticOutStream<256> out_stream;
+
+    header.emit(out_stream);
+    pdu.emit(out_stream);
+
+    sender->operator()(
+        out_stream.get_offset(),
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+        out_stream.get_bytes());
+}
