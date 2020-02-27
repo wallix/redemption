@@ -32,6 +32,7 @@
 
 // TODO add timer on file
 // TODO add limit on file transfered
+// TODO status = broken => not to index ??????????
 
 namespace
 {
@@ -280,11 +281,12 @@ namespace
         }
 
         // TODO add ifile
-        LockedFileContentsRange* search_range_by_offset(LockId lock_id, uint64_t offset)
+        LockedFileContentsRange* search_range_by_offset(LockId lock_id, FileGroupId ifile, uint64_t offset)
         {
             for (auto& r : this->locked_file_contents_ranges) {
                 if (r.lock_id == lock_id
                  && r.state == LockedTransferState::WaitingRequest
+                 && r.file_contents_range.lindex == ifile
                  && r.file_contents_range.file_offset == offset
                 ) {
                     return &r;
@@ -1073,7 +1075,7 @@ struct ClipboardVirtualChannel::D
 
             if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
                 auto* r = clip.search_range_by_offset(
-                    lock_id, file_contents_request_pdu.position());
+                    lock_id, ifile, file_contents_request_pdu.position());
 
                 LOG(LOG_DEBUG, "pos %zu (is %d) ifile %u stream_id %u",
                     file_contents_request_pdu.position(), bool(r), ifile, stream_id);
@@ -1269,7 +1271,6 @@ struct ClipboardVirtualChannel::D
                         else {
                             clip.transfer_state = ClipCtx::TransferState::WaitingContinuationRange;
                         }
-                        clip.has_current_file_contents_stream_id = false;
                     }
                 }
                 else {
@@ -1288,6 +1289,22 @@ struct ClipboardVirtualChannel::D
             not clip.locked_file_contents_requested_range.file_contents_requested_range
                 .file_name.empty());
 
+        auto update_locked_file_range = [&](ClipCtx::LockedFileContentsRange& locked_file){
+            auto& rng = locked_file.file_contents_range;
+
+            update_file_range_data(rng, in_stream.remaining_bytes());
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                clip.has_current_file_contents_stream_id = false;
+                if (this->finalize_file_transfer(clip, rng)) {
+                    clip.remove_locked_file_contents_range(&locked_file);
+                }
+                else {
+                    locked_file.state = ClipCtx::LockedTransferState::WaitingRequest;
+                }
+            }
+        };
+
         if (clip.locked_file_contents_requested_range.is_stream_id(stream_id)) {
             if (is_ok) {
                 auto& r =
@@ -1299,21 +1316,7 @@ struct ClipboardVirtualChannel::D
                 });
                 clip.locked_file_contents_requested_range.disable();
 
-                auto* locked_contents_range = &r;
-                auto& rng = locked_contents_range->file_contents_range;
-
-                update_file_range_data(rng, in_stream.remaining_bytes());
-
-                if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-
-                    clip.has_current_file_contents_stream_id = false;
-                    if (this->finalize_file_transfer(clip, rng)) {
-                        clip.remove_locked_file_contents_range(locked_contents_range);
-                    }
-                    else {
-                        locked_contents_range->state = ClipCtx::LockedTransferState::WaitingRequest;
-                    }
-                }
+                update_locked_file_range(r);
             }
             else {
                 clip.locked_file_contents_requested_range.file_contents_requested_range.file_name.empty();
@@ -1321,24 +1324,12 @@ struct ClipboardVirtualChannel::D
             }
         }
         else if (auto* locked_contents_range = clip.search_range_by_id(stream_id)) {
-            auto& rng = locked_contents_range->file_contents_range;
-
             if (is_ok) {
-                update_file_range_data(rng, in_stream.remaining_bytes());
-
-                if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    clip.has_current_file_contents_stream_id = false;
-                    if (this->finalize_file_transfer(clip, rng)) {
-                        clip.remove_locked_file_contents_range(locked_contents_range);
-                    }
-                    else {
-                        locked_contents_range->state = ClipCtx::LockedTransferState::WaitingRequest;
-                    }
-                }
+                update_locked_file_range(*locked_contents_range);
             }
             else {
                 clip.has_current_file_contents_stream_id = false;
-                this->broken_file_transfer(clip, rng);
+                this->broken_file_transfer(clip, locked_contents_range->file_contents_range);
                 clip.remove_locked_file_contents_range(locked_contents_range);
             }
         }
