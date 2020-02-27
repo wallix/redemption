@@ -985,9 +985,14 @@ struct ClipboardVirtualChannel::D
          || not file_contents_request_pdu.has_optional_clipDataId()
         ) {
             if (lindex >= clip.files.size()) {
-                LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                    " Invalid lindex %u", lindex);
-                throw Error(ERR_RDP_PROTOCOL);
+                FilecontentsRequestSendBack(
+                    file_contents_request_pdu.dwFlags(),
+                    file_contents_request_pdu.streamId(),
+                    sender);
+                return false;
+                // LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                //     " Invalid lindex %u", lindex);
+                // throw Error(ERR_RDP_PROTOCOL);
             }
 
             switch (clip.transfer_state)
