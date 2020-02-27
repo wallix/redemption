@@ -287,8 +287,9 @@ bogus_pointer_xormask_padding = boolean(default=False)
 #_advanced
 disabled_orders = string_list(default=list())
 
+# Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
-wabam_uses_cache_bitmap_r2 = boolean(default=False)
+force_bitmap_cache_v2_with_am = boolean(default=True)
 
 [mod_rdp]
 
