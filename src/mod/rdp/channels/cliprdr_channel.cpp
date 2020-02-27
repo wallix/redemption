@@ -567,6 +567,7 @@ struct ClipboardVirtualChannel::D
     [[nodiscard]]
     bool finalize_file_transfer(ClipCtx& clip, ClipCtx::FileContentsRange& file_rng)
     {
+        LOG(LOG_DEBUG, "finalize: %zu/%zu", file_rng.file_offset, file_rng.file_size);
         if (file_rng.file_offset < file_rng.file_size) {
             return false;
         }
@@ -1178,9 +1179,16 @@ struct ClipboardVirtualChannel::D
             ClipCtx::FileContentsRange& file_contents_range,
             bytes_view data
         ){
+            LOG(LOG_DEBUG, "size = %zu  requested = %zu",
+                data.size(), file_contents_range.file_size_requested);
+
             if (data.size() >= file_contents_range.file_size_requested) {
                 data = data.first(file_contents_range.file_size_requested);
             }
+
+            LOG(LOG_DEBUG, "offset %zu -> %zu",
+                file_contents_range.file_offset,
+                file_contents_range.file_offset + data.size());
 
             file_contents_range.sig.update(data);
             file_contents_range.file_offset += data.size();
@@ -1244,6 +1252,7 @@ struct ClipboardVirtualChannel::D
                 if (is_ok) {
                     auto& rng = clip.file_contents_data.range;
                     update_file_range_data(rng, in_stream.remaining_bytes());
+
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                         clip.has_current_file_contents_stream_id = false;
                         if (this->finalize_file_transfer(clip, rng)) {
@@ -1283,9 +1292,12 @@ struct ClipboardVirtualChannel::D
                 });
                 clip.locked_file_contents_requested_range.disable();
 
+                auto* locked_contents_range = &r;
+                auto& rng = locked_contents_range->file_contents_range;
+
+                update_file_range_data(rng, in_stream.remaining_bytes());
+
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    auto* locked_contents_range = &r;
-                    auto& rng = locked_contents_range->file_contents_range;
 
                     clip.has_current_file_contents_stream_id = false;
                     if (this->finalize_file_transfer(clip, rng)) {
@@ -1736,6 +1748,27 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                 ? Direction::FileFromServer
                 : Direction::FileFromClient;
 
+            auto close_rng = [&](ClipCtx::FileContentsRange& rng){
+                auto& file_name = rng.file_name;
+
+                if (rng.tfl_file) {
+                    rng.sig.broken();
+                    this->fdx_capture->close_tfl(
+                        *rng.tfl_file,
+                        file_name,
+                        Mwrm3::TransferedStatus::Broken,
+                        Mwrm3::Sha256Signature{rng.sig.digest_as_av()});
+                }
+
+                if (bool(rng.file_validator_id)) {
+                    dlpav_report_file(
+                        file_name,
+                        this->report_message,
+                        this->session_reactor.get_current_time(),
+                        direction, status);
+                }
+            };
+
             switch (clip.transfer_state)
             {
             case ClipCtx::TransferState::Empty:
@@ -1759,30 +1792,14 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 
             case ClipCtx::TransferState::Range:
             case ClipCtx::TransferState::WaitingContinuationRange: {
-                auto& rng = clip.file_contents_data.range;
-                auto& file_name = rng.file_name;
-
-                if (rng.tfl_file) {
-                    rng.sig.broken();
-                    this->fdx_capture->close_tfl(
-                        *rng.tfl_file,
-                        file_name,
-                        Mwrm3::TransferedStatus::Broken,
-                        Mwrm3::Sha256Signature{rng.sig.digest_as_av()});
-                }
-
-                if (bool(rng.file_validator_id)) {
-                    dlpav_report_file(
-                        file_name,
-                        this->report_message,
-                        this->session_reactor.get_current_time(),
-                        direction, status);
-                }
-
-                rng.~FileContentsRange();
-
+                close_rng(clip.file_contents_data.range);
+                clip.file_contents_data.range.~FileContentsRange();
                 break;
             }
+            }
+
+            for (auto& locked_file : clip.locked_file_contents_ranges) {
+                close_rng(locked_file.file_contents_range);
             }
         };
 
