@@ -975,7 +975,9 @@ struct ClipboardVirtualChannel::D
                 throw Error(ERR_RDP_UNSUPPORTED);
             }
             rng.stream_id = stream_id;
-            rng.file_size_requested = file_contents_request_pdu.cbRequested();
+            rng.file_size_requested = std::min(
+                rng.file_size - rng.file_offset,
+                uint64_t(file_contents_request_pdu.cbRequested()));
         };
 
         // ignore lock if don't have CB_CAN_LOCK_CLIPDATA
@@ -1115,7 +1117,7 @@ struct ClipboardVirtualChannel::D
                 r.stream_id,
                 r.lindex,
                 0,
-                r.file_size_requested,
+                std::min(r.file_size_requested, r.file_size),
                 r.file_size,
                 std::move(r.file_name),
                 file_validator_id,
