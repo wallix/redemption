@@ -282,7 +282,11 @@ void config_spec_definition(Writer && W)
             "This option takes precedence over the option Extra orders of section mod_rdp."
         }, set(""));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "wabam_uses_cache_bitmap_r2", set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
+                 "force_bitmap_cache_v2_with_am",
+                 desc{"Force usage of bitmap cache V2 for compatibility "
+                         "with WALLIX Access Manager."},
+                 set(true));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]

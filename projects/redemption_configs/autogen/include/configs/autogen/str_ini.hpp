@@ -345,9 +345,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disabled_orders = 
 
+# Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 # value: 0 or 1
 #_advanced
-#wabam_uses_cache_bitmap_r2 = 0
+#force_bitmap_cache_v2_with_am = 1
 
 [mod_rdp]
 
