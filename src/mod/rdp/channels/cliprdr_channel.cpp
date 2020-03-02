@@ -278,6 +278,131 @@ namespace
             }
         };
 
+        struct LockedData
+        {
+            struct LockedSize
+            {
+                LockId lock_id;
+                FileContentsSize file_contents_size;
+            };
+
+            struct LockedRange
+            {
+                enum State : bool { WaitingResponse, WaitingRequest, };
+
+                LockId lock_id;
+                State state;
+                FileContentsRange file_contents_range;
+            };
+
+            struct LockedRequestedRange
+            {
+                LockId lock_id;
+                FileContentsRequestedRange file_contents_requested_range;
+
+                bool is_stream_id(StreamId id)
+                {
+                    return file_contents_requested_range.stream_id == id
+                    && not file_contents_requested_range.file_name.empty();
+                }
+
+                void disable()
+                {
+                    this->file_contents_requested_range.file_name.clear();
+                }
+            };
+
+            struct LockedFileList
+            {
+                LockId lock_id;
+                std::vector<CliprdFileInfo> files;
+            };
+
+            std::vector<LockedSize> sizes;
+            std::vector<LockedRange> ranges;
+
+            LockedRequestedRange requested_range = []{
+                LockedRequestedRange r {};
+                r.disable();
+                return r;
+            }();
+
+            std::vector<LockedFileList> lock_list;
+
+
+            LockedFileList* search_lock_by_id(LockId lock_id)
+            {
+                for (auto& r : this->lock_list) {
+                    if (r.lock_id == lock_id) {
+                        return &r;
+                    }
+                }
+                return nullptr;
+            }
+
+            LockedRange* search_range_by_id(StreamId stream_id)
+            {
+                for (auto& r : this->ranges) {
+                    if (r.file_contents_range.stream_id == stream_id
+                     && r.state == LockedRange::State::WaitingResponse
+                    ) {
+                        return &r;
+                    }
+                }
+                return nullptr;
+            }
+
+            LockedRange* search_range_by_validator_id(FileValidatorId id)
+            {
+                for (auto& r : this->ranges) {
+                    if (r.file_contents_range.file_validator_id == id) {
+                        return &r;
+                    }
+                }
+                return nullptr;
+            }
+
+            void remove_locked_file_contents_range(LockedRange* p)
+            {
+                vector_fast_erase(this->ranges, p);
+            }
+
+            LockedRange* search_range_by_offset(LockId lock_id, FileGroupId ifile, uint64_t offset)
+            {
+                for (auto& r : this->ranges) {
+                    if (r.lock_id == lock_id
+                     && r.state == LockedRange::State::WaitingRequest
+                     && r.file_contents_range.lindex == ifile
+                     && r.file_contents_range.file_offset == offset
+                    ) {
+                        return &r;
+                    }
+                }
+                return nullptr;
+            }
+
+            LockedSize* search_size_by_id(StreamId stream_id)
+            {
+                for (auto& r : this->sizes) {
+                    if (r.file_contents_size.stream_id == stream_id) {
+                        return &r;
+                    }
+                }
+                return nullptr;
+            }
+
+            void remove_locked_file_contents_size(LockedSize* p)
+            {
+                vector_fast_erase(this->sizes, p);
+            }
+
+            bool contains_stream_id(StreamId stream_id)
+            {
+                return this->search_range_by_id(stream_id)
+                    || this->search_size_by_id(stream_id);
+            }
+        };
+
         struct OptionalLockId
         {
             void disable()
@@ -370,128 +495,8 @@ namespace
 
         StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
-
         NoLockData nolock_data;
-
-        struct LockedFileContentsSize
-        {
-            LockId lock_id;
-            FileContentsSize file_contents_size;
-        };
-
-        enum LockedTransferState : bool { WaitingResponse, WaitingRequest, };
-
-        struct LockedFileContentsRange
-        {
-            LockId lock_id;
-            LockedTransferState state;
-            FileContentsRange file_contents_range;
-        };
-
-        struct LockedFileContentsRequestedRange
-        {
-            LockId lock_id;
-            FileContentsRequestedRange file_contents_requested_range;
-
-            bool is_stream_id(StreamId id)
-            {
-                return file_contents_requested_range.stream_id == id
-                && not file_contents_requested_range.file_name.empty();
-            }
-
-            void disable()
-            {
-                file_contents_requested_range.stream_id = StreamId(99999);
-            }
-        };
-
-        std::vector<LockedFileContentsSize> locked_file_contents_sizes;
-        std::vector<LockedFileContentsRange> locked_file_contents_ranges;
-
-        LockedFileContentsRequestedRange locked_file_contents_requested_range = []{
-            LockedFileContentsRequestedRange r {};
-            r.disable();
-            return r;
-        }();
-
-        struct LockData
-        {
-            LockId lock_id;
-            std::vector<CliprdFileInfo> files;
-        };
-
-        std::vector<LockData> lock_list;
-
-        LockData* search_lock_by_id(LockId lock_id)
-        {
-            for (auto& r : this->lock_list) {
-                if (r.lock_id == lock_id) {
-                    return &r;
-                }
-            }
-            return nullptr;
-        }
-
-        LockedFileContentsRange* search_range_by_id(StreamId stream_id)
-        {
-            for (auto& r : this->locked_file_contents_ranges) {
-                if (r.file_contents_range.stream_id == stream_id
-                 && r.state == LockedTransferState::WaitingResponse) {
-                    return &r;
-                }
-            }
-            return nullptr;
-        }
-
-        LockedFileContentsRange* search_range_by_validator_id(FileValidatorId id)
-        {
-            for (auto& r : this->locked_file_contents_ranges) {
-                if (r.file_contents_range.file_validator_id == id) {
-                    return &r;
-                }
-            }
-            return nullptr;
-        }
-
-        void remove_locked_file_contents_range(LockedFileContentsRange* p)
-        {
-            vector_fast_erase(this->locked_file_contents_ranges, p);
-        }
-
-        LockedFileContentsRange* search_range_by_offset(LockId lock_id, FileGroupId ifile, uint64_t offset)
-        {
-            for (auto& r : this->locked_file_contents_ranges) {
-                if (r.lock_id == lock_id
-                 && r.state == LockedTransferState::WaitingRequest
-                 && r.file_contents_range.lindex == ifile
-                 && r.file_contents_range.file_offset == offset
-                ) {
-                    return &r;
-                }
-            }
-            return nullptr;
-        }
-
-        LockedFileContentsSize* search_size_by_id(StreamId stream_id)
-        {
-            for (auto& r : this->locked_file_contents_sizes) {
-                if (r.file_contents_size.stream_id == stream_id) {
-                    return &r;
-                }
-            }
-            return nullptr;
-        }
-
-        void remove_locked_file_contents_size(LockedFileContentsSize* p)
-        {
-            vector_fast_erase(this->locked_file_contents_sizes, p);
-        }
-
-        bool contains_stream_id(StreamId stream_id)
-        {
-            return this->search_range_by_id(stream_id)
-                || this->search_size_by_id(stream_id);
-        }
+        LockedData locked_data;
     };
 
     struct ClientCtx : ClipCtx {};
@@ -925,11 +930,13 @@ struct ClipboardVirtualChannel::D
         else {
             // TODO stop current transfers
             auto p = std::find_if(
-                clip.lock_list.begin(), clip.lock_list.end(),
-                [&](ClipCtx::LockData const& l){ return l.lock_id == lock_id; });
+                clip.locked_data.lock_list.begin(), clip.locked_data.lock_list.end(),
+                [&](ClipCtx::LockedData::LockedFileList const& l){
+                    return l.lock_id == lock_id;
+                });
 
-            if (p != clip.lock_list.end()) {
-                vector_fast_erase(clip.lock_list, &*p);
+            if (p != clip.locked_data.lock_list.end()) {
+                vector_fast_erase(clip.locked_data.lock_list, &*p);
             }
         }
     }
@@ -1009,7 +1016,7 @@ struct ClipboardVirtualChannel::D
 
             if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST) && clip.optional_lock_id.has_unused_lock()) {
                 LOG(LOG_DEBUG, "%c push lock %d", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
-                clip.lock_list.push_back(ClipCtx::LockData{
+                clip.locked_data.lock_list.push_back(ClipCtx::LockedData::LockedFileList{
                     clip.optional_lock_id.lock_id(), std::move(clip.files)});
                 clip.optional_lock_id.set_used();
             }
@@ -1233,11 +1240,11 @@ struct ClipboardVirtualChannel::D
         else {
             const auto lock_id = LockId(file_contents_request_pdu.clipDataId());
 
-            for (auto& r : clip.lock_list) {
+            for (auto& r : clip.locked_data.lock_list) {
                 LOG(LOG_DEBUG, "%c r.id = %u", (&clip == &this->server ? '>' : '<'), r.lock_id);
             }
 
-            auto* lock_data = clip.search_lock_by_id(lock_id);
+            auto* lock_data = clip.locked_data.search_lock_by_id(lock_id);
 
             if (not lock_data) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
@@ -1251,14 +1258,14 @@ struct ClipboardVirtualChannel::D
                 throw Error(ERR_RDP_PROTOCOL);
             }
 
-            if (clip.contains_stream_id(stream_id)) {
+            if (clip.locked_data.contains_stream_id(stream_id)) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " streamId already used (%u)", stream_id);
                 throw Error(ERR_RDP_PROTOCOL);
             }
 
             if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
-                auto* r = clip.search_range_by_offset(
+                auto* r = clip.locked_data.search_range_by_offset(
                     lock_id, ifile, file_contents_request_pdu.position());
 
                 LOG(LOG_DEBUG, "pos %zu (is %d) ifile %u stream_id %u",
@@ -1266,25 +1273,23 @@ struct ClipboardVirtualChannel::D
 
                 if (r) {
                     update_continuation_range(r->file_contents_range);
-                    r->state = ClipCtx::LockedTransferState::WaitingResponse;
+                    r->state = ClipCtx::LockedData::LockedRange::State::WaitingResponse;
                 }
                 else {
-                    clip.locked_file_contents_requested_range
-                        = ClipCtx::LockedFileContentsRequestedRange{
-                            lock_id, {
-                                stream_id,
-                                ifile,
-                                file_contents_request_pdu.cbRequested(),
-                                lock_data->files[lindex].file_size,
-                                lock_data->files[lindex].file_name
-                            }
-                        };
+                    clip.locked_data.requested_range = ClipCtx::LockedData::LockedRequestedRange{
+                        lock_id, {
+                            stream_id,
+                            ifile,
+                            file_contents_request_pdu.cbRequested(),
+                            lock_data->files[lindex].file_size,
+                            lock_data->files[lindex].file_name
+                        }
+                    };
                 }
             }
             else {
                 LOG(LOG_DEBUG, "push size");
-                clip.locked_file_contents_sizes.push_back(
-                    {lock_id, {stream_id, ifile}});
+                clip.locked_data.sizes.push_back({lock_id, {stream_id, ifile}});
             }
         }
 
@@ -1464,11 +1469,11 @@ struct ClipboardVirtualChannel::D
         }
 
         LOG(LOG_DEBUG, "locked_file_contents_requested_range.stream_id = %u (%d)",
-            clip.locked_file_contents_requested_range.file_contents_requested_range.stream_id,
-            not clip.locked_file_contents_requested_range.file_contents_requested_range
+            clip.locked_data.requested_range.file_contents_requested_range.stream_id,
+            not clip.locked_data.requested_range.file_contents_requested_range
                 .file_name.empty());
 
-        auto update_locked_file_range = [&](ClipCtx::LockedFileContentsRange& locked_file){
+        auto update_locked_file_range = [&](ClipCtx::LockedData::LockedRange& locked_file){
             auto& rng = locked_file.file_contents_range;
 
             update_file_range_data(rng, in_stream.remaining_bytes());
@@ -1476,54 +1481,53 @@ struct ClipboardVirtualChannel::D
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                 clip.has_current_file_contents_stream_id = false;
                 if (this->finalize_file_transfer(clip, rng)) {
-                    clip.remove_locked_file_contents_range(&locked_file);
+                    clip.locked_data.remove_locked_file_contents_range(&locked_file);
                 }
                 else {
-                    locked_file.state = ClipCtx::LockedTransferState::WaitingRequest;
+                    locked_file.state = ClipCtx::LockedData::LockedRange::State::WaitingRequest;
                 }
             }
         };
 
-        if (clip.locked_file_contents_requested_range.is_stream_id(stream_id)) {
+        if (clip.locked_data.requested_range.is_stream_id(stream_id)) {
             if (is_ok) {
-                auto& r =
-                clip.locked_file_contents_ranges.emplace_back(ClipCtx::LockedFileContentsRange{
-                    clip.locked_file_contents_requested_range.lock_id,
-                    ClipCtx::LockedTransferState::WaitingResponse,
+                auto& r = clip.locked_data.ranges.emplace_back(ClipCtx::LockedData::LockedRange{
+                    clip.locked_data.requested_range.lock_id,
+                    ClipCtx::LockedData::LockedRange::State::WaitingResponse,
                     new_range(std::move(
-                        clip.locked_file_contents_requested_range.file_contents_requested_range))
+                        clip.locked_data.requested_range.file_contents_requested_range))
                 });
-                clip.locked_file_contents_requested_range.disable();
 
                 update_locked_file_range(r);
             }
             else {
-                clip.locked_file_contents_requested_range.file_contents_requested_range.file_name.empty();
-                clip.locked_file_contents_requested_range.disable();
+                clip.locked_data.requested_range.disable();
             }
+
+            assert(not clip.locked_data.requested_range.is_stream_id(stream_id));
         }
-        else if (auto* locked_contents_range = clip.search_range_by_id(stream_id)) {
+        else if (auto* locked_contents_range = clip.locked_data.search_range_by_id(stream_id)) {
             if (is_ok) {
                 update_locked_file_range(*locked_contents_range);
             }
             else {
                 clip.has_current_file_contents_stream_id = false;
                 this->broken_file_transfer(clip, locked_contents_range->file_contents_range);
-                clip.remove_locked_file_contents_range(locked_contents_range);
+                clip.locked_data.remove_locked_file_contents_range(locked_contents_range);
             }
         }
-        else if (auto* locked_contents_size = clip.search_size_by_id(stream_id)) {
+        else if (auto* locked_contents_size = clip.locked_data.search_size_by_id(stream_id)) {
             if (is_ok) {
                 clip.has_current_file_contents_stream_id = false;
-                not_null_ptr lock_data = clip.search_lock_by_id(locked_contents_size->lock_id);
+                not_null_ptr lock_data = clip.locked_data.search_lock_by_id(locked_contents_size->lock_id);
                 update_file_size_or_throw(
                     lock_data->files, locked_contents_size->file_contents_size,
                     flags, in_stream.remaining_bytes());
-                clip.remove_locked_file_contents_size(locked_contents_size);
+                clip.locked_data.remove_locked_file_contents_size(locked_contents_size);
             }
             else {
                 clip.has_current_file_contents_stream_id = false;
-                clip.remove_locked_file_contents_size(locked_contents_size);
+                clip.locked_data.remove_locked_file_contents_size(locked_contents_size);
             }
         }
         else {
@@ -1843,7 +1847,7 @@ struct ClipboardVirtualChannel::D
                         break;
                     }
 
-                    if (auto* r = clip.search_range_by_validator_id(file_validator_id)) {
+                    if (auto* r = clip.locked_data.search_range_by_validator_id(file_validator_id)) {
                         process_file(
                             (&clip == &this->server)
                                 ? Direction::FileFromServer
@@ -1947,37 +1951,37 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 
             switch (clip.nolock_data)
             {
-            case ClipCtx::TransferState::Empty:
-                break;
+                case ClipCtx::TransferState::Empty:
+                    break;
 
-            case ClipCtx::TransferState::Size:
-                clip.nolock_data.delete_size();
-                break;
+                case ClipCtx::TransferState::Size:
+                    clip.nolock_data.delete_size();
+                    break;
 
-            case ClipCtx::TransferState::Text:
-                if (bool(clip.nolock_data.text().file_validator_id)) {
-                    dlpav_report_text(
-                        clip.nolock_data.text().file_validator_id,
-                        this->report_message,
-                        this->session_reactor.get_current_time(),
-                        direction, status);
+                case ClipCtx::TransferState::Text:
+                    if (bool(clip.nolock_data.text().file_validator_id)) {
+                        dlpav_report_text(
+                            clip.nolock_data.text().file_validator_id,
+                            this->report_message,
+                            this->session_reactor.get_current_time(),
+                            direction, status);
+                    }
+                    clip.nolock_data.delete_text();
+                    break;
+
+                case ClipCtx::TransferState::RequestedRange:
+                    clip.nolock_data.delete_requested_range();
+                    break;
+
+                case ClipCtx::TransferState::Range:
+                case ClipCtx::TransferState::WaitingContinuationRange: {
+                    close_rng(clip.nolock_data.range());
+                    clip.nolock_data.delete_range();
+                    break;
                 }
-                clip.nolock_data.delete_text();
-                break;
-
-            case ClipCtx::TransferState::RequestedRange:
-                clip.nolock_data.delete_requested_range();
-                break;
-
-            case ClipCtx::TransferState::Range:
-            case ClipCtx::TransferState::WaitingContinuationRange: {
-                close_rng(clip.nolock_data.range());
-                clip.nolock_data.delete_range();
-                break;
-            }
             }
 
-            for (auto& locked_file : clip.locked_file_contents_ranges) {
+            for (auto& locked_file : clip.locked_data.ranges) {
                 close_rng(locked_file.file_contents_range);
             }
         };
