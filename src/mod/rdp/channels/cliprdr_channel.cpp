@@ -32,7 +32,6 @@
 
 // TODO add timer on file
 // TODO add limit on file transfered
-// TODO status = broken => not to index ??????????
 
 namespace
 {
@@ -280,7 +279,6 @@ namespace
             vector_fast_erase(this->locked_file_contents_ranges, p);
         }
 
-        // TODO add ifile
         LockedFileContentsRange* search_range_by_offset(LockId lock_id, FileGroupId ifile, uint64_t offset)
         {
             for (auto& r : this->locked_file_contents_ranges) {
@@ -387,7 +385,6 @@ namespace
         });
     }
 
-    // TODO enum message type
     [[nodiscard]]
     uint16_t process_header_message(
         uint16_t current_message_type, uint32_t total_length, uint32_t flags, InStream& chunk,
@@ -423,14 +420,19 @@ namespace
 
         if (bool(verbose & RDPVerbose::cliprdr)) {
             const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-            LOG(LOG_INFO, "%s: total_length=%u flags=0x%08X chunk_data_length=%zu %s (%u)%s",
+            LOG(LOG_INFO, "%s: total_length=%u flags=0x%08X chunk_data_length=%zu %s (%u)%s%s",
                 funcname, total_length, flags, chunk.in_remain(),
                 RDPECLIP::get_msgType_name(current_message_type),
                 current_message_type,
                 ((flags & first_last) == first_last) ? " FIRST|LAST"
                 : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? " FIRST"
                 : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? " LAST"
-                : "");
+                : "",
+                not (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? ""
+                : (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) ? " RESPONSE_OK"
+                : (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) ? " RESPONSE_FAIL"
+                : ""
+            );
         }
 
         dump();
@@ -438,8 +440,7 @@ namespace
         return current_message_type;
     }
 
-    bool check_header_response(
-        RDPECLIP::CliprdrHeader const& in_header, uint32_t flags, char const* /*TODO fname*/)
+    bool check_header_response(RDPECLIP::CliprdrHeader const& in_header, uint32_t flags)
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             auto mask = RDPECLIP::CB_RESPONSE_FAIL | RDPECLIP::CB_RESPONSE_OK;
@@ -697,7 +698,7 @@ struct ClipboardVirtualChannel::D
         RDPECLIP::CliprdrHeader const& in_header, uint32_t flags, ClipCtx& clip)
     {
         // TODO check previously to last
-        if (not check_header_response(in_header, flags, "process_format_list_response_pdu")) {
+        if (not check_header_response(in_header, flags)) {
             clip.current_file_list_format_id = 0;
             return ;
         }
@@ -767,7 +768,7 @@ struct ClipboardVirtualChannel::D
         ClipCtx& clip, uint32_t flags, bytes_view chunk_data)
     {
         // TODO check previously to last
-        if (not check_header_response(in_header, flags, "process_format_data_response_pdu")) {
+        if (not check_header_response(in_header, flags)) {
             clip.requested_format_id = 0;
             return ;
         }
@@ -1138,7 +1139,7 @@ struct ClipboardVirtualChannel::D
             };
         };
 
-        const bool is_ok = check_header_response(in_header, flags, "process_filecontents_response_pdu");
+        const bool is_ok = check_header_response(in_header, flags);
 
         InStream in_stream(chunk_data);
 
