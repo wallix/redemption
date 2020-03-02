@@ -278,34 +278,98 @@ namespace
             }
         };
 
+        struct OptionalLockId
+        {
+            void disable()
+            {
+                this->_state = Disabled;
+            }
+
+            void enable(bool activate)
+            {
+                this->_state = activate ? Enabled : Disabled;
+            }
+
+            [[nodiscard]]
+            bool is_enabled() const
+            {
+                return bool(this->_state & State::Enabled);
+            }
+
+            [[nodiscard]]
+            bool has_lock() const
+            {
+                return State(this->_state & State::HasLock) == State::HasLock;
+            }
+
+            [[nodiscard]]
+            bool has_unused_lock() const
+            {
+                return this->_state == State::HasLock;
+            }
+
+            void set_used()
+            {
+                assert(this->_state == HasLock);
+                this->_state = State::LockIsUsed;
+            }
+
+            void set_lock_id(LockId id)
+            {
+                assert(bool(this->_state));
+                this->_lock_id = id;
+                this->_state = HasLock;
+            }
+
+            void unset_lock_id()
+            {
+                this->_state = State(this->_state & State::Enabled);
+            }
+
+            [[nodiscard]]
+            LockId lock_id() const
+            {
+                assert(bool(this->_state));
+                return this->_lock_id;
+            }
+
+        private:
+            enum State : uint8_t
+            {
+                Disabled    = 0b000,
+                Enabled     = 0b001,
+                HasLock     = 0b010 | Enabled,
+                // lock_id is pushed to lock_list (avoid duplication)
+                LockIsUsed  = 0b100 | HasLock,
+            };
+
+            State _state = Disabled;
+            LockId _lock_id;
+        };
+
 
         uint16_t message_type = 0;
 
         bool use_long_format_names = false;
-        bool has_lock_support = false;
-        bool has_current_lock = false;
-        // if true, current_lock_id id pushed to lock_list (avoid duplication)
-        // TODO enum with has_current_lock
-        bool current_lock_id_is_used;
-        uint32_t current_lock_id;
-
-
+        bool has_current_file_contents_stream_id = false;
+        StreamId current_file_contents_stream_id;
         uint32_t current_file_list_format_id;
+        uint32_t requested_format_id;
+
+        uint32_t clip_text_locale_identifier = 0;
+
+        OptionalLockId optional_lock_id;
+
         Cliprdr::FormatNameInventory current_format_list;
 
         std::vector<FileValidatorId> clip_text_validator_id_list;
-        uint32_t clip_text_locale_identifier = 0;
 
         std::string validator_target_name;
 
-        StreamId current_file_contents_stream_id;
-        bool has_current_file_contents_stream_id = false;
+        std::vector<CliprdFileInfo> files;
 
         StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
-        std::vector<CliprdFileInfo> files;
-
-        uint32_t requested_format_id;
 
         NoLockData nolock_data;
 
@@ -706,8 +770,7 @@ struct ClipboardVirtualChannel::D
 
         clip.has_current_file_contents_stream_id = false;
         clip.use_long_format_names = false;
-        clip.has_lock_support = false;
-        clip.has_current_lock = false;
+        clip.optional_lock_id.disable();
 
         for (uint16_t i = 0; i < caps.cCapabilitiesSets(); ++i) {
             CapabilitySet cap(in_stream);
@@ -728,7 +791,7 @@ struct ClipboardVirtualChannel::D
                         generalFlags, RDPECLIP::generalFlags_to_string(generalFlags));
                 }
 
-                clip.has_lock_support = bool(generalFlags & RDPECLIP::CB_CAN_LOCK_CLIPDATA);
+                clip.optional_lock_id.enable(bool(generalFlags & RDPECLIP::CB_CAN_LOCK_CLIPDATA));
                 clip.use_long_format_names
                     = bool(generalFlags & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
 
@@ -752,11 +815,13 @@ struct ClipboardVirtualChannel::D
             return false;
         }
 
-        LOG(LOG_DEBUG, "%c [%d] current lock %u -> 0", (&clip == &this->server ? '>' : '<'), clip.has_current_lock, clip.current_lock_id);
+        if (clip.optional_lock_id.has_lock()) {
+            LOG(LOG_DEBUG, "%c current lock %u -> 0", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
+        }
 
         clip.current_format_list.clear();
         clip.current_file_list_format_id = 0;
-        clip.has_current_lock = false;
+        clip.optional_lock_id.unset_lock_id();
         clip.files.clear();
 
         if (!clip_enabled) {
@@ -817,6 +882,8 @@ struct ClipboardVirtualChannel::D
 
     void lock(ClipCtx& clip, bytes_view chunk_data)
     {
+        // TODO is validator or storage
+
         RDPECLIP::LockClipboardDataPDU pdu;
         InStream in_stream(chunk_data);
         pdu.recv(in_stream);
@@ -827,13 +894,15 @@ struct ClipboardVirtualChannel::D
 
         LOG(LOG_DEBUG, "%c lock %u", (&clip == &this->server ? '>' : '<'), pdu.clipDataId);
 
-        clip.has_current_lock = true;
-        clip.current_lock_id = pdu.clipDataId;
-        clip.current_lock_id_is_used = false;
+        // TODO check clip.optional_lock_id.is_enabled() ?
+
+        clip.optional_lock_id.set_lock_id(LockId(pdu.clipDataId));
     }
 
     void unlock(ClipCtx& clip, bytes_view chunk_data)
     {
+        // TODO is validator or storage
+
         RDPECLIP::UnlockClipboardDataPDU pdu;
         InStream in_stream(chunk_data);
         pdu.recv(in_stream);
@@ -842,17 +911,22 @@ struct ClipboardVirtualChannel::D
             pdu.log();
         }
 
-        LOG(LOG_DEBUG, "%c unlock %u", (&clip == &this->server ? '>' : '<'), pdu.clipDataId);
-        LOG(LOG_DEBUG, "%c [%d] current lock %u", (&clip == &this->server ? '>' : '<'), clip.has_current_lock, clip.current_lock_id);
+        auto lock_id = LockId(pdu.clipDataId);
 
-        if (clip.has_current_lock && clip.current_lock_id == pdu.clipDataId) {
+        LOG(LOG_DEBUG, "%c unlock %u", (&clip == &this->server ? '>' : '<'), pdu.clipDataId);
+        if (clip.optional_lock_id.has_lock()) {
+            LOG(LOG_DEBUG, "%c current lock %u", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
+        }
+
+        if (clip.optional_lock_id.has_lock() && clip.optional_lock_id.lock_id() == lock_id) {
             LOG(LOG_DEBUG, "%c disable lock", (&clip == &this->server ? '>' : '<'));
-            clip.has_current_lock = false;
+            clip.optional_lock_id.unset_lock_id();
         }
         else {
+            // TODO stop current transfers
             auto p = std::find_if(
                 clip.lock_list.begin(), clip.lock_list.end(),
-                [&](ClipCtx::LockData const& l){ return l.lock_id == LockId(pdu.clipDataId); });
+                [&](ClipCtx::LockData const& l){ return l.lock_id == lock_id; });
 
             if (p != clip.lock_list.end()) {
                 vector_fast_erase(clip.lock_list, &*p);
@@ -929,16 +1003,15 @@ struct ClipboardVirtualChannel::D
                 is_client_to_server ? "client to server" : "server to client"
             );
 
-            LOG(LOG_DEBUG, "%c has lock %d  is used %d", (&clip == &this->server ? '>' : '<'), clip.has_current_lock, clip.current_lock_id_is_used);
+            if (clip.optional_lock_id.has_lock()) {
+                LOG(LOG_DEBUG, "%c lock = %d", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
+            }
 
-            if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)
-             && clip.has_current_lock
-             && not clip.current_lock_id_is_used
-            ) {
-                LOG(LOG_DEBUG, "%c push lock %d", (&clip == &this->server ? '>' : '<'), clip.current_lock_id);
+            if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST) && clip.optional_lock_id.has_unused_lock()) {
+                LOG(LOG_DEBUG, "%c push lock %d", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
                 clip.lock_list.push_back(ClipCtx::LockData{
-                    LockId(clip.current_lock_id), std::move(clip.files)});
-                clip.current_lock_id_is_used = true;
+                    clip.optional_lock_id.lock_id(), std::move(clip.files)});
+                clip.optional_lock_id.set_used();
             }
 
             this->log_siem_info(
@@ -1093,7 +1166,7 @@ struct ClipboardVirtualChannel::D
         };
 
         // ignore lock if don't have CB_CAN_LOCK_CLIPDATA
-        if (not clip.has_lock_support
+        if (not clip.optional_lock_id.is_enabled()
          || not file_contents_request_pdu.has_optional_clipDataId()
         ) {
             if (lindex >= clip.files.size()) {
