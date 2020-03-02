@@ -388,7 +388,7 @@ void ModuleManager::create_mod_rdp(
             rail_client_execute.reset(false);
         }
 
-        struct ModRDPWithMetrics : public DispatchReportMessage, ModRdpFactory, mod_rdp
+        struct RdpData
         {
             struct ModMetrics : Metrics
             {
@@ -397,7 +397,6 @@ void ModuleManager::create_mod_rdp(
                 RDPMetrics protocol_metrics{*this};
                 SessionReactor::TimerPtr metrics_timer;
             };
-
 
             struct FileValidator
             {
@@ -461,7 +460,10 @@ void ModuleManager::create_mod_rdp(
             std::unique_ptr<FileValidator> file_validator;
             std::unique_ptr<FdxCapture> fdx_capture;
             Fstat fstat;
+        };
 
+        struct ModRDPWithMetrics : DispatchReportMessage, RdpData, ModRdpFactory, mod_rdp
+        {
             FdxCapture* get_fdx_capture(ModuleManager& mm)
             {
                 if (!this->fdx_capture) {
@@ -626,10 +628,10 @@ void ModuleManager::create_mod_rdp(
         }
 
         if (enable_metrics) {
-            new_mod->metrics = std::move(metrics);
-            new_mod->metrics->metrics_timer = session_reactor.create_timer()
+            new_mod->RdpData::metrics = std::move(metrics);
+            new_mod->RdpData::metrics->metrics_timer = session_reactor.create_timer()
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){
+                .on_action([metrics = new_mod->RdpData::metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
                     return ctx.ready();
                 })
