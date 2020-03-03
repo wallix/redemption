@@ -500,10 +500,10 @@ namespace
 
         std::vector<CliprdFileInfo> files;
 
-        StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
-
         NoLockData nolock_data;
         LockedData locked_data;
+
+        StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
         void clear()
         {
@@ -775,7 +775,6 @@ struct ClipboardVirtualChannel::D
     [[nodiscard]]
     bool finalize_file_transfer(ClipCtx& clip, ClipCtx::FileContentsRange& file_rng)
     {
-        LOG(LOG_DEBUG, "finalize: %zu/%zu", file_rng.file_offset, file_rng.file_size);
         if (file_rng.file_offset < file_rng.file_size) {
             return false;
         }
@@ -883,10 +882,6 @@ struct ClipboardVirtualChannel::D
             return false;
         }
 
-        if (clip.optional_lock_id.has_lock()) {
-            LOG(LOG_DEBUG, "%c current lock %u -> 0", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
-        }
-
         clip.current_format_list.clear();
         clip.current_file_list_format_id = 0;
         clip.optional_lock_id.unset_lock_id();
@@ -939,7 +934,6 @@ struct ClipboardVirtualChannel::D
             return ;
         }
 
-        LOG(LOG_DEBUG, "%c lock %u", (&clip == &this->server ? '>' : '<'), pdu.clipDataId);
         clip.optional_lock_id.set_lock_id(LockId(pdu.clipDataId));
     }
 
@@ -961,13 +955,7 @@ struct ClipboardVirtualChannel::D
 
         auto lock_id = LockId(pdu.clipDataId);
 
-        LOG(LOG_DEBUG, "%c unlock %u", (&clip == &this->server ? '>' : '<'), pdu.clipDataId);
-        if (clip.optional_lock_id.has_lock()) {
-            LOG(LOG_DEBUG, "%c current lock %u", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
-        }
-
         if (clip.optional_lock_id.has_lock() && clip.optional_lock_id.lock_id() == lock_id) {
-            LOG(LOG_DEBUG, "%c disable lock", (&clip == &this->server ? '>' : '<'));
             clip.optional_lock_id.unset_lock_id();
         }
         else {
@@ -1070,12 +1058,9 @@ struct ClipboardVirtualChannel::D
                 is_client_to_server ? "client to server" : "server to client"
             );
 
-            if (clip.optional_lock_id.has_lock()) {
-                LOG(LOG_DEBUG, "%c lock = %d", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
-            }
-
-            if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST) && clip.optional_lock_id.has_unused_lock()) {
-                LOG(LOG_DEBUG, "%c push lock %d", (&clip == &this->server ? '>' : '<'), clip.optional_lock_id.lock_id());
+            if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)
+             && clip.optional_lock_id.has_unused_lock()
+            ) {
                 clip.locked_data.lock_list.push_back(ClipCtx::LockedData::LockedFileList{
                     clip.optional_lock_id.lock_id(), std::move(clip.files)});
                 clip.optional_lock_id.set_used();
@@ -1195,8 +1180,6 @@ struct ClipboardVirtualChannel::D
         RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
         file_contents_request_pdu.receive(in_stream);
 
-        LOG(LOG_DEBUG, "filecontent req stream id: %u", file_contents_request_pdu.streamId());
-
         if (bool(self.verbose & RDPVerbose::cliprdr)) {
             file_contents_request_pdu.log(LOG_INFO);
         }
@@ -1300,10 +1283,6 @@ struct ClipboardVirtualChannel::D
         else {
             const auto lock_id = LockId(file_contents_request_pdu.clipDataId());
 
-            for (auto& r : clip.locked_data.lock_list) {
-                LOG(LOG_DEBUG, "%c r.id = %u", (&clip == &this->server ? '>' : '<'), r.lock_id);
-            }
-
             auto* lock_data = clip.locked_data.search_lock_by_id(lock_id);
 
             if (not lock_data) {
@@ -1328,9 +1307,6 @@ struct ClipboardVirtualChannel::D
                 auto* r = clip.locked_data.search_range_by_offset(
                     lock_id, ifile, file_contents_request_pdu.position());
 
-                LOG(LOG_DEBUG, "pos %zu (is %d) ifile %u stream_id %u",
-                    file_contents_request_pdu.position(), bool(r), ifile, stream_id);
-
                 if (r) {
                     update_continuation_range(r->file_contents_range);
                     r->state = ClipCtx::LockedData::LockedRange::State::WaitingResponse;
@@ -1349,7 +1325,6 @@ struct ClipboardVirtualChannel::D
                 }
             }
             else {
-                LOG(LOG_DEBUG, "push size");
                 clip.locked_data.sizes.push_back({lock_id, {stream_id, ifile}});
             }
         }
@@ -1438,16 +1413,9 @@ struct ClipboardVirtualChannel::D
             ClipCtx::FileContentsRange& file_contents_range,
             bytes_view data
         ){
-            LOG(LOG_DEBUG, "size = %zu  requested = %zu",
-                data.size(), file_contents_range.file_size_requested);
-
             if (data.size() >= file_contents_range.file_size_requested) {
                 data = data.first(file_contents_range.file_size_requested);
             }
-
-            LOG(LOG_DEBUG, "offset %zu -> %zu",
-                file_contents_range.file_offset,
-                file_contents_range.file_offset + data.size());
 
             file_contents_range.sig.update(data);
             file_contents_range.file_offset += data.size();
@@ -1528,11 +1496,6 @@ struct ClipboardVirtualChannel::D
             }
             break;
         }
-
-        LOG(LOG_DEBUG, "locked_file_contents_requested_range.stream_id = %u (%d)",
-            clip.locked_data.requested_range.file_contents_requested_range.stream_id,
-            not clip.locked_data.requested_range.file_contents_requested_range
-                .file_name.empty());
 
         auto update_locked_file_range = [&](ClipCtx::LockedData::LockedRange& locked_file){
             auto& rng = locked_file.file_contents_range;
