@@ -321,13 +321,17 @@ namespace
             std::vector<LockedSize> sizes;
             std::vector<LockedRange> ranges;
 
-            LockedRequestedRange requested_range = []{
-                LockedRequestedRange r {};
-                r.disable();
-                return r;
-            }();
+            LockedRequestedRange requested_range {};
 
             std::vector<LockedFileList> lock_list;
+
+            void clear()
+            {
+                this->sizes.clear();
+                this->ranges.clear();
+                this->lock_list.clear();
+                this->requested_range.disable();
+            }
 
 
             LockedFileList* search_lock_by_id(LockId lock_id)
@@ -487,8 +491,6 @@ namespace
 
         Cliprdr::FormatNameInventory current_format_list;
 
-        std::vector<FileValidatorId> clip_text_validator_id_list;
-
         std::string validator_target_name;
 
         std::vector<CliprdFileInfo> files;
@@ -497,6 +499,19 @@ namespace
 
         NoLockData nolock_data;
         LockedData locked_data;
+
+        void clear()
+        {
+            assert(this->nolock_data == TransferState::Empty);
+            this->message_type = 0;
+            this->has_current_file_contents_stream_id = false;
+            this->clip_text_locale_identifier = 0;
+            this->optional_lock_id.disable();
+            this->current_format_list.clear();
+            this->files.clear();
+            this->file_descriptor_stream.rewind();
+            this->locked_data.clear();
+        }
     };
 
     struct ClientCtx : ClipCtx {};
@@ -766,16 +781,53 @@ struct ClipboardVirtualChannel::D
         return true;
     }
 
+    void stop_nolock_data(ClipCtx& clip)
+    {
+        switch (clip.nolock_data)
+        {
+            case ClipCtx::TransferState::WaitingContinuationRange:
+            case ClipCtx::TransferState::Range:
+                this->broken_file_transfer(clip, clip.nolock_data.range());
+                clip.nolock_data.delete_range();
+                break;
+
+            case ClipCtx::TransferState::Size:
+                clip.nolock_data.delete_size();
+                break;
+
+            case ClipCtx::TransferState::Text:
+                this->finalize_text_transfer(clip, clip.nolock_data.text());
+                clip.nolock_data.delete_text();
+                break;
+
+            case ClipCtx::TransferState::RequestedRange:
+                clip.nolock_data.delete_requested_range();
+                break;
+
+            case ClipCtx::TransferState::Empty:
+                break;
+        }
+    }
+
+    void reset_clip(ClipCtx& clip)
+    {
+        this->stop_nolock_data(clip);
+        for (ClipCtx::LockedData::LockedRange& locked_rng : clip.locked_data.ranges) {
+            this->broken_file_transfer(clip, locked_rng.file_contents_range);
+        }
+        clip.clear();
+    }
+
     void clip_caps(ClipCtx& clip, bytes_view chunk_data, RDPVerbose verbose)
     {
+        this->reset_clip(clip);
+
         InStream in_stream(chunk_data);
 
         RDPECLIP::ClipboardCapabilitiesPDU caps;
         caps.recv(in_stream);
 
-        clip.has_current_file_contents_stream_id = false;
         clip.use_long_format_names = false;
-        clip.optional_lock_id.disable();
 
         for (uint16_t i = 0; i < caps.cCapabilitiesSets(); ++i) {
             CapabilitySet cap(in_stream);
@@ -808,6 +860,11 @@ struct ClipboardVirtualChannel::D
         }
     }
 
+    void monitor_ready(ClipCtx& clip)
+    {
+        this->reset_clip(clip);
+    }
+
     bool format_list(
         uint32_t flags, RDPECLIP::CliprdrHeader const& in_header,
         VirtualChannelDataSender* sender, bool clip_enabled,
@@ -835,30 +892,7 @@ struct ClipboardVirtualChannel::D
             return false;
         }
 
-        switch (clip.nolock_data)
-        {
-            case ClipCtx::TransferState::WaitingContinuationRange:
-            case ClipCtx::TransferState::Range:
-                this->broken_file_transfer(clip, clip.nolock_data.range());
-                clip.nolock_data.delete_range();
-                break;
-
-            case ClipCtx::TransferState::Size:
-                clip.nolock_data.delete_size();
-                break;
-
-            case ClipCtx::TransferState::Text:
-                this->finalize_text_transfer(clip, clip.nolock_data.text());
-                clip.nolock_data.delete_text();
-                break;
-
-            case ClipCtx::TransferState::RequestedRange:
-                clip.nolock_data.delete_requested_range();
-                break;
-
-            case ClipCtx::TransferState::Empty:
-                break;
-        }
+        this->stop_nolock_data(clip);
 
         InStream in_stream(chunk_data);
         FormatListReceive receiver(
@@ -2014,16 +2048,16 @@ void ClipboardVirtualChannel::process_server_message(
             auto pkt_data = chunk.remaining_bytes();
             this->d->clip_caps(this->d->server, pkt_data, this->verbose);
             send_message_to_client = !this->proxy_managed;
-            // TODO reset clip
         }
         break;
 
         case RDPECLIP::CB_MONITOR_READY: {
-            // TODO reset clip
             if (this->proxy_managed) {
                 this->d->server.use_long_format_names = true;
                 ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
             }
+
+            this->d->monitor_ready(this->d->server);
 
             if (this->clipboard_monitor_ready_notifier) {
                 if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
@@ -2142,13 +2176,8 @@ void ClipboardVirtualChannel::process_client_message(
             auto pkt_data = chunk.remaining_bytes();
             this->d->clip_caps(this->d->client, pkt_data, this->verbose);
             send_message_to_server = true;
-            // TODO reset clip
         }
         break;
-
-        // case RDPECLIP::CB_MONITOR_READY: {
-        //     // TODO reset clip
-        // }
 
         case RDPECLIP::CB_FORMAT_LIST: {
             auto pkt_data = chunk.remaining_bytes();
