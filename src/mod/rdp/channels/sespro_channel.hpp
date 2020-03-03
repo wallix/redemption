@@ -545,6 +545,21 @@ public:
                 });
 
                 {
+                    if (this->sespro_params.end_of_session_check_delay_time.count() > 0) {
+                        send_client_message([this](OutStream & out_s) {
+                            out_s.out_copy_bytes("EndOfSessionCheckDelayTime="_av);
+
+                            {
+                                char cstr[128];
+                                int len = std::snprintf(cstr, sizeof(cstr), "%ld",
+                                    this->sespro_params.end_of_session_check_delay_time.count());
+                                out_s.out_copy_bytes(cstr, size_t(len));
+                            }
+                        });
+                    }
+                }
+
+                {
                     uint32_t options = 0;
 
                     if (this->sespro_params.ignore_ui_less_processes_during_end_of_session_check) {

@@ -300,6 +300,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, session_probe_params.vc_params.disabled_features);
 
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.end_of_session_check_delay_time);
+
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.ignore_ui_less_processes_during_end_of_session_check);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.childless_window_as_unidentified_input_field);
