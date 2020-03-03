@@ -93,7 +93,7 @@ struct ModWrapper
     {
         return this->mod;
     }
-    
+
     void set_mod(mod_api* mod)
     {
         // TODO: check we are using no_mod, otherwise it is an error
@@ -348,6 +348,18 @@ public:
         return ret;
     }
 
+    void try_rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
+    {
+        if (this->is_disable_by_input) {
+            this->graphics.begin_update();
+            this->draw_osd_message_impl(this->graphics);
+            this->graphics.end_update();
+        }
+        else {
+            this->disable_osd();
+        }
+    }
+
 private:
     void draw_osd_message_impl(gdi::GraphicApi & drawable)
     {
@@ -471,7 +483,7 @@ class ModuleManager
     ModWrapper & mod_wrapper;
 public:
 
-    ModWrapper & get_mod_wrapper() 
+    ModWrapper & get_mod_wrapper()
     {
         return mod_wrapper;
     }
@@ -614,6 +626,13 @@ public:
             }
 
             Mod::rdp_input_invalidate2(vr);
+        }
+
+        void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
+        {
+            this->mm.mod_osd.try_rdp_allow_display_updates(left, top, right, bottom);
+
+            Mod::rdp_allow_display_updates(left, top, right, bottom);
         }
     };
 
@@ -849,7 +868,7 @@ public:
         case MODULE_INTERNAL_TRANSITION:
             this->set_mod(mod_factory.create_transition_mod());
         break;
-        case MODULE_INTERNAL_WIDGET_LOGIN: 
+        case MODULE_INTERNAL_WIDGET_LOGIN:
             this->set_mod(mod_factory.create_login_mod());
         break;
 
@@ -972,7 +991,7 @@ public:
         return module_id;
     }
 
-    void check_module() 
+    void check_module()
     {
         if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
             this->session_reactor.set_next_event(BACK_EVENT_NEXT);
