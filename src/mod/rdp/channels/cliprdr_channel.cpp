@@ -29,6 +29,8 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "capture/fdx_capture.hpp"
 
+#include <algorithm>
+
 
 namespace
 {
@@ -42,6 +44,12 @@ namespace
             v[n] = std::move(v.back());
         }
         v.pop_back();
+    }
+
+    template<class T, class F>
+    void vector_fast_remove(std::vector<T>& v, F&& pred)
+    {
+        v.erase(std::remove_if(v.begin(), v.end(), pred), v.end());
     }
 
     struct ClipCtx
@@ -727,6 +735,7 @@ struct ClipboardVirtualChannel::D
                 file_rng.file_name,
                 file_rng.sig
             });
+            file_rng.file_validator_id = FileValidatorId();
         }
         else if (file_rng.tfl_file) {
             if (this->self.always_file_storage || file_rng.dlp_failure) {
@@ -916,8 +925,6 @@ struct ClipboardVirtualChannel::D
 
     void lock(ClipCtx& clip, bytes_view chunk_data)
     {
-        // TODO if validator or storage
-
         RDPECLIP::LockClipboardDataPDU pdu;
         InStream in_stream(chunk_data);
         pdu.recv(in_stream);
@@ -926,23 +933,30 @@ struct ClipboardVirtualChannel::D
             pdu.log();
         }
 
+        // TODO if validator or storage
+
+        if (not clip.optional_lock_id.is_enabled()) {
+            return ;
+        }
+
         LOG(LOG_DEBUG, "%c lock %u", (&clip == &this->server ? '>' : '<'), pdu.clipDataId);
-
-        // TODO check clip.optional_lock_id.is_enabled() ?
-
         clip.optional_lock_id.set_lock_id(LockId(pdu.clipDataId));
     }
 
     void unlock(ClipCtx& clip, bytes_view chunk_data)
     {
-        // TODO if validator or storage
-
         RDPECLIP::UnlockClipboardDataPDU pdu;
         InStream in_stream(chunk_data);
         pdu.recv(in_stream);
 
         if (bool(this->self.verbose & RDPVerbose::cliprdr)) {
             pdu.log();
+        }
+
+        // TODO if validator or storage
+
+        if (not clip.optional_lock_id.is_enabled()) {
+            return ;
         }
 
         auto lock_id = LockId(pdu.clipDataId);
@@ -957,7 +971,6 @@ struct ClipboardVirtualChannel::D
             clip.optional_lock_id.unset_lock_id();
         }
         else {
-            // TODO stop current transfers
             auto p = std::find_if(
                 clip.locked_data.lock_list.begin(), clip.locked_data.lock_list.end(),
                 [&](ClipCtx::LockedData::LockedFileList const& l){
@@ -967,6 +980,26 @@ struct ClipboardVirtualChannel::D
             if (p != clip.locked_data.lock_list.end()) {
                 vector_fast_erase(clip.locked_data.lock_list, &*p);
             }
+
+            vector_fast_remove(
+                clip.locked_data.sizes,
+                [lock_id](ClipCtx::LockedData::LockedSize const& size){
+                    return size.lock_id == lock_id;
+                });
+
+            vector_fast_remove(
+                clip.locked_data.ranges,
+                [&](ClipCtx::LockedData::LockedRange& rng){
+                    if (rng.lock_id == lock_id) {
+                        this->broken_file_transfer(clip, rng.file_contents_range);
+                        return true;
+                    }
+                    return false;
+                });
+        }
+
+        if (clip.locked_data.requested_range.lock_id == lock_id) {
+            clip.locked_data.requested_range.disable();
         }
     }
 
@@ -1303,6 +1336,7 @@ struct ClipboardVirtualChannel::D
                     r->state = ClipCtx::LockedData::LockedRange::State::WaitingResponse;
                 }
                 else {
+                    // TODO in-place copy
                     clip.locked_data.requested_range = ClipCtx::LockedData::LockedRequestedRange{
                         lock_id, {
                             stream_id,
