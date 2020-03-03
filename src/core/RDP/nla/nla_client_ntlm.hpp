@@ -106,7 +106,7 @@ public:
     rdpClientNTLM(bytes_view user,
                bytes_view domain,
                uint8_t * pass,
-               uint8_t * hostname,
+               const char * hostname,
                array_view_const_u8 public_key,
                const bool restricted_admin_mode,
                Random & rand,
@@ -119,7 +119,7 @@ public:
         , identity_Password(::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))}))
         , timeobj(timeobj)
         , rand(rand)
-        , Workstation(::UTF8toUTF16({hostname, strlen(char_ptr_cast(hostname))}))
+        , Workstation(::UTF8toUTF16({hostname, strlen(hostname)}))
         , restricted_admin_mode(restricted_admin_mode)
         , credssp_verbose(credssp_verbose)
         , verbose(verbose)

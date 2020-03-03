@@ -573,10 +573,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "wabam_uses_cache_bitmap_r2")) {
+        else if (0 == strcmp(key, "force_bitmap_cache_v2_with_am")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::client::wabam_uses_cache_bitmap_r2&>(this->variables).value,
+                static_cast<cfg::client::force_bitmap_cache_v2_with_am&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

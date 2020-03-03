@@ -62,10 +62,10 @@ public:
 
 private:
     uint32_t enabled_protocols;
-    char username[128];
+    std::string username;
 
-    uint8_t hostname[16];
-    std::vector<uint8_t> user;
+    std::string hostname;
+    std::string user;
     uint8_t password[2048];
     std::vector<uint8_t> domain;
     const char * target_host;
@@ -108,7 +108,7 @@ public:
     void set_lb_info(uint8_t * lb_info, size_t lb_info_length);
 
     RdpNego(
-        const bool tls, const char * username, bool nla, bool admin_mode,
+        const bool tls, const std::string & username, bool nla, bool admin_mode,
         const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
         std::string& extra_message, Translation::language_t lang,
         const TLSClientParams & tls_client_params,
@@ -116,7 +116,7 @@ public:
 
     ~RdpNego();
 
-    void set_identity(bytes_view user, bytes_view domain, char const * pass, char const * hostname);
+    void set_identity(bytes_view user, bytes_view domain, char const * pass, const std::string & hostname);
 
     void send_negotiation_request(OutTransport trans);
 
@@ -124,7 +124,7 @@ public:
         return this->target_host;
     }
 
-    [[nodiscard]] const char * get_user_name() const {
+    [[nodiscard]] const std::string & get_user_name() const {
         return this->username;
     }
 

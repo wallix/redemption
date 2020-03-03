@@ -1076,12 +1076,12 @@ class Sesman():
 
                         _status = None  # One more loop
                     except Exception as e:
+                        _emsg = u"Unexpected error in selector pagination"
                         if DEBUG:
                             import traceback
-                            _emsg = u"Unexpected error in selector pagination"
                             Logger().info(
-                                u"Unexpected error in selector pagination %s" %
-                                traceback.format_exc(e)
+                                u"%s %s" %
+                                (_emsg, traceback.format_exc())
                             )
 
                         return False, _emsg

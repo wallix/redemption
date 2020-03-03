@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     std::string user("Ulysse");
     std::string domain("Ithaque");
     uint8_t pass[] = "Pénélope";
-    uint8_t host[] = "Télémaque";
+    std::string host("Télémaque");
     
     
     ReplayRandom rand(std::vector<uint8_t>({
@@ -57,7 +57,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     ReplayTime timeobj(std::vector<timeval>{{3598079566, 1510905191}});
 //    LCGTime timeobj;
     std::string extra_message;
-    rdpClientNTLM ntlm_client(user, domain, pass, host, public_key, false, rand, timeobj, true, true);
+    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, timeobj, true, true);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -154,7 +154,7 @@ RED_AUTO_TEST_CASE(TestNlaclientv6)
     std::string user("Christophe");
     std::string domain("");
     uint8_t pass[] = "SecureLinux$42";
-    uint8_t host[] = "WIN10CGR";
+    std::string host("WIN10CGR");
     ReplayRandom rand(std::vector<uint8_t>({
         0x72, 0x0f, 0xa1, 0x62, 0x9f, 0xbf, 0xe3, 0x5b,
         0x61, 0x52, 0x2f, 0xa9, 0xa9, 0x36, 0x75, 0xda, 0x62, 0x19, 0x9e, 0xcd, 0x22, 0xbe, 0xb4, 0xea,
@@ -164,7 +164,7 @@ RED_AUTO_TEST_CASE(TestNlaclientv6)
     }));
     ReplayTime timeobj({{0x5d91e371,0xdaa63}});
     std::string extra_message;
-    rdpClientNTLM ntlm_client(user, domain, pass, host, public_key, false, rand, timeobj, true);
+    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, timeobj, true);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
