@@ -264,6 +264,9 @@ public:
     {
         return this->mod.DLP_antivirus_check_channels_files(); 
     }
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+
 };
 
 void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,

@@ -129,7 +129,6 @@ public:
     template<class T, class... Args>
     void set_acl(Args && ... args) {
         static_assert(T::is_proxy_to_sesman, "T isn't writable, used set<T>() instead.");
-        LOG(LOG_INFO, "set_acl");
         this->set_value<T>(std::forward<Args>(args)...);
     }
 

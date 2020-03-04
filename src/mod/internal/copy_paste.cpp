@@ -196,6 +196,7 @@ void CopyPaste::copy(const char * s)
 
 void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
 {
+    LOG(LOG_INFO, "CopyPaste::send_to_mod_channel()");
     InStream stream({chunk.get_data(), chunk.get_capacity()});
 
     if (this->long_data_response_size) {

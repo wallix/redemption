@@ -63,6 +63,88 @@
 
 struct ModWrapper
 {
+    struct CallbackWrapper : public Callback
+    {
+        ModWrapper & wrap;
+        CallbackWrapper(ModWrapper & wrap) : wrap(wrap){}
+        // Callback
+        void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
+        {
+            LOG(LOG_INFO, "mod_wrapper::CallbackWrapper::send_to_mod_channel()");
+            this->wrap.send_to_mod_channel(front_channel_name, chunk, length, flags);
+        }
+        // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
+        void send_auth_channel_data(const char * data) override
+        {
+            this->wrap.send_auth_channel_data(data);
+        }
+        void send_checkout_channel_data(const char * data) override
+        {
+            this->wrap.send_checkout_channel_data(data);
+        }
+        void create_shadow_session(const char * userdata, const char * type) override
+        {
+            this->wrap.create_shadow_session(userdata, type);
+        }
+        // RdpInput
+        std::string module_name() override 
+        {
+            return "WrappedMod" + this->wrap.module_name();
+        }
+
+        void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
+        {
+            this->wrap.rdp_input_scancode(param1, param2, param3, param4, keymap);
+        }
+
+        void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
+        {
+            this->wrap.rdp_input_unicode(unicode, flag);
+        }
+
+        void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+        {
+            this->wrap.rdp_input_mouse(device_flags, x, y, keymap);
+        }
+
+        void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
+        {
+            this->wrap.rdp_input_synchronize(time, device_flags, param1, param2);
+        }
+
+        void rdp_input_invalidate(Rect r) override
+        {
+            this->wrap.rdp_input_invalidate(r);
+        }
+
+    // Client Notify module that gdi is up and running
+        void rdp_gdi_up_and_running(ScreenInfo & screen_info) override
+        {
+            this->wrap.rdp_gdi_up_and_running(screen_info);
+        }
+
+    // Client Notify module that gdi is not up and running any more
+        void rdp_gdi_down() override
+        {
+            this->wrap.rdp_gdi_down();
+        }
+
+        void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
+        {
+            this->wrap.rdp_allow_display_updates(left, top, right, bottom);
+        }
+        
+        void rdp_suppress_display_updates() override
+        {
+            this->wrap.rdp_suppress_display_updates();
+        }
+
+        void refresh(Rect clip) override
+        {
+            this->wrap.refresh(clip);
+        }
+    } callback;
+
     struct GraphicFilter : public gdi::GraphicApi
     {
         gdi::GraphicApi & sink;
@@ -280,7 +362,8 @@ private:
 
 public:
     explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
-    : gfilter(graphics, palette, Rect{})
+    : callback(*this)
+    , gfilter(graphics, palette, Rect{})
     , front(front)
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
@@ -297,7 +380,7 @@ public:
 
     Callback & get_callback() noexcept
     {
-        return *this->get_mod();
+        return this->callback;
     }
 
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
@@ -613,6 +696,7 @@ public:
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
         std::size_t length, uint32_t flags)
     {
+        LOG(LOG_INFO, "mod_wrapper::send_to_mod_channel()");
         this->get_mod()->send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 
@@ -620,13 +704,24 @@ public:
     { this->get_mod()->send_auth_channel_data(data); }
 
     void send_checkout_channel_data(const char * data)
-    { this->get_mod()->send_checkout_channel_data(data); }
+    {
+        this->get_mod()->send_checkout_channel_data(data);
+    }
+
+    void create_shadow_session(const char * userdata, const char * type)
+    {
+        this->get_mod()->create_shadow_session(userdata, type);
+    }
 
     void disconnect()
-    { this->get_mod()->disconnect(); }
+    {
+        this->get_mod()->disconnect();
+    }
 
     void display_osd_message(std::string const & message)
-    { this->get_mod()->display_osd_message(message); }
+    {
+        this->get_mod()->display_osd_message(message);
+    }
 
     [[nodiscard]] Dimension get_dim() const
     {

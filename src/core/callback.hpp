@@ -30,6 +30,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/rect.hpp"
 #include "gdi/screen_info.hpp"
+#include "utils/log.hpp"
 
 #include <string>
 
@@ -147,13 +148,7 @@ struct RdpInput : private noncopyable
 
 struct Callback : RdpInput
 {
-    virtual void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags)
-    {
-        (void)front_channel_name;
-        (void)chunk;
-        (void)length;
-        (void)flags;
-    }
+    virtual void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) = 0;
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
     virtual void send_auth_channel_data(const char * data) { (void)data; }
     virtual void send_checkout_channel_data(const char * data) { (void)data; }

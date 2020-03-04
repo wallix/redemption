@@ -203,6 +203,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
         bool is_up_and_running() const override { return true; }
         void rdp_gdi_up_and_running(ScreenInfo & /*screen_info*/) override {}
         void rdp_gdi_down() override {}
+        void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
     } dummy_cb;
 
 

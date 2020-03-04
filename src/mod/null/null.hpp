@@ -40,5 +40,7 @@ struct null_mod : public mod_api
     bool is_up_and_running() const override { return true; }
     void rdp_gdi_up_and_running(ScreenInfo & ) override {}
     void rdp_gdi_down() override {}
+    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+
 };
 

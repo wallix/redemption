@@ -596,6 +596,7 @@ private:
             && !this->clipboard_to_server_sender);
 
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
+        LOG(LOG_INFO, "create clipboard_to_server_sender");
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
         BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
@@ -625,6 +626,7 @@ private:
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_synchronous_sender(CHANNELS::ChannelNameId channel_name, ServerTransportContext & stc)
     {
+        LOG(LOG_INFO, "create_to_server_synchronous_sender()");
         const CHANNELS::ChannelDef* channel = this->mod_channel_list.get_by_name(channel_name);
         if (!channel)
         {
@@ -652,6 +654,8 @@ private:
 
             void operator()(uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
             {
+                LOG(LOG_INFO, "ToServerSender()::Operator()");
+
                 if (this->show_protocol) {
                     flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                 }
@@ -717,6 +721,8 @@ private:
             }
         };
 
+        LOG(LOG_INFO, "create create_to_server_asynchronous_sender");
+
         return std::make_unique<ToServerAsynchronousSender>(
             create_to_server_synchronous_sender(channel_name, stc),
             asynchronous_tasks,
@@ -728,6 +734,7 @@ private:
         assert(!this->dynamic_channel_to_client_sender && !this->dynamic_channel_to_server_sender);
 
         this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
+        LOG(LOG_INFO, "create dynamic_channel_to_server_sender");
         this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
         DynamicChannelVirtualChannel::Params dcvc_params(this->report_message, this->verbose);
@@ -752,6 +759,7 @@ private:
                                                 || !this->file_system.bogus_ios_rdpdr_virtual_channel)
                                             ? this->create_to_client_sender(channel_names::rdpdr, front)
                                             : nullptr);
+        LOG(LOG_INFO, "create asynchronous file_system_to_server_sender");
         this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
 
         BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
@@ -801,6 +809,7 @@ public:
                 ) {
         assert(!this->session_probe_to_server_sender);
 
+        LOG(LOG_INFO, "create session_probe_to_server_sender");
         this->session_probe_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::sespro, stc);
 
@@ -857,6 +866,7 @@ private:
             this->remote_programs_to_client_sender =
                 this->create_to_client_sender(channel_names::rail, front);
         }
+        LOG(LOG_INFO, "create remote_programs_to_server_sender");
         this->remote_programs_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::rail, stc);
 
@@ -1585,7 +1595,7 @@ public:
 
         if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-
+            LOG(LOG_INFO, "mod_rdp::send_to_channel()");
             virtual_channel_pdu.send_to_server(stc, channel.chanid, length, flags, chunk);
         }
         else {
@@ -1611,7 +1621,7 @@ public:
 
                 CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-                LOG(LOG_INFO, "send to server");
+                LOG(LOG_INFO, "mod_rdp::send_to_channel::send to server");
 
                 virtual_channel_pdu.send_to_server(stc, channel.chanid, length,
                     get_channel_control_flags(
@@ -1641,7 +1651,7 @@ public:
         const char (& client_name)[128]
     ) {
     
-        LOG(LOG_INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>> send_to_mod_channel()");
+        LOG(LOG_INFO, "mod_rdp_channels::send_to_mod_channel()");
     
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         if (!mod_channel) {
@@ -2291,6 +2301,8 @@ public:
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk, size_t length, uint32_t flags
     ) override {
+        LOG(LOG_INFO, "mod_rdp::send_to_mod_channel()");
+
         LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
             "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"", front_channel_name);
 
@@ -2307,6 +2319,7 @@ public:
     // Method used by session to transmit sesman answer for auth_channel
     // TODO: move to channels
     void send_auth_channel_data(const char * string_data) override {
+        LOG(LOG_INFO, "send_auth_channel_data");
 #ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
@@ -2328,6 +2341,8 @@ public:
 
     // TODO: move to channels (and also remains here as it is mod API)
     void send_checkout_channel_data(const char * string_data) override {
+        LOG(LOG_INFO, "send_checkout_channel_data");
+
 #ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
@@ -2787,16 +2802,22 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
 #ifndef __EMSCRIPTEN__
+            LOG(LOG_INFO, "CHANNEL DATA: mod_channel.name=%" PRIX64 " %s this->channels.enable_auth_channel=%s",
+                uint64_t(mod_channel.name), mod_channel.name, this->channels.enable_auth_channel?"true":"false");
+
             // If channel name is our virtual channel, then don't send data to front
-            if (mod_channel.name == this->channels.auth_channel && this->channels.enable_auth_channel) {
+            if ((mod_channel.name == this->channels.auth_channel) && this->channels.enable_auth_channel) {
+                LOG(LOG_INFO, "CHANNEL DATA: this->channels.auth_channel=%" PRIX64 " %s", uint64_t(this->channels.auth_channel),this->channels.auth_channel);
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, *this, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
             }
             else if (mod_channel.name == this->channels.checkout_channel) {
+                LOG(LOG_INFO, "CHANNEL DATA: this->channels.checkout_channel=%" PRIX64 " %s", uint64_t(this->channels.checkout_channel),this->channels.checkout_channel);
                 this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
             }
             else if (mod_channel.name == channel_names::sespro) {
+                LOG(LOG_INFO, "CHANNEL DATA: channel_names::sespro=%" PRIX64 " %s", uint64_t(channel_names::sespro),channel_names::sespro);
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
@@ -2807,12 +2828,14 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
+                LOG(LOG_INFO, "CHANNEL DATA: channel_names::cliprdr=%" PRIx64 " %s", uint64_t(channel_names::cliprdr),channel_names::cliprdr);
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service, sesman);
             }
             else if (mod_channel.name == channel_names::rail) {
+                LOG(LOG_INFO, "CHANNEL DATA: channel_names::rail=%" PRIX64 " %s", uint64_t(channel_names::rail),channel_names::rail);
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
@@ -2821,18 +2844,21 @@ public:
                     this->front, stc, this->vars, this->client_rail_caps, sesman);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
+                LOG(LOG_INFO, "CHANNEL DATA: channel_names::rdpdr=%" PRIX64 " %s", uint64_t(channel_names::rdpdr),channel_names::rdpdr);
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, sesman);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
+                LOG(LOG_INFO, "CHANNEL DATA: channel_names::drdynvc=%" PRIX64 " %s", uint64_t(channel_names::drdynvc),channel_names::drdynvc);
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, sesman);
             }
             else {
+                LOG(LOG_INFO, "process_unknown_channel");
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 this->channels.process_unknown_channel_event(mod_channel, sec.payload, length, flags, chunk_size, this->front);
             }

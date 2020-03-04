@@ -304,6 +304,8 @@ void WaitMod::refused()
 void WaitMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
+    LOG(LOG_INFO, "WaitMod::send_to_mod_channel()");
+
     if (this->rail_enabled && this->rail_client_execute){
         if (front_channel_name == CHANNELS::channel_names::rail) {
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
