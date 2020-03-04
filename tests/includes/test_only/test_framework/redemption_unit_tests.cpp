@@ -361,10 +361,10 @@ namespace redemption_unit_test__
 
     static void put_utf8_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
     {
+        PutCharCtx putc_ctx;
         auto print = [&](bytes_view x, bool is_markable){
             auto* p = x.as_u8p();
             auto* end = p + x.size();
-            PutCharCtx putc_ctx;
 
             while (p < end) {
                 utf8_char_process(p, end-p, [&](std::size_t n){
@@ -400,8 +400,8 @@ namespace redemption_unit_test__
 
     static void put_ascii_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
     {
+        PutCharCtx putc_ctx;
         auto print = [&](bytes_view x){
-            PutCharCtx putc_ctx;
             for (uint8_t c : x) {
                 putc_ctx.put(out, c, newline);
             }
