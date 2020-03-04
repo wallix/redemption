@@ -188,7 +188,8 @@ namespace
 
             FileContentsRange& range()
             {
-                assert(this->transfer_state == TransferState::Range);
+                assert(this->transfer_state == TransferState::Range
+                    || this->transfer_state == TransferState::WaitingContinuationRange);
                 return this->data.range;
             }
 
@@ -867,7 +868,9 @@ struct ClipboardVirtualChannel::D
 
     void monitor_ready(ClipCtx& clip)
     {
+        bool has_lock_support = clip.optional_lock_id.is_enabled();
         this->reset_clip(clip);
+        clip.optional_lock_id.enable(has_lock_support);
     }
 
     bool format_list(
@@ -1430,8 +1433,10 @@ struct ClipboardVirtualChannel::D
         {
         case ClipCtx::TransferState::Text:
         case ClipCtx::TransferState::Empty:
+            break;
+
         case ClipCtx::TransferState::WaitingContinuationRange:
-            if (clip.nolock_data.size().stream_id == stream_id) {
+            if (clip.nolock_data.range().stream_id == stream_id) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
                     " invalid state");
                 throw Error(ERR_RDP_PROTOCOL);
