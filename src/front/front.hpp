@@ -1305,7 +1305,6 @@ public:
                         , bytes_view chunk_data
                         , std::size_t total_length
                         , int flags) override {
-        LOG(LOG_INFO, "Front::send_to_channel DATA ON VIRTUAL CHANNEL %u", unsigned(channel.chanid));
         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
             "Front::send_to_channel: (channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)",
             channel.name, channel.chanid, voidp(chunk_data.data()),
@@ -2566,7 +2565,6 @@ public:
             "Front::incoming: sec_flags=%x", sec.flags);
 
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-            LOG(LOG_INFO, "Front:: DATA ON VIRTUAL CHANNEL %u", mcs.channelId);
             this->virtual_channel_slowpath_activate(mcs.channelId, sec.payload);
         }
         else {
@@ -2654,7 +2652,6 @@ public:
             "Front::incoming: sec_flags=%x", sec.flags);
 
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-            LOG(LOG_INFO, "Front:: DATA ON VIRTUAL CHANNEL %u", mcs.channelId);
             LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
                 "Front::incoming: channel_data channelId=%u", mcs.channelId);
 
@@ -2687,7 +2684,6 @@ public:
                 "Front::incoming: channel_name=\"%s\"", channel.name);
 
             InStream chunk({sec.payload.get_current(), chunk_size});
-            LOG(LOG_INFO, "Front::cb.send_to_mod_channel DATA ON VIRTUAL CHANNEL [%s] %u", channel.name, unsigned(channel.chanid));
             cb.send_to_mod_channel(channel.name, chunk, length, flags);
             sec.payload.in_skip_bytes(chunk_size);
         }

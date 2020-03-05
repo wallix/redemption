@@ -70,7 +70,6 @@ struct ModWrapper
         // Callback
         void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
         {
-            LOG(LOG_INFO, "mod_wrapper::CallbackWrapper::send_to_mod_channel()");
             this->wrap.send_to_mod_channel(front_channel_name, chunk, length, flags);
         }
         // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
@@ -696,7 +695,6 @@ public:
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
         std::size_t length, uint32_t flags)
     {
-        LOG(LOG_INFO, "mod_wrapper::send_to_mod_channel()");
         this->get_mod()->send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 

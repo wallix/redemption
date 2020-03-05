@@ -596,7 +596,6 @@ private:
             && !this->clipboard_to_server_sender);
 
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
-        LOG(LOG_INFO, "create clipboard_to_server_sender");
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
         BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
@@ -626,7 +625,6 @@ private:
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_synchronous_sender(CHANNELS::ChannelNameId channel_name, ServerTransportContext & stc)
     {
-        LOG(LOG_INFO, "create_to_server_synchronous_sender()");
         const CHANNELS::ChannelDef* channel = this->mod_channel_list.get_by_name(channel_name);
         if (!channel)
         {
@@ -654,8 +652,6 @@ private:
 
             void operator()(uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
             {
-                LOG(LOG_INFO, "ToServerSender()::Operator()");
-
                 if (this->show_protocol) {
                     flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                 }
@@ -721,8 +717,6 @@ private:
             }
         };
 
-        LOG(LOG_INFO, "create create_to_server_asynchronous_sender");
-
         return std::make_unique<ToServerAsynchronousSender>(
             create_to_server_synchronous_sender(channel_name, stc),
             asynchronous_tasks,
@@ -734,7 +728,6 @@ private:
         assert(!this->dynamic_channel_to_client_sender && !this->dynamic_channel_to_server_sender);
 
         this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
-        LOG(LOG_INFO, "create dynamic_channel_to_server_sender");
         this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
         DynamicChannelVirtualChannel::Params dcvc_params(this->report_message, this->verbose);
@@ -759,7 +752,6 @@ private:
                                                 || !this->file_system.bogus_ios_rdpdr_virtual_channel)
                                             ? this->create_to_client_sender(channel_names::rdpdr, front)
                                             : nullptr);
-        LOG(LOG_INFO, "create asynchronous file_system_to_server_sender");
         this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
 
         BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
@@ -809,7 +801,6 @@ public:
                 ) {
         assert(!this->session_probe_to_server_sender);
 
-        LOG(LOG_INFO, "create session_probe_to_server_sender");
         this->session_probe_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::sespro, stc);
 
@@ -866,7 +857,6 @@ private:
             this->remote_programs_to_client_sender =
                 this->create_to_client_sender(channel_names::rail, front);
         }
-        LOG(LOG_INFO, "create remote_programs_to_server_sender");
         this->remote_programs_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::rail, stc);
 
@@ -908,7 +898,6 @@ private:
 public:
     // TODO: make that private again when callers will be moved to channels
     static void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
-        LOG(LOG_INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> send_to_front_channel");
         const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
@@ -921,14 +910,8 @@ public:
         FileValidatorService * file_validator_service,
         SesmanInterface & sesman
     ) {
-        LOG(LOG_INFO, "mod_rdp::process_cliprdr_event(%u %u)", length, chunk_size);
-
         if (!this->clipboard_virtual_channel) {
-            LOG(LOG_INFO, "mod_rdp::process_cliprdr_event::create_clipboard_virtual_channel");
             this->create_clipboard_virtual_channel(front, stc, file_validator_service);
-        }
-        else {
-            LOG(LOG_INFO, "mod_rdp::process_cliprdr_event virtual channel already created");
         }
 
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
@@ -1022,14 +1005,10 @@ public:
         uint16_t const version = stream.in_uint16_le();
         uint16_t const data_length = stream.in_uint16_le();
 
-        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Version=%u DataLength=%u", version, data_length);
-
         std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         this->checkout_channel_flags  = flags;
         this->checkout_channel_chanid = checkout_channel.chanid;
-
-        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
 
 //        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
         authentifier.set_pm_request(checkout_channel_message.c_str());
@@ -1105,8 +1084,6 @@ public:
                     const ModRdpVariables & vars,
                     RailCaps const & client_rail_caps) {
 
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! send_to_mod_rail_channel");
-
         if (!this->remote_programs_virtual_channel) {
             this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
         }
@@ -1121,8 +1098,6 @@ public:
     void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
                             FrontAPI& front,
                             ServerTransportContext & stc) {
-
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! send_to_mod_cliprdr_channel");
 
         if (!this->clipboard_virtual_channel) {
             this->create_clipboard_virtual_channel(front, stc, this->file_validator_service);
@@ -1515,9 +1490,6 @@ public:
                                     GeneralCaps const & client_general_caps,
                                     const char (& client_name)[128])
     {
-    
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! send_to_mod_rdpdr_channel");
-
         if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
         &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
@@ -1575,8 +1547,6 @@ public:
         bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!! mod_rdp::send_to_channel");
-
 #ifndef __EMSCRIPTEN__
         if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
             InStream clone(chunk);
@@ -1595,7 +1565,6 @@ public:
 
         if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-            LOG(LOG_INFO, "mod_rdp::send_to_channel()");
             virtual_channel_pdu.send_to_server(stc, channel.chanid, length, flags, chunk);
         }
         else {
@@ -1620,9 +1589,6 @@ public:
                     std::min<size_t>(remaining_data_length, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
                 CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-
-                LOG(LOG_INFO, "mod_rdp::send_to_channel::send to server");
-
                 virtual_channel_pdu.send_to_server(stc, channel.chanid, length,
                     get_channel_control_flags(
                         flags, length, remaining_data_length, virtual_channel_data_length),
@@ -1650,9 +1616,6 @@ public:
         RailCaps const & client_rail_caps,
         const char (& client_name)[128]
     ) {
-    
-        LOG(LOG_INFO, "mod_rdp_channels::send_to_mod_channel()");
-    
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         if (!mod_channel) {
             return;
@@ -2165,7 +2128,6 @@ public:
         this->negociation_result.front_height = info.screen_info.height;
 
         gdi_clear_screen(gd, this->get_dim());
-        LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
 
         this->init_negociate_event_(
             info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,
@@ -2207,8 +2169,6 @@ public:
     void acl_update() override;
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
-//        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!SCANCODE RECEIVED RDP MOD!!!!!!!!!!!!!!!!!!!!! cfs=%d ie=%s",
-//            int(this->connection_finalization_state), this->input_event_disabled?"dis":"ena");
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && !this->input_event_disabled) {
 
@@ -2233,7 +2193,6 @@ public:
                        && this->channels.session_probe.session_probe_launcher->is_keyboard_sequences_started())
                      || this->channels.session_probe_virtual_channel->has_been_launched()
                     ) {
-//                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
                     }
@@ -2241,13 +2200,11 @@ public:
                 else
 #endif
                 {
-//                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
                 }
             }
 
-//            LOG(LOG_INFO, "mod_rdp::rdp_input_scancode::send_input");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
 #ifndef __EMSCRIPTEN__
@@ -2278,9 +2235,6 @@ public:
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
-        //if (!(MOUSE_FLAG_MOVE & device_flags)) {
-        //    LOG(LOG_INFO, "rdp_input_mouse x=%d y=%d device_flags=%d", x, y, device_flags);
-        //}
         if (UP_AND_RUNNING == this->connection_finalization_state
          && !this->input_event_disabled
         ) {
@@ -2301,8 +2255,6 @@ public:
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk, size_t length, uint32_t flags
     ) override {
-        LOG(LOG_INFO, "mod_rdp::send_to_mod_channel()");
-
         LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
             "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"", front_channel_name);
 
@@ -2319,7 +2271,6 @@ public:
     // Method used by session to transmit sesman answer for auth_channel
     // TODO: move to channels
     void send_auth_channel_data(const char * string_data) override {
-        LOG(LOG_INFO, "send_auth_channel_data");
 #ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
@@ -2341,8 +2292,6 @@ public:
 
     // TODO: move to channels (and also remains here as it is mod API)
     void send_checkout_channel_data(const char * string_data) override {
-        LOG(LOG_INFO, "send_checkout_channel_data");
-
 #ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
@@ -2624,8 +2573,6 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-        LOG(LOG_INFO, "============ SURFACE COMMAND ==========================");
-
         while (stream.in_check_rem(2)) {
             ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
 
@@ -2802,22 +2749,17 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
 #ifndef __EMSCRIPTEN__
-            LOG(LOG_INFO, "CHANNEL DATA: mod_channel.name=%" PRIX64 " %s this->channels.enable_auth_channel=%s",
-                uint64_t(mod_channel.name), mod_channel.name, this->channels.enable_auth_channel?"true":"false");
 
             // If channel name is our virtual channel, then don't send data to front
             if ((mod_channel.name == this->channels.auth_channel) && this->channels.enable_auth_channel) {
-                LOG(LOG_INFO, "CHANNEL DATA: this->channels.auth_channel=%" PRIX64 " %s", uint64_t(this->channels.auth_channel),this->channels.auth_channel);
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, *this, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
             }
             else if (mod_channel.name == this->channels.checkout_channel) {
-                LOG(LOG_INFO, "CHANNEL DATA: this->channels.checkout_channel=%" PRIX64 " %s", uint64_t(this->channels.checkout_channel),this->channels.checkout_channel);
                 this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
             }
             else if (mod_channel.name == channel_names::sespro) {
-                LOG(LOG_INFO, "CHANNEL DATA: channel_names::sespro=%" PRIX64 " %s", uint64_t(channel_names::sespro),channel_names::sespro);
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
@@ -2828,14 +2770,12 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
-                LOG(LOG_INFO, "CHANNEL DATA: channel_names::cliprdr=%" PRIx64 " %s", uint64_t(channel_names::cliprdr),channel_names::cliprdr);
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service, sesman);
             }
             else if (mod_channel.name == channel_names::rail) {
-                LOG(LOG_INFO, "CHANNEL DATA: channel_names::rail=%" PRIX64 " %s", uint64_t(channel_names::rail),channel_names::rail);
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
@@ -2844,21 +2784,19 @@ public:
                     this->front, stc, this->vars, this->client_rail_caps, sesman);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
-                LOG(LOG_INFO, "CHANNEL DATA: channel_names::rdpdr=%" PRIX64 " %s", uint64_t(channel_names::rdpdr),channel_names::rdpdr);
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, sesman);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
-                LOG(LOG_INFO, "CHANNEL DATA: channel_names::drdynvc=%" PRIX64 " %s", uint64_t(channel_names::drdynvc),channel_names::drdynvc);
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, sesman);
             }
             else {
-                LOG(LOG_INFO, "process_unknown_channel");
+                LOG(LOG_INFO, "mod_rdp::process unknown channel: mod_channel.name=%" PRIX64 " %s",uint64_t(mod_channel.name), mod_channel.name);
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 this->channels.process_unknown_channel_event(mod_channel, sec.payload, length, flags, chunk_size, this->front);
             }
@@ -3235,7 +3173,6 @@ public:
                     case PDUTYPE_DEACTIVATEALLPDU:
                         LOG_IF(bool(this->verbose & RDPVerbose::connection),
                             LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU");
-                        LOG(LOG_INFO, "Deactivate All PDU");
                         this->deactivation_reactivation_in_progress = true;
                         // TODO CGR: Data should actually be consumed
                             // TODO CGR: Check we are indeed expecting Synchronize... dubious
@@ -3276,8 +3213,6 @@ public:
 
     void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
     {
-        //LOG(LOG_INFO, "mod_rdp::draw_event()");
-
 #ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager) {
             this->channels.remote_programs_session_manager->set_drawable(&gd);
@@ -3312,8 +3247,6 @@ public:
                 }
             }
             catch(Error const & e){
-                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
-
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     if (!this->support_connection_redirection_during_recording) {
                         this->front.must_be_stop_capture();
@@ -3395,7 +3328,6 @@ public:
                 }
             }
         }
-        //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
     // 1.3.1.3 Deactivation-Reactivation Sequence
@@ -3435,7 +3367,6 @@ public:
     // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
     void send_confirm_active(gdi::GraphicApi& drawable) {
-        LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         LOG_IF(bool(this->verbose & RDPVerbose::capabilities),
             LOG_INFO, "mod_rdp::send_confirm_active");
         this->send_data_request_ex(
@@ -4860,9 +4791,6 @@ public:
             "%s@%s", username, domain);
         snprintf(domain_username_format_1, sizeof(domain_username_format_0),
             "%s\\%s", domain, username);
-        //LOG(LOG_INFO,
-        //    "Domain username format 0=(%s) Domain username format 1=(%s)",
-        //    domain_username_format_0, domain_username_format_0);
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.file_system.smartcard_passthrough) {
@@ -5107,7 +5035,6 @@ public:
     void process_demand_active(ShareControl_Recv & sctrl)
     {
         LOG(LOG_INFO, "mod_rdp::recv_demand_active");
-
         this->share_id = sctrl.payload.in_uint32_le();
 
         uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
@@ -5126,8 +5053,7 @@ public:
     void process_server_caps(InStream & stream, uint16_t len) {
         // TODO check stream consumed and len
         (void)len;
-        LOG_IF(bool(this->verbose & RDPVerbose::capabilities),
-            LOG_INFO, "mod_rdp::process_server_caps");
+        LOG_IF(bool(this->verbose & RDPVerbose::capabilities), LOG_INFO, "mod_rdp::process_server_caps");
 
         uint16_t ncapsets = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
@@ -5153,7 +5079,6 @@ public:
                 this->negociation_result.front_width = bitmap_caps.desktopWidth;
                 this->negociation_result.front_height = bitmap_caps.desktopHeight;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "###############################################################");
                     LOG(LOG_INFO, "Bitmap Depth from Server: %d", bitmap_caps.preferredBitsPerPixel);
                 }
             }
@@ -5226,7 +5151,7 @@ public:
                 this->haveRemoteFx = bitmap_codecs_caps.haveRemoteFxCodec;
                 if (this->haveRemoteFx){
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        LOG(LOG_INFO, "RemoteFx Enabled on server ++++++++++++++++");
+                        LOG(LOG_INFO, "RemoteFx Enabled on server");
                     }
                 }
             }
@@ -5244,8 +5169,7 @@ public:
             stream.in_skip_bytes(next - stream.get_current());
         }
 
-        LOG_IF(bool(this->verbose & RDPVerbose::capabilities),
-            LOG_INFO, "mod_rdp::process_server_caps done");
+        LOG_IF(bool(this->verbose & RDPVerbose::capabilities), LOG_INFO, "mod_rdp::process_server_caps done");
     }   // process_server_caps
 
     void send_control(int action) {
@@ -5289,12 +5213,8 @@ public:
                 }
                 uint32_t const max_cache_num_entries = this->BmpCacheRev2_Cache_NumEntries()[cache_id];
                 totalEntriesCache[cache_id] = std::min<uint32_t>(idx, max_cache_num_entries);
-                //LOG(LOG_INFO, "totalEntriesCache[%d]=%d", cache_id, idx);
             }
         }
-        //LOG(LOG_INFO, "totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u totalEntriesCache3=%u totalEntriesCache4=%u",
-        //    totalEntriesCache[0], totalEntriesCache[1], totalEntriesCache[2], totalEntriesCache[3], totalEntriesCache[4]);
-
         uint16_t total_number_of_entries = totalEntriesCache[0] + totalEntriesCache[1] + totalEntriesCache[2] +
                                            totalEntriesCache[3] + totalEntriesCache[4];
         if (total_number_of_entries > 0) {

@@ -1503,7 +1503,6 @@ void mod_vnc::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, In
     if (front_channel_name == channel_names::cliprdr) {
         this->clipboard_send_to_vnc_server(chunk, length, flags);
     }
-    LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::send_to_mod_channel done");
 }
 
 void mod_vnc::send_clipboard_pdu_to_front(const OutStream & out_stream)

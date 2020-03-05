@@ -41,7 +41,6 @@ public:
 
     // CHANNELS
     void send_to_mod_channel(CHANNELS::ChannelNameId channel_name, InStream & stream, size_t size, uint32_t flag) {
-        LOG(LOG_INFO, "ClientChannelMod::send_to_mod_channel()");
         if (this->mod) {
             this->mod->send_to_mod_channel(channel_name, stream, size, flag);
         }
