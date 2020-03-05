@@ -551,6 +551,13 @@ namespace
 
     using Direction = ClipboardVirtualChannel::Direction;
 
+    array_view_const_char to_dlpav_str_direction(Direction direction)
+    {
+        return (direction == Direction::FileFromClient)
+            ? "UP"_av
+            : "DOWN"_av;
+    }
+
     void dlpav_report_text(
         FileValidatorId file_validator_id,
         ReportMessageApi& report_message,
@@ -558,15 +565,11 @@ namespace
         Direction direction,
         std::string_view result_content)
     {
-        auto str_direction = (direction == Direction::FileFromClient)
-            ? "UP"_av
-            : "DOWN"_av;
-
         char buf[24];
         unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
             underlying_cast(file_validator_id));
         report_message.log6(LogId::TEXT_VERIFICATION, time, {
-            KVLog("direction"_av, str_direction),
+            KVLog("direction"_av, to_dlpav_str_direction(direction)),
             KVLog("copy_id"_av, {buf, n}),
             KVLog("status"_av, result_content),
         });
@@ -579,12 +582,8 @@ namespace
         Direction direction,
         std::string_view result_content)
     {
-        auto str_direction = (direction == Direction::FileFromClient)
-            ? "UP"_av
-            : "DOWN"_av;
-
         report_message.log6(LogId::FILE_VERIFICATION, time, {
-            KVLog("direction"_av, str_direction),
+            KVLog("direction"_av, to_dlpav_str_direction(direction)),
             KVLog("file_name"_av, file_name),
             KVLog("status"_av, result_content),
         });
@@ -662,6 +661,14 @@ struct ClipboardVirtualChannel::D
 {
     ClientCtx client;
     ServerCtx server;
+
+    Direction to_direction(ClipCtx const& clip) const
+    {
+        return (&clip == &this->server)
+            ? Direction::FileFromServer
+            : Direction::FileFromClient;
+    }
+
     ClipboardVirtualChannel& self;
     // boost::sml::sm<cliprdr_tt> sm{DataCtxRef{data_ctx}};
 
@@ -728,9 +735,7 @@ struct ClipboardVirtualChannel::D
             this->self.file_validator->send_eof(file_rng.file_validator_id);
             this->file_validator_list.push_back({
                 file_rng.file_validator_id,
-                (&clip == &this->server)
-                    ? Direction::FileFromServer
-                    : Direction::FileFromClient,
+                this->to_direction(clip),
                 file_rng.dlp_failure,
                 std::move(file_rng.tfl_file),
                 file_rng.file_name,
@@ -766,9 +771,7 @@ struct ClipboardVirtualChannel::D
                 clip.nolock_data.text().file_validator_id);
             this->text_validator_list.push_back({
                 clip.nolock_data.text().file_validator_id,
-                (&clip == &this->server)
-                    ? Direction::FileFromServer
-                    : Direction::FileFromClient,
+                this->to_direction(clip),
             });
         }
     }
@@ -914,7 +917,6 @@ struct ClipboardVirtualChannel::D
     void format_list_response(
         RDPECLIP::CliprdrHeader const& in_header, uint32_t flags, ClipCtx& clip)
     {
-        // TODO check previously to last
         if (not check_header_response(in_header, flags)) {
             clip.current_file_list_format_id = 0;
             return ;
@@ -930,8 +932,6 @@ struct ClipboardVirtualChannel::D
         if (bool(this->self.verbose & RDPVerbose::cliprdr)) {
             pdu.log();
         }
-
-        // TODO if validator or storage
 
         if (not clip.optional_lock_id.is_enabled()) {
             return ;
@@ -949,8 +949,6 @@ struct ClipboardVirtualChannel::D
         if (bool(this->self.verbose & RDPVerbose::cliprdr)) {
             pdu.log();
         }
-
-        // TODO if validator or storage
 
         if (not clip.optional_lock_id.is_enabled()) {
             return ;
@@ -1010,7 +1008,6 @@ struct ClipboardVirtualChannel::D
         RDPECLIP::CliprdrHeader const& in_header,
         ClipCtx& clip, uint32_t flags, bytes_view chunk_data)
     {
-        // TODO check previously to last
         if (not check_header_response(in_header, flags)) {
             clip.requested_format_id = 0;
             return ;
@@ -1300,7 +1297,6 @@ struct ClipboardVirtualChannel::D
                 throw Error(ERR_RDP_PROTOCOL);
             }
 
-            // TODO check with file_contents_request_pdu.dwFlags()
             if (clip.locked_data.contains_stream_id(stream_id)) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " streamId already used (%u)", stream_id);
@@ -1316,7 +1312,6 @@ struct ClipboardVirtualChannel::D
                     r->state = ClipCtx::LockedData::LockedRange::State::WaitingResponse;
                 }
                 else {
-                    // TODO in-place copy
                     clip.locked_data.requested_range = ClipCtx::LockedData::LockedRequestedRange{
                         lock_id, {
                             stream_id,
@@ -1856,9 +1851,7 @@ struct ClipboardVirtualChannel::D
 
                     case ClipCtx::TransferState::Text:
                         if (clip.nolock_data.text().file_validator_id == file_validator_id) {
-                            process_text((&clip == &this->server)
-                                ? Direction::FileFromServer
-                                : Direction::FileFromClient);
+                            process_text(this->to_direction(clip));
                             clip.nolock_data.delete_text();
                             return true;
                         }
@@ -1868,11 +1861,7 @@ struct ClipboardVirtualChannel::D
                     case ClipCtx::TransferState::WaitingContinuationRange:
                         if (clip.nolock_data.range().file_validator_id == file_validator_id) {
                             auto& rng = clip.nolock_data.range();
-                            process_file(
-                                (&clip == &this->server)
-                                    ? Direction::FileFromServer
-                                    : Direction::FileFromClient,
-                                rng.file_name);
+                            process_file(this->to_direction(clip), rng.file_name);
                             rng.dlp_failure
                                 = this->self.file_validator->last_result_flag() != ValidationResult::IsAccepted;
                             rng.file_validator_id = FileValidatorId();
@@ -1882,11 +1871,7 @@ struct ClipboardVirtualChannel::D
                     }
 
                     if (auto* r = clip.locked_data.search_range_by_validator_id(file_validator_id)) {
-                        process_file(
-                            (&clip == &this->server)
-                                ? Direction::FileFromServer
-                                : Direction::FileFromClient,
-                            r->file_contents_range.file_name);
+                        process_file(this->to_direction(clip), r->file_contents_range.file_name);
                         r->file_contents_range.file_validator_id = FileValidatorId();
                         return true;
                     }
@@ -1935,7 +1920,6 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()
 {
-    // TODO move to D::~D()
     try {
         using namespace std::string_view_literals;
 
@@ -1966,9 +1950,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
         }
 
         auto close_clip = [&](ClipCtx& clip){
-            auto direction = (&clip == &this->d->server)
-                ? Direction::FileFromServer
-                : Direction::FileFromClient;
+            auto direction = this->d->to_direction(clip);
 
             auto close_rng = [&](ClipCtx::FileContentsRange& rng){
                 auto& file_name = rng.file_name;
