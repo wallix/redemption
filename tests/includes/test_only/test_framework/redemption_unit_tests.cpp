@@ -268,7 +268,6 @@ namespace redemption_unit_test__
     struct PutCharCtx
     {
         bool is_printable = true;
-        uint8_t previous_char;
 
         void put(std::ostream& out, uint8_t c, char const* newline = "\\n")
         {
@@ -280,11 +279,16 @@ namespace redemption_unit_test__
                     }
                     is_printable = true;
                 }
-                out << char(c);
+
+                if (c == '\\') {
+                    out << "\\\\";
+                }
+                else {
+                    out << char(c);
+                }
             }
             else {
                 is_printable = !put_unprintable_char(out, c, newline);
-                previous_char = c;
             }
         }
     };
