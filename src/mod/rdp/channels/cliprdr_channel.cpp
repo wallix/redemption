@@ -1300,6 +1300,7 @@ struct ClipboardVirtualChannel::D
                 throw Error(ERR_RDP_PROTOCOL);
             }
 
+            // TODO check with file_contents_request_pdu.dwFlags()
             if (clip.locked_data.contains_stream_id(stream_id)) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " streamId already used (%u)", stream_id);
@@ -1412,7 +1413,7 @@ struct ClipboardVirtualChannel::D
             return true;
         };
 
-        auto update_file_range_data = [](
+        auto update_file_range_data = [this](
             ClipCtx::FileContentsRange& file_contents_range,
             bytes_view data
         ){
@@ -1426,6 +1427,11 @@ struct ClipboardVirtualChannel::D
 
             if (bool(file_contents_range.tfl_file)) {
                 file_contents_range.tfl_file->trans.send(data);
+            }
+
+            if (bool(file_contents_range.file_validator_id)) {
+                this->self.file_validator->send_data(
+                    file_contents_range.file_validator_id, data);
             }
         };
 
@@ -1835,7 +1841,6 @@ struct ClipboardVirtualChannel::D
                     else {
                         this->self.fdx_capture->cancel_tfl(*file_validator_data->tfl_file);
                     }
-                    file_validator_data->tfl_file.reset();
                 }
 
                 this->remove_file_validator(file_validator_data);
@@ -1945,6 +1950,14 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
         }
 
         for (auto& file_validator : this->d->file_validator_list) {
+            if (file_validator.tfl_file) {
+                this->fdx_capture->close_tfl(
+                    *file_validator.tfl_file,
+                    file_validator.file_name,
+                    Mwrm3::TransferedStatus::Broken,
+                    Mwrm3::Sha256Signature{file_validator.sig.digest_as_av()});
+            }
+
             dlpav_report_file(
                 file_validator.file_name,
                 this->report_message,

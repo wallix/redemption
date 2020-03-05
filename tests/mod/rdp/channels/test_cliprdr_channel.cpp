@@ -405,6 +405,14 @@ namespace
             "sid,blabla", sid, -1, cctx, rnd, fstat,
             ReportError()};
     };
+
+    auto add_file(DataTest& data_test, std::string_view suffix)
+    {
+        auto basename = str_concat(sid, suffix);
+        auto path = data_test.fdx_record_path.add_file(basename);
+        (void)data_test.fdx_hash_path.add_file(basename);
+        return path;
+    }
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
@@ -417,8 +425,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
     };
 
     using namespace std::string_view_literals;
-
-    static constexpr auto sid = "my_session_id"sv;
 
     RED_TEST_CONTEXT_DATA(D const& d,
           "with validator: " << d.with_validator <<
@@ -669,7 +675,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
 
             if (d.with_validator) {
                 RED_CHECK_SMEM(validator_transport.buf,
-                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b""filename\x00\x03""abc\x03\x00\x00\x00\x04\x00\x00\x00\x01"
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""abc\x01\x00\x00\x00\x10\x00\x00\x00"
+                    "\x01""data_abcdefg\x03\x00\x00\x00\x04\x00\x00\x00\x01"
                     ""_av);
 
                 validator_transport.buf.clear();
@@ -698,10 +706,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
 
             if (fdx_ctx && d.always_file_storage) {
-                auto basename = str_concat(sid, ",000001.tfl");
-                auto tfl_path = fdx_ctx->fdx_record_path.add_file(basename);
-                (void)fdx_ctx->fdx_hash_path.add_file(basename);
-                RED_CHECK_FILE_CONTENTS(tfl_path, "data_abcdefg"sv);
+                RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000001.tfl"), "data_abcdefg"sv);
             }
 
             // check TEXT_VALIDATION
@@ -800,6 +805,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                     "\x00\x00,\x03\x00\x26\x00""abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9"
                     "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
                     "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
+            }
+            else {
+                RED_CHECK_FILE_CONTENTS(fdx_path, "v3\n"_av);
             }
         }
 
@@ -1071,7 +1079,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             RED_REQUIRE(report_message.messages.size() == 1);
             RED_CHECK(report_message.messages.back() ==
                 "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=FileGroupDescriptorW(49262) size=596"_av);
-            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 using namespace RDPECLIP;
@@ -1088,6 +1095,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00"_av);
             RED_CHECK(report_message.messages.size() == 1);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             // (partial) file content (2 packets)
 
@@ -1106,26 +1114,25 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x09\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00""da"
                 ""_av);
             RED_REQUIRE(report_message.messages.size() == 1);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
+            if (d.with_validator) {
+                RED_CHECK(validator_transport.buf ==
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""abc\x01\x00\x00\x00\x06\x00\x00\x00\x01""da"_av);
+            }
 
             {
-                using namespace Cliprdr;
-                Buffer buf;
-                auto av = buf.build(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
-                    out.out_uint32_le(0);
-                    out.out_copy_bytes("ta_"_av);
-                });
-                process_client_message(av, CHANNELS::CHANNEL_FLAG_LAST);
+                process_client_message("ta_"_av, CHANNELS::CHANNEL_FLAG_LAST);
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
-            RED_CHECK_MEM(to_server_sender.back(),
-                "\x09\x00\x01\x00\x07\x00\x00\x00\x00\x00\x00\x00""ta_"
-                ""_av);
+            RED_CHECK_MEM(to_server_sender.back(), "ta_"_av);
             RED_REQUIRE(report_message.messages.size() == 1);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
+            if (d.with_validator) {
+                RED_CHECK(validator_transport.buf ==
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""abc\x01\x00\x00\x00\x06\x00\x00\x00\x01""da"
+                    "\x01\x00\x00\x00\x07\x00\x00\x00\x01ta_"_av);
+            }
 
             {
                 StaticOutStream<1600> out;
@@ -1145,8 +1152,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x72\x00\x57\x00\x00\x00" //r.W... !
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
 
             {
                 Buffer buf;
@@ -1161,8 +1166,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x0A\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
 
             {
                 Buffer buf;
@@ -1193,8 +1196,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
 
             {
                 Buffer buf;
@@ -1209,8 +1210,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
 
             {
                 using namespace Cliprdr;
@@ -1275,8 +1274,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             RED_REQUIRE(report_message.messages.size() == 2);
             RED_CHECK(report_message.messages.back() ==
                 "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=FileGroupDescriptorW(49262) size=596"_av);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
 
             {
                 using namespace RDPECLIP;
@@ -1293,8 +1290,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00" //................ !
                 "\x01\x00\x00\x00"_av);
             RED_CHECK(report_message.messages.size() == 2);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"_av);
+            if (d.with_validator) {
+                RED_CHECK(validator_transport.buf ==
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""abc\x01\x00\x00\x00\x06\x00\x00\x00\x01""da"
+                    "\x01\x00\x00\x00\x07\x00\x00\x00\x01ta_"_av);
+            }
 
             // file content
 
@@ -1316,11 +1317,17 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             RED_CHECK(report_message.messages.back() ==
                 "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=def size=10"
                 " sha256=dda098fc2804923ceeef1b65f26b78be8789535b7b9dddb6fda8de6a2dacf190"_av);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\bfilename\x00\x03""def"
-                "\x03\x00\x00\x00\x04\x00\x00\x00\x02"
-                ""_av);
+            if (d.with_validator) {
+                RED_CHECK(validator_transport.buf ==
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""abc\x01\x00\x00\x00\x06\x00\x00\x00\x01""da"
+                    "\x01\x00\x00\x00\x07\x00\x00\x00\x01ta_"
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""def"
+                    "\x01\x00\x00\x00\x0e\x00\x00\x00\x02plopploppl"
+                    "\x03\x00\x00\x00\x04\x00\x00\x00\x02"
+                    ""_av);
+            }
 
             {
                 Buffer buf;
@@ -1335,11 +1342,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x0B\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 3);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\bfilename\x00\x03""def"
-                "\x03\x00\x00\x00\x04\x00\x00\x00\x02"
-                ""_av);
 
             {
                 using namespace RDPECLIP;
@@ -1356,11 +1358,17 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 "\x02\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00"
                 "\x00\x00\x00\x00"_av);
             RED_CHECK(report_message.messages.size() == 3);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\bfilename\x00\x03""def"
-                "\x03\x00\x00\x00\x04\x00\x00\x00\x02"
-                ""_av);
+            if (d.with_validator) {
+                RED_CHECK(validator_transport.buf ==
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""abc\x01\x00\x00\x00\x06\x00\x00\x00\x01""da"
+                    "\x01\x00\x00\x00\x07\x00\x00\x00\x01ta_"
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""def"
+                    "\x01\x00\x00\x00\x0e\x00\x00\x00\x02plopploppl"
+                    "\x03\x00\x00\x00\x04\x00\x00\x00\x02"
+                    ""_av);
+            }
 
             // (last partial) file content
 
@@ -1381,21 +1389,22 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             RED_REQUIRE(report_message.messages.size() == 4);
             RED_CHECK_SMEM(report_message.messages.back(),
                 "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=abc size=12"
-                " sha256=8c840f078586a6bdabe89f5e4f1fd9dd073783e99ea9033fb4260ad246d77e77"_av);
-            RED_CHECK(validator_transport.buf ==
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"
-                "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\bfilename\x00\x03""def"
-                "\x03\x00\x00\x00\x04\x00\x00\x00\x02\x03\x00\x00\x00\x04\x00\x00\x00\x01"
-                ""_av);
+                " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av);
 
 
             size_t expected_report_messages_size = 4;
 
             if (d.with_validator) {
                 RED_CHECK(validator_transport.buf ==
-                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\bfilename\x00\x03""abc"
-                    "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\bfilename\x00\x03""def"
-                    "\x03\x00\x00\x00\x04\x00\x00\x00\x02\x03\x00\x00\x00\x04\x00\x00\x00\x01"
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""abc\x01\x00\x00\x00\x06\x00\x00\x00\x01""da"
+                    "\x01\x00\x00\x00\x07\x00\x00\x00\x01ta_"
+                    "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\b"
+                    "filename\x00\x03""def"
+                    "\x01\x00\x00\x00\x0e\x00\x00\x00\x02plopploppl"
+                    "\x03\x00\x00\x00\x04\x00\x00\x00\x02"
+                    "\x01\x00\x00\x00\x0b\x00\x00\x00\x01""abcdefg"
+                    "\x03\x00\x00\x00\x04\x00\x00\x00\x01"
                     ""_av);
 
                 validator_transport.buf.clear();
@@ -1426,17 +1435,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
 
         if (fdx_ctx) {
             if (d.always_file_storage) {
-                auto basename = str_concat(sid, ",000001.tfl");
-                auto tfl_path = fdx_ctx->fdx_record_path.add_file(basename);
-                (void)fdx_ctx->fdx_hash_path.add_file(basename);
-                RED_CHECK_FILE_CONTENTS(tfl_path, "data_abcdefg"sv);
+                RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000001.tfl"), "data_abcdefg"sv);
             }
 
-            {
-                auto basename = str_concat(sid, ",000002.tfl");
-                auto tfl_path = fdx_ctx->fdx_record_path.add_file(basename);
-                (void)fdx_ctx->fdx_hash_path.add_file(basename);
-                RED_CHECK_FILE_CONTENTS(tfl_path, "plopploppl"sv);
+            if (d.with_validator || (d.with_fdx_capture && d.always_file_storage)) {
+                RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000002.tfl"), "plopploppl"sv);
             }
 
             (void)fdx_ctx->hash_path.add_file(fdx_basename);
@@ -1446,15 +1449,37 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             OutCryptoTransport::HashArray fhash;
             fdx_ctx->fdx.close(qhash, fhash);
 
-            RED_CHECK_WORKSPACE(fdx_ctx->wd);
-
-            if (d.always_file_storage) {
+            if (d.with_validator && d.always_file_storage) {
                 RED_CHECK_FILE_CONTENTS(fdx_path,
-                    "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                    "\x00\x00,\x03\x00\x26\x00""abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9"
-                    "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
-                    "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
+                    "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "\x00\x00\x00\x00\x00,\x03\x00\x26\x00"
+                    "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9"
+                    "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98"
+                    "\xf7\xf5\xe0\x7f,\x96.\x10x\xc0""5\x9f^\x04\x00\x02\x00"
+                    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "L\x03\x00&\x00""defmy_session_id/my_session_id,000002.tfl"
+                    "\xdd\xa0\x98\xfc(\x04\x92<\xee\xef\x1b""e\xf2kx\xbe\x87"
+                    "\x89S[{\x9d\xdd\xb6\xfd\xa8\xdej-\xac\xf1\x90"_av);
             }
+            else if (d.always_file_storage) {
+                RED_CHECK_FILE_CONTENTS(fdx_path,
+                    "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "\x00\x00,\x03\x00&\x00""defmy_session_id/my_session_id,000002.tfl"
+                    "\xdd\xa0\x98\xfc(\x04\x92<\xee\xef\x1b""e\xf2kx\xbe\x87\x89S[{\x9d"
+                    "\xdd\xb6\xfd\xa8\xdej-\xac\xf1\x90\x04\x00\x01\x00\x00\x00\x00\x00"
+                    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00,\x03\x00&\x00"
+                    "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9\xdb""E\\p\xb7"
+                    "\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0\x7f,\x96.\x10"
+                    "x\xc0""5\x9f^"_av);
+            }
+            else if (d.with_validator && d.with_fdx_capture) {
+                RED_CHECK_FILE_CONTENTS(fdx_path, "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00L\x03\x00&\x00""defmy_session_id/my_session_id,000002.tfl\xdd\xa0\x98\xfc(\x04\x92<\xee\xef\x1b""e\xf2kx\xbe\x87\x89S[{\x9d\xdd\xb6\xfd\xa8\xdej-\xac\xf1\x90"_av);
+            }
+            else {
+                RED_CHECK_FILE_CONTENTS(fdx_path, "v3\n"_av);
+            }
+
+            RED_CHECK_WORKSPACE(fdx_ctx->wd);
         }
 
         if (err_count != RED_ERROR_COUNT()) {
