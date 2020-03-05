@@ -4287,27 +4287,6 @@ private:
                 if (BitsPerPixel{8} != this->mod_bpp) {
                     this->send_palette();
                 }
-
-                // if (this->client_info.remote_program && this->rail_channel_id) {
-                //     CHANNELS::ChannelDef const* rail_channel = this->channel_list.get_by_id(this->rail_channel_id);
-
-                //     StaticOutStream<64> rail_handshake_pdu_stream;
-
-                //     RAILPDUHeader_Send raid_pdu_header_send(rail_handshake_pdu_stream);
-
-                //     raid_pdu_header_send.emit_begin(TS_RAIL_ORDER_HANDSHAKE);
-
-                //     HandshakePDU_Send(rail_handshake_pdu_stream, 0x1771);
-
-                //     raid_pdu_header_send.emit_end();
-
-                //     this->send_to_channel(
-                //         *rail_channel,
-                //         rail_handshake_pdu_stream.get_data(),
-                //         rail_handshake_pdu_stream.get_offset(),
-                //         rail_handshake_pdu_stream.get_offset(),
-                //         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
-                // }
             }
         }
         break;

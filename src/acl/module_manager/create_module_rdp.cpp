@@ -404,6 +404,7 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     spp.enable_session_probe = ini.get<cfg::mod_rdp::enable_session_probe>();
     spp.enable_launch_mask = ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>();
     spp.used_clipboard_based_launcher = ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
+    spp.start_launch_timeout_timer_only_after_logon = ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>();
     spp.vc_params.effective_launch_timeout
         = ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>()
         ? ((ini.get<cfg::mod_rdp::session_probe_on_launch_failure>()
@@ -437,6 +438,7 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
          ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
     spp.clipboard_based_launcher.short_delay_ms =
         ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
+    spp.vc_params.end_of_session_check_delay_time = ini.get<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>();
     spp.vc_params.ignore_ui_less_processes_during_end_of_session_check =
         ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
     spp.vc_params.childless_window_as_unidentified_input_field =

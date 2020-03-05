@@ -399,6 +399,15 @@
           "description": ""
         },
         {
+          "name": "end_of_session_check_delay_time",
+          "type": "integer",
+          "min": 0,
+          "max": 60000,
+          "default": 0,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "ignore_ui_less_processes_during_end_of_session_check",
           "type": "bool",
           "default": true,

@@ -140,6 +140,9 @@ cp_spec = {
         u'mod_rdp:session_probe_memory_usage_limit': (
             'memory_usage_limit', 0
         ),
+        u'mod_rdp:session_probe_end_of_session_check_delay_time': (
+            'end_of_session_check_delay_time', 0
+        ),
         u'mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check': (
             'ignore_ui_less_processes_during_end_of_session_check', True
         ),
