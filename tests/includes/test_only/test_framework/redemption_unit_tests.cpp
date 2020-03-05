@@ -236,236 +236,236 @@ namespace redemption_unit_test__
         }
 
         char const * hex_table = "0123456789abcdef";
-    }
 
-    static bool is_printable_ascii(uint8_t c)
-    {
-        return 0x20 <= c && c < 127;
-    }
-
-    static bool put_unprintable_char(std::ostream& out, uint8_t c, char const* newline = "\\n")
-    {
-        switch (c) {
-            case '"': out << "\\\""; return false;
-            case '\b': out << "\\b"; return false;
-            case '\t': out << "\\t"; return false;
-            case '\r': out << "\\r"; return false;
-            case '\n': out << newline; return false;
-        }
-        out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-        return true;
-    }
-
-    static bool is_hex(uint8_t c)
-    {
-        return
-            ('0' <= c && c <= '9')
-         || ('a' <= c && c <= 'f')
-         || ('A' <= c && c <= 'F')
-        ;
-    }
-
-    struct PutCharCtx
-    {
-        bool is_printable = true;
-
-        void put(std::ostream& out, uint8_t c, char const* newline = "\\n")
+        static bool is_printable_ascii(uint8_t c)
         {
-            if (is_printable_ascii(c)) {
-                if (!is_printable) {
-                    // split hexadecimal rendering "\xaaa" -> "\xaa""a"
-                    if (is_hex(c)) {
-                        out << "\"\"";
-                    }
-                    is_printable = true;
-                }
+            return 0x20 <= c && c < 127;
+        }
 
-                if (c == '\\') {
-                    out << "\\\\";
+        static bool put_unprintable_char(std::ostream& out, uint8_t c, char const* newline = "\\n")
+        {
+            switch (c) {
+                case '"': out << "\\\""; return false;
+                case '\b': out << "\\b"; return false;
+                case '\t': out << "\\t"; return false;
+                case '\r': out << "\\r"; return false;
+                case '\n': out << newline; return false;
+            }
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            return true;
+        }
+
+        static bool is_hex(uint8_t c)
+        {
+            return
+                ('0' <= c && c <= '9')
+            || ('a' <= c && c <= 'f')
+            || ('A' <= c && c <= 'F')
+            ;
+        }
+
+        struct PutCharCtx
+        {
+            bool is_printable = true;
+
+            void put(std::ostream& out, uint8_t c, char const* newline = "\\n")
+            {
+                if (is_printable_ascii(c)) {
+                    if (!is_printable) {
+                        // split hexadecimal rendering "\xaaa" -> "\xaa""a"
+                        if (is_hex(c)) {
+                            out << "\"\"";
+                        }
+                        is_printable = true;
+                    }
+
+                    if (c == '\\') {
+                        out << "\\\\";
+                    }
+                    else {
+                        out << char(c);
+                    }
                 }
                 else {
-                    out << char(c);
+                    is_printable = !put_unprintable_char(out, c, newline);
                 }
             }
+        };
+
+        static std::ostream& put_dump_bytes(size_t pos, std::ostream& out, bytes_view x)
+        {
+            if (x.size() == 0){
+                return out << "\"\"\n";
+            }
+
+            constexpr size_t line_size = 16;
+            char const* empty_line
+                = "                                                                ";
+
+            auto print_hex = [&](bytes_view av){
+                for (uint8_t c : av) {
+                    out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+                }
+            };
+
+            auto print_data = [&](bytes_view av){
+                for (uint8_t c : av) {
+                    out << (is_printable_ascii(c) ? char(c) : '.');
+                }
+            };
+
+            auto print_line = [&](bytes_view av){
+                out << '"';
+                print_hex(av.first(line_size));
+                out << "\" // ";
+                print_data(av.first(line_size));
+                av = av.from_offset(line_size);
+                out << "\n";
+                return av;
+            };
+
+            auto lbytes = x.first(pos);
+            auto rbytes = x.from_offset(pos);
+
+            while (lbytes.size() >= line_size) {
+                lbytes = print_line(lbytes);
+            }
+
+            if (lbytes.empty()) {
+                out << "\x1b[35m";
+            }
             else {
-                is_printable = !put_unprintable_char(out, c, newline);
+                auto partial_right_size = std::min(line_size - lbytes.size(), rbytes.size());
+                out << "\n\"";
+                print_hex(lbytes);
+                out << "\x1b[35m";
+                print_hex(rbytes.first(partial_right_size));
+                out << "\"" << &empty_line[(lbytes.size() + partial_right_size) * 4] << " // ";
+                print_data(lbytes);
+                print_data(rbytes.first(partial_right_size));
+                out << "\n";
+                rbytes = rbytes.from_offset(partial_right_size);
+            }
+
+            while (rbytes.size() >= line_size) {
+                rbytes = print_line(rbytes);
+            }
+
+            if (!rbytes.empty()) {
+                out << '"';
+                print_hex(rbytes);
+                out << "\"" << &empty_line[rbytes.size() * 4] << " // ";
+                print_data(rbytes);
+                out << "\n";
+            }
+
+            return out << "\x1b[0m";
+        }
+
+        static void put_utf8_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
+        {
+            PutCharCtx putc_ctx;
+            auto print = [&](bytes_view x, bool is_markable){
+                auto* p = x.as_u8p();
+                auto* end = p + x.size();
+
+                while (p < end) {
+                    utf8_char_process(p, end-p, [&](std::size_t n){
+                        if (n <= 1) {
+                            putc_ctx.put(out, *p, newline);
+                            ++p;
+                        }
+                        else {
+                            out.write(char_ptr_cast(p), n);
+                            putc_ctx.is_printable = true;
+                            p += n;
+                        }
+                    });
+                }
+
+                if (is_markable) {
+                    out << "\x1b[35m";
+                }
+            };
+
+            print(v.first(pos), pos != v.size());
+            if (pos != v.size()) {
+                out << "\x1b[35m";
+                print(v.from_offset(pos), false);
+                out << "\x1b[0m";
             }
         }
-    };
 
-    static std::ostream& put_dump_bytes(size_t pos, std::ostream& out, bytes_view x)
-    {
-        if (x.size() == 0){
-            return out << "\"\"\n";
+        static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v)
+        {
+            put_utf8_bytes(pos, out, v, "\n");
         }
 
-        constexpr size_t line_size = 16;
-        char const* empty_line
-            = "                                                                ";
+        static void put_ascii_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
+        {
+            PutCharCtx putc_ctx;
+            auto print = [&](bytes_view x){
+                for (uint8_t c : x) {
+                    putc_ctx.put(out, c, newline);
+                }
+            };
 
-        auto print_hex = [&](bytes_view av){
-            for (uint8_t c : av) {
-                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            print(v.first(pos));
+            if (pos != v.size()) {
+                out << "\x1b[35m";
+                print(v.from_offset(pos));
+                out << "\x1b[0m";
             }
-        };
+        }
 
-        auto print_data = [&](bytes_view av){
-            for (uint8_t c : av) {
-                out << (is_printable_ascii(c) ? char(c) : '.');
+        static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v)
+        {
+            put_ascii_bytes(pos, out, v, "\n");
+        }
+
+        static void put_hex_bytes(size_t pos, std::ostream& out, bytes_view v)
+        {
+            auto print = [&](bytes_view x){
+                for (uint8_t c : x) {
+                    out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+                }
+            };
+
+            print(v.first(pos));
+            if (pos != v.size()) {
+                out << "\x1b[35m";
+                print(v.from_offset(pos));
+                out << "\x1b[0m";
             }
-        };
-
-        auto print_line = [&](bytes_view av){
-            out << '"';
-            print_hex(av.first(line_size));
-            out << "\" // ";
-            print_data(av.first(line_size));
-            av = av.from_offset(line_size);
-            out << "\n";
-            return av;
-        };
-
-        auto lbytes = x.first(pos);
-        auto rbytes = x.from_offset(pos);
-
-        while (lbytes.size() >= line_size) {
-            lbytes = print_line(lbytes);
         }
 
-        if (lbytes.empty()) {
-            out << "\x1b[35m";
-        }
-        else {
-            auto partial_right_size = std::min(line_size - lbytes.size(), rbytes.size());
-            out << "\n\"";
-            print_hex(lbytes);
-            out << "\x1b[35m";
-            print_hex(rbytes.first(partial_right_size));
-            out << "\"" << &empty_line[(lbytes.size() + partial_right_size) * 4] << " // ";
-            print_data(lbytes);
-            print_data(rbytes.first(partial_right_size));
-            out << "\n";
-            rbytes = rbytes.from_offset(partial_right_size);
-        }
-
-        while (rbytes.size() >= line_size) {
-            rbytes = print_line(rbytes);
-        }
-
-        if (!rbytes.empty()) {
-            out << '"';
-            print_hex(rbytes);
-            out << "\"" << &empty_line[rbytes.size() * 4] << " // ";
-            print_data(rbytes);
-            out << "\n";
-        }
-
-        return out << "\x1b[0m";
-    }
-
-    static void put_utf8_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
-    {
-        PutCharCtx putc_ctx;
-        auto print = [&](bytes_view x, bool is_markable){
-            auto* p = x.as_u8p();
-            auto* end = p + x.size();
-
+        static void put_auto_bytes(size_t pos, std::ostream& out, bytes_view v)
+        {
+            auto n = std::min(int(v.size()), 36);
+            auto* p = v.as_u8p();
+            auto* end = p + n;
+            int count_invalid = 0;
             while (p < end) {
                 utf8_char_process(p, end-p, [&](std::size_t n){
-                    if (n <= 1) {
-                        putc_ctx.put(out, *p, newline);
+                    if (n == 0) {
+                        ++count_invalid;
                         ++p;
                     }
                     else {
-                        out.write(char_ptr_cast(p), n);
-                        putc_ctx.is_printable = true;
+                        if (n == 1 && !is_printable_ascii(*p)) {
+                            ++count_invalid;
+                        }
                         p += n;
                     }
                 });
             }
 
-            if (is_markable) {
-                out << "\x1b[35m";
+            if (count_invalid > n / 6) {
+                put_ascii_bytes(pos, out, v);
             }
-        };
-
-        print(v.first(pos), pos != v.size());
-        if (pos != v.size()) {
-            out << "\x1b[35m";
-            print(v.from_offset(pos), false);
-            out << "\x1b[0m";
-        }
-    }
-
-    static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v)
-    {
-        put_utf8_bytes(pos, out, v, "\n");
-    }
-
-    static void put_ascii_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
-    {
-        PutCharCtx putc_ctx;
-        auto print = [&](bytes_view x){
-            for (uint8_t c : x) {
-                putc_ctx.put(out, c, newline);
+            else {
+                put_utf8_bytes(pos, out, v);
             }
-        };
-
-        print(v.first(pos));
-        if (pos != v.size()) {
-            out << "\x1b[35m";
-            print(v.from_offset(pos));
-            out << "\x1b[0m";
-        }
-    }
-
-    static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v)
-    {
-        put_ascii_bytes(pos, out, v, "\n");
-    }
-
-    static void put_hex_bytes(size_t pos, std::ostream& out, bytes_view v)
-    {
-        auto print = [&](bytes_view x){
-            for (uint8_t c : x) {
-                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-            }
-        };
-
-        print(v.first(pos));
-        if (pos != v.size()) {
-            out << "\x1b[35m";
-            print(v.from_offset(pos));
-            out << "\x1b[0m";
-        }
-    }
-
-    static void put_auto_bytes(size_t pos, std::ostream& out, bytes_view v)
-    {
-        auto n = std::min(int(v.size()), 36);
-        auto* p = v.as_u8p();
-        auto* end = p + n;
-        int count_invalid = 0;
-        while (p < end) {
-            utf8_char_process(p, end-p, [&](std::size_t n){
-                if (n == 0) {
-                    ++count_invalid;
-                    ++p;
-                }
-                else {
-                    if (n == 1 && !is_printable_ascii(*p)) {
-                        ++count_invalid;
-                    }
-                    p += n;
-                }
-            });
-        }
-
-        if (count_invalid > n / 6) {
-            put_ascii_bytes(pos, out, v);
-        }
-        else {
-            put_utf8_bytes(pos, out, v);
         }
     }
 
