@@ -122,7 +122,7 @@ S           <- %s*
 
 local pfunc = [=[
 
-function    <- {| type {id} '(' S params S ')' S ';' |} -> func
+function    <- {| type {id} '(' S params S ')' S ('noexcept' S)? ';' |} -> func
 params      <- {| (param (',' S)?)* |}
 param       <- S type S id S
 
