@@ -341,8 +341,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 
     mod_rdp_params.validator_params.log_if_accepted = ini.get<cfg::file_verification::log_if_accepted>();
-    mod_rdp_params.validator_params.validate_up_text = ini.get<cfg::file_verification::clipboard_text_up>();
-    mod_rdp_params.validator_params.validate_down_text = ini.get<cfg::file_verification::clipboard_text_down>();
+    mod_rdp_params.validator_params.enable_clipboard_text_up = ini.get<cfg::file_verification::clipboard_text_up>();
+    mod_rdp_params.validator_params.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
     mod_rdp_params.validator_params.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
     mod_rdp_params.validator_params.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
 

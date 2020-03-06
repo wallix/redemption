@@ -1052,7 +1052,12 @@ struct ClipboardVirtualChannel::D
                 current_format_list, flags, in_header, true, clip.requested_format_id,
                 LogSiemDataType::NoData, bytes_view{}, is_client_to_server);
         }
-        else if (!clip.validator_target_name.empty()) {
+        else if (!clip.validator_target_name.empty()
+            && (is_client_to_server
+                ? this->self.params.validator_params.enable_clipboard_text_up
+                : this->self.params.validator_params.enable_clipboard_text_down
+            )
+        ) {
             switch (clip.requested_format_id) {
                 case RDPECLIP::CF_TEXT:
                 case RDPECLIP::CF_UNICODETEXT: {

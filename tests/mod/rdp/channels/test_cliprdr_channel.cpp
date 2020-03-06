@@ -462,13 +462,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
 
             BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
-            ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+            ClipboardVirtualChannelParams clipboard_virtual_channel_params {};
             clipboard_virtual_channel_params.clipboard_down_authorized = true;
             clipboard_virtual_channel_params.clipboard_up_authorized   = true;
             clipboard_virtual_channel_params.clipboard_file_authorized = true;
             clipboard_virtual_channel_params.validator_params.down_target_name = "down";
             clipboard_virtual_channel_params.validator_params.up_target_name = "up";
             clipboard_virtual_channel_params.validator_params.log_if_accepted = true;
+            clipboard_virtual_channel_params.validator_params.enable_clipboard_text_up = true;
 
             TestResponseSender to_client_sender;
             TestResponseSender to_server_sender;
