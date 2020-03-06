@@ -162,12 +162,12 @@ void ModuleManager::create_mod_vnc(
                 client_info.cs_monitor,
                 false
             );
-            this->set_mod(host_mod);
+            this->set_mod(host_mod, nullptr, nullptr);
             this->rail_module_host_mod_ptr = host_mod;
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
-            this->set_mod(new_mod.release());
+            this->set_mod(new_mod.release(), nullptr, nullptr);
         }
     }
     catch (...) {
