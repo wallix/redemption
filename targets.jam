@@ -4309,19 +4309,11 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_send_and_receive.cpp
 :
   <library>crypto
-  <library>snappy
-  <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
-  <library>src/core/report_error.o
   <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel_send_and_receive.hpp
@@ -5444,6 +5436,10 @@ test-run tests/utils/sugar/test_update_lock :
 :
   <covfile>src/utils/sugar/update_lock.hpp
 ;
+test-run tests/utils/sugar/unordered_erase :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/unordered_erase.cpp
+:
+;
 test-run tests/utils/test_asynchronous_task_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
@@ -6261,6 +6257,7 @@ alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias test_update_lock : tests/utils/sugar/test_update_lock ;
+alias unordered_erase : tests/utils/sugar/unordered_erase ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_base64 : tests/utils/test_base64 ;
 alias test_bitfu : tests/utils/test_bitfu ;
@@ -7016,6 +7013,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_static_vector
   tests/utils/sugar/test_unique_fd
   tests/utils/sugar/test_update_lock
+  tests/utils/sugar/unordered_erase
 ;
 alias tests/utils.norec :
   tests/utils/test_asynchronous_task_manager
