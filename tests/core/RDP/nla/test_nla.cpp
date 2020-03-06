@@ -164,7 +164,7 @@ RED_AUTO_TEST_CASE(TestNlaclientv6)
     }));
     ReplayTime timeobj({{0x5d91e371,0xdaa63}});
     std::string extra_message;
-    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, timeobj, true);
+    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, timeobj, true, true);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
