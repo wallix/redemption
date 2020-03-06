@@ -730,8 +730,8 @@ public:
                Random & rand,
                std::string& extra_message,
                Translation::language_t lang,
-               const bool credssp_verbose = false,
-               const bool verbose = false)
+               const bool credssp_verbose,
+               const bool verbose)
         : ts_request(6) // Credssp Version 6 Supported
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)

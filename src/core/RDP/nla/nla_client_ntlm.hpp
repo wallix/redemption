@@ -111,8 +111,8 @@ public:
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
-               const bool credssp_verbose = false,
-               const bool verbose = false)
+               const bool credssp_verbose,
+               const bool verbose)
         : PublicKey(public_key.data(), public_key.data()+public_key.size())
         , utf16_user(::UTF8toUTF16(user))
         , utf16_domain(::UTF8toUTF16(domain))
