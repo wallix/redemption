@@ -155,7 +155,7 @@ public:
     }
 
 private:
-    void set_mod(ModWrapper & mod_wrapper, not_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
+    void set_mod(ModWrapper & mod_wrapper, not_null_ptr<mod_api> mod, rdp_api* rdpapi, windowing_api* winapi)
     {
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -300,7 +300,6 @@ public:
                     report_message, trkeys::authentification_x_fail);
 
             this->set_mod(mod_wrapper, mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
-
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             this->connected = true;
             break;
