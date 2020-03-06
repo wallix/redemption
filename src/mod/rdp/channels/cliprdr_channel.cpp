@@ -21,36 +21,20 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
+#include "mod/file_validator_service.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "core/error.hpp"
 #include "core/session_reactor.hpp"
 #include "core/log_id.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/sugar/unordered_erase.hpp"
 #include "capture/fdx_capture.hpp"
-
-#include <algorithm>
 
 
 namespace
 {
     enum class LockId : uint32_t;
-
-    template<class T>
-    void vector_fast_erase(std::vector<T>& v, T* p)
-    {
-        if (p != &v.back()) {
-            auto n = std::distance(&v.front(), p);
-            v[n] = std::move(v.back());
-        }
-        v.pop_back();
-    }
-
-    template<class T, class F>
-    void vector_fast_remove(std::vector<T>& v, F&& pred)
-    {
-        v.erase(std::remove_if(v.begin(), v.end(), pred), v.end());
-    }
 
     struct ClipCtx
     {
@@ -374,7 +358,7 @@ namespace
 
             void remove_locked_file_contents_range(LockedRange* p)
             {
-                vector_fast_erase(this->ranges, p);
+                unordered_erase_element(this->ranges, p);
             }
 
             LockedRange* search_range_by_offset(LockId lock_id, FileGroupId ifile, uint64_t offset)
@@ -403,7 +387,7 @@ namespace
 
             void remove_locked_file_contents_size(LockedSize* p)
             {
-                vector_fast_erase(this->sizes, p);
+                unordered_erase_element(this->sizes, p);
             }
 
             bool contains_stream_id(StreamId stream_id)
@@ -659,19 +643,6 @@ namespace
 
 struct ClipboardVirtualChannel::D
 {
-    ClientCtx client;
-    ServerCtx server;
-
-    Direction to_direction(ClipCtx const& clip) const
-    {
-        return (&clip == &this->server)
-            ? Direction::FileFromServer
-            : Direction::FileFromClient;
-    }
-
-    ClipboardVirtualChannel& self;
-    // boost::sml::sm<cliprdr_tt> sm{DataCtxRef{data_ctx}};
-
     struct FileValidatorDataList
     {
         FileValidatorId file_validator_id;
@@ -682,15 +653,26 @@ struct ClipboardVirtualChannel::D
         ClipCtx::Sig sig;
     };
 
-    std::vector<FileValidatorDataList> file_validator_list;
-
     struct TextValidatorDataList
     {
         FileValidatorId file_validator_id;
         Direction direction;
     };
 
-    std::vector<TextValidatorDataList> text_validator_list {};
+    ClientCtx client;
+    ServerCtx server;
+
+    ClipboardVirtualChannel& self;
+
+    std::vector<FileValidatorDataList> file_validator_list;
+    std::vector<TextValidatorDataList> text_validator_list;
+
+    Direction to_direction(ClipCtx const& clip) const
+    {
+        return (&clip == &this->server)
+            ? Direction::FileFromServer
+            : Direction::FileFromClient;
+    }
 
     FileValidatorDataList* search_file_validator_by_id(FileValidatorId id)
     {
@@ -704,7 +686,7 @@ struct ClipboardVirtualChannel::D
 
     void remove_file_validator(FileValidatorDataList* p)
     {
-        vector_fast_erase(this->file_validator_list, p);
+        unordered_erase_element(this->file_validator_list, p);
     }
 
     TextValidatorDataList* search_text_validator_by_id(FileValidatorId id)
@@ -719,7 +701,7 @@ struct ClipboardVirtualChannel::D
 
     void remove_text_validator(TextValidatorDataList* p)
     {
-        vector_fast_erase(this->text_validator_list, p);
+        unordered_erase_element(this->text_validator_list, p);
     }
 
     D(ClipboardVirtualChannel& self)
@@ -967,16 +949,16 @@ struct ClipboardVirtualChannel::D
                 });
 
             if (p != clip.locked_data.lock_list.end()) {
-                vector_fast_erase(clip.locked_data.lock_list, &*p);
+                unordered_erase_element(clip.locked_data.lock_list, &*p);
             }
 
-            vector_fast_remove(
+            unordered_erase_if(
                 clip.locked_data.sizes,
                 [lock_id](ClipCtx::LockedData::LockedSize const& size){
                     return size.lock_id == lock_id;
                 });
 
-            vector_fast_remove(
+            unordered_erase_if(
                 clip.locked_data.ranges,
                 [&](ClipCtx::LockedData::LockedRange& rng){
                     if (rng.lock_id == lock_id) {
@@ -2035,8 +2017,7 @@ void ClipboardVirtualChannel::process_server_message(
     switch (this->d->server.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->clip_caps(this->d->server, pkt_data, this->verbose);
+            this->d->clip_caps(this->d->server, chunk.remaining_bytes(), this->verbose);
             send_message_to_client = !this->proxy_managed;
         }
         break;
@@ -2060,12 +2041,11 @@ void ClipboardVirtualChannel::process_server_message(
         break;
 
         case RDPECLIP::CB_FORMAT_LIST: {
-            auto pkt_data = chunk.remaining_bytes();
             send_message_to_client = this->d->format_list(
                 flags, header, this->to_server_sender_ptr(),
                 this->params.clipboard_down_authorized || this->params.clipboard_up_authorized,
                 this->d->server,
-                pkt_data);
+                chunk.remaining_bytes());
 
             if (this->format_list_notifier) {
                 if (!this->format_list_notifier->on_server_format_list()) {
@@ -2090,8 +2070,7 @@ void ClipboardVirtualChannel::process_server_message(
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->format_data_request(this->d->client, pkt_data);
+            this->d->format_data_request(this->d->client, chunk.remaining_bytes());
 
             if (this->format_data_request_notifier
              && this->d->client.requested_format_id == RDPECLIP::CF_TEXT
@@ -2115,32 +2094,30 @@ void ClipboardVirtualChannel::process_server_message(
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->format_data_response(header, this->d->server, flags, pkt_data);
+            this->d->format_data_response(
+                header, this->d->server, flags, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            auto pkt_data = chunk.remaining_bytes();
-            send_message_to_client = this->d->filecontents_request(this->d->client, flags, pkt_data, this->to_server_sender_ptr());
+            send_message_to_client = this->d->filecontents_request(
+                this->d->client, flags, chunk.remaining_bytes(), this->to_server_sender_ptr());
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->filecontents_response(header, this->d->server, flags, pkt_data);
+            this->d->filecontents_response(
+                header, this->d->server, flags, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_LOCK_CLIPDATA: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->lock(this->d->client, pkt_data);
+            this->d->lock(this->d->client, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->unlock(this->d->client, pkt_data);
+            this->d->unlock(this->d->client, chunk.remaining_bytes());
         }
     }   // switch (this->server_message_type)
 
@@ -2163,21 +2140,19 @@ void ClipboardVirtualChannel::process_client_message(
     switch (this->d->client.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->clip_caps(this->d->client, pkt_data, this->verbose);
+            this->d->clip_caps(this->d->client, chunk.remaining_bytes(), this->verbose);
             send_message_to_server = true;
         }
         break;
 
         case RDPECLIP::CB_FORMAT_LIST: {
-            auto pkt_data = chunk.remaining_bytes();
             send_message_to_server = this->d->format_list(
                 flags, header, this->to_client_sender_ptr(),
                 this->params.clipboard_down_authorized
                 || this->params.clipboard_up_authorized
                 || this->format_list_response_notifier,
                 this->d->client,
-                pkt_data);
+                chunk.remaining_bytes());
         }
         break;
 
@@ -2186,8 +2161,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->format_data_request(this->d->server, pkt_data);
+            this->d->format_data_request(this->d->server, chunk.remaining_bytes());
             send_message_to_server = this->params.clipboard_down_authorized;
             if (!this->params.clipboard_down_authorized) {
                 LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
@@ -2200,32 +2174,30 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->format_data_response(header, this->d->client, flags, pkt_data);
+            this->d->format_data_response(
+                header, this->d->client, flags, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            auto pkt_data = chunk.remaining_bytes();
-            send_message_to_server = this->d->filecontents_request(this->d->server, flags, pkt_data, this->to_client_sender_ptr());
+            send_message_to_server = this->d->filecontents_request(
+                this->d->server, flags, chunk.remaining_bytes(), this->to_client_sender_ptr());
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->filecontents_response(header, this->d->client, flags, pkt_data);
+            this->d->filecontents_response(
+                header, this->d->client, flags, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_LOCK_CLIPDATA: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->lock(this->d->server, pkt_data);
+            this->d->lock(this->d->server, chunk.remaining_bytes());
         }
         break;
 
         case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-            auto pkt_data = chunk.remaining_bytes();
-            this->d->unlock(this->d->server, pkt_data);
+            this->d->unlock(this->d->server, chunk.remaining_bytes());
         }
         break;
     }   // switch (this->client_message_type)
