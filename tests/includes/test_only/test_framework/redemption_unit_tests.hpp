@@ -31,13 +31,41 @@ namespace ut
     struct flagged_bytes_view : bytes_view
     {
         char flag;
+        size_t n;
     };
 
-    inline flagged_bytes_view ascii(bytes_view v) { return {v, 'c'}; }
-    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's'}; }
-    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b'}; }
-    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd'}; }
+    inline flagged_bytes_view ascii(bytes_view v, size_t n = 0) { return {v, 'c', n}; }
+    inline flagged_bytes_view utf8(bytes_view v, size_t n = 0) { return {v, 's', n}; }
+    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b', 0}; }
+    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd', 0}; }
 } // namespace ut
+
+namespace redemption_unit_test__
+{
+    namespace literals
+    {
+        inline ut::flagged_bytes_view operator"" _av_ascii(char const * s, size_t len) noexcept
+        {
+            return ut::ascii({s, len});
+        }
+
+        inline ut::flagged_bytes_view operator"" _av_utf8(char const * s, size_t len) noexcept
+        {
+            return ut::utf8({s, len});
+        }
+
+        inline ut::flagged_bytes_view operator"" _av_hex(char const * s, size_t len) noexcept
+        {
+            return ut::hex({s, len});
+        }
+
+        inline ut::flagged_bytes_view operator"" _av_dump(char const * s, size_t len) noexcept
+        {
+            return ut::dump({s, len});
+        }
+    } // namespace literals
+} // namespace redemption_unit_test__
+
 
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 
