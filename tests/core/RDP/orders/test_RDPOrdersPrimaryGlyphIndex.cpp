@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestGlyphIndex)
             0x0c, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64,
         };
 
-        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
+        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
         InStream in_stream(out_stream.get_bytes());
 
         RDPOrderCommon common_cmd = state_common;
@@ -156,7 +156,7 @@ RED_AUTO_TEST_CASE(TestGlyphIndex2)
             , 0x08, 0x09
         };
 
-        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
+        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
         InStream in_stream(out_stream.get_bytes());
 
         RDPOrderCommon common_cmd = state_common;

@@ -34,9 +34,9 @@ RED_AUTO_TEST_CASE(TestOutStream_Create)
     uint8_t buf[3];
     OutStream out_per_stream(buf);
 
-    RED_CHECK_EQ(out_per_stream.get_capacity(), 3u);
+    RED_CHECK(out_per_stream.get_capacity() == 3u);
     RED_CHECK(out_per_stream.get_data());
-    RED_CHECK_EQ(out_per_stream.get_data(), out_per_stream.get_current());
+    RED_CHECK(out_per_stream.get_data() == out_per_stream.get_current());
 }
 
 RED_AUTO_TEST_CASE(TestStream_uint8)
@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestStream_out_Stream)
     RED_CHECK_EQUAL((s.get_data())[11], 7);
     RED_CHECK_EQUAL((s.get_data())[12], 8);
 
-    RED_CHECK_MEM("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av, s.get_bytes());
+    RED_CHECK("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av == s.get_bytes());
 
     // underflow because end is not yet moved at p
     RED_CHECK(s.tailroom());
@@ -282,7 +282,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
         RED_CHECK_EQUAL(int32_t(0xFFFCFDFE), ss_min_val.in_sint32_le());
         StaticOutStream<4> fs_min_val;
         fs_min_val.out_sint32_le(0xFFFCFDFE);
-        RED_CHECK_MEM(fs_min_val.get_bytes(), tmp);
+        RED_CHECK(fs_min_val.get_bytes() == tmp);
     }
 
     {
@@ -291,7 +291,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
         RED_CHECK_EQUAL(0x7FFEFDFC, ss_max_val.in_sint32_le());
         StaticOutStream<4> fs_max_val;
         fs_max_val.out_sint32_le(0x7FFEFDFC);
-        RED_CHECK_MEM(fs_max_val.get_bytes(), tmp);
+        RED_CHECK(fs_max_val.get_bytes() == tmp);
     }
 
 }
@@ -301,34 +301,26 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
     {
         const int64_t int64_test = -5000000000LLU;
 
-        const unsigned char data_test[] = { 0x00, 0x0e, 0xfa, 0xd5, 0xfe, 0xff, 0xff, 0xff };
-
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
+        RED_CHECK(stream.get_bytes() == "\x00\x0e\xfa\xd5\xfe\xff\xff\xff"_av);
     }
 
     {
-        const int64_t int64_test = 0LLU;
-
-        const unsigned char data_test[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-
         StaticOutStream<8> stream;
-        stream.out_sint64_le(int64_test);
+        stream.out_sint64_le(0);
 
-        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
+        RED_CHECK(stream.get_bytes() == "\0\0\0\0\0\0\0\0"_av);
     }
 
     {
         const int64_t int64_test = 10000000000LLU;
 
-        const unsigned char data_test[] = { 0x00, 0xe4, 0x0b, 0x54, 0x02, 0x00, 0x00, 0x00 };
-
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
+        RED_CHECK(stream.get_bytes() == "\x00\xe4\x0b\x54\x02\x00\x00\x00"_av);
     }
 }
 
@@ -355,43 +347,33 @@ RED_AUTO_TEST_CASE(TestStreamAt)
     StaticOutStream<12> stream;
     stream.out_copy_bytes("abcde"_av);
 
-    RED_CHECK_MEM(stream.get_bytes(), "abcde"_av);
+    RED_CHECK(stream.get_bytes() == "abcde"_av);
     stream.stream_at(1).out_uint8('x');
-    RED_CHECK_MEM(stream.get_bytes(), "axcde"_av);
+    RED_CHECK(stream.get_bytes() == "axcde"_av);
 }
 
 RED_AUTO_TEST_CASE(TestDynamicReservedStream)
 {
-	uint8_t expected1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
 	StaticOutStream<2> ostream;
 	ostream.out_uint16_be(0x0001);
-	writable_bytes_view packet;
 
 	DynamicOutReservedStreamHelper dstream(2, 8+2);
-	dstream.get_data_stream().out_uint64_be(0x0203040506070809); // 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09
+	dstream.get_data_stream().out_uint64_be(0x0203040506070809);
 
 	dstream.copy_to_head(ostream);
-	RED_CHECK_EQ(memcmp(dstream.get_packet().as_u8p(), expected1, sizeof(expected1)), 0);
-
-	dstream.advance_stream(2);
-	dstream.copy_to_head(ostream);
-	uint8_t expected2[] = {0x00, 0x01, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
-	RED_CHECK_EQ(memcmp(dstream.get_packet().as_u8p(), expected2, sizeof(expected2)), 0);
+	RED_CHECK(dstream.get_packet() == "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"_av);
 
 	// dstream is supposed to be
 	//     v headPtr
 	// 0 1 0 1 4 5 6 7 8 9
 	//         ^ payloadStream
 	OutReservedStreamHelper sub(dstream.get_sub_stream(1, 3));
-	uint8_t expected2b[] = {0x01, 0x04, 0x05};
-	packet = sub.get_packet();
-	RED_CHECK_EQ(packet.size(), sizeof(expected2b));
-	RED_CHECK_EQ(memcmp(packet.as_u8p(), expected2b, sizeof(expected2b)), 0);
+	RED_CHECK(sub.get_packet() == "\x01\x02\x03"_av);
 
-	sub.copy_to_head(ostream);
-	uint8_t expected3[] = {0x00, 0x01, 0x01, 0x04, 0x05};
-	packet = sub.get_packet();
-	RED_CHECK_EQ(packet.size(), sizeof(expected3));
-	RED_CHECK_EQ(memcmp(packet.as_u8p(), expected3, sizeof(expected3)), 0);
+	StaticOutStream<1> ostream2;
+	ostream2.out_uint8(0x00);
+
+	sub.copy_to_head(ostream2);
+	RED_CHECK(sub.get_packet() == "\x00\x01\x02\x03"_av);
 }
 

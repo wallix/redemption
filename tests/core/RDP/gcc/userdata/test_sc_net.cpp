@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
     sc_net.channelDefArray[1].id = 1005;
     sc_net.channelDefArray[2].id = 1006;
     sc_net.emit(out_stream);
-    RED_CHECK_MEM(out_stream.get_bytes(), expected);
+    RED_CHECK(out_stream.get_bytes() == expected);
 
     GCC::UserData::SCNet sc_net2;
 

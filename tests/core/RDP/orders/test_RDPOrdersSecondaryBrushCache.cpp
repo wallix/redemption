@@ -62,7 +62,7 @@ RED_AUTO_TEST_CASE(TestBrushCache1BPP)
         // BMF_24BPP && iBytes 28 : compression (16 bytes for 64 x 4 colors pixels, + 12 bytes color definitions)
         // Other iBytes values : uncompressed bitmap data
 
-        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
+        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
 
         InStream in_stream(out_stream.get_bytes());
 
@@ -75,6 +75,6 @@ RED_AUTO_TEST_CASE(TestBrushCache1BPP)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2);
-        RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 }

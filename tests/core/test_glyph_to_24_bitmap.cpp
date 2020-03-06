@@ -94,5 +94,5 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
     GlyphTo24Bitmap g24b(fc, BGRColor{ 96,  31,   8}, BGRColor{255, 255, 255});
 
     const size_t len = width*height;
-    RED_CHECK_MEM(make_array_view(g24b.data(), len), make_array_view(bytes_data, len));
+    RED_CHECK(make_array_view(g24b.data(), len) == make_array_view(bytes_data, len));
 }

@@ -50,11 +50,11 @@ RED_AUTO_TEST_CASE(TestLogon)
         |INFO_AUTOLOGON
         |INFO_LOGONERRORS
         ));
-    RED_CHECK_MEM("Domain_Test"_av, infoPacket.zDomain());
-    RED_CHECK_MEM("UserName_Test"_av, infoPacket.zUserName());
-    RED_CHECK_MEM("Password_Test"_av, infoPacket.zPassword());
-    RED_CHECK_MEM("Program_Test"_av, infoPacket.zAlternateShell());
-    RED_CHECK_MEM("Directory_Test"_av, infoPacket.zWorkingDirectory());
+    RED_CHECK("Domain_Test" == infoPacket.zDomain());
+    RED_CHECK("UserName_Test" == infoPacket.zUserName());
+    RED_CHECK("Password_Test" == infoPacket.zPassword());
+    RED_CHECK("Program_Test" == infoPacket.zAlternateShell());
+    RED_CHECK("Directory_Test" == infoPacket.zWorkingDirectory());
     RED_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags,
         (PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
 }
