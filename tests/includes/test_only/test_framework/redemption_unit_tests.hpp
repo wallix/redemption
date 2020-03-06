@@ -31,11 +31,11 @@ namespace ut
     struct flagged_bytes_view : bytes_view
     {
         char flag;
-        size_t n;
+        size_t min_len;
     };
 
-    inline flagged_bytes_view ascii(bytes_view v, size_t n = 0) { return {v, 'c', n}; }
-    inline flagged_bytes_view utf8(bytes_view v, size_t n = 0) { return {v, 's', n}; }
+    inline flagged_bytes_view ascii(bytes_view v, size_t min_len = 0) { return {v, 'c', min_len}; }
+    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's', 0}; }
     inline flagged_bytes_view hex(bytes_view v) { return {v, 'b', 0}; }
     inline flagged_bytes_view dump(bytes_view v) { return {v, 'd', 0}; }
 } // namespace ut
@@ -255,16 +255,16 @@ bool operator!=(bytes_view, bytes_view);
         );                                    \
     }(a, b)
 
-# define RED_TEST_MEM(lvl, mem, memref, c)                \
-    [](bytes_view x_mem__, bytes_view x_memref__){        \
-        size_t pos__ = 0;                                 \
-        RED_##lvl##_MESSAGE(                              \
-            ::redemption_unit_test__::compare_bytes(      \
-                pos__, x_mem__, x_memref__),              \
-            RED_TEST_STRING_##lvl " "                     \
-            #mem " == " #memref " has failed "            \
-            << (::redemption_unit_test__::Put2Mem{        \
-                pos__, x_mem__, x_memref__, c, " != "})); \
+# define RED_TEST_MEM(lvl, mem, memref, c)                   \
+    [](bytes_view x_mem__, bytes_view x_memref__){           \
+        size_t pos__ = 0;                                    \
+        RED_##lvl##_MESSAGE(                                 \
+            ::redemption_unit_test__::compare_bytes(         \
+                pos__, x_mem__, x_memref__),                 \
+            RED_TEST_STRING_##lvl " "                        \
+            #mem " == " #memref " has failed "               \
+            << (::redemption_unit_test__::Put2Mem{           \
+                pos__, x_mem__, x_memref__, " != ", 0, c})); \
     }(mem, memref)
 
 

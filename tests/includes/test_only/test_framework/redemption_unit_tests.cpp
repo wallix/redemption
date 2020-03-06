@@ -57,7 +57,7 @@ namespace redemption_unit_test__
     }
 
     // based on element_compare from boost/test/tools/collection_comparison_op.hpp
-    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern)
+    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
     {
         size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
 
@@ -68,7 +68,7 @@ namespace redemption_unit_test__
         {
             ar = false;
 
-            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " == "};
+            ar.message() << "[" << Put2Mem{pos, a, b, " == ", min_len, pattern};
             ar.message() << "\nMismatch at position " << pos;
 
             if (a.size() != b.size())
@@ -83,7 +83,7 @@ namespace redemption_unit_test__
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern)
+    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
     {
         size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
 
@@ -93,13 +93,13 @@ namespace redemption_unit_test__
         if (REDEMPTION_UNLIKELY(r))
         {
             ar = false;
-            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " != "};
+            ar.message() << "[" << Put2Mem{pos, a, b, " != ", min_len, pattern};
         }
 
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern)
+    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
     {
         size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
 
@@ -111,14 +111,14 @@ namespace redemption_unit_test__
         if (REDEMPTION_UNLIKELY(r))
         {
             ar = false;
-            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " >= "};
+            ar.message() << "[" << Put2Mem{pos, a, b, " >= ", min_len, pattern};
             ar.message() << "\nMismatch at position " << pos;
         }
 
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern)
+    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
     {
         size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
 
@@ -130,14 +130,14 @@ namespace redemption_unit_test__
         if (REDEMPTION_UNLIKELY(r))
         {
             ar = false;
-            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " > "};
+            ar.message() << "[" << Put2Mem{pos, a, b, " > ", min_len, pattern};
             ar.message() << "\nMismatch at position " << pos;
         }
 
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern)
+    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
     {
         size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
 
@@ -149,14 +149,14 @@ namespace redemption_unit_test__
         if (REDEMPTION_UNLIKELY(r))
         {
             ar = false;
-            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " <= "};
+            ar.message() << "[" << Put2Mem{pos, a, b, " <= ", min_len, pattern};
             ar.message() << "\nMismatch at position " << pos;
         }
 
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern)
+    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
     {
         size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
 
@@ -168,7 +168,7 @@ namespace redemption_unit_test__
         if (REDEMPTION_UNLIKELY(r))
         {
             ar = false;
-            ar.message() << "[" << Put2Mem{pos, a, b, pattern, " < "};
+            ar.message() << "[" << Put2Mem{pos, a, b, " < ", min_len, pattern};
             ar.message() << "\nMismatch at position " << pos;
         }
 
@@ -266,17 +266,22 @@ namespace redemption_unit_test__
 
         struct PutCharCtx
         {
-            bool is_printable = true;
+            bool previous_is_printable = true;
 
             void put(std::ostream& out, uint8_t c, char const* newline = "\\n")
             {
-                if (is_printable_ascii(c)) {
-                    if (!is_printable) {
+                this->put_cond(out, c, newline, is_printable_ascii(c));
+            }
+
+            void put_cond(std::ostream& out, uint8_t c, char const* newline, bool is_printable)
+            {
+                if (is_printable) {
+                    if (!previous_is_printable) {
                         // split hexadecimal rendering "\xaaa" -> "\xaa""a"
                         if (is_hex(c)) {
                             out << "\"\"";
                         }
-                        is_printable = true;
+                        previous_is_printable = true;
                     }
 
                     if (c == '\\') {
@@ -287,12 +292,13 @@ namespace redemption_unit_test__
                     }
                 }
                 else {
-                    is_printable = !put_unprintable_char(out, c, newline);
+                    previous_is_printable = !put_unprintable_char(out, c, newline);
                 }
             }
         };
 
-        static std::ostream& put_dump_bytes(size_t pos, std::ostream& out, bytes_view x)
+        static std::ostream& put_dump_bytes(
+            size_t pos, std::ostream& out, bytes_view x, size_t /*min_len*/)
         {
             if (x.size() == 0){
                 return out << "\"\"\n";
@@ -362,7 +368,9 @@ namespace redemption_unit_test__
             return out << "\x1b[0m";
         }
 
-        static void put_utf8_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
+        static void put_utf8_bytes(
+            size_t pos, std::ostream& out, bytes_view v,
+            size_t /*min_len*/, char const* newline = "\\n")
         {
             PutCharCtx putc_ctx;
             auto print = [&](bytes_view x, bool is_markable){
@@ -377,7 +385,7 @@ namespace redemption_unit_test__
                         }
                         else {
                             out.write(char_ptr_cast(p), n);
-                            putc_ctx.is_printable = true;
+                            putc_ctx.previous_is_printable = true;
                             p += n;
                         }
                     });
@@ -396,34 +404,77 @@ namespace redemption_unit_test__
             }
         }
 
-        static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v)
+        static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
         {
-            put_utf8_bytes(pos, out, v, "\n");
+            put_utf8_bytes(pos, out, v, min_len, "\n");
         }
 
-        static void put_ascii_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
+        static void put_ascii_bytes(
+            size_t pos, std::ostream& out, bytes_view v,
+            size_t min_len, char const* newline = "\\n")
         {
             PutCharCtx putc_ctx;
-            auto print = [&](bytes_view x){
-                for (uint8_t c : x) {
-                    putc_ctx.put(out, c, newline);
+
+            auto put_bytes = [&](auto print){
+                print(v.first(pos));
+                if (pos != v.size()) {
+                    out << "\x1b[35m";
+                    print(v.from_offset(pos));
+                    out << "\x1b[0m";
                 }
             };
 
-            print(v.first(pos));
-            if (pos != v.size()) {
-                out << "\x1b[35m";
-                print(v.from_offset(pos));
-                out << "\x1b[0m";
+            if (min_len)
+            {
+                std::vector<bool> is_ascii_mask(v.size());
+
+                auto pmask = is_ascii_mask.begin();
+                auto first = v.begin();
+                auto last = v.end();
+
+                while (first != last) {
+                    auto pos = std::find_if(first, last, [](uint8_t c){
+                        return not is_printable_ascii(c);
+                    });
+
+                    if (pos == first) {
+                        ++first;
+                        ++pmask;
+                        continue;
+                    }
+
+                    auto end = pmask + (pos - first);
+                    if (size_t(pos - first) > min_len) {
+                        std::fill(pmask, end, true);
+                    }
+                    pmask = end;
+                    first = pos;
+                }
+
+                pmask = is_ascii_mask.begin();
+
+                put_bytes([&](bytes_view x){
+                    for (uint8_t c : x) {
+                        putc_ctx.put_cond(out, c, newline, *pmask);
+                        ++pmask;
+                    }
+                });
+            }
+            else {
+                put_bytes([&](bytes_view x){
+                    for (uint8_t c : x) {
+                        putc_ctx.put(out, c, newline);
+                    }
+                });
             }
         }
 
-        static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v)
+        static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
         {
-            put_ascii_bytes(pos, out, v, "\n");
+            put_ascii_bytes(pos, out, v, min_len, "\n");
         }
 
-        static void put_hex_bytes(size_t pos, std::ostream& out, bytes_view v)
+        static void put_hex_bytes(size_t pos, std::ostream& out, bytes_view v, size_t /*min_len*/)
         {
             auto print = [&](bytes_view x){
                 for (uint8_t c : x) {
@@ -439,7 +490,7 @@ namespace redemption_unit_test__
             }
         }
 
-        static void put_auto_bytes(size_t pos, std::ostream& out, bytes_view v)
+        static void put_auto_bytes(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
         {
             auto n = std::min(int(v.size()), 36);
             auto* p = v.as_u8p();
@@ -461,10 +512,10 @@ namespace redemption_unit_test__
             }
 
             if (count_invalid > n / 6) {
-                put_ascii_bytes(pos, out, v);
+                put_ascii_bytes(pos, out, v, min_len);
             }
             else {
-                put_utf8_bytes(pos, out, v);
+                put_utf8_bytes(pos, out, v, min_len);
             }
         }
     }
@@ -474,10 +525,10 @@ namespace redemption_unit_test__
         char const* sep = (x.pattern == 'd') ? "" : "\"";
         out << sep;
         switch (x.pattern) {
-            #define CASE(c, print) case c: \
-                print(x.pos, out, x.lhs);       \
-                out << sep << x.revert << sep;  \
-                print(x.pos, out, x.rhs);       \
+            #define CASE(c, print) case c:           \
+                print(x.pos, out, x.lhs, x.min_len); \
+                out << sep << x.revert << sep;       \
+                print(x.pos, out, x.rhs, x.min_len); \
                 break
             CASE('c', put_ascii_bytes);
             CASE('C', put_ascii_bytes2);
@@ -603,7 +654,7 @@ std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::Enum 
 std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::BytesView const& v)
 {
     out << "\"";
-    ::redemption_unit_test__::put_auto_bytes(v.bytes.size(), out, v.bytes);
+    ::redemption_unit_test__::put_auto_bytes(v.bytes.size(), out, v.bytes, 0);
     out << "\"";
     return out;
 }
