@@ -451,7 +451,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
                            {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, 
                            rand, timeobj, 5,
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
-                           false, true);
+                           false, true, true);
 
     std::vector<uint8_t> negotiate{ 
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -610,7 +610,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp}, 
                            rand, timeobj, 6, 
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_3, 9600, NTLMSSP_REVISION_W2K3},
-                           false, true);
+                           false, true, true);
 
     std::vector<uint8_t> negotiate{ 
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -778,7 +778,7 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName, MsvAvDnsComputerName, MsvAvDnsTreeName, MsvAvTimestamp}, 
                            rand, timeobj, 6, 
                            NtlmVersion{10, 0, 0x4563, NTLMSSP_REVISION_W2K3},
-                           false, true);
+                           false, true, true);
 
     std::vector<uint8_t> negotiate{ 
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
