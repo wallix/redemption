@@ -760,7 +760,7 @@ public:
     }
 
 private:
-    void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
+    void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi, windowing_api* winapi)
     {
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -830,46 +830,46 @@ public:
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
-            this->set_mod(mod_factory.create_mod_bouncer());
+            this->set_mod(mod_factory.create_mod_bouncer(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TEST:
-            this->set_mod(mod_factory.create_mod_replay());
+            this->set_mod(mod_factory.create_mod_replay(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGETTEST:
-            this->set_mod(mod_factory.create_widget_test_mod());
+            this->set_mod(mod_factory.create_widget_test_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CARD:
-            this->set_mod(mod_factory.create_test_card_mod());
+            this->set_mod(mod_factory.create_test_card_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-            this->set_mod(mod_factory.create_selector_mod());
+            this->set_mod(mod_factory.create_selector_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CLOSE:
-            this->set_mod(mod_factory.create_close_mod());
+            this->set_mod(mod_factory.create_close_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_CLOSE_BACK:
-            this->set_mod(mod_factory.create_close_mod_back_to_selector());
+            this->set_mod(mod_factory.create_close_mod_back_to_selector(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TARGET:
-            this->set_mod(mod_factory.create_interactive_target_mod());
+            this->set_mod(mod_factory.create_interactive_target_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-            this->set_mod(mod_factory.create_valid_message_mod());
+            this->set_mod(mod_factory.create_valid_message_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-            this->set_mod(mod_factory.create_display_message_mod());
+            this->set_mod(mod_factory.create_display_message_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
-            this->set_mod(mod_factory.create_dialog_challenge_mod());
+            this->set_mod(mod_factory.create_dialog_challenge_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_WAIT_INFO:
-            this->set_mod(mod_factory.create_wait_info_mod());
+            this->set_mod(mod_factory.create_wait_info_mod(), nullptr, nullptr);
         break;
         case MODULE_INTERNAL_TRANSITION:
-            this->set_mod(mod_factory.create_transition_mod());
+            this->set_mod(mod_factory.create_transition_mod(), nullptr, nullptr);
         break;
-        case MODULE_INTERNAL_WIDGET_LOGIN:
-            this->set_mod(mod_factory.create_login_mod());
+        case MODULE_INTERNAL_WIDGET_LOGIN: 
+            this->set_mod(mod_factory.create_login_mod(), nullptr, nullptr);
         break;
 
         case MODULE_XUP: {
@@ -894,7 +894,7 @@ public:
                 safe_int(this->ini.get<cfg::context::opt_bpp>())
                 // TODO: shouldn't alls mods have access to sesman authentifier ?
             );
-            this->set_mod(new_xup_mod);
+            this->set_mod(new_xup_mod, nullptr, nullptr);
 
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded");
