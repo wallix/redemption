@@ -219,21 +219,10 @@ struct LogonInfoVersion1_Recv {
 
     explicit LogonInfoVersion1_Recv(InStream & stream)
     {
-        // TODO duplication
-        auto in_uni_to_ascii_str = [&](auto& text, uint32_t& sz) {
-            auto utf8 = UTF16toUTF8_buf(
-                stream.remaining_bytes().first(sz),
-                make_array_view(text).drop_back(1));
-            stream.in_skip_bytes(sz);
-            sz = utf8.size();
-            text[sz] = 0;
-        };
-
         // cbDomain(4)
         ::check_throw(stream, 4, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
         uint32_t cbDomain = stream.in_uint32_le();
-
         if (cbDomain > 52) {
             LOG(LOG_ERR, "cbDomain=%zu too long: expected=%zu", size_t(cbDomain), size_t(cbDomain));
             throw Error(ERR_RDP_DATA_TRUNCATED);
@@ -241,26 +230,22 @@ struct LogonInfoVersion1_Recv {
 
         // Domain(52) + cbUserName(4)
         ::check_throw(stream, 56, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
-
-        in_uni_to_ascii_str(this->Domain, cbDomain);
-
-        stream.in_skip_bytes(52 -  // Domain(52)
-            cbDomain);
+        auto domain_data = stream.in_skip_bytes(52); // Domain(52)
+        auto domain_utf8 = UTF16toUTF8_buf(domain_data, make_array_view(this->Domain));
+        (void)domain_utf8; // TODO: we could check computed length match transmitted length
 
         uint32_t cbUserName = stream.in_uint32_le();
-
-        // UserName(512) + SessionId(4)
-        ::check_throw(stream, 516, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
-
-        in_uni_to_ascii_str(this->UserName, cbUserName);
-
-        stream.in_skip_bytes(512 - // UserName(512)
-            cbUserName);
-
         if (cbUserName > 512) {
             LOG(LOG_ERR, "cbUserName=%zu too long: expected=%zu", size_t(cbUserName), size_t(cbUserName));
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
+
+        // UserName(512) + SessionId(4)
+        ::check_throw(stream, 516, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
+
+        auto user_data = stream.in_skip_bytes(512); // UserName(512)
+        auto user_utf8 = UTF16toUTF8_buf(user_data, make_array_view(this->UserName));
+        (void)user_utf8;  // TODO: we could check computed length match transmitted length
 
         this->SessionId = stream.in_uint32_le();
 
