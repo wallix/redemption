@@ -250,6 +250,8 @@ public:
 //        }
 
 
+        mod_wrapper.show_osd_flag = false;
+
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
@@ -302,6 +304,7 @@ public:
             this->set_mod(mod_wrapper, mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             this->connected = true;
+            mod_wrapper.show_osd_flag = true;
             break;
         }
 
@@ -323,6 +326,7 @@ public:
             mod_wrapper.get_mod()->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
             LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
             ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+            mod_wrapper.show_osd_flag = true;
             this->connected = true;
         }
         break;
@@ -332,6 +336,7 @@ public:
                 authentifier, report_message, this->ini,
                 mod_wrapper.get_graphics(), this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags);
+                mod_wrapper.show_osd_flag = true;
             break;
 
         default:

@@ -61,88 +61,11 @@
 
 #include "core/session_reactor.hpp"
 
+#include "core/callback_forwarder.hpp"
+
 struct ModWrapper
 {
-    struct CallbackWrapper : public Callback
-    {
-        ModWrapper & wrap;
-        CallbackWrapper(ModWrapper & wrap) : wrap(wrap){}
-        // Callback
-        void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
-        {
-            this->wrap.send_to_mod_channel(front_channel_name, chunk, length, flags);
-        }
-        // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
-        void send_auth_channel_data(const char * data) override
-        {
-            this->wrap.send_auth_channel_data(data);
-        }
-        void send_checkout_channel_data(const char * data) override
-        {
-            this->wrap.send_checkout_channel_data(data);
-        }
-        void create_shadow_session(const char * userdata, const char * type) override
-        {
-            this->wrap.create_shadow_session(userdata, type);
-        }
-        // RdpInput
-        std::string module_name() override 
-        {
-            return "WrappedMod" + this->wrap.module_name();
-        }
-
-        void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
-        {
-            this->wrap.rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-
-        void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
-        {
-            this->wrap.rdp_input_unicode(unicode, flag);
-        }
-
-        void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
-        {
-            this->wrap.rdp_input_mouse(device_flags, x, y, keymap);
-        }
-
-        void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-        {
-            this->wrap.rdp_input_synchronize(time, device_flags, param1, param2);
-        }
-
-        void rdp_input_invalidate(Rect r) override
-        {
-            this->wrap.rdp_input_invalidate(r);
-        }
-
-    // Client Notify module that gdi is up and running
-        void rdp_gdi_up_and_running(ScreenInfo & screen_info) override
-        {
-            this->wrap.rdp_gdi_up_and_running(screen_info);
-        }
-
-    // Client Notify module that gdi is not up and running any more
-        void rdp_gdi_down() override
-        {
-            this->wrap.rdp_gdi_down();
-        }
-
-        void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
-        {
-            this->wrap.rdp_allow_display_updates(left, top, right, bottom);
-        }
-        
-        void rdp_suppress_display_updates() override
-        {
-            this->wrap.rdp_suppress_display_updates();
-        }
-
-        void refresh(Rect clip) override
-        {
-            this->wrap.refresh(clip);
-        }
-    } callback;
+    struct CallbackForwarder<ModWrapper> callback;
 
     struct GraphicFilter : public gdi::GraphicApi
     {
@@ -303,6 +226,9 @@ struct ModWrapper
     }
 
 public:
+
+    bool target_info_is_shown = false;
+    bool show_osd_flag = false;
 
     void last_disconnect()
     {
@@ -579,19 +505,17 @@ public:
 
     bool try_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
-        (void)param1;
-        (void)param2;
-        (void)param3;
-        (void)param4;
-        if (this->is_disable_by_input
-         && keymap->nb_kevent_available() > 0
-//             && !(param3 & SlowPath::KBDFLAGS_DOWN)
-         && keymap->top_kevent() == Keymap2::KEVENT_INSERT
+        LOG(LOG_INFO, "ModWrapper::try_input_scancode");
+
+        if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
+            && keymap->top_kevent() == Keymap2::KEVENT_INSERT
         ) {
             keymap->get_kevent();
             this->disable_osd();
+            LOG(LOG_INFO, "ModWrapper::try_input_scancode done(true)");
             return true;
         }
+        LOG(LOG_INFO, "ModWrapper::try_input_scancode done(false)");
         return false;
     }
 
@@ -640,8 +564,62 @@ public:
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
-        if (!this->try_input_scancode(param1, param2, param3, param4, keymap)) {
-            this->get_mod()->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        LOG(LOG_INFO, "ModWrapper::rdp_input_scancode");
+        
+        if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
+            && keymap->top_kevent() == Keymap2::KEVENT_INSERT
+        ) {
+            keymap->get_kevent();
+            this->disable_osd();
+            return;
+        }
+        if (this->show_osd_flag) {
+
+            if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
+                && keymap->top_kevent() == Keymap2::KEVENT_INSERT
+            ) {
+                keymap->get_kevent();
+                this->disable_osd();
+                this->target_info_is_shown = false;
+            }
+        }
+
+        this->get_mod().rdp_input_scancode(param1, param2, param3, param4, keymap);
+
+        if (this->show_osd_flag) {
+            Inifile const& ini = this->ini;
+
+            if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
+                bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
+                if (this->target_info_is_shown && f12_released) {
+                    LOG(LOG_INFO, "Hide info");
+                    this->clear_osd_message();
+                    this->target_info_is_shown = false;
+                }
+                else if (!this->target_info_is_shown && !f12_released) {
+                    LOG(LOG_INFO, "Show info");
+                    std::string msg;
+                    msg.reserve(64);
+                    if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
+                        msg  = ini.get<cfg::globals::target_user>();
+                        msg += "@";
+                    }
+                    msg += ini.get<cfg::globals::target_device>();
+                    const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+                    if (enddate) {
+                        const auto now = time(nullptr);
+                        const auto elapsed_time = enddate - now;
+                        // only if "reasonable" time
+                        if (elapsed_time < 60*60*24*366L) {
+                            msg += "  [";
+                            msg += time_before_closing(elapsed_time, Translator(ini));
+                            msg += ']';
+                        }
+                    }
+                    this->osd_message_fn(std::move(msg), false);
+                    this->target_info_is_shown = true;
+                }
+            }
         }
     }
 
@@ -681,7 +659,9 @@ public:
     { this->get_mod()->rdp_gdi_down(); }
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
-    { this->get_mod()->rdp_allow_display_updates(left, top, right, bottom); }
+    {
+        this->get_mod()->rdp_allow_display_updates(left, top, right, bottom);
+    }
 
     void rdp_suppress_display_updates()
     { this->get_mod()->rdp_suppress_display_updates(); }

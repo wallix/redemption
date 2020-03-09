@@ -34,7 +34,6 @@ public:
 private:
     ModWrapper & mod_wrapper;
     Inifile & ini;
-    bool target_info_is_shown = false;
 
 public:
     XupModWithSocket(ModWrapper & mod_wrapper, Inifile & ini,
@@ -49,6 +48,7 @@ public:
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
+        this->mod_wrapper.target_info_is_shown = false;
         this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
@@ -66,54 +66,16 @@ public:
     
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        //LOG(LOG_INFO, "mod_wrapper::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
-        if (this->mod_wrapper.try_input_scancode(param1, param2, param3, param4, keymap)) {
-            this->target_info_is_shown = false;
-            return ;
-        }
-
+        LOG(LOG_INFO, "XupModWithSocket::rdp_input_scancode");
         this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
-
-        Inifile const& ini = this->ini;
-
-        if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
-            bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
-            if (this->target_info_is_shown && f12_released) {
-                // LOG(LOG_INFO, "Hide info");
-                this->mod_wrapper.clear_osd_message();
-                this->target_info_is_shown = false;
-            }
-            else if (!this->target_info_is_shown && !f12_released) {
-                // LOG(LOG_INFO, "Show info");
-                std::string msg;
-                msg.reserve(64);
-                if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
-                    msg  = ini.get<cfg::globals::target_user>();
-                    msg += "@";
-                }
-                msg += ini.get<cfg::globals::target_device>();
-                const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-                if (enddate) {
-                    const auto now = time(nullptr);
-                    const auto elapsed_time = enddate - now;
-                    // only if "reasonable" time
-                    if (elapsed_time < 60*60*24*366L) {
-                        msg += "  [";
-                        msg += time_before_closing(elapsed_time, Translator(ini));
-                        msg += ']';
-                    }
-                }
-                this->mod_wrapper.osd_message_fn(std::move(msg), false);
-                this->target_info_is_shown = true;
-            }
-        }
+        LOG(LOG_INFO, "XupModWithSocket::rdp_input_scancode done(2)");
     }
 
     // from RdpInput
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
         if (this->mod_wrapper.try_input_mouse(device_flags, x, y, keymap)) {
-            this->target_info_is_shown = false;
+            this->mod_wrapper.target_info_is_shown = false;
             return ;
         }
 
