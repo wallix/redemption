@@ -503,22 +503,6 @@ public:
         }
     }
 
-    bool try_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
-    {
-        LOG(LOG_INFO, "ModWrapper::try_input_scancode");
-
-        if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
-            && keymap->top_kevent() == Keymap2::KEVENT_INSERT
-        ) {
-            keymap->get_kevent();
-            this->disable_osd();
-            LOG(LOG_INFO, "ModWrapper::try_input_scancode done(true)");
-            return true;
-        }
-        LOG(LOG_INFO, "ModWrapper::try_input_scancode done(false)");
-        return false;
-    }
-
     bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
     {
         if (this->is_disable_by_input
@@ -564,8 +548,6 @@ public:
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
-        LOG(LOG_INFO, "ModWrapper::rdp_input_scancode");
-        
         if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
             && keymap->top_kevent() == Keymap2::KEVENT_INSERT
         ) {
