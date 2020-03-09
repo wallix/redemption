@@ -695,11 +695,6 @@ public:
         this->get_mod()->disconnect();
     }
 
-    void display_osd_message(std::string const & message)
-    {
-        this->get_mod()->display_osd_message(message);
-    }
-
     [[nodiscard]] Dimension get_dim() const
     {
         return this->get_mod()->get_dim();

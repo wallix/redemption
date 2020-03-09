@@ -117,19 +117,12 @@ public:
     
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        LOG(LOG_INFO, "ModWithSocketAndMetrics::rdp_input_scancode");
         this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
-        LOG(LOG_INFO, "ModWithSocketAndMetrics::rdp_input_scancode done(2)");
     }
 
     // from RdpInput
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
-        if (this->mod_wrapper.try_input_mouse(device_flags, x, y, keymap)) {
-            this->mod_wrapper.target_info_is_shown = false;
-            return ;
-        }
-
         this->mod.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
@@ -174,13 +167,6 @@ public:
     void disconnect() override 
     {
         return this->mod.disconnect();
-    }
-
-    // from mod_api
-    void display_osd_message(std::string const & message) override 
-    {
-        this->mod_wrapper.osd_message_fn(message, true);
-        //return this->mod.display_osd_message(message);
     }
 
     // from mod_api
