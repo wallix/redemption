@@ -291,8 +291,8 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
     uint8_t downflag = 0;
     while (uint32_t key = this->keymapSym.get_sym(downflag)){
         if (bool(this->verbose & VNCVerbose::keymap_stack)) {
-            LOG(LOG_INFO, "keyloop::key=%d (%x) %s param1=%u nbsym=%u",
-                key, static_cast<unsigned>(key), downflag?"DOWN":"UP",
+            LOG(LOG_INFO, "keyloop::key=%u (%x) %s param1=%u nbsym=%u",
+                key, key, downflag?"DOWN":"UP",
                 static_cast<unsigned>(keycode),
                 this->keymapSym.nb_sym_available());
         }

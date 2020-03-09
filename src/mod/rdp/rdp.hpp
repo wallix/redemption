@@ -2574,7 +2574,7 @@ public:
 
                 uint16_t frameAction = stream.in_uint16_le();
                 uint32_t frameId = stream.in_uint32_le();
-                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: frameMarker action=%d frameId=%d",
+                LOG_IF(bool(this->verbose & RDPVerbose::surfaceCmd), LOG_DEBUG, "setSurfaceBits: frameMarker action=%u frameId=%u",
                         frameAction, frameId);
 
                 switch(frameAction) {
@@ -3063,7 +3063,7 @@ public:
                                 LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
 
                             this->orders.reset();
-                            
+
                             this->process_demand_active(sctrl);
                             this->send_confirm_active(drawable);
                             this->send_synchronise();
@@ -3575,7 +3575,7 @@ public:
                      *     * a multi_fragment_update that is big enough (at least the value returned by the server)
                      */
                     Emit_CS_BitmapCodecCaps bitmap_codec_caps;
-                    
+
                     if (this->front_bitmap_codec_caps.haveRemoteFxCodec) {
                         for (uint8_t i = 0 ; i < this->front_bitmap_codec_caps.bitmapCodecCount ; i++){
                             if (this->front_bitmap_codec_caps.bitmapCodecArray[i].codecType == CODEC_REMOTEFX){
@@ -3585,7 +3585,7 @@ public:
                                 if (memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0) {
                                     bitmap_codec_caps.addCodec(id, CODEC_GUID_IMAGE_REMOTEFX);
                                     this->remoteFx_codec_id.push_back(id);
-                                } else 
+                                } else
                                 // CODEC_GUID_REMOTEFX
                                 if(memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0) {
                                     bitmap_codec_caps.addCodec(id, CODEC_GUID_REMOTEFX);
@@ -4946,11 +4946,11 @@ public:
 //    lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size
 //  in bytes of the sourceDescriptor field.
 
-//    lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. 
+//    lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer.
 // The combined size in bytes of the numberCapabilities, pad2Octets, and
 // capabilitySets fields.
 
-//    sourceDescriptor (variable): A variable-length array of bytes containing 
+//    sourceDescriptor (variable): A variable-length array of bytes containing
 // a source descriptor (see [T128] section 8.4.1 for more information regarding
 // source descriptors).
 
@@ -4982,7 +4982,7 @@ public:
         uint32_t sessionId = sctrl.payload.in_uint32_le();
         (void)sessionId;
     }
-    
+
     void process_server_caps(InStream & stream, uint16_t len) {
         // TODO check stream consumed and len
         (void)len;
