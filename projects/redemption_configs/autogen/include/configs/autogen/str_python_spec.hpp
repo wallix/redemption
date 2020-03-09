@@ -287,8 +287,9 @@ bogus_pointer_xormask_padding = boolean(default=False)
 #_advanced
 disabled_orders = string_list(default=list())
 
+# Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
-wabam_uses_cache_bitmap_r2 = boolean(default=False)
+force_bitmap_cache_v2_with_am = boolean(default=True)
 
 [mod_rdp]
 
@@ -506,6 +507,10 @@ session_probe_handle_usage_limit = integer(min=0, max=1000, default=0)
 #_hidden
 session_probe_memory_usage_limit = integer(min=0, max=200000000, default=0)
 
+# (is in millisecond)
+#_hidden
+session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
+
 #_hidden
 session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
@@ -655,13 +660,18 @@ enable_remotefx = boolean(default=False)
 #_advanced
 accept_monitor_layout_change_if_capture_is_not_started = boolean(default=False)
 
-# Connect to the remote computer in Restricted Admin mode.
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
 #_hidden
 enable_restricted_admin_mode = boolean(default=False)
 
-# If enabled, NLA will be disabled automatically.
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 #_hidden
-smartcard_passthrough = boolean(default=False)
+force_smartcard_authentication = boolean(default=False)
 
 [mod_vnc]
 

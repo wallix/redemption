@@ -151,13 +151,13 @@
           "name": "enable_restricted_admin_mode",
           "type": "bool",
           "default": false,
-          "description": "Connect to the remote computer in Restricted Admin mode."
+          "description": "Connect to the server in Restricted Admin mode.\nThis mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.\nNLA must be enabled."
         },
         {
-          "name": "smartcard_passthrough",
+          "name": "force_smartcard_authentication",
           "type": "bool",
           "default": false,
-          "description": "If enabled, NLA will be disabled automatically."
+          "description": "NLA will be disabled.\nTarget must be set for interactive login, otherwise server connection may not be guaranteed.\nSmartcard device must be available on client desktop.\nSmartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
         },
         {
           "name": "remote_programs_disconnect_message_delay",
@@ -394,6 +394,15 @@
           "type": "integer",
           "min": 0,
           "max": 200000000,
+          "default": 0,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "end_of_session_check_delay_time",
+          "type": "integer",
+          "min": 0,
+          "max": 60000,
           "default": 0,
           "advanced": true,
           "description": ""

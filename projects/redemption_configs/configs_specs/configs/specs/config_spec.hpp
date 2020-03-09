@@ -281,7 +281,11 @@ void config_spec_definition(Writer && W)
             "This option takes precedence over the option Extra orders of section mod_rdp."
         }, set(""));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "wabam_uses_cache_bitmap_r2", set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
+                 "force_bitmap_cache_v2_with_am",
+                 desc{"Force usage of bitmap cache V2 for compatibility "
+                         "with WALLIX Access Manager."},
+                 set(true));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
@@ -404,6 +408,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 1000>>(), "session_probe_handle_usage_limit", connpolicy::name{"handle_usage_limit"}, set(0));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 200'000'000>>(), "session_probe_memory_usage_limit", connpolicy::name{"memory_usage_limit"}, set(0));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), "session_probe_end_of_session_check_delay_time", connpolicy::name{"end_of_session_check_delay_time"}, set(0));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", connpolicy::name{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
@@ -471,9 +477,22 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "accept_monitor_layout_change_if_capture_is_not_started", set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_restricted_admin_mode", desc{"Connect to the remote computer in Restricted Admin mode."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+                 "enable_restricted_admin_mode",
+                 desc{"Connect to the server in Restricted Admin mode.\n"
+                         "This mode must be supported by the server "
+                         "(available from Windows Server 2012 R2), "
+                         "otherwise, connection will fail.\n"
+                         "NLA must be enabled."},
+                 set(false));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "smartcard_passthrough", desc{"If enabled, NLA will be disabled automatically."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(),
+                 "force_smartcard_authentication",
+                 desc{"NLA will be disabled.\n"
+                         "Target must be set for interactive login, otherwise server connection may not be guaranteed.\n"
+                         "Smartcard device must be available on client desktop.\n"
+                         "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
+                 set(false));
     });
 
     W.section("metrics", [&]

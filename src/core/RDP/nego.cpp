@@ -46,7 +46,7 @@ struct RdpNegoProtocols
 };
 
 RdpNego::RdpNego(
-    const bool tls, const char * username, bool nla, bool admin_mode,
+    const bool tls, const std::string & username, bool nla, bool admin_mode,
     const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
     std::string& extra_message, Translation::language_t lang,
     const TLSClientParams & tls_client_params,
@@ -77,16 +77,21 @@ RdpNego::RdpNego(
         (this->restricted_admin_mode ? "Enabled" : "Disabled")
         );
 
-    strncpy(this->username, username, 127);
-    this->username[127] = 0;
+    if (this->restricted_admin_mode
+        && !(this->enabled_protocols & RdpNegoProtocols::Nla)) {
+        LOG(LOG_ERR, "NLA disabled. Restricted admin mode requires NLA.");
+        throw Error(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE);
+    }
+
+    this->username = username;
 }
 
 RdpNego::~RdpNego() = default;
 
-void RdpNego::set_identity(bytes_view user, bytes_view domain, char const * pass, char const * hostname)
+void RdpNego::set_identity(bytes_view user, bytes_view domain, char const * pass, const std::string & hostname)
 {
     if (this->nla) {
-        this->user = std::vector<uint8_t>{} << user;
+        this->user.assign(user.data(), user.data()+user.size());
         this->domain = std::vector<uint8_t>{} << domain;
 
         // Password is a multi-sz!
@@ -94,7 +99,7 @@ void RdpNego::set_identity(bytes_view user, bytes_view domain, char const * pass
         MultiSZCopy(char_ptr_cast(this->password), sizeof(this->password), pass);
         this->current_password = this->password;
 
-        snprintf(char_ptr_cast(this->hostname), sizeof(this->hostname), "%s", hostname);
+        this->hostname = hostname;
     }
 }
 
@@ -394,7 +399,8 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 this->hostname, this->target_host,
                 this->restricted_admin_mode,
                 this->rand, this->extra_message, this->lang,
-                bool(this->verbose & Verbose::credssp)
+                bool(this->verbose & Verbose::credssp),
+                bool(this->verbose & Verbose::negotiation)
             );
         }
         catch (const Error &) {
@@ -412,7 +418,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
             this->NTLM = std::make_unique<rdpClientNTLM>(
                 this->user, this->domain,
                 this->current_password,
-                this->hostname,
+                this->hostname.c_str(),
                 trans.get_transport().get_public_key(),
                 this->restricted_admin_mode,
                 this->rand, this->timeobj,
@@ -481,6 +487,10 @@ RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
         LOG(LOG_ERR, "Failed to disconnect transport");
         throw Error(ERR_SOCKET_CONNECT_FAILED);
     }
+    if (this->restricted_admin_mode) {
+        LOG(LOG_ERR, "NLA failed. Restricted admin mode requires NLA.");
+        throw Error(ERR_NEGO_NLA_REQUIRED_BY_RESTRICTED_ADMIN_MODE);
+    }
 
     this->current_password += (strlen(char_ptr_cast(this->current_password)) + 1);
 
@@ -534,7 +544,7 @@ void RdpNego::send_negotiation_request(OutTransport trans)
 {
     LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::send_x224_connection_request_pdu: ...");
     char cookie[256];
-    snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
+    snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username.c_str());
     char * cookie_or_token = this->lb_info ? this->lb_info : cookie;
     if (bool(this->verbose & Verbose::negotiation)) {
         LOG(LOG_INFO, "Send %s:", this->lb_info ? "load_balance_info" : "cookie");

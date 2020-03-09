@@ -97,7 +97,7 @@ namespace cfg {
         struct enable_remotefx;
         struct bogus_pointer_xormask_padding;
         struct disabled_orders;
-        struct wabam_uses_cache_bitmap_r2;
+        struct force_bitmap_cache_v2_with_am;
     };
 
     struct mod_rdp {
@@ -158,6 +158,7 @@ namespace cfg {
         struct session_probe_enable_crash_dump;
         struct session_probe_handle_usage_limit;
         struct session_probe_memory_usage_limit;
+        struct session_probe_end_of_session_check_delay_time;
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
         struct session_probe_childless_window_as_unidentified_input_field;
         struct session_probe_disabled_features;
@@ -189,7 +190,7 @@ namespace cfg {
         struct enable_remotefx;
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;
-        struct smartcard_passthrough;
+        struct force_smartcard_authentication;
     };
 
     struct mod_vnc {

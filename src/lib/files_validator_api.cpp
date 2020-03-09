@@ -195,9 +195,9 @@ int validator_close_session(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
+    std::unique_ptr<ValidatorApi> auto_delete{validator};
     validator->file_validator.send_close_session();
     CHECK_ERRNUM(validator);
-    delete validator; /*NOLINT*/
     return 0;
 }
 

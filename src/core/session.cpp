@@ -470,7 +470,7 @@ class Session
                         }
                     }
 
-                    if (ini.get<cfg::client::wabam_uses_cache_bitmap_r2>() &&
+                    if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
                         ini.get<cfg::context::is_wabam>()) {
                         front.force_using_cache_bitmap_r2();
                     }

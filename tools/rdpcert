@@ -11,10 +11,12 @@ my $keyfile = '';
 my $x509file = '';
 my $key = '';
 my $x509 = '';
+my $eckey = '';
 
 GetOptions (
     'force' => \$force,
     'key' => \$key,
+    'eckey' => \$eckey,
     'x509' => \$x509,
     'inkey=s' => \$keyfile,
     'inx509=s' => \$x509file,
@@ -23,12 +25,13 @@ GetOptions (
 if (not $key and not $x509){
     print STDERR "usage: rdpcert confpath [parameters]\n\n"
         ."--key          : set RDP Proxy server private key (x509 is mandatory if changing key)\n"
-        ."--inkey=<file> : user provided file containing private 4096 bit rsa key, PEM format\n"
+        ."--eckey        : with --key and without --inkey, generate EC key instead of RSA key\n"
+        ."--inkey=<file> : user provided file containing private key (EC or RSA), PEM format\n"
         ."--x509         : set RDP Proxy server X509 certificate\n"
         ."--inx509=<file>: user provided X509 certificate matching private key, PEM format\n"
         ."--force        : force erasing existing key or user provided certificate\n"
         ;
-    die;
+    exit $!;
 }
 
 my $confpath = '';
@@ -55,6 +58,9 @@ my $pass = "inquisition";
 my $hostname = `hostname -f`;
 chomp $hostname;
 
+my $rsa_gen_opts = "-algorithm rsa -pkeyopt rsa_keygen_bits:4096";
+my $ec_gen_opts = "-algorithm ec -pkeyopt ec_paramgen_curve:P-384";
+
 if ($key){
     if (-e $pkey and not $force){
       print STDERR "RDP proxy private key file already exist and no --force parameter, keeping current key\n";
@@ -63,12 +69,13 @@ if ($key){
         if ($keyfile){
             print STDERR "Setting RDP proxy server user defined private key\n";
             -e $keyfile or die "User private key file not found\n";
-            `openssl rsa -in $keyfile -out $pkey -des3 -passout "pass:$pass"`;
+            `openssl pkey -in $keyfile -out $pkey -des3 -passout "pass:$pass"`;
             die "rdpproxy:failed to set ReDemPtion server private key\n" if $?;
         }
         else {
+            my $gen_opts = $eckey ? $ec_gen_opts : $rsa_gen_opts;
             print STDERR "Setting new RDP proxy server private key\n";
-            `openssl genrsa -out $pkey -des3 -passout "pass:$pass" 4096`;
+            `openssl genpkey -out $pkey -des3 -pass "pass:$pass" $gen_opts`;
              die "rdpproxy:failed to create ReDemPtion server private key" if $?;
         }
         $x509 = 1; # force regeneration of key
@@ -102,15 +109,15 @@ if ($x509){
             die "Certificate is user provided, use --force to change to create a new autosigned certificate\n";
         }
         print STDERR "Creating new rdp proxy autosigned certificate\n";
-        `openssl req -new -key $pkey -passin "pass:$pass" -out $certreq -subj "/CN=$hostname"`;
+        `openssl req -new -sha256 -key $pkey -passin "pass:$pass" -out $certreq -subj "/CN=$hostname"`;
         die "failed to create ReDemPtion server certificate request" if $?;
 
         open(my $fh, ">", $extfile);
-        print $fh   "keyUsage=keyEncipherment,dataEncipherment\n"
+        print $fh   "keyUsage=digitalSignature,keyEncipherment,dataEncipherment\n"
                    ."extendedKeyUsage=serverAuth\n";
         close $fh;
 
-        `openssl x509 -req -days 7300 -in $certreq -signkey $pkey -passin "pass:$pass" -out $cert -extfile $extfile`;
+        `openssl x509 -req -sha256 -days 7300 -in $certreq -signkey $pkey -passin "pass:$pass" -out $cert -extfile $extfile`;
         die "failed to create ReDemPtion server certificate" if $?;
 
         ($login,$pass,$uid,$gid) = getpwnam('wabuser');

@@ -106,20 +106,20 @@ public:
     rdpClientNTLM(bytes_view user,
                bytes_view domain,
                uint8_t * pass,
-               uint8_t * hostname,
+               const char * hostname,
                array_view_const_u8 public_key,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
-               const bool credssp_verbose = false,
-               const bool verbose = false)
+               const bool credssp_verbose,
+               const bool verbose)
         : PublicKey(public_key.data(), public_key.data()+public_key.size())
         , utf16_user(::UTF8toUTF16(user))
         , utf16_domain(::UTF8toUTF16(domain))
         , identity_Password(::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))}))
         , timeobj(timeobj)
         , rand(rand)
-        , Workstation(::UTF8toUTF16({hostname, strlen(char_ptr_cast(hostname))}))
+        , Workstation(::UTF8toUTF16({hostname, strlen(hostname)}))
         , restricted_admin_mode(restricted_admin_mode)
         , credssp_verbose(credssp_verbose)
         , verbose(verbose)

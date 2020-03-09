@@ -118,6 +118,7 @@ cfg::mod_rdp::session_probe_launcher_abort_delay ⇐ mod_rdp:session_probe_launc
 cfg::mod_rdp::session_probe_enable_crash_dump ⇐ mod_rdp:session_probe_enable_crash_dump   [bool]
 cfg::mod_rdp::session_probe_handle_usage_limit ⇐ mod_rdp:session_probe_handle_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_memory_usage_limit ⇐ mod_rdp:session_probe_memory_usage_limit   [uint32_t]
+cfg::mod_rdp::session_probe_end_of_session_check_delay_time ⇐ mod_rdp:session_probe_end_of_session_check_delay_time   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check ⇐ mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
 cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field ⇐ mod_rdp:session_probe_childless_window_as_unidentified_input_field   [bool]
 cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled_features   [SessionProbeDisabledFeature]
@@ -185,9 +186,14 @@ cfg::mod_rdp::server_cert_response ⇐ server_cert_response   [std::string]
 cfg::mod_rdp::enable_remotefx ⇐ mod_rdp:enable_remotefx   [bool]
     Enables support of the remoteFX codec.
 cfg::mod_rdp::enable_restricted_admin_mode ⇐ mod_rdp:enable_restricted_admin_mode   [bool]
-    Connect to the remote computer in Restricted Admin mode.
-cfg::mod_rdp::smartcard_passthrough ⇐ mod_rdp:smartcard_passthrough   [bool]
-    If enabled, NLA will be disabled automatically.
+    Connect to the server in Restricted Admin mode.
+    This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+    NLA must be enabled.
+cfg::mod_rdp::force_smartcard_authentication ⇐ mod_rdp:force_smartcard_authentication   [bool]
+    NLA will be disabled.
+    Target must be set for interactive login, otherwise server connection may not be guaranteed.
+    Smartcard device must be available on client desktop.
+    Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).

@@ -377,10 +377,30 @@ void RDPDrawable::draw(RDPSetSurfaceCommand const & /*cmd*/)
 
 void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
 {
-    ConstImageDataView constImg(content.data, content.width, content.rect.height(), content.stride,
-            BitsPerPixel{32}, ConstImageDataView::Storage::TopToBottom);
+    /* no remoteFx support in recording, transcode to bitmapUpdates */
+    for (const Rect & rect : content.region.rects) {
+//        LOG(LOG_INFO, "RDPDrawable::draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
+//            content.stride, rect);
+        Bitmap bitmap(content.data, content.stride, rect);
+        RDPBitmapData bitmap_data;
+        bitmap_data.dest_left = cmd.destRect.x + rect.ileft();
+        bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;
+        bitmap_data.dest_top = cmd.destRect.y + rect.itop();
+        bitmap_data.dest_bottom = cmd.destRect.y + rect.ebottom()-1;
+        
+        bitmap_data.width = bitmap.cx();
+        bitmap_data.height = bitmap.cy();
+        bitmap_data.bits_per_pixel = 32;
+        bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
+        bitmap_data.bitmap_length = bitmap.bmp_size();
 
-    this->drawable.draw_bitmap(cmd.destRect, constImg);
+        this->RDPDrawable::draw(bitmap_data, bitmap);
+    }
+
+//    ConstImageDataView constImg(content.data, content.width, content.rect.height(), content.stride,
+//            BitsPerPixel{32}, ConstImageDataView::Storage::TopToBottom);
+
+//    this->drawable.draw_bitmap(cmd.destRect, constImg);
 }
 
 /*

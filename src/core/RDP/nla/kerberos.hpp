@@ -54,7 +54,7 @@ public:
     }
 
 
-    int get_credentials(const char * princname, const char * password,
+    int get_credentials(const std::string & princname, const char * password,
                         const char * cache_name)
     {
         char* name;
@@ -108,7 +108,7 @@ public:
          * Kerberos error codes
          */
 
-        ret = krb5_parse_name(this->ctx, princname, &client_princ);
+        ret = krb5_parse_name(this->ctx, princname.c_str(), &client_princ);
         LOG(LOG_INFO, "Parse name %s", princname);
         if (ret) {
             LOG(LOG_ERR, "Parse name %s", princname);

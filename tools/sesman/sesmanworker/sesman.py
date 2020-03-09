@@ -18,6 +18,7 @@ import signal
 import traceback
 import json
 import re
+import sys
 from logger import Logger
 
 from .cutmessage import cut_message
@@ -51,12 +52,48 @@ from .engine import TargetContext
 import syslog
 
 
-def to_utf8(item):
-    if not item:
-        return ""
-    if isinstance(item, unicode):
-        return item.encode('utf8')
-    return item
+# Python 2.7 compatibility layer
+if sys.version_info[0] < 3:
+    def bytes(data, encoding="utf-8"):
+        return data.encode(encoding)
+    text_type = unicode
+    binary_type = str
+    def iterable_bytes(data):
+        return data
+    def to_syslog(data):
+        return to_utf8(data)
+else:
+    from struct import unpack
+    text_type = str
+    binary_type = (bytes, bytearray)
+    unicode = None
+    def iterable_bytes(data):
+        return unpack('%sc' % len(data), data)
+    def to_syslog(data):
+        return to_unicode(data)
+
+
+def to_utf8(string):
+    if isinstance(string, text_type):
+        return bytes(string, "utf-8")
+    return string
+
+
+def to_unicode(string):
+    if isinstance(string, binary_type):
+        return string.decode("utf-8")
+    return string
+
+
+def print_exception_caught(func):
+    def method_wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            import traceback
+            Logger().info(traceback.format_exc())
+            raise
+    return method_wrapper
 
 
 class RdpProxyLog(object):
@@ -69,14 +106,14 @@ class RdpProxyLog(object):
 
     def log(self, type, **kwargs):
         target = kwargs.pop('target', None)
-        arg_list = kwargs.items()
+        arg_list = list(kwargs.items())
         if target:
             arg_list[:0] = [('target', target)]
         arg_list[:0] = [('type', type)]
         args = ' '.join(('%s="%s"' % (k, self.escape_bs_dq(v)))
                         for (k, v) in arg_list if v)
         line = to_utf8(' '.join((self._context, args)))
-        syslog.syslog(syslog.LOG_INFO, line)
+        syslog.syslog(syslog.LOG_INFO, to_syslog(line))
 
     @staticmethod
     def escape_bs_dq(string):
@@ -104,16 +141,6 @@ def rvalue(value):
 DEBUG = False
 
 
-def mdecode(item):
-    if not item:
-        return ""
-    try:
-        item = item.decode('utf8')
-    except:
-        pass
-    return item
-
-
 def truncat_string(item, maxsize=20):
     return (item[:maxsize] + '..') if len(item) > maxsize else item
 
@@ -136,21 +163,19 @@ def parse_auth(username):
     no ambiguity)
 
     """
-    user_at_dev_service_group, sep, primary = username.rpartition(':')
+    user_dev_service_group, sep, primary = username.rpartition(':')
     if not sep:
-        user_at_dev_service_group, sep, primary = username.rpartition('+')
+        user_dev_service_group, sep, primary = username.rpartition('+')
     if sep:
-        user_at_dev_service, sep, group = user_at_dev_service_group.rpartition(
-            sep
-        )
+        user_dev_service, sep, group = user_dev_service_group.rpartition(sep)
         if not sep:
             # service and group not provided
-            user_at_dev, service, group = user_at_dev_service_group, '', ''
+            user_at_dev, service, group = user_dev_service_group, '', ''
         else:
-            user_at_dev, sep, service = user_at_dev_service.rpartition(sep)
+            user_at_dev, sep, service = user_dev_service.rpartition(sep)
             if not sep:
                 # group not provided
-                user_at_dev, service, group = user_at_dev_service, group, ''
+                user_at_dev, service, group = user_dev_service, group, ''
         user, sep, dev = user_at_dev.rpartition('@')
         if sep:
             return primary, (user, dev, service, group)
@@ -405,7 +430,7 @@ class Sesman():
         self.internal_target = False
         self.target_app_rights = {}
         # Should set context values back to default
-        for key, value in back_to_selector_default_reinit.iteritems():
+        for key, value in back_to_selector_default_reinit.items():
             self.shared[key] = value
         back_to_selector_default_sent[u"module"] = u'transitory'
         self.send_data(back_to_selector_default_sent)
@@ -459,7 +484,7 @@ class Sesman():
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []
-        for key, value in data.iteritems():
+        for key, value in data.items():
             self.shared[key] = value
             if value != MAGICASK:
                 _pair = u"%s\n!%s\n" % (key, value)
@@ -478,7 +503,7 @@ class Sesman():
         _len = len(_r_data)
 
         _chunk_size = 1024 * 64 - 1
-        _chunks = _len / _chunk_size
+        _chunks = _len // _chunk_size
 
         if _chunks == 0:
             self.proxy_conx.sendall(pack(">L", _len))
@@ -500,7 +525,7 @@ class Sesman():
         """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
 
         _status, _error = True, u''
-        _data = ''
+        _data = b''
         self._changed_keys = []
         try:
             # Fetch Data from Redemption
@@ -511,8 +536,6 @@ class Sesman():
                 if not _is_multi_packet:
                     break
             _data = _data.decode('utf-8')
-        except AuthentifierSocketClosed as e:
-            raise
         except Exception as e:
             # Logger().info("%s <<<%s>>>" % (
             #     u"Failed to read data from rdpproxy authentifier socket",
@@ -1053,12 +1076,12 @@ class Sesman():
 
                         _status = None  # One more loop
                     except Exception as e:
+                        _emsg = u"Unexpected error in selector pagination"
                         if DEBUG:
                             import traceback
-                            _emsg = u"Unexpected error in selector pagination"
                             Logger().info(
-                                u"Unexpected error in selector pagination %s" %
-                                traceback.format_exc(e)
+                                u"%s %s" %
+                                (_emsg, traceback.format_exc())
                             )
 
                         return False, _emsg
@@ -1166,7 +1189,7 @@ class Sesman():
             'session_id': session_id,
             'username': user,
             'source_ip': self.shared.get(u'ip_client'),
-            'account': mdecode(account),
+            'account': account,
             'device': self.shared.get(u'target_device'),
             'timestamp': start_time.strftime("%Y%m%d-%H%M%S"),
             'host': gethostname(),
@@ -1422,7 +1445,7 @@ class Sesman():
         flag = 0
         if not request_fields:
             return flag
-        for key, value in request_fields.iteritems():
+        for key, value in request_fields.items():
             bitset = Sesman.MAP_FIELD_FLAG.get(key)
             if bitset is not None:
                 flag += bitset
@@ -1624,13 +1647,6 @@ class Sesman():
             kv[u'proto_dest'] = proto_info.protocol
             kv[u'target_str'] = target_login_info.get_target_str()
 
-            # Depecrated, credentials checkout is made by check_target
-            _status, _error = self.engine.checkout_target(selected_target)
-            if not _status:
-                self.send_data({
-                    u'rejected': mdecode(_error) or TR(u"start_session_failed")
-                })
-
         if _status:
             kv['password'] = 'pass'
 
@@ -1644,7 +1660,7 @@ class Sesman():
             Logger().info(u"Starting Session, effective login='%s'" %
                           self.effective_login)
 
-            user = mdecode(self.engine.get_username())
+            user = self.engine.get_username()
             uname = self.effective_login or target_login_info.account_login
 
             # Add connection to the observer
@@ -1882,24 +1898,24 @@ class Sesman():
                             or ''
                         )
 
-                    smartcard_passthrough = conn_opts.get(
+                    force_sc_auth = conn_opts.get(
                         u'rdp', {}
                     ).get(
-                        u'smartcard_passthrough', False
+                        u'force_smartcard_authentication', False
                     )
-                    Logger().info("smartcard_passthrough = %s" %
-                                  smartcard_passthrough)
+                    Logger().info("force_smartcard_authentication = %s" %
+                                  force_sc_auth)
                     allow_interactive_password = (
                         (PASSWORD_INTERACTIVE in auth_policy_methods
                          or self.passthrough_mode)
-                        and not smartcard_passthrough
+                        and not force_sc_auth
                     )
-                    allow_interactive_login = not smartcard_passthrough
+                    allow_interactive_login = not force_sc_auth
 
                     kv[u'target_password'] = target_password
                     is_interactive_login = (
                         not bool(kv.get('target_login'))
-                        and not smartcard_passthrough
+                        and not force_sc_auth
                     )
                     extra_kv, _status, _error = self.complete_target_info(
                         kv, allow_interactive_password,
@@ -2498,10 +2514,10 @@ class Sesman():
     def fetch_connectionpolicy(self, conn_opts):
         connectionpolicy_kv = {}
         # Logger().info(u"%s" % conn_opts)
-        for (section, matches) in cp_spec.iteritems():
+        for (section, matches) in cp_spec.items():
             section_values = conn_opts.get(section)
             if section_values is not None:
-                for (config_key, (cp_key, cp_value)) in matches.iteritems():
+                for (config_key, (cp_key, cp_value)) in matches.items():
                     value = section_values.get(cp_key)
                     if value is not None:
                         connectionpolicy_kv[config_key] = value

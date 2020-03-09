@@ -112,7 +112,7 @@ void ModuleManager::create_mod_rdp(
     }
     // END READ PROXY_OPT
 
-    const bool smartcard_passthrough = ini.get<cfg::mod_rdp::smartcard_passthrough>();
+    const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
 
     ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
     ModRDPParams mod_rdp_params(
@@ -194,6 +194,9 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.clipboard_based_launcher.start_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.long_delay_ms                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.short_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
+
+    mod_rdp_params.session_probe_params.vc_params.end_of_session_check_delay_time =
+                                                        ini.get<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>();
 
     mod_rdp_params.session_probe_params.vc_params.ignore_ui_less_processes_during_end_of_session_check = ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
 

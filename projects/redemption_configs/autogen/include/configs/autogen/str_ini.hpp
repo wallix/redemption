@@ -342,9 +342,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disabled_orders = 
 
+# Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 # value: 0 or 1
 #_advanced
-#wabam_uses_cache_bitmap_r2 = 0
+#force_bitmap_cache_v2_with_am = 1
 
 [mod_rdp]
 
@@ -603,6 +604,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_memory_usage_limit = 0
 
+# min = 0, max = 60000
+# (is in millisecond)
+#_hidden
+#session_probe_end_of_session_check_delay_time = 0
+
 # value: 0 or 1
 #_hidden
 #session_probe_ignore_ui_less_processes_during_end_of_session_check = 1
@@ -777,15 +783,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #accept_monitor_layout_change_if_capture_is_not_started = 0
 
-# Connect to the remote computer in Restricted Admin mode.
+# Connect to the server in Restricted Admin mode.
+# This mode must be supported by the server (available from Windows Server 2012 R2), otherwise, connection will fail.
+# NLA must be enabled.
 # value: 0 or 1
 #_hidden
 #enable_restricted_admin_mode = 0
 
-# If enabled, NLA will be disabled automatically.
+# NLA will be disabled.
+# Target must be set for interactive login, otherwise server connection may not be guaranteed.
+# Smartcard device must be available on client desktop.
+# Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 # value: 0 or 1
 #_hidden
-#smartcard_passthrough = 0
+#force_smartcard_authentication = 0
 
 [mod_vnc]
 

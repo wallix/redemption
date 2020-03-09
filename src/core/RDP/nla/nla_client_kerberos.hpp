@@ -47,18 +47,19 @@ private:
     std::vector<uint8_t> PublicKey;
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
-    std::vector<uint8_t> ServicePrincipalName;
+    std::string ServicePrincipalName;
     struct SEC_WINNT_AUTH_IDENTITY
     {
         // kerberos only
         //@{
-        char princname[256];
+        std::string princname;
+//        char princname[256];
         char princpass[256];
         //@}
         // ntlm only
         //@{
         private:
-        std::vector<uint8_t> User;
+        std::string User;
         std::vector<uint8_t> Domain;
         public:
         std::vector<uint8_t> Password;
@@ -67,7 +68,6 @@ private:
         public:
         SEC_WINNT_AUTH_IDENTITY()
         {
-            this->princname[0] = 0;
             this->princpass[0] = 0;
         }
 
@@ -90,7 +90,7 @@ private:
             return this->Password;
         }
 
-        [[nodiscard]] bytes_view get_user_utf16_av() const
+        [[nodiscard]] const std::string & get_user_utf16_av() const
         {
             return this->User;
         }
@@ -100,9 +100,9 @@ private:
             return this->Domain;
         }
 
-        void SetUserFromUtf8(bytes_view user)
+        void SetUserFromUtf8(const std::string & user)
         {
-            this->User = ::UTF8toUTF16(user);
+            this->User = ::UTF8toUTF16_asString(user);
         }
 
         void SetDomainFromUtf8(bytes_view domain)
@@ -122,7 +122,7 @@ private:
             }
         }
 
-        void SetKrbAuthIdentity(bytes_view user, const uint8_t * pass)
+        void SetKrbAuthIdentity(const std::string & user, const uint8_t * pass)
         {
             auto copy = [](char (&arr)[256], uint8_t const* data){
                 if (data) {
@@ -134,8 +134,7 @@ private:
             };
 
             
-            memcpy(this->princname, user.data(), (user.size()>=sizeof(this->princname))?user.size():sizeof(this->princname));
-            this->princname[sizeof(this->princname)-1] = 0;
+            this->princname = user;
             copy(this->princpass, pass);
         }
 
@@ -171,13 +170,9 @@ private:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS sspi_AcquireCredentialsHandle(
-        const char * pszPrincipal, std::vector<uint8_t> * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+        const std::string & pszPrincipal, std::string & pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) {
-        if (pszPrincipal && pvLogonID) {
-            size_t length = strlen(pszPrincipal);
-            pvLogonID->assign(pszPrincipal, pszPrincipal+length);
-            pvLogonID->push_back(0);
-        }
+        pvLogonID = pszPrincipal;
         this->sspi_credentials = Krb5CredsPtr(new Krb5Creds);
 
         // set KRB5CCNAME cache name to specific with PID,
@@ -199,7 +194,7 @@ private:
         return SEC_E_NO_CREDENTIALS;
     }
 
-    bool sspi_get_service_name(array_view_const_char server, gss_name_t * name) {
+    bool sspi_get_service_name(const std::string & server, gss_name_t * name) {
         gss_buffer_desc output;
         const char service_name[] = "TERMSRV";
         gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
@@ -207,8 +202,7 @@ private:
 
         auto output_value = std::make_unique<char[]>(size);
         output.value = output_value.get();
-        snprintf(static_cast<char*>(output.value), size, "%s@%.*s",
-            service_name, int(server.size()), server.data());
+        snprintf(static_cast<char*>(output.value), size, "%s@%s", service_name, server.c_str());
         output.length = strlen(static_cast<char*>(output.value)) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", static_cast<char*>(output.value));
         OM_uint32 minor_status  = 0;
@@ -377,7 +371,7 @@ private:
 
     bool restricted_admin_mode;
 
-    const char * target_host;
+    const std::string target_host;
     Random & rand;
     std::string& extra_message;
     Translation::language_t lang;
@@ -386,10 +380,8 @@ private:
 
     Transport & trans;
 
-    void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
-        this->ServicePrincipalName.assign(pszTargetName, pszTargetName+length);
-        this->ServicePrincipalName.push_back(0);
+    void SetHostnameFromUtf8(const std::string pszTargetName) {
+        this->ServicePrincipalName = pszTargetName;
     }
 
     void credssp_generate_client_nonce() {
@@ -526,14 +518,13 @@ private:
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        array_view_const_char pszTargetName = bytes_view(this->ServicePrincipalName).as_chars();
         array_view_const_u8 input_buffer = this->client_auth_data.input_buffer;
         /*output*/std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
 
         // Target name (server name, ip ...)
-        if (!this->sspi_get_service_name(pszTargetName, &this->sspi_krb_ctx->target_name)) {
+        if (!this->sspi_get_service_name(this->ServicePrincipalName, &this->sspi_krb_ctx->target_name)) {
             // SEC_E_WRONG_PRINCIPAL;
             LOG(LOG_ERR, "Initialize Security Context Error !");
             return Res::Err;
@@ -690,7 +681,7 @@ private:
         if (this->ts_credentials.credType == 1){
             if (this->restricted_admin_mode) {
                 LOG(LOG_INFO, "Restricted Admin Mode");
-                result = emitTSCredentialsPassword({},{}, {}, this->credssp_verbose);
+                result = emitTSCredentialsPassword({},std::string{}, {}, this->credssp_verbose);
             }
             else {
                 result = emitTSCredentialsPassword(this->identity.get_domain_utf16_av(),this->identity.get_user_utf16_av(),this->identity.get_password_utf16_av(), this->credssp_verbose);
@@ -716,8 +707,8 @@ private:
     }
 
 private:
-    void set_credentials(bytes_view user, bytes_view domain,
-                         uint8_t const* pass, uint8_t const* hostname) {
+    void set_credentials(const std::string & user, bytes_view domain,
+                         uint8_t const* pass, const std::string & hostname) {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::set_credentials");
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
@@ -730,17 +721,17 @@ private:
 
 public:
     rdpCredsspClientKerberos(OutTransport transport,
-               bytes_view user,
+               const std::string & user,
                bytes_view domain,
                uint8_t * pass,
-               uint8_t * hostname,
-               const char * target_host,
+               const std::string & hostname,
+               const std::string target_host,
                const bool restricted_admin_mode,
                Random & rand,
                std::string& extra_message,
                Translation::language_t lang,
-               const bool credssp_verbose = false,
-               const bool verbose = false)
+               const bool credssp_verbose,
+               const bool verbose)
         : ts_request(6) // Credssp Version 6 Supported
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
@@ -767,7 +758,7 @@ public:
 
         LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
 
-        SEC_STATUS status = this->sspi_AcquireCredentialsHandle(this->target_host, &this->ServicePrincipalName, &this->identity);
+        SEC_STATUS status = this->sspi_AcquireCredentialsHandle(this->target_host, this->ServicePrincipalName, &this->identity);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Kerberos InitSecurityInterface status:%s0x%08X, fallback to NTLM",
@@ -790,7 +781,7 @@ public:
         
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        array_view_const_char pszTargetName = bytes_view(this->ServicePrincipalName).as_chars();
+        const std::string pszTargetName = this->ServicePrincipalName;
         std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;

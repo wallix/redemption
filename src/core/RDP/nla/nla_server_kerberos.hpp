@@ -651,8 +651,8 @@ public:
     rdpCredsspServerKerberos(array_view_u8 key,
                std::string& extra_message,
                Translation::language_t lang,
-               const bool credssp_verbose = false,
-               const bool verbose = false)
+               const bool credssp_verbose,
+               const bool verbose)
         : public_key(key)
         , extra_message(extra_message)
         , lang(lang)

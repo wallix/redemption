@@ -181,8 +181,8 @@ public:
                TimeObj & timeobj,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
                bool ignore_bogus_nego_flags,
-               const bool credssp_verbose = false,
-               const bool verbose = false)
+               const bool credssp_verbose,
+               const bool verbose)
         : is_domain(is_domain)
         , is_server(is_server)
         , avFieldsTags(avFieldsTags.data(),avFieldsTags.data()+avFieldsTags.size())

@@ -573,10 +573,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "wabam_uses_cache_bitmap_r2")) {
+        else if (0 == strcmp(key, "force_bitmap_cache_v2_with_am")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::client::wabam_uses_cache_bitmap_r2&>(this->variables).value,
+                static_cast<cfg::client::force_bitmap_cache_v2_with_am&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -996,6 +996,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "session_probe_end_of_session_check_delay_time")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_end_of_session_check_delay_time&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "session_probe_ignore_ui_less_processes_during_end_of_session_check")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1220,10 +1228,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "smartcard_passthrough")) {
+        else if (0 == strcmp(key, "force_smartcard_authentication")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_rdp::smartcard_passthrough&>(this->variables).value,
+                static_cast<cfg::mod_rdp::force_smartcard_authentication&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
