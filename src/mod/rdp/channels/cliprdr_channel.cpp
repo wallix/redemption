@@ -291,9 +291,9 @@ enum ClipboardVirtualChannel::ClipCtx::OptionalLockId::State : uint8_t
 {
     Disabled    = 0b000,
     Enabled     = 0b001,
-    HasLock     = 0b010 | Enabled,
+    HasLock     = 0b011/*bug gcc-9 | Enabled*/,
     // lock_id is pushed to lock_list (avoid duplication)
-    LockIsUsed  = 0b100 | HasLock,
+    LockIsUsed  = 0b111/*bug gcc-9 | HasLock*/,
 };
 
 void ClipboardVirtualChannel::ClipCtx::OptionalLockId::disable()
