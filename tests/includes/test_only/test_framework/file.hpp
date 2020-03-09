@@ -71,7 +71,7 @@ namespace tu
     return s;                                                                            \
 }(filename)
 
-# define RED_TEST_FILE_CONTENTS(lvl1, lvl2, filename, content)                        \
+# define RED_TEST_LEVEL_FILE_CONTENTS(lvl1, filename, content)                        \
 [&](auto&& filename__, auto&& content__){                                             \
     std::string file_contents_;                                                       \
     auto current_count_error = ::redemption_unit_test__::current_count_error();       \
@@ -83,25 +83,22 @@ namespace tu
         RED_##lvl1(::tu::append_file_contents(filename__,                             \
             file_contents_) == FileContentsError::None);                              \
         if (current_count_error == ::redemption_unit_test__::current_count_error()) { \
-            RED_##lvl1##_##lvl2(file_contents_, content__);                           \
+            RED_##lvl1(file_contents_ == content__);                                  \
         }                                                                             \
     }                                                                                 \
 }(filename, content)
 
-# define RED_CHECK_MEM_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(CHECK, MEM, filename, contents)
+# define RED_TEST_FILE_CONTENTS(filename, contents) \
+    RED_TEST_LEVEL_FILE_CONTENTS(CHECK, filename, contents)
 
 # define RED_CHECK_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(CHECK, SMEM, filename, contents)
+    RED_TEST_LEVEL_FILE_CONTENTS(CHECK, filename, contents)
 
 # define RED_CHECK_GET_FILE_CONTENTS(filename) \
     RED_TEST_GET_FILE_CONTENTS(CHECK, filename)
 
-# define RED_REQUIRE_MEM_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(REQUIRE, MEM, filename, contents)
-
 # define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(REQUIRE, SMEM, filename, contents)
+    RED_TEST_LEVEL_FILE_CONTENTS(REQUIRE, filename, contents)
 
 # define RED_REQUIRE_GET_FILE_CONTENTS(filename) \
     RED_TEST_GET_FILE_CONTENTS(REQUIRE, filename)

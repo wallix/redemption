@@ -300,8 +300,8 @@ void CheckTransport::do_send(const uint8_t * const data, size_t len)
         throw Error(ERR_TRANSPORT_DIFFERS);
     }
 
-    // RED_REQUIRE_MEM(
-    //     make_array_view(this->data.get() + this->current, available_len),
+    // RED_REQUIRE(
+    //     make_array_view(this->data.get() + this->current, available_len) ==
     //     make_array_view(data, len));
 
     this->current += len;

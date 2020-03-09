@@ -34,10 +34,11 @@
     do {                                                           \
         uint8_t obj_sig__[SslSha1::DIGEST_LENGTH];                 \
         ::redemption_unit_test__::compute_obj_sig(obj_sig__, obj); \
-        RED_CHECK_BMEM(make_array_view(obj_sig__), expected_sig);  \
+        auto obj_sig_ = make_array_view(obj_sig__);                \
+        RED_CHECK(ut::hex(obj_sig_) == expected_sig);              \
     } while (0)
 
-#define RED_CHECK_SIG(obj, expected_sig) RED_CHECK_SIG_A(obj, cstr_array_view(expected_sig ""))
+#define RED_CHECK_SIG(obj, expected_sig) RED_CHECK_SIG_A(obj, expected_sig ""_av)
 
 #define RED_CHECK_SIG_FROM(obj, array_for_sig)                     \
     do {                                                           \
@@ -46,7 +47,9 @@
         ::redemption_unit_test__::compute_av_sig(expected_sig__,   \
             make_array_view(array_for_sig));                       \
         ::redemption_unit_test__::compute_obj_sig(obj_sig__, obj); \
-        RED_CHECK_MEM_AA(obj_sig__, expected_sig__);               \
+        auto obj_sig_ = make_array_view(obj_sig__);                \
+        auto expected_sig_ = make_array_view(expected_sig__);      \
+        RED_CHECK(ut::hex(obj_sig_) == expected_sig_);             \
     } while (0)
 
 class InStream;

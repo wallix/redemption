@@ -256,7 +256,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
     });
 
-    RED_CHECK_MEM_FILE_CONTENTS(record_wd.add_file("test_capture-000000.png"),
+    RED_CHECK_FILE_CONTENTS(record_wd.add_file("test_capture-000000.png"),
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR !
         "\x00\x00\x00\x64\x00\x00\x00\x64\x08\x02\x00\x00\x00\xff\x80\x02" //...d...d........ !
         "\x03\x00\x00\x01\x6d\x49\x44\x41\x54\x78\x9c\xed\xd6\xc1\x0e\x82" //....mIDATx...... !

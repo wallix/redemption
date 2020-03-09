@@ -459,7 +459,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         RED_REQUIRE(content.size() >= hres.size());
         RED_TEST(content.substr(0, hres.size()) == hres);
 
-        RED_CHECK_MEM_FILE_CONTENTS(file2path, data.tfl2_content);
+        RED_CHECK_FILE_CONTENTS(file2path, data.tfl2_content);
 
         RED_TEST(0 == scytale_fdx_writer_close(fdx));
         RED_TEST(1 == scytale_fdx_writer_close(fdx)); // double close
@@ -473,7 +473,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_fdx_writer_delete(fdx));
 
-        RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
+        RED_CHECK_FILE_CONTENTS(fdxpath, data.fdx_content);
 
         if (data.has_encryption)
         {

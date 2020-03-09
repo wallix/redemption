@@ -159,11 +159,6 @@ bool operator!=(bytes_view, bytes_view);
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_CHECK_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
-# define RED_CHECK_MEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_BMEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_HMEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_CMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// REQUIRE
@@ -187,11 +182,6 @@ bool operator!=(bytes_view, bytes_view);
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_REQUIRE_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
-# define RED_REQUIRE_MEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_SMEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_RMEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_HMEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_CMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// WARN
@@ -202,18 +192,6 @@ bool operator!=(bytes_view, bytes_view);
 #else
 
 # include "impl/redemption_unit_tests_impl.hpp"
-
-# define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'a')
-# define RED_CHECK_SMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'S')
-# define RED_CHECK_BMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'b')
-# define RED_CHECK_HMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'd')
-# define RED_CHECK_CMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'C')
-
-# define RED_REQUIRE_MEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'a')
-# define RED_REQUIRE_SMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'S')
-# define RED_REQUIRE_RMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'b')
-# define RED_REQUIRE_HMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'd')
-# define RED_REQUIRE_CMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'C')
 
 /// CHECK
 //@{
@@ -254,19 +232,6 @@ bool operator!=(bytes_view, bytes_view);
             (void(#b), begin(b__)), end(b__)  \
         );                                    \
     }(a, b)
-
-# define RED_TEST_MEM(lvl, mem, memref, c)                   \
-    [](bytes_view x_mem__, bytes_view x_memref__){           \
-        size_t pos__ = 0;                                    \
-        RED_##lvl##_MESSAGE(                                 \
-            ::redemption_unit_test__::compare_bytes(         \
-                pos__, x_mem__, x_memref__),                 \
-            RED_TEST_STRING_##lvl " "                        \
-            #mem " == " #memref " has failed "               \
-            << (::redemption_unit_test__::Put2Mem{           \
-                pos__, x_mem__, x_memref__, " != ", 0, c})); \
-    }(mem, memref)
-
 
 namespace redemption_unit_test__
 {
@@ -556,30 +521,12 @@ namespace redemption_unit_test__
 //@{
 #define RED_CHECK_EQ RED_CHECK_EQUAL
 #define RED_CHECK_EQ_RANGES RED_CHECK_EQUAL_RANGES
-
-#define RED_CHECK_MEM_AA(mem, memref) \
-    RED_CHECK_MEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_CHECK_SMEM_AA(mem, memref) \
-    RED_CHECK_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_CHECK_BMEM_AA(mem, memref) \
-    RED_CHECK_BMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 //@}
 
 /// REQUIRE
 //@{
 #define RED_REQUIRE_EQ RED_REQUIRE_EQUAL
 #define RED_REQUIRE_EQ_RANGES RED_REQUIRE_EQUAL_RANGES
-
-#define RED_REQUIRE_MEM_AA(mem, memref) \
-    RED_REQUIRE_MEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_REQUIRE_SMEM_AA(mem, memref) \
-    RED_REQUIRE_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_REQUIRE_RMEM_AA(mem, memref) \
-    RED_REQUIRE_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 //@}
 
 #define RED_ERROR_COUNT() redemption_unit_test__::current_count_error()
