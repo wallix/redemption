@@ -251,11 +251,6 @@ public:
     // from RdpInput
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
-        if (this->mod_wrapper.try_input_mouse(device_flags, x, y, keymap)) {
-            this->mod_wrapper.target_info_is_shown = false;
-            return ;
-        }
-
         this->mod.rdp_input_mouse(device_flags, x, y, keymap);
     }
 

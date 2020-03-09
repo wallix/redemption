@@ -614,6 +614,12 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (!this->try_input_mouse(device_flags, x, y, keymap)) {
+            if (this->show_osd_flag) {
+                if (this->try_input_mouse(device_flags, x, y, keymap)) {
+                    this->target_info_is_shown = false;
+                    return ;
+                }
+            }
             this->get_mod()->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
@@ -625,11 +631,8 @@ public:
                 if (this->try_input_invalidate(r)) {
                     return ;
                 }
-                this->get_mod()->rdp_input_invalidate(r);
             }
-            else {
-                this->get_mod()->rdp_input_invalidate(r);
-            }
+            this->get_mod()->rdp_input_invalidate(r);
         }
     }
 
@@ -640,11 +643,8 @@ public:
                 if (this->try_input_invalidate2(vr)) {
                     return ;
                 }
-                this->get_mod()->rdp_input_invalidate2(vr);
             }
-            else {
-                this->get_mod()->rdp_input_invalidate2(vr);
-            }
+            this->get_mod()->rdp_input_invalidate2(vr);
         }
     }
 
