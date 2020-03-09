@@ -58,9 +58,7 @@ template<class ForwardTo> class CallbackForwarder : public Callback
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        LOG(LOG_INFO, "CallbackForwarder::rdp_input_scancode");
         this->wrap.rdp_input_scancode(param1, param2, param3, param4, keymap);
-        LOG(LOG_INFO, "CallbackForwarder::rdp_input_scancode done");
     }
 
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override

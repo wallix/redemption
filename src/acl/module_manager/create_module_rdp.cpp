@@ -245,9 +245,7 @@ public:
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
-        LOG(LOG_INFO, "ModRDPWithSocketAndMetrics::rdp_input_scancode");
         this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
-        LOG(LOG_INFO, "ModRDPWithSocketAndMetrics::rdp_input_scancode done(2)");
     }
 
     // from RdpInput
@@ -269,20 +267,12 @@ public:
     // from RdpInput
     void rdp_input_invalidate(const Rect r) override
     {
-        if (this->mod_wrapper.try_input_invalidate(r)) {
-            return ;
-        }
-
         this->mod.rdp_input_invalidate(r);
     }
 
     // from RdpInput
     void rdp_input_invalidate2(array_view<Rect const> vr) override
     {
-        if (this->mod_wrapper.try_input_invalidate2(vr)) {
-            return ;
-        }
-
         this->mod.rdp_input_invalidate2(vr);
     }
 

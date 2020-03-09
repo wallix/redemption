@@ -61,7 +61,6 @@
 
 #include "core/session_reactor.hpp"
 #include "acl/mod_wrapper.hpp"
-#include "acl/time_before_closing.hpp"
 #include "acl/acl_serializer.hpp"
 
 class rdp_api;

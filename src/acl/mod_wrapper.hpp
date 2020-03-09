@@ -62,6 +62,7 @@
 #include "core/session_reactor.hpp"
 
 #include "core/callback_forwarder.hpp"
+#include "acl/time_before_closing.hpp"
 
 struct ModWrapper
 {
@@ -566,7 +567,7 @@ public:
             }
         }
 
-        this->get_mod().rdp_input_scancode(param1, param2, param3, param4, keymap);
+        this->get_mod()->rdp_input_scancode(param1, param2, param3, param4, keymap);
 
         if (this->show_osd_flag) {
             Inifile const& ini = this->ini;
@@ -620,14 +621,30 @@ public:
     void rdp_input_invalidate(Rect r)
     {
         if (!this->try_input_invalidate(r)) {
-            this->get_mod()->rdp_input_invalidate(r);
+            if (this->show_osd_flag) {
+                if (this->try_input_invalidate(r)) {
+                    return ;
+                }
+                this->get_mod()->rdp_input_invalidate(r);
+            }
+            else {
+                this->get_mod()->rdp_input_invalidate(r);
+            }
         }
     }
 
     void rdp_input_invalidate2(array_view<Rect const> vr)
     {
         if (!this->try_input_invalidate2(vr)) {
-            this->get_mod()->rdp_input_invalidate2(vr);
+            if (this->show_osd_flag) {
+                if (this->try_input_invalidate2(vr)) {
+                    return ;
+                }
+                this->get_mod()->rdp_input_invalidate2(vr);
+            }
+            else {
+                this->get_mod()->rdp_input_invalidate2(vr);
+            }
         }
     }
 

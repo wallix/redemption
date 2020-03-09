@@ -141,20 +141,12 @@ public:
     // from RdpInput
     void rdp_input_invalidate(const Rect r) override
     {
-        if (this->mod_wrapper.try_input_invalidate(r)) {
-            return ;
-        }
-
         this->mod.rdp_input_invalidate(r);
     }
 
     // from RdpInput
     void rdp_input_invalidate2(array_view<Rect const> vr) override
     {
-        if (this->mod_wrapper.try_input_invalidate2(vr)) {
-            return ;
-        }
-
         this->mod.rdp_input_invalidate2(vr);
     }
 
