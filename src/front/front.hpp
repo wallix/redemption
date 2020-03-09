@@ -653,10 +653,10 @@ public:
 
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPSetSurfaceCommand const & cmd) override {
-    
-        if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec 
-        || (cmd.codec != RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) 
-        || !cmd.bitmapData 
+
+        if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec
+        || (cmd.codec != RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX)
+        || !cmd.bitmapData
         || !cmd.bitmapDataLength){
             return;
         }
@@ -688,7 +688,7 @@ public:
             bitmap_data.dest_right = base.x + rect.eright()-1;
             bitmap_data.dest_top = base.y + rect.itop();
             bitmap_data.dest_bottom = base.y + rect.ebottom()-1;
-            
+
             bitmap_data.width = bitmap.cx();
             bitmap_data.height = bitmap.cy();
             bitmap_data.bits_per_pixel = 32;
@@ -2089,7 +2089,7 @@ public:
                 );
                 (void)sec;
 
-                auto packet = hstream.copy_to_head(tmp_sec_header);
+                auto packet = hstream.copy_to_head(tmp_sec_header.get_bytes());
                 sec_header = OutStream(packet);
                 sec_header.out_skip_bytes(packet.size());
             }
@@ -3208,7 +3208,7 @@ private:
                     send_multifrag_caps = true;
                 }
 
-                if (this->ini.get<cfg::client::enable_remotefx>() 
+                if (this->ini.get<cfg::client::enable_remotefx>()
                     && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
                     Emit_SC_BitmapCodecCaps bitmap_codec_caps;
                     ScreenInfo &screen_info = this->client_info.screen_info;

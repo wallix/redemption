@@ -909,41 +909,25 @@ struct OutReservedStreamHelper
     	return ret;
     }
 
-    writable_bytes_view copy_to_head(OutStream const & stream) noexcept {
-        assert(stream.get_offset() <= this->reserved_leading_space);
-        this->head_ptr -= stream.get_offset();
-        this->reserved_leading_space -= stream.get_offset();
-        memcpy(this->head_ptr, stream.get_data(), stream.get_offset());
+    writable_bytes_view copy_to_head(bytes_view data) noexcept {
+        assert(data.size() <= this->reserved_leading_space);
+        this->head_ptr -= data.size();
+        this->reserved_leading_space -= data.size();
+        memcpy(this->head_ptr, data.data(), data.size());
 
         return get_packet();
     }
 
-    writable_bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2) noexcept {
-        auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
+    writable_bytes_view copy_to_head(bytes_view data1, bytes_view data2) noexcept {
+        auto const total_stream_size = data1.size() + data2.size();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
         this->head_ptr -= total_stream_size;
 
         auto start = this->head_ptr;
-        memcpy(start, stream1.get_data(), stream1.get_offset());
-        start += stream1.get_offset();
-        memcpy(start, stream2.get_data(), stream2.get_offset());
-
-        return get_packet();
-    }
-
-    writable_bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) noexcept {
-        auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
-        assert(total_stream_size <= this->reserved_leading_space);
-        this->reserved_leading_space -= total_stream_size;
-        this->head_ptr -= total_stream_size;
-
-        auto start = this->head_ptr;
-        memcpy(start, stream1.get_data(), stream1.get_offset());
-        start += stream1.get_offset();
-        memcpy(start, stream2.get_data(), stream2.get_offset());
-        start += stream2.get_offset();
-        memcpy(start, stream3.get_data(), stream3.get_offset());
+        memcpy(start, data1.data(), data1.size());
+        start += data1.size();
+        memcpy(start, data2.data(), data2.size());
 
         return get_packet();
     }
@@ -957,12 +941,6 @@ struct OutReservedStreamHelper
     void rewind_head() noexcept {
         this->reserved_leading_space += this->payload_stream.get_data() - this->head_ptr;
         this->head_ptr = this->payload_stream.get_data();
-    }
-
-    void advance_stream(std::size_t delta) {
-    	this->reserved_leading_space += this->payload_stream.get_data() - this->head_ptr + delta;
-    	this->head_ptr = this->payload_stream.get_data() + delta;
-    	this->payload_stream = OutStream({this->head_ptr, this->full_size - this->reserved_leading_space});
     }
 
 protected:

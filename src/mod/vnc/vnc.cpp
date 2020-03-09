@@ -1092,7 +1092,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         dsm->getResponse(outPacket);
 
         lenStream.out_uint16_le(outPacket.get_offset());
-        out.copy_to_head(lenStream);
+        out.copy_to_head(lenStream.get_bytes());
         writable_bytes_view packet = out.get_packet();
         this->t.send(packet.begin(), packet.size());
 
