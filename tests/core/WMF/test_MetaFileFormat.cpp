@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestMetaHeader)
         MFF::MetaHeader metaHeader(MFF::MEMORYMETAFILE, MFF::METAVERSION300, 220*73*3);
         metaHeader.emit(out_stream);
 
-        RED_CHECK_MEM(data, out_stream.get_bytes());
+        RED_CHECK(data == out_stream.get_bytes());
     }
 
     {                                                       // Recv
@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestMetaSetMapMod)
         MFF::MetaSetMapMod MetaSetMapMod(8);
         MetaSetMapMod.emit(out_stream);
 
-        RED_CHECK_MEM(data, out_stream.get_bytes());
+        RED_CHECK(data == out_stream.get_bytes());
     }
 
     {                                                       // Recv
@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestMetaSetWindowExt)
         MFF::MetaSetWindowExt MetaSetWindowExt(73, 220);
         MetaSetWindowExt.emit(out_stream);
 
-        RED_CHECK_MEM(data, out_stream.get_bytes());
+        RED_CHECK(data == out_stream.get_bytes());
     }
 
     {                                                       // Recv
@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TestMetaSetWindowOrg)
         MFF::MetaSetWindowOrg MetaSetWindowOrg(0, 0);
         MetaSetWindowOrg.emit(out_stream);
 
-        RED_CHECK_MEM(data, out_stream.get_bytes());
+        RED_CHECK(data == out_stream.get_bytes());
     }
 
     {                                                       // Recv
@@ -186,7 +186,7 @@ RED_AUTO_TEST_CASE(TestDibStretchBLT)
         MFF::DibStretchBLT dibStretchBLT(48180, 73, 220, 24, 0x00CC0020);
         dibStretchBLT.emit(out_stream);
 
-        RED_CHECK_MEM(data, out_stream.get_bytes());
+        RED_CHECK(data == out_stream.get_bytes());
     }
 
     {                                                      // Recv

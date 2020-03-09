@@ -388,7 +388,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
         });
 
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|24|INPUT_LANGUAGE|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 identifier=ident display_name=name\n");
-        RED_CHECK_SMEM(logbuf.buf(), expected6);
+        RED_CHECK(logbuf.buf() == expected6);
     }
 
     time.tv_sec += 10;
@@ -403,7 +403,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"xup\"\nJan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 msg=long long\\nmessage\\=|x\\\\y\"z msg2=xup\n");
 
-        RED_CHECK_SMEM(logbuf.buf(), expected6);
+        RED_CHECK(logbuf.buf() == expected6);
     }
 
     time.tv_sec += 3023;
@@ -419,7 +419,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\nJan 01 1970 00:50:33 host message CEF:1|Wallix|Bastion|" VERSION "|15|DRIVE_REDIRECTION_RENAME|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 app=rdp oldFilePath=/dir/old_file.ext filePath=/dir/new_file.ext\n");
 
-        RED_CHECK_SMEM(logbuf.buf(), expected6);
+        RED_CHECK(logbuf.buf() == expected6);
     }
 
     acl.close_session_log();

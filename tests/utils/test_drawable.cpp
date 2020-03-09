@@ -852,5 +852,5 @@ RED_AUTO_TEST_CASE(TestBitmapUpate)
     StaticOutStream<1024> out;
     bmp2.compress(BitsPerPixel{16}, out);
 
-    RED_CHECK_MEM(bmp.data_compressed(), make_array_view(raw_bitmap));
+    RED_CHECK(bmp.data_compressed() == make_array_view(raw_bitmap));
 }

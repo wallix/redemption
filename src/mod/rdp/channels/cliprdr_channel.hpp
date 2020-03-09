@@ -20,45 +20,71 @@
 
 #pragma once
 
-#include "core/error.hpp"
-#include "core/session_reactor.hpp"
-#include "core/log_id.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
-#include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-#include "mod/rdp/channels/sespro_launcher.hpp"
-#include "utils/difftimeval.hpp"
-#include "utils/log.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "utils/sugar/cast.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_name.hpp"
+#include "capture/fdx_capture.hpp"
+#include "mod/file_validator_service.hpp"
 
 #include <vector>
+#include <memory>
 #include <string>
 
-/*
 
-        Client                      Server
-
- CB_FORMAT_LIST           ->
-                          <- CB_LOCK_CLIPDATA (id = 1)
-                          <- CB_UNLOCK_CLIPDATA (id = 0)
-                          <- CB_FORMAT_LIST_RESPONSE
-                          <- CB_FORMAT_DATA_REQUEST
- CB_FORMAT_DATA_RESPONSE  ->
-
-*/
+class FileValidatorService;
+class FdxCapture;
+class CliprdFileInfo;
+class SessionProbeLauncher;
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
-    using StreamId = ClipboardSideData::StreamId;
-    using FileGroupId = ClipboardSideData::FileGroupId;
+public:
+    struct FileStorage
+    {
+        FdxCapture * fdx_capture;
+        bool always_file_storage;
+    };
 
-    ClipboardData clip_data;
+    ClipboardVirtualChannel(
+        VirtualChannelDataSender* to_client_sender_,
+        VirtualChannelDataSender* to_server_sender_,
+        SessionReactor& session_reactor,
+        const BaseVirtualChannel::Params & base_params,
+        const ClipboardVirtualChannelParams & params,
+        FileValidatorService * file_validator_service,
+        FileStorage file_storage);
+
+    ~ClipboardVirtualChannel();
+
+    void empty_client_clipboard();
+
+    [[nodiscard]] bool use_long_format_names() const;
+
+    void process_client_message(uint32_t total_length,
+        uint32_t flags, bytes_view chunk_data) override;
+
+    void process_server_message(uint32_t total_length,
+        uint32_t flags, bytes_view chunk_data,
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task, SesmanInterface & sesman) override;
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->clipboard_monitor_ready_notifier = launcher;
+        this->clipboard_initialize_notifier    = launcher;
+        this->format_list_notifier             = launcher;
+        this->format_list_response_notifier    = launcher;
+        this->format_data_request_notifier     = launcher;
+    }
+
+    void DLP_antivirus_check_channels_files();
+
+private:
+    enum class StreamId : uint32_t;
+    enum class FileGroupId : uint32_t;
 
     std::vector<CliprdFileInfo> file_descr_list;
 
     Cliprdr::FormatNameInventory format_name_inventory;
-
 
     const ClipboardVirtualChannelParams params;
 
@@ -77,987 +103,293 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
     FdxCapture * fdx_capture;
     bool always_file_storage;
 
-    enum class Direction : bool
+private:
+    enum class LockId : uint32_t;
+
+    struct ClipCtx
     {
-        FileFromServer,
-        FileFromClient,
-    };
-
-public:
-    struct FileStorage
-    {
-        FdxCapture * fdx_capture;
-        bool always_file_storage;
-    };
-
-    ClipboardVirtualChannel(
-        VirtualChannelDataSender* to_client_sender_,
-        VirtualChannelDataSender* to_server_sender_,
-        SessionReactor& session_reactor,
-        const BaseVirtualChannel::Params & base_params,
-        const ClipboardVirtualChannelParams & params,
-        FileValidatorService * file_validator_service,
-        FileStorage file_storage)
-    : BaseVirtualChannel(to_client_sender_,
-                         to_server_sender_,
-                         base_params)
-    , params([&]{
-        auto p = params;
-        if (!file_validator_service) {
-            p.validator_params.up_target_name.clear();
-            p.validator_params.down_target_name.clear();
-        }
-        return p;
-    }())
-    , proxy_managed(to_client_sender_ == nullptr)
-    , session_reactor(session_reactor)
-    , file_validator(file_validator_service)
-    , fdx_capture(file_storage.fdx_capture)
-    , always_file_storage(file_storage.always_file_storage)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::(constructor)");
-    }
-
-    ~ClipboardVirtualChannel()
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::(destructor)");
-        try {
-            for (ClipboardSideData* side_data : {
-                &this->clip_data.client_data,
-                &this->clip_data.server_data
-            }) {
-                for (auto& file : side_data->get_file_contents_list()) {
-                    auto& file_data = file.file_data;
-                    if (file_data.tfl_file) {
-                        if (file_data.tfl_file->trans.is_open()) {
-                            this->_close_tfl(file_data);
-                        }
-                    }
-                }
-            }
-        }
-        catch (Error const& err) {
-            LOG(LOG_ERR, "ClipboardVirtualChannel: error on close tfls: %s", err.errmsg());
-        }
-    }
-
-    void empty_client_clipboard() {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::empty_client_clipboard");
-
-        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_, 0);
-
-        StaticOutStream<256> out_s;
-
-        clipboard_header.emit(out_s);
-
-        const size_t totalLength = out_s.get_offset();
-
-        this->send_message_to_server(
-            totalLength,
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
-    }
-
-    [[nodiscard]] bool use_long_format_names() const {
-        return (this->clip_data.client_data.use_long_format_names &&
-            this->clip_data.server_data.use_long_format_names);
-    }
-
-public:
-    void process_client_message(uint32_t total_length,
-        uint32_t flags, bytes_view chunk_data) override
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_client_message");
-        this->log_process_message(total_length, flags, chunk_data, Direction::FileFromClient);
-
-        InStream chunk(chunk_data);
-        RDPECLIP::CliprdrHeader header;
-        bool send_message_to_server = true;
-
-        switch (this->process_header_message(
-            this->clip_data.client_data, flags, chunk, header, Direction::FileFromClient
-        ))
+        struct Sig
         {
-            case RDPECLIP::CB_FORMAT_LIST:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_FORMAT_LIST");
-                send_message_to_server = this->process_format_list_pdu(
-                    flags, chunk, header,
-                    this->to_client_sender_ptr(),
-                    this->clip_data.client_data,
-                    this->params.clipboard_down_authorized || this->params.clipboard_up_authorized || this->format_list_response_notifier);
-            break;
+            void update(bytes_view data);
 
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_FORMAT_DATA_REQUEST");
-                FormatDataRequestReceive receiver(this->clip_data, this->verbose, chunk);
-                if (!this->params.clipboard_down_authorized) {
-                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                        "ClipboardVirtualChannel::CB_FORMAT_DATA_REQUEST "
-                            "Server to client Clipboard operation is not allowed.");
-                    FormatDataRequestSendBack sender(this->to_client_sender_ptr());
-                }
-                send_message_to_server = this->params.clipboard_down_authorized;
-            }
-            break;
+            void final();
 
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_FORMAT_DATA_RESPONSE");
-                const bool is_from_remote_session = false;
-                send_message_to_server = this->process_format_data_response_pdu(
-                    flags, chunk, header, is_from_remote_session);
-            }
-            break;
+            void broken();
 
-            case RDPECLIP::CB_CLIP_CAPS:
-            {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_CLIP_CAPS");
-                ClipboardCapabilitiesReceive(this->clip_data.client_data, chunk, this->verbose);
-                send_message_to_server = true;
-            }
-            break;
+            bool has_digest() const noexcept;
 
-            case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_FILECONTENTS_REQUEST");
-                send_message_to_server = this->process_filecontents_request_pdu(
-                    flags, chunk, this->to_client_sender_ptr(),
-                    this->clip_data.client_data, Direction::FileFromServer);
-            break;
+            static const std::size_t digest_len = SslSha256::DIGEST_LENGTH;
 
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_FILECONTENTS_RESPONSE");
-                const bool is_from_remote_session = false;
-                send_message_to_server = this->process_filecontents_response_pdu(
-                    flags, chunk, header, this->clip_data.server_data, is_from_remote_session);
-            }
-            break;
+            auto& digest() const noexcept;
 
-            case RDPECLIP::CB_LOCK_CLIPDATA:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_LOCK_CLIPDATA");
-                this->process_lock_pdu(chunk, this->clip_data.client_data);
-            break;
+            bytes_view digest_as_av() const noexcept;
 
-            case RDPECLIP::CB_UNLOCK_CLIPDATA:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_message:RDPECLIP::CB_UNLOCK_CLIPDATA");
-                this->process_unlock_pdu(chunk, this->clip_data.client_data);
-            break;
-        }   // switch (this->client_message_type)
+        private:
+            enum class Status : uint8_t;
 
-        if (send_message_to_server) {
-            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_client_message:send_message_to_server");
-            this->send_message_to_server(total_length, flags, chunk_data);
-        }
-    }   // process_client_message
-
-    bool process_server_format_data_request_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & /*in_header*/)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_server_format_data_request_pdu");
-        (void)total_length;
-        (void)flags;
-        FormatDataRequestReceive receiver(this->clip_data, this->verbose, chunk);
-
-        if (this->format_data_request_notifier &&
-            (this->clip_data.requestedFormatId == RDPECLIP::CF_TEXT)) {
-            if (!this->format_data_request_notifier->on_server_format_data_request()) {
-                this->format_data_request_notifier = nullptr;
-            }
-
-            return false;
-        }
-
-        if (!this->params.clipboard_up_authorized) {
-            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
-                    "Client to server Clipboard operation is not allowed.");
-
-            FormatDataRequestSendBack sender(this->to_server_sender_ptr());
-
-            return false;
-        }
-
-        return true;
-    }   // process_server_format_data_request_pdu
-
-    void process_server_message(uint32_t total_length,
-        uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-        SesmanInterface & sesman) override
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_server_message");
-        (void)out_asynchronous_task;
-
-        this->log_process_message(total_length, flags, chunk_data, Direction::FileFromServer);
-
-        InStream chunk(chunk_data);
-        RDPECLIP::CliprdrHeader header;
-        bool send_message_to_client = true;
-
-        switch (this->process_header_message(
-            this->clip_data.server_data, flags, chunk, header, Direction::FileFromServer
-        ))
-        {
-            case RDPECLIP::CB_MONITOR_READY: {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_MONITOR_READY");
-
-                if (this->proxy_managed) {
-                    this->clip_data.server_data.use_long_format_names = true;
-                    ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
-                }
-
-                if (this->clipboard_monitor_ready_notifier) {
-                    if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
-                        this->clipboard_monitor_ready_notifier = nullptr;
-                    }
-                }
-
-                send_message_to_client = !this->proxy_managed;
-            }
-            break;
-
-            case RDPECLIP::CB_FORMAT_LIST:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_FORMAT_LIST");
-
-                send_message_to_client = this->process_format_list_pdu(
-                    flags, chunk, header,
-                    this->to_server_sender_ptr(),
-                    this->clip_data.server_data,
-                    this->params.clipboard_down_authorized || this->params.clipboard_up_authorized);
-
-                if (this->format_list_notifier) {
-                    if (!this->format_list_notifier->on_server_format_list()) {
-                        this->format_list_notifier = nullptr;
-                    }
-                }
-            break;
-
-            case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_FORMAT_LIST_RESPONSE");
-                if (this->clipboard_initialize_notifier) {
-                    if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
-                        this->clipboard_initialize_notifier = nullptr;
-                    }
-                }
-                else if (this->format_list_response_notifier) {
-                    if (!this->format_list_response_notifier->on_server_format_list_response()) {
-                        this->format_list_response_notifier = nullptr;
-                    }
-                }
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_FORMAT_DATA_REQUEST");
-                send_message_to_client = this->process_server_format_data_request_pdu(
-                    total_length, flags, chunk, header);
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_FORMAT_DATA_RESPONSE");
-                const bool is_from_remote_session = true;
-                send_message_to_client = this->process_format_data_response_pdu(
-                    flags, chunk, header, is_from_remote_session);
-            }
-            break;
-
-            case RDPECLIP::CB_CLIP_CAPS:
-            {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_CLIP_CAPS");
-                ClipboardCapabilitiesReceive(this->clip_data.server_data, chunk, this->verbose);
-                send_message_to_client = !this->proxy_managed;
-            }
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_FILECONTENTS_REQUEST");
-                send_message_to_client = this->process_filecontents_request_pdu(
-                    flags, chunk, this->to_server_sender_ptr(),
-                    this->clip_data.server_data, Direction::FileFromClient);
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_FILECONTENTS_RESPONSE");
-                const bool from_remote_session = true;
-                send_message_to_client = this->process_filecontents_response_pdu(
-                    flags, chunk, header, this->clip_data.client_data, from_remote_session);
-            }
-            break;
-
-            case RDPECLIP::CB_LOCK_CLIPDATA:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_LOCK_CLIPDATA");
-                this->process_lock_pdu(chunk, this->clip_data.server_data);
-            break;
-
-            case RDPECLIP::CB_UNLOCK_CLIPDATA:
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_message:RDPECLIP::CB_UNLOCK_CLIPDATA");
-                this->process_unlock_pdu(chunk, this->clip_data.server_data);
-            break;
-        }   // switch (this->server_message_type)
-
-        if (send_message_to_client) {
-            this->send_message_to_client(total_length, flags, chunk_data);
-        }   // switch (this->server_message_type)
-    }   // process_server_message
-
-    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::set_session_probe_launcher");
-        this->clipboard_monitor_ready_notifier = launcher;
-        this->clipboard_initialize_notifier    = launcher;
-        this->format_list_notifier             = launcher;
-        this->format_list_response_notifier    = launcher;
-        this->format_data_request_notifier     = launcher;
-    }
-
-    void DLP_antivirus_check_channels_files()
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::DLP_antivirus_check_channels_files");
-        if (!this->file_validator) {
-            return ;
-        }
-
-        auto receive_data = [this]{
-            for (;;) {
-                switch (this->file_validator->receive_response()) {
-                    case FileValidatorService::ResponseType::WaitingData:
-                        return false;
-                    case FileValidatorService::ResponseType::HasContent:
-                        return true;
-                    case FileValidatorService::ResponseType::Error:
-                        ;
-                }
-            }
+            SslSha256 sha256;
+            uint8_t array[digest_len];
+            Status status = Status();
         };
 
-        using ValidationResult = LocalFileValidatorProtocol::ValidationResult;
+        using StreamId = ClipboardVirtualChannel::StreamId;
+        using FileGroupId = ClipboardVirtualChannel::FileGroupId;
 
-        while (receive_data()){
-            bool is_accepted = false;
-            switch (this->file_validator->last_result_flag()) {
-                case ValidationResult::Wait:
-                    return;
-                case ValidationResult::IsAccepted:
-                    is_accepted = true;
-                    [[fallthrough]];
-                case ValidationResult::IsRejected:
-                case ValidationResult::Error:
-                    ;
+        struct FileContentsSize
+        {
+            StreamId stream_id;
+            FileGroupId lindex;
+        };
+
+        struct FileContentsRequestedRange
+        {
+            StreamId stream_id;
+            FileGroupId lindex;
+            uint64_t file_size_requested;
+            uint64_t file_size;
+            std::string file_name;
+        };
+
+        struct FileContentsRange
+        {
+            StreamId stream_id;
+            FileGroupId lindex;
+            uint64_t file_offset;
+            uint64_t file_size_requested;
+            uint64_t file_size;
+            std::string file_name;
+
+            FileValidatorId file_validator_id;
+
+            std::unique_ptr<FdxCapture::TflFile> tfl_file;
+
+            Sig sig = Sig();
+
+            bool dlp_failure = false;
+        };
+
+        enum class TransferState :  uint8_t {
+            Empty,
+            Size,
+            Range,
+            RequestedRange,
+            WaitingContinuationRange,
+            Text,
+        };
+
+        struct TextData
+        {
+            FileValidatorId file_validator_id;
+            bool is_unicode;
+        };
+
+        union FileContentsData
+        {
+            FileContentsSize size;
+            FileContentsRequestedRange requested_range;
+            FileContentsRange range;
+            TextData text;
+
+            FileContentsData() {}
+            ~FileContentsData() {}
+        };
+
+        class NoLockData
+        {
+            TransferState transfer_state = TransferState::Empty;
+            FileContentsData data;
+
+        public:
+            #ifndef NDEBUG
+            ~NoLockData()
+            {
+                assert(this->transfer_state == TransferState::Empty);
+            }
+            #endif
+
+            FileContentsRequestedRange& requested_range();
+
+            FileContentsRange& range();
+
+            FileContentsSize& size();
+
+            TextData& text();
+
+            operator TransferState() const
+            {
+                return this->transfer_state;
             }
 
-            auto file_validator_id = this->file_validator->last_file_id();
-            auto& result_content = this->file_validator->get_content();
+            void set_waiting_continuation_range();
 
-            bool is_client_text = this->clip_data.client_data.remove_text_id(file_validator_id);
-            bool is_server_text = not is_client_text
-                               && this->clip_data.server_data.remove_text_id(file_validator_id);
-            bool is_text = is_client_text || is_server_text;
+            void set_range();
 
-            if (is_text) {
-                if (!is_accepted || this->params.validator_params.log_if_accepted) {
-                    auto str_direction = is_client_text ? "UP"_av : "DOWN"_av;
-                    char buf[24];
-                    unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
-                        underlying_cast(file_validator_id));
-                    this->report_message.log6(LogId::TEXT_VERIFICATION, this->session_reactor.get_current_time(), {
-                        KVLog("direction"_av, str_direction),
-                        KVLog("copy_id"_av, {buf, n}),
-                        KVLog("status"_av, result_content),
-                    });
-                }
-                continue;
-            }
+            template<class F>
+            void new_range(F f);
 
-            Direction direction = Direction::FileFromClient;
-            auto* file = this->clip_data.server_data.find_file_by_file_validator_id(file_validator_id);
-            if (!file) {
-                file = this->clip_data.client_data.find_file_by_file_validator_id(file_validator_id);
-                direction = Direction::FileFromServer;
-            }
-            if (!file) {
-                LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
-                auto& target_name = (direction == Direction::FileFromClient)
-                    ? this->params.validator_params.up_target_name
-                    : this->params.validator_params.down_target_name;
-                this->report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
-                    KVLog("icap_service"_av, target_name),
-                    KVLog("status"_av, "Invalid file id"_av),
-                });
-                continue;
-            }
+            template<class F>
+            void new_requested_range(F f);
 
-            auto& file_data = file->file_data;
-            file_data.on_failure = !is_accepted;
-            file_data.file_validator_id = FileValidatorId();
+            template<class F>
+            void new_size(F f);
 
-            if (!is_accepted || this->params.validator_params.log_if_accepted) {
-                auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
+            template<class F>
+            void new_text(F f);
 
-                this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
-                    KVLog("direction"_av, str_direction),
-                    KVLog("file_name"_av, file_data.file_name),
-                    KVLog("status"_av, result_content),
-                });
-            }
+            void delete_range();
 
-            if (file->is_wait_validator()) {
-                if (file_data.tfl_file) {
-                    if (this->always_file_storage
-                     || this->file_validator->last_result_flag() != ValidationResult::IsAccepted
-                    ) {
-                        this->_close_tfl(file_data);
-                    }
-                    else {
-                        this->fdx_capture->cancel_tfl(*file_data.tfl_file);
-                    }
-                    file_data.tfl_file.reset();
-                }
+            void delete_requested_range();
 
-                if (direction == Direction::FileFromClient) {
-                    this->clip_data.server_data.remove_file(file);
-                }
-                else {
-                    this->clip_data.client_data.remove_file(file);
-                }
-            }
-        }
-    }
+            void delete_text();
 
-private:
-    void log_process_message(
-        uint32_t total_length, uint32_t flags, bytes_view chunk_data, Direction direction)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::log_process_message process_%s_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%zu",
-            (direction == Direction::FileFromClient)
-                ? "client" : "server",
-            total_length, flags, chunk_data.size());
+            void delete_size();
+        };
 
-        if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
-            const bool send              = false;
-            const bool from_or_to_client = (direction == Direction::FileFromClient);
-            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
-        }
-    }
+        struct LockedData
+        {
+            struct LockedSize
+            {
+                LockId lock_id;
+                FileContentsSize file_contents_size;
+            };
 
-    uint16_t process_header_message(
-        ClipboardSideData& side_data,
-        uint32_t flags, InStream& chunk, RDPECLIP::CliprdrHeader& header, Direction direction)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_header_message");
+            struct LockedRange
+            {
+                enum State : bool { WaitingResponse, WaitingRequest, };
 
-        char const* funcname = (direction == Direction::FileFromClient)
-            ? "ClipboardVirtualChannel::process_client_message"
-            : "ClipboardVirtualChannel::process_server_message";
+                LockId lock_id;
+                State state;
+                FileContentsRange file_contents_range;
+            };
 
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            /* msgType(2) + msgFlags(2) + dataLen(4) */
-            ::check_throw(chunk, 8, funcname, ERR_RDP_DATA_TRUNCATED);
-            header.recv(chunk);
-            side_data.current_message_type = header.msgType();
-        }
+            struct LockedRequestedRange
+            {
+                LockId lock_id;
+                FileContentsRequestedRange file_contents_requested_range;
 
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-            LOG(LOG_INFO, "%s: %s (%u)%s)",
-                funcname,
-                RDPECLIP::get_msgType_name(side_data.current_message_type),
-                side_data.current_message_type,
-                ((flags & first_last) == first_last) ? " FIRST|LAST"
-                : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? "FIRST"
-                : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? "LAST"
-                : "");
-        }
-
-        return side_data.current_message_type;
-    }
-
-    void process_lock_pdu(InStream& chunk, ClipboardSideData& side_data)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_lock_pdu");
-        RDPECLIP::LockClipboardDataPDU pdu;
-        pdu.recv(chunk);
-        side_data.push_lock_id(pdu.clipDataId);
-
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            pdu.log();
-        }
-    }
-
-    void process_unlock_pdu(InStream& chunk, ClipboardSideData& side_data)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_unlock_pdu");
-        RDPECLIP::UnlockClipboardDataPDU pdu;
-        pdu.recv(chunk);
-        side_data.remove_lock_id(pdu.clipDataId);
-
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            pdu.log();
-        }
-    }
-
-    bool process_filecontents_response_pdu(
-        uint32_t flags, InStream& chunk,
-        RDPECLIP::CliprdrHeader const& in_header, ClipboardSideData& side_data,
-        const bool from_remote_session)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_filecontents_response_pdu");
-
-        auto& from_server = from_remote_session
-            ? this->clip_data.server_data : this->clip_data.client_data;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            check_throw(chunk, 4, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
-            from_server.file_contents_stream_id = safe_int(chunk.in_uint32_le());
-            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "File Contents Response: streamId=%u", from_server.file_contents_stream_id);
-        }
-
-        auto* file = side_data.find_file_by_stream_id(from_server.file_contents_stream_id);
-
-        if (!file) {
-            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
-                " Unknown stream id %u", from_server.file_contents_stream_id);
-            throw Error(ERR_RDP_PROTOCOL);
-        }
-
-        if (in_header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
-            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_filecontents_response_pdu:RDPECLIP::CB_RESPONSE_FAIL");
-            if (file->is_file_range()) {
-                auto& file_data = file->file_data;
-
-                if (bool(file_data.file_validator_id)) {
-                    this->file_validator->send_eof(file_data.file_validator_id);
-                    file->set_wait_validator();
-                }
-            }
-        }
-        else if (file->is_file_range()) {
-            auto& file_data = file->file_data;
-            auto data_fragment = file->receive_data(chunk.remaining_bytes());
-
-            if (file_data.tfl_file) {
-                file_data.tfl_file->trans.send(data_fragment);
-            }
-
-            if (bool(file_data.file_validator_id)) {
-                this->file_validator->send_data(file_data.file_validator_id, data_fragment);
-            }
-
-            if ((flags & CHANNELS::CHANNEL_FLAG_LAST) && file_data.file_offset == file_data.file_size) {
-                this->log_file_info(file_data, from_remote_session);
-
-                if (bool(file_data.file_validator_id)) {
-                    this->file_validator->send_eof(file_data.file_validator_id);
-                }
-                else {
-                    if (file_data.tfl_file) {
-                        if (this->always_file_storage || file_data.on_failure) {
-                            this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
-                                Mwrm3::TransferedStatus::Completed,
-                                Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
-                        }
-                        else {
-                            this->fdx_capture->cancel_tfl(*file_data.tfl_file);
-                        }
-                        file_data.tfl_file.reset();
-                    }
-                    side_data.remove_file(file);
-                }
-            }
-        }
-        else /*if (file->is_file_size())*/ {
-            if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
-                LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
-                    " Unsupported partial FILECONTENTS_SIZE packet");
-                throw Error(ERR_RDP_UNSUPPORTED);
-            }
-            if (size_t(file->file_group_id) >= this->file_descr_list.size()) {
-                LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
-                    " Invalid lindex");
-                throw Error(ERR_RDP_UNSUPPORTED);
-            }
-            check_throw(chunk, 8, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
-            this->file_descr_list[safe_int(file->file_group_id)].file_size = chunk.in_uint64_le();
-            side_data.remove_file(file);
-        }
-
-        return true;
-    }
-
-    bool process_filecontents_request_pdu(
-        uint32_t flags, InStream& chunk, VirtualChannelDataSender* sender,
-        ClipboardSideData& side_data, Direction direction)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_filecontents_request_pdu");
-        RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
-        file_contents_request_pdu.receive(chunk);
-
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            file_contents_request_pdu.log(LOG_INFO);
-        }
-
-        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
-          != (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) {
-            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu: Unsupported partial packet");
-            throw Error(ERR_RDP_PROTOCOL);
-        }
-
-        if (!this->params.clipboard_file_authorized) {
-            FilecontentsRequestSendBack(
-                file_contents_request_pdu.dwFlags(),
-                file_contents_request_pdu.streamId(),
-                sender);
-            return false;
-        }
-
-        std::string const& target_name = (direction == Direction::FileFromServer)
-            ? this->params.validator_params.down_target_name
-            : this->params.validator_params.up_target_name;
-
-        auto stream_id = StreamId(file_contents_request_pdu.streamId());
-        auto lindex = FileGroupId(file_contents_request_pdu.lindex());
-        if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
-            auto offset = file_contents_request_pdu.position();
-            if (offset) {
-                auto* file = side_data.find_continuation_stream_id(stream_id);
-                if (file) {
-                    if (!file_contents_request_pdu.has_optional_clipDataId()) {
-                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                            " Require clipDataId");
-                        throw Error(ERR_RDP_UNSUPPORTED);
-                    }
-                    if (file_contents_request_pdu.clipDataId() != file->file_data.clip_data_id) {
-                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                            " Invalid clipDataId (%u != %u)", file_contents_request_pdu.clipDataId(),
-                            file->file_data.clip_data_id);
-                        throw Error(ERR_RDP_UNSUPPORTED);
-                    }
-                    if (file->is_file_size()) {
-                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                            " is a FILECONTENTS_SIZE, expected FILECONTENTS_RANGE");
-                        throw Error(ERR_RDP_UNSUPPORTED);
-                    }
-                    if (file->file_data.file_offset != offset) {
-                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                            " Unsupported random access for a FILECONTENTS_RANGE");
-                        throw Error(ERR_RDP_UNSUPPORTED);
-                    }
-                }
-                else {
-                    file = side_data.find_file_by_offset(lindex, offset);
-                    if (!file) {
-                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                            " Unsupported random access for a FILECONTENTS_RANGE");
-                        throw Error(ERR_RDP_UNSUPPORTED);
-                    }
-                    if (file_contents_request_pdu.has_optional_clipDataId()) {
-                        file->file_data.clip_data_id = file_contents_request_pdu.clipDataId();
-                    }
-                    file->stream_id = stream_id;
+                bool is_stream_id(StreamId id)
+                {
+                    return file_contents_requested_range.stream_id == id
+                    && not file_contents_requested_range.file_name.empty();
                 }
 
-                file->update_requested(file_contents_request_pdu.cbRequested());
-            }
-            else {
-                std::size_t ifilegroup = safe_int(lindex);
-                if (ifilegroup >= this->file_descr_list.size()) {
-                    LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                        " Invalid lindex %u", lindex);
-                    throw Error(ERR_RDP_PROTOCOL);
+                void disable()
+                {
+                    this->file_contents_requested_range.file_name.clear();
                 }
-                CliprdFileInfo const& desc = this->file_descr_list[ifilegroup];
-                FileValidatorId file_validator_id{};
-                if (!target_name.empty()) {
-                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                        "ClipboardVirtualChannel::Validator::open_file");
-                    file_validator_id = this->file_validator->open_file(desc.file_name, target_name);
-                }
+            };
 
-                side_data.push_file_content_range(
-                    stream_id, lindex,
-                    file_contents_request_pdu.has_optional_clipDataId(),
-                    file_contents_request_pdu.clipDataId(),
-                    file_validator_id,
-                    this->fdx_capture
-                        ? std::unique_ptr<FdxCapture::TflFile>(new FdxCapture::TflFile( /*NOLINT*/
-                            this->fdx_capture->new_tfl(direction == Direction::FileFromServer
-                                ? Mwrm3::Direction::ServerToClient
-                                : Mwrm3::Direction::ClientToServer
-                        )))
-                        : std::unique_ptr<FdxCapture::TflFile>(),
-                    desc.file_name, desc.file_size,
-                    file_contents_request_pdu.cbRequested());
-            }
-        }
-        else {
-            side_data.push_file_content_size(stream_id, lindex);
-        }
+            struct LockedFileList
+            {
+                LockId lock_id;
+                std::vector<CliprdFileInfo> files;
+            };
 
-        return true;
-    }
+            std::vector<LockedSize> sizes;
+            std::vector<LockedRange> ranges;
 
-    bool process_format_data_response_pdu(uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header, bool is_from_remote_session)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_format_data_response_pdu");
-        auto& side_data = is_from_remote_session
-            ? this->clip_data.server_data
-            : this->clip_data.client_data;
-        auto requested_format_id = this->clip_data.requestedFormatId;
-        auto file_list_format_id = side_data.file_list_format_id;
+            LockedRequestedRange requested_range {};
 
-        if (file_list_format_id && requested_format_id == file_list_format_id) {
-            FormatDataResponseReceiveFileList receiver(
-                this->file_descr_list,
-                chunk,
-                in_header,
-                this->params.dont_log_data_into_syslog,
-                side_data.file_list_format_id,
-                flags,
-                side_data.file_descriptor_stream,
-                this->verbose,
-                is_from_remote_session ? "client" : "server"
-            );
+            std::vector<LockedFileList> lock_list;
 
-            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
-        }
-        else {
-            auto original_chunk = chunk.clone();
-            FormatDataResponseReceive receiver(requested_format_id, chunk, flags);
+            void clear();
 
-            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+            LockedFileList* search_lock_by_id(LockId lock_id);
 
-            std::string const& target_name = is_from_remote_session
-                ? this->params.validator_params.down_target_name
-                : this->params.validator_params.up_target_name;
+            LockedRange* search_range_by_id(StreamId stream_id);
 
-            if (!target_name.empty()) {
-                switch (requested_format_id) {
-                    case RDPECLIP::CF_TEXT:
-                    case RDPECLIP::CF_UNICODETEXT: {
-                        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                            if (bool(side_data.clip_text_id)) {
-                                this->file_validator->send_eof(side_data.clip_text_id);
-                                side_data.push_clip_text_to_list();
-                            }
-                            side_data.clip_text_id = this->file_validator->open_text(
-                                RDPECLIP::CF_TEXT == requested_format_id
-                                    ? 0u : side_data.clip_text_locale_identifier,
-                                target_name);
-                        }
-                        uint8_t utf8_buf[32*1024];
-                        auto utf8_av = UTF16toUTF8_buf(
-                            original_chunk.remaining_bytes(),
-                            make_array_view(utf8_buf));
-                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                            if (not utf8_av.empty() && utf8_av.back() == '\0') {
-                                utf8_av = utf8_av.drop_back(1);
-                            }
-                        }
-                        this->file_validator->send_data(side_data.clip_text_id, utf8_av);
-                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                            this->file_validator->send_eof(side_data.clip_text_id);
-                            side_data.push_clip_text_to_list();
-                        }
-                        break;
-                    }
-                    case RDPECLIP::CF_LOCALE:
-                        side_data.clip_text_locale_identifier = original_chunk.in_uint32_le();
-                        break;
-                }
-            }
-        }
+            LockedRange* search_range_by_validator_id(FileValidatorId id);
 
-        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-            this->clip_data.requestedFormatId = 0;
-        }
+            void remove_locked_file_contents_range(LockedRange* p);
 
-        return true;
-    }
+            LockedRange* search_range_by_offset(LockId lock_id, FileGroupId ifile, uint64_t offset);
 
-    bool process_format_list_pdu(
-        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header,
-        VirtualChannelDataSender* sender, ClipboardSideData& side_data, bool clip_enabled)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_format_list_pdu");
-        if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
-            LOG(LOG_ERR, "Format List PDU is not yet supported!");
-            FormatListSendBack pdu(sender);
-            return false;
-        }
+            LockedSize* search_size_by_id(StreamId stream_id);
 
-        this->file_descr_list.clear();
+            void remove_locked_file_contents_size(LockedSize* p);
 
-        if (!clip_enabled) {
-            LOG(LOG_WARNING, "Clipboard is fully disabled.");
-            FormatListSendBack pdu(sender);
-            return false;
-        }
+            bool contains_stream_id(StreamId stream_id);
+        };
 
-        this->format_name_inventory.clear();
+        struct OptionalLockId
+        {
+            void disable();
 
-        FormatListReceive receiver(
-            this->use_long_format_names(),
-            in_header,
-            chunk,
-            this->format_name_inventory,
-            this->verbose);
+            void enable(bool activate);
 
-        side_data.file_list_format_id = receiver.file_list_format_id;
-        return true;
-    }
+            [[nodiscard]]
+            bool is_enabled() const;
 
-    void log_file_info(ClipboardSideData::FileContent::FileData& file_data, bool from_remote_session)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::log_file_info");
-        const char* type = (
-                  from_remote_session
-                ? "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
-                : "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION"
-            );
+            [[nodiscard]]
+            bool has_lock() const;
 
-        if (!file_data.sig.has_digest()) {
-            file_data.sig.broken();
-        }
+            [[nodiscard]]
+            bool has_unused_lock() const;
 
-        static_assert(SslSha256::DIGEST_LENGTH == decltype(file_data.sig)::digest_len);
-        auto& digest = file_data.sig.digest();
-        char digest_s[128];
-        size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
-            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-            digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
-            digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
-            digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
-            digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
+            void set_used();
 
-        char file_size[128];
-        size_t file_size_len = std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
+            void set_lock_id(LockId id);
 
-        this->report_message.log6(from_remote_session
-            ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
-            : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
-            this->session_reactor.get_current_time(), {
-            KVLog("file_name"_av, file_data.file_name),
-            KVLog("size"_av, {file_size, file_size_len}),
-            KVLog("sha256"_av, {digest_s, digest_s_len}),
-        });
+            void unset_lock_id();
 
-        LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
-            "type=%s file_name=%s size=%s sha256=%s",
-            type, file_data.file_name, file_size, digest_s);
-    }
+            [[nodiscard]]
+            LockId lock_id() const;
 
-    void log_siem_info(uint32_t flags, const RDPECLIP::CliprdrHeader & in_header, const uint32_t requestedFormatId, const std::string & data_to_dump, const bool is_from_remote_session) {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::log_siem_info");
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        private:
+            enum State : uint8_t;
 
-            if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
+            State _state = State();
+            LockId _lock_id;
+        };
 
-                const auto type = (is_from_remote_session)
-                    ? (data_to_dump.empty()
-                        ? "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION"_av
-                        : "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX"_av)
-                    : (data_to_dump.empty()
-                        ? "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"_av
-                        : "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"_av);
 
-                auto* format_name = this->format_name_inventory.find(requestedFormatId);
-                auto utf8_format = (format_name && !format_name->utf8_name().empty())
-                    ? format_name->utf8_name()
-                    : RDPECLIP::get_FormatId_name_av(requestedFormatId);
+        uint16_t message_type = 0;
 
-                bool const log_current_activity = (
-                    !this->params.log_only_relevant_clipboard_activities
-                 || !format_name
-                 || (!ranges_equal(utf8_format,
-                        Cliprdr::formats::file_group_descriptor_w.ascii_name)
-                  && !ranges_equal(utf8_format,
-                        Cliprdr::formats::preferred_drop_effect.ascii_name)
-                ));
+        bool use_long_format_names = false;
+        bool has_current_file_contents_stream_id = false;
+        StreamId current_file_contents_stream_id;
+        uint32_t current_file_list_format_id;
+        uint32_t requested_format_id;
 
-                auto format = str_concat(utf8_format.as_chars(),
-                    '(', std::to_string(requestedFormatId), ')');
+        uint32_t clip_text_locale_identifier = 0;
 
-                auto const size_str = std::to_string(in_header.dataLen());
+        OptionalLockId optional_lock_id;
 
-                if (log_current_activity) {
-                    if (data_to_dump.empty()) {
-                        this->report_message.log6(is_from_remote_session
-                            ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION
-                            : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION,
-                            this->session_reactor.get_current_time(), {
-                            KVLog("format"_av, format),
-                            KVLog("size"_av, size_str),
-                        });
-                    }
-                    else {
-                        this->report_message.log6(is_from_remote_session
-                            ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX
-                            : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX,
-                            this->session_reactor.get_current_time(), {
-                            KVLog("format"_av, format),
-                            KVLog("size"_av, size_str),
-                            KVLog("partial_data"_av, data_to_dump),
-                        });
-                    }
-                }
+        Cliprdr::FormatNameInventory current_format_list;
 
-                LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
-                    "type=%s format=%s size=%s %s%s",
-                    type.data(), format, size_str,
-                    data_to_dump.empty() ? "" : " partial_data",
-                    data_to_dump.c_str());
-            }
-        }
-    }
+        std::string validator_target_name;
 
-private:
-    void _close_tfl(ClipboardSideData::FileContent::FileData& file_data)
-    {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::_close_tfl");
-        auto status = Mwrm3::TransferedStatus::Completed;
-        if (!file_data.sig.has_digest()) {
-            file_data.sig.broken();
-            status = Mwrm3::TransferedStatus::Broken;
-        }
-        this->fdx_capture->close_tfl(*file_data.tfl_file, file_data.file_name,
-            status, Mwrm3::Sha256Signature{file_data.sig.digest_as_av()});
-    }
-};  // class ClipboardVirtualChannel
+        std::vector<CliprdFileInfo> files;
+
+        NoLockData nolock_data;
+        LockedData locked_data;
+
+        StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
+
+        void clear();
+    };
+
+    using ClientCtx = ClipCtx;
+    using ServerCtx = ClipCtx;
+
+    struct FileValidatorDataList;
+    struct TextValidatorDataList;
+
+    ClientCtx client_ctx;
+    ServerCtx server_ctx;
+
+    std::vector<FileValidatorDataList> file_validator_list;
+    std::vector<TextValidatorDataList> text_validator_list;
+
+    FileValidatorDataList* search_file_validator_by_id(FileValidatorId id);
+
+    void remove_file_validator(FileValidatorDataList* p);
+
+    TextValidatorDataList* search_text_validator_by_id(FileValidatorId id);
+
+    void remove_text_validator(TextValidatorDataList* p);
+
+    class D;
+    friend class D;
+}; // class ClipboardVirtualChannel
+

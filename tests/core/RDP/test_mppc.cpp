@@ -38,7 +38,7 @@ RED_AUTO_TEST_CASE(TestMPPC)
         rdp_mppc_dec & rmppc = rmppc_d;
 
         /* uncompress data */
-        RED_CHECK_MEM(make_array_view(decompressed_rd5),
+        RED_CHECK(make_array_view(decompressed_rd5) ==
             rmppc.decompress(make_array_view(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K));
     }
 }
@@ -64,7 +64,7 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     RED_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
-    RED_CHECK_MEM(make_array_view(decompressed_rd5_data),
+    RED_CHECK(make_array_view(decompressed_rd5_data) ==
         rmppc.decompress({enc.outputBuffer, enc.bytes_in_opb}, enc.flags));
 }
 

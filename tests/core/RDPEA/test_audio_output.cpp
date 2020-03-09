@@ -31,7 +31,7 @@ RED_AUTO_TEST_CASE(RDPSNDPDUHeaderEmit)
     StaticOutStream<8> stream;
     rdpsnd::RDPSNDPDUHeader(rdpsnd::SNDC_FORMATS, 38).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 
@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(ServerAudioFormatsandVersionHeaderEmit)
     StaticOutStream<32> stream;
     rdpsnd::ServerAudioFormatsandVersionHeader(22, 0xff, 6).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 
@@ -72,7 +72,7 @@ RED_AUTO_TEST_CASE(AudioFormatEmit)
     StaticOutStream<32> stream;
     rdpsnd::AudioFormat(rdpsnd::WAVE_FORMAT_PCM, 2, 0x0000ac44, 0x0002b110, 4, 16, 0).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 
@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(ClientAudioFormatsandVersionHeaderEmit)
     StaticOutStream<32> stream;
     rdpsnd::ClientAudioFormatsandVersionHeader(0x00000001, 0x00000000, 0x00000000, 0x0000, 1, 6).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 
@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(QualityModePDUEmit)
     StaticOutStream<32> stream;
     rdpsnd::QualityModePDU(rdpsnd::MEDIUM_QUALITY).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 
@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TrainingPDUEmit)
     StaticOutStream<32> stream;
     rdpsnd::TrainingPDU(0xfd73, 1024).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 
@@ -155,7 +155,7 @@ RED_AUTO_TEST_CASE(TrainingConfirmPDUEmit)
     StaticOutStream<32> stream;
     rdpsnd::TrainingConfirmPDU(0xfd73, 1024).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 
@@ -180,7 +180,7 @@ RED_AUTO_TEST_CASE(WaveInfoPDUEmit)
         ch.emit(stream);
     }
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(data);
 
@@ -190,7 +190,7 @@ RED_AUTO_TEST_CASE(WaveInfoPDUEmit)
     RED_CHECK_EQUAL(ch.wTimeStamp, 0x11a7);
     RED_CHECK_EQUAL(ch.wFormatNo, 0x0000);
     RED_CHECK_EQUAL(ch.cBlockNo, 0x00);
-    RED_CHECK_MEM_AA(ch.Data, data.from_offset(8));
+    RED_CHECK(make_array_view(ch.Data) == data.from_offset(8));
 }
 
 RED_AUTO_TEST_CASE(WaveConfirmPDUEmit)
@@ -200,7 +200,7 @@ RED_AUTO_TEST_CASE(WaveConfirmPDUEmit)
     StaticOutStream<32> stream;
     rdpsnd::WaveConfirmPDU(0x11a7, 0x01).emit(stream);
 
-    RED_CHECK_MEM(stream.get_bytes(), data);
+    RED_CHECK(stream.get_bytes() == data);
 
     InStream in_stream(stream.get_bytes());
 

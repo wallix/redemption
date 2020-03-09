@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFileList)
     RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems);
     fdr.emit(ou_stream_fileList);
 
-    RED_CHECK_MEM(ou_stream_fileList.get_bytes(), "\x01\x00\x00\x00"_av);
+    RED_CHECK(ou_stream_fileList.get_bytes() == "\x01\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFileList)
@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFilePic)
         "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00");
 
-    RED_CHECK_MEM(metafilepic_out_data, ou_stream_metaFilePic.get_bytes());
+    RED_CHECK(metafilepic_out_data == ou_stream_metaFilePic.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
@@ -380,7 +380,7 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 
     file_descriptor.emit(out_stream);
 
-    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
+    RED_CHECK(out_stream.get_bytes() == in_data);
 }
 
 
@@ -402,7 +402,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeEmit)
         "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
         "\x00\x00\x00\x00\x01\x00\x00\x00");
 
-    RED_CHECK_MEM(exp_data, out_stream.get_bytes());
+    RED_CHECK(exp_data == out_stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeRecv)
@@ -444,7 +444,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeEmit)
         "\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
         "\x07\x00\x00\x00\x01\x00\x00\x00");
 
-    RED_CHECK_MEM(exp_data, out_stream.get_bytes());
+    RED_CHECK(exp_data == out_stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeRecv)
@@ -596,7 +596,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
         header.recv(in_stream);
         RED_CHECK(bool(header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) == bool(data.is_ascii));
 
-        RED_CHECK_MEM(data.expected_result, out_stream.get_bytes());
+        RED_CHECK(data.expected_result == out_stream.get_bytes());
 
         auto format_ref = data.formats_ref.empty() ? data.formats : data.formats_ref;
         auto it = format_ref.begin();
@@ -606,7 +606,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
                     RED_REQUIRE((it != format_ref.end()));
                     RED_CHECK(format_id == it->format_id());
                     Cliprdr::FormatName format_name(0, name);
-                    RED_CHECK_SMEM(format_name.utf8_name(), it->utf8_name());
+                    RED_CHECK(format_name.utf8_name() == it->utf8_name());
                     ++it;
                 }
             });

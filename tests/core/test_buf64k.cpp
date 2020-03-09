@@ -52,8 +52,7 @@ private:
 RED_AUTO_TEST_CASE(Test1Read1)
 {
     Buf64k buf;
-    RED_CHECK_EQ(0, buf.remaining());
-    RED_CHECK_MEM(bytes_view{}, buf.av());
+    RED_CHECK(bytes_view{} == buf.av());
 
     uint8_t data[100000];
     std::iota(std::begin(data), std::end(data), 0);
@@ -65,14 +64,12 @@ RED_AUTO_TEST_CASE(Test1Read1)
         for (unsigned i = 0; i < k64; ++i) {
             buf.read_with(t);
         }
-        RED_CHECK_EQ(k64, buf.remaining());
-        RED_CHECK_MEM(make_array_view(data, k64), buf.av());
+        RED_CHECK(make_array_view(data, k64) == buf.av());
         RED_CHECK_EXCEPTION_ERROR_ID(buf.read_with(t), ERR_TRANSPORT_NO_MORE_DATA);
         RED_CHECK_EQ(k64, buf.remaining());
         buf.advance(k64);
         buf.read_with(t);
-        RED_CHECK_EQ(1, buf.remaining());
-        RED_CHECK_MEM(bytes_view(data+k64, 1), buf.av());
+        RED_CHECK(bytes_view(data+k64, 1) == buf.av());
     }
 
     buf.advance(buf.remaining());
@@ -86,7 +83,6 @@ RED_AUTO_TEST_CASE(Test1Read1)
         RED_CHECK_EQ(k64, buf.remaining());
         buf.advance(1000);
         buf.read_with(t);
-        RED_CHECK_EQ(k64, buf.remaining());
-        RED_CHECK_MEM(bytes_view(data+1000, k64), buf.av());
+        RED_CHECK(bytes_view(data+1000, k64) == buf.av());
     }
 }

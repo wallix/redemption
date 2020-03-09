@@ -122,12 +122,11 @@ RED_AUTO_TEST_CASE(TestRmemcpy)
     uint8_t dest[sizeof(buffer)] = {};
     uint8_t expected[] = {0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0xFF, 0xEE, 0xDD, 0xCC };
     rmemcpy(dest, buffer, sizeof(buffer));
-    RED_CHECK_MEM_AA(dest, expected);
+    RED_CHECK(make_array_view(dest) == make_array_view(expected));
 
     uint8_t buffer2[]   = {0xCC, 0xDD, 0xEE };
     uint8_t dest2[sizeof(buffer2)] = {};
     uint8_t expected2[] = {0xEE, 0xDD, 0xCC };
     rmemcpy(dest2, buffer2, sizeof(buffer2));
-    RED_CHECK_MEM_AA(dest2, expected2);
-
+    RED_CHECK(make_array_view(dest2) == make_array_view(expected2));
 }

@@ -27,6 +27,7 @@
 #include "utils/region.hpp"
 #include "core/error.hpp"
 #include "core/stream_throw_helpers.hpp"
+#include <cinttypes>
 
 
 /** @brief a surface content update */
@@ -71,27 +72,27 @@ public:
 
     void recv(InStream & stream) {
         // 2.2.9.2.1 Set Surface Bits Command (TS_SURFCMD_SET_SURF_BITS)
-        
+
         // The Set Surface Bits Command is used to transport encoded bitmap data
         //  destined for a rectangular region of the primary drawing surface
         //  from an RDP server to an RDP client.
         //
         // cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type.
         //   This field MUST be set to CMDTYPE_SET_SURFACE_BITS (0x0001).
-        
+
         // destLeft (2 bytes): A 16-bit, unsigned integer. Left bound of the
         //   destination rectangle that will contain the decoded bitmap data.
-        
+
         // destTop (2 bytes): A 16-bit, unsigned integer. Top bound of the
         //   destination rectangle that will contain the decoded bitmap data.
-        
+
         // destRight (2 bytes): A 16-bit, unsigned integer. Exclusive right
         //   bound of the destination rectangle that will contain the decoded
         //   bitmap data. This field SHOULD be ignored, as the width of the
         //   encoded bitmap image is specified in the Extended Bitmap Data
         //   (section 2.2.9.2.1.1) present in the variable-length bitmapData
         //   field.
-        
+
         // destBottom (2 bytes): A 16-bit, unsigned integer. Exclusive bottom
         //   bound of the destination rectangle that will contain the decoded
         //   bitmap data. This field SHOULD be ignored, as the height of the
@@ -106,7 +107,7 @@ public:
         //
         // bpp (1 byte): An 8-bit, unsigned integer. The color depth of the
         //   bitmap data in bits-per-pixel.
-        
+
         // flags (1 byte): An 8-bit, unsigned integer that contains flags.
         // +-------------------------------------+-----------------------------+
         // |               Flag                  |    Meaning                  |
@@ -126,14 +127,14 @@ public:
         //   decoding transformation.
         // width (2 bytes): A 16-bit, unsigned integer. The width of the decoded
         //   bitmap image in pixels.
-        // height (2 bytes): A 16-bit, unsigned integer. The height of the 
+        // height (2 bytes): A 16-bit, unsigned integer. The height of the
         //   decoded bitmap image in pixels.
         // bitmapDataLength (4 bytes): A 32-bit, unsigned integer. The size in
         //   bytes of the bitmapData field.
         // exBitmapDataHeader (variable): An optional Extended Compressed Bitmap
-        //   Header (section 2.2.9.2.1.1.1) structure that contains non 
+        //   Header (section 2.2.9.2.1.1.1) structure that contains non
         //   essential information associated with bitmap data in the bitmapData
-        //   field. This field MUST be present if the 
+        //   field. This field MUST be present if the
         //   EX_COMPRESSED_BITMAP_HEADER_PRESENT (0x01) flag is present.
         // bitmapData (variable): A variable-length array of bytes containing
         //   bitmap data encoded using the codec identified by the ID in the
@@ -200,7 +201,7 @@ public:
             this->destRect, this->width, this->height, this->bitmapDataLength,
             this->bpp, this->flags, this->codecId);
         if (this->flags & EX_COMPRESSED_BITMAP_HEADER_PRESENT) {
-            LOG(level, "RDPSurfaceCommand:  hUI=%.8x lUI=%.8x tm.s=%lu tm.ms=%lu",
+            LOG(level, "RDPSurfaceCommand:  hUI=%.8x lUI=%.8x tm.s=%" PRIu64 " tm.ms=%" PRIu64,
                 this->highUniqueId, this->lowUniqueId, this->tmSeconds, this->tmMilliseconds);
         }
         if (dump){

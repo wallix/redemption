@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
         }
     }
 
-    RED_CHECK_MEM(out_s.get_bytes(), payload);
+    RED_CHECK(out_s.get_bytes() == payload);
 } // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
@@ -170,5 +170,5 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)
         }
     }
 
-    RED_CHECK_MEM(out_s.get_bytes(), payload);
+    RED_CHECK(out_s.get_bytes() == payload);
 } // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

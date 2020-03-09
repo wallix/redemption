@@ -45,8 +45,8 @@ RED_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)
     cctx.set_master_key(expected_master_key);
     cctx.set_hmac_key(expected_hmac_key);
 
-    RED_CHECK_MEM(make_array_view(expected_master_key), cctx.get_master_key());
-    RED_CHECK_MEM(make_array_view(expected_hmac_key), make_array_view(cctx.get_hmac_key()));
+    RED_CHECK(make_array_view(expected_master_key) == cctx.get_master_key());
+    RED_CHECK(make_array_view(expected_hmac_key) == make_array_view(cctx.get_hmac_key()));
 }
 
 RED_AUTO_TEST_CASE(TestSetMasterDerivator)

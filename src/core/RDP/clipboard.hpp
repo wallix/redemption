@@ -1147,8 +1147,8 @@ private:
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length,
-            "FileContentsRequestPDU: streamId=%u(4 bytes) lindex=%u(4 bytes) dwFlags=%u(4 bytes) "
-                "nPositionLow=%u(4 bytes) nPositionHigh=%u(4 bytes) cbRequested=%u(4 bytes)",
+            "FileContentsRequestPDU: streamId=%u lindex=%u dwFlags=%u "
+                "nPositionLow=%u nPositionHigh=%u cbRequested=%u",
             this->streamId_, this->lindex_, this->dwFlags_,
             this->nPositionLow_, this->nPositionHigh_, this->cbRequested_);
         length += ((result < size - length) ? result : (size - length - 1));

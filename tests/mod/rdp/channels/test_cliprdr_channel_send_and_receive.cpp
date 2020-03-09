@@ -52,26 +52,6 @@ struct FakeDataSender : VirtualChannelDataSender
     }
 };
 
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
-{
-    StaticOutStream<64> stream;
-
-    stream.out_uint16_le(1); // cCapabilitiesSets
-    stream.out_uint16_le(0); // pad1(2)
-
-    RDPECLIP::GeneralCapabilitySet caps(RDPECLIP::CB_CAPS_VERSION_1, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-    caps.emit(stream);
-
-    InStream chunk(stream.get_bytes());
-
-    ClipboardSideData state;
-
-    ClipboardCapabilitiesReceive receiver(state, chunk, RDPVerbose::none);
-
-    RED_CHECK(state.use_long_format_names);
-}
-
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
 {
     FakeDataSender data_sender;
@@ -80,27 +60,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
     FilecontentsRequestSendBack sender(RDPECLIP::FILECONTENTS_SIZE, streamID, &data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-    RED_CHECK_MEM(data_sender.streams[0].av(),
+    RED_CHECK(data_sender.streams[0].av() ==
         "\x09\x00\x02\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00"
         ""_av);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
-{
-    StaticOutStream<64> stream;
-
-    RDPECLIP::FileContentsRequestPDU file_contents_request_pdu(1, 2, 3, 4, 0, 6, 7, true);
-
-    stream.out_uint32_le(3);
-
-    InStream chunk(stream.get_bytes());
-
-    ClipboardData state;
-
-    FormatDataRequestReceive receiver(state, RDPVerbose::none, chunk);
-
-    RED_CHECK_EQUAL(state.requestedFormatId, 3);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
@@ -110,139 +73,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
     FormatDataRequestSendBack sender(&data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-    RED_CHECK_MEM(data_sender.streams[0].av(), "\x05\x00\x02\x00\x00\x00\x00\x00"_av);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
-{
-    {
-    auto text = "text de test"_av;
-    uint8_t utf16text[50] = {0};
-    size_t utf16size = ::UTF8toUTF16(text, utf16text, text.size() *2);
-
-    StaticOutStream<1600> out_stream;
-    out_stream.out_copy_bytes(utf16text, utf16size+2);
-
-    InStream stream(out_stream.get_bytes());
-
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE,
-                                   RDPECLIP::CB_RESPONSE_OK,
-                                   text.size());
-    uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-    ClipboardData clip_data;
-    clip_data.requestedFormatId = RDPECLIP::CF_UNICODETEXT;
-
-    FormatDataResponseReceive receiver(clip_data.requestedFormatId, stream, flags);
-    clip_data.requestedFormatId = 0;
-
-    RED_CHECK_EQUAL(receiver.data_to_dump, "text de test");
-    }
-
-    {
-    StaticOutStream<1600> out_stream;
-
-    std::string file_name_1("file1.txt");
-    std::string file_name_2("file2.txt");
-    uint32_t cItems = 2;
-    size_t file_size_1 = 42;
-    size_t file_size_2 = 84;
-    RDPECLIP::FileDescriptor fd1(file_name_1, file_size_1, fscc::FILE_ATTRIBUTE_ARCHIVE);
-    RDPECLIP::FileDescriptor fd2(file_name_2, file_size_2, fscc::FILE_ATTRIBUTE_ARCHIVE);
-
-    out_stream.out_uint32_le(cItems);
-    fd1.emit(out_stream);
-    fd2.emit(out_stream);
-
-    InStream stream(out_stream.get_bytes());
-
-    RDPECLIP::CliprdrHeader header (RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (cItems*RDPECLIP::FileDescriptor::size())+4);
-    bool param_dont_log_data_into_syslog = false;
-    uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-    RDPVerbose verbose = RDPVerbose::none;
-
-    uint32_t requestedFormatId = 48025;
-
-    ClipboardData clip_data;
-    clip_data.requestedFormatId = requestedFormatId;
-    clip_data.client_data.file_list_format_id = requestedFormatId;
-
-    std::vector<CliprdFileInfo> files;
-    FormatDataResponseReceiveFileList receiver(
-        files,
-        stream,
-        header,
-        param_dont_log_data_into_syslog,
-        clip_data.client_data.file_list_format_id,
-        flags,
-        clip_data.client_data.file_descriptor_stream,
-        verbose,
-        "server");
-    clip_data.requestedFormatId = 0;
-
-    RED_REQUIRE_EQUAL(files.size(), cItems);
-
-    CliprdFileInfo& file_info_type_1 = files[0];
-    RED_CHECK_EQUAL(file_info_type_1.file_size, 42);
-    RED_CHECK_EQUAL(file_info_type_1.file_name, file_name_1);
-
-    CliprdFileInfo& file_info_type_2 = files[1];
-    RED_CHECK_EQUAL(file_info_type_2.file_size, 84);
-    RED_CHECK_EQUAL(file_info_type_2.file_name, file_name_2);
-    }
-    {
-    StaticOutStream<1600> pre_stream;
-
-    std::string file_name_1("file1.txt");
-    std::string file_name_2("file2.txt");
-    uint32_t cItems = 2;
-    RDPECLIP::FileDescriptor fd1(file_name_1, 42, fscc::FILE_ATTRIBUTE_ARCHIVE);
-    RDPECLIP::FileDescriptor fd2(file_name_2, 84, fscc::FILE_ATTRIBUTE_ARCHIVE);
-
-    fd1.emit(pre_stream);
-    fd2.emit(pre_stream);
-
-    InStream stream({pre_stream.get_data(), cItems*RDPECLIP::FileDescriptor::size()});
-
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (cItems*RDPECLIP::FileDescriptor::size())+4);
-    bool param_dont_log_data_into_syslog = false;
-    uint32_t flags = CHANNELS::CHANNEL_FLAG_LAST;
-
-    RDPVerbose verbose = RDPVerbose::none;
-
-    uint32_t requestedFormatId = 48025;
-
-    ClipboardData clip_data;
-    clip_data.requestedFormatId = requestedFormatId;
-    clip_data.client_data.file_list_format_id = requestedFormatId;
-    size_t size_part_1 = 150;
-    clip_data.client_data.file_descriptor_stream.rewind();
-    clip_data.client_data.file_descriptor_stream.out_copy_bytes(pre_stream.get_data(), size_part_1);
-    stream.in_skip_bytes(size_part_1);
-
-    std::vector<CliprdFileInfo> files;
-    FormatDataResponseReceiveFileList receiver(
-        files,
-        stream,
-        header,
-        param_dont_log_data_into_syslog,
-        clip_data.client_data.file_list_format_id,
-        flags,
-        clip_data.client_data.file_descriptor_stream,
-        verbose,
-        "server");
-    clip_data.requestedFormatId = 0;
-
-    RED_REQUIRE_EQUAL(files.size(), cItems);
-
-    CliprdFileInfo & file_info_type_1 = files[0];
-    RED_CHECK_EQUAL(file_info_type_1.file_size, 42);
-    RED_CHECK_EQUAL(file_info_type_1.file_name, file_name_1);
-
-    CliprdFileInfo & file_info_type_2 = files[1];
-    RED_CHECK_EQUAL(file_info_type_2.file_size, 84);
-    RED_CHECK_EQUAL(file_info_type_2.file_name, file_name_2);
-    }
+    RED_CHECK(data_sender.streams[0].av() == "\x05\x00\x02\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
@@ -273,19 +104,19 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
 
     RED_CHECK(received.file_list_format_id == client_file_list_format_id);
     RED_REQUIRE(!!(format_name = format_name_inventory.find(RDPECLIP::CF_TEXT)));
-    RED_CHECK_SMEM(format_name->utf8_name(), ""_av);
+    RED_CHECK(format_name->utf8_name() == ""_av);
     RED_REQUIRE(!!(format_name = format_name_inventory.find(client_file_list_format_id)));
-    RED_CHECK_SMEM(format_name->utf8_name(), Cliprdr::formats::file_group_descriptor_w.ascii_name);
+    RED_CHECK(format_name->utf8_name() == Cliprdr::formats::file_group_descriptor_w.ascii_name);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
     FakeDataSender data_sender;
 
-    FormatListSendBack sender(&data_sender);
+    format_list_send_back(&data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-    RED_CHECK_MEM(data_sender.streams[0].av(), "\x03\x00\x01\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(data_sender.streams[0].av() == "\x03\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
@@ -296,11 +127,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
     ServerMonitorReadySendBack pdu(RDPVerbose::none, use_long_format_name, &sender);
 
     RED_REQUIRE_EQUAL(sender.index, 2);
-    RED_CHECK_MEM(sender.streams[0].av(),
+    RED_CHECK(sender.streams[0].av() ==
         "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00"
         "\x01\x00\x00\x00\x02\x00\x00\x00"
         ""_av);
-    RED_CHECK_MEM(sender.streams[1].av(),
+    RED_CHECK(sender.streams[1].av() ==
         "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 

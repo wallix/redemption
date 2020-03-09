@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestDestBlt)
             0x3c, 0x00,  // cy = 60
             0xFF,        // rop
         };
-        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
+        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
 
         InStream in_stream(out_stream.get_bytes());
 
@@ -66,6 +66,6 @@ RED_AUTO_TEST_CASE(TestDestBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_destblt);
-        RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 }

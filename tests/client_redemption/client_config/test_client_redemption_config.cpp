@@ -130,18 +130,18 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 
     RED_REQUIRE_EQUAL(config.rDPClipboardConfig.formats.size(), 4);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].format_id(), ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[0].utf8_name(),
+    RED_CHECK(config.rDPClipboardConfig.formats[0].utf8_name() ==
         Cliprdr::formats::file_group_descriptor_w.ascii_name);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].format_id(), ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS);
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[1].utf8_name(),
+    RED_CHECK(config.rDPClipboardConfig.formats[1].utf8_name() ==
         Cliprdr::formats::file_contents.ascii_name);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].format_id(), uint32_t(RDPECLIP::CF_TEXT));
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[2].utf8_name(), ""_av);
+    RED_CHECK(config.rDPClipboardConfig.formats[2].utf8_name() == ""_av);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), uint32_t(RDPECLIP::CF_METAFILEPICT));
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[3].utf8_name(), ""_av);
+    RED_CHECK(config.rDPClipboardConfig.formats[3].utf8_name() == ""_av);
 
     RED_CHECK(config.rDPClipboardConfig.path == "/DATA/clipboard_temp"sv);
 
@@ -306,18 +306,18 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     RED_REQUIRE_EQUAL(config.rDPClipboardConfig.formats.size(), 4);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].format_id(), ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[0].utf8_name(),
+    RED_CHECK(config.rDPClipboardConfig.formats[0].utf8_name() ==
         Cliprdr::formats::file_group_descriptor_w.ascii_name);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].format_id(), ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS);
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[1].utf8_name(),
+    RED_CHECK(config.rDPClipboardConfig.formats[1].utf8_name() ==
         Cliprdr::formats::file_contents.ascii_name);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].format_id(), uint32_t(RDPECLIP::CF_TEXT));
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[2].utf8_name(), ""_av);
+    RED_CHECK(config.rDPClipboardConfig.formats[2].utf8_name() == ""_av);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), uint32_t(RDPECLIP::CF_METAFILEPICT));
-    RED_CHECK_SMEM(config.rDPClipboardConfig.formats[3].utf8_name(), ""_av);
+    RED_CHECK(config.rDPClipboardConfig.formats[3].utf8_name() == ""_av);
 
     RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp"sv);
 

@@ -274,20 +274,21 @@ namespace redemption_unit_test__
         size_t & pos;
         bytes_view lhs;
         bytes_view rhs;
-        char pattern;
         char const* revert;
+        std::size_t min_len;
+        char pattern;
 
         friend std::ostream & operator<<(std::ostream & out, Put2Mem const & x);
     };
 
     bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
 
-    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern);
-    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern);
-    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern);
-    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern);
-    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern);
-    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern);
+    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
+    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
+    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
+    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
+    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
+    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
 
 
     template<class T> struct is_bytes_view : std::false_type {};
@@ -454,7 +455,7 @@ struct name<T, U, std::enable_if_t<                                       \
     static assertion_result                                               \
     eval( bytes_view lhs, bytes_view rhs )                                \
     {                                                                     \
-        return ::redemption_unit_test__::bytes_##name(lhs, rhs, 'a');     \
+        return ::redemption_unit_test__::bytes_##name(lhs, rhs, 'a', 0);  \
     }                                                                     \
                                                                           \
     template<class PrevExprType>                                          \
@@ -485,14 +486,17 @@ struct name<T, U, std::enable_if_t<                                       \
                    && std::is_convertible_v<U, bytes_view>)               \
         {                                                                 \
             char flag = 'a';                                              \
+            std::size_t min_len = 0;                                      \
             if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {  \
                flag = lhs.flag;                                           \
+               min_len = lhs.min_len;                                     \
             }                                                             \
             if constexpr (std::is_same_v<U, ::ut::flagged_bytes_view>) {  \
                flag = rhs.flag;                                           \
+               min_len = rhs.min_len;                                     \
             }                                                             \
             return ::redemption_unit_test__                               \
-                ::bytes_##name(lhs, rhs, flag);                           \
+                ::bytes_##name(lhs, rhs, flag, min_len);                  \
         }                                                                 \
         else                                                              \
         {                                                                 \

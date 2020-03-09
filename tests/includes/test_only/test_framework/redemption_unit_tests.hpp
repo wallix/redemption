@@ -31,13 +31,41 @@ namespace ut
     struct flagged_bytes_view : bytes_view
     {
         char flag;
+        size_t min_len;
     };
 
-    inline flagged_bytes_view ascii(bytes_view v) { return {v, 'c'}; }
-    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's'}; }
-    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b'}; }
-    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd'}; }
+    inline flagged_bytes_view ascii(bytes_view v, size_t min_len = 0) { return {v, 'c', min_len}; }
+    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's', 0}; }
+    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b', 0}; }
+    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd', 0}; }
 } // namespace ut
+
+namespace redemption_unit_test__
+{
+    namespace literals
+    {
+        inline ut::flagged_bytes_view operator"" _av_ascii(char const * s, size_t len) noexcept
+        {
+            return ut::ascii({s, len});
+        }
+
+        inline ut::flagged_bytes_view operator"" _av_utf8(char const * s, size_t len) noexcept
+        {
+            return ut::utf8({s, len});
+        }
+
+        inline ut::flagged_bytes_view operator"" _av_hex(char const * s, size_t len) noexcept
+        {
+            return ut::hex({s, len});
+        }
+
+        inline ut::flagged_bytes_view operator"" _av_dump(char const * s, size_t len) noexcept
+        {
+            return ut::dump({s, len});
+        }
+    } // namespace literals
+} // namespace redemption_unit_test__
+
 
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 
@@ -131,11 +159,6 @@ bool operator!=(bytes_view, bytes_view);
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_CHECK_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
-# define RED_CHECK_MEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_BMEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_HMEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_CMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// REQUIRE
@@ -159,11 +182,6 @@ bool operator!=(bytes_view, bytes_view);
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_REQUIRE_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
-# define RED_REQUIRE_MEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_SMEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_RMEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_HMEM(mem, memref) void(mem), void(memref)
-# define RED_REQUIRE_CMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// WARN
@@ -174,18 +192,6 @@ bool operator!=(bytes_view, bytes_view);
 #else
 
 # include "impl/redemption_unit_tests_impl.hpp"
-
-# define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'a')
-# define RED_CHECK_SMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'S')
-# define RED_CHECK_BMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'b')
-# define RED_CHECK_HMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'd')
-# define RED_CHECK_CMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'C')
-
-# define RED_REQUIRE_MEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'a')
-# define RED_REQUIRE_SMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'S')
-# define RED_REQUIRE_RMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'b')
-# define RED_REQUIRE_HMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'd')
-# define RED_REQUIRE_CMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'C')
 
 /// CHECK
 //@{
@@ -226,19 +232,6 @@ bool operator!=(bytes_view, bytes_view);
             (void(#b), begin(b__)), end(b__)  \
         );                                    \
     }(a, b)
-
-# define RED_TEST_MEM(lvl, mem, memref, c)                \
-    [](bytes_view x_mem__, bytes_view x_memref__){        \
-        size_t pos__ = 0;                                 \
-        RED_##lvl##_MESSAGE(                              \
-            ::redemption_unit_test__::compare_bytes(      \
-                pos__, x_mem__, x_memref__),              \
-            RED_TEST_STRING_##lvl " "                     \
-            #mem " == " #memref " has failed "            \
-            << (::redemption_unit_test__::Put2Mem{        \
-                pos__, x_mem__, x_memref__, c, " != "})); \
-    }(mem, memref)
-
 
 namespace redemption_unit_test__
 {
@@ -330,12 +323,47 @@ namespace std /*NOLINT*/
     #type << "{" << +::std::underlying_type_t<type>(x) << "}")
 
 
+#ifdef IN_IDE_PARSER
 #define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
     for (type_value : __VA_ARGS__)                        \
         RED_TEST_CONTEXT(iocontext) /*NOLINT*/
+#else
+#define RED_TEST_CONTEXT_DATA_II(cont, i, n, type_value, iocontext, ...) \
+    if (auto&& cont = __VA_ARGS__; 1)                                    \
+        if (::std::size_t i = 0,                                         \
+            n = ::redemption_unit_test__::cont_size(cont, 1); 1          \
+        )                                                                \
+            for (type_value : cont)                                      \
+                if (++i)                                                 \
+                    RED_TEST_CONTEXT(                                    \
+                        "[" << i << "/" << n << "] " << iocontext) /*NOLINT*/
+#define RED_TEST_CONTEXT_DATA_I(cont, i, n, type_value, iocontext, ...) \
+    RED_TEST_CONTEXT_DATA_II(cont, i, n, type_value, iocontext, __VA_ARGS__)
+
+#define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
+    RED_TEST_CONTEXT_DATA_I(                              \
+        BOOST_PP_CAT(ctx_cont__, __LINE__),               \
+        BOOST_PP_CAT(ctx_cont_i__, __LINE__),             \
+        BOOST_PP_CAT(ctx_cont_n__, __LINE__),             \
+        type_value, iocontext, __VA_ARGS__)
+#endif
 
 namespace redemption_unit_test__
 {
+
+template<class T>
+auto cont_size(T const& cont, int) -> decltype(std::size_t(cont.size()))
+{
+    return cont.size();
+}
+
+template<class T>
+std::size_t cont_size(T const& cont, char)
+{
+    using std::begin;
+    using std::end;
+    return end(cont) - cont(begin);
+}
 
 unsigned long current_count_error();
 
@@ -493,30 +521,12 @@ namespace redemption_unit_test__
 //@{
 #define RED_CHECK_EQ RED_CHECK_EQUAL
 #define RED_CHECK_EQ_RANGES RED_CHECK_EQUAL_RANGES
-
-#define RED_CHECK_MEM_AA(mem, memref) \
-    RED_CHECK_MEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_CHECK_SMEM_AA(mem, memref) \
-    RED_CHECK_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_CHECK_BMEM_AA(mem, memref) \
-    RED_CHECK_BMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 //@}
 
 /// REQUIRE
 //@{
 #define RED_REQUIRE_EQ RED_REQUIRE_EQUAL
 #define RED_REQUIRE_EQ_RANGES RED_REQUIRE_EQUAL_RANGES
-
-#define RED_REQUIRE_MEM_AA(mem, memref) \
-    RED_REQUIRE_MEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_REQUIRE_SMEM_AA(mem, memref) \
-    RED_REQUIRE_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
-
-#define RED_REQUIRE_RMEM_AA(mem, memref) \
-    RED_REQUIRE_SMEM(::redemption_unit_test__::to_av(mem), ::redemption_unit_test__::to_av(memref))
 //@}
 
-#define RED_ERROR_COUNT redemption_unit_test__::current_count_error()
+#define RED_ERROR_COUNT() redemption_unit_test__::current_count_error()

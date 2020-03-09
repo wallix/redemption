@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(file_validatorSendFile)
         "\x20\x70\x72\x6f\x76\x69\x64\x65\x21\x03\x00\x00\x00\x04\x00\x00" // provide!....... !
         "\x00\x01"                                                         //.. !
         ""_av;
-    RED_CHECK_HMEM(trans.data(), data_ref);
+    RED_CHECK(trans.data() == data_ref);
 
     RED_CHECK(file_validator.open_file(filename, "clamav") == FileValidatorId(2));
 }
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(file_validatorSendText)
         "\x20\x70\x61\x73\x20\xc3\xa0\x20\x70\x6f\x75\x03\x00\x00\x00\x04" // pas .. pou..... !
         "\x00\x00\x00\x01"                                                 //.... !
         ""_av;
-    RED_CHECK_HMEM(trans.data(), data_ref);
+    RED_CHECK(trans.data() == data_ref);
 
     RED_CHECK(file_validator.open_file("filename", "clamav") == FileValidatorId(2));
 }
@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(file_validatorSendInfos)
         "\x00\x03key"  "\x00\x02v2"
         "\x00\x02k3"   "\x00\x05value"
         ""_av;
-    RED_CHECK_MEM(trans.data(), data_ref);
+    RED_CHECK(trans.data() == data_ref);
 }
 
 RED_AUTO_TEST_CASE(file_validatorReceive)

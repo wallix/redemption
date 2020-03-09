@@ -40,6 +40,7 @@
 #include "utils/parse_primary_drawing_orders.hpp"
 # include "mod/rdp/params/rdp_session_probe_params.hpp"
 # include "mod/rdp/params/rdp_application_params.hpp"
+#include "capture/fdx_capture.hpp"
 
 namespace
 {
@@ -67,23 +68,15 @@ namespace
     }
 }
 
-
-class ModRDPWithSocketAndMetrics final : public mod_api
+struct RdpData
 {
-    SocketTransport socket_transport;
-public:
-    ModRdpFactory rdp_factory;
-    DispatchReportMessage dispatcher;
-    mod_rdp mod;
-
     struct ModMetrics : Metrics
     {
         using Metrics::Metrics;
 
         RDPMetrics protocol_metrics{*this};
-        TimerPtr metrics_timer;
+        SessionReactor::TimerPtr metrics_timer;
     };
-
 
     struct FileValidator
     {
@@ -95,7 +88,7 @@ public:
             {
                 size_t r = FileTransport::do_partial_read(buffer, len);
                 if (r == 0) {
-                    LOG(LOG_ERR, "FileValidator::do_partial_read: No data read!");
+                    LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
                     throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
                 }
                 return r;
@@ -108,7 +101,6 @@ public:
             std::string up_target_name;
             std::string down_target_name;
             SessionReactor& session_reactor;
-            TimerContainer& timer_events_;
             FrontAPI& front;
         };
 
@@ -116,7 +108,7 @@ public:
         FileValidatorTransport trans;
         // TODO wait result (add delay)
         FileValidatorService service;
-        TopFdPtr validator_event;
+        SessionReactor::TopFdPtr validator_event;
 
         FileValidator(unique_fd&& fd, CtxError&& ctx_error)
         : ctx_error(std::move(ctx_error))
@@ -148,11 +140,22 @@ public:
     std::unique_ptr<FileValidator> file_validator;
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
+};
+
+
+
+class ModRDPWithSocketAndMetrics final : public mod_api
+{
+    SocketTransport socket_transport;
+public:
+    ModRdpFactory rdp_factory;
+    DispatchReportMessage dispatcher;
+    mod_rdp mod;
 
     FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
     {
         if (!this->fdx_capture) {
-            LOG(LOG_INFO, "Enable clipboard file record");
+            LOG(LOG_INFO, "Enable clipboard file storage");
             int  const groupid = ini.get<cfg::video::capture_groupid>();
             auto const& session_id = ini.get<cfg::context::session_id>();
             auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
@@ -173,6 +176,8 @@ public:
 
         return this->fdx_capture.get();
     }
+
+    RdpData rdp_data;
 
     ModRdpFactory& get_rdp_factory() noexcept
     {
@@ -345,6 +350,8 @@ public:
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 };
+metrics metrics metrics
+
 
 inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
 {
@@ -622,6 +629,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     mod_rdp_params.clipboard_params.log_only_relevant_activities =
         ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain = ini.get<cfg::mod_rdp::split_domain>();
+
     mod_rdp_params.enable_remotefx = ini.get<cfg::mod_rdp::enable_remotefx>();
     mod_rdp_params.use_license_store = ini.get<cfg::mod_rdp::use_license_store>();
     mod_rdp_params.accept_monitor_layout_change_if_capture_is_not_started
@@ -787,11 +795,11 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         }
 
         if (enable_metrics) {
-            new_mod->metrics = std::move(metrics);
+            new_mod->RdpData::metrics = std::move(metrics);
             LOG(LOG_INFO, "create_module_rdp::timer_events_.create_timer_executor");
-            new_mod->metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
+            new_mod->RdpData::metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){
+                .on_action([metrics = new_mod->RdpData::metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
                     return ctx.ready();
                 })

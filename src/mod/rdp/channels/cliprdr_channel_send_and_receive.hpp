@@ -21,404 +21,15 @@
 
 #pragma once
 
-#include "capture/fdx_capture.hpp"
-#include "core/channel_list.hpp"
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
-#include "core/FSCC/FileInformation.hpp"
-#include "mod/rdp/channels/base_channel.hpp"
-#include "mod/rdp/channels/sespro_launcher.hpp"
-#include "mod/file_validator_service.hpp"
 #include "utils/stream.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include <vector>
 
-
-struct ClipboardSideData
-{
-    uint16_t current_message_type = 0;
-    bool use_long_format_names = false;
-    uint32_t file_list_format_id = 0;
-    FileValidatorId clip_text_id {};
-    // https://docs.microsoft.com/en-us/windows/win32/intl/language-identifier-constants-and-strings
-    uint32_t clip_text_locale_identifier = 0;
-    StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
-
-    enum class StreamId : uint32_t;
-    enum class FileGroupId : uint32_t;
-
-    StreamId file_contents_stream_id {};
-
-    struct FileContent
-    {
-        // if not stream_id then file_data has value
-
-        // TODO CLIPRDR
-        StreamId stream_id;
-        FileGroupId file_group_id;
-
-        enum class Status : uint8_t
-        {
-            // *WithId: file_data with optional clip_data_id
-            // WaitContinuation*: file transfered to several packet
-            WaitValidator,
-            WaitDataWithId,
-            WaitData,
-            WaitContinuationWithId,
-            WaitContinuation,
-            IsSize,
-        };
-
-        Status status;
-
-        struct FileData
-        {
-            FileValidatorId file_validator_id;
-            uint32_t clip_data_id;
-            bool active_lock;
-
-            std::string file_name;
-            uint64_t file_size;
-            uint64_t file_offset;
-            uint64_t file_size_requested;
-
-            std::unique_ptr<FdxCapture::TflFile> tfl_file;
-
-            struct Sig
-            {
-                Sig()
-                {
-                    this->sha256.init();
-                }
-
-                void update(bytes_view data)
-                {
-                    this->sha256.update(data);
-                }
-
-                void final()
-                {
-                    assert(this->status == Status::Update);
-                    this->sha256.final(this->array);
-                    this->status = Status::Final;
-                }
-
-                void broken()
-                {
-                    assert(this->status == Status::Update);
-                    this->sha256.final(this->array);
-                    this->status = Status::Broken;
-                }
-
-                bool has_digest() const noexcept
-                {
-                    return this->status != Status::Update;
-                }
-
-                static const std::size_t digest_len = SslSha256::DIGEST_LENGTH;
-
-                auto& digest() const noexcept
-                {
-                    assert(this->has_digest());
-                    return this->array;
-                }
-
-                bytes_view digest_as_av() const noexcept
-                {
-                    return make_array_view(this->digest());
-                }
-
-            private:
-                enum class Status : uint8_t {
-                    Update,
-                    Broken,
-                    Final,
-                };
-
-                SslSha256_Delayed sha256;
-                uint8_t array[digest_len];
-                Status status = Status::Update;
-            };
-
-            Sig sig;
-
-            bool on_failure = false;
-        };
-
-        FileData file_data;
-
-        [[nodiscard]] bool is_file_range() const
-        {
-            return !is_file_size();
-        }
-
-        [[nodiscard]] bool is_file_size() const
-        {
-            return this->status == Status::IsSize;
-        }
-
-        void set_wait_validator()
-        {
-            this->status = Status::WaitValidator;
-        }
-
-        [[nodiscard]] bool is_wait_validator() const
-        {
-            return this->status == Status::WaitValidator;
-        }
-
-        bytes_view receive_data(bytes_view data)
-        {
-            assert(this->status == Status::WaitData || this->status == Status::WaitDataWithId);
-
-            if (data.size() >= this->file_data.file_size_requested) {
-                data = data.first(this->file_data.file_size_requested);
-            }
-
-            this->file_data.sig.update(data);
-            this->file_data.file_offset += data.size();
-            this->file_data.file_size_requested -= data.size();
-
-            if (!this->file_data.file_size_requested) {
-                if (this->file_data.file_offset == this->file_data.file_size) {
-                    this->file_data.sig.final();
-                    this->status = Status::WaitValidator;
-                }
-                else {
-                    if (this->status == Status::WaitData) {
-                        this->status = Status::WaitContinuation;
-                    }
-                    else if (this->status == Status::WaitDataWithId) {
-                        this->status = Status::WaitContinuationWithId;
-                    }
-                }
-            }
-
-            return data;
-        }
-
-        void update_requested(uint64_t file_size_requested)
-        {
-            assert(this->status == Status::WaitContinuation || this->status == Status::WaitContinuationWithId);
-
-            if (this->status == Status::WaitContinuation) {
-                this->status = Status::WaitData;
-            }
-            else if (this->status == Status::WaitContinuationWithId) {
-                this->status = Status::WaitDataWithId;
-            }
-            else {
-                assert(false);
-            }
-
-            uint64_t offset_end = this->file_data.file_offset + file_size_requested;
-            uint64_t size_after_requested = std::min(this->file_data.file_size, offset_end);
-            this->file_data.file_size_requested = size_after_requested - this->file_data.file_offset;
-        }
-    };
-
-    std::vector<FileValidatorId> clip_text_id_list;
-    std::vector<FileContent> file_contents_list;
-    std::vector<uint32_t> lock_id_list;
-
-private:
-    [[nodiscard]] auto _find_lock_id_it(uint32_t id) const
-    {
-        return std::find(this->lock_id_list.begin(), this->lock_id_list.end(), id);
-    }
-
-public:
-    bool remove_text_id(FileValidatorId file_validator_id)
-    {
-        auto it = std::find(this->clip_text_id_list.begin(), this->clip_text_id_list.end(),
-            file_validator_id);
-        if (it != this->clip_text_id_list.end()) {
-            *it = this->clip_text_id_list.back();
-            this->clip_text_id_list.pop_back();
-            return true;
-        }
-        return false;
-    }
-
-    void push_clip_text_to_list()
-    {
-        this->clip_text_id_list.push_back(this->clip_text_id);
-        this->clip_text_id = FileValidatorId();
-    }
-
-    [[nodiscard]] bool has_lock_id(uint32_t id) const
-    {
-        return this->_find_lock_id_it(id) != this->lock_id_list.end();
-    }
-
-    void push_lock_id(uint32_t id)
-    {
-        if (!this->has_lock_id(id)) {
-            this->lock_id_list.push_back(id);
-            for (auto& file : this->file_contents_list) {
-                if ((
-                    file.status == FileContent::Status::WaitDataWithId
-                 || file.status == FileContent::Status::WaitContinuationWithId
-                ) && file.file_data.clip_data_id == id) {
-                    file.file_data.active_lock = true;
-                }
-            }
-        }
-    }
-
-    void remove_lock_id(uint32_t id)
-    {
-        auto pos = this->_find_lock_id_it(id);
-        if (pos != this->lock_id_list.end()) {
-            this->lock_id_list.erase(pos);
-            for (auto& file : this->file_contents_list) {
-                if ((
-                    (file.status == FileContent::Status::WaitDataWithId)
-                 || file.status == FileContent::Status::WaitContinuationWithId
-                ) && file.file_data.clip_data_id == id
-                ) {
-                    if (file.status == FileContent::Status::WaitDataWithId) {
-                        file.status = FileContent::Status::WaitData;
-                    }
-                    else {
-                        file.status = FileContent::Status::WaitContinuation;
-                    }
-                    file.file_data.active_lock = false;
-                }
-            }
-        }
-    }
-
-    void push_file_content_size(StreamId stream_id, FileGroupId file_group_id)
-    {
-        this->file_contents_list.push_back({stream_id, file_group_id, FileContent::Status::IsSize, {}});
-    }
-
-    void push_file_content_range(
-        StreamId stream_id, FileGroupId file_group_id,
-        bool has_clip_data_id, uint32_t clip_data_id,
-        FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl_file,
-        std::string const& filename, uint64_t filesize, uint64_t file_size_requested)
-    {
-        bool active_lock = (has_clip_data_id && this->has_lock_id(clip_data_id));
-        this->file_contents_list.push_back({
-            stream_id, file_group_id, has_clip_data_id
-                ? FileContent::Status::WaitDataWithId
-                : FileContent::Status::WaitData,
-            FileContent::FileData{
-                file_validator_id, clip_data_id, active_lock, filename, filesize, 0,
-                std::min(file_size_requested, filesize), std::move(tfl_file), {}
-            }
-        });
-    }
-
-    void remove_file(FileContent* file)
-    {
-        assert(file);
-        auto n = std::size_t(file - this->file_contents_list.data());
-        if (n+1u != this->file_contents_list.size()) {
-            this->file_contents_list[n] = std::move(this->file_contents_list.back());
-        }
-        this->file_contents_list.pop_back();
-    }
-
-    FileContent* find_file_by_offset(FileGroupId file_group_id, uint64_t offset)
-    {
-        for (auto& file : this->file_contents_list) {
-            if (file.file_group_id == file_group_id
-             && file.file_data.file_offset == offset
-             && (file.status == FileContent::Status::WaitContinuation ||
-                 file.status == FileContent::Status::WaitContinuationWithId)
-            ) {
-                return &file;
-            }
-        }
-        return nullptr;
-    }
-
-    FileContent* find_file_by_stream_id(StreamId stream_id)
-    {
-        for (auto& file : this->file_contents_list) {
-            if (file.stream_id == stream_id && (
-                file.status == FileContent::Status::WaitDataWithId
-             || file.status == FileContent::Status::WaitData
-             || file.status == FileContent::Status::IsSize
-            )) {
-                return &file;
-            }
-        }
-        return nullptr;
-    }
-
-    FileContent* find_continuation_stream_id(StreamId stream_id)
-    {
-        for (auto& file : this->file_contents_list) {
-            if (file.stream_id == stream_id && file.file_data.active_lock && (
-                file.status == FileContent::Status::WaitContinuationWithId
-             || file.status == FileContent::Status::WaitDataWithId
-            )) {
-                return &file;
-            }
-        }
-        return nullptr;
-    }
-
-    FileContent* find_file_by_file_validator_id(FileValidatorId file_validator_id)
-    {
-        for (auto& file : this->file_contents_list) {
-            if (file.file_data.file_validator_id == file_validator_id) {
-                return &file;
-            }
-        }
-        return nullptr;
-    }
-
-    std::vector<FileContent>& get_file_contents_list() noexcept
-    {
-        return this->file_contents_list;
-    }
-};
-
-struct ClipboardData
-{
-    ClipboardSideData server_data;
-    ClipboardSideData client_data;
-
-    uint32_t requestedFormatId = 0;
-};
-
-struct ClipboardCapabilitiesReceive
-{
-    ClipboardCapabilitiesReceive(ClipboardSideData& side_data, InStream& chunk, const RDPVerbose verbose)
-    {
-        // cCapabilitiesSets(2) +
-        // pad1(2)
-        check_throw(chunk, 4, "CLIPRDR_CAPS", ERR_RDP_DATA_TRUNCATED);
-
-        const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
-        assert(1 == cCapabilitiesSets);
-
-        chunk.in_skip_bytes(2); // pad1(2)
-
-        for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
-            RDPECLIP::CapabilitySetRecvFactory f(chunk);
-
-            if (f.capabilitySetType() == RDPECLIP::CB_CAPSTYPE_GENERAL) {
-                RDPECLIP::GeneralCapabilitySet general_caps;
-
-                general_caps.recv(chunk, f);
-
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    general_caps.log(LOG_INFO);
-                }
-
-                side_data.use_long_format_names =
-                    bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-            }
-        }
-    }
-};
 
 struct FilecontentsRequestSendBack
 {
@@ -459,19 +70,6 @@ struct FilecontentsRequestSendBack
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_stream.get_bytes());
-    }
-};
-
-struct FormatDataRequestReceive
-{
-    FormatDataRequestReceive(ClipboardData & clip_data, const RDPVerbose verbose, InStream& chunk) {
-        RDPECLIP::FormatDataRequestPDU pdu;
-        pdu.recv(chunk);
-        clip_data.requestedFormatId = pdu.requestedFormatId;
-
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            pdu.log();
-        }
     }
 };
 
@@ -558,63 +156,6 @@ struct FormatDataResponseReceiveFileList
         }
     }
 };
-
-struct FormatDataResponseReceive
-{
-    std::string data_to_dump;
-
-    FormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const uint32_t flags)
-    {
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-
-            constexpr size_t const max_length_of_data_to_dump = 256;
-
-            switch (requestedFormatId) {
-    /*
-                case RDPECLIP::CF_TEXT:
-                {
-                    const size_t length_of_data_to_dump = std::min(
-                        chunk.in_remain(), max_length_of_data_to_dump);
-                    data_to_dump.assign(
-                        ::char_ptr_cast(chunk.get_current()),
-                        length_of_data_to_dump);
-                }
-                break;
-    */
-                case RDPECLIP::CF_UNICODETEXT:
-                {
-                    assert(!(chunk.in_remain() & 1));
-
-                    const size_t length_of_data_to_dump = std::min(
-                        chunk.in_remain(), max_length_of_data_to_dump * 2);
-
-                    constexpr size_t size_of_utf8_string =
-                        max_length_of_data_to_dump *
-                            maximum_length_of_utf8_character_in_bytes;
-
-                    uint8_t utf8_string[size_of_utf8_string + 1] {};
-                    const size_t length_of_utf8_string = ::UTF16toUTF8(
-                        chunk.get_current(), length_of_data_to_dump / 2,
-                        utf8_string, size_of_utf8_string);
-                    this->data_to_dump.assign(
-                        ::char_ptr_cast(utf8_string),
-                        ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
-                            length_of_utf8_string - 1 :
-                            length_of_utf8_string));
-                }
-                break;
-
-                case RDPECLIP::CF_LOCALE:
-                {
-                    const uint32_t locale_identifier = chunk.in_uint32_le();
-                    this->data_to_dump = std::to_string(locale_identifier);
-                }
-                break;
-            }
-        }
-    }
-};
-
 
 struct ServerMonitorReadySendBack
 {
@@ -713,26 +254,23 @@ struct FormatListReceive
     }
 };
 
-struct FormatListSendBack
+inline void format_list_send_back(VirtualChannelDataSender* sender)
 {
-    FormatListSendBack(VirtualChannelDataSender* sender)
-    {
-        if (!sender) {
-            return ;
-        }
-
-        RDPECLIP::FormatListResponsePDU pdu;
-
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, pdu.size());
-
-        StaticOutStream<256> out_stream;
-
-        header.emit(out_stream);
-        pdu.emit(out_stream);
-
-        sender->operator()(
-            out_stream.get_offset(),
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_bytes());
+    if (!sender) {
+        return ;
     }
-};
+
+    RDPECLIP::FormatListResponsePDU pdu;
+
+    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, pdu.size());
+
+    StaticOutStream<256> out_stream;
+
+    header.emit(out_stream);
+    pdu.emit(out_stream);
+
+    sender->operator()(
+        out_stream.get_offset(),
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+        out_stream.get_bytes());
+}

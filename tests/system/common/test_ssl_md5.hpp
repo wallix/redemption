@@ -100,7 +100,8 @@ RED_AUTO_TEST_CASE(TestSslMd5)
         md.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        RED_CHECK_MEM_AA(sig, "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc"_av);
+        RED_CHECK(make_array_view(sig) ==
+            "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc"_av);
     }
 
     {
@@ -113,7 +114,8 @@ RED_AUTO_TEST_CASE(TestSslMd5)
         md.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        RED_CHECK_MEM_AA(sig, "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc"_av);
+        RED_CHECK(make_array_view(sig) ==
+            "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc"_av);
     }
 }
 
@@ -127,7 +129,8 @@ RED_AUTO_TEST_CASE(TestSslHmacMd5)
     hmac.final(sig);
     // hexdump96_c(sig, sizeof(sig));
 
-    RED_CHECK_MEM_AA(sig, "\x80\x07\x07\x13\x46\x3e\x77\x49\xb9\x0c\x2d\xc2\x49\x11\xe2\x75"_av);
+    RED_CHECK(make_array_view(sig) ==
+        "\x80\x07\x07\x13\x46\x3e\x77\x49\xb9\x0c\x2d\xc2\x49\x11\xe2\x75"_av);
 }
 
 
@@ -183,7 +186,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0x08, 0xd0, 0xd2, 0x29, 0xfa, 0x4d, 0xe6, 0x98
     };
 
-    RED_CHECK_MEM_AA(sig, NTOWFv2);
+    RED_CHECK(make_array_view(sig) == make_array_view(NTOWFv2));
 
 
     // CHALLENGE_MESSAGE.TargetInfo.MsvAvTimestamp 8-bytes (little endian)
@@ -246,7 +249,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0x01, 0x4a, 0xd0, 0x8c, 0x24, 0xb4, 0x90, 0x74,
         0x39, 0x68, 0xe8, 0xbd, 0x0d, 0x2b, 0x70, 0x10
     };
-    RED_CHECK_MEM_AA(computed_NtProofStr, NtProofStr);
+    RED_CHECK(make_array_view(computed_NtProofStr) == make_array_view(NtProofStr));
 
     // NtChallengeResponse = Concat(NtProofStr, temp)
 
@@ -271,7 +274,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0xf6, 0xbe, 0x00, 0x33, 0x90, 0x20, 0x34, 0xb3,
         0x47, 0xa2, 0xe5, 0xcf, 0x27, 0xf7, 0x3c, 0x43
     };
-    RED_CHECK_MEM_AA(LmChallengeResp, LmChallengeRespExpected);
+    RED_CHECK(make_array_view(LmChallengeResp) == make_array_view(LmChallengeRespExpected));
 
     // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
     //                           NtProofStr)
@@ -299,7 +302,8 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0xb1, 0xd2, 0x45, 0x42, 0x0f, 0x37, 0x9a, 0x0e,
         0xe0, 0xce, 0x77, 0x40, 0x10, 0x8a, 0xda, 0xba
     };
-    RED_CHECK_MEM_AA(EncryptedRandomSessionKeyExpected, EncryptedRandomSessionKey);
+    RED_CHECK(make_array_view(EncryptedRandomSessionKeyExpected) ==
+        make_array_view(EncryptedRandomSessionKey));
 
     static const uint8_t client_sign_magic[] = "session key to client-to-server signing key magic constant";
     static const uint8_t server_sign_magic[] = "session key to server-to-client signing key magic constant";
@@ -318,7 +322,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0xbf, 0x5e, 0x42, 0x76, 0x55, 0x68, 0x38, 0x97,
         0x45, 0xd3, 0xb4, 0x9f, 0x5e, 0x2f, 0xbc, 0x89
     };
-    RED_CHECK_MEM_AA(ClientSignKeyExpected, ClientSignKey);
+    RED_CHECK(make_array_view(ClientSignKeyExpected) == make_array_view(ClientSignKey));
 
     // ServerSignKey = MD5(Concat(ExportedSessionKey,
     //                            "session key to server-to-client signing key magic constant"))
@@ -332,7 +336,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0x9b, 0x3b, 0x64, 0x89, 0xda, 0x84, 0x52, 0x17,
         0xd5, 0xc2, 0x6e, 0x90, 0x16, 0x3b, 0x42, 0x11
     };
-    RED_CHECK_MEM_AA(ServerSignKeyExpected, ServerSignKey);
+    RED_CHECK(make_array_view(ServerSignKeyExpected) == make_array_view(ServerSignKey));
 
     // ClientSealKey = MD5(Concat(ExportedSessionKey,
     //                            "session key to client-to-server sealing key magic constant"))
@@ -346,7 +350,7 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0xca, 0x41, 0xcd, 0x08, 0x48, 0x07, 0x22, 0x6e,
         0x0d, 0x84, 0xc3, 0x88, 0xa5, 0x07, 0xa9, 0x73
     };
-    RED_CHECK_MEM_AA(ClientSealKeyExpected, ClientSealKey);
+    RED_CHECK(make_array_view(ClientSealKeyExpected) == make_array_view(ClientSealKey));
 
     // ServerSealKey = MD5(Concat(ExportedSessionKey,
     //                            "session key to server-to-client sealing key magic constant"))
@@ -360,5 +364,5 @@ RED_AUTO_TEST_CASE(TestNTLMAUTH)
         0x14, 0xb7, 0x1d, 0x06, 0x2c, 0x68, 0x2e, 0xad,
         0x4b, 0x0e, 0x95, 0x23, 0x70, 0x91, 0x98, 0x90
     };
-    RED_CHECK_MEM_AA(ServerSealKeyExpected, ServerSealKey);
+    RED_CHECK(make_array_view(ServerSealKeyExpected) == make_array_view(ServerSealKey));
 }

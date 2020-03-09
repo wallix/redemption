@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TestLineTo)
             01,              // pen width
             0x33, 0x22, 0x11 // pen color
         };
-        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
+        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
 
         InStream in_stream(out_stream.get_bytes());
 
@@ -77,6 +77,6 @@ RED_AUTO_TEST_CASE(TestLineTo)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_lineto);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 }

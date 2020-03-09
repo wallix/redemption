@@ -61,7 +61,7 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
     };
 
-    RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
+    RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
 
     InStream in_stream(out_stream.get_bytes());
 
@@ -77,5 +77,5 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
     //
     // decltype(out_stream) out_stream2;
     // cmd.emit(24, out_stream2, ci.bitmap_cache_version, use_bitmap_comp, ci.use_compact_packets);
-    // RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+    // RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
 }

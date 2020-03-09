@@ -29,6 +29,8 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/channel_names.hpp"
 #include "core/session_reactor.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "core/RDP/clipboard/format_list_serialize.hpp"
 
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 public:

@@ -638,9 +638,18 @@ int main(int ac, char** av)
 
     CryptoContext cctx;
     Fstat fstat;
-    InCryptoTransport infile(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-    infile.open(av[1]);
 
-    Mwrm3FileReader reader{infile};
-    return mwrm3_text_viewer(reader);
+    try
+    {
+        InCryptoTransport infile(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
+        infile.open(av[1]);
+
+        Mwrm3FileReader reader{infile};
+        return mwrm3_text_viewer(reader);
+    }
+    catch (Error const& e)
+    {
+        std::cerr << e.errmsg() << "\n";
+        return 1;
+    }
 }

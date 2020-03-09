@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
     StaticOutStream<1024> stream;
     SEC::SecExchangePacket_Send sec(stream, make_array_view(client_encrypted_key));
 
-    RED_CHECK_MEM(sec_pkt, stream.get_bytes());
+    RED_CHECK(sec_pkt == stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
     RED_CHECK_EQUAL(sec_pkt.size() - 16, sec.payload.get_capacity());
     RED_CHECK_EQUAL(64, sec.payload.get_capacity());
     // We won't compare padding
-    RED_CHECK_MEM(sec_pkt.subarray(8, sec_pkt.size()-16), sec.payload.remaining_bytes());
+    RED_CHECK(sec_pkt.subarray(8, sec_pkt.size()-16) == sec.payload.remaining_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         /* 0130 */ "\x00\x00\x64\x00\x00\x00"
         ""_av
         ;
-    RED_CHECK_MEM(expected, sec.payload.remaining_bytes());
+    RED_CHECK(expected == sec.payload.remaining_bytes());
 }
 
 

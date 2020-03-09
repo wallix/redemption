@@ -132,7 +132,7 @@ std::ostream& operator<<(std::ostream& out, WorkingFileBase const& wf)
 
 WorkingFile::WorkingFile(std::string_view name)
 : WorkingFileBase(suffix_by_test({}))
-, start_error_count(RED_ERROR_COUNT)
+, start_error_count(RED_ERROR_COUNT())
 {
     recursive_delete_directory(this->c_str());
     if (-1 == mkdir(this->c_str(), 0755) && errno != EEXIST) {
@@ -145,7 +145,7 @@ WorkingFile::WorkingFile(std::string_view name)
 WorkingFile::~WorkingFile()
 {
     if (!this->is_removed && ! std::uncaught_exceptions()) {
-        if (this->start_error_count == RED_ERROR_COUNT) {
+        if (this->start_error_count == RED_ERROR_COUNT()) {
             RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
             this->filename_.resize(this->filename_.find_last_of('/'));
             rmdir(this->filename_.c_str());
@@ -227,7 +227,7 @@ std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
 
 WorkingDirectory::WorkingDirectory(std::string_view name)
 : dirname_(suffix_by_test(name))
-, start_error_count_(RED_ERROR_COUNT)
+, start_error_count_(RED_ERROR_COUNT())
 {
     recursive_delete_directory(this->dirname_);
     if (-1 == mkdir(this->dirname_, 0755) && errno != EEXIST) {
@@ -435,13 +435,13 @@ std::string WorkingDirectory::unmached_files()
 
 WorkingDirectory::~WorkingDirectory() noexcept(false)
 {
-    if (!this->is_checked_ && this->start_error_count_ == RED_ERROR_COUNT) {
+    if (!this->is_checked_ && this->start_error_count_ == RED_ERROR_COUNT()) {
         WD_ERROR_S("unchecked entries");
     }
 
     if (!this->has_error_
      && !std::uncaught_exceptions()
-     && this->start_error_count_ == RED_ERROR_COUNT
+     && this->start_error_count_ == RED_ERROR_COUNT()
     ) {
         recursive_delete_directory(this->dirname_.c_str());
     }

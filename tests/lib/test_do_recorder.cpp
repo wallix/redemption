@@ -71,14 +71,14 @@ int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme
 } // anonymous namespace
 
 #define TEST_DO_MAIN(argv, res_result, hmac_key, trace_fn, output, output_error) do { \
-    int argc = sizeof(argv)/sizeof(char*);                                           \
-    tu::ostream_buffered cout_buf;                                                   \
-    tu::ostream_buffered cerr_buf(std::cerr);                                        \
+    int argc = sizeof(argv)/sizeof(char*);                                            \
+    tu::ostream_buffered cout_buf;                                                    \
+    tu::ostream_buffered cerr_buf(std::cerr);                                         \
     int res = do_main(argc, argv, hmac_key, trace_fn);                                \
-    EVP_cleanup();                                                                   \
-    RED_CHECK_SMEM(cout_buf.str(), output);                                          \
-    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                    \
-    RED_TEST(res_result == res);                                                     \
+    EVP_cleanup();                                                                    \
+    RED_CHECK(cout_buf.str() == output);                                              \
+    RED_CHECK(cerr_buf.str() == output_error);                                        \
+    RED_TEST(res_result == res);                                                      \
 } while (0)
 
 // tests/fixtures/verifier/recorded/toto@10.10.43.13\,Administrateur@QA@cible\,20160218-181658\,wab-5-0-0.yourdomain\,7681.mwrm

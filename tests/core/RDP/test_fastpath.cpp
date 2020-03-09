@@ -104,8 +104,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
-    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_offset(2));
+    RED_CHECK(out_s.get_bytes() == payload.first(2));
+    RED_CHECK(out_payload.get_bytes() == payload.from_offset(2));
 }
 
 struct mppc_dec_error : rdp_mppc_dec
@@ -195,8 +195,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
-    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_offset(2));
+    RED_CHECK(out_s.get_bytes() == payload.first(2));
+    RED_CHECK(out_payload.get_bytes() == payload.from_offset(2));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
@@ -349,8 +349,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
         , decrypt
         );
 
-    RED_CHECK_MEM(SvrUpdPDU_s.get_bytes(), payload.first(2)); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-    RED_CHECK_MEM(out_s.get_bytes(), payload.from_offset(2)); // Fast-Path Update (TS_FP_UPDATE)
+    RED_CHECK(SvrUpdPDU_s.get_bytes() == payload.first(2)); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+    RED_CHECK(out_s.get_bytes() == payload.from_offset(2)); // Fast-Path Update (TS_FP_UPDATE)
 
     RED_CHECK_EQUAL(0, in_su.payload.in_remain());
 }

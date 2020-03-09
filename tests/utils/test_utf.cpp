@@ -33,18 +33,10 @@
 using namespace std::string_view_literals;
 
 
-RED_AUTO_TEST_CASE(TestUTF8Len_2)
-{
-    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    RED_CHECK_EQUAL(11u, UTF8Len(source));
-}
-
 RED_AUTO_TEST_CASE(TestUTF8Len)
 {
-    uint8_t source[] = { 'a', 0xC3, 0xA9, 0};
-
-    RED_CHECK_EQUAL(2u, UTF8Len(source));
+    RED_CHECK_EQUAL(2u, UTF8Len("a\xC3\xA9"));
+    RED_CHECK_EQUAL(11u, UTF8Len("abcedef\xC3\xA9\xC3\xA7\xC3\xA0@"));
 }
 
 RED_AUTO_TEST_CASE(TestUTF16ByteLen)
@@ -60,37 +52,30 @@ RED_AUTO_TEST_CASE(TestUTF16ToUTF8_buf)
 {
     uint8_t source[24];
     auto buf = make_array_view(source);
-    RED_CHECK_SMEM(""_av, UTF16toUTF8_buf("\0\0"_av, buf));
-    RED_CHECK_SMEM(""_av, UTF16toUTF8_buf("\0"_av, buf));
-    RED_CHECK_SMEM("abc"_av, UTF16toUTF8_buf("a\0b\0c\0\0\0"_av, buf));
-    RED_CHECK_SMEM("abc"_av, UTF16toUTF8_buf("a\0b\0c\0\0\0\0"_av, buf));
-    RED_CHECK_SMEM("a\xc3\xa9\xc3\xa7\xc3\xa0"_av, UTF16toUTF8_buf("a\0\xe9\0\xe7\0\xe0\0"_av, buf));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8LenChar)
-{
-    uint8_t source[] = { 'a', 0xC3, 0xA9, 0};
-
-    RED_CHECK_EQUAL(2u, UTF8Len(source));
+    RED_CHECK(""_av == UTF16toUTF8_buf("\0\0"_av, buf));
+    RED_CHECK(""_av == UTF16toUTF8_buf("\0"_av, buf));
+    RED_CHECK("abc"_av == UTF16toUTF8_buf("a\0b\0c\0\0\0"_av, buf));
+    RED_CHECK("abc"_av == UTF16toUTF8_buf("a\0b\0c\0\0\0\0"_av, buf));
+    RED_CHECK("a\xc3\xa9\xc3\xa7\xc3\xa0"_av == UTF16toUTF8_buf("a\0\xe9\0\xe7\0\xe0\0"_av, buf));
 }
 
 RED_AUTO_TEST_CASE(TestUTF8InsertUtf16)
 {
     uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f'};
     RED_CHECK(UTF8InsertUtf16(make_array_view(source), 8, 'x'));
-    RED_CHECK_SMEM(make_array_view(source).first(9), "xabcedef\x00"_av);
+    RED_CHECK(make_array_view(source).first(9) == "xabcedef\x00"_av);
     RED_CHECK(!UTF8InsertUtf16(make_array_view(source).first(9), 9, 'y'));
-    RED_CHECK_SMEM(make_array_view(source).first(9), "xabcedef\x00"_av);
+    RED_CHECK(make_array_view(source).first(9) == "xabcedef\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos0)
 {
     uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f'};
     UTF8RemoveOne(make_array_view(source).first(8));
-    RED_CHECK_SMEM(make_array_view(source).first(8), "bcedef\x00\x00"_av);
+    RED_CHECK(make_array_view(source).first(8) == "bcedef\x00\x00"_av);
     source[7] = 'x';
     UTF8RemoveOne(make_array_view(source).drop_front(6));
-    RED_CHECK_SMEM(make_array_view(source).first(9), "bcedef\x00x\00"_av);
+    RED_CHECK(make_array_view(source).first(9) == "bcedef\x00x\00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestUTF8_UTF16)
@@ -193,17 +178,11 @@ RED_AUTO_TEST_CASE(TestUTF8toUnicodeIterator) {
 
 RED_AUTO_TEST_CASE(TestIsUtf8String) {
     RED_CHECK(is_utf8_string(byte_ptr_cast("abcd"), -1));
-
     RED_CHECK(is_utf8_string(byte_ptr_cast("Téléphone"), -1));
-
     RED_CHECK(is_utf8_string(byte_ptr_cast("T\xc3\x9al\xc3\x9aphone"), -1));
-
     RED_CHECK(!is_utf8_string(byte_ptr_cast("T\xc3\x9al\xc3""aphone"), -1));
-
     RED_CHECK(is_utf8_string(byte_ptr_cast("T\xc3\x9al\xc3""aphone"), 4));
-
     RED_CHECK(!is_utf8_string(byte_ptr_cast("T\xe9l\xe9phone"), -1));
-
     RED_CHECK(is_utf8_string(byte_ptr_cast("Téléphone"), 10));
 }
 
@@ -255,7 +234,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16)
         Latin1toUTF16({latin1_src, number_of_characters+1}, utf16_dst, sizeof(utf16_dst)),
         utf16_chars_count + 2);
 
-    RED_CHECK_SMEM(make_array_view(utf16_dst, utf16_chars_count + 2), utf16_expected);
+    RED_CHECK(make_array_view(utf16_dst, utf16_chars_count + 2) == utf16_expected);
 
     uint8_t utf8_dst[16]{};
 
@@ -274,12 +253,12 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
 
     uint8_t utf16_dst[32];
 
-    RED_CHECK_MEM(array_view(utf16_dst, Latin1toUTF16(latin1_src, utf16_dst, sizeof(utf16_dst))),
+    RED_CHECK(array_view(utf16_dst, Latin1toUTF16(latin1_src, utf16_dst, sizeof(utf16_dst))) ==
         utf16_expected);
 
     uint8_t utf8_dst[16];
 
-    RED_CHECK_MEM(array_view(utf8_dst, UTF16toUTF8(utf16_dst, latin1_src.size() * 2, utf8_dst, sizeof(utf8_dst))),
+    RED_CHECK(array_view(utf8_dst, UTF16toUTF8(utf16_dst, latin1_src.size() * 2, utf8_dst, sizeof(utf8_dst))) ==
         "100 €\0"_av); /* '€' => 0xE2 0x82 0xAC */
 }
 
@@ -297,12 +276,12 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
 
     uint8_t utf16_dst[64];
 
-    RED_CHECK_MEM(array_view(utf16_dst, Latin1toUTF16(latin1_src, utf16_dst, sizeof(utf16_dst))),
+    RED_CHECK(array_view(utf16_dst, Latin1toUTF16(latin1_src, utf16_dst, sizeof(utf16_dst))) ==
         utf16_expected);
 
     uint8_t utf8_dst[32];
 
-    RED_CHECK_MEM(array_view(utf8_dst, UTF16toUTF8(utf16_dst, latin1_src.size() * 2, utf8_dst, sizeof(utf8_dst))),
+    RED_CHECK(array_view(utf8_dst, UTF16toUTF8(utf16_dst, latin1_src.size() * 2, utf8_dst, sizeof(utf8_dst))) ==
         "100 €\r\ntrapézoïdal\0"_av);
 }
 
@@ -317,28 +296,22 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF8) {
 
     uint8_t utf8_dst[64];
 
-    RED_CHECK_MEM(
-        array_view(utf8_dst, Latin1toUTF8(byte_ptr_cast(latin1_src.data()), latin1_src.size(), utf8_dst, sizeof(utf8_dst))),
+    RED_CHECK(
+        array_view(utf8_dst, Latin1toUTF8(byte_ptr_cast(latin1_src.data()), latin1_src.size(), utf8_dst, sizeof(utf8_dst))) ==
         utf8_expected);
 }
 
 RED_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast(""), 6), 0u);
-
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 6), 4u);
-
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 3), 2u);
-
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 1), 0u);
-
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 0), 0u);
 }
 
 RED_AUTO_TEST_CASE(TestUTF16StrLen) {
     RED_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x00\x00")), 0u);
-
     RED_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00")), 3u);
-
     RED_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00\x31\x00\x30\x00\x30\x00")), 3u);
 }
 
@@ -377,7 +350,7 @@ RED_AUTO_TEST_CASE(TestUtf16UpperCase)
                     ""_av;
     UTF16Upper(test, number_of_elements);
 
-    RED_CHECK_MEM(make_array_view(test), expected);
+    RED_CHECK(make_array_view(test) == expected);
 }
 
 
@@ -434,9 +407,7 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
 RED_AUTO_TEST_CASE(TestUTF8StrLenInChar)
 {
     RED_CHECK_EQUAL(4u, UTF8StrLenInChar(byte_ptr_cast("abcd")));
-
     RED_CHECK_EQUAL(0u, UTF8StrLenInChar(byte_ptr_cast("")));
-
     RED_CHECK_EQUAL(4u, UTF8StrLenInChar("éric"));
     RED_CHECK_EQUAL(4u, UTF8StrLenInChar("€uro"));
 }
@@ -444,8 +415,6 @@ RED_AUTO_TEST_CASE(TestUTF8StrLenInChar)
 RED_AUTO_TEST_CASE(Testis_ASCII_string)
 {
     RED_CHECK(is_ASCII_string(byte_ptr_cast("abcd")));
-
     RED_CHECK(!is_ASCII_string(byte_ptr_cast("éric")));
-
     RED_CHECK(is_ASCII_string(byte_ptr_cast("")));
 }

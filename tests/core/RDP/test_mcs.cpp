@@ -89,8 +89,8 @@ RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     RED_CHECK_EQUAL(65535, mcs.maximumParameters.maxMCSPDUsize);
     RED_CHECK_EQUAL(2, mcs.maximumParameters.protocolVersion);
 
-    RED_CHECK_MEM(array_view(mcs.callingDomainSelector, mcs.len_callingDomainSelector), "\x01"_av);
-    RED_CHECK_MEM(array_view(mcs.calledDomainSelector, mcs.len_calledDomainSelector), "\x01"_av);
+    RED_CHECK(array_view(mcs.callingDomainSelector, mcs.len_callingDomainSelector) == "\x01"_av);
+    RED_CHECK(array_view(mcs.calledDomainSelector, mcs.len_calledDomainSelector) == "\x01"_av);
 
     RED_CHECK(mcs.upwardFlag);
 
@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
         ""_av
     ;
 
-    RED_CHECK_MEM(expected, stream.get_bytes());
+    RED_CHECK(expected == stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
@@ -212,7 +212,7 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
@@ -273,7 +273,7 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
@@ -292,7 +292,7 @@ RED_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
@@ -323,7 +323,7 @@ RED_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
@@ -349,7 +349,7 @@ RED_AUTO_TEST_CASE(TestSend_AttachUserRequest)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
@@ -371,7 +371,7 @@ RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
         "\x00"
         ""_av
     ;
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
@@ -399,7 +399,7 @@ RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
@@ -430,7 +430,7 @@ RED_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
@@ -463,7 +463,7 @@ RED_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
         ""_av
     ;
 
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
@@ -498,7 +498,7 @@ RED_AUTO_TEST_CASE(TestSend_SendDataRequest)
         "\x81\x7b" // len 379
         ""_av
     ;
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
@@ -561,7 +561,7 @@ RED_AUTO_TEST_CASE(TestSend_SendDataIndication)
         "\x81\x7b" // len 379
         ""_av
     ;
-    RED_CHECK_MEM(stream.get_bytes(), expected);
+    RED_CHECK(stream.get_bytes() == expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_SendDataIndication)

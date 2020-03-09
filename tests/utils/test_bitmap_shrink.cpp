@@ -99,5 +99,5 @@ RED_AUTO_TEST_CASE(TestSimpleShrink)
         scaled_height, height,
         rowsize);
 
-    RED_CHECK_MEM_AA(expected, scaled_buffer);
+    RED_CHECK(make_array_view(expected) == make_array_view(scaled_buffer));
 }

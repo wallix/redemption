@@ -35,12 +35,12 @@ RED_AUTO_TEST_CASE(TestSendShareControlAndData)
     sdata.emit_begin(PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     sdata.emit_end();
 
-    RED_CHECK_MEM(stream.get_bytes(), "\x78\x56\x34\x12\x00\x02\x12\x00\x02\x00\x00\x00"_av);
+    RED_CHECK(stream.get_bytes() == "\x78\x56\x34\x12\x00\x02\x12\x00\x02\x00\x00\x00"_av);
 
     StaticOutStream<256> sctrl_header;
     ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, 1, stream.get_offset());
 
-    RED_CHECK_MEM(sctrl_header.get_bytes(), "\x12\x00\x17\x00\x01\x00"_av);
+    RED_CHECK(sctrl_header.get_bytes() == "\x12\x00\x17\x00\x01\x00"_av);
 
     // concatenate Data and control before checking read
     StaticOutStream<65536> stream2;

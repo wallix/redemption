@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
             RED_REQUIRE_GT(res, 0);
             total += size_t(res);
         }
-        RED_CHECK_MEM(writable_bytes_view(buf, 31), "We write, and again, and so on."_av);
+        RED_CHECK(writable_bytes_view(buf, 31) == "We write, and again, and so on."_av);
         RED_CHECK_EQ(scytale_reader_close(handle), 0);
 
         RED_CHECK_EQ(scytale_reader_get_error_message(handle), "No error"sv);
@@ -225,7 +225,7 @@ RED_AUTO_TEST_CASE(TestscytaleReaderOpenAutoDetectScheme)
 
     char buf[20]{};
     RED_CHECK_EQ(scytale_reader_read(handle, byte_ptr_cast(buf), sizeof(buf)), 20);
-    RED_CHECK_EQUAL_RANGES(buf, cstr_array_view("800 600\n\n\n/var/wab/r"));
+    RED_CHECK(make_array_view(buf) == "800 600\n\n\n/var/wab/r"_av);
 
     scytale_reader_close(handle);
     scytale_reader_delete(handle);
@@ -418,7 +418,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
     })
     { WorkingDirectory wd(data.name); RED_TEST_CONTEXT("wd: " << wd.dirname()) {
 
-        auto count_error = RED_ERROR_COUNT;
+        auto count_error = RED_ERROR_COUNT();
 
         auto wd_hash = wd.create_subdirectory("hash");
         auto wd_record = wd.create_subdirectory("record");
@@ -459,7 +459,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         RED_REQUIRE(content.size() >= hres.size());
         RED_TEST(content.substr(0, hres.size()) == hres);
 
-        RED_CHECK_MEM_FILE_CONTENTS(file2path, data.tfl2_content);
+        RED_CHECK_FILE_CONTENTS(file2path, data.tfl2_content);
 
         RED_TEST(0 == scytale_fdx_writer_close(fdx));
         RED_TEST(1 == scytale_fdx_writer_close(fdx)); // double close
@@ -473,7 +473,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_TEST(0 == scytale_fdx_writer_delete(fdx));
 
-        RED_CHECK_MEM_FILE_CONTENTS(fdxpath, data.fdx_content);
+        RED_CHECK_FILE_CONTENTS(fdxpath, data.fdx_content);
 
         if (data.has_encryption)
         {
@@ -511,7 +511,7 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
 
         RED_CHECK_WORKSPACE(wd);
 
-        if (count_error != RED_ERROR_COUNT) {
+        if (count_error != RED_ERROR_COUNT()) {
             break;
         }
     } }

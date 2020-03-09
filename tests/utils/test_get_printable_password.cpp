@@ -31,13 +31,13 @@ RED_AUTO_TEST_CASE(TestPrintable)
     auto hidden = "<hidden>"_av;
     auto null = "<null>"_av;
 
-    RED_CHECK_SMEM(hidden, get_printable_password(pass, 0));
-    RED_CHECK_SMEM(hidden, get_printable_password(pass, 1));
-    RED_CHECK_SMEM(pass, get_printable_password(pass, 2));
-    RED_CHECK_SMEM(hidden, get_printable_password(pass, 3));
+    RED_CHECK(hidden == get_printable_password(pass, 0));
+    RED_CHECK(hidden == get_printable_password(pass, 1));
+    RED_CHECK(pass == get_printable_password(pass, 2));
+    RED_CHECK(hidden == get_printable_password(pass, 3));
 
-    RED_CHECK_SMEM(hidden, get_printable_password(empty, 0));
-    RED_CHECK_SMEM(null, get_printable_password(empty, 1));
-    RED_CHECK_SMEM(empty, get_printable_password(empty, 2));
-    RED_CHECK_SMEM(hidden, get_printable_password(empty, 3));
+    RED_CHECK(hidden == get_printable_password(empty, 0));
+    RED_CHECK(null == get_printable_password(empty, 1));
+    RED_CHECK(empty == get_printable_password(empty, 2));
+    RED_CHECK(hidden == get_printable_password(empty, 3));
 }

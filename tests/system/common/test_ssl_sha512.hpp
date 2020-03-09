@@ -100,8 +100,8 @@ RED_AUTO_TEST_CASE(TestSslSha512)
         sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        RED_CHECK_MEM_AA(
-            sig,
+        RED_CHECK(
+            make_array_view(sig) ==
             "\x78\xcd\x2d\xe8\xa7\xd0\xe9\xd6"
             "\xa5\xc6\x10\x6b\x7a\xd5\x8a\x6d"
             "\xf2\x94\x3d\xbe\x06\x7d\x12\xdb"
@@ -123,8 +123,8 @@ RED_AUTO_TEST_CASE(TestSslSha512)
         sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        RED_CHECK_MEM_AA(
-            sig,
+        RED_CHECK(
+            make_array_view(sig) ==
             "\x78\xcd\x2d\xe8\xa7\xd0\xe9\xd6"
             "\xa5\xc6\x10\x6b\x7a\xd5\x8a\x6d"
             "\xf2\x94\x3d\xbe\x06\x7d\x12\xdb"
@@ -148,8 +148,8 @@ RED_AUTO_TEST_CASE(TestSslHmacSHA512)
 
     RED_CHECK_EQUAL(SslSha512::DIGEST_LENGTH, 64);
 
-    RED_CHECK_MEM_AA(
-        sig,
+    RED_CHECK(
+        make_array_view(sig) ==
         "\xb4\x2a\xf0\x90\x57\xba\xc1\xe2\xd4\x17\x08\xe4\x8a\x90\x2e\x09"
         "\xb5\xff\x7f\x12\xab\x42\x8a\x4f\xe8\x66\x53\xc7\x3d\xd2\x48\xfb"
         "\x82\xf9\x48\xa5\x49\xf7\xb7\x91\xa5\xb4\x19\x15\xee\x4d\x1e\xc3"

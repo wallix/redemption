@@ -64,7 +64,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 1);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -120,7 +120,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -154,7 +154,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -170,7 +170,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -186,7 +186,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -229,7 +229,7 @@ RED_AUTO_TEST_CASE(Test2008R2)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
     }
 }
 
@@ -259,7 +259,7 @@ RED_AUTO_TEST_CASE(TestNewOCR2)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -277,7 +277,7 @@ RED_AUTO_TEST_CASE(TestNewOCR2)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -304,7 +304,7 @@ RED_AUTO_TEST_CASE(TestNewOCR3)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -331,7 +331,7 @@ RED_AUTO_TEST_CASE(TestNewOCR4)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -348,7 +348,7 @@ RED_AUTO_TEST_CASE(TestNewOCR4)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -375,7 +375,7 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -391,7 +391,7 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -418,7 +418,7 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012_VNC)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -445,7 +445,7 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -461,7 +461,7 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -477,7 +477,7 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
 
         out_titles.clear();
     }
@@ -505,7 +505,7 @@ RED_AUTO_TEST_CASE(TestOCRBug)
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+        RED_CHECK(expected[idx_best] == filter.get_title());
     }
 }
 
@@ -533,7 +533,7 @@ RED_DATA_TEST_CASE(TestNewOCRRussian, (std::array{
 
     auto idx_best = filter.extract_best_title(out_titles);
     RED_CHECK_EQUAL(idx_best, 0);
-    RED_CHECK_SMEM(expected[idx_best], filter.get_title());
+    RED_CHECK(expected[idx_best] == filter.get_title());
 }
 
 RED_AUTO_TEST_CASE(TestBogusOCR)
@@ -554,5 +554,5 @@ RED_AUTO_TEST_CASE(TestBogusOCR)
 
     auto idx_best = filter.extract_best_title(out_titles);
     RED_CHECK_EQUAL(idx_best, 0);
-    RED_CHECK_SMEM_AA(expected, filter.get_title());
+    RED_CHECK(expected == filter.get_title());
 }

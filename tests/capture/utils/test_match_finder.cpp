@@ -161,8 +161,8 @@ RED_AUTO_TEST_CASE(report_notify)
         void log6(LogId id, const timeval /*time*/, KVList kv_list) override {
             RED_CHECK(id == LogId::NOTIFY_PATTERN_DETECTED);
             RED_REQUIRE(kv_list.size() > 0);
-            RED_CHECK_SMEM(kv_list[0].key, "pattern"_av);
-            RED_CHECK_SMEM(kv_list[0].value, "$kbd:c| cacao"_av);
+            RED_CHECK(kv_list[0].key == "pattern"_av);
+            RED_CHECK(kv_list[0].value == "$kbd:c| cacao"_av);
             this->has_log = true;
         }
 
@@ -186,8 +186,8 @@ RED_AUTO_TEST_CASE(report_kill)
         void log6(LogId id, const timeval /*time*/, KVList kv_list) override {
             RED_CHECK(id == LogId::KILL_PATTERN_DETECTED);
             RED_REQUIRE(kv_list.size() > 0);
-            RED_CHECK_SMEM(kv_list[0].key, "pattern"_av);
-            RED_CHECK_SMEM(kv_list[0].value, "$ocr:c| cacao"_av);
+            RED_CHECK(kv_list[0].key == "pattern"_av);
+            RED_CHECK(kv_list[0].value == "$ocr:c| cacao"_av);
             this->has_log = true;
         }
 

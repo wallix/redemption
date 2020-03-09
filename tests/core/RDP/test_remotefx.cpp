@@ -757,7 +757,7 @@ static void checkFuzzyCompareImage(const uint32_t *refImage, const uint8_t *img,
         RED_TEST(G == ((*refImage >> 8 ) & 0xFF) +- 1_v);
         RED_TEST(B == ((*refImage >> 0 ) & 0xFF) +- 1_v);
 
-        if (RED_ERROR_COUNT > 0) return;
+        if (RED_ERROR_COUNT() > 0) return;
     }
 }
 

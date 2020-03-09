@@ -31,7 +31,7 @@
     type.receive(in_stream);                                                       \
     RED_CHECK_EQUAL(in_data.size(), type.size());                                  \
     type.emit(out_stream);                                                         \
-    RED_CHECK_MEM(out_stream.get_bytes(), in_data);                                \
+    RED_CHECK(out_stream.get_bytes() == in_data);                                  \
 }
 
 FSCC_TEST(FileBothDirectoryInformation, 1,

@@ -239,7 +239,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
                     RED_REQUIRE_EQ(in.size(), this->expected_license_data.size());
 
-                    RED_CHECK_MEM(in, this->expected_license_data);
+                    RED_CHECK(in == this->expected_license_data);
 
                     return true;
                 }
