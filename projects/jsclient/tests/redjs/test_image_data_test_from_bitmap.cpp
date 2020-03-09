@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestImageData16)
 {
     redjs::ImageData img = create_image_4x_2y(encode_color16());
 
-    RED_CHECK_MEM(make_array_view(img.data(), img.size()),
+    RED_CHECK(make_array_view(img.data(), img.size()) ==
         "\x31\x00\xad\xff\x00\xaa\x31\xff\xad\x30\x00\xff\x39\x08\x00\xff"
         "\x00\x00\xff\xff\x00\xff\x00\xff\xff\x00\x00\xff\x52\x34\x10\xff"_av
     );
@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE(TestImageData24)
 {
     redjs::ImageData img = create_image_4x_2y(encode_color24());
 
-    RED_CHECK_MEM(make_array_view(img.data(), img.size()),
+    RED_CHECK(make_array_view(img.data(), img.size()) ==
         "\xaa\x00\x33\xff\x33\xaa\x00\xff\x00\x33\xaa\xff\x03\x0a\x3a\xff"
         "\xff\x00\x00\xff\x00\xff\x00\xff\x00\x00\xff\xff\x12\x34\x56\xff"_av
     );
