@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     }
 
     auto s = RED_REQUIRE_GET_FILE_CONTENTS(wf);
-    RED_CHECK_MEM(s,
+    RED_CHECK(s ==
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""abc"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00""defg"
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""123"
@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
 
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
-                    RED_CHECK_MEM(in.first(3), make_array_view(buf, 3));
+                    RED_CHECK(in.first(3) == make_array_view(buf, 3));
                     in = in.from_offset(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;
@@ -194,7 +194,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
                     io_fd_set(fd, rfd);
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
-                    RED_CHECK_MEM(in.first(3), make_array_view(buf, 3));
+                    RED_CHECK(in.first(3) == make_array_view(buf, 3));
                     in = in.from_offset(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;

@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestLogProxySiem)
     LOG_PROXY_SIEM("TAC", "test 2");
     log_proxy::set_user("Banana");
     LOG_PROXY_SIEM("ACT", "test 3");
-    RED_CHECK_MEM(log_buf.buf(),
+    RED_CHECK(log_buf.buf() ==
         R"([rdpproxy] psid="42" user="" type="CAT" test 1)""\n"
         R"([rdpproxy] psid="L33t" type="INCOMING_CONNECTION" src_ip="universe" src_port="1234")""\n"
         R"([rdpproxy] psid="L33t" user="" type="TAC" test 2)""\n"

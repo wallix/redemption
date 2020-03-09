@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         // internal: next()
         RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer + 5, 10));
 
-        RED_CHECK_SMEM_AA(buffer, "AAAAXBBBBXCCCCX"_av);
+        RED_CHECK(make_array_view(buffer) == "AAAAXBBBBXCCCCX"_av);
     }
 }
 

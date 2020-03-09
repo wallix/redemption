@@ -606,7 +606,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
                     RED_REQUIRE((it != format_ref.end()));
                     RED_CHECK(format_id == it->format_id());
                     Cliprdr::FormatName format_name(0, name);
-                    RED_CHECK_SMEM(format_name.utf8_name(), it->utf8_name());
+                    RED_CHECK(format_name.utf8_name() == it->utf8_name());
                     ++it;
                 }
             });

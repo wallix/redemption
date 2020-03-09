@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -231,7 +231,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -300,7 +300,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -339,7 +339,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -378,7 +378,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -413,7 +413,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -445,7 +445,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        // TODO RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        // TODO RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
 
@@ -483,7 +483,7 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
 

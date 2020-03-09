@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
     FilecontentsRequestSendBack sender(RDPECLIP::FILECONTENTS_SIZE, streamID, &data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-    RED_CHECK_MEM(data_sender.streams[0].av(),
+    RED_CHECK(data_sender.streams[0].av() ==
         "\x09\x00\x02\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00"
         ""_av);
@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
     FormatDataRequestSendBack sender(&data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-    RED_CHECK_MEM(data_sender.streams[0].av(), "\x05\x00\x02\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(data_sender.streams[0].av() == "\x05\x00\x02\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
@@ -104,9 +104,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
 
     RED_CHECK(received.file_list_format_id == client_file_list_format_id);
     RED_REQUIRE(!!(format_name = format_name_inventory.find(RDPECLIP::CF_TEXT)));
-    RED_CHECK_SMEM(format_name->utf8_name(), ""_av);
+    RED_CHECK(format_name->utf8_name() == ""_av);
     RED_REQUIRE(!!(format_name = format_name_inventory.find(client_file_list_format_id)));
-    RED_CHECK_SMEM(format_name->utf8_name(), Cliprdr::formats::file_group_descriptor_w.ascii_name);
+    RED_CHECK(format_name->utf8_name() == Cliprdr::formats::file_group_descriptor_w.ascii_name);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
     format_list_send_back(&data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-    RED_CHECK_MEM(data_sender.streams[0].av(), "\x03\x00\x01\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(data_sender.streams[0].av() == "\x03\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
@@ -127,11 +127,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
     ServerMonitorReadySendBack pdu(RDPVerbose::none, use_long_format_name, &sender);
 
     RED_REQUIRE_EQUAL(sender.index, 2);
-    RED_CHECK_MEM(sender.streams[0].av(),
+    RED_CHECK(sender.streams[0].av() ==
         "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00"
         "\x01\x00\x00\x00\x02\x00\x00\x00"
         ""_av);
-    RED_CHECK_MEM(sender.streams[1].av(),
+    RED_CHECK(sender.streams[1].av() ==
         "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 

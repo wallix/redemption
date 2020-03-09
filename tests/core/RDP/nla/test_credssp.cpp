@@ -436,10 +436,10 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.domainHint, domainHint);
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.cspData.keySpec, keySpec);
 
-    RED_CHECK_SMEM(ts_cred.smartcardCreds.cspData.cardName, cardName);
-    RED_CHECK_SMEM(ts_cred.smartcardCreds.cspData.readerName, readerName);
-    RED_CHECK_SMEM(ts_cred.smartcardCreds.cspData.containerName, containerName);
-    RED_CHECK_SMEM(ts_cred.smartcardCreds.cspData.cspName, cspName);
+    RED_CHECK(ts_cred.smartcardCreds.cspData.cardName == cardName);
+    RED_CHECK(ts_cred.smartcardCreds.cspData.readerName == readerName);
+    RED_CHECK(ts_cred.smartcardCreds.cspData.containerName == containerName);
+    RED_CHECK(ts_cred.smartcardCreds.cspData.cspName == cspName);
 }
 
 //rdpCredssp - Client Authentication : Sending Authentication Token

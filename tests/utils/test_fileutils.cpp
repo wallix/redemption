@@ -61,7 +61,7 @@ RED_AUTO_TEST_CASE(TestBasename)
         RED_CHECK(basename(data.filename) == data.basename);
         size_t len = 0;
         char const * base = basename_len(data.filename, len);
-        RED_CHECK_SMEM(make_array_view(base, len), data.basename);
+        RED_CHECK(make_array_view(base, len) == data.basename);
     }
 }
 

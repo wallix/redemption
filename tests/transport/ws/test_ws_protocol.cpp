@@ -25,7 +25,7 @@
 
 #include "transport/ws/ws_protocol.hpp"
 
-inline std::string av2str(bytes_view av)
+static inline std::string av2str(bytes_view av)
 {
     return std::string(av.as_charp(), av.size());
 }
@@ -47,13 +47,13 @@ RED_AUTO_TEST_CASE(TestWsHttpHeader)
     RED_CHECK(R::Partial == ws_http_header.extract("a\r\n"_av));
     RED_CHECK(R::Completed == ws_http_header.extract("a\r\n\r\n"_av));
     RED_CHECK(!ws_http_header.has_key());
-    RED_CHECK_SMEM(ws_http_header.send_header(av2str), http_header1);
+    RED_CHECK(ws_http_header.send_header(av2str) == http_header1);
 
     RED_CHECK(R::Partial == ws_http_header.extract("ds\r\n"_av));
     RED_CHECK(R::Partial == ws_http_header.extract("k: v\r\n"_av));
     RED_CHECK(R::Completed == ws_http_header.extract("k: v\r\n\r\n"_av));
     RED_CHECK(!ws_http_header.has_key());
-    RED_CHECK_SMEM(ws_http_header.send_header(av2str), http_header1);
+    RED_CHECK(ws_http_header.send_header(av2str) == http_header1);
 
     const auto http_header2 =
         "HTTP/1.1 101 Switching Protocols\r\n"
@@ -66,13 +66,23 @@ RED_AUTO_TEST_CASE(TestWsHttpHeader)
     RED_CHECK(R::Partial == ws_http_header.extract("k: v\r\nSec-WebSocket-Key: xyz\r\n"_av));
     RED_CHECK(R::Completed == ws_http_header.extract("k: v\r\nSec-WebSocket-Key: xyz\r\n\r\n"_av));
     RED_CHECK(ws_http_header.has_key());
-    RED_CHECK_SMEM(ws_http_header.send_header(av2str), http_header2);
+    RED_CHECK(ws_http_header.send_header(av2str) == http_header2);
 }
 
-template<class... Ts>
-auto array(Ts... xs)
+namespace
 {
-    return std::array<uint8_t, sizeof...(xs)>{{uint8_t(xs)...}};
+    template<class T>
+    struct ArrayW : T
+    {
+        bytes_view av() const { return *this; }
+    };
+
+    template<class... Ts>
+    auto array(Ts... xs)
+    {
+        using A = std::array<uint8_t, sizeof...(xs)>;
+        return ArrayW<A>{A{{uint8_t(xs)...}}};
+    }
 }
 
 RED_AUTO_TEST_CASE(TestWsParseClient)
@@ -97,7 +107,7 @@ RED_AUTO_TEST_CASE(TestWsParseClient)
     ProtocolParseClientResult r;
     RED_CHECK(R::Ok == (r = ws_protocol_parse_client(av(12))).state);
     RED_CHECK(s[12] == 0xff);
-    RED_CHECK_MEM(r.data, array(0x2b ^ 0xf0, 0x2b ^ 0x0f, 0x2b ^ 0x00, 0x2b ^ 0xff, 0x85 ^ 0xf0, 0x85 ^ 0x0f));
+    RED_CHECK(r.data == array(0x2b ^ 0xf0, 0x2b ^ 0x0f, 0x2b ^ 0x00, 0x2b ^ 0xff, 0x85 ^ 0xf0, 0x85 ^ 0x0f));
 
     uint8_t s2[]{
         0x80 | 0x02,
@@ -110,13 +120,13 @@ RED_AUTO_TEST_CASE(TestWsParseClient)
 
 RED_AUTO_TEST_CASE(TestWsSend)
 {
-    RED_CHECK_MEM(ws_protocol_server_send_binary_header(5, av2str), array(0x80 | 0x02, 5));
-    RED_CHECK_MEM(ws_protocol_server_send_binary_header(125, av2str), array(0x80 | 0x02, 125));
-    RED_CHECK_MEM(ws_protocol_server_send_binary_header(126, av2str), array(0x80 | 0x02, 126, 0, 126));
-    RED_CHECK_MEM(ws_protocol_server_send_binary_header(127, av2str), array(0x80 | 0x02, 126, 0, 127));
-    RED_CHECK_MEM(ws_protocol_server_send_binary_header(229, av2str), array(0x80 | 0x02, 126, 0, 229));
-    RED_CHECK_MEM(ws_protocol_server_send_binary_header(0xABCD, av2str), array(0x80 | 0x02, 126, 0xAB, 0xCD));
-    RED_CHECK_MEM(ws_protocol_server_send_binary_header(0x1ABCD, av2str), array(0x80 | 0x02, 127, 0, 0, 0, 0, 0, 1, 0xAB, 0xCD));
+    RED_CHECK(ws_protocol_server_send_binary_header(5, av2str) == array(0x80 | 0x02, 5).av());
+    RED_CHECK(ws_protocol_server_send_binary_header(125, av2str) == array(0x80 | 0x02, 125).av());
+    RED_CHECK(ws_protocol_server_send_binary_header(126, av2str) == array(0x80 | 0x02, 126, 0, 126).av());
+    RED_CHECK(ws_protocol_server_send_binary_header(127, av2str) == array(0x80 | 0x02, 126, 0, 127).av());
+    RED_CHECK(ws_protocol_server_send_binary_header(229, av2str) == array(0x80 | 0x02, 126, 0, 229).av());
+    RED_CHECK(ws_protocol_server_send_binary_header(0xABCD, av2str) == array(0x80 | 0x02, 126, 0xAB, 0xCD).av());
+    RED_CHECK(ws_protocol_server_send_binary_header(0x1ABCD, av2str) == array(0x80 | 0x02, 127, 0, 0, 0, 0, 0, 1, 0xAB, 0xCD).av());
 
-    RED_CHECK_MEM(ws_protocol_server_send_close_frame(av2str), array(0x80 | 0x08, 2, 0, 1));
+    RED_CHECK(ws_protocol_server_send_close_frame(av2str) == array(0x80 | 0x08, 2, 0, 1).av());
 }

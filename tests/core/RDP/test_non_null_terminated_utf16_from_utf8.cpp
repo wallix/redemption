@@ -29,5 +29,5 @@ RED_AUTO_TEST_CASE(Test_non_null_terminated_utf16_from_utf8)
     char buf[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'};
     OutStream out_stream(buf);
     RED_TEST(4 == put_non_null_terminated_utf16_from_utf8(out_stream, "AB"_av, out_stream.get_capacity()));
-    RED_CHECK_SMEM(array_view_const_char(buf, 6), "\x04\00""A\0B\0"_av);
+    RED_CHECK(array_view_const_char(buf, 6) == "\x04\00""A\0B\0"_av);
 }

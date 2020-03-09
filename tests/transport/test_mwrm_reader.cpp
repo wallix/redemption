@@ -169,12 +169,12 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     RED_CHECK(meta_line.start_time == 1352304810);
     RED_CHECK(meta_line.stop_time == 1352304870);
     RED_CHECK(meta_line.with_hash);
-    RED_CHECK_MEM_AA(
-        meta_line.hash1,
+    RED_CHECK(
+        make_array_view(meta_line.hash1) ==
         "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
         "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"_av);
-    RED_CHECK_MEM_AA(
-        meta_line.hash2,
+    RED_CHECK(
+        make_array_view(meta_line.hash2) ==
         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"_av);
 }
@@ -239,10 +239,10 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
     RED_CHECK(meta_line.start_time == 1477416187);
     RED_CHECK(meta_line.stop_time == 1477416298);
     RED_CHECK(meta_line.with_hash);
-    RED_CHECK_MEM_AA(meta_line.hash1,
+    RED_CHECK(make_array_view(meta_line.hash1) ==
       "\x32\xd7\xbb\xef\x41\xa7\xc1\x53\x47\xc9\xe8\xab\xc1\xec\xe0\x3b"
       "\xbd\x23\x0a\x71\xae\xba\x5c\xe2\xa0\xf5\x10\xd6\xe6\x94\x8e\x9a"_av);
-    RED_CHECK_MEM_AA(meta_line.hash2,
+    RED_CHECK(make_array_view(meta_line.hash2) ==
       "\xf4\xbd\x5d\xfb\xbc\xc3\x0d\x9d\x30\xfa\xdf\xed\x00\xec\x81\xad"
       "\xc2\x02\x19\xdd\xff\x79\x6f\xfa\xc1\xe7\x61\xfc\x4e\x07\x0b\x2c"_av);
 
@@ -316,10 +316,10 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     RED_CHECK(meta_line.start_time == 1455816611);
     RED_CHECK(meta_line.stop_time == 1455816633);
     RED_CHECK(meta_line.with_hash);
-    RED_CHECK_MEM_AA(meta_line.hash1,
+    RED_CHECK(make_array_view(meta_line.hash1) ==
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
       "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77"_av);
-    RED_CHECK_MEM_AA(meta_line.hash2,
+    RED_CHECK(make_array_view(meta_line.hash2) ==
       "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
       "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c"_av);
 
@@ -353,7 +353,7 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
 
     MwrmWriterBuf writer;
     writer.write_hash_file(meta_line);
-    RED_CHECK_MEM(writer.buffer(), data);
+    RED_CHECK(writer.buffer() == data);
 }
 
 RED_AUTO_TEST_CASE(ReadHashV1)
@@ -370,10 +370,10 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         reader.read_meta_hash_line(meta_line);
         RED_CHECK(meta_line.filename == "file_xyz"sv);
         RED_CHECK(meta_line.with_hash);
-        RED_CHECK_MEM_AA(meta_line.hash1,
+        RED_CHECK(make_array_view(meta_line.hash1) ==
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
-        RED_CHECK_MEM_AA(meta_line.hash2,
+        RED_CHECK(make_array_view(meta_line.hash2) ==
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
 
@@ -391,10 +391,10 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         reader.read_meta_hash_line(meta_line);
         RED_CHECK(meta_line.filename == "file_xyz"sv);
         RED_CHECK(meta_line.with_hash);
-        RED_CHECK_MEM_AA(meta_line.hash1,
+        RED_CHECK(make_array_view(meta_line.hash1) ==
         " \x30\n\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
-        RED_CHECK_MEM_AA(meta_line.hash2,
+        RED_CHECK(make_array_view(meta_line.hash2) ==
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\n"_av);
 

@@ -29,26 +29,26 @@ RED_AUTO_TEST_CASE(TestSOHSeparatedStringsToMultiSZ)
     char dest[16];
 
     SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "");
-    RED_CHECK_MEM(make_array_view(dest),
+    RED_CHECK(make_array_view(dest) ==
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 
     SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234");
-    RED_CHECK_MEM(make_array_view(dest), "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 
     SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "12345678901234567890");
-    RED_CHECK_MEM(make_array_view(dest), "12345678901234\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "12345678901234\x00\x00"_av);
 
     SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234\x01OPQR");
-    RED_CHECK_MEM(make_array_view(dest), "1234\x00OPQR\x00\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "1234\x00OPQR\x00\x00\x00\x00\x00\x00\x00"_av);
 
     SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "12345678\x01OPQRSTUV");
-    RED_CHECK_MEM(make_array_view(dest), "12345678\x00OPQRS\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "12345678\x00OPQRS\x00\x00"_av);
 
     SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234\x01\x01");
-    RED_CHECK_MEM(make_array_view(dest), "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 
     SOHSeparatedStringsToMultiSZ(dest, sizeof(dest), "1234\x01\x01OPQR");
-    RED_CHECK_MEM(make_array_view(dest), "1234\x00\x00OPQR\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "1234\x00\x00OPQR\x00\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestMultiSZCopy)
@@ -56,20 +56,20 @@ RED_AUTO_TEST_CASE(TestMultiSZCopy)
     char dest[16];
 
     MultiSZCopy(dest, sizeof(dest), "\x00");
-    RED_CHECK_MEM(make_array_view(dest), "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 
     MultiSZCopy(dest, sizeof(dest), "1234\x00");
-    RED_CHECK_MEM(make_array_view(dest), "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "1234\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 
     MultiSZCopy(dest, sizeof(dest), "12345678901234567890\x00");
-    RED_CHECK_MEM(make_array_view(dest), "12345678901234\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "12345678901234\x00\x00"_av);
 
     MultiSZCopy(dest, sizeof(dest), "1234\x00OPQR\x00");
-    RED_CHECK_MEM(make_array_view(dest), "1234\x00OPQR\x00\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "1234\x00OPQR\x00\x00\x00\x00\x00\x00\x00"_av);
 
     MultiSZCopy(dest, sizeof(dest), "12345678\x00OPQRSTUV\x00");
-    RED_CHECK_MEM(make_array_view(dest), "12345678\x00OPQRS\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "12345678\x00OPQRS\x00\x00"_av);
 
     MultiSZCopy(dest, sizeof(dest), "12345678\x00\x00OPQRSTUV\x00");
-    RED_CHECK_MEM(make_array_view(dest), "12345678\x00\x00\x00\x00\x00\x00\x00\x00"_av);
+    RED_CHECK(make_array_view(dest) == "12345678\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 }

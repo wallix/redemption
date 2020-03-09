@@ -508,7 +508,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             const auto file_group_id = 49262;
 
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 using namespace RDPECLIP;
@@ -524,13 +524,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 1);
-            RED_CHECK_MEM(to_client_sender.back(), to_server_sender.back());
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() == to_server_sender.back());
+            RED_CHECK(to_client_sender.back() ==
                 "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" //................ !
                 "\x01\x00\x00\x00\x02\x00\x00\x00" //........
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 StaticOutStream<1600> out;
@@ -543,14 +543,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
                 "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
                 "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
                 "\x72\x00\x57\x00\x00\x00" //r.W... !
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             // skip format list response
 
@@ -563,11 +563,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 2);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 using namespace Cliprdr;
@@ -589,7 +589,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 2);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -644,7 +644,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00"_av);
@@ -663,11 +663,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 4);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\t\x00\x01\x00\x10\x00\x00\x00\x00\x00\x00\x00""data_abcdefg"
                 ""_av);
             RED_REQUIRE(report_message.messages.size() == 2);
-            RED_CHECK_SMEM(report_message.messages.back(),
+            RED_CHECK(report_message.messages.back() ==
                 "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=abc size=12"
                 " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av);
 
@@ -675,7 +675,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             size_t expected_report_messages_size = 2;
 
             if (d.with_validator) {
-                RED_CHECK_SMEM(validator_transport.buf,
+                RED_CHECK(validator_transport.buf ==
                     "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
                     "filename\x00\x03""abc\x01\x00\x00\x00\x10\x00\x00\x00"
                     "\x01""data_abcdefg\x03\x00\x00\x00\x04\x00\x00\x00\x01"
@@ -702,7 +702,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
 
             if (d.with_validator) {
-                RED_CHECK_SMEM(report_message.messages.back(),
+                RED_CHECK(report_message.messages.back() ==
                     "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av);
             }
 
@@ -723,11 +723,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == expected_report_messages_size);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             // skip format list response
 
@@ -740,11 +740,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 4);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == expected_report_messages_size);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 using namespace Cliprdr;
@@ -756,14 +756,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 4);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av);
             ++expected_report_messages_size;
             RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
-            RED_CHECK_SMEM(report_message.messages.back(),
+            RED_CHECK(report_message.messages.back() ==
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av);
             if (d.with_validator) {
-                RED_CHECK_SMEM(validator_transport.buf,
+                RED_CHECK(validator_transport.buf ==
                     "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up\x00\x01\x00\x13microsoft_locale_id\x00\x01"
                     "0\x01\x00\x00\x00\x07\x00\x00\x00\x02""abc\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av);
                 validator_transport.buf.clear();
@@ -785,7 +785,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             }
             RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
             if (d.with_validator) {
-                RED_CHECK_SMEM(report_message.messages.back(),
+                RED_CHECK(report_message.messages.back() ==
                     "TEXT_VERIFICATION direction=UP copy_id=2 status=ok"_av);
             }
         }
@@ -909,7 +909,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             const auto file_group_id = 49262;
 
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 using namespace RDPECLIP;
@@ -927,13 +927,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 1);
-            RED_CHECK_MEM(to_client_sender.back(), to_server_sender.back());
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() == to_server_sender.back());
+            RED_CHECK(to_client_sender.back() ==
                 "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00"
                 "\x01\x00\x00\x00\x12\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 StaticOutStream<1600> out;
@@ -946,14 +946,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
                 "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
                 "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
                 "\x72\x00\x57\x00\x00\x00" //r.W... !
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 Buffer buf;
@@ -964,11 +964,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 2);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x0A\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 Buffer buf;
@@ -979,11 +979,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 Buffer buf;
@@ -996,11 +996,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 4);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 Buffer buf;
@@ -1011,11 +1011,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 5);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 0);
-            RED_CHECK_SMEM(validator_transport.buf, ""_av);
+            RED_CHECK(validator_transport.buf == ""_av);
 
             {
                 using namespace Cliprdr;
@@ -1037,7 +1037,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 5);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -1091,7 +1091,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00"_av);
@@ -1111,7 +1111,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 4);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x09\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00""da"
                 ""_av);
             RED_REQUIRE(report_message.messages.size() == 1);
@@ -1126,7 +1126,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
-            RED_CHECK_MEM(to_server_sender.back(), "ta_"_av);
+            RED_CHECK(to_server_sender.back() == "ta_"_av);
             RED_REQUIRE(report_message.messages.size() == 1);
             if (d.with_validator) {
                 RED_CHECK(validator_transport.buf ==
@@ -1146,7 +1146,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
                 "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
                 "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
@@ -1163,7 +1163,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 7);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x0A\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
@@ -1177,7 +1177,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 8);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
@@ -1193,7 +1193,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 9);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
@@ -1207,7 +1207,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 10);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 1);
@@ -1232,7 +1232,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 10);
             RED_REQUIRE(to_server_sender.total_in_stream == 7);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -1311,7 +1311,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 11);
             RED_REQUIRE(to_server_sender.total_in_stream == 8);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\t\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00""plopploppl"
                 ""_av);
             RED_REQUIRE(report_message.messages.size() == 3);
@@ -1339,7 +1339,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 12);
             RED_REQUIRE(to_server_sender.total_in_stream == 8);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x0B\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
                 ""_av);
             RED_CHECK(report_message.messages.size() == 3);
@@ -1354,7 +1354,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 13);
             RED_REQUIRE(to_server_sender.total_in_stream == 8);
-            RED_CHECK_MEM(to_client_sender.back(),
+            RED_CHECK(to_client_sender.back() ==
                 "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 "\x02\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00"
                 "\x00\x00\x00\x00"_av);
@@ -1384,11 +1384,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 13);
             RED_REQUIRE(to_server_sender.total_in_stream == 9);
-            RED_CHECK_MEM(to_server_sender.back(),
+            RED_CHECK(to_server_sender.back() ==
                 "\t\x00\x01\x00\x0b\x00\x00\x00\x00\x00\x00\x00""abcdefg"
                 ""_av);
             RED_REQUIRE(report_message.messages.size() == 4);
-            RED_CHECK_SMEM(report_message.messages.back(),
+            RED_CHECK(report_message.messages.back() ==
                 "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=abc size=12"
                 " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av);
 
@@ -1429,7 +1429,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             RED_REQUIRE(report_message.messages.size() == expected_report_messages_size);
 
             if (d.with_validator) {
-                RED_CHECK_SMEM(report_message.messages.back(),
+                RED_CHECK(report_message.messages.back() ==
                     "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av);
             }
         }

@@ -125,15 +125,15 @@ RED_AUTO_TEST_CASE(TestEncryption1)
                                   'M', 'F', 'C', 'W',    // EOF Magic
                                   0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
                                   };
-    RED_CHECK_MEM_AA(make_array_view(result, 68), expected_result);
+    RED_CHECK(make_array_view(result, 68) == make_array_view(expected_result));
 
     auto expected_hash = cstr_array_view(
         "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
         "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
         "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
         "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29");
-    RED_CHECK_MEM_AA(qhash, expected_hash);
-    RED_CHECK_MEM_AA(fhash, expected_hash);
+    RED_CHECK(make_array_view(qhash) == expected_hash);
+    RED_CHECK(make_array_view(fhash) == expected_hash);
 
 }
 
@@ -205,7 +205,7 @@ RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
                                   'M', 'F', 'C', 'W',    // EOF Magic
                                   0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
                                   };
-    RED_CHECK_MEM_AA(make_array_view(result, offset), expected_result);
+    RED_CHECK(make_array_view(result, offset) == make_array_view(expected_result));
 
     RED_TEST(write_file(wf, expected_result) == 68);
 
@@ -214,8 +214,8 @@ RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
         "\xfe\x2f\x05\x90\x0b\x62\x92\xdd"
         "\x12\x31\x2d\x3e\x1d\x17\xd3\xfd"
         "\x8e\x9c\x3b\x52\xcd\x1d\xf7\x29");
-    RED_CHECK_MEM_AA(qhash, expected_hash);
-    RED_CHECK_MEM_AA(fhash, expected_hash);
+    RED_CHECK(make_array_view(qhash) == make_array_view(expected_hash));
+    RED_CHECK(make_array_view(fhash) == make_array_view(expected_hash));
 
     char clear[12] = {};
 
@@ -226,7 +226,7 @@ RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
     RED_CHECK(decrypter.is_encrypted());
     decrypter.close();
 
-    RED_CHECK_MEM(make_array_view(clear, 4), "toto"_av);
+    RED_CHECK(make_array_view(clear, 4) == "toto"_av);
 }
 
 RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
@@ -403,8 +403,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     decrypter.close();
 
 
-    RED_CHECK_MEM_AA(make_array_view(clear, sizeof(randomSample)), randomSample);
-    RED_CHECK_MEM_AA(make_array_view(clear + sizeof(randomSample),  sizeof(randomSample)), randomSample);
+    RED_CHECK(make_array_view(clear, sizeof(randomSample)) == make_array_view(randomSample));
+    RED_CHECK(make_array_view(clear).from_offset(sizeof(randomSample)) == make_array_view(randomSample));
 
 
     unsigned char fhash2[MD_HASH::DIGEST_LENGTH];
@@ -416,8 +416,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 
     InCryptoTransport::HASH fh;
     RED_TEST(InCryptoTransport::read_fhash(wf.c_str(), cctx.get_hmac_key(), fh));
-    RED_CHECK_MEM_AA(fh.hash, fhash);
-    RED_CHECK_MEM_AA(fh.hash, fhash2);
+    RED_CHECK(make_array_view(fh.hash) == make_array_view(fhash));
+    RED_CHECK(make_array_view(fh.hash) == make_array_view(fhash2));
 
 
     unsigned char qhash2[MD_HASH::DIGEST_LENGTH];
@@ -449,10 +449,10 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
             );
     #endif
 
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
-    RED_CHECK_MEM_AA(qhash2, expected_qhash);
-    RED_CHECK_MEM_AA(fhash2, expected_fhash);
+    RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
+    RED_CHECK(make_array_view(fhash) == make_array_view(expected_fhash));
+    RED_CHECK(make_array_view(qhash2) == make_array_view(expected_qhash));
+    RED_CHECK(make_array_view(fhash2) == make_array_view(expected_fhash));
 }
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
@@ -522,8 +522,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
         "\x07\xa7\xe7\x14\x9b\xf7\xeb\x34\x57\xdc\xce\x07\x5c\x62\x61\x34"
         "\x51\x42\x7d\xe0\x0f\xbe\xda\x53\x11\x08\x75\x31\x40\xc5\x50\xe8");
 
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
+    RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
+    RED_CHECK(make_array_view(fhash) == make_array_view(expected_fhash));
 
     uint8_t qhash2[MD_HASH::DIGEST_LENGTH] {};
     uint8_t fhash2[MD_HASH::DIGEST_LENGTH] {};
@@ -539,9 +539,9 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
     quick_hmac.update({randomSample, 4096});
     quick_hmac.final(qhash2);
 
-    RED_CHECK_MEM_AA(fhash2, expected_fhash);
+    RED_CHECK(make_array_view(fhash2) == make_array_view(expected_fhash));
     // "\x73\xe8\x21\x3a\x8f\xa3\x61\x0e\x0f\xfe\x14\x28\xff\xcd\x1d\x97\x7f\xc8\xe8\x90\x44\xfc\x4f\x75\xf7\x6c\xa3\x5b\x0d\x2e\x14\x80"
-    RED_CHECK_MEM_AA(qhash2, expected_qhash);
+    RED_CHECK(make_array_view(qhash2) == make_array_view(expected_qhash));
 }
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
@@ -617,8 +617,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryption)
     RED_CHECK_EQUAL(offset, sizeof(randomSample)*2);
 
     // Check qhash and fhash are left unchanged if no checksum is enabled
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
+    RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
+    RED_CHECK(make_array_view(fhash) == make_array_view(expected_fhash));
 }
 
 RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
@@ -683,8 +683,8 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
         "\x3b\x79\xd5\x76\x98\x66\x4f\xe1\xdd\xd4\x90\x5b\xa5\x56\x6a\xa3\x14"
         "\x45\x5e\xf3\x8c\x04\xc4\xc4\x49\x6b\x00\xd4\x5e\x82\x13\x68");
 
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
+    RED_CHECK(make_array_view(qhash) == make_array_view(expected_qhash));
+    RED_CHECK(make_array_view(fhash) == make_array_view(expected_fhash));
 
     uint8_t qhash2[MD_HASH::DIGEST_LENGTH] {};
     uint8_t fhash2[MD_HASH::DIGEST_LENGTH] {};
@@ -702,8 +702,8 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
     quick_hmac.update(make_array_view(data));
     quick_hmac.final(qhash2);
 
-    RED_CHECK_MEM_AA(fhash2, expected_fhash);
-    RED_CHECK_MEM_AA(qhash2, expected_qhash);
+    RED_CHECK(make_array_view(fhash2) == make_array_view(expected_fhash));
+    RED_CHECK(make_array_view(qhash2) == make_array_view(expected_qhash));
 }
 
 
@@ -743,8 +743,8 @@ RED_BIND_DATA_TEST_CASE(TestOutCryptoTransport, (std::array{
         ct.close(qhash, fhash);
     }
 
-    RED_CHECK_MEM_AA(fhash, qhash);
-    RED_CHECK_MEM_AA(qhash, hash);
+    RED_CHECK(make_array_view(fhash) == make_array_view(qhash));
+    RED_CHECK(make_array_view(qhash) == make_array_view(hash));
 
     RED_CHECK_WORKSPACE(wd);
 }
@@ -772,14 +772,14 @@ RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportBigFile, wd)
         ct.close(qhash, fhash);
     }
 
-    RED_CHECK_MEM_AA(
-        qhash,
+    RED_CHECK(
+        make_array_view(qhash) ==
         "\x39\xcd\x15\x84\x07\x35\x55\xf3\x9b\x45\xc7\xb2\xdd\x06\xa1\x0f"
         "\xd0\x9d\x44\xdd\xcd\x40\x49\x74\x14\xec\x72\x59\xa9\x7b\x7f\x81"_av
     );
 
-    RED_CHECK_MEM_AA(
-        fhash,
+    RED_CHECK(
+        make_array_view(fhash) ==
         "\xc2\x55\x50\xf3\xcd\x56\xf3\xb9\x26\x37\x06\x9a\x3b\xb1\x26\xd6"
         "\x84\xfd\x6c\xac\x15\xc1\x76\x92\x2f\x16\xc0\xe3\x19\xce\xd0\xe4"_av
     );
@@ -863,12 +863,12 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
 
     RED_CHECK_WORKSPACE(wd);
 
-    auto expected_hash = cstr_array_view(
+    auto expected_hash =
         "\xc5\x28\xb4\x74\x84\x3d\x8b\x14\xcf\x5b\xf4\x3a\x9c\x04\x9a\xf3"
-        "\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b");
+        "\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b"_av;
 
-    RED_CHECK_MEM_AA(qhash, expected_hash);
-    RED_CHECK_MEM_AA(fhash, expected_hash);
+    RED_CHECK(make_array_view(qhash) == expected_hash);
+    RED_CHECK(make_array_view(fhash) == expected_hash);
 
     {
         char buffer[40];
@@ -883,7 +883,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[31], 1));
         RED_CHECK(ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
+        RED_CHECK(make_array_view(buffer, 31) == "We write, and again, and so on."_av);
         // close followed by open
         ct.open(finalname);
         RED_CHECK(not ct.is_eof());
@@ -894,14 +894,14 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[31], 1));
         RED_CHECK(ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
+        RED_CHECK(make_array_view(buffer, 31) == "We write, and again, and so on."_av);
 
         InCryptoTransport::HASH fh;
         InCryptoTransport::HASH qh;
         RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
         RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
-        RED_CHECK_MEM_AA(qh.hash, expected_hash);
-        RED_CHECK_MEM_AA(fh.hash, expected_hash);
+        RED_CHECK(make_array_view(qh.hash) == expected_hash);
+        RED_CHECK(make_array_view(fh.hash) == expected_hash);
 
         RED_CHECK_FILE_CONTENTS(hash_finalname,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
@@ -938,17 +938,16 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
 
     RED_CHECK_WORKSPACE(wd);
 
-    auto expected_qhash = cstr_array_view(
+    auto expected_qhash =
         "\x04\x52\x16\x50\xdb\x48\xe6\x70\x36\x3c\x68\xa9\xcd\xdb\xeb\x60"
-        "\xf9\x25\x83\xbc\x0d\x2e\x09\x3f\xf2\xc9\x37\x5d\xa6\x9d\x7a\xf0");
+        "\xf9\x25\x83\xbc\x0d\x2e\x09\x3f\xf2\xc9\x37\x5d\xa6\x9d\x7a\xf0"_av;
 
-    auto expected_fhash = cstr_array_view(
+    auto expected_fhash =
         "\xa8\x7c\x51\x79\xe2\xcc\x2c\xe3\x51\x64\x40\xc0\xb0\xbd\xa8\x99"
-        "\xcc\x46\xac\x42\x3f\x22\x0f\x64\x50\xbb\xbb\x7c\x45\xb8\x1c\xc4"
-        );
+        "\xcc\x46\xac\x42\x3f\x22\x0f\x64\x50\xbb\xbb\x7c\x45\xb8\x1c\xc4"_av;
 
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
+    RED_CHECK(make_array_view(qhash) == expected_qhash);
+    RED_CHECK(make_array_view(fhash) == expected_fhash);
 
     {
         Fstat fstat;
@@ -964,14 +963,14 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK(ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(buffer, randomSample);
+        RED_CHECK(make_array_view(buffer) == make_array_view(randomSample));
 
         InCryptoTransport::HASH fh;
         InCryptoTransport::HASH qh;
         RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
         RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
-        RED_CHECK_MEM_AA(qh.hash, expected_qhash);
-        RED_CHECK_MEM_AA(fh.hash, expected_fhash);
+        RED_CHECK(make_array_view(qh.hash) == expected_qhash);
+        RED_CHECK(make_array_view(fh.hash) == expected_fhash);
     }
     {
         Fstat fstat;
@@ -1021,8 +1020,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce"
         "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5");
 
-    RED_CHECK_MEM_AA(qhash, expected_hash);
-    RED_CHECK_MEM_AA(fhash, expected_hash);
+    RED_CHECK(make_array_view(qhash) == make_array_view(expected_hash));
+    RED_CHECK(make_array_view(fhash) == make_array_view(expected_hash));
 
     {
         Fstat fstat;
@@ -1037,14 +1036,14 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         RED_CHECK(ct.is_eof());
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[30], 1));
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
+        RED_CHECK(make_array_view(buffer, 31) == "We write, and again, and so on."_av);
 
         InCryptoTransport::HASH fh;
         InCryptoTransport::HASH qh;
         RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
         RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
-        RED_CHECK_MEM_AA(qh.hash, qhash);
-        RED_CHECK_MEM_AA(fh.hash, fhash);
+        RED_CHECK(make_array_view(qh.hash) == make_array_view(qhash));
+        RED_CHECK(make_array_view(fh.hash) == make_array_view(fhash));
     }
     {
         Fstat fstat;
@@ -1111,26 +1110,24 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK(ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(buffer, clearSample);
+        RED_CHECK(make_array_view(buffer) == make_array_view(clearSample));
 
-        auto expected_qhash = cstr_array_view(
+        auto expected_qhash =
             "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
-            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-            );
+            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"_av;
 
-        auto expected_fhash = cstr_array_view(
+        auto expected_fhash =
             "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
-            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-            );
-        RED_CHECK_MEM_AA(qhash, expected_qhash);
-        RED_CHECK_MEM_AA(fhash, expected_fhash);
+            "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"_av;
+        RED_CHECK(make_array_view(qhash) == expected_qhash);
+        RED_CHECK(make_array_view(fhash) == expected_fhash);
 
         InCryptoTransport::HASH fh;
         InCryptoTransport::HASH qh;
         RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
         RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
-        RED_CHECK_MEM_AA(qh.hash, expected_qhash);
-        RED_CHECK_MEM_AA(fh.hash, expected_fhash);
+        RED_CHECK(make_array_view(qh.hash) == expected_qhash);
+        RED_CHECK(make_array_view(fh.hash) == expected_fhash);
 
         RED_CHECK_FILE_CONTENTS(hash_finalname,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
@@ -1167,15 +1164,16 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
 
     RED_CHECK_WORKSPACE(wd);
 
-    auto expected_qhash = cstr_array_view(
-        "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-        );
+    auto expected_qhash =
+        "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
+        "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"_av;
 
-    auto expected_fhash = cstr_array_view("\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
-        );
+    auto expected_fhash =
+        "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
+        "\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"_av;
 
-    RED_CHECK_MEM_AA(qhash, expected_qhash);
-    RED_CHECK_MEM_AA(fhash, expected_fhash);
+    RED_CHECK(make_array_view(qhash) == expected_qhash);
+    RED_CHECK(make_array_view(fhash) == expected_fhash);
 
     {
         Fstat fstat;
@@ -1191,14 +1189,14 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
 
 
         ct.close();
-        RED_CHECK_MEM_AA(buffer, clearSample);
+        RED_CHECK(make_array_view(buffer) == make_array_view(clearSample));
 
         InCryptoTransport::HASH fh;
         InCryptoTransport::HASH qh;
         RED_TEST(InCryptoTransport::read_fhash(finalname, cctx.get_hmac_key(), fh));
         RED_TEST(InCryptoTransport::read_qhash(finalname, cctx.get_hmac_key(), qh));
-        RED_CHECK_MEM_AA(qh.hash, expected_qhash);
-        RED_CHECK_MEM_AA(fh.hash, expected_fhash);
+        RED_CHECK(make_array_view(qh.hash) == expected_qhash);
+        RED_CHECK(make_array_view(fh.hash) == expected_fhash);
 
         RED_CHECK_FILE_CONTENTS(hash_finalname,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
@@ -1256,7 +1254,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         ct.close();
         RED_CHECK(hash_buf == "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0\n"sv);
     }
-    RED_CHECK_MEM_AA(buffer, original_contents);
+    RED_CHECK(make_array_view(buffer) == original_contents);
 
     RED_CHECK_WORKSPACE(wd);
 }
@@ -1303,10 +1301,10 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         RED_TEST(InCryptoTransport::read_fhash(encrypted_file, cctx.get_hmac_key(), fhash2));
         RED_TEST(InCryptoTransport::read_qhash(encrypted_file, cctx.get_hmac_key(), qhash2));
 
-        RED_CHECK_MEM_AA(qhash2.hash, qhash);
-        RED_CHECK_MEM_AA(qhash, qhash2.hash);
-        RED_CHECK_MEM_AA(fhash2.hash, fhash);
-        RED_CHECK_MEM_AA(fhash, fhash2.hash);
+        RED_CHECK(make_array_view(qhash2.hash) == make_array_view(qhash));
+        RED_CHECK(make_array_view(qhash) == make_array_view(qhash2.hash));
+        RED_CHECK(make_array_view(fhash2.hash) == make_array_view(fhash));
+        RED_CHECK(make_array_view(fhash) == make_array_view(fhash2.hash));
 
         char hash_buf[512];
         ct.open(hash_encrypted_file, cstr_array_view("encrypted_file.enc"));
@@ -1334,5 +1332,5 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         #endif
     }
 
-    RED_CHECK_MEM(make_array_view(buffer, original_filesize), original_contents);
+    RED_CHECK(make_array_view(buffer, original_filesize) == original_contents);
 }

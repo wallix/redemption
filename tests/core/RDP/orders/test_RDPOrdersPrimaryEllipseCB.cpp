@@ -88,8 +88,8 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        RED_CHECK_MEM(
-            out_stream.get_bytes().from_offset(2),
+        RED_CHECK(
+            out_stream.get_bytes().from_offset(2) ==
             out_stream2.get_bytes().from_offset(1));
     }
 
@@ -129,8 +129,8 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
-        RED_CHECK_MEM(
-            out_stream.get_bytes().from_offset(2),
+        RED_CHECK(
+            out_stream.get_bytes().from_offset(2) ==
             out_stream2.get_bytes().from_offset(1));
     }
 

@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     wgroupbox.set_wh(cx, cy);
     wgroupbox.set_xy(x, y);
 
-    RED_CHECK_SMEM(std::string_view(wgroupbox.get_text()), text.first(text.size()-2));
+    RED_CHECK(std::string_view(wgroupbox.get_text()) == text.first(text.size()-2));
 
     BGRColor focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;

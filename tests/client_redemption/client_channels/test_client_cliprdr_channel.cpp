@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     /* 0050 */ "\x73\x00\x00\x00\x01\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00" // s...............
                 ""_av
     ;
-    RED_CHECK_MEM(expected_init_format_list_pdu, pdu_data->av());
+    RED_CHECK(expected_init_format_list_pdu == pdu_data->av());
 }
 
 
@@ -184,7 +184,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     // channel state check
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
     RED_CHECK_EQUAL(std::size(clip_data_total), channel._cb_buffers.sizeTotal);
-    RED_CHECK_SMEM(channel._cb_buffers.av(), std::string(1592, 'a'));
+    RED_CHECK(channel._cb_buffers.av() == std::string(1592, 'a'));
 
     // Format Data Response PDU part 2
     StaticOutStream<1600> out_FormatDataResponsep_part2;
@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(0, channel._cb_buffers.sizeTotal);
 
     // check clip io data
-    RED_CHECK_SMEM_AA(clip_io.data_text, clip_txt_total);
+    RED_CHECK(clip_io.data_text == make_array_view(clip_txt_total));
 
     // Unlock Clipboard Data PDU
     pdu_data = mod.stream();
@@ -291,14 +291,14 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total));
-    RED_CHECK_SMEM(
-        make_array_view(stream_formatDataResponse_part1.get_current(), 1592),
+    RED_CHECK(
+        make_array_view(stream_formatDataResponse_part1.get_current(), 1592) ==
         std::string(1592, 'a')
     );
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
-    RED_CHECK_SMEM(make_array_view(pdu_data->data, 208), std::string(208, 'a'));
+    RED_CHECK(make_array_view(pdu_data->data, 208) == std::string(208, 'a'));
 }
 
 
@@ -465,7 +465,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK(channel._waiting_for_data);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
-    RED_CHECK_SMEM(make_array_view(clip_io._chunk.get(), 1588), std::string(1588, 'a'));
+    RED_CHECK(make_array_view(clip_io._chunk.get(), 1588) == std::string(1588, 'a'));
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
 
     // File Content Response Range part 2
@@ -492,7 +492,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.offset);
     RED_CHECK_EQUAL("file_name.name", clip_io.fileName);
-    RED_CHECK_SMEM_AA(clip_io.get_file_item(0), clip_txt_total);
+    RED_CHECK(clip_io.get_file_item(0) == make_array_view(clip_txt_total));
 }
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
@@ -542,7 +542,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     /* 0020 */ "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" // e.s.c.r.i.p.t.o.
     /* 0030 */ "\x72\x00\x57\x00\x00\x00"_av                                      // r.W...
     ;
-    RED_CHECK_MEM(expected_format_list_pdu, pdu_data->av());
+    RED_CHECK(expected_format_list_pdu == pdu_data->av());
 
     // Format List Response PDU
     StaticOutStream<512> out_FormatListResponsePDU;
@@ -636,11 +636,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total)+4);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), 1);
-    RED_CHECK_SMEM(
-        make_array_view(stream_formatDataResponse_part1.get_current(), 1588),
+    RED_CHECK(
+        make_array_view(stream_formatDataResponse_part1.get_current(), 1588) ==
         std::string(1588, 'a'));
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
-    RED_CHECK_SMEM(make_array_view(pdu_data->data, 212), std::string(212, 'a'));
+    RED_CHECK(make_array_view(pdu_data->data, 212) == std::string(212, 'a'));
 }

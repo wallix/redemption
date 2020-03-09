@@ -272,5 +272,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
     StaticOutStream<indata.size()> out_stream;
     sc_sec1.emit(out_stream);
 
-    RED_CHECK_MEM(out_stream.get_bytes(), indata);
+    RED_CHECK(out_stream.get_bytes() == indata);
 }

@@ -55,7 +55,7 @@ RED_AUTO_TEST_CASE(TestRDP40BlukCompression4)
 
     RED_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
     RED_CHECK_EQUAL(18,    datalen);
-    RED_CHECK_MEM(make_array_view(compressed_data),
+    RED_CHECK(make_array_view(compressed_data) ==
         array_view(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb));
 }
 
@@ -74,6 +74,6 @@ RED_AUTO_TEST_CASE(TestRDP50BlukDecompression6)
 
     uint8_t  compressionFlags = 0x60;
 
-    RED_CHECK_MEM(make_array_view(uncompressed_data),
+    RED_CHECK(make_array_view(uncompressed_data) ==
         mppc_dec.decompress(make_array_view(compressed_data), compressionFlags));
 }

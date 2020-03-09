@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
             RED_REQUIRE_GT(res, 0);
             total += size_t(res);
         }
-        RED_CHECK_MEM(writable_bytes_view(buf, 31), "We write, and again, and so on."_av);
+        RED_CHECK(writable_bytes_view(buf, 31) == "We write, and again, and so on."_av);
         RED_CHECK_EQ(scytale_reader_close(handle), 0);
 
         RED_CHECK_EQ(scytale_reader_get_error_message(handle), "No error"sv);
@@ -225,7 +225,7 @@ RED_AUTO_TEST_CASE(TestscytaleReaderOpenAutoDetectScheme)
 
     char buf[20]{};
     RED_CHECK_EQ(scytale_reader_read(handle, byte_ptr_cast(buf), sizeof(buf)), 20);
-    RED_CHECK_EQUAL_RANGES(buf, cstr_array_view("800 600\n\n\n/var/wab/r"));
+    RED_CHECK(make_array_view(buf) == "800 600\n\n\n/var/wab/r"_av);
 
     scytale_reader_close(handle);
     scytale_reader_delete(handle);

@@ -448,7 +448,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelMax)
     wlabel.set_xy(x, y);
 
 
-    RED_CHECK_SMEM(std::string_view(wlabel.get_text()), text.subarray(0, text.size()-2));
+    RED_CHECK(std::string_view(wlabel.get_text()) == text.subarray(0, text.size()-2));
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),

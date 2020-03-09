@@ -479,7 +479,7 @@ RED_AUTO_TEST_CASE(TestPngOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     d.draw(cmd, screen_rect, color_cxt);
     dump_png24(trans, d.impl(), true);
-    RED_CHECK_MEM(expected_red, trans.buf);
+    RED_CHECK(expected_red == trans.buf);
 }
 
 RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)

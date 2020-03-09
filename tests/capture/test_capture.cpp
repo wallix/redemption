@@ -908,8 +908,8 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         now.tv_sec += 1;
     }
 
-    RED_CHECK_SMEM(
-        trans.buf,
+    RED_CHECK(
+        trans.buf ==
         "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
         "1970-01-01 01:16:43 - type=\"KBD_INPUT\" data=\"ABC\"\n"
@@ -2385,8 +2385,8 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     tu::ostream_buffered cerr_buf(std::cerr);                                         \
     int res = do_main(argc, argv, hmac_key, trace_fn);                                \
     EVP_cleanup();                                                                    \
-    RED_CHECK_SMEM(cout_buf.str(), output);                                           \
-    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                     \
+    RED_CHECK(cout_buf.str() == output);                                              \
+    RED_CHECK(cerr_buf.str() == output_error);                                        \
     RED_TEST(res_result == res);                                                      \
 } while (0)
 

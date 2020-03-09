@@ -234,7 +234,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16)
         Latin1toUTF16({latin1_src, number_of_characters+1}, utf16_dst, sizeof(utf16_dst)),
         utf16_chars_count + 2);
 
-    RED_CHECK_SMEM(make_array_view(utf16_dst, utf16_chars_count + 2), utf16_expected);
+    RED_CHECK(make_array_view(utf16_dst, utf16_chars_count + 2) == utf16_expected);
 
     uint8_t utf8_dst[16]{};
 

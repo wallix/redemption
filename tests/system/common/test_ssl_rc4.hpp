@@ -165,11 +165,11 @@ RED_AUTO_TEST_CASE(TestSslRc4)
         /* 01f0 */ 0xca, 0x4c, 0xeb, 0x28, 0x2e, 0x55, 0xe9, 0xa3,  // .L.(.U..
         /* 01f8 */ 0xac, 0x2f, 0x14, 0x6b, 0xd1, 0xc1, 0x43, 0xe1,  // ./.k..C.
     };
-    RED_CHECK_MEM_AA(encrypted_data, expected_data);
+    RED_CHECK(make_array_view(encrypted_data) == make_array_view(expected_data));
 
     uint8_t decrypted_data[512];
     rc.set_key(make_array_view(key));
     rc.crypt(512, encrypted_data, decrypted_data);
 
-    RED_CHECK_MEM_AA(decrypted_data, data);
+    RED_CHECK(make_array_view(decrypted_data) == make_array_view(data));
 }

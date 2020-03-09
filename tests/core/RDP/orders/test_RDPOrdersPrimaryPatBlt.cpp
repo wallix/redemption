@@ -93,7 +93,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_patblt);
-        RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {
@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_patblt);
-        RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
     }
 
     {

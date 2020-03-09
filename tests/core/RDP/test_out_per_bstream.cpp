@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large)
     // test we can create a Stream object
     StaticOutStream<256> stream;
     out_per_integer(stream, 0x12345678);
-    RED_CHECK_MEM(stream.get_bytes(), "\x04\x12\x34\x56\x78"_av);
+    RED_CHECK(stream.get_bytes() == "\x04\x12\x34\x56\x78"_av);
 }
 
 RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large2)
@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large2)
     // test we can create a Stream object
     StaticOutStream<256> stream;
     out_per_integer(stream, 0x00345678);
-    RED_CHECK_MEM(stream.get_bytes(), "\x04\x00\x34\x56\x78"_av);
+    RED_CHECK(stream.get_bytes() == "\x04\x00\x34\x56\x78"_av);
 }
 
 
@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_medium)
     // test we can create a Stream object
     StaticOutStream<256> stream;
     out_per_integer(stream, 0x1234);
-    RED_CHECK_MEM(stream.get_bytes(), "\x02\x12\x34"_av);
+    RED_CHECK(stream.get_bytes() == "\x02\x12\x34"_av);
 }
 
 RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
@@ -57,5 +57,5 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
     // test we can create a Stream object
     StaticOutStream<256> stream;
     out_per_integer(stream, 0x12);
-    RED_CHECK_MEM(stream.get_bytes(), "\x01\x12"_av);
+    RED_CHECK(stream.get_bytes() == "\x01\x12"_av);
 }

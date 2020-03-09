@@ -137,8 +137,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure1)
 
     high_contrast_system_information_structure.emit(out_stream);
 
-    RED_CHECK_EQUAL(reference_data.size(), high_contrast_system_information_structure.size());
-    RED_CHECK_MEM(out_stream.get_bytes(), reference_data);
+    RED_CHECK(out_stream.get_bytes() == reference_data);
 }
 
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure2)
@@ -177,8 +176,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure3)
 
     high_contrast_system_information_structure.emit(out_stream);
 
-    RED_CHECK_EQUAL(reference_data.size(), high_contrast_system_information_structure.size());
-    RED_CHECK_MEM(out_stream.get_bytes(), reference_data);
+    RED_CHECK(out_stream.get_bytes() == reference_data);
 }
 
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure4)
