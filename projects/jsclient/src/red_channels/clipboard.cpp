@@ -172,7 +172,7 @@ void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat cust
 
 void ClipboardChannel::receive(bytes_view data, int channel_flags)
 {
-    if (this->wating_for_data)
+    if (this->wating_format_data_response)
     {
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU Continuation");
         this->process_format_data_response(data, channel_flags, 0);
@@ -252,7 +252,6 @@ void ClipboardChannel::receive(bytes_view data, int channel_flags)
             "Clipboard: Default Process server PDU data (%" PRIu16 ")", header.msgType());
         // this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
         break;
-
     }
 }
 
@@ -402,7 +401,7 @@ void ClipboardChannel::process_format_data_response(bytes_view data, uint32_t ch
         this->data_len = data_len;
     }
 
-    this->wating_for_data = !(channel_flags & CHANNELS::CHANNEL_FLAG_LAST);
+    this->wating_format_data_response = !(channel_flags & CHANNELS::CHANNEL_FLAG_LAST);
 
     auto send_data = [&](char const* fname, bytes_view data, auto const&... args){
         emval_call(this->callbacks, fname, data.data(), data.size(), args...);
@@ -635,18 +634,21 @@ void ClipboardChannel::send_format_list_response_ok()
 
 void ClipboardChannel::process_capabilities(InStream& chunk)
 {
-    RDPECLIP::ClipboardCapabilitiesPDU pdu;
-    pdu.recv(chunk);
+    // TODO reset data
 
-    RDPECLIP::GeneralCapabilitySet pdu2;
-    pdu2.recv(chunk);
+    auto general_flags = RDPECLIP::extract_clipboard_general_flags_capability(
+        chunk.remaining_bytes(), this->verbose);
 
     this->format_list.use_long_format_names
-        = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+      = bool(general_flags & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+    // this->format_list.lock_id_support
+    //     = bool(general_flags & RDPECLIP::CB_CAN_LOCK_CLIPDATA);
 }
 
 void ClipboardChannel::process_monitor_ready()
 {
+    // TODO save use_long_format_names + reset data
+
     {
         uint16_t cCapabilitiesSets = 1;
         uint32_t const generalFlags

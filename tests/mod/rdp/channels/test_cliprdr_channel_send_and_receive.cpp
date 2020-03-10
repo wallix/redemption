@@ -109,8 +109,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
     RED_CHECK(format_name->utf8_name() == Cliprdr::formats::file_group_descriptor_w.ascii_name);
 }
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
-
+RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend)
+{
     FakeDataSender data_sender;
 
     format_list_send_back(&data_sender);
@@ -119,8 +119,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
     RED_CHECK(data_sender.streams[0].av() == "\x03\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
-
+RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack)
+{
     FakeDataSender sender;
     const bool use_long_format_name = true;
 

@@ -613,3 +613,13 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
         RED_CHECK((it == format_ref.end()));
     }
 }
+
+RED_AUTO_TEST_CASE(test_extract_general_flags)
+{
+    auto pkt = "\x01\x00\0\0\x01\x00\x0c\x00\1\0\0\0\2\0\0\0"_av;
+    RED_CHECK(RDPECLIP::extract_clipboard_general_flags_capability(pkt, false) ==
+        RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+    RED_CHECK_EXCEPTION_ERROR_ID(
+        RDPECLIP::extract_clipboard_general_flags_capability(pkt.drop_back(1), false),
+        ERR_RDP_DATA_TRUNCATED);
+}

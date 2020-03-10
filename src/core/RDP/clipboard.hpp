@@ -747,6 +747,57 @@ public:
     }
 };  // GeneralCapabilitySet
 
+
+inline uint32_t extract_clipboard_general_flags_capability(
+    bytes_view data, bool verbose)
+{
+    uint32_t general_flags_result = 0;
+
+    InStream in_stream(data);
+
+    RDPECLIP::ClipboardCapabilitiesPDU caps;
+    caps.recv(in_stream);
+
+    for (uint16_t i = 0; i < caps.cCapabilitiesSets(); ++i) {
+        ::check_throw(in_stream, 4, "RDPECLIP::CapabilitySet truncated capabilitySet",
+            ERR_RDP_DATA_TRUNCATED);
+
+        auto capabilitySetType = in_stream.in_uint16_le();
+        auto lengthCapability = in_stream.in_uint16_le();
+
+        auto const remains = in_stream.in_remain() + 4u;
+        if (remains < lengthCapability) {
+            LOG(LOG_ERR, "Truncated RDPECLIP::CapabilitySet truncated data:"
+                " expected=%u remains=%zu", lengthCapability, remains);
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        if (capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+            auto version = in_stream.in_uint32_le();
+            auto generalFlags = in_stream.in_uint32_le();
+
+            if (verbose) {
+                LOG(LOG_INFO, "GeneralCapabilitySet:"
+                    " capabilitySetType=0x%04x:CB_CAPSTYPE_GENERAL"
+                    " lengthCapability=0x%04x"
+                    " version=0x%08x"
+                    " generalFlags=0x%08x: %s",
+                    RDPECLIP::CB_CAPSTYPE_GENERAL,
+                    lengthCapability,
+                    version,
+                    generalFlags, RDPECLIP::generalFlags_to_string(generalFlags));
+            }
+
+            general_flags_result |= generalFlags;
+        }
+        else {
+            in_stream.in_skip_bytes(lengthCapability - 4u);
+        }
+    }
+
+    return general_flags_result;
+}
+
 // [MS-RDPECLIP] 2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
 // ======================================================================
 
