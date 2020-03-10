@@ -2010,7 +2010,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
             };
 
             if (not process_clip(this->client_ctx) && not process_clip(this->server_ctx)) {
-                LOG(LOG_ERR, "ClipboardVirtualChannel::DLP_antivirus_check_channels_files:"
+                LOG(LOG_INFO, "ClipboardVirtualChannel::DLP_antivirus_check_channels_files:"
                     " unknown validatorId(%u)", file_validator_id);
             }
         }
