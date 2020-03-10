@@ -41,6 +41,7 @@
 # include "mod/rdp/params/rdp_session_probe_params.hpp"
 # include "mod/rdp/params/rdp_application_params.hpp"
 #include "capture/fdx_capture.hpp"
+#include "core/session_reactor.hpp"
 
 namespace
 {
@@ -75,7 +76,7 @@ struct RdpData
         using Metrics::Metrics;
 
         RDPMetrics protocol_metrics{*this};
-        SessionReactor::TimerPtr metrics_timer;
+        TimerPtr metrics_timer;
     };
 
     struct FileValidator
@@ -101,6 +102,7 @@ struct RdpData
             std::string up_target_name;
             std::string down_target_name;
             SessionReactor& session_reactor;
+            TimerContainer& timer_events_;
             FrontAPI& front;
         };
 
@@ -108,7 +110,7 @@ struct RdpData
         FileValidatorTransport trans;
         // TODO wait result (add delay)
         FileValidatorService service;
-        SessionReactor::TopFdPtr validator_event;
+        TopFdPtr validator_event;
 
         FileValidator(unique_fd&& fd, CtxError&& ctx_error)
         : ctx_error(std::move(ctx_error))
@@ -154,7 +156,7 @@ public:
 
     FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
     {
-        if (!this->fdx_capture) {
+        if (!this->rdp_data.fdx_capture) {
             LOG(LOG_INFO, "Enable clipboard file storage");
             int  const groupid = ini.get<cfg::video::capture_groupid>();
             auto const& session_id = ini.get<cfg::context::session_id>();
@@ -163,18 +165,18 @@ public:
             auto const& hash_dir = ini.get<cfg::video::hash_path>();
             auto const& filebase = ini.get<cfg::capture::record_filebase>();
 
-            this->fdx_capture = std::make_unique<FdxCapture>(
+            this->rdp_data.fdx_capture = std::make_unique<FdxCapture>(
                 str_concat(record_dir.as_string(), subdir),
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
-                session_id, groupid, cctx, gen, this->fstat,
+                session_id, groupid, cctx, gen, this->rdp_data.fstat,
                 /* TODO should be a log (siem?)*/
                 ReportError());
 
-            ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
+            ini.set_acl<cfg::capture::fdx_path>(this->rdp_data.fdx_capture->get_fdx_path());
         }
 
-        return this->fdx_capture.get();
+        return this->rdp_data.fdx_capture.get();
     }
 
     RdpData rdp_data;
@@ -350,8 +352,6 @@ public:
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 };
-metrics metrics metrics
-
 
 inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
 {
@@ -672,15 +672,15 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         // ================== FileValidator ============================
         auto & vp = mod_rdp_params.validator_params;
         vp.log_if_accepted = ini.get<cfg::file_verification::log_if_accepted>();
-        vp.validate_up_text = ini.get<cfg::file_verification::clipboard_text_up>();
-        vp.validate_down_text = ini.get<cfg::file_verification::clipboard_text_down>();
+        vp.enable_clipboard_text_up = ini.get<cfg::file_verification::clipboard_text_up>();
+        vp.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
         vp.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
         vp.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
 
         bool enable_validator = ini.get<cfg::file_verification::enable_up>() 
             || ini.get<cfg::file_verification::enable_down>();
 
-        std::unique_ptr<ModRDPWithSocketAndMetrics::FileValidator> file_validator;
+        std::unique_ptr<RdpData::FileValidator> file_validator;
         int validator_fd = -1;
 
         if (enable_validator) {
@@ -690,9 +690,9 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
             if (ufd) {
                 validator_fd = ufd.fd();
                 fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
-                file_validator = std::make_unique<ModRDPWithSocketAndMetrics::FileValidator>(
+                file_validator = std::make_unique<RdpData::FileValidator>(
                     std::move(ufd),
-                    ModRDPWithSocketAndMetrics::FileValidator::CtxError{
+                    RdpData::FileValidator::CtxError{
                         report_message,
                         mod_rdp_params.validator_params.up_target_name,
                         mod_rdp_params.validator_params.down_target_name,
@@ -722,10 +722,10 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
-        std::unique_ptr<ModRDPWithSocketAndMetrics::ModMetrics> metrics;
+        std::unique_ptr<RdpData::ModMetrics> metrics;
 
         if (enable_metrics) {
-            metrics = std::make_unique<ModRDPWithSocketAndMetrics::ModMetrics>(
+            metrics = std::make_unique<RdpData::ModMetrics>(
                 ini.get<cfg::metrics::log_dir_path>().as_string(),
                 ini.get<cfg::context::session_id>(),
                 hmac_user(
@@ -783,9 +783,9 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         );
 
         if (enable_validator) {
-            new_mod->file_validator = std::move(file_validator);
+            new_mod->rdp_data.file_validator = std::move(file_validator);
             LOG(LOG_INFO, "create_module_rdp::fd_events_.create_top_executor");
-            new_mod->file_validator->validator_event = this->fd_events_.create_top_executor(this->session_reactor, validator_fd)
+            new_mod->rdp_data.file_validator->validator_event = this->fd_events_.create_top_executor(this->session_reactor, validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())
@@ -795,11 +795,11 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         }
 
         if (enable_metrics) {
-            new_mod->RdpData::metrics = std::move(metrics);
+            new_mod->rdp_data.metrics = std::move(metrics);
             LOG(LOG_INFO, "create_module_rdp::timer_events_.create_timer_executor");
-            new_mod->RdpData::metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
+            new_mod->rdp_data.metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->RdpData::metrics.get()](JLN_TIMER_CTX ctx){
+                .on_action([metrics = new_mod->rdp_data.metrics.get()](JLN_TIMER_CTX ctx){
                     metrics->log(ctx.get_current_time());
                     return ctx.ready();
                 })
