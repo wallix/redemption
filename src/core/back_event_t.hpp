@@ -20,12 +20,25 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
+#include <string>
+
 enum BackEvent_t
 {
     BACK_EVENT_NONE = 0,
-    BACK_EVENT_NEXT,
-    BACK_EVENT_STOP = 4,
-    BACK_EVENT_REFRESH,
+    BACK_EVENT_NEXT,     // MODULE FINISHED, ASKING FOR NEXT MODULE
+    BACK_EVENT_STOP = 4, // MODULE FINISHED, ASKING TO LEAVE SESSION
+    BACK_EVENT_REFRESH,  // MODULE ASKED DATA TO ACL, WAITING FOR ACL REFRESH
 
     BACK_EVENT_RETRY_CURRENT,
 };
+
+static inline auto signal_name(BackEvent_t signal) -> std::string
+{
+     return signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
+           :signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
+           :signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
+           :signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
+           :signal == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
+           :"BACK_EVENT_UNKNOWN";
+}
+

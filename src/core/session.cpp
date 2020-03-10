@@ -247,18 +247,6 @@ class Session
         }
 
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
-
-        auto signal_name = [](BackEvent_t sig) {
-            return
-            sig == BACK_EVENT_NONE?"BACK_EVENT_NONE"
-           :sig == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
-           :sig == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
-           :sig == BACK_EVENT_STOP?"BACK_EVENT_STOP"
-           :sig == BACK_EVENT_RETRY_CURRENT?"BACK_EVENT_RETRY_CURRENT"
-           :"BACK_EVENT_UNKNOWN";
-        };
-//        LOG(LOG_INFO, "check_acl mod_signal=%s", signal_name(signal));
-
         if (!acl->keepalive.is_started() && mm.is_connected()) {
             acl->keepalive.start(now);
         }
@@ -274,8 +262,6 @@ class Session
                 return true;
             }
             switch (signal){
-            case BACK_EVENT_RETRY_CURRENT:
-            break;
             case BACK_EVENT_STOP:
             break;
             case BACK_EVENT_NONE:
@@ -294,7 +280,8 @@ class Session
             }
             return true;
         }
-        if (acl->acl_serial.remote_answer || signal == BACK_EVENT_RETRY_CURRENT) {
+        
+        if (acl->acl_serial.remote_answer) {
             LOG(LOG_INFO, "check_acl remote_answer signal=%s", signal_name(signal));
             acl->acl_serial.remote_answer = false;
             switch (signal){
@@ -326,14 +313,6 @@ class Session
                     acl->keepalive.stop();
                 }
                 mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
-            }
-            return true;
-            case BACK_EVENT_RETRY_CURRENT:
-            {
-                LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
-                mod_wrapper.remove_mod();
-                mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, report_message);
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
             }
             return true;
             }
@@ -428,7 +407,7 @@ class Session
         return true;
     }
 
-    bool end_session_exception(Error const& e, std::unique_ptr<Acl> & acl, ModuleManager & mm, ModWrapper & mod_wrapper, Authentifier & authentifier, Inifile & ini) {
+    bool end_session_exception(Error const& e, std::unique_ptr<Acl> & acl, ModuleManager & mm, ModWrapper & mod_wrapper, Authentifier & authentifier, Inifile & ini, bool & retry_current_module_flag) {
 
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
@@ -446,7 +425,8 @@ class Session
             {
                 LOG(LOG_INFO, "====> Retry without session probe");
                 ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
+                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                retry_current_module_flag = true;
                 return true;
             }
             LOG(LOG_ERR, "Session::Session Exception (1) = %s", e.errmsg());
@@ -457,26 +437,30 @@ class Session
         }
         else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
             LOG(LOG_INFO, "====> Retry SESSION_PROBE_DISCONNECTION_RECONNECTION");
-            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
+            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+            retry_current_module_flag = true;
             return true;
         }
         else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
             LOG(LOG_INFO, "====> Retry AUTOMATIC_RECONNECTION_REQUIRED");
             ini.set<cfg::context::perform_automatic_reconnection>(true);
-            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
+            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+            retry_current_module_flag = true;
             return true;
         }
         else if (e.id == ERR_RAIL_NOT_ENABLED) {
             LOG(LOG_INFO, "====> Retry witout Native remoteapp capability");
             ini.get_mutable_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
-            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
+            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+            retry_current_module_flag = true;
             return true;
         }
         else if (e.id == ERR_RDP_SERVER_REDIR){
             if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                 LOG(LOG_INFO, "====> Retry Server redirection");
                 set_server_redirection_target(ini, authentifier);
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_RETRY_CURRENT);
+                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                retry_current_module_flag = true;
                 return true;
             }
             else {
@@ -582,7 +566,14 @@ class Session
                               TimerContainer & timer_events_,
                               GraphicEventContainer & graphic_events_,
                               GraphicTimerContainer & graphic_timer_events_, 
-                              std::unique_ptr<Acl> & acl, timeval & now, const time_t start_time, Inifile& ini, ModuleManager & mm, ModWrapper & mod_wrapper, EndSessionWarning & end_session_warning, Front & front, Authentifier & authentifier, SesmanInterface & sesman)
+                              std::unique_ptr<Acl> & acl, timeval & now,
+                              const time_t start_time, Inifile& ini,
+                              ModuleManager & mm, ModWrapper & mod_wrapper,
+                              EndSessionWarning & end_session_warning,
+                              Front & front,
+                              Authentifier & authentifier,
+                              SesmanInterface & sesman,
+                              bool & retry_current_module_flag)
     {
         try {
             auto const end_tv = session_reactor.get_current_time();
@@ -592,7 +583,7 @@ class Session
             graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
             fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){ return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
         } catch (Error const& e) {
-            if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini)) {
+            if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini, retry_current_module_flag)) {
                 return false;
             }
         }
@@ -640,7 +631,7 @@ class Session
                 return this->module_sequencing(mm, acl, authentifier, mod_wrapper, now, front);
             } catch (Error const& e) {
                 LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
-                if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini)) {
+                if (false == end_session_exception(e, acl, mm, mod_wrapper, authentifier, ini, retry_current_module_flag)) {
                     return false;
                 }
             }
@@ -784,6 +775,8 @@ public:
         TimerContainer timer_events_;
         GraphicEventContainer graphic_events_;
         GraphicTimerContainer graphic_timer_events_;
+        
+        bool retry_current_module_flag = false;
 
         TimeSystem timeobj;
 
@@ -1074,7 +1067,18 @@ public:
                         continue;
                     }
 
-                    run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, sesman);
+                    if (retry_current_module_flag){
+                        acl->acl_serial.remote_answer = false;
+                        LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
+                        mod_wrapper.remove_mod();
+                        mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
+                        mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                        retry_current_module_flag = false;
+                        run_session = true;
+                    }
+                    else {
+                        run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, sesman, retry_current_module_flag);
+                    }
                 }
                 break;
                 } // switch

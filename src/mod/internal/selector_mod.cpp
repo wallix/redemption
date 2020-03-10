@@ -320,7 +320,7 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::globals::target_device>();
     this->vars.ask<cfg::context::selector>();
 
-    // TODO replace BACK_EVENT_REFRESH by session_reactor.create_graphic_event ?
+    // Asking from data from ACL
     this->set_mod_signal(BACK_EVENT_REFRESH);
 }
 
