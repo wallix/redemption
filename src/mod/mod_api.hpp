@@ -43,7 +43,7 @@ public:
 
     BackEvent_t get_mod_signal()
     {
-        LOG(LOG_INFO, "Reading mod_signal from %p is %s", this, signal_name(this->mod_signal)); 
+        LOG_IF(this->mod_signal != BACK_EVENT_NONE, LOG_INFO, "Reading mod_signal from %p is %s", this, signal_name(this->mod_signal)); 
         return this->mod_signal;
     }
 

@@ -366,7 +366,6 @@ namespace CHANNELS {
         void send_to_server( ServerTransportContext & stc,
                              uint16_t channelId, uint32_t length, uint32_t flags
                            , bytes_view chunk) {
-            LOG(LOG_INFO, "VirtualChannelPDU::send_to_server");
             this->send_<false, MCS::SendDataRequest_Send>(
                 stc.trans, stc.encrypt, stc.negociation_result.encryptionLevel,
                 stc.negociation_result.userid, channelId, length, flags, chunk
@@ -376,7 +375,6 @@ namespace CHANNELS {
         void send_to_client( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
                            , bytes_view chunk) {
-            LOG(LOG_INFO, "VirtualChannelPDU::send_to_client");
             this->send_<true, MCS::SendDataIndication_Send>(
                 trans, crypt_context, encryptionLevel,
                 userId, channelId, length, flags, chunk
