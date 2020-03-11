@@ -67,6 +67,10 @@ namespace redemption_unit_test__
 } // namespace redemption_unit_test__
 
 
+#if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
+# define REDEMPTION_UNIT_TEST_FAST_CHECK 0
+#endif
+
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 
 namespace redemption_unit_test__
@@ -295,7 +299,7 @@ namespace redemption_unit_test__
 
 } // namespace redemption_unit_test__
 
-#if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK) || REDEMPTION_UNIT_TEST_FAST_CHECK != 1
+#if ! REDEMPTION_UNIT_TEST_FAST_CHECK
 
 namespace std /*NOLINT*/
 {
@@ -308,6 +312,9 @@ namespace std /*NOLINT*/
 
 #endif
 
+#if REDEMPTION_UNIT_TEST_FAST_CHECK
+#define RED_TEST_DELEGATE_PRINT(type, stream_expr)
+#else
 #define RED_TEST_DELEGATE_PRINT(type, stream_expr)          \
   template<>                                                \
   struct RED_TEST_PRINT_TYPE_STRUCT_NAME<type>              \
@@ -317,13 +324,14 @@ namespace std /*NOLINT*/
       out << stream_expr; /* NOLINT */                      \
     }                                                       \
   }
+#endif
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \
   RED_TEST_DELEGATE_PRINT(type,            \
     #type << "{" << +::std::underlying_type_t<type>(x) << "}")
 
 
-#ifdef IN_IDE_PARSER
+#if defined(IN_IDE_PARSER) || REDEMPTION_UNIT_TEST_FAST_CHECK
 #define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
     for (type_value : __VA_ARGS__)                        \
         RED_TEST_CONTEXT(iocontext) /*NOLINT*/

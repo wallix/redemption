@@ -1169,8 +1169,11 @@ public:
     [[nodiscard]] uint32_t dwFlags() const { return this->dwFlags_; }
 
     [[nodiscard]] uint64_t position() const {
-            return (this->nPositionLow_ | (static_cast<uint64_t>(this->nPositionHigh_) << 32));
-        }
+        return (this->nPositionLow_ | (static_cast<uint64_t>(this->nPositionHigh_) << 32));
+    }
+
+    [[nodiscard]] uint32_t position_low() const { return this->nPositionLow_; }
+    [[nodiscard]] uint32_t position_high() const { return this->nPositionHigh_; }
 
     [[nodiscard]] uint32_t cbRequested() const { return this->cbRequested_; }
     [[nodiscard]] uint32_t clipDataId() const { return this->clipDataId_; }
