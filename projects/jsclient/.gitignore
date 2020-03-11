@@ -1,3 +1,6 @@
 # ln -s /usr/include/boost system_include/boost
 /system_include/boost
 /bin
+# source-map module
+/node_modules/
+/package-lock.json

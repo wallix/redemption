@@ -27,10 +27,17 @@ constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "''" ] ;
 constant JS_CLIENT_COPY_MODE : [ setvar copy_application_mode : "copy" ] ;
 
-# remove -Wno-ctad-maybe-unsupported
+import feature : feature ;
+feature source_map_support : no yes : propagated ;
+import toolset ;
+toolset.flags source_map_support SOURCE_MAP_SUPPORT : <source_map_support> ;
+toolset.flags exenode SOURCE_MAP_SUPPORT <source_map_support> ;
+
 rule emcc_flags ( properties * )
 {
     local fs = ;
+
+    # remove -Wno-ctad-maybe-unsupported
     for f in [ flags $(properties) ]
     {
         if $(f) != <cxxflags>-Wno-ctad-maybe-unsupported
@@ -38,6 +45,22 @@ rule emcc_flags ( properties * )
             fs += $(f) ;
         }
     }
+
+    # source-map support
+    local ps = [ property-set.create $(properties) ] ;
+    local map_support = [ $(ps).get <source_map_support> ] ;
+    if $(map_support) = yes
+    {
+        fs +=
+            <relevant>source_map_support
+            <cxxflags>-g4
+            <cxxflags>--emit-symbol-map
+            <cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
+            <cxxflags>"-s DEMANGLE_SUPPORT=1"
+            <linkflags>"-s DEMANGLE_SUPPORT=1"
+        ;
+    }
+
     return $(fs) ;
 }
 
@@ -100,11 +123,11 @@ project redjs
     # <cxxflags>"-s BINARYEN_TRAP_MODE=js" # clamp, allow
     # <cxxflags>"-s EMCC_WASM_BACKEND=1"
 
-    <variant>debug:<cxxflags>-g
+    # <variant>debug:<cxxflags>-g
     # <variant>debug:<cxxflags>-g4
-    <variant>debug:<cxxflags>--emit-symbol-map
-    <variant>debug:<cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
-    <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
+    # <variant>debug:<cxxflags>--emit-symbol-map
+    # <variant>debug:<cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
+    # <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
 
     <variant>release:<cxxflags>-O3
     # <variant>release:<cxxflags>-Os
@@ -209,10 +232,13 @@ explicit targets.jam ;
 make targets.jam : : @gen_targets ;
 
 
-
 actions exenode
 {
-  node $(>:S=.js) && : > $(<)
+    if [ "$(SOURCE_MAP_SUPPORT)" = yes ]; then
+        node -r source-map-support/register $(>:S=.js) && : > $(<)
+    else
+        node $(>:S=.js) && : > $(<)
+    fi
 }
 
 rule test-run ( name : objs + : requirements * )
