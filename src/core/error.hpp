@@ -184,6 +184,12 @@
     f(ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) \
     f(ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)           \
                                                              \
+    fv(ERR_SESSION_CLOSE_USER_INACTIVITY, 24500)             \
+    f(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE)             \
+    f(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED)                \
+    f(ERR_SESSION_CLOSE_ENDDATE_REACHED)                     \
+    f(ERR_SESSION_CLOSE_MODULE_NEXT)                         \
+                                                             \
     fv(ERR_SSL_CALL_FAILED, 25000)                           \
     f(ERR_SSL_CALL_HMAC_INIT_FAILED)                         \
     f(ERR_SSL_CALL_HMAC_UPDATE_FAILED)                       \

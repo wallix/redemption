@@ -68,6 +68,14 @@ namespace
 
 class Session
 {
+
+    enum class SessionState : int {
+        SESSION_STATE_INCOMING,
+        SESSION_STATE_RUNNING,
+        SESSION_STATE_BACKEND_CLEANUP,
+        SESSION_STATE_CLOSE_BOX
+    };
+
     struct Select
     {
         unsigned max = 0;
@@ -157,6 +165,7 @@ class Session
 
     static const time_t select_timeout_tv_sec = 3;
 
+private:
     void start_acl_running(std::unique_ptr<Acl> & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, Authentifier & authentifier, Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
@@ -169,9 +178,11 @@ class Session
         authentifier.set_acl_serial(&acl->acl_serial);
     }
 
-    bool close_box(ModuleManager & mm, std::unique_ptr<Acl> & acl, Authentifier & authentifier, ModWrapper & mod_wrapper, Inifile & ini)
+private:
+    bool close_box(ModuleManager & mm, std::unique_ptr<Acl> & acl, Authentifier & authentifier, ModWrapper & mod_wrapper, Inifile & ini, SessionState & session_state)
     {
         this->last_module = true;
+        session_state = SessionState::SESSION_STATE_CLOSE_BOX;
         mod_wrapper.last_disconnect();
         authentifier.set_acl_serial(nullptr);
         acl.reset();
@@ -182,41 +193,12 @@ class Session
         return false;
     }
 
-
+private:
     // Returns run_session value
     bool check_acl(ModuleManager & mm, std::unique_ptr<Acl> & acl,
         Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
-        time_t now, bool & has_user_activity)
+        time_t now, bool & has_user_activity, SessionState & session_state)
     {
-        const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-        if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
-            LOG(LOG_INFO, "check_acl: close by enddate");
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
-            return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
-        }
-
-        // Close by rejeted message received
-        if (!this->ini.get<cfg::context::rejected>().empty()) {
-            this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
-            LOG(LOG_INFO, "check_acl: close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
-            this->ini.set_acl<cfg::context::rejected>("");
-            return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
-        }
-
-        // Keep Alive
-        if (acl->keepalive.check(now, this->ini)) {
-            LOG(LOG_INFO, "check_acl: close by Missed keepalive");
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
-            return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
-        }
-
-        // Inactivity management
-        if (acl->inactivity.check_user_activity(now, has_user_activity)) {
-            LOG(LOG_INFO, "check_acl: close by user Inactivity");
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
-            return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
-        }
-
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
         if (!acl->keepalive.is_started() && mm.is_connected()) {
             acl->keepalive.start(now);
@@ -276,8 +258,7 @@ class Session
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    LOG(LOG_INFO, "check_acl is INTERNAL CLOSE signal=%s", signal_name(signal));
-                    return this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
+                    throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     LOG(LOG_INFO, "check_acl is INTERNAL CLOSE BACK signal=%s", signal_name(signal));
@@ -378,6 +359,7 @@ class Session
         return true;
     }
 
+private:
     int end_session_exception(Error const& e, Authentifier & authentifier, Inifile & ini) {
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
@@ -430,6 +412,32 @@ class Session
                 return 1;
             }
         }
+        else if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
+            LOG(LOG_INFO, "check_acl: close by enddate");
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE){
+            // Close by rejeted message received
+            this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
+            LOG(LOG_INFO, "check_acl: close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
+            this->ini.set_acl<cfg::context::rejected>("");
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED) {
+            LOG(LOG_INFO, "check_acl: close by Missed keepalive");
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_USER_INACTIVITY) {
+            LOG(LOG_INFO, "check_acl: close by user Inactivity");
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_MODULE_NEXT) {
+            LOG(LOG_INFO, "check_acl: next module is close box");
+            return 1;
+        }
         LOG(LOG_ERR, "Start Session Failed = %s", e.errmsg());
         if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
@@ -437,6 +445,7 @@ class Session
         return 1;
     }
 
+private:
     bool front_close_box(Select& ioswitch, SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicTimerContainer & graphic_timer_events_, ModWrapper & mod_wrapper)
     {
         bool run_session = true;
@@ -463,6 +472,7 @@ class Session
         return run_session;
     }
 
+private:
     void rt_display(Inifile & ini, ModuleManager & mm, ModWrapper & mod_wrapper, Front & front)
     {
         if (ini.check_from_acl()) {
@@ -494,28 +504,6 @@ class Session
         }
     }
 
-    bool module_sequencing(ModuleManager & mm, std::unique_ptr<Acl> & acl,
-        Authentifier & authentifier, ModWrapper & mod_wrapper,
-        timeval now, Front & front)
-    {
-        int i = 0;
-        do {
-            if (++i == 11) {
-                LOG(LOG_INFO, "module_sequencing: emergency exit");
-                break;
-            }
-            if (!this->last_module) {
-                bool run_session = this->check_acl(mm, acl,
-                    authentifier, authentifier, mod_wrapper,
-                    now.tv_sec, front.has_user_activity
-                );
-                if (!run_session) {
-                    return false;
-                }
-            }
-        } while (mod_wrapper.get_mod()->get_mod_signal() != BACK_EVENT_NONE);
-        return true;
-    }
 
     bool front_up_and_running(Select& ioswitch,
                               SessionReactor& session_reactor,
@@ -529,7 +517,8 @@ class Session
                               ModuleManager & mm, ModWrapper & mod_wrapper,
                               EndSessionWarning & end_session_warning,
                               Front & front,
-                              Authentifier & authentifier)
+                              Authentifier & authentifier,
+                              SessionState & session_state)
     {
         auto const end_tv = session_reactor.get_current_time();
         timer_events_.exec_timer(end_tv);
@@ -574,7 +563,23 @@ class Session
             }
         }
 
-        return this->module_sequencing(mm, acl, authentifier, mod_wrapper, now, front);
+        int i = 0;
+        do {
+            if (++i == 11) {
+                LOG(LOG_INFO, "module_sequencing: emergency exit");
+                break;
+            }
+            if (!this->last_module) {
+                bool run_session = this->check_acl(mm, acl,
+                    authentifier, authentifier, mod_wrapper,
+                    now.tv_sec, front.has_user_activity, session_state
+                );
+                if (!run_session) {
+                    return false;
+                }
+            }
+        } while (mod_wrapper.get_mod()->get_mod_signal() != BACK_EVENT_NONE);
+        return true;
     }
 
 
@@ -704,7 +709,6 @@ public:
         std::unique_ptr<Acl> acl;
 
         try {
-
             Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());;
 
             auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
@@ -760,22 +764,22 @@ public:
             //        and be caused either a deconnexion (or hang) of proxy, a failure to
             //        reply to keepalive, or as a consequence of disconnection from target server.
 
-            enum {
-                SESSION_STATE_INCOMING,
-                SESSION_STATE_RUNNING,
-                SESSION_STATE_BACKEND_CLEANUP,
-                SESSION_STATE_CLOSE_BOX
-            } session_state = SESSION_STATE_INCOMING;
+           
+            SessionState session_state = SessionState::SESSION_STATE_INCOMING;
 
             while (run_session) {
+
+                timeval now = tvtime();
+                session_reactor.set_current_time(now);
+
+                Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
+
                 switch (session_state) {
-                case SESSION_STATE_INCOMING:
+                case SessionState::SESSION_STATE_INCOMING:
                 {
+                    // Pre assertion: connected front socket
+                    // No ACL socket, No connected mode
 
-                    timeval now = tvtime();
-                    session_reactor.set_current_time(now);
-
-                    Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
 
                     bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
                     bool mod_has_waiting_data_to_write   = mod_wrapper.has_mod()
@@ -962,27 +966,6 @@ public:
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                             return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
                         });
-
-                        // front event
-                        try {
-                        } catch (Error const& e) {
-                            // RemoteApp disconnection initiated by user
-                            // ERR_DISCONNECT_BY_USER == e.id
-                            if (
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                                // Can be caused by wabwatchdog.
-                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                            }
-                            run_session = false;
-                        } catch (...) {
-                            LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                            run_session = false;
-                        }
                     }
                     break;
                     case Front::FRONT_UP_AND_RUNNING:
@@ -998,6 +981,7 @@ public:
                                     mm.new_mod_internal_close(mod_wrapper, authentifier);
                                 }
                                 this->last_module = true;
+                                session_state = SessionState::SESSION_STATE_CLOSE_BOX;
                             }
                             if (this->last_module && !ini.get<cfg::globals::enable_close_box>()) {
                                 run_session = false;
@@ -1030,7 +1014,24 @@ public:
                         }
                         else {
                             try {
-                                run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier);
+                                // Close by end date reached
+                                const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
+                                if (enddate != 0 && (static_cast<uint32_t>(now.tv_sec) > enddate)) {
+                                    throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
+                                }
+                                // Close by rejeted message received
+                                if (!this->ini.get<cfg::context::rejected>().empty()) {
+                                    throw Error(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE);
+                                }
+                                // Keep Alive
+                                if (acl->keepalive.check(now.tv_sec, this->ini)) {
+                                    throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
+                                }
+                                // Inactivity management
+                                if (acl->inactivity.check_user_activity(now.tv_sec, front.has_user_activity)) {
+                                    throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
+                                }
+                                run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, session_state);
                             } catch (Error const& e) {
                                 LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
                                 switch (end_session_exception(e, authentifier, ini)){
@@ -1038,7 +1039,7 @@ public:
                                     run_session = false;
                                 break;
                                 case 1: // Close Box
-                                    run_session = this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
+                                    run_session = this->close_box(mm, acl, authentifier, mod_wrapper, this->ini, session_state);
                                 break;
                                 case 2: // retry current module
                                     mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
@@ -1054,317 +1055,32 @@ public:
     //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");            
                 }
                 break;
-                case SESSION_STATE_RUNNING:
+                case SessionState::SESSION_STATE_RUNNING:
                 {
-                    timeval now = tvtime();
-                    session_reactor.set_current_time(now);
-
-                    Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
-
-                    bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
-                    bool mod_has_waiting_data_to_write   = mod_wrapper.has_mod()
-                                                        && mod_wrapper.get_mod_transport()
-                                                        && mod_wrapper.get_mod_transport()->has_data_to_write();
-
-                    // =============================================================
-                    // This block takes care of outgoing data waiting in buffers because system write buffer is full
-                    if (front_has_waiting_data_to_write || mod_has_waiting_data_to_write){
-                        if (front_has_waiting_data_to_write){
-                            ioswitch.set_write_sck(front_trans.sck);
-                        }
-                        if (mod_has_waiting_data_to_write){
-                            ioswitch.set_write_sck(mod_wrapper.get_mod_transport()->sck);
-                        }
-
-                        sleep(1);
-                        int num = ioswitch.select(now);
-                        if (num < 0) {
-
-                            if (errno != EINTR) {
-                                // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
-                                // EBADF: means fd has been closed (by me) or as already returned an error on another call
-                                // EINVAL: invalid value in timeout (my fault again)
-                                // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
-                                LOG(LOG_ERR, "Proxy send wait raised error %d : %s", errno, strerror(errno));
-                                run_session = false;
-                                continue;
-                            }
-                        }
-                        if (mod_wrapper.has_mod() 
-                        && mod_wrapper.get_mod_transport() 
-                        && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
-                            mod_wrapper.get_mod_transport()->send_waiting_data();
-                        }
-
-                        if (front_trans.sck != INVALID_SOCKET
-                        && ioswitch.is_set_for_writing(front_trans.sck)) {
-                            front_trans.send_waiting_data();
-                        }
-                        if (num > 0) { continue; }
-                        // if the select stopped on timeout or EINTR we will give a try to reading
-                    }
-                    
-                    // =============================================================
-                    // Now prepare select for listening on all read sockets
-                    // timeout or immediate wakeups are managed using timeout
-                    // =============================================================
-                    
-                    // sockets for mod or front aren't managed using fd events
-                    if (mod_wrapper.has_mod() && mod_wrapper.get_mod_transport()) {
-                        int fd = mod_wrapper.get_mod_transport()->sck;
-    //                    LOG(LOG_INFO, "Wait for read event on mod fd=%d", fd);
-                        if (fd != INVALID_SOCKET) {
-                            ioswitch.set_read_sck(fd);
-                        }
-                    }
-                    
-                    if (front_trans.sck != INVALID_SOCKET) {
-    //                    LOG(LOG_INFO, "Wait for read event on front fd=%d", front_trans.sck);
-                        ioswitch.set_read_sck(front_trans.sck);
-                    }
-
-                    // if event lists are waiting for incoming data 
-                    fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
-    //                        LOG(LOG_INFO, "Wait for read event on fd=%d", fd);
-                            if (fd != INVALID_SOCKET){
-                                ioswitch.set_read_sck(fd);
-                            }
-                    });
-                    
-                    if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
-    //                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
-                            if (fd != INVALID_SOCKET){
-                                ioswitch.set_read_sck(fd);
-                            }
-                    });
-                    }
-
-                    if (acl) {
-    //                    LOG(LOG_INFO, "Wait for read event on acl fd=%d", acl->auth_trans.sck);
-                        if (acl->auth_trans.sck != INVALID_SOCKET){
-                            ioswitch.set_read_sck(acl->auth_trans.sck);
-                        }
-                    }
-
-                    bool mod_data_pending = (mod_wrapper.has_mod()
-                            && mod_wrapper.get_mod_transport()
-                            && mod_wrapper.get_mod_transport()->has_tls_pending_data());
-
-                    timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
-                            timer_events_,
-                            fd_events_,
-                            graphic_timer_events_,
-                            graphic_fd_events_,
-                            graphic_events_,
-                            front_trans.has_tls_pending_data(),
-                            mod_data_pending
-                            );
-
-                    ioswitch.set_timeout(ultimatum);
-
-                    int num = ioswitch.select(now);
-    //                LOG(LOG_INFO, " Select num = %d", num);
-
-                    if (num < 0) {
-                        if (errno != EINTR) {
-                            // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
-                            // EBADF: means fd has been closed (by me) or as already returned an error on another call
-                            // EINVAL: invalid value in timeout (my fault again)
-                            // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
-                            LOG(LOG_ERR, "Proxy data wait loop raised error %d : %s", errno, strerror(errno));
-                            run_session = false;
-                        }
-                        continue;
-                    }
-
-                    now = tvtime();
-                    session_reactor.set_current_time(now);
-                    
-                    if (ini.get<cfg::debug::performance>() & 0x8000) {
-                        this->write_performance_log(now.tv_sec);
-                    }
-
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
-                    || (front_trans.sck != INVALID_SOCKET 
-                    && ioswitch.is_set_for_reading(front_trans.sck));
-
-                    bool acl_is_set = bool(acl) 
-                        && acl->auth_trans.sck != INVALID_SOCKET 
-                        && ioswitch.is_set_for_reading(acl->auth_trans.sck);
-
-                    bool mod_is_set = mod_data_pending
-                    || (mod_wrapper.has_mod()
-                        && mod_wrapper.get_mod_transport()
-                        && mod_wrapper.get_mod_transport()->sck != INVALID_SOCKET
-                        && ioswitch.is_set_for_reading(mod_wrapper.get_mod_transport()->sck));
-
-                    try {
-                        if (front_is_set){
-                            this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
-                        }
-                    } catch (Error const& e) {
-                        // RemoteApp disconnection initiated by user
-                        // ERR_DISCONNECT_BY_USER == e.id
-                        if (
-                            // Can be caused by client disconnect.
-                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU)
-                            // Can be caused by client disconnect.
-                            && (e.id != ERR_MCS_APPID_IS_MCS_DPUM)
-                            && (e.id != ERR_RDP_HANDSHAKE_TIMEOUT)
-                            // Can be caused by wabwatchdog.
-                            && (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                        }
-                        front_trans.sck = INVALID_SOCKET;
-                        run_session = false;
-                        continue;
-                    } catch (...) {
-                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                        run_session = false;
-                        continue;
-                    }
-
-                    if (acl_is_set) {
-                        this->acl_incoming_data(*acl.get(), ini, mod_wrapper);
-                    }
-
-                    if (mod_is_set) {
-                    }
-
-                    switch (front.state) {
-                    default:
-                    // Design a State to ensure ACL Start
-    //                if (acl){
-    //                    ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-    //                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-    //                }
-                    {
-                        fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                            return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
-                        });
-
-                        // front event
-                        try {
-                        } catch (Error const& e) {
-                            // RemoteApp disconnection initiated by user
-                            // ERR_DISCONNECT_BY_USER == e.id
-                            if (
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                                // Can be caused by wabwatchdog.
-                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                            }
-                            run_session = false;
-                        } catch (...) {
-                            LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                            run_session = false;
-                        }
-                    }
-                    break;
-                    case Front::FRONT_UP_AND_RUNNING:
-                    {
-                        if (!acl && !this->last_module) {
-                            try {
-                                this->start_acl_running(acl, cctx, rnd, now, ini, authentifier, fstat);
-                            }
-                            catch (...) {
-                                this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                                mod_wrapper.last_disconnect();
-                                if (ini.get<cfg::globals::enable_close_box>()) {
-                                    mm.new_mod_internal_close(mod_wrapper, authentifier);
-                                }
-                                this->last_module = true;
-                            }
-                            if (this->last_module && !ini.get<cfg::globals::enable_close_box>()) {
-                                run_session = false;
-                                continue;
-                            }
-                        }
-
-                        if (!sesman.auth_info_sent){
-                            sesman.set_acl_screen_info();
-                            sesman.set_acl_auth_info();
-                            if (this->ini.changed_field_size()) {
-                                acl->acl_serial.send_acl_data();
-                                continue;
-                            }
-                        }
-
-                        if (this->last_module){
-                            run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, mod_wrapper);
-                            continue;
-                        }
-
-                        if (retry_current_module_flag){
-                            acl->acl_serial.remote_answer = false;
-                            LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
-                            mod_wrapper.remove_mod();
-                            mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
-                            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                            retry_current_module_flag = false;
-                            run_session = true;
-                        }
-                        else {
-                            try {
-                                run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier);
-                            } catch (Error const& e) {
-                                LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
-                                switch (end_session_exception(e, authentifier, ini)){
-                                case 0: // End of session loop
-                                    run_session = false;
-                                break;
-                                case 1: // Close Box
-                                    run_session = this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
-                                break;
-                                case 2: // retry current module
-                                    mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                                    retry_current_module_flag = true;
-                                    run_session = true;
-                                break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                    } // switch
-    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");            
                 }
                 break;
 
-                case SESSION_STATE_BACKEND_CLEANUP:
+                case SessionState::SESSION_STATE_BACKEND_CLEANUP:
                 {
-                    timeval now = tvtime();
-                    session_reactor.set_current_time(now);
+                }
 
-                    Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
+                case SessionState::SESSION_STATE_CLOSE_BOX:
+                {
+                    // Pre assertion: front socket still connected
+                    // ACL already disconnected
+                    // current mode is close mod
 
                     bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
-                    bool mod_has_waiting_data_to_write   = mod_wrapper.has_mod()
-                                                        && mod_wrapper.get_mod_transport()
-                                                        && mod_wrapper.get_mod_transport()->has_data_to_write();
 
                     // =============================================================
                     // This block takes care of outgoing data waiting in buffers because system write buffer is full
-                    if (front_has_waiting_data_to_write || mod_has_waiting_data_to_write){
+                    if (front_has_waiting_data_to_write){
                         if (front_has_waiting_data_to_write){
                             ioswitch.set_write_sck(front_trans.sck);
                         }
-                        if (mod_has_waiting_data_to_write){
-                            ioswitch.set_write_sck(mod_wrapper.get_mod_transport()->sck);
-                        }
 
-                        sleep(1);
                         int num = ioswitch.select(now);
                         if (num < 0) {
-
                             if (errno != EINTR) {
                                 // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
                                 // EBADF: means fd has been closed (by me) or as already returned an error on another call
@@ -1375,14 +1091,8 @@ public:
                                 continue;
                             }
                         }
-                        if (mod_wrapper.has_mod() 
-                        && mod_wrapper.get_mod_transport() 
-                        && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
-                            mod_wrapper.get_mod_transport()->send_waiting_data();
-                        }
 
-                        if (front_trans.sck != INVALID_SOCKET
-                        && ioswitch.is_set_for_writing(front_trans.sck)) {
+                        if (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_writing(front_trans.sck)) {
                             front_trans.send_waiting_data();
                         }
                         if (num > 0) { continue; }
@@ -1395,48 +1105,18 @@ public:
                     // =============================================================
                     
                     // sockets for mod or front aren't managed using fd events
-                    if (mod_wrapper.has_mod() && mod_wrapper.get_mod_transport()) {
-                        int fd = mod_wrapper.get_mod_transport()->sck;
-    //                    LOG(LOG_INFO, "Wait for read event on mod fd=%d", fd);
-                        if (fd != INVALID_SOCKET) {
-                            ioswitch.set_read_sck(fd);
-                        }
-                    }
-                    
                     if (front_trans.sck != INVALID_SOCKET) {
-    //                    LOG(LOG_INFO, "Wait for read event on front fd=%d", front_trans.sck);
                         ioswitch.set_read_sck(front_trans.sck);
                     }
 
                     // if event lists are waiting for incoming data 
-                    fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
-    //                        LOG(LOG_INFO, "Wait for read event on fd=%d", fd);
-                            if (fd != INVALID_SOCKET){
-                                ioswitch.set_read_sck(fd);
-                            }
-                    });
+                    fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                            if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
                     
                     if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
-    //                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
-                            if (fd != INVALID_SOCKET){
-                                ioswitch.set_read_sck(fd);
-                            }
-                    });
+                        graphic_fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                            if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
                     }
-
-                    if (acl) {
-    //                    LOG(LOG_INFO, "Wait for read event on acl fd=%d", acl->auth_trans.sck);
-                        if (acl->auth_trans.sck != INVALID_SOCKET){
-                            ioswitch.set_read_sck(acl->auth_trans.sck);
-                        }
-                    }
-
-                    bool mod_data_pending = (mod_wrapper.has_mod()
-                            && mod_wrapper.get_mod_transport()
-                            && mod_wrapper.get_mod_transport()->has_tls_pending_data());
 
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
                             front,  
@@ -1446,14 +1126,12 @@ public:
                             graphic_fd_events_,
                             graphic_events_,
                             front_trans.has_tls_pending_data(),
-                            mod_data_pending
+                            false
                             );
 
                     ioswitch.set_timeout(ultimatum);
 
                     int num = ioswitch.select(now);
-    //                LOG(LOG_INFO, " Select num = %d", num);
-
                     if (num < 0) {
                         if (errno != EINTR) {
                             // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
@@ -1474,18 +1152,7 @@ public:
                     }
 
                     bool const front_is_set = front_trans.has_tls_pending_data() 
-                    || (front_trans.sck != INVALID_SOCKET 
-                    && ioswitch.is_set_for_reading(front_trans.sck));
-
-                    bool acl_is_set = bool(acl) 
-                        && acl->auth_trans.sck != INVALID_SOCKET 
-                        && ioswitch.is_set_for_reading(acl->auth_trans.sck);
-
-                    bool mod_is_set = mod_data_pending
-                    || (mod_wrapper.has_mod()
-                        && mod_wrapper.get_mod_transport()
-                        && mod_wrapper.get_mod_transport()->sck != INVALID_SOCKET
-                        && ioswitch.is_set_for_reading(mod_wrapper.get_mod_transport()->sck));
+                    || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
 
                     try {
                         if (front_is_set){
@@ -1512,402 +1179,10 @@ public:
                         run_session = false;
                         continue;
                     }
-
-                    if (acl_is_set) {
-                        this->acl_incoming_data(*acl.get(), ini, mod_wrapper);
-                    }
-
-                    if (mod_is_set) {
-                    }
-
-                    switch (front.state) {
-                    default:
-                    // Design a State to ensure ACL Start
-    //                if (acl){
-    //                    ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-    //                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-    //                }
-                    {
-                        fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                            return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
-                        });
-
-                        // front event
-                        try {
-                        } catch (Error const& e) {
-                            // RemoteApp disconnection initiated by user
-                            // ERR_DISCONNECT_BY_USER == e.id
-                            if (
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                                // Can be caused by wabwatchdog.
-                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                            }
-                            run_session = false;
-                        } catch (...) {
-                            LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                            run_session = false;
-                        }
-                    }
-                    break;
-                    case Front::FRONT_UP_AND_RUNNING:
-                    {
-                        if (!acl && !this->last_module) {
-                            try {
-                                this->start_acl_running(acl, cctx, rnd, now, ini, authentifier, fstat);
-                            }
-                            catch (...) {
-                                this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                                mod_wrapper.last_disconnect();
-                                if (ini.get<cfg::globals::enable_close_box>()) {
-                                    mm.new_mod_internal_close(mod_wrapper, authentifier);
-                                }
-                                this->last_module = true;
-                            }
-                            if (this->last_module && !ini.get<cfg::globals::enable_close_box>()) {
-                                run_session = false;
-                                continue;
-                            }
-                        }
-
-                        if (!sesman.auth_info_sent){
-                            sesman.set_acl_screen_info();
-                            sesman.set_acl_auth_info();
-                            if (this->ini.changed_field_size()) {
-                                acl->acl_serial.send_acl_data();
-                                continue;
-                            }
-                        }
-
-                        if (this->last_module){
-                            run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, mod_wrapper);
-                            continue;
-                        }
-
-                        if (retry_current_module_flag){
-                            acl->acl_serial.remote_answer = false;
-                            LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
-                            mod_wrapper.remove_mod();
-                            mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
-                            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                            retry_current_module_flag = false;
-                            run_session = true;
-                        }
-                        else {
-                            try {
-                                run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier);
-                            } catch (Error const& e) {
-                                LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
-                                switch (end_session_exception(e, authentifier, ini)){
-                                case 0: // End of session loop
-                                    run_session = false;
-                                break;
-                                case 1: // Close Box
-                                    run_session = this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
-                                break;
-                                case 2: // retry current module
-                                    mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                                    retry_current_module_flag = true;
-                                    run_session = true;
-                                break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                    } // switch
-    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");            
+                    run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, mod_wrapper);
                 }
-                
-                case SESSION_STATE_CLOSE_BOX:
-                {
-                    timeval now = tvtime();
-                    session_reactor.set_current_time(now);
-
-                    Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
-
-                    bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
-                    bool mod_has_waiting_data_to_write   = mod_wrapper.has_mod()
-                                                        && mod_wrapper.get_mod_transport()
-                                                        && mod_wrapper.get_mod_transport()->has_data_to_write();
-
-                    // =============================================================
-                    // This block takes care of outgoing data waiting in buffers because system write buffer is full
-                    if (front_has_waiting_data_to_write || mod_has_waiting_data_to_write){
-                        if (front_has_waiting_data_to_write){
-                            ioswitch.set_write_sck(front_trans.sck);
-                        }
-                        if (mod_has_waiting_data_to_write){
-                            ioswitch.set_write_sck(mod_wrapper.get_mod_transport()->sck);
-                        }
-
-                        sleep(1);
-                        int num = ioswitch.select(now);
-                        if (num < 0) {
-
-                            if (errno != EINTR) {
-                                // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
-                                // EBADF: means fd has been closed (by me) or as already returned an error on another call
-                                // EINVAL: invalid value in timeout (my fault again)
-                                // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
-                                LOG(LOG_ERR, "Proxy send wait raised error %d : %s", errno, strerror(errno));
-                                run_session = false;
-                                continue;
-                            }
-                        }
-                        if (mod_wrapper.has_mod() 
-                        && mod_wrapper.get_mod_transport() 
-                        && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
-                            mod_wrapper.get_mod_transport()->send_waiting_data();
-                        }
-
-                        if (front_trans.sck != INVALID_SOCKET
-                        && ioswitch.is_set_for_writing(front_trans.sck)) {
-                            front_trans.send_waiting_data();
-                        }
-                        if (num > 0) { continue; }
-                        // if the select stopped on timeout or EINTR we will give a try to reading
-                    }
-                    
-                    // =============================================================
-                    // Now prepare select for listening on all read sockets
-                    // timeout or immediate wakeups are managed using timeout
-                    // =============================================================
-                    
-                    // sockets for mod or front aren't managed using fd events
-                    if (mod_wrapper.has_mod() && mod_wrapper.get_mod_transport()) {
-                        int fd = mod_wrapper.get_mod_transport()->sck;
-    //                    LOG(LOG_INFO, "Wait for read event on mod fd=%d", fd);
-                        if (fd != INVALID_SOCKET) {
-                            ioswitch.set_read_sck(fd);
-                        }
-                    }
-                    
-                    if (front_trans.sck != INVALID_SOCKET) {
-    //                    LOG(LOG_INFO, "Wait for read event on front fd=%d", front_trans.sck);
-                        ioswitch.set_read_sck(front_trans.sck);
-                    }
-
-                    // if event lists are waiting for incoming data 
-                    fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
-    //                        LOG(LOG_INFO, "Wait for read event on fd=%d", fd);
-                            if (fd != INVALID_SOCKET){
-                                ioswitch.set_read_sck(fd);
-                            }
-                    });
-                    
-                    if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
-    //                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
-                            if (fd != INVALID_SOCKET){
-                                ioswitch.set_read_sck(fd);
-                            }
-                    });
-                    }
-
-                    if (acl) {
-    //                    LOG(LOG_INFO, "Wait for read event on acl fd=%d", acl->auth_trans.sck);
-                        if (acl->auth_trans.sck != INVALID_SOCKET){
-                            ioswitch.set_read_sck(acl->auth_trans.sck);
-                        }
-                    }
-
-                    bool mod_data_pending = (mod_wrapper.has_mod()
-                            && mod_wrapper.get_mod_transport()
-                            && mod_wrapper.get_mod_transport()->has_tls_pending_data());
-
-                    timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
-                            timer_events_,
-                            fd_events_,
-                            graphic_timer_events_,
-                            graphic_fd_events_,
-                            graphic_events_,
-                            front_trans.has_tls_pending_data(),
-                            mod_data_pending
-                            );
-
-                    ioswitch.set_timeout(ultimatum);
-
-                    int num = ioswitch.select(now);
-    //                LOG(LOG_INFO, " Select num = %d", num);
-
-                    if (num < 0) {
-                        if (errno != EINTR) {
-                            // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
-                            // EBADF: means fd has been closed (by me) or as already returned an error on another call
-                            // EINVAL: invalid value in timeout (my fault again)
-                            // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
-                            LOG(LOG_ERR, "Proxy data wait loop raised error %d : %s", errno, strerror(errno));
-                            run_session = false;
-                        }
-                        continue;
-                    }
-
-                    now = tvtime();
-                    session_reactor.set_current_time(now);
-                    
-                    if (ini.get<cfg::debug::performance>() & 0x8000) {
-                        this->write_performance_log(now.tv_sec);
-                    }
-
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
-                    || (front_trans.sck != INVALID_SOCKET 
-                    && ioswitch.is_set_for_reading(front_trans.sck));
-
-                    bool acl_is_set = bool(acl) 
-                        && acl->auth_trans.sck != INVALID_SOCKET 
-                        && ioswitch.is_set_for_reading(acl->auth_trans.sck);
-
-                    bool mod_is_set = mod_data_pending
-                    || (mod_wrapper.has_mod()
-                        && mod_wrapper.get_mod_transport()
-                        && mod_wrapper.get_mod_transport()->sck != INVALID_SOCKET
-                        && ioswitch.is_set_for_reading(mod_wrapper.get_mod_transport()->sck));
-
-                    try {
-                        if (front_is_set){
-                            this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
-                        }
-                    } catch (Error const& e) {
-                        // RemoteApp disconnection initiated by user
-                        // ERR_DISCONNECT_BY_USER == e.id
-                        if (
-                            // Can be caused by client disconnect.
-                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU)
-                            // Can be caused by client disconnect.
-                            && (e.id != ERR_MCS_APPID_IS_MCS_DPUM)
-                            && (e.id != ERR_RDP_HANDSHAKE_TIMEOUT)
-                            // Can be caused by wabwatchdog.
-                            && (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                            LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                        }
-                        front_trans.sck = INVALID_SOCKET;
-                        run_session = false;
-                        continue;
-                    } catch (...) {
-                        LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                        run_session = false;
-                        continue;
-                    }
-
-                    if (acl_is_set) {
-                        this->acl_incoming_data(*acl.get(), ini, mod_wrapper);
-                    }
-
-                    if (mod_is_set) {
-                    }
-
-                    switch (front.state) {
-                    default:
-                    // Design a State to ensure ACL Start
-    //                if (acl){
-    //                    ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-    //                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-    //                }
-                    {
-                        fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                            return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
-                        });
-
-                        // front event
-                        try {
-                        } catch (Error const& e) {
-                            // RemoteApp disconnection initiated by user
-                            // ERR_DISCONNECT_BY_USER == e.id
-                            if (
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
-                                // Can be caused by client disconnect.
-                                (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
-                                (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
-                                // Can be caused by wabwatchdog.
-                                (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
-                                LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
-                            }
-                            run_session = false;
-                        } catch (...) {
-                            LOG(LOG_ERR, "Proxy data processing raised unknown error");
-                            run_session = false;
-                        }
-                    }
-                    break;
-                    case Front::FRONT_UP_AND_RUNNING:
-                    {
-                        if (!acl && !this->last_module) {
-                            try {
-                                this->start_acl_running(acl, cctx, rnd, now, ini, authentifier, fstat);
-                            }
-                            catch (...) {
-                                this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                                mod_wrapper.last_disconnect();
-                                if (ini.get<cfg::globals::enable_close_box>()) {
-                                    mm.new_mod_internal_close(mod_wrapper, authentifier);
-                                }
-                                this->last_module = true;
-                            }
-                            if (this->last_module && !ini.get<cfg::globals::enable_close_box>()) {
-                                run_session = false;
-                                continue;
-                            }
-                        }
-
-                        if (!sesman.auth_info_sent){
-                            sesman.set_acl_screen_info();
-                            sesman.set_acl_auth_info();
-                            if (this->ini.changed_field_size()) {
-                                acl->acl_serial.send_acl_data();
-                                continue;
-                            }
-                        }
-
-                        if (this->last_module){
-                            run_session = this->front_close_box(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_timer_events_, mod_wrapper);
-                            continue;
-                        }
-
-                        if (retry_current_module_flag){
-                            acl->acl_serial.remote_answer = false;
-                            LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
-                            mod_wrapper.remove_mod();
-                            mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
-                            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                            retry_current_module_flag = false;
-                            run_session = true;
-                        }
-                        else {
-                            try {
-                                run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier);
-                            } catch (Error const& e) {
-                                LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
-                                switch (end_session_exception(e, authentifier, ini)){
-                                case 0: // End of session loop
-                                    run_session = false;
-                                break;
-                                case 1: // Close Box
-                                    run_session = this->close_box(mm, acl, authentifier, mod_wrapper, this->ini);
-                                break;
-                                case 2: // retry current module
-                                    mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                                    retry_current_module_flag = true;
-                                    run_session = true;
-                                break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                    } // switch
-    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");            
-                }
-                
-                }
+                break;
+                } // switch SESSION_STATE
 
             } // loop
 
