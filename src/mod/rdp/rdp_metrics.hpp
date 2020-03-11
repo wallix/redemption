@@ -377,7 +377,7 @@ private:
         Cliprdr::format_list_extract(
             chunk,
             Cliprdr::IsLongFormat(this->use_long_format_names),
-            Cliprdr::IsAscii(header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+            Cliprdr::IsAscii(bool(header.msgFlags() & RDPECLIP::CB_ASCII_NAMES)),
             [&](uint32_t format_id, auto name) {
                 switch (format_id) {
                     case RDPECLIP::CF_TEXT:

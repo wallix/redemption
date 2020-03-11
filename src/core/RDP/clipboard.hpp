@@ -2177,7 +2177,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
                 Cliprdr::format_list_extract(
                     chunk,
                     Cliprdr::IsLongFormat(state.use_long_format_names),
-                    Cliprdr::IsAscii(header.msgFlags() & CB_ASCII_NAMES),
+                    Cliprdr::IsAscii(bool(header.msgFlags() & CB_ASCII_NAMES)),
                     [&](uint32_t format_id, auto const& name) {
                         Cliprdr::log_format_name("", format_id, name);
                     }

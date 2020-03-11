@@ -229,7 +229,7 @@ struct FormatListReceive
         Cliprdr::format_list_extract(
             in_stream,
             Cliprdr::IsLongFormat(use_long_format),
-            Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+            Cliprdr::IsAscii(bool(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES)),
             [&](uint32_t format_id, auto name) {
                 auto&& format_name = format_name_inventory.push(format_id, name);
                 auto&& utf8_name = format_name.utf8_name();

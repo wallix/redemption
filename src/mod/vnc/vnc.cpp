@@ -1613,7 +1613,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
             Cliprdr::format_list_extract(
                 chunk,
                 Cliprdr::IsLongFormat(this->client_use_long_format_names),
-                Cliprdr::IsAscii(incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+                Cliprdr::IsAscii(bool(incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES)),
                 [&](uint32_t format_id, auto const& name) {
                     contains_data_in_text_format |= (format_id == RDPECLIP::CF_TEXT);
                     contains_data_in_unicodetext_format |= (format_id == RDPECLIP::CF_UNICODETEXT);
