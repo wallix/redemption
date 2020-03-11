@@ -26,7 +26,6 @@
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "utils/stream.hpp"
-#include "system/ssl_sha256.hpp"
 
 #include <vector>
 

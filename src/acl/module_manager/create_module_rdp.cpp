@@ -53,14 +53,14 @@ namespace
         array_view_const_char down_target_name,
         array_view_const_char msg)
     {
-        auto log6 = [&](LogId id, KVList kv_list){
-            report_message.log6(id, session_reactor.get_current_time(), kv_list);
-            front.session_update(id, kv_list);
-        };
-
         for (auto&& service : {up_target_name, down_target_name}) {
             if (not service.empty()) {
-                log6(LogId::FILE_VERIFICATION_ERROR, {
+                report_message.log6(
+                    LogId::FILE_VERIFICATION_ERROR, session_reactor.get_current_time(), {
+                    KVLog("icap_service"_av, service),
+                    KVLog("status"_av, msg),
+                });
+                front.session_update(LogId::FILE_VERIFICATION_ERROR, {
                     KVLog("icap_service"_av, service),
                     KVLog("status"_av, msg),
                 });

@@ -141,7 +141,7 @@ function terminate()
 
     for k,v in pairs(ids) do
         if v ~= 1 then
-            print_error(k .. ' not used\n')
+            print_error('LogId::' .. k .. ' not used\n')
             errcount = errcount + 1
         end
     end

@@ -115,7 +115,7 @@ private:
     uint32_t requested_format_id = 0;
     uint32_t data_len = 0;
     CustomFormat custom_cf {};
-    bool wating_for_data = false;
+    bool wating_format_data_response = false;
     bool verbose;
     ResponseBuffer response_buffer;
 };

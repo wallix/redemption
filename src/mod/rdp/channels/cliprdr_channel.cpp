@@ -416,32 +416,6 @@ void ClipboardVirtualChannel::remove_text_validator(TextValidatorDataList* p)
 
 namespace
 {
-    struct CapabilitySet
-    {
-        uint16_t capabilitySetType;
-        uint16_t lengthCapability;
-
-        explicit CapabilitySet(InStream & stream)
-        {
-            ::check_throw(stream, 4, "RDPECLIP::CapabilitySet truncated capabilitySet", ERR_RDP_DATA_TRUNCATED);
-
-            this->capabilitySetType = stream.in_uint16_le();
-            this->lengthCapability = stream.in_uint16_le();
-
-            if (this->lengthCapability < 4) {
-                LOG(LOG_ERR, "RDPECLIP::CapabilitySet bad lengthCapability");
-                throw Error(ERR_RDP_PROTOCOL);
-            }
-
-            ::check_throw(stream, this->lengthCapability - 4u, "RDPECLIP::CapabilitySet truncated capabilityData", ERR_RDP_DATA_TRUNCATED);
-        }
-
-        uint16_t capabilityDataLen() const
-        {
-            return this->lengthCapability - 4u;
-        }
-    };
-
     array_view_const_char to_dlpav_str_direction(Direction direction)
     {
         return (direction == Direction::FileFromClient)
@@ -667,42 +641,10 @@ struct ClipboardVirtualChannel::D
     {
         this->reset_clip(self, clip);
 
-        InStream in_stream(chunk_data);
-
-        RDPECLIP::ClipboardCapabilitiesPDU caps;
-        caps.recv(in_stream);
-
-        clip.use_long_format_names = false;
-
-        for (uint16_t i = 0; i < caps.cCapabilitiesSets(); ++i) {
-            CapabilitySet cap(in_stream);
-
-            if (cap.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
-                auto version = in_stream.in_uint32_le();
-                auto generalFlags = in_stream.in_uint32_le();
-
-                if (bool(self.verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO, "GeneralCapabilitySet:"
-                        " capabilitySetType=0x%04x:CB_CAPSTYPE_GENERAL"
-                        " lengthCapability=0x%04x"
-                        " version=0x%08x"
-                        " generalFlags=0x%08x: %s",
-                        RDPECLIP::CB_CAPSTYPE_GENERAL,
-                        cap.lengthCapability,
-                        version,
-                        generalFlags, RDPECLIP::generalFlags_to_string(generalFlags));
-                }
-
-                clip.optional_lock_id.enable(bool(generalFlags & RDPECLIP::CB_CAN_LOCK_CLIPDATA));
-                clip.use_long_format_names
-                    = bool(generalFlags & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-
-                break;
-            }
-            else {
-                in_stream.in_skip_bytes(cap.capabilityDataLen());
-            }
-        }
+        auto general_flags = RDPECLIP::extract_clipboard_general_flags_capability(
+            chunk_data, bool(self.verbose & RDPVerbose::cliprdr));
+        clip.optional_lock_id.enable(bool(general_flags & RDPECLIP::CB_CAN_LOCK_CLIPDATA));
+        clip.use_long_format_names = bool(general_flags & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
     }
 
     void monitor_ready(ClipboardVirtualChannel& self, ClipCtx& clip)
@@ -2068,7 +2010,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
             };
 
             if (not process_clip(this->client_ctx) && not process_clip(this->server_ctx)) {
-                LOG(LOG_ERR, "ClipboardVirtualChannel::DLP_antivirus_check_channels_files:"
+                LOG(LOG_INFO, "ClipboardVirtualChannel::DLP_antivirus_check_channels_files:"
                     " unknown validatorId(%u)", file_validator_id);
             }
         }
