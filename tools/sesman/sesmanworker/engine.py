@@ -1583,7 +1583,7 @@ class Engine(object):
                     trace_type=u"rdptrc"
                 )
                 trace.initialize()
-                trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8'))))
+                trace.writeframe(b"%s.mwrm" % (video_path.encode('utf-8')))
                 self.trace_hash = trace.end()
         except Exception as e:
             Logger().info("Engine write_trace failed: %s" % e)
