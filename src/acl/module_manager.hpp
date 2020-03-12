@@ -34,7 +34,6 @@
 #include "core/log_id.hpp"
 #include "core/session_reactor.hpp"
 #include "front/front.hpp"
-#include "gdi/protected_graphics.hpp"
 
 #include "mod/internal/rail_module_host_mod.hpp"
 

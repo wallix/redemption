@@ -33,7 +33,6 @@
 #include "core/log_id.hpp"
 #include "core/session_reactor.hpp"
 #include "front/front.hpp"
-#include "gdi/protected_graphics.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
 #include "gdi/clip_from_cmd.hpp"
