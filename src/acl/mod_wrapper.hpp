@@ -580,70 +580,14 @@ public:
         }
     }
 
-    bool try_input_invalidate(const Rect r)
-    {
-        if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
-            auto rects = gdi::subrect4(r, this->get_protected_rect());
-            auto p = std::begin(rects);
-            auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
-                return rect.isempty();
-            });
-            if (p != e) {
-                this->get_mod()->rdp_input_invalidate2({p, e});
-                this->clip = r.intersect(this->get_protected_rect());
-            }
-            return true;
-        }
-        return false;
-    }
-
     void rdp_input_invalidate(Rect r)
     {
-        if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
-            auto rects = gdi::subrect4(r, this->get_protected_rect());
-            auto p = std::begin(rects);
-            auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
-                return rect.isempty();
-            });
-            if (p != e) {
-                this->get_mod()->rdp_input_invalidate2({p, e});
-                this->clip = r.intersect(this->get_protected_rect());
-            }
+        if (this->get_protected_rect().isempty() || !r.has_intersection(this->get_protected_rect())) {
+            this->get_mod()->rdp_input_invalidate(r);
             return;
         }
-        this->get_mod()->rdp_input_invalidate(r);
-    }
-
-    bool try_input_invalidate2(array_view<Rect const> vr)
-    {
-        // TODO PERF multi opaque rect
-        bool ret = false;
-        for (Rect const & r : vr) {
-            if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
-                auto rects = gdi::subrect4(r, this->get_protected_rect());
-                auto p = std::begin(rects);
-                auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
-                    return rect.isempty();
-                });
-                if (p != e) {
-                    this->get_mod()->rdp_input_invalidate2({p, e});
-                    this->clip = r.intersect(this->get_protected_rect());
-                }
-                ret = true;
-            }
-            else {
-                this->get_mod()->rdp_input_invalidate(r);
-            }            
-        }
-        return ret;
-    }
-
-    void rdp_input_invalidate2(array_view<Rect const> vr)
-    {
-        if (this->try_input_invalidate2(vr)) {
-            return;
-        }
-        this->get_mod()->rdp_input_invalidate2(vr);
+        auto rects = gdi::subrect4(r, this->get_protected_rect());
+        this->get_mod()->rdp_input_invalidate2({std::begin(rects), std::end(rects)});
     }
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
