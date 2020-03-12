@@ -90,17 +90,32 @@ struct WVector
         bool operator == (classname const) const { return true; }            \
     }, +[]() { g_channel_data_received.push_back(classname{}); })
 
-#define JS_x(classname, ...) (                                                      \
-    classname,                                                                      \
-    struct classname : decltype(js_to_tuple<void(__VA_ARGS__)>::type{})             \
-    {                                                                               \
-        using decltype(js_to_tuple<void(__VA_ARGS__)>::type{})::tuple;              \
-        friend std::ostream& operator<<(std::ostream& out, classname const& x)      \
-        { out << #classname << "{"; print_tuple(out, x); return out << "}"; }       \
-    },                                                                              \
-    static_cast<void(*)(__VA_ARGS__)>(                                              \
-        [](auto... args) { g_channel_data_received.push_back(classname{args...}); } \
-    )                                                                               \
+#define JS_X_MAKE_CLASS(classname, ...)                                        \
+    struct classname : decltype(js_to_tuple<void(__VA_ARGS__)>::type{})        \
+    {                                                                          \
+        using decltype(js_to_tuple<void(__VA_ARGS__)>::type{})::tuple;         \
+        friend std::ostream& operator<<(std::ostream& out, classname const& x) \
+        { out << #classname << "{"; print_tuple(out, x); return out << "}"; }  \
+    }
+
+#define JS_x(classname, ...) (                                 \
+    classname,                                                 \
+    JS_X_MAKE_CLASS(classname, __VA_ARGS__),                   \
+    static_cast<void(*)(__VA_ARGS__)>([](auto... args) {       \
+        g_channel_data_received.push_back(classname{args...}); \
+    })                                                         \
+)
+
+#define JS_x_f(classname, body_func, ...) (                         \
+    classname,                                                      \
+    JS_X_MAKE_CLASS(classname, __VA_ARGS__),                        \
+    ([]{                                                            \
+        static auto user_func = [](__VA_ARGS__) { body_func; };     \
+        return static_cast<decltype(+user_func)>([](auto... args) { \
+            g_channel_data_received.push_back(classname{args...});  \
+            return user_func(args...);                              \
+        });                                                         \
+    }())                                                            \
 )
 
 #define JS_d(classname, data_type, ...) (                                      \
@@ -131,9 +146,9 @@ struct WVector
 #define MAKE_JS_TO_CPP_E(r, data, elem) MAKE_JS_TO_CPP_E_S elem
 #define MAKE_JS_TO_CPP_E_S(classname, struct_def, func) struct_def;
 
-#define MAKE_JS_CALL_E(r, data, elem)   \
-    MAKE_TYPE_NAME elem: (...args) => { \
-        BOOST_PP_CAT(Module.test_js_chan__, MAKE_TYPE_NAME elem)(...args) },
+#define MAKE_JS_CALL_E(r, data, elem) \
+    MAKE_TYPE_NAME elem: (...args) => \
+        BOOST_PP_CAT(Module.test_js_chan__, MAKE_TYPE_NAME elem)(...args),
 
 #define MAKE_CPP_BINDING_E(r, data, elem) \
     redjs::function("test_js_chan__" MAKE_CPP_BINDING_F elem);
