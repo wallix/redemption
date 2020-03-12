@@ -34,6 +34,12 @@
 #include "core/session_reactor.hpp"
 #include "front/front.hpp"
 #include "gdi/protected_graphics.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/graphic_api_forwarder.hpp"
+#include "gdi/clip_from_cmd.hpp"
+#include "gdi/subrect4.hpp"
+#include "utils/sugar/array_view.hpp"
+
 
 #include "mod/internal/rail_module_host_mod.hpp"
 
@@ -68,63 +74,25 @@ struct ModWrapper
 {
     struct CallbackForwarder<ModWrapper> callback;
 
-    struct GraphicFilter : public gdi::GraphicApi
-    {
+    struct GFilter {
         gdi::GraphicApi & sink;
+        Callback & callback;
         BGRPalette const & palette;
         Rect protected_rect;
-        Callback * mod;
 
-        GraphicFilter(gdi::GraphicApi & sink, const BGRPalette & palette, Rect rect) 
-            : sink(sink), palette(palette), protected_rect(rect) {}
+        GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect) 
+            : sink(sink), callback(callback), palette(palette), protected_rect(rect) {}
 
-    public:
-        void draw(RDP::FrameMarker    const & cmd) override { this->sink.draw(cmd); }
-        void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-        void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-        void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPScrBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-        void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
-        void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
-        void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
-        void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
-        void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) 
-                                                                                  override { this->draw_impl(cmd, clip, color_ctx, bmp); }
-        void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) 
-                                                                            override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
-        void draw(RDPNineGrid const &  /*cmd*/, Rect /*clip*/, gdi::ColorCtx  /*color_ctx*/, Bitmap const &  /*bmp*/) 
-                                                                                  override { }
-        void draw(RDPSetSurfaceCommand const & cmd) override { this->sink.draw(cmd); }
-        void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override { this->sink.draw(cmd, content); }
-        void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->sink.draw(cmd); }
-        void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->sink.draw(cmd); }
-        void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->sink.draw(cmd); }
-        void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->sink.draw(cmd); }
-        void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override { this->sink.draw(cmd); }
-        void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override { this->sink.draw(cmd); }
-        void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override { this->sink.draw(cmd); }
-        void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override { this->sink.draw(cmd); }
-        void draw(RDPColCache   const & cmd) override { this->sink.draw(cmd); }
-        void draw(RDPBrushCache const & cmd) override { this->sink.draw(cmd); }
-        void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) 
-                                                            override {this->sink.set_pointer(cache_idx, cursor, mode); }
-        void set_palette(BGRPalette const & palette) override { this->sink.set_palette(palette); }
-        void sync() override {this->sink.sync();}
-        void set_row(std::size_t rownum, bytes_view data) override {this->sink.set_row(rownum, data);}
-        void begin_update() override {this->sink.begin_update();}
-        void end_update() override {this->sink.end_update();}
-
-    private:
         template<class Command, class... Args>
-        void draw_impl(Command const & cmd, Rect clip, Args const &... args)
+        void draw(Command const & cmd)
+            { this->sink.draw(cmd); }
+        void draw(RDPNineGrid const &  /*cmd*/, Rect /*clip*/, gdi::ColorCtx  /*color_ctx*/, Bitmap const &  /*bmp*/) 
+            {}
+        void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
+            { this->sink.draw(cmd, content); }
+            
+        template<class Command, class... Args>
+        void draw(Command const & cmd, Rect clip, Args const &... args)
         {
             auto const & clip_rect = clip_from_cmd(cmd).intersect(clip);
             if (this->protected_rect.contains(clip_rect) || clip_rect.isempty()) {
@@ -144,7 +112,7 @@ struct ModWrapper
             }
         }
 
-        void draw_impl(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
+        void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
         {
             Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                         , bitmap_data.dest_right - bitmap_data.dest_left + 1
@@ -183,7 +151,7 @@ struct ModWrapper
             }
         }
 
-        void draw_impl(const RDPScrBlt & cmd, const Rect clip)
+        void draw(const RDPScrBlt & cmd, const Rect clip)
         {
             const Rect drect = cmd.rect.intersect(clip);
             const int deltax = cmd.srcx - cmd.rect.x;
@@ -205,7 +173,7 @@ struct ModWrapper
                     gdi::subrect4_t rects = gdi::subrect4(drect, this->protected_rect);
                     auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
                     auto av = make_array_view(rects.begin(), e);
-                    this->mod->rdp_input_invalidate2(av);
+                    this->callback.rdp_input_invalidate2(av);
                 }
                 else {
                     // only drect has intersection, src rect is available
@@ -217,7 +185,24 @@ struct ModWrapper
                 }
             }
         }
+
+        void set_pointer(uint16_t cache_idx, Pointer const& cursor, gdi::GraphicApi::SetPointerMode mode) 
+            {this->sink.set_pointer(cache_idx, cursor, mode); }
+        void set_palette(BGRPalette const & palette)
+            { this->sink.set_palette(palette); }
+        void sync()
+            {this->sink.sync();}
+        void set_row(std::size_t rownum, bytes_view data)
+            {this->sink.set_row(rownum, data);}
+        void begin_update()
+            {this->sink.begin_update();}
+        void end_update()
+            {this->sink.end_update();}
+
+
     } gfilter;
+
+    struct gdi::GraphicApiForwarder<GFilter> g;
 
     FrontAPI & front;
     
@@ -246,7 +231,7 @@ public:
 
     gdi::GraphicApi & get_graphics() 
     {
-        return this->gfilter;
+        return this->g;
     }
 
     // FIXME: we should always be able to use graphic_wrapper directly
@@ -289,7 +274,8 @@ private:
 public:
     explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : callback(*this)
-    , gfilter(graphics, palette, Rect{})
+    , gfilter(graphics, callback, palette, Rect{})
+    , g(gfilter)
     , front(front)
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
@@ -458,7 +444,6 @@ public:
     {
         // TODO: check we are using no_mod, otherwise it is an error
         this->modi = mod;
-        this->gfilter.mod = mod;
     }
     
     [[nodiscard]] SocketTransport* get_mod_transport() const noexcept
