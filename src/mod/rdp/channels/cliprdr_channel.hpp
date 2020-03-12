@@ -569,7 +569,9 @@ private:
     {
         (void)total_length;
 
-        if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)) {
+        if ((flags & CHANNELS::CHANNEL_FLAG_FIRST)
+         && !(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)
+        ) {
             return true;
         }
 
@@ -1077,11 +1079,12 @@ public:
                     }
                 }
 
+                auto file_contents_request_it = this->server_file_contents_request_info_inventory.find(this->client_streamId);
                 if (this->server_file_contents_request_info_inventory.end() !=
-                    this->server_file_contents_request_info_inventory.find(this->client_streamId))
+                    file_contents_request_it)
                 {
                     file_contents_request_info& file_contents_request =
-                        this->server_file_contents_request_info_inventory[this->client_streamId];
+                        file_contents_request_it->second;
 
                     {
                         file_info_inventory_type& file_info_inventory =
@@ -1359,7 +1362,9 @@ public:
     {
         (void)total_length;
 
-        if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)) {
+        if ((flags & CHANNELS::CHANNEL_FLAG_FIRST)
+         && !(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK)
+        ) {
             return true;
         }
 
@@ -1894,11 +1899,12 @@ public:
                     }
                 }
 
+                auto file_contents_request_it = this->client_file_contents_request_info_inventory.find(this->server_streamId);
                 if (this->client_file_contents_request_info_inventory.end() !=
-                    this->client_file_contents_request_info_inventory.find(this->server_streamId))
+                    file_contents_request_it)
                 {
                     file_contents_request_info& file_contents_request =
-                        this->client_file_contents_request_info_inventory[this->server_streamId];
+                        file_contents_request_it->second;
 
                     {
                         file_info_inventory_type& file_info_inventory =
