@@ -889,10 +889,8 @@ struct ClipboardVirtualChannel::D
                         }
                     }
 
-                    InStream in_stream(chunk_data);
                     uint8_t utf8_buf[32*1024];
-                    auto utf8_av = UTF16toUTF8_buf(
-                        in_stream.remaining_bytes(), make_array_view(utf8_buf));
+                    auto utf8_av = UTF16toUTF8_buf(chunk_data, make_array_view(utf8_buf));
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                         if (not utf8_av.empty() && utf8_av.back() == '\0') {

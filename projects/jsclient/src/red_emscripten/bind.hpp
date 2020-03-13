@@ -57,6 +57,5 @@ namespace redjs
     void function(const char* name, F f, Policies... policies)
     {
         emscripten::function(name, +f, policies...);
-
     }
 }

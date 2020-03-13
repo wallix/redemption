@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
+#include "utils/literals/utf16.hpp"
 
 #include <tuple>
 #include <vector>
@@ -61,14 +62,14 @@ struct DataChan : DataChan_tuple
 
 MAKE_BINDING_CALLBACKS(
     DataChan,
+    (JS_x_f(setGeneralCapability, return generalFlags, uint32_t generalFlags))
     (JS_c(receiveFormatStart))
-    (JS_c(receiveFormatStop))
     (JS_d(receiveFormat, uint8_t, uint32_t formatId, bool isUTF8))
-    (JS_d(receiveData, uint8_t, uint32_t formatId, uint32_t channelFlags))
+    (JS_c(receiveFormatStop))
+    (JS_d(receiveData, uint8_t, uint32_t channelFlags))
     (JS_x(receiveNbFileName, uint32_t nb))
     (JS_d(receiveFileName, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
     (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t channelFlags))
-    (JS_x(receiveFileSize, uint32_t sizeHigh, uint32_t sizeLow, uint32_t streamId))
     (JS_x(receiveFormatId, uint32_t format_id))
     (JS_x(receiveFileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
 )
@@ -77,7 +78,7 @@ std::unique_ptr<redjs::ClipboardChannel> clip;
 
 void test_init_channel(Callback& cb, emscripten::val&& v)
 {
-    clip = std::make_unique<redjs::ClipboardChannel>(cb, std::move(v), RDPVerbose{});
+    clip = std::make_unique<redjs::ClipboardChannel>(cb, std::move(v), true);
 }
 
 constexpr int first_last_show_proto_channel_flags
@@ -141,24 +142,6 @@ DataChan data_chan(
 #define RECEIVE_DATAS(...) ::clip_receive(__VA_ARGS__); CTX_CHECK_DATAS()
 #define CALL_CB(...) clip->__VA_ARGS__; CTX_CHECK_DATAS()
 
-REDEMPTION_DIAGNOSTIC_PUSH
-REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-template<class C, C... cs>
-std::array<uint8_t, sizeof...(cs) * 2> const operator "" _utf16()
-{
-    std::array<uint8_t, sizeof...(cs) * 2> a;
-    char s[] {cs...};
-    auto p = a.data();
-    for (char c : s)
-    {
-        p[0] = c;
-        p[1] = 0;
-        p += 2;
-    }
-    return a;
-}
-REDEMPTION_DIAGNOSTIC_POP
-
 }
 
 RED_AUTO_TEST_CASE(TestClipboardChannel)
@@ -171,16 +154,19 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     // const bool not_utf = false;
 
     RECEIVE_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
-        "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x1e\x00\x00\x00"_av, Padding(4))
+        "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x12\x00\x00\x00"_av, Padding(4))
     {
+        CHECK_NEXT_DATA(setGeneralCapability{
+            RDPECLIP::CB_USE_LONG_FORMAT_NAMES |
+            RDPECLIP::CB_CAN_LOCK_CLIPDATA
+        });
     };
 
     RECEIVE_DATAS(CB_MONITOR_READY, CB_RESPONSE__NONE_)
     {
         CHECK_NEXT_DATA(data_chan(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
-            "\x01\0\0\0\x01\0\x0C\0\x02\0\0\0.\0\0\0"_av));
-        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_ASCII_NAMES,
-            "\x0d\0\0\0\0\0"_av));
+            "\x01\0\0\0\x01\0\x0C\0\x02\0\0\0\x12\0\0\0"_av));
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_ASCII_NAMES, ""_av));
     };
 
     RECEIVE_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK)
@@ -190,27 +176,29 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     // copy
 
     RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
-        "\x0d\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00"
-        "\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00"_av, Padding(4))
+        "\x0d\x00\x00\x00\x00\x00"
+        "\x10\x00\x00\x00\x00\x00"
+        "\x01\x00\x00\x00\x00\x00"
+        "\x07\x00\x00\x00\x00\x00"_av, Padding(4))
     {
         CHECK_NEXT_DATA(receiveFormatStart{});
-        CHECK_NEXT_DATA(receiveFormat{"unicodetext"_av, CF_UNICODETEXT, is_utf});
-        CHECK_NEXT_DATA(receiveFormat{"locale"_av, CF_LOCALE, is_utf});
-        CHECK_NEXT_DATA(receiveFormat{"text"_av, CF_TEXT, is_utf});
-        CHECK_NEXT_DATA(receiveFormat{"oemtext"_av, CF_OEMTEXT, is_utf});
-        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
+        CHECK_NEXT_DATA(receiveFormat{""_av, CF_UNICODETEXT, is_utf});
+        CHECK_NEXT_DATA(receiveFormat{""_av, CF_LOCALE, is_utf});
+        CHECK_NEXT_DATA(receiveFormat{""_av, CF_TEXT, is_utf});
+        CHECK_NEXT_DATA(receiveFormat{""_av, CF_OEMTEXT, is_utf});
         CHECK_NEXT_DATA(receiveFormatStop{});
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };
 
-    CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat::None))
+    CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat()))
     {
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\0\0\0"_av));
     };
 
     RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
-        "\x70\x00\x6c\x00\x6f\x00\x70\x00\x00\x00"_av, Padding(4))
+        "p\0l\0o\0p\0""\0\0"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveData("plop"_utf16, CF_UNICODETEXT, first_last_channel_flags));
+        CHECK_NEXT_DATA(receiveData("plop\0"_utf16_le, first_last_channel_flags));
     };
 
     // paste
@@ -229,7 +217,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
         CHECK_NEXT_DATA(receiveFormatId{CF_UNICODETEXT});
     };
 
-    const auto paste1 = "xyz\0"_utf16;
+    const auto paste1 = "xyz\0"_utf16_le;
     CALL_CB(send_header(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, paste1.size(), 0))
     {
         CHECK_NEXT_DATA(DataChan{"\x05\0\1\0\x08\0\0\0"_av, paste1.size() + 8,

@@ -67,4 +67,10 @@ RED_AUTO_TEST_CASE(TestTrim)
     is_safe_convertible<int, int>{} = std::true_type{}; safe_cast<int>(int{});
     is_safe_convertible<uE, signed char>{} = std::false_type{};
     is_safe_convertible<signed char, uE>{} = std::false_type{};
+
+    enum Bool : bool {};
+    is_safe_convertible<bool, Bool>{} = std::true_type{};
+    is_safe_convertible<char, Bool>{} = std::false_type{};
+    is_safe_convertible<signed char, Bool>{} = std::false_type{};
+    is_safe_convertible<unsigned char, Bool>{} = std::false_type{};
 }

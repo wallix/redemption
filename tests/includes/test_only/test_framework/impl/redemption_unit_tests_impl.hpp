@@ -354,7 +354,8 @@ namespace redemption_unit_test__
     {
         using std::begin;
         using std::end;
-        if constexpr (is_bytes_view<T>::value || is_bytes_view<U>::value)
+        if constexpr (is_bytes_view<T>::value || is_bytes_view<U>::value
+         || (std::is_convertible_v<T, bytes_view> && std::is_convertible_v<U, bytes_view>))
         {
             bytes_view a = x;
             bytes_view b = y;

@@ -1169,8 +1169,11 @@ public:
     [[nodiscard]] uint32_t dwFlags() const { return this->dwFlags_; }
 
     [[nodiscard]] uint64_t position() const {
-            return (this->nPositionLow_ | (static_cast<uint64_t>(this->nPositionHigh_) << 32));
-        }
+        return (this->nPositionLow_ | (static_cast<uint64_t>(this->nPositionHigh_) << 32));
+    }
+
+    [[nodiscard]] uint32_t position_low() const { return this->nPositionLow_; }
+    [[nodiscard]] uint32_t position_high() const { return this->nPositionHigh_; }
 
     [[nodiscard]] uint32_t cbRequested() const { return this->cbRequested_; }
     [[nodiscard]] uint32_t clipDataId() const { return this->clipDataId_; }
@@ -2174,7 +2177,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
                 Cliprdr::format_list_extract(
                     chunk,
                     Cliprdr::IsLongFormat(state.use_long_format_names),
-                    Cliprdr::IsAscii(header.msgFlags() & CB_ASCII_NAMES),
+                    Cliprdr::IsAscii(bool(header.msgFlags() & CB_ASCII_NAMES)),
                     [&](uint32_t format_id, auto const& name) {
                         Cliprdr::log_format_name("", format_id, name);
                     }

@@ -855,7 +855,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     Cliprdr::format_list_extract(
         chunk,
         Cliprdr::IsLongFormat(this->server_use_long_format_names),
-        Cliprdr::IsAscii(msgFlags & RDPECLIP::CB_ASCII_NAMES),
+        Cliprdr::IsAscii(bool(msgFlags & RDPECLIP::CB_ASCII_NAMES)),
         [&](uint32_t format_id, auto format_name) {
             if (auto* format_name_ = this->format_name_list.find(format_id)) {
                 if (Cliprdr::formats::file_group_descriptor_w.same_as(format_name)) {

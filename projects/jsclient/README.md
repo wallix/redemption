@@ -77,6 +77,12 @@ Debug mode:
 If you get some undefined symbol error, solve it as a link error for the main
 project. Rerun `bjam targets.jam`
 
+## Debug with source-map
+
+    npm install source-map-support
+
+    bjam source_map_support=yes ....
+
 
 ## Install
 

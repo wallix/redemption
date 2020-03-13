@@ -62,6 +62,8 @@ if sys.version_info[0] < 3:
         return data
     def to_syslog(data):
         return to_utf8(data)
+    def bin2hex(bstr):
+        return bstr.encode('hex')
 else:
     from struct import unpack
     text_type = str
@@ -71,6 +73,8 @@ else:
         return unpack('%sc' % len(data), data)
     def to_syslog(data):
         return to_unicode(data)
+    def bin2hex(bstr):
+        return bstr.hex()
 
 
 def to_utf8(string):
@@ -1201,14 +1205,9 @@ class Sesman():
     def get_trace_keys(self):
         derivator = self.record_filebase + u".mwrm"
         encryption_key = self.engine.get_trace_encryption_key(derivator, False)
-        formated_encryption_key = "".join(
-            "{:02x}".format(ord(c)) for c in encryption_key
-        )
-
+        formated_encryption_key = bin2hex(encryption_key)
         sign_key = self.engine.get_trace_sign_key()
-        formated_sign_key = "".join(
-            "{:02x}".format(ord(c)) for c in sign_key
-        )
+        formated_sign_key = bin2hex(sign_key)
         return formated_encryption_key, formated_sign_key
 
     def load_video_recording(self, rec_path, user):
