@@ -181,25 +181,33 @@ const redemptionLoadModule = function(Module, window)
     const addChannelClass = (ChannelClassName, wrappers) => {
         resultFuncs['new' + ChannelClassName] = function(cb, events, ...channelArgs) {
             wrapEvents(events, wrappers, events, noop);
-            return new Module[ChannelClassName](cb, events, ...channelArgs);
+            const chann = new Module[ChannelClassName](cb, events, ...channelArgs);
+            const setChann = events['setEmcChannel'];
+            if (setChann) {
+                setChann.call(events, chann);
+            }
+            return chann;
         };
     };
 
     addChannelClass('ClipboardChannel', {
+        setGeneralCapability: identity,
         receiveFormatStart: identity,
+        receiveFormat: wCb_em2js_U8p,
         receiveFormatStop: identity,
-        receiveFormat: identity,
         receiveData: wCb_em2js_U8p,
         receiveNbFileName: identity,
         receiveFileName: wCb_em2js_U8p,
-        receiveFileContents: wCb_em2js_U8p,
-        receiveFileSize: identity,
         receiveFormatId: identity,
-        fileContentsRequest: identity,
+        receiveFileContents: wCb_em2js_U8p,
+        receiveFileContentsRequest: identity,
+        receiveResponseFail: identity,
+        delete: identity,
     });
 
     addChannelClass('CustomChannel', {
         receiveData: wCb_em2js_U8p,
+        delete: identity,
     });
 
     return resultFuncs;

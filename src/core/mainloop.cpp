@@ -370,6 +370,9 @@ namespace
                         session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                     case SocketType::Wss:
+                        // disable rdp tls
+                        ini.set<cfg::client::tls_support>(false);
+                        ini.set<cfg::client::tls_fallback_legacy>(true);
                         session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                     case SocketType::Tls:
