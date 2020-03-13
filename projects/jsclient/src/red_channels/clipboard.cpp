@@ -191,9 +191,10 @@ void ClipboardChannel::receive(bytes_view data, uint32_t channel_flags)
 
     if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
     {
-        // TODO send to js
-        LOG(LOG_WARNING, "Clipboard: Response FAIL");
+        LOG(LOG_WARNING, "Clipboard: Response FAIL, msgType=%s",
+            RDPECLIP::get_msgType_name(header.msgType()));
         this->custom_cf = CustomFormat::None;
+        emval_call(this->callbacks, "receiveResponseFail", header.msgType());
         return ;
     }
 
@@ -547,11 +548,10 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_f
 
 void ClipboardChannel::process_capabilities(InStream& chunk)
 {
-    // TODO reset data
-
     uint32_t general_flags = RDPECLIP::extract_clipboard_general_flags_capability(
         chunk.remaining_bytes(), this->verbose);
 
+    this->custom_cf = CustomFormat::None;
     this->general_flags = emval_call<uint32_t>(
         this->callbacks, "setGeneralCapability", general_flags);
 }

@@ -96,7 +96,7 @@ private:
     uint32_t general_flags = 0;
     uint32_t remaining_data_len;
     uint32_t stream_id;
-    CustomFormat custom_cf = CustomFormat();
+    CustomFormat custom_cf = CustomFormat::None;
 
     enum ResponseState : uint8_t
     {

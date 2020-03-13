@@ -72,6 +72,7 @@ MAKE_BINDING_CALLBACKS(
     (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t channelFlags))
     (JS_x(receiveFormatId, uint32_t format_id))
     (JS_x(receiveFileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
+    (JS_x(receiveResponseFail, uint32_t messageType))
 )
 
 std::unique_ptr<redjs::ClipboardChannel> clip;
@@ -314,5 +315,12 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     {
         CHECK_NEXT_DATA(receiveFileContents{"\0\0\0\0""abcdefghijkl"_av, 0,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST});
+    };
+
+    // response fail
+
+    RECEIVE_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_FAIL, ""_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveResponseFail{CB_FORMAT_LIST_RESPONSE});
     };
 }
