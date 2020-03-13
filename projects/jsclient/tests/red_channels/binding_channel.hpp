@@ -232,6 +232,7 @@ inline void print_bytes(std::ostream& out, bytes_view v)
             if ((!previous && ishex(x)) || ishex(previous))
             {
                 out << "\"\"";
+                previous = 1;
             }
             out << x;
         }
@@ -327,8 +328,8 @@ struct datas_checker
 };
 
 #define RED_CHECK_V(i, ...) std::visit(Overload{                  \
-    [&](decltype(__VA_ARGS__) const& x) {                         \
-        RED_CHECK((__VA_ARGS__) == x); },                         \
+    [&](decltype(__VA_ARGS__) const& expected) {                  \
+        RED_CHECK((__VA_ARGS__) == expected); },                  \
     [&](auto const& x){ RED_CHECK_MESSAGE(false, "check "         \
         << ::get_type<::remove_cvref_t<decltype(__VA_ARGS__)>>()  \
         << " == " << ::get_type<::remove_cvref_t<decltype(x)>>()  \

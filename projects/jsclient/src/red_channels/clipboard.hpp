@@ -36,6 +36,7 @@ namespace redjs::channels::clipboard
 
 enum class CustomFormat : uint32_t
 {
+    None,
     FileGroupDescriptorW = 33333,
 };
 

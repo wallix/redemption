@@ -191,7 +191,9 @@ void ClipboardChannel::receive(bytes_view data, uint32_t channel_flags)
 
     if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
     {
-        LOG(LOG_WARNING, "Clipboard: Format List Response PDU");
+        // TODO send to js
+        LOG(LOG_WARNING, "Clipboard: Response FAIL");
+        this->custom_cf = CustomFormat::None;
         return ;
     }
 
@@ -405,6 +407,7 @@ void ClipboardChannel::process_format_data_response(
     bytes_view data, uint32_t channel_flags, uint32_t data_len)
 {
     const bool is_first_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_FIRST);
+    const bool is_last_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_LAST);
 
     if (is_first_packet)
     {
@@ -412,7 +415,7 @@ void ClipboardChannel::process_format_data_response(
         this->remaining_data_len = data_len;
     }
 
-    this->response_state = bool(channel_flags & CHANNELS::CHANNEL_FLAG_LAST)
+    this->response_state = is_last_packet
         ? ResponseState::None
         : ResponseState::Data;
 
@@ -472,8 +475,15 @@ void ClipboardChannel::process_format_data_response(
 
         this->response_buffer.push(in_stream.remaining_bytes());
 
+        if (is_last_packet)
+        {
+            this->custom_cf = CustomFormat::None;
+        }
+
         return;
     }
+
+    case CustomFormat::None: break;
     }
 
     emval_call_bytes(this->callbacks, "receiveData", data, channel_flags & first_last_flags);
@@ -506,7 +516,7 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
         this->stream_id, channel_flags & first_last_flags);
 }
 
-void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_flags)
+void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_flags*/)
 {
     emval_call(this->callbacks, "receiveFormatStart");
 

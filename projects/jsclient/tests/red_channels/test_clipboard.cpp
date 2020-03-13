@@ -151,7 +151,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     init_js_channel();
 
     const bool is_utf = true;
-    // const bool not_utf = false;
+    const bool not_utf = false;
 
     RECEIVE_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
         "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x12\x00\x00\x00"_av, Padding(4))
@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     {
     };
 
-    // copy
+    // copy (server -> client)
 
     RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
         "\x0d\x00\x00\x00\x00\x00"
@@ -190,18 +190,18 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };
 
-    CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat()))
+    CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat::None))
     {
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\0\0\0"_av));
     };
 
-    RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
-        "p\0l\0o\0p\0""\0\0"_av, Padding(4))
+    auto copy1 = "plop\0"_utf16_le;
+    RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, copy1, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveData("plop\0"_utf16_le, first_last_channel_flags));
+        CHECK_NEXT_DATA(receiveData(copy1, first_last_channel_flags));
     };
 
-    // paste
+    // paste (client -> server)
 
     CALL_CB(send_format(CF_UNICODETEXT, cbchan::Charset::Utf16, ""_av))
     {
@@ -228,5 +228,91 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     {
         CHECK_NEXT_DATA(DataChan{paste1, 0,
             CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL});
+    };
+
+    // file copy (server -> client)
+
+    RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
+        "\x6e\xc0\x00\x00\x46\x00\x69\x00" //n...F.i. !
+        "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
+        "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
+        "\x72\x00\x57\x00\x00\x00" //r.W... !
+        ""_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveFormatStart{});
+        CHECK_NEXT_DATA(receiveFormat{"FileGroupDescriptorW"_utf16_le, 49262, not_utf});
+        CHECK_NEXT_DATA(receiveFormatStop{});
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
+    };
+
+    CALL_CB(send_request_format(49262, cbchan::CustomFormat::FileGroupDescriptorW))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_,
+            "\x6e\xc0\x00\x00"_av));
+    };
+
+    RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
+        "\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x0c\x00\x00\x00\x61\x00\x62\x00\x63\x00\x00\x00\x00\x00\x00\x00" //....a.b.c....... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
+        ""_av
+        , Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveNbFileName{1});
+        CHECK_NEXT_DATA(receiveFileName{"abc"_utf16_le,
+            /*.attr=*/0, /*.flags=*/0,
+            /*.sizeLow=*/12, /*.sizeHigh=*/0,
+            /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
+    };
+
+    CALL_CB(send_data(
+        "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00"_av))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK,
+            "\0\0\0\0\0\0\0\0\x02\0\0\0\0\0\0\0\0\0\0\0\x05\0\0\0\0\0\0\0"_av));
+    };
+
+    RECEIVE_DATAS(CB_FILECONTENTS_RESPONSE, CB_RESPONSE__NONE_,
+        "\x00\x00\x00\x00""abcdefghijkl"_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveFileContents{"\0\0\0\0""abcdefghijkl"_av, 0,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST});
     };
 }
