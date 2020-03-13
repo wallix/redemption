@@ -116,7 +116,10 @@ ClipboardChannel::ClipboardChannel(Callback& cb, emscripten::val&& callbacks, bo
 , verbose(verbose)
 {}
 
-ClipboardChannel::~ClipboardChannel() = default;
+ClipboardChannel::~ClipboardChannel()
+{
+    emval_call(this->callbacks, "free");
+}
 
 void ClipboardChannel::send_file_contents_request(
     uint32_t request_type,
@@ -487,7 +490,8 @@ void ClipboardChannel::process_format_data_response(
     case CustomFormat::None: break;
     }
 
-    emval_call_bytes(this->callbacks, "receiveData", data, channel_flags & first_last_flags);
+    emval_call_bytes(this->callbacks, "receiveData",
+        data, this->remaining_data_len, channel_flags & first_last_flags);
 }
 
 void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t channel_flags, uint32_t data_len)
@@ -514,7 +518,7 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
     this->remaining_data_len -= data.size();
 
     emval_call_bytes(this->callbacks, "receiveFileContents", data,
-        this->stream_id, channel_flags & first_last_flags);
+        this->stream_id, this->remaining_data_len, channel_flags & first_last_flags);
 }
 
 void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_flags*/)
@@ -526,14 +530,12 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_f
         is_long_format(this->general_flags),
         is_ascii_format(this->general_flags),
         [&](uint32_t format_id, auto name){
-            auto av_name = name.bytes;
             bool is_utf8 = overload{
                 [](Cliprdr::AsciiName const&) { return true; },
-                [&](Cliprdr::UnicodeName const&) { return av_name.empty(); },
+                [](Cliprdr::UnicodeName const& unicode) { return unicode.bytes.empty(); },
             }(name);
 
-            emval_call(this->callbacks, "receiveFormat",
-                av_name.data(), av_name.size(), format_id, is_utf8);
+            emval_call_bytes(this->callbacks, "receiveFormat", name.bytes, format_id, is_utf8);
         }
     );
 

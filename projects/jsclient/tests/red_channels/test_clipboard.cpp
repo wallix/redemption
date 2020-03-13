@@ -66,21 +66,15 @@ MAKE_BINDING_CALLBACKS(
     (JS_c(receiveFormatStart))
     (JS_d(receiveFormat, uint8_t, uint32_t formatId, bool isUTF8))
     (JS_c(receiveFormatStop))
-    (JS_d(receiveData, uint8_t, uint32_t channelFlags))
+    (JS_d(receiveData, uint8_t, uint32_t remainingDataLen, uint32_t channelFlags))
     (JS_x(receiveNbFileName, uint32_t nb))
     (JS_d(receiveFileName, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
-    (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t channelFlags))
+    (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
     (JS_x(receiveFormatId, uint32_t format_id))
     (JS_x(receiveFileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
     (JS_x(receiveResponseFail, uint32_t messageType))
+    (JS_c(free))
 )
-
-std::unique_ptr<redjs::ClipboardChannel> clip;
-
-void test_init_channel(Callback& cb, emscripten::val&& v)
-{
-    clip = std::make_unique<redjs::ClipboardChannel>(cb, std::move(v), true);
-}
 
 constexpr int first_last_show_proto_channel_flags
     = CHANNELS::CHANNEL_FLAG_LAST
@@ -92,11 +86,6 @@ constexpr int first_last_channel_flags
     = CHANNELS::CHANNEL_FLAG_LAST
     | CHANNELS::CHANNEL_FLAG_FIRST
 ;
-
-void clip_raw_receive(bytes_view data, int channel_flags = first_last_show_proto_channel_flags)
-{
-    clip->receive(data, channel_flags);
-}
 
 enum class Padding : unsigned;
 
@@ -122,12 +111,13 @@ struct Serializer
 };
 
 void clip_receive(
+    redjs::ClipboardChannel& clip,
     uint16_t msgType, uint16_t msgFlags,
     bytes_view data = {},
     Padding padding_data = Padding{},
     uint32_t channel_flags = first_last_show_proto_channel_flags)
 {
-    clip_raw_receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
+    clip.receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
 }
 
 DataChan data_chan(
@@ -140,12 +130,21 @@ DataChan data_chan(
 }
 
 
-#define RECEIVE_DATAS(...) ::clip_receive(__VA_ARGS__); CTX_CHECK_DATAS()
-#define CALL_CB(...) clip->__VA_ARGS__; CTX_CHECK_DATAS()
+
+std::unique_ptr<redjs::ClipboardChannel> clip;
+
+auto test_init_channel(Callback& cb, emscripten::val&& v)
+{
+    return redjs::ClipboardChannel(cb, std::move(v), true);
+}
 
 }
 
-RED_AUTO_TEST_CASE(TestClipboardChannel)
+
+#define RECEIVE_DATAS(...) ::clip_receive(clip, __VA_ARGS__); CTX_CHECK_DATAS()
+#define CALL_CB(...) clip.__VA_ARGS__; CTX_CHECK_DATAS()
+
+RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
 {
     using namespace RDPECLIP;
     namespace cbchan = redjs::channels::clipboard;
@@ -199,7 +198,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     auto copy1 = "plop\0"_utf16_le;
     RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, copy1, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveData(copy1, first_last_channel_flags));
+        CHECK_NEXT_DATA(receiveData(copy1, 0, first_last_channel_flags));
     };
 
     // paste (client -> server)
@@ -313,7 +312,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     RECEIVE_DATAS(CB_FILECONTENTS_RESPONSE, CB_RESPONSE__NONE_,
         "\x00\x00\x00\x00""abcdefghijkl"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveFileContents{"\0\0\0\0""abcdefghijkl"_av, 0,
+        CHECK_NEXT_DATA(receiveFileContents{"\0\0\0\0""abcdefghijkl"_av, 0, 0,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST});
     };
 

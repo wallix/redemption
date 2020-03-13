@@ -25,6 +25,12 @@ Author(s): Jonathan Poelen
 #include "core/callback.hpp"
 #include "utils/stream.hpp"
 
+
+redjs::channels::JsChannel::~JsChannel()
+{
+    emval_call(this->js_handler, "free");
+}
+
 void redjs::channels::JsChannel::receive(bytes_view data, int flags)
 {
     redjs::emval_call(this->js_handler, "receiveData", data.data(), data.size(), flags);
