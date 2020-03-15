@@ -41,6 +41,7 @@ enum class LogCategoryId
     Kbd,
     Protocol,
     AccountManipulation,
+    BestSafe,
     count
 };
 
@@ -115,7 +116,8 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(WEB_THIRD_PARTY_URL_BLOCKED, Web)                          \
     f(ACCOUNT_MANIPULATION_BLOCKED, AccountManipulation)         \
     f(ACCOUNT_MANIPULATION_DETECTED, AccountManipulation)        \
-    f(TEXT_VERIFICATION, FileVerification)
+    f(TEXT_VERIFICATION, FileVerification)                       \
+    f(BESTSAFE_SERVICE_LOG, BestSafe)
 
 
 enum class LogId : unsigned

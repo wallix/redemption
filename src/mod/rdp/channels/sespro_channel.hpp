@@ -1026,6 +1026,13 @@ public:
                         message_format_invalid = true;
                     }
                 }
+                else if (!::strcasecmp(order_.c_str(), "BESTSAFE_SERVICE_LOG")) {
+                    std::vector<KVLog> vecLog;
+                    for (size_t i = 0, c = parameters_.size() / 2; i < c; ++i) {
+                        vecLog.emplace_back(KVLog{parameters_[i * 2], parameters_[i * 2 + 1]});
+                    }
+                    this->log6(LogId::BESTSAFE_SERVICE_LOG, {vecLog});
+                }
                 else if (!::strcasecmp(order_.c_str(), "PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     this->log6(
                         LogId::PASSWORD_TEXT_BOX_GET_FOCUS, {
