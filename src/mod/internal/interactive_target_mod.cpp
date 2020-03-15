@@ -33,7 +33,7 @@ InteractiveTargetMod::InteractiveTargetMod(
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme)
     : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
         rail_client_execute, theme)
-    , ask_device(vars.is_asked<cfg::context::target_host>())
+    , ask_device(vars.is_asked<cfg::globals::target_device>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge,
@@ -99,7 +99,7 @@ void InteractiveTargetMod::notify(Widget* sender, notify_event_t event)
 void InteractiveTargetMod::accepted()
 {
     if (this->ask_device) {
-        this->vars.set_acl<cfg::context::target_host>(this->challenge.device_edit.get_text());
+        this->vars.set_acl<cfg::globals::target_device>(this->challenge.device_edit.get_text());
     }
     if (this->ask_login) {
         this->vars.set_acl<cfg::globals::target_user>(this->challenge.login_edit.get_text());
