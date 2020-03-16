@@ -342,5 +342,4 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
 
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
     ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-    this->connected = true;
 }

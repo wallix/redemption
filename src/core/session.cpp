@@ -183,14 +183,14 @@ private:
         time_t now, bool & has_user_activity, SessionState & session_state)
     {
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
-        if (!acl->keepalive.is_started() && mm.is_connected()) {
+        if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
             acl->keepalive.start(now);
         }
 
         // There are modified fields to send to sesman
         if (this->ini.changed_field_size()) {
             LOG(LOG_INFO, "check_acl: data to send to sesman");
-            if (mm.is_connected()) {
+            if (mod_wrapper.is_connected()) {
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc, xup ...) and something changed.
                 // used for authchannel and keepalive.
@@ -237,7 +237,7 @@ private:
                 auto module_id = get_module_id(module_cstr);
                 LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
 
-                if (mm.is_connected() 
+                if (mod_wrapper.is_connected() 
                     && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
                     if (mm.ini.get<cfg::context::auth_error_message>().empty()) {
                         mm.ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(mm.ini)));
@@ -325,9 +325,7 @@ private:
             }
         }
 
-        // LOG(LOG_INFO, "connect=%s check=%s", this->connected?"Y":"N", check()?"Y":"N");
-
-        if (mm.is_connected()) {
+        if (mod_wrapper.is_connected()) {
             // AuthCHANNEL CHECK
             // if an answer has been received, send it to
             // rdp serveur via mod (should be rdp module)
@@ -476,7 +474,7 @@ private:
                 }
             }
 
-            if (this->ini.get<cfg::context::forcemodule>() && !mm.is_connected()) {
+            if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
                 this->ini.set<cfg::context::forcemodule>(false);
                 // Do not send back the value to sesman.
             }

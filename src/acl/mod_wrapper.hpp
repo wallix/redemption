@@ -217,6 +217,11 @@ public:
 
     bool target_info_is_shown = false;
     bool show_osd_flag = false;
+    bool connected = false;
+
+    bool is_connected() {
+        return this->connected;
+    }
 
     void last_disconnect()
     {

@@ -70,13 +70,8 @@ class ModuleManager
 {
     ModFactory & mod_factory;
 
-private:
-    bool connected{false};
 
 public:
-    bool is_connected() {
-        return this->connected;
-    }
 
     Inifile& ini;
     SessionReactor& session_reactor;
@@ -178,7 +173,7 @@ public:
         LOG(LOG_INFO, "New_mod: target_module=MODULE_INTERNAL_CLOSE");
         this->rail_client_execute.enable_remote_program(this->client_info.remote_program);
         log_proxy::set_user("");
-        this->connected = false;
+        mod_wrapper.connected = false;
         if (this->old_target_module != MODULE_INTERNAL_CLOSE) {
             this->front.must_be_stop_capture();
             auto is_remote_mod = [](int mod_type){
@@ -220,7 +215,7 @@ public:
             break;
         }
 
-        this->connected = false;
+        mod_wrapper.connected = false;
 
         if (this->old_target_module != target_module) {
             this->front.must_be_stop_capture();
@@ -301,7 +296,7 @@ public:
 
             this->set_mod(mod_wrapper, mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-            this->connected = true;
+            mod_wrapper.connected = true;
             mod_wrapper.show_osd_flag = true;
             break;
         }
@@ -325,16 +320,16 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
             ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             mod_wrapper.show_osd_flag = true;
-            this->connected = true;
+            mod_wrapper.connected = true;
         }
         break;
 
         case MODULE_VNC:
-            this->create_mod_vnc(mod_wrapper,
-                authentifier, report_message, this->ini,
+            this->create_mod_vnc(mod_wrapper, authentifier, report_message, this->ini,
                 mod_wrapper.get_graphics(), this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags);
                 mod_wrapper.show_osd_flag = true;
+                mod_wrapper.connected = true;
             break;
 
         default:
@@ -346,32 +341,6 @@ public:
 public:
     [[nodiscard]] rdp_api* get_rdp_api(ModWrapper & mod_wrapper) const {
         return mod_wrapper.rdpapi;
-    }
-
-    ModuleIndex next_module()
-    {
-        auto & module_cstr = this->ini.get<cfg::context::module>();
-        auto module_id = get_module_id(module_cstr);
-        LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
-
-        if (this->connected && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
-            if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
-            }
-            return MODULE_INTERNAL_CLOSE;
-        }
-        if (module_id == MODULE_INTERNAL)
-        {
-            auto module_id = get_internal_module_id_from_target(this->ini.get<cfg::context::target_host>());
-            LOG(LOG_INFO, "===========> %s (from target)", get_module_name(module_id));
-            return module_id;
-        }
-        if (module_id == MODULE_UNKNOWN)
-        {
-            LOG(LOG_INFO, "===========> UNKNOWN MODULE (closing)");
-            return MODULE_INTERNAL_CLOSE;
-        }
-        return module_id;
     }
 
 private:
