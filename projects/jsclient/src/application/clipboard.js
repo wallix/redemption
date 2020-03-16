@@ -31,6 +31,7 @@ const CF = Object.freeze({
 });
 
 const CustomCF = Object.freeze({
+    None: 0,
     FileGroupDescriptorW: 33333,
 });
 
@@ -167,8 +168,8 @@ class Cliprdr
         this.fileGroupId = null;
     }
 
-    formatListFormat(dataName, formatId, isUTF8) {
-        console.log('formatList:', formatId, isUTF8);
+    formatListFormat(dataName, formatId, customFormatId, isUTF8) {
+        console.log('formatList:', formatId, customFormatId, isUTF8);
 
         const button = document.createElement('button');
         button.dataset.formatId = formatId;
@@ -185,10 +186,16 @@ class Cliprdr
             }
 
             default: {
-                const name = (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(dataName);
-                button.appendChild(new Text(`${formatId}: ${name}`));
-                if (name === "FileGroupDescriptorW") {
-                    this.fileGroupId = formatId;
+                switch (customFormatId) {
+                    case CustomCF.FileGroupDescriptorW:
+                        button.appendChild(new Text(`${formatId}: FileGroupDescriptorW`));
+                        this.fileGroupId = formatId;
+                        break;
+
+                    case CustomCF.None:
+                        const name = (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(dataName);
+                        button.appendChild(new Text(`${formatId}: ${name}`));
+                        break;
                 }
                 break;
             }
@@ -211,11 +218,6 @@ class Cliprdr
                 }
 
                 if (channelFlags & ChannelFlags.Last) {
-                    const len = data.length;
-                    // remove "\0\0" terminal
-                    if (len >= 2 && !data[len-2] && !data[len-1]) {
-                        data = data.subarray(0, len - 2);
-                    }
                     const text = this.dataDecoder.decode(data)
                     console.log(text);
                 }

@@ -60,7 +60,7 @@ struct ClipboardChannel
         uint32_t max_bytes_to_read,
         bool has_lock_id, uint32_t lock_id);
 
-    void send_request_format(uint32_t format_id, CustomFormat custom_cf);
+    void send_request_format(uint32_t format_id, CustomFormat custom_format_id);
     void send_format(uint32_t format_id, Charset charset, bytes_view name);
     unsigned add_format(writable_bytes_view data, uint32_t format_id, Charset charset, bytes_view name);
     void send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags);
@@ -96,7 +96,9 @@ private:
     uint32_t general_flags = 0;
     uint32_t remaining_data_len;
     uint32_t stream_id;
-    CustomFormat custom_cf = CustomFormat::None;
+
+    CustomFormat requested_custom_format_id = CustomFormat::None;
+    uint32_t requested_format_id = 0;
 
     enum ResponseState : uint8_t
     {

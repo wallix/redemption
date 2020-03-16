@@ -59,11 +59,16 @@ namespace redjs
     }
 
     template<class T>
-    inline T const& emval_call_arg(T const& x) noexcept
+    inline auto emval_call_arg(T const& x) noexcept
     {
-        static_assert(std::is_integral_v<T>);
-        static_assert(sizeof(T) != 8, "uint64_t and int64_t are not supported");
-        return x;
+        if constexpr (std::is_enum_v<T>) {
+            return std::underlying_type_t<T>(x);
+        }
+        else {
+            static_assert(std::is_integral_v<T>);
+            static_assert(sizeof(T) != 8, "uint64_t and int64_t are not supported");
+            return x;
+        }
     }
 
     template<class ReturnType = void, class... Args>

@@ -153,10 +153,10 @@ void ClipboardChannel::send_file_contents_request(
     this->send_data(out_stream.get_bytes());
 }
 
-void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat custom_cf)
+void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat custom_format_id)
 {
     LOG_IF(this->verbose, LOG_INFO,
-        "Clipboard: Send Request Format id=%d custom=%d", format_id, custom_cf);
+        "Clipboard: Send Request Format id=%d custom=%d", format_id, custom_format_id);
 
     RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
     RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(format_id);
@@ -165,7 +165,8 @@ void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat cust
     formatDataRequestPDU.emit(out_stream);
     InStream chunkRequest(out_stream.get_bytes());
 
-    this->custom_cf = custom_cf;
+    this->requested_format_id = format_id;
+    this->requested_custom_format_id = custom_format_id;
 
     this->send_data(out_stream.get_bytes());
 }
@@ -196,7 +197,9 @@ void ClipboardChannel::receive(bytes_view data, uint32_t channel_flags)
     {
         LOG(LOG_WARNING, "Clipboard: Response FAIL, msgType=%s",
             RDPECLIP::get_msgType_name(header.msgType()));
-        this->custom_cf = CustomFormat::None;
+        // TODO always ?
+        this->requested_format_id = 0;
+        this->requested_custom_format_id = CustomFormat::None;
         emval_call(this->callbacks, "receiveResponseFail", header.msgType());
         return ;
     }
@@ -429,7 +432,7 @@ void ClipboardChannel::process_format_data_response(
     }
     this->remaining_data_len -= data.size();
 
-    switch (this->custom_cf)
+    switch (this->requested_custom_format_id)
     {
     case CustomFormat::FileGroupDescriptorW: {
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Group Descriptor Response PDU");
@@ -481,17 +484,36 @@ void ClipboardChannel::process_format_data_response(
 
         if (is_last_packet)
         {
-            this->custom_cf = CustomFormat::None;
+            this->requested_format_id = 0;
+            this->requested_custom_format_id = CustomFormat::None;
         }
 
-        return;
+        break;
     }
 
-    case CustomFormat::None: break;
+    case CustomFormat::None:
+        switch (this->requested_format_id)
+        {
+            case RDPECLIP::CF_UNICODETEXT:
+                if (is_last_packet)
+                {
+                    const auto len = data.size();
+                    if (len >= 2 && !data[len-1] && !data[len-2]) {
+                        data = data.drop_back(2);
+                    }
+                }
+                break;
+        }
+
+        if (is_last_packet)
+        {
+            this->requested_format_id = 0;
+        }
+
+        emval_call_bytes(this->callbacks, "formatDataResponse",
+            data, this->remaining_data_len, channel_flags & first_last_flags);
     }
 
-    emval_call_bytes(this->callbacks, "formatDataResponse",
-        data, this->remaining_data_len, channel_flags & first_last_flags);
 }
 
 void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t channel_flags, uint32_t data_len)
@@ -534,8 +556,12 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_f
                 [](Cliprdr::AsciiName const&) { return true; },
                 [](Cliprdr::UnicodeName const& unicode) { return unicode.bytes.empty(); },
             }(name);
+            CustomFormat custom_format_id = Cliprdr::file_group_descriptor_w.same_as(name)
+                ? CustomFormat::FileGroupDescriptorW
+                : CustomFormat::None;
 
-            emval_call_bytes(this->callbacks, "formatListFormat", name.bytes, format_id, is_utf8);
+            emval_call_bytes(this->callbacks, "formatListFormat",
+                name.bytes, format_id, custom_format_id, is_utf8);
         }
     );
 
@@ -553,7 +579,8 @@ void ClipboardChannel::process_capabilities(InStream& chunk)
     uint32_t general_flags = RDPECLIP::extract_clipboard_general_flags_capability(
         chunk.remaining_bytes(), this->verbose);
 
-    this->custom_cf = CustomFormat::None;
+    this->requested_format_id = 0;
+    this->requested_custom_format_id = CustomFormat::None;
     this->general_flags = emval_call<uint32_t>(
         this->callbacks, "setGeneralCapability", general_flags);
 }

@@ -64,7 +64,7 @@ MAKE_BINDING_CALLBACKS(
     DataChan,
     (JS_x_f(setGeneralCapability, return generalFlags, uint32_t generalFlags))
     (JS_c(formatListStart))
-    (JS_d(formatListFormat, uint8_t, uint32_t formatId, bool isUTF8))
+    (JS_d(formatListFormat, uint8_t, uint32_t formatId, uint32_t customFormatId, bool isUTF8))
     (JS_c(formatListStop))
     (JS_d(formatDataResponse, uint8_t, uint32_t remainingDataLen, uint32_t channelFlags))
     (JS_x(formatDataResponseNbFileName, uint32_t nb))
@@ -184,10 +184,10 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         "\x07\x00\x00\x00\x00\x00"_av, Padding(4))
     {
         CHECK_NEXT_DATA(formatListStart{});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_UNICODETEXT, is_utf});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_LOCALE, is_utf});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_TEXT, is_utf});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_OEMTEXT, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_UNICODETEXT, 0, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_LOCALE, 0, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_TEXT, 0, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_OEMTEXT, 0, is_utf});
         CHECK_NEXT_DATA(formatListStop{});
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };
@@ -200,7 +200,8 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
     auto copy1 = "plop\0"_utf16_le;
     RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, copy1, Padding(4))
     {
-        CHECK_NEXT_DATA(formatDataResponse(copy1, 0, first_last_channel_flags));
+        // "\0\0" terminal automatically removed
+        CHECK_NEXT_DATA(formatDataResponse(copy1.drop_back(2), 0, first_last_channel_flags));
     };
 
     // paste (client -> server)
@@ -242,7 +243,8 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         ""_av, Padding(4))
     {
         CHECK_NEXT_DATA(formatListStart{});
-        CHECK_NEXT_DATA(formatListFormat{"FileGroupDescriptorW"_utf16_le, 49262, not_utf});
+        CHECK_NEXT_DATA(formatListFormat{"FileGroupDescriptorW"_utf16_le, 49262,
+            uint32_t(cbchan::CustomFormat::FileGroupDescriptorW), not_utf});
         CHECK_NEXT_DATA(formatListStop{});
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };
