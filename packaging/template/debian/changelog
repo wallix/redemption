@@ -1,3 +1,9 @@
+redemption (8.0.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * BestSafe Integration: Forward event log
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 16 Mar 2020 15:28:46 +0200
+
 redemption (8.0.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Improve Clipboard management
