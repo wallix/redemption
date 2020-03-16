@@ -273,14 +273,14 @@ void ClipboardChannel::process_format_data_request(InStream& in_stream)
 {
     RDPECLIP::FormatDataRequestPDU pdu;
     pdu.recv(in_stream);
-    emval_call(this->callbacks, "receiveFormatId", pdu.requestedFormatId);
+    emval_call(this->callbacks, "formatDataRequest", pdu.requestedFormatId);
 }
 
 void ClipboardChannel::process_filecontents_request(InStream& in_stream)
 {
     RDPECLIP::FileContentsRequestPDU pdu;
     pdu.receive(in_stream);
-    emval_call(this->callbacks, "receiveFileContentsRequest",
+    emval_call(this->callbacks, "fileContentsRequest",
         pdu.streamId(),
         pdu.dwFlags(),
         pdu.lindex(),
@@ -439,7 +439,7 @@ void ClipboardChannel::process_format_data_response(
         if (is_first_packet)
         {
             auto nb_item = in_stream.in_uint32_le();
-            emval_call(this->callbacks, "receiveNbFileName", nb_item);
+            emval_call(this->callbacks, "formatDataResponseNbFileName", nb_item);
         }
 
         namespace constants = constants::file_group_descriptor_w;
@@ -455,7 +455,7 @@ void ClipboardChannel::process_format_data_response(
             auto size_low = in_stream.in_uint32_le();
             auto name = quick_utf16_av(in_stream.remaining_bytes()
                 .first(constants::filename_attribute_size));
-            emval_call_bytes(this->callbacks, "receiveFileName",
+            emval_call_bytes(this->callbacks, "formatDataResponseFile",
                 name, file_attrs, flags, size_low, size_high,
                 last_write_time_low, last_write_time_high);
         };
@@ -490,7 +490,7 @@ void ClipboardChannel::process_format_data_response(
     case CustomFormat::None: break;
     }
 
-    emval_call_bytes(this->callbacks, "receiveData",
+    emval_call_bytes(this->callbacks, "formatDataResponse",
         data, this->remaining_data_len, channel_flags & first_last_flags);
 }
 
@@ -517,13 +517,13 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
     }
     this->remaining_data_len -= data.size();
 
-    emval_call_bytes(this->callbacks, "receiveFileContents", data,
+    emval_call_bytes(this->callbacks, "fileContentsResponse", data,
         this->stream_id, this->remaining_data_len, channel_flags & first_last_flags);
 }
 
 void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_flags*/)
 {
-    emval_call(this->callbacks, "receiveFormatStart");
+    emval_call(this->callbacks, "formatListStart");
 
     Cliprdr::format_list_extract(
         chunk,
@@ -535,11 +535,11 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_f
                 [](Cliprdr::UnicodeName const& unicode) { return unicode.bytes.empty(); },
             }(name);
 
-            emval_call_bytes(this->callbacks, "receiveFormat", name.bytes, format_id, is_utf8);
+            emval_call_bytes(this->callbacks, "formatListFormat", name.bytes, format_id, is_utf8);
         }
     );
 
-    emval_call(this->callbacks, "receiveFormatStop");
+    emval_call(this->callbacks, "formatListStop");
 
     StaticOutStream<256> out_stream;
     RDPECLIP::CliprdrHeader formatListResponsePDUHeader(

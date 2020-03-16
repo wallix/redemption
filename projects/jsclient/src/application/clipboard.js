@@ -169,14 +169,14 @@ class Cliprdr
         return generalFlags;
     }
 
-    receiveFormatStart() {
+    formatListStart() {
         this.DOMFiles.innerText = '';
         this.DOMFormats.innerText = '';
         this.fileGroupId = null;
     }
 
-    receiveFormat(dataName, formatId, isUTF8) {
-        console.log('receiveFormat:', formatId, isUTF8);
+    formatListFormat(dataName, formatId, isUTF8) {
+        console.log('formatList:', formatId, isUTF8);
 
         const button = document.createElement('button');
         button.dataset.id = formatId;
@@ -205,10 +205,12 @@ class Cliprdr
         this.DOMFormats.appendChild(button);
     }
 
-    // receiveFormatStop() {}
+    formatListStop() {
+        console.log('formatListStop');
+    }
 
-    receiveData(data, remainingDataLen, channelFlags) {
-        console.log('receiveData:', this.expectedFormatId, remainingDataLen, channelFlags);
+    formatDataResponse(data, remainingDataLen, channelFlags) {
+        console.log('formatDataResponse:', this.expectedFormatId, remainingDataLen, channelFlags);
 
         switch (this.expectedFormatId) {
             case CF.UNICODETEXT: {
@@ -234,7 +236,7 @@ class Cliprdr
         }
     }
 
-    receiveNbFileName(countFile) {
+    formatDataResponseNbFileName(countFile) {
         console.log('receiveNbFileName:', nb);
         this.DOMFormats = replaceDiv(this.DOMBox, this.DOMFormats);
         this.countFile = countFile;
@@ -242,7 +244,7 @@ class Cliprdr
         this.DOMFiles.innerText = '';
     },
 
-    receiveFileName(utf16Name, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
+    formatDataResponseFile(utf16Name, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
         const filename = UTF16Decoder.decode(utf16Name);
         console.log('receiveFileName:', filename, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
         const button = this.DOMFiles.appendChild(document.createElement('button'));
@@ -251,8 +253,8 @@ class Cliprdr
         ++this.ifile;
     }
 
-    receiveFileContents(data, streamId, remainingDataLen, channelFlags) {
-        console.log('receiveFileContents:', streamId, remainingDataLen, channelFlags);
+    fileContentsResponse(data, streamId, remainingDataLen, channelFlags) {
+        console.log('fileContentsResponse:', streamId, remainingDataLen, channelFlags);
         // TODO streamId
 
         if (channelFlags & ChannelFlags.First) {
@@ -271,8 +273,8 @@ class Cliprdr
         }
     }
 
-    receiveFormatId(formatId) {
-        console.log('receiveFormatId:', formatId);
+    formatDataRequest(formatId) {
+        console.log('formatDataRequest:', formatId);
 
         const data = this.transferableData;
         switch (formatId) {
@@ -322,7 +324,7 @@ class Cliprdr
         }
     }
 
-    receiveFileContentsRequest(streamId, type, lindex, nposLow, nposHigh, szRequested) {
+    fileContentsRequest(streamId, type, lindex, nposLow, nposHigh, szRequested) {
         console.log("fileContentsRequest:", ...arguments);
 
         const file = sendCbFile_data.files[lindex];
@@ -389,6 +391,14 @@ class Cliprdr
             break;
         }
         }
+    }
+
+    lock(lockId) {
+        console.log("lock:", lockId);
+    }
+
+    unlock(lockId) {
+        console.log("unlock:", lockId);
     }
 }
 

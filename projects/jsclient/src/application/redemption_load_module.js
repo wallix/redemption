@@ -192,16 +192,18 @@ const redemptionLoadModule = function(Module, window)
 
     addChannelClass('ClipboardChannel', {
         setGeneralCapability: identity,
-        receiveFormatStart: identity,
-        receiveFormat: wCb_em2js_U8p,
-        receiveFormatStop: identity,
-        receiveData: wCb_em2js_U8p,
-        receiveNbFileName: identity,
-        receiveFileName: wCb_em2js_U8p,
-        receiveFormatId: identity,
-        receiveFileContents: wCb_em2js_U8p,
-        receiveFileContentsRequest: identity,
+        formatListStart: identity,
+        formatListFormat: wCb_em2js_U8p,
+        formatListStop: identity,
+        formatDataResponse: wCb_em2js_U8p,
+        formatDataResponseNbFileName: identity,
+        formatDataResponseFile: wCb_em2js_U8p,
+        formatDataRequest: identity,
+        fileContentsRequest: identity,
+        fileContentsResponse: wCb_em2js_U8p,
         receiveResponseFail: identity,
+        lock: identity,
+        unlock: identity,
         delete: identity,
     });
 
