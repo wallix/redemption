@@ -232,8 +232,31 @@ private:
             return true;
             case BACK_EVENT_NEXT:
             {
-                LOG(LOG_INFO, "Remote Answer, current module ask NEXT");
-                ModuleIndex next_state = mm.next_module();
+                ModuleIndex next_state = MODULE_INTERNAL_CLOSE;
+                auto & module_cstr = mm.ini.get<cfg::context::module>();
+                auto module_id = get_module_id(module_cstr);
+                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
+
+                if (mm.is_connected() 
+                    && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
+                    if (mm.ini.get<cfg::context::auth_error_message>().empty()) {
+                        mm.ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(mm.ini)));
+                    }
+                    next_state = MODULE_INTERNAL_CLOSE;
+                }
+                else if (module_id == MODULE_INTERNAL)
+                {
+                    auto module_id = get_internal_module_id_from_target(mm.ini.get<cfg::context::target_host>());
+                    LOG(LOG_INFO, "===========> %s (from target)", get_module_name(module_id));
+                    next_state = module_id;
+                }
+                else if (module_id == MODULE_UNKNOWN)
+                {
+                    LOG(LOG_INFO, "===========> UNKNOWN MODULE (closing)");
+                    next_state = MODULE_INTERNAL_CLOSE;
+                }
+                next_state = module_id;
+
                 if (next_state == MODULE_TRANSITORY) {
                     LOG(LOG_INFO, "check_acl TRANSITORY signal=%s", signal_name(signal));
                     acl->acl_serial.remote_answer = false;
@@ -651,8 +674,6 @@ public:
         GraphicEventContainer graphic_events_;
         GraphicTimerContainer graphic_timer_events_;
         
-        bool retry_current_module_flag = false;
-
         TimeSystem timeobj;
 
         session_reactor.set_current_time(tvtime());
@@ -1069,61 +1090,53 @@ public:
                             }
                         }
 
-                        if (retry_current_module_flag){
-                            acl->acl_serial.remote_answer = false;
-                            LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
-                            mod_wrapper.remove_mod();
-                            mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
-                            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                            retry_current_module_flag = false;
-                            run_session = true;
-                        }
-                        else {
-                            try {
-                                // Close by end date reached
-                                const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-                                if (enddate != 0 && (static_cast<uint32_t>(now.tv_sec) > enddate)) {
-                                    throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
-                                }
-                                // Close by rejeted message received
-                                if (!this->ini.get<cfg::context::rejected>().empty()) {
-                                    throw Error(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE);
-                                }
-                                // Keep Alive
-                                if (acl->keepalive.check(now.tv_sec, this->ini)) {
-                                    throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
-                                }
-                                // Inactivity management
-                                if (acl->inactivity.check_user_activity(now.tv_sec, front.has_user_activity)) {
-                                    throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
-                                }
+                        // Exception ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE
+                        try {
+                            // Close by end date reached
+                            const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
+                            if (enddate != 0 && (static_cast<uint32_t>(now.tv_sec) > enddate)) {
+                                throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
+                            }
+                            // Close by rejeted message received
+                            if (!this->ini.get<cfg::context::rejected>().empty()) {
+                                throw Error(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE);
+                            }
+                            // Keep Alive
+                            if (acl->keepalive.check(now.tv_sec, this->ini)) {
+                                throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
+                            }
+                            // Inactivity management
+                            if (acl->inactivity.check_user_activity(now.tv_sec, front.has_user_activity)) {
+                                throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
+                            }
 
-                                run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, session_state);
+                            run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, session_state);
 
-                            } catch (Error const& e) {
-                                LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
-                                run_session = false;
-                                switch (end_session_exception(e, authentifier, ini)){
-                                case 0: // End of session loop
-                                break;
-                                case 1: // Close Box
-                                {
-                                    session_state = SessionState::SESSION_STATE_CLOSE_BOX;
-                                    mod_wrapper.last_disconnect();
-                                    authentifier.set_acl_serial(nullptr);
-                                    acl.reset();
-                                    if (ini.get<cfg::globals::enable_close_box>()) {
-                                        mm.new_mod_internal_close(mod_wrapper, authentifier);
-                                        run_session = true;
-                                    }
-                                }
-                                break;
-                                case 2: // retry current module
-                                    mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                                    retry_current_module_flag = true;
+                        } catch (Error const& e) {
+                            LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
+                            run_session = false;
+                            switch (end_session_exception(e, authentifier, ini)){
+                            case 0: // End of session loop
+                            break;
+                            case 1: // Close Box
+                            {
+                                session_state = SessionState::SESSION_STATE_CLOSE_BOX;
+                                mod_wrapper.last_disconnect();
+                                authentifier.set_acl_serial(nullptr);
+                                acl.reset();
+                                if (ini.get<cfg::globals::enable_close_box>()) {
+                                    mm.new_mod_internal_close(mod_wrapper, authentifier);
                                     run_session = true;
-                                break;
                                 }
+                            }
+                            break;
+                            case 2: // TODO: should we put some counter to avoid retrying indefinitely?
+                                acl->acl_serial.remote_answer = false;
+                                LOG(LOG_INFO, "Retrying current module");
+                                mod_wrapper.remove_mod();
+                                mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
+                                run_session = true;
+                            break;
                             }
                         }
                     }
