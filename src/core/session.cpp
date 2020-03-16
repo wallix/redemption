@@ -180,7 +180,7 @@ private:
     // Returns run_session value
     bool check_acl(ModuleManager & mm, std::unique_ptr<Acl> & acl,
         Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
-        time_t now, bool & has_user_activity, SessionState & session_state)
+        time_t now, bool & has_user_activity, SessionState & session_state, Inifile& ini)
     {
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
         if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
@@ -188,7 +188,7 @@ private:
         }
 
         // There are modified fields to send to sesman
-        if (this->ini.changed_field_size()) {
+        if (ini.changed_field_size()) {
             LOG(LOG_INFO, "check_acl: data to send to sesman");
             if (mod_wrapper.is_connected()) {
                 // send message to acl with changed values when connected to
@@ -233,20 +233,20 @@ private:
             case BACK_EVENT_NEXT:
             {
                 ModuleIndex next_state = MODULE_INTERNAL_CLOSE;
-                auto & module_cstr = mm.ini.get<cfg::context::module>();
+                auto & module_cstr = ini.get<cfg::context::module>();
                 auto module_id = get_module_id(module_cstr);
                 LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
 
                 if (mod_wrapper.is_connected() 
                     && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
-                    if (mm.ini.get<cfg::context::auth_error_message>().empty()) {
-                        mm.ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(mm.ini)));
+                    if (ini.get<cfg::context::auth_error_message>().empty()) {
+                        ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
                     }
                     next_state = MODULE_INTERNAL_CLOSE;
                 }
                 else if (module_id == MODULE_INTERNAL)
                 {
-                    auto module_id = get_internal_module_id_from_target(mm.ini.get<cfg::context::target_host>());
+                    auto module_id = get_internal_module_id_from_target(ini.get<cfg::context::target_host>());
                     LOG(LOG_INFO, "===========> %s (from target)", get_module_name(module_id));
                     next_state = module_id;
                 }
@@ -275,21 +275,21 @@ private:
             return true;
             }
 
-            if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
-                acl->acl_serial.manager_disconnect_reason = this->ini.get<cfg::context::disconnect_reason>();
-                this->ini.get_mutable_ref<cfg::context::disconnect_reason>().clear();
-                this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+            if (!ini.get<cfg::context::disconnect_reason>().empty()) {
+                acl->acl_serial.manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
+                ini.get_mutable_ref<cfg::context::disconnect_reason>().clear();
+                ini.set_acl<cfg::context::disconnect_reason_ack>(true);
             }
-            else if (!this->ini.get<cfg::context::auth_command>().empty()) {
+            else if (!ini.get<cfg::context::auth_command>().empty()) {
                 if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(), "rail_exec")) {
-                    const uint16_t flags                = this->ini.get<cfg::context::auth_command_rail_exec_flags>();
-                    const char*    original_exe_or_file = this->ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
-                    const char*    exe_or_file          = this->ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
-                    const char*    working_dir          = this->ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
-                    const char*    arguments            = this->ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
-                    const uint16_t exec_result          = this->ini.get<cfg::context::auth_command_rail_exec_exec_result>();
-                    const char*    account              = this->ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
-                    const char*    password             = this->ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
+                    const uint16_t flags                = ini.get<cfg::context::auth_command_rail_exec_flags>();
+                    const char*    original_exe_or_file = ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
+                    const char*    exe_or_file          = ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
+                    const char*    working_dir          = ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
+                    const char*    arguments            = ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
+                    const uint16_t exec_result          = ini.get<cfg::context::auth_command_rail_exec_exec_result>();
+                    const char*    account              = ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
+                    const char*    password             = ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
 
                     rdp_api* rdpapi = mm.get_rdp_api(mod_wrapper);
 
@@ -321,7 +321,7 @@ private:
                     }
                 }
 
-                this->ini.get_mutable_ref<cfg::context::auth_command>().clear();
+                ini.get_mutable_ref<cfg::context::auth_command>().clear();
             }
         }
 
@@ -330,13 +330,13 @@ private:
             // if an answer has been received, send it to
             // rdp serveur via mod (should be rdp module)
             // TODO Check if this->mod is RDP MODULE
-            if (this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
+            if (ini.get<cfg::mod_rdp::auth_channel>()[0]) {
                 // Get sesman answer to AUTHCHANNEL_TARGET
-                if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
+                if (!ini.get<cfg::context::auth_channel_answer>().empty()) {
                     // If set, transmit to auth_channel channel
-                    mod_wrapper.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
+                    mod_wrapper.get_mod()->send_auth_channel_data(ini.get<cfg::context::auth_channel_answer>().c_str());
                     // Erase the context variable
-                    this->ini.get_mutable_ref<cfg::context::auth_channel_answer>().clear();
+                    ini.get_mutable_ref<cfg::context::auth_channel_answer>().clear();
                 }
             }
 
@@ -344,20 +344,20 @@ private:
             // if an answer has been received, send it to
             // rdp serveur via mod (should be rdp module)
             // TODO Check if this->mod is RDP MODULE
-            if (this->ini.get<cfg::mod_rdp::checkout_channel>()[0]) {
+            if (ini.get<cfg::mod_rdp::checkout_channel>()[0]) {
                 // Get sesman answer to AUTHCHANNEL_TARGET
-                if (!this->ini.get<cfg::context::pm_response>().empty()) {
+                if (!ini.get<cfg::context::pm_response>().empty()) {
                     // If set, transmit to auth_channel channel
-                    mod_wrapper.get_mod()->send_checkout_channel_data(this->ini.get<cfg::context::pm_response>().c_str());
+                    mod_wrapper.get_mod()->send_checkout_channel_data(ini.get<cfg::context::pm_response>().c_str());
                     // Erase the context variable
-                    this->ini.get_mutable_ref<cfg::context::pm_response>().clear();
+                    ini.get_mutable_ref<cfg::context::pm_response>().clear();
                 }
             }
 
-            if (!this->ini.get<cfg::context::rd_shadow_type>().empty()) {
-                mod_wrapper.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
-                    this->ini.get<cfg::context::rd_shadow_type>().c_str());
-                this->ini.get_mutable_ref<cfg::context::rd_shadow_type>().clear();
+            if (!ini.get<cfg::context::rd_shadow_type>().empty()) {
+                mod_wrapper.get_mod()->create_shadow_session(ini.get<cfg::context::rd_shadow_userdata>().c_str(),
+                    ini.get<cfg::context::rd_shadow_type>().c_str());
+                ini.get_mutable_ref<cfg::context::rd_shadow_type>().clear();
             }
         }
         return true;
@@ -548,7 +548,8 @@ private:
             }
             bool run_session = this->check_acl(mm, acl,
                 authentifier, authentifier, mod_wrapper,
-                now.tv_sec, front.has_user_activity, session_state
+                now.tv_sec, front.has_user_activity, session_state,
+                ini
             );
             if (!run_session) {
                 return false;
