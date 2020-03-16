@@ -42,7 +42,7 @@ struct AgentDataExtractor
     static bool relevant_log_id(LogId id) noexcept;
 
 private:
-    std::array<KVLog, 7> kvlogs;
+    std::array<KVLog, 64> kvlogs;
     KVLog* kvlogs_end;
     LogId id;
 };

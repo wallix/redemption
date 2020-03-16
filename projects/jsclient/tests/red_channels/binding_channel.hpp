@@ -46,10 +46,11 @@ Author(s): Jonathan Poelen
 namespace
 {
 
+inline namespace test_channel
+{
+
 using DataChan_tuple = std::tuple<
     CHANNELS::ChannelNameId, std::vector<uint8_t>, std::size_t, uint32_t>;
-
-void test_init_channel(Callback& cb, emscripten::val&& v);
 
 template<class>
 struct js_to_tuple;
@@ -144,7 +145,8 @@ struct WVector
     {};
 
 #define MAKE_JS_TO_CPP_E(r, data, elem) MAKE_JS_TO_CPP_E_S elem
-#define MAKE_JS_TO_CPP_E_S(classname, struct_def, func) struct_def;
+#define MAKE_JS_TO_CPP_E_S(classname, struct_def, func) \
+    inline namespace test_channel { struct_def; }
 
 #define MAKE_JS_CALL_E(r, data, elem) \
     MAKE_TYPE_NAME elem: (...args) => \
@@ -155,63 +157,64 @@ struct WVector
 
 #define MAKE_CPP_BINDING_F(classname, struct_def, func) #classname, func
 
-#define MAKE_BINDING_CALLBACKS(ModChannelDataType, S)   \
-    BOOST_PP_SEQ_FOR_EACH(MAKE_JS_TO_CPP_E, _, S)       \
-                                                        \
-    template<int, class...> class binding_type;         \
-    template<class... Ts>                               \
-    struct binding_type<__COUNTER__-1, Ts...>           \
-    { using type = std::variant<                        \
-        ModChannelDataType, Ts...>; };                  \
-                                                        \
-    BOOST_PP_SEQ_FOR_EACH(MAKE_BIND_TYPE_E, _, S)       \
-                                                        \
-    std::vector<binding_type<__COUNTER__-2>::type>      \
-        g_channel_data_received;                        \
-                                                        \
-    void TestBindingSendModChannel                      \
-        ::send_to_mod_channel(                          \
-        CHANNELS::ChannelNameId front_channel_name,     \
-        InStream & chunk, std::size_t length,           \
-        uint32_t flags)                                 \
-    {                                                   \
-        g_channel_data_received.push_back(              \
-            ModChannelDataType{front_channel_name, {    \
-                chunk.get_data(),                       \
-                chunk.get_data_end()                    \
-            }, length, flags});                         \
-    }                                                   \
-                                                        \
-    template<class F>                                   \
-    void ::datas_checker::operator = (F f)              \
-    {                                                   \
-        f(*this);                                       \
-        if (i < g_channel_data_received.size())         \
-        {                                               \
-            err(*this);                                 \
-        }                                               \
-        g_channel_data_received.clear();                \
-    }                                                   \
-                                                        \
-    TestBindingSendModChannel g_send_mod_channel;       \
-                                                        \
-    EMSCRIPTEN_BINDINGS(test_channel_)                  \
-    {                                                   \
-        BOOST_PP_SEQ_FOR_EACH(MAKE_CPP_BINDING_E, _, S) \
-        auto init = [](emscripten::val&& v){            \
-            test_init_channel(static_cast<Callback&>(   \
-                g_send_mod_channel), std::move(v));     \
-            g_channel_data_received.clear();            \
-        };                                              \
-        redjs::function("test_init_js_channel_", init); \
-    }                                                   \
-                                                        \
-    void init_js_channel()                              \
-    {                                                   \
-        g_channel_data_received.clear();                \
-        RED_EM_ASM({Module.test_init_js_channel_({      \
-            BOOST_PP_SEQ_FOR_EACH(MAKE_JS_CALL_E, _, S) \
-        });});                                          \
+#define MAKE_BINDING_CALLBACKS(ModChannelDataType, S)       \
+    BOOST_PP_SEQ_FOR_EACH(MAKE_JS_TO_CPP_E, _, S)           \
+                                                            \
+    template<int, class...> class binding_type;             \
+    template<class... Ts>                                   \
+    struct binding_type<__COUNTER__-1, Ts...>               \
+    { using type = std::variant<                            \
+        ModChannelDataType, Ts...>; };                      \
+                                                            \
+    BOOST_PP_SEQ_FOR_EACH(MAKE_BIND_TYPE_E, _, S)           \
+                                                            \
+    std::vector<binding_type<__COUNTER__-2>::type>          \
+        g_channel_data_received;                            \
+                                                            \
+    void TestBindingSendModChannel                          \
+        ::send_to_mod_channel(                              \
+        CHANNELS::ChannelNameId front_channel_name,         \
+        InStream & chunk, std::size_t length,               \
+        uint32_t flags)                                     \
+    {                                                       \
+        g_channel_data_received.push_back(                  \
+            ModChannelDataType{front_channel_name, {        \
+                chunk.get_data(),                           \
+                chunk.get_data_end()                        \
+            }, length, flags});                             \
+    }                                                       \
+                                                            \
+    template<class F>                                       \
+    void ::datas_checker::operator = (F f)                  \
+    {                                                       \
+        f(*this);                                           \
+        if (i < g_channel_data_received.size())             \
+        {                                                   \
+            err(*this);                                     \
+        }                                                   \
+        g_channel_data_received.clear();                    \
+    }                                                       \
+                                                            \
+    TestBindingSendModChannel g_send_mod_channel;           \
+                                                            \
+    EMSCRIPTEN_BINDINGS(test_channel_)                      \
+    {                                                       \
+        BOOST_PP_SEQ_FOR_EACH(MAKE_CPP_BINDING_E, _, S)     \
+        auto init = [](emscripten::val&& v){                \
+            _global_create_channel(                         \
+                static_cast<Callback&>(g_send_mod_channel), \
+                std::move(v));                              \
+            g_channel_data_received.clear();                \
+        };                                                  \
+        redjs::function("test_init_js_channel_", init);     \
+    }                                                       \
+                                                            \
+    void init_js_channel()                                  \
+    {                                                       \
+        g_channel_data_received.clear();                    \
+        RED_EM_ASM({Module.test_init_js_channel_({          \
+            BOOST_PP_SEQ_FOR_EACH(MAKE_JS_CALL_E, _, S)     \
+        });});                                              \
     }
 
 inline void print_bytes(std::ostream& out, bytes_view v)
@@ -232,6 +235,7 @@ inline void print_bytes(std::ostream& out, bytes_view v)
             if ((!previous && ishex(x)) || ishex(previous))
             {
                 out << "\"\"";
+                previous = 1;
             }
             out << x;
         }
@@ -327,8 +331,8 @@ struct datas_checker
 };
 
 #define RED_CHECK_V(i, ...) std::visit(Overload{                  \
-    [&](decltype(__VA_ARGS__) const& x) {                         \
-        RED_CHECK((__VA_ARGS__) == x); },                         \
+    [&](decltype(__VA_ARGS__) const& expected) {                  \
+        RED_CHECK((__VA_ARGS__) == expected); },                  \
     [&](auto const& x){ RED_CHECK_MESSAGE(false, "check "         \
         << ::get_type<::remove_cvref_t<decltype(__VA_ARGS__)>>()  \
         << " == " << ::get_type<::remove_cvref_t<decltype(x)>>()  \
@@ -368,4 +372,42 @@ struct DataChanPrintable : DataChan_tuple
     }
 };
 
+void* _global_channel_instance = nullptr;
+void (*_global_create_channel)(Callback&, emscripten::val&&) = nullptr;
+
 }
+}
+
+#define RED_AUTO_TEST_CHANNEL(test_name, create_channel, chann_name)            \
+    namespace {                                                                 \
+        auto CHANNEL_TU_ ## test_name ## create_channel() {                     \
+            return create_channel;                                              \
+        };                                                                      \
+    }                                                                           \
+    struct CHANNEL_TU_ ## test_name {                                           \
+        using channel_type = decltype(                                          \
+            CHANNEL_TU_ ## test_name ## create_channel()(                       \
+                std::declval<Callback&>(), std::declval<emscripten::val&&>())); \
+        static void test(channel_type& chann_name);                             \
+    };                                                                          \
+    RED_AUTO_TEST_CASE(test_name) {                                             \
+        using channel_type = CHANNEL_TU_ ## test_name::channel_type;            \
+                                                                                \
+        ::test_channel::_global_create_channel = [](                            \
+            Callback& cb, emscripten::val&& v                                   \
+        ) {                                                                     \
+            auto* chann = new channel_type{                                     \
+                CHANNEL_TU_ ## test_name ## create_channel()(                   \
+                    cb, static_cast<emscripten::val&&>(v))};                    \
+            ::test_channel::_global_channel_instance = chann;                   \
+        };                                                                      \
+                                                                                \
+        init_js_channel();                                                      \
+        std::unique_ptr<channel_type> pchann{static_cast<channel_type*>(        \
+            ::test_channel::_global_channel_instance)};                         \
+        CHANNEL_TU_ ## test_name ::test(*pchann);                               \
+        pchann.reset();                                                         \
+        ::test_channel::_global_channel_instance = nullptr;                     \
+        CTX_CHECK_DATAS() { CHECK_NEXT_DATA(::test_channel::free{}); };         \
+    }                                                                           \
+    void CHANNEL_TU_ ## test_name ::test(channel_type& chann_name)

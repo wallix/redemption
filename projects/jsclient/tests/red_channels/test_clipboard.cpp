@@ -66,20 +66,15 @@ MAKE_BINDING_CALLBACKS(
     (JS_c(receiveFormatStart))
     (JS_d(receiveFormat, uint8_t, uint32_t formatId, bool isUTF8))
     (JS_c(receiveFormatStop))
-    (JS_d(receiveData, uint8_t, uint32_t channelFlags))
+    (JS_d(receiveData, uint8_t, uint32_t remainingDataLen, uint32_t channelFlags))
     (JS_x(receiveNbFileName, uint32_t nb))
     (JS_d(receiveFileName, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
-    (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t channelFlags))
+    (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
     (JS_x(receiveFormatId, uint32_t format_id))
     (JS_x(receiveFileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
+    (JS_x(receiveResponseFail, uint32_t messageType))
+    (JS_c(free))
 )
-
-std::unique_ptr<redjs::ClipboardChannel> clip;
-
-void test_init_channel(Callback& cb, emscripten::val&& v)
-{
-    clip = std::make_unique<redjs::ClipboardChannel>(cb, std::move(v), true);
-}
 
 constexpr int first_last_show_proto_channel_flags
     = CHANNELS::CHANNEL_FLAG_LAST
@@ -91,11 +86,6 @@ constexpr int first_last_channel_flags
     = CHANNELS::CHANNEL_FLAG_LAST
     | CHANNELS::CHANNEL_FLAG_FIRST
 ;
-
-void clip_raw_receive(bytes_view data, int channel_flags = first_last_show_proto_channel_flags)
-{
-    clip->receive(data, channel_flags);
-}
 
 enum class Padding : unsigned;
 
@@ -121,12 +111,13 @@ struct Serializer
 };
 
 void clip_receive(
+    redjs::ClipboardChannel& clip,
     uint16_t msgType, uint16_t msgFlags,
     bytes_view data = {},
     Padding padding_data = Padding{},
     uint32_t channel_flags = first_last_show_proto_channel_flags)
 {
-    clip_raw_receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
+    clip.receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
 }
 
 DataChan data_chan(
@@ -139,19 +130,28 @@ DataChan data_chan(
 }
 
 
-#define RECEIVE_DATAS(...) ::clip_receive(__VA_ARGS__); CTX_CHECK_DATAS()
-#define CALL_CB(...) clip->__VA_ARGS__; CTX_CHECK_DATAS()
+
+std::unique_ptr<redjs::ClipboardChannel> clip;
+
+auto test_init_channel(Callback& cb, emscripten::val&& v)
+{
+    return redjs::ClipboardChannel(cb, std::move(v), true);
+}
 
 }
 
-RED_AUTO_TEST_CASE(TestClipboardChannel)
+
+#define RECEIVE_DATAS(...) ::clip_receive(clip, __VA_ARGS__); CTX_CHECK_DATAS()
+#define CALL_CB(...) clip.__VA_ARGS__; CTX_CHECK_DATAS()
+
+RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
 {
     using namespace RDPECLIP;
     namespace cbchan = redjs::channels::clipboard;
     init_js_channel();
 
     const bool is_utf = true;
-    // const bool not_utf = false;
+    const bool not_utf = false;
 
     RECEIVE_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
         "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x12\x00\x00\x00"_av, Padding(4))
@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     {
     };
 
-    // copy
+    // copy (server -> client)
 
     RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
         "\x0d\x00\x00\x00\x00\x00"
@@ -190,18 +190,18 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };
 
-    CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat()))
+    CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat::None))
     {
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\0\0\0"_av));
     };
 
-    RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
-        "p\0l\0o\0p\0""\0\0"_av, Padding(4))
+    auto copy1 = "plop\0"_utf16_le;
+    RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, copy1, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveData("plop\0"_utf16_le, first_last_channel_flags));
+        CHECK_NEXT_DATA(receiveData(copy1, 0, first_last_channel_flags));
     };
 
-    // paste
+    // paste (client -> server)
 
     CALL_CB(send_format(CF_UNICODETEXT, cbchan::Charset::Utf16, ""_av))
     {
@@ -228,5 +228,98 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     {
         CHECK_NEXT_DATA(DataChan{paste1, 0,
             CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL});
+    };
+
+    // file copy (server -> client)
+
+    RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
+        "\x6e\xc0\x00\x00\x46\x00\x69\x00" //n...F.i. !
+        "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
+        "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
+        "\x72\x00\x57\x00\x00\x00" //r.W... !
+        ""_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveFormatStart{});
+        CHECK_NEXT_DATA(receiveFormat{"FileGroupDescriptorW"_utf16_le, 49262, not_utf});
+        CHECK_NEXT_DATA(receiveFormatStop{});
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
+    };
+
+    CALL_CB(send_request_format(49262, cbchan::CustomFormat::FileGroupDescriptorW))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_,
+            "\x6e\xc0\x00\x00"_av));
+    };
+
+    RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
+        "\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x0c\x00\x00\x00\x61\x00\x62\x00\x63\x00\x00\x00\x00\x00\x00\x00" //....a.b.c....... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
+        ""_av
+        , Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveNbFileName{1});
+        CHECK_NEXT_DATA(receiveFileName{"abc"_utf16_le,
+            /*.attr=*/0, /*.flags=*/0,
+            /*.sizeLow=*/12, /*.sizeHigh=*/0,
+            /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
+    };
+
+    CALL_CB(send_data(
+        "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00"_av))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK,
+            "\0\0\0\0\0\0\0\0\x02\0\0\0\0\0\0\0\0\0\0\0\x05\0\0\0\0\0\0\0"_av));
+    };
+
+    RECEIVE_DATAS(CB_FILECONTENTS_RESPONSE, CB_RESPONSE__NONE_,
+        "\x00\x00\x00\x00""abcdefghijkl"_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveFileContents{"\0\0\0\0""abcdefghijkl"_av, 0, 0,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST});
+    };
+
+    // response fail
+
+    RECEIVE_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_FAIL, ""_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveResponseFail{CB_FORMAT_LIST_RESPONSE});
     };
 }

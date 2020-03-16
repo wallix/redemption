@@ -30,6 +30,8 @@ namespace redjs::channels
 {
     struct JsChannel
     {
+        ~JsChannel();
+
         void receive(bytes_view data, int flags);
 
         void send_data(bytes_view data, uint32_t total_data_len, uint32_t channel_flags);

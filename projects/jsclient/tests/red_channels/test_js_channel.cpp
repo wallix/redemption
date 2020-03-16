@@ -42,24 +42,21 @@ using DataChan = DataChanPrintable;
 MAKE_BINDING_CALLBACKS(
     DataChan,
     (JS_d(receiveData, uint8_t, int flags))
+    (JS_c(free))
 )
 
-std::unique_ptr<redjs::JsChannel> js_channel;
-
-void test_init_channel(Callback& cb, emscripten::val&& v)
+auto test_init_channel(Callback& cb, emscripten::val&& v)
 {
-    js_channel.reset(new redjs::JsChannel{cb, std::move(v), name_id_ref});
+    return redjs::JsChannel{cb, std::move(v), name_id_ref};
 }
-
-#define RECEIVE_DATAS(...) js_channel->receive(__VA_ARGS__); CTX_CHECK_DATAS()
-#define CALL_CB(...) js_channel->__VA_ARGS__; CTX_CHECK_DATAS()
 
 }
 
-RED_AUTO_TEST_CASE(TestJsChannel)
-{
-    init_js_channel();
+#define RECEIVE_DATAS(...) js_channel.receive(__VA_ARGS__); CTX_CHECK_DATAS()
+#define CALL_CB(...) js_channel.__VA_ARGS__; CTX_CHECK_DATAS()
 
+RED_AUTO_TEST_CHANNEL(TestJsChannel, test_init_channel, js_channel)
+{
     auto vec = [](bytes_view av) { return std::vector<uint8_t>(av.begin(), av.end()); };
     auto chan_flags1 = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST;
     auto chan_flags2 = CHANNELS::CHANNEL_FLAG_FIRST;

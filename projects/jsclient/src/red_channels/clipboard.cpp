@@ -116,7 +116,10 @@ ClipboardChannel::ClipboardChannel(Callback& cb, emscripten::val&& callbacks, bo
 , verbose(verbose)
 {}
 
-ClipboardChannel::~ClipboardChannel() = default;
+ClipboardChannel::~ClipboardChannel()
+{
+    emval_call(this->callbacks, "free");
+}
 
 void ClipboardChannel::send_file_contents_request(
     uint32_t request_type,
@@ -191,7 +194,10 @@ void ClipboardChannel::receive(bytes_view data, uint32_t channel_flags)
 
     if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
     {
-        LOG(LOG_WARNING, "Clipboard: Format List Response PDU");
+        LOG(LOG_WARNING, "Clipboard: Response FAIL, msgType=%s",
+            RDPECLIP::get_msgType_name(header.msgType()));
+        this->custom_cf = CustomFormat::None;
+        emval_call(this->callbacks, "receiveResponseFail", header.msgType());
         return ;
     }
 
@@ -405,6 +411,7 @@ void ClipboardChannel::process_format_data_response(
     bytes_view data, uint32_t channel_flags, uint32_t data_len)
 {
     const bool is_first_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_FIRST);
+    const bool is_last_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_LAST);
 
     if (is_first_packet)
     {
@@ -412,7 +419,7 @@ void ClipboardChannel::process_format_data_response(
         this->remaining_data_len = data_len;
     }
 
-    this->response_state = bool(channel_flags & CHANNELS::CHANNEL_FLAG_LAST)
+    this->response_state = is_last_packet
         ? ResponseState::None
         : ResponseState::Data;
 
@@ -472,11 +479,19 @@ void ClipboardChannel::process_format_data_response(
 
         this->response_buffer.push(in_stream.remaining_bytes());
 
+        if (is_last_packet)
+        {
+            this->custom_cf = CustomFormat::None;
+        }
+
         return;
     }
+
+    case CustomFormat::None: break;
     }
 
-    emval_call_bytes(this->callbacks, "receiveData", data, channel_flags & first_last_flags);
+    emval_call_bytes(this->callbacks, "receiveData",
+        data, this->remaining_data_len, channel_flags & first_last_flags);
 }
 
 void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t channel_flags, uint32_t data_len)
@@ -503,10 +518,10 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
     this->remaining_data_len -= data.size();
 
     emval_call_bytes(this->callbacks, "receiveFileContents", data,
-        this->stream_id, channel_flags & first_last_flags);
+        this->stream_id, this->remaining_data_len, channel_flags & first_last_flags);
 }
 
-void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_flags)
+void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_flags*/)
 {
     emval_call(this->callbacks, "receiveFormatStart");
 
@@ -515,14 +530,12 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_fla
         is_long_format(this->general_flags),
         is_ascii_format(this->general_flags),
         [&](uint32_t format_id, auto name){
-            auto av_name = name.bytes;
             bool is_utf8 = overload{
                 [](Cliprdr::AsciiName const&) { return true; },
-                [&](Cliprdr::UnicodeName const&) { return av_name.empty(); },
+                [](Cliprdr::UnicodeName const& unicode) { return unicode.bytes.empty(); },
             }(name);
 
-            emval_call(this->callbacks, "receiveFormat",
-                av_name.data(), av_name.size(), format_id, is_utf8);
+            emval_call_bytes(this->callbacks, "receiveFormat", name.bytes, format_id, is_utf8);
         }
     );
 
@@ -537,11 +550,10 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_fla
 
 void ClipboardChannel::process_capabilities(InStream& chunk)
 {
-    // TODO reset data
-
     uint32_t general_flags = RDPECLIP::extract_clipboard_general_flags_capability(
         chunk.remaining_bytes(), this->verbose);
 
+    this->custom_cf = CustomFormat::None;
     this->general_flags = emval_call<uint32_t>(
         this->callbacks, "setGeneralCapability", general_flags);
 }
