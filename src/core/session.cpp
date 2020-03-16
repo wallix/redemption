@@ -853,95 +853,25 @@ public:
                     break;
                     case Front::FRONT_UP_AND_RUNNING:
                     {
-                        if (!acl) {
-                            try {
-                                this->start_acl_running(acl, cctx, rnd, now, ini, authentifier, fstat);
-                                session_state = SessionState::SESSION_STATE_INCOMING;
-                            }
-                            catch (...) {
-                                this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                                mod_wrapper.last_disconnect();
-                                session_state = SessionState::SESSION_STATE_CLOSE_BOX;
-                                run_session = false;
-                                LOG(LOG_INFO, "start acl failed");
-                                if (ini.get<cfg::globals::enable_close_box>()) {
-                                    mm.new_mod_internal_close(mod_wrapper, authentifier);
-                                    run_session = true;
-                                }
-                                continue;
-                            }
+                        try {
+                            this->start_acl_running(acl, cctx, rnd, now, ini, authentifier, fstat);
+                            session_state = SessionState::SESSION_STATE_RUNNING;
                         }
-
-                        if (!sesman.auth_info_sent){
-                            sesman.set_acl_screen_info();
-                            sesman.set_acl_auth_info();
-                            if (this->ini.changed_field_size()) {
-                                acl->acl_serial.send_acl_data();
-                                continue;
+                        catch (...) {
+                            this->ini.set<cfg::context::auth_error_message>("No authentifier available");
+                            mod_wrapper.last_disconnect();
+                            session_state = SessionState::SESSION_STATE_CLOSE_BOX;
+                            run_session = false;
+                            LOG(LOG_INFO, "start acl failed");
+                            if (ini.get<cfg::globals::enable_close_box>()) {
+                                mm.new_mod_internal_close(mod_wrapper, authentifier);
+                                run_session = true;
                             }
-                        }
-
-                        if (retry_current_module_flag){
-                            acl->acl_serial.remote_answer = false;
-                            LOG(LOG_INFO, "Remote Answer, current module ask RETRY");
-                            mod_wrapper.remove_mod();
-                            mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
-                            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                            retry_current_module_flag = false;
-                            run_session = true;
-                        }
-                        else {
-                            try {
-                                // Close by end date reached
-                                const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-                                if (enddate != 0 && (static_cast<uint32_t>(now.tv_sec) > enddate)) {
-                                    throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
-                                }
-                                // Close by rejeted message received
-                                if (!this->ini.get<cfg::context::rejected>().empty()) {
-                                    throw Error(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE);
-                                }
-                                // Keep Alive
-                                if (acl->keepalive.check(now.tv_sec, this->ini)) {
-                                    throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
-                                }
-                                // Inactivity management
-                                if (acl->inactivity.check_user_activity(now.tv_sec, front.has_user_activity)) {
-                                    throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
-                                }
-
-                                run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, session_state);
-
-                            } catch (Error const& e) {
-                                LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
-                                run_session = false;
-                                switch (end_session_exception(e, authentifier, ini)){
-                                case 0: // End of session loop
-                                break;
-                                case 1: // Close Box
-                                {
-                                    session_state = SessionState::SESSION_STATE_CLOSE_BOX;
-                                    mod_wrapper.last_disconnect();
-                                    authentifier.set_acl_serial(nullptr);
-                                    acl.reset();
-                                    if (ini.get<cfg::globals::enable_close_box>()) {
-                                        mm.new_mod_internal_close(mod_wrapper, authentifier);
-                                        run_session = true;
-                                    }
-                                }
-                                break;
-                                case 2: // retry current module
-                                    mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                                    retry_current_module_flag = true;
-                                    run_session = true;
-                                break;
-                                }
-                            }
+                            continue;
                         }
                     }
                     break;
-                    } // switch
-    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");            
+                    } // switch front_state
                 }
                 break;
 
@@ -1032,12 +962,7 @@ public:
                     });
                     }
 
-                    if (acl) {
-    //                    LOG(LOG_INFO, "Wait for read event on acl fd=%d", acl->auth_trans.sck);
-                        if (acl->auth_trans.sck != INVALID_SOCKET){
-                            ioswitch.set_read_sck(acl->auth_trans.sck);
-                        }
-                    }
+                    ioswitch.set_read_sck(acl->auth_trans.sck);
 
                     bool mod_data_pending = (mod_wrapper.has_mod()
                             && mod_wrapper.get_mod_transport()
@@ -1081,9 +1006,7 @@ public:
                     || (front_trans.sck != INVALID_SOCKET 
                     && ioswitch.is_set_for_reading(front_trans.sck));
 
-                    bool acl_is_set = bool(acl) 
-                        && acl->auth_trans.sck != INVALID_SOCKET 
-                        && ioswitch.is_set_for_reading(acl->auth_trans.sck);
+                    bool acl_is_set = ioswitch.is_set_for_reading(acl->auth_trans.sck);
 
                     bool mod_is_set = mod_data_pending
                     || (mod_wrapper.has_mod()
