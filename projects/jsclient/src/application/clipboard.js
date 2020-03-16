@@ -89,18 +89,6 @@ const CbGeneralFlags = Object.freeze({
     HugeFileSupportEnabled: 0x00000020
 })
 
-// sendCbUtf8.onsubmit = (e) => {
-//     e.preventDefault();
-//     clipboard.sendFormat(CF.UTF16, 0, "");
-//     rdpclient.sendBufferedData();
-// };
-//
-// sendCbFile.onsubmit = (e) => {
-//     e.preventDefault();
-//     clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW");
-//     rdpclient.sendBufferedData();
-// };
-
 
 class Cliprdr
 {
@@ -286,9 +274,9 @@ class Cliprdr
     formatDataRequest(formatId) {
         console.log('formatDataRequest:', formatId);
 
-        const data = this.transferableData;
         switch (formatId) {
             case CF.UNICODETEXT: {
+                const data = sendCbUtf8_data.value;
                 // TODO chunk
                 let len = data.length * 2 + 2;
                 len = this.emccModule.stringToUTF16(data, this.channel_ibuffer, len) + 2;

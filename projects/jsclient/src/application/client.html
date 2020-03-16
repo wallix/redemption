@@ -286,14 +286,26 @@ function run()
             pass_input.value,
             /*0x04000000*/);
 
-        rdpclient.addChannel(
-            newClipboardChannel(
-                rdpclient.getCallback(),
-                new Cliprdr(
-                    cbFiles,
-                    () => rdpclient.sendBufferedData(),
-                    Module),
-                0x04000000));
+        const clipboard = newClipboardChannel(
+            rdpclient.getCallback(),
+            new Cliprdr(
+                cbFiles,
+                () => rdpclient.sendBufferedData(),
+                Module),
+            /*verbose = */0x04000000);
+        rdpclient.addChannel(clipboard);
+
+        sendCbUtf8.onsubmit = (e) => {
+            e.preventDefault();
+            clipboard.sendFormat(CF.UNICODETEXT, 0, "");
+            rdpclient.sendBufferedData();
+        };
+
+        sendCbFile.onsubmit = (e) => {
+            e.preventDefault();
+            clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW");
+            rdpclient.sendBufferedData();
+        };
 
         socket.onmessage = function(event) {
             rdpclient.addReceivingData(event.data);
