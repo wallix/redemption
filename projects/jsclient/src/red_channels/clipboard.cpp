@@ -456,8 +456,7 @@ void ClipboardChannel::process_format_data_response(
             auto last_write_time_low = in_stream.in_uint32_le();
             auto size_high = in_stream.in_uint32_le();
             auto size_low = in_stream.in_uint32_le();
-            auto name = quick_utf16_av(in_stream.remaining_bytes()
-                .first(constants::filename_attribute_size));
+            auto name = quick_utf16_av(in_stream.in_skip_bytes(constants::filename_attribute_size));
             emval_call_bytes(this->callbacks, "formatDataResponseFile",
                 name, file_attrs, flags, size_low, size_high,
                 last_write_time_low, last_write_time_high);
@@ -467,12 +466,13 @@ void ClipboardChannel::process_format_data_response(
             && in_stream.in_remain() + this->response_buffer.size >= constants::file_packet_size)
         {
             auto nbcopy = constants::file_packet_size - this->response_buffer.size;
-            this->response_buffer.push(in_stream.remaining_bytes().first(nbcopy));
+            this->response_buffer.push(in_stream.in_skip_bytes(nbcopy));
 
             InStream in_stream(this->response_buffer.as_bytes());
             extract_file(in_stream);
-            this->response_buffer.clear();
             assert(in_stream.in_remain() == 0);
+
+            this->response_buffer.clear();
         }
 
         while (in_stream.in_remain() >= constants::file_packet_size)
