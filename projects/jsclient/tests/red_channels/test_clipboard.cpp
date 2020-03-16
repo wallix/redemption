@@ -66,7 +66,7 @@ MAKE_BINDING_CALLBACKS(
     (JS_c(formatListStart))
     (JS_d(formatListFormat, uint8_t, uint32_t formatId, uint32_t customFormatId, bool isUTF8))
     (JS_c(formatListStop))
-    (JS_d(formatDataResponse, uint8_t, uint32_t remainingDataLen, uint32_t channelFlags))
+    (JS_d(formatDataResponse, uint8_t, uint32_t remainingDataLen, uint32_t formatId, uint32_t channelFlags))
     (JS_x(formatDataResponseNbFileName, uint32_t nb))
     (JS_d(formatDataResponseFile, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
     (JS_d(fileContentsResponse, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
@@ -201,7 +201,8 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
     RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, copy1, Padding(4))
     {
         // "\0\0" terminal automatically removed
-        CHECK_NEXT_DATA(formatDataResponse(copy1.drop_back(2), 0, first_last_channel_flags));
+        CHECK_NEXT_DATA(formatDataResponse(
+            copy1.drop_back(2), 0, CF_UNICODETEXT, first_last_channel_flags));
     };
 
     // paste (client -> server)

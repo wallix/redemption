@@ -107,8 +107,13 @@ class Cliprdr
         this.ifile = 0;
         this.streamId = 0;
 
-        this.channel_ibuffer = emccModule._malloc(1600);
-        this.channel_buffer = emccModule.HEAPU8.subarray(this.channel_ibuffer, this.channel_ibuffer + 1600);
+        const buflen = 1600;
+        const bufp = emccModule._malloc(buflen);
+        this.buffer = {
+            capacity: buflen,
+            i: bufp,
+            array: emccModule.HEAPU8.subarray(bufp, bufp + buflen)
+        }
 
         this.DOMBox = DOMBox;
         this.DOMFormats = this.DOMBox.appendChild(document.createElement('div'));
@@ -145,9 +150,28 @@ class Cliprdr
     }
 
     delete() {
-        this.emccModule._free(this.channel_ibuffer);
+        this.emccModule._free(this.buffer.i);
         this.DOMBox.removeChild(this.DOMFormats);
         this.DOMBox.removeChild(this.DOMFiles);
+    }
+
+    _processWithBuffer(bufLen, f) {
+        const reallocBuf = (this.buffer.capacity < bufLen);
+        if (this.buffer.capacity < bufLen) {
+            const ibuf = this.emccModule._malloc(bufLen);
+            if (!ibuf) {
+                return false;
+            }
+            // TODO first parameter not used
+            f(this.emccModule.HEAPU8.subarray(ibuf, ibuf + bufLen), ibuf);
+            this.emccModule._free(ibuf);
+        }
+        else {
+            // TODO first parameter not used
+            f(this.buffer.array.subarray(0, bufLen), this.buffer.i)
+        }
+
+        return true;
     }
 
     setEmcChannel(chann) {
@@ -208,10 +232,10 @@ class Cliprdr
         console.log('formatListStop');
     }
 
-    formatDataResponse(data, remainingDataLen, channelFlags) {
-        console.log('formatDataResponse:', this.expectedFormatId, remainingDataLen, channelFlags);
+    formatDataResponse(data, remainingDataLen, formatId, channelFlags) {
+        console.log('formatDataResponse:', remainingDataLen, formatId, channelFlags);
 
-        switch (this.expectedFormatId) {
+        switch (formatId) {
             case CF.UNICODETEXT: {
                 if (channelFlags & ChannelFlags.First) {
                     this.dataDecoder = new TextDecoder("utf-16");
@@ -279,10 +303,32 @@ class Cliprdr
         switch (formatId) {
             case CF.UNICODETEXT: {
                 const data = sendCbUtf8_data.value;
-                // TODO chunk
-                let len = data.length * 2 + 2;
-                len = this.emccModule.stringToUTF16(data, this.channel_ibuffer, len) + 2;
-                this.clipboard.sendDataWithHeader(CbType.DataResponse, this.channel_ibuffer, len);
+                const capacity = data.length * 2 + 2 /*"\0\0"*/ + 8 /* header size */;
+                if (!this._processWithBuffer(capacity, (arr, ibuffer) => {
+                    let len = this.emccModule.stringToUTF16(data, ibuffer + 8, capacity - 8) + 2;
+
+                    const stream = new OutStream(ibuffer, this.emccModule)
+                    stream.u16le(CbType.DataResponse);
+                    stream.u16le(MsgFlags.Ok);
+                    stream.u32le(len);
+
+                    if (capacity <= 1600) {
+                        this.clipboard.sendRawData(
+                            ibuffer, capacity, capacity, ChannelFlags.First | ChannelFlags.Last);
+                    }
+                    else {
+                        this.clipboard.sendRawData(ibuffer, 1600, capacity, ChannelFlags.First);
+                        let i = 1600;
+                        while (capacity - i > 1600) {
+                            this.clipboard.sendRawData(ibuffer + i, 1600, capacity, 0);
+                            i += 1600;
+                        }
+                        this.clipboard.sendRawData(
+                            ibuffer + i, capacity - i, capacity, ChannelFlags.Last);
+                    }
+                })) {
+                    // TODO malloc error
+                }
                 break;
             }
 

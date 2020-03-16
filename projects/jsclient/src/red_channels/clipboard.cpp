@@ -505,13 +505,13 @@ void ClipboardChannel::process_format_data_response(
                 break;
         }
 
+        emval_call_bytes(this->callbacks, "formatDataResponse",
+            data, this->remaining_data_len, this->requested_format_id, channel_flags & first_last_flags);
+
         if (is_last_packet)
         {
             this->requested_format_id = 0;
         }
-
-        emval_call_bytes(this->callbacks, "formatDataResponse",
-            data, this->remaining_data_len, channel_flags & first_last_flags);
     }
 
 }

@@ -123,11 +123,8 @@ project redjs
     # <cxxflags>"-s BINARYEN_TRAP_MODE=js" # clamp, allow
     # <cxxflags>"-s EMCC_WASM_BACKEND=1"
 
-    # <variant>debug:<cxxflags>-g
-    # <variant>debug:<cxxflags>-g4
-    # <variant>debug:<cxxflags>--emit-symbol-map
-    # <variant>debug:<cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
-    # <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
+    <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
+    <variant>debug:<linkflags>"-s DEMANGLE_SUPPORT=1"
 
     <variant>release:<cxxflags>-O3
     # <variant>release:<cxxflags>-Os
