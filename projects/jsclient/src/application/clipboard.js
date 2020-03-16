@@ -140,6 +140,7 @@ class Cliprdr
             if (ifile) {
                 ifile = Number(ifile);
                 console.log('DOMFiles.onclick:', ifile);
+                console.log('streamId:', this.streamId);
                 // TODO lock + pos + hugeFileSupport
                 this.clipboard.sendFileContentsRequest(
                     FileContentsOp.Range, this.streamId, ifile, 0, 0, 0x7ffff, 0, 0);
@@ -439,5 +440,9 @@ class Cliprdr
 
     unlock(lockId) {
         console.log("unlock:", lockId);
+    }
+
+    receiveResponseFail(msgType) {
+        console.log("receiveResponseFail", msgType)
     }
 }

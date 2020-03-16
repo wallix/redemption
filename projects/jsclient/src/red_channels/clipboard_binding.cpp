@@ -43,8 +43,8 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             };
             return redjs::ChannelReceiver(channel_names::cliprdr, receiver);
         })
-        .function_ptr("sendRequestFormat", [](clipboard::ClipboardChannel& clip, uint32_t id, int custom_cf) {
-            clip.send_request_format(id, clipboard::CustomFormat(custom_cf));
+        .function_ptr("sendRequestFormat", [](clipboard::ClipboardChannel& clip, uint32_t format_id, int custom_format_id) {
+            clip.send_request_format(format_id, clipboard::CustomFormat(custom_format_id));
         })
         .function_ptr("sendFileContentsRequest", [](clipboard::ClipboardChannel& clip,
             uint32_t request_type, uint32_t stream_id, uint32_t lindex,
