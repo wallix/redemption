@@ -5,22 +5,23 @@ const redemptionLoadModule = function(Module, window)
 
     const identity = function(cb, thisp) {
         return function(...args) {
-            cb.call(thisp, ...args);
+            return cb.call(thisp, ...args);
         };
     };
 
     const wCb_em2js_ImageData = function(cb, thisp) {
         return function(idata, w, h, ...args) {
             const data = HEAPU8.subarray(idata, idata + w * h * 4);
+            // TODO Uint8ClampedArray(data) -> data ?
             const image = new ImageData(new Uint8ClampedArray(data), w, h);
-            cb.call(thisp, image, ...args);
+            return cb.call(thisp, image, ...args);
         };
     };
 
     const wCb_em2js_U8p = function(cb, thisp) {
         return function(idata, len, ...args) {
             const data = HEAPU8.subarray(idata, idata + len);
-            cb.call(thisp, data, ...args);
+            return cb.call(thisp, data, ...args);
         };
     };
 
@@ -204,12 +205,12 @@ const redemptionLoadModule = function(Module, window)
         receiveResponseFail: identity,
         lock: identity,
         unlock: identity,
-        delete: identity,
+        free: identity,
     });
 
     addChannelClass('CustomChannel', {
         receiveData: wCb_em2js_U8p,
-        delete: identity,
+        free: identity,
     });
 
     return resultFuncs;
