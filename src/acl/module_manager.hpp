@@ -168,30 +168,6 @@ private:
 
 public:
 
-    void new_mod_internal_close(ModWrapper & mod_wrapper, AuthApi & authentifier)
-    {
-        LOG(LOG_INFO, "New_mod: target_module=MODULE_INTERNAL_CLOSE");
-        this->rail_client_execute.enable_remote_program(this->client_info.remote_program);
-        log_proxy::set_user("");
-        mod_wrapper.connected = false;
-        if (this->old_target_module != MODULE_INTERNAL_CLOSE) {
-            this->front.must_be_stop_capture();
-            auto is_remote_mod = [](int mod_type){
-                return
-                    (mod_type == MODULE_XUP)
-                 || (mod_type == MODULE_RDP)
-                 || (mod_type == MODULE_VNC);
-            };
-
-            if (is_remote_mod(this->old_target_module)) {
-                authentifier.delete_remote_mod();
-            }
-        }
-        this->old_target_module = MODULE_INTERNAL_CLOSE;
-        this->set_mod(mod_wrapper, mod_factory.create_close_mod(), nullptr, nullptr);
-    }
-
-
     void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
     {
         LOG(LOG_INFO, "New_mod: target_module=%s (was %s)", 
@@ -207,6 +183,8 @@ public:
 
         switch (target_module) {
         case MODULE_INTERNAL_CLOSE:
+            log_proxy::set_user("");
+            break;
         case MODULE_INTERNAL_WIDGET_LOGIN:
             log_proxy::set_user("");
             break;
@@ -220,19 +198,18 @@ public:
         if (this->old_target_module != target_module) {
             this->front.must_be_stop_capture();
 
-            auto is_remote_mod = [](int mod_type){
-                return
-                    (mod_type == MODULE_XUP)
-                 || (mod_type == MODULE_RDP)
-                 || (mod_type == MODULE_VNC);
-            };
-
-            if (is_remote_mod(this->old_target_module)) {
-                authentifier.delete_remote_mod();
+            switch (this->old_target_module){
+            case MODULE_XUP: authentifier.delete_remote_mod(); break;
+            case MODULE_RDP: authentifier.delete_remote_mod(); break;
+            case MODULE_VNC: authentifier.delete_remote_mod(); break;
+            default:;
             }
 
-            if (is_remote_mod(target_module)) {
-                authentifier.new_remote_mod();
+            switch (target_module){
+            case MODULE_XUP: authentifier.new_remote_mod(); break;
+            case MODULE_RDP: authentifier.new_remote_mod(); break;
+            case MODULE_VNC: authentifier.new_remote_mod(); break;
+            default:;
             }
         }
         this->old_target_module = target_module;
@@ -241,7 +218,6 @@ public:
 //        && (acl.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count())) {
 //            acl.update_inactivity_timeout();
 //        }
-
 
         mod_wrapper.show_osd_flag = false;
 

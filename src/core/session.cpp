@@ -884,7 +884,7 @@ public:
                             run_session = false;
                             LOG(LOG_INFO, "start acl failed");
                             if (ini.get<cfg::globals::enable_close_box>()) {
-                                mm.new_mod_internal_close(mod_wrapper, authentifier);
+                                mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, authentifier);
                                 run_session = true;
                             }
                             continue;
@@ -1124,7 +1124,7 @@ public:
                                 authentifier.set_acl_serial(nullptr);
                                 acl.reset();
                                 if (ini.get<cfg::globals::enable_close_box>()) {
-                                    mm.new_mod_internal_close(mod_wrapper, authentifier);
+                                    mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, authentifier);
                                     run_session = true;
                                 }
                             }
