@@ -374,38 +374,6 @@ bool AgentDataExtractor::extract_list(Av data)
                 }
                 break;
 
-            case LogId::BESTSAFE_SERVICE_LOG:
-                {
-                    auto* p = this->kvlogs.data();
-
-                    auto remaining = parameters;
-                    do
-                    {
-                        auto       subitem_separator = find(remaining, '\x01');
-                        auto const key               = ileft(remaining, subitem_separator);
-                                   remaining         = right(remaining, subitem_separator);
-
-                        subitem_separator = find(remaining, '\x01');
-                        if (subitem_separator)
-                        {
-                            auto const value = ileft(remaining, subitem_separator);
-
-                            *p++ = KVLog(key, value);
-
-                            remaining = right(remaining, subitem_separator);
-                        }
-                        else
-                        {
-                            *p++ = KVLog(key, remaining);
-
-                            break;
-                        }
-                    }
-                    while (true);
-
-                    return true;
-                }
-
             case LogId::WEB_ATTEMPT_TO_PRINT:
             case LogId::WEB_DOCUMENT_COMPLETE:
                 return line_with_2_var("url"_av, "title"_av);
