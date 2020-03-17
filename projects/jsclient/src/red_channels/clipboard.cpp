@@ -442,7 +442,7 @@ void ClipboardChannel::process_format_data_response(
         if (is_first_packet)
         {
             auto nb_item = in_stream.in_uint32_le();
-            emval_call(this->callbacks, "formatDataResponseNbFileName", nb_item);
+            emval_call(this->callbacks, "formatDataResponseFileStart", nb_item);
         }
 
         namespace constants = constants::file_group_descriptor_w;
@@ -486,6 +486,7 @@ void ClipboardChannel::process_format_data_response(
         {
             this->requested_format_id = 0;
             this->requested_custom_format_id = CustomFormat::None;
+            emval_call(this->callbacks, "formatDataResponseFileStop");
         }
 
         break;

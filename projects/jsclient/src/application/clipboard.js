@@ -98,13 +98,15 @@ class Cliprdr
         this.emccModule = emccModule;
         this.syncData = syncData;
         this.clipboard = null;
+        this.streams = {};
         this.locks = {};
+        this.lockId = '_';
         this.formats = [];
         this.expectedFormatId = null;
         this.fileGroupId = null;
         this.dataDecoder = null;
-        this.countFile = 0;
         this.ifile = 0;
+        this.files = []
         this.streamId = 0;
 
         const buflen = 1600;
@@ -143,7 +145,14 @@ class Cliprdr
                 console.log('streamId:', this.streamId);
                 // TODO lock + pos + hugeFileSupport
                 this.clipboard.sendFileContentsRequest(
-                    FileContentsOp.Range, this.streamId, ifile, 0, 0, 0x7ffff, 0, 0);
+                    FileContentsOp.Range, this.streamId, ifile, 0, 0, 0xffff, 0, 0);
+                    // FileContentsOp.Range, this.streamId, ifile, 0, 0, 0xffff, 
+                    //   true, this.lockId);
+                
+                const lockId = e.originalTarget.parentNode.dataset.lockId;
+                this.streams[this.streamId] = {ifile, lockId, pos: 0, datas: []};
+                this.locks[lockId].streamIds[this.streamId] = true;
+                
                 ++this.streamId;
                 this.syncData();
             }
@@ -180,17 +189,24 @@ class Cliprdr
     }
 
     setGeneralCapability(generalFlags) {
+        // TODO reset others values
         console.log('setGeneralCapability:', generalFlags);
-        this.lockSupport = !!(generalFlags & CbGeneralFlags.CanLockClipData);
+        // TODO
+        // this.lockSupport = !!(generalFlags & CbGeneralFlags.CanLockClipData);
         // this.fileSupport = !!(generalFlags & CbGeneralFlags.StreamFileclipEnabled);
         // this.hugeFileSupport = !!(generalFlags & CbGeneralFlags.HugeFileSupportEnabled);
-        return generalFlags;
+        return generalFlags & ~CbGeneralFlags.CanLockClipData;
     }
 
     formatListStart() {
         this.DOMFiles.innerText = '';
         this.DOMFormats.innerText = '';
         this.fileGroupId = null;
+        // TODO remove streams
+        const previous = this.locks._
+        if (previous) {
+            this.DOMFiles.removeChild(previous.DOMElement);
+        }
     }
 
     formatListFormat(dataName, formatId, customFormatId, isUTF8) {
@@ -262,39 +278,54 @@ class Cliprdr
         }
     }
 
-    formatDataResponseNbFileName(countFile) {
-        console.log('formatDataResponseNbFileName:', countFile);
-        this.countFile = countFile;
-        this.ifile = 0;
-        this.DOMFiles.innerText = '';
+    formatDataResponseFileStart(countFile) {
+        console.log('formatDataResponseFileStart:', countFile);
+        this.responseFiles = []
+
+        // TODO remove streamIds
+        const previous = this.locks._
+        if (previous) {
+            this.DOMFiles.removeChild(previous.DOMElement);
+        }
     }
 
-    formatDataResponseFile(utf16Name, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
+    formatDataResponseFile(utf16Name, attributes, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
         const filename = UTF16Decoder.decode(utf16Name);
-        console.log('formatDataResponseFile:', filename, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
-        const button = this.DOMFiles.appendChild(document.createElement('button'));
-        button.appendChild(new Text(`${attr}, ${flags}, ${(sizeHigh << 32) | sizeLow}, ${(lastWriteTimeHigh << 32) | lastWriteTimeLow}  ${filename}`));
-        button.dataset.ifile = this.ifile;
-        ++this.ifile;
+        console.log('formatDataResponseFile:', filename, attributes, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
+        this.responseFiles.push({filename, size: (sizeHigh << 32) + sizeLow,})
+    }
+    
+    formatDataResponseFileStop() {
+        console.log('formatDataResponseFileStop');
+        const div = document.createElement('div');
+        div.dataset.lockId = this.lockId;
+        for (const i in this.responseFiles) {
+            const button = div.appendChild(document.createElement('button'));
+            button.appendChild(new Text(this.responseFiles[i].filename));
+            button.dataset.ifile = i;
+        }
+        this.locks[this.lockId] = {files: this.responseFiles, DOMElement: div, streamIds: {}};
+        this.DOMFiles.appendChild(div);
     }
 
     fileContentsResponse(data, streamId, remainingDataLen, channelFlags) {
         console.log('fileContentsResponse:', streamId, remainingDataLen, channelFlags);
-        // TODO streamId
-
-        if (channelFlags & ChannelFlags.First) {
-            this.dataDecoder = [data]
-        }
-        else {
-            this.dataDecoder.push(data)
-        }
+        
+        const file = this.streams[streamId];
 
         if (channelFlags & ChannelFlags.Last) {
-            const blob = new Blob(this.dataDecoder, {type: "application/octet-stream"});
+            // TODO file.pos + chunkSize != file.size
+            file.datas.push(data);
+            const blob = new Blob(file.datas, {type: "application/octet-stream"});
             cbDownload.href = URL.createObjectURL(blob);
-            // TODO filename
-            cbDownload.download = 'filename';
+            cbDownload.download = this.locks[file.lockId].files[file.ifile].filename;
             cbDownload.click();
+            delete this.streams[streamId];
+            delete this.locks[file.lockId].streamIds[this.streamId];
+        }
+        else {
+            // copy data
+            file.datas.push(data.buffer.slice(0));
         }
     }
 
@@ -436,13 +467,17 @@ class Cliprdr
 
     lock(lockId) {
         console.log("lock:", lockId);
+        this.lockId = lockId;
     }
 
     unlock(lockId) {
         console.log("unlock:", lockId);
+        delete this.locks[lockId];
+        this.lockId = '_';
     }
 
     receiveResponseFail(msgType) {
-        console.log("receiveResponseFail", msgType)
+        console.log("receiveResponseFail", msgType);
+        // TODO streamId for disable transfer
     }
 }

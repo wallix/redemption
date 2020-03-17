@@ -67,10 +67,11 @@ MAKE_BINDING_CALLBACKS(
     (JS_d(formatListFormat, uint8_t, uint32_t formatId, uint32_t customFormatId, bool isUTF8))
     (JS_c(formatListStop))
     (JS_d(formatDataResponse, uint8_t, uint32_t remainingDataLen, uint32_t formatId, uint32_t channelFlags))
-    (JS_x(formatDataResponseNbFileName, uint32_t nb))
+    (JS_x(formatDataResponseFileStart, uint32_t countFile))
     (JS_d(formatDataResponseFile, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
+    (JS_c(formatDataResponseFileStop))
     (JS_d(fileContentsResponse, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
-    (JS_x(formatDataRequest, uint32_t format_id))
+    (JS_x(formatDataRequest, uint32_t formatId))
     (JS_x(fileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
     (JS_x(receiveResponseFail, uint32_t messageType))
     (JS_x(lock, uint32_t lockId))
@@ -298,11 +299,12 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         ""_av
         , Padding(4))
     {
-        CHECK_NEXT_DATA(formatDataResponseNbFileName{1});
+        CHECK_NEXT_DATA(formatDataResponseFileStart{1});
         CHECK_NEXT_DATA(formatDataResponseFile{"abc"_utf16_le,
             /*.attr=*/0, /*.flags=*/0,
             /*.sizeLow=*/12, /*.sizeHigh=*/0,
             /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
+        CHECK_NEXT_DATA(formatDataResponseFileStop{});
     };
 
     CALL_CB(send_data(
@@ -469,7 +471,7 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
     CTX_CHECK_DATAS()
     {
-        CHECK_NEXT_DATA(formatDataResponseNbFileName{3});
+        CHECK_NEXT_DATA(formatDataResponseFileStart{3});
         CHECK_NEXT_DATA(formatDataResponseFile{"abc"_utf16_le,
             /*.attr=*/0, /*.flags=*/0,
             /*.sizeLow=*/12, /*.sizeHigh=*/0,
@@ -487,5 +489,6 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
             /*.attr=*/0, /*.flags=*/0,
             /*.sizeLow=*/12, /*.sizeHigh=*/0,
             /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
+        CHECK_NEXT_DATA(formatDataResponseFileStop{});
     };
 }

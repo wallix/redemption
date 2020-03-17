@@ -793,7 +793,7 @@ void FileToGraphic::interpret_order()
                     "Invalid LogId %" PRIu32, log_id);
             }
             else if (AgentDataExtractor::relevant_log_id(LogId(log_id))) {
-                KVLog kvlogs[12];
+                KVLog kvlogs[128];
                 auto* pkv = kvlogs;
 
                 auto nbkv = in.in_uint8();
