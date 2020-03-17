@@ -5,22 +5,23 @@ const redemptionLoadModule = function(Module, window)
 
     const identity = function(cb, thisp) {
         return function(...args) {
-            cb.call(thisp, ...args);
+            return cb.call(thisp, ...args);
         };
     };
 
     const wCb_em2js_ImageData = function(cb, thisp) {
         return function(idata, w, h, ...args) {
             const data = HEAPU8.subarray(idata, idata + w * h * 4);
+            // TODO Uint8ClampedArray(data) -> data ?
             const image = new ImageData(new Uint8ClampedArray(data), w, h);
-            cb.call(thisp, image, ...args);
+            return cb.call(thisp, image, ...args);
         };
     };
 
     const wCb_em2js_U8p = function(cb, thisp) {
         return function(idata, len, ...args) {
             const data = HEAPU8.subarray(idata, idata + len);
-            cb.call(thisp, data, ...args);
+            return cb.call(thisp, data, ...args);
         };
     };
 
@@ -192,22 +193,24 @@ const redemptionLoadModule = function(Module, window)
 
     addChannelClass('ClipboardChannel', {
         setGeneralCapability: identity,
-        receiveFormatStart: identity,
-        receiveFormat: wCb_em2js_U8p,
-        receiveFormatStop: identity,
-        receiveData: wCb_em2js_U8p,
-        receiveNbFileName: identity,
-        receiveFileName: wCb_em2js_U8p,
-        receiveFormatId: identity,
-        receiveFileContents: wCb_em2js_U8p,
-        receiveFileContentsRequest: identity,
+        formatListStart: identity,
+        formatListFormat: wCb_em2js_U8p,
+        formatListStop: identity,
+        formatDataResponse: wCb_em2js_U8p,
+        formatDataResponseNbFileName: identity,
+        formatDataResponseFile: wCb_em2js_U8p,
+        formatDataRequest: identity,
+        fileContentsRequest: identity,
+        fileContentsResponse: wCb_em2js_U8p,
         receiveResponseFail: identity,
-        delete: identity,
+        lock: identity,
+        unlock: identity,
+        free: identity,
     });
 
     addChannelClass('CustomChannel', {
         receiveData: wCb_em2js_U8p,
-        delete: identity,
+        free: identity,
     });
 
     return resultFuncs;

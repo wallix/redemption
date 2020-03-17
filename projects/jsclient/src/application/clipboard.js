@@ -31,6 +31,7 @@ const CF = Object.freeze({
 });
 
 const CustomCF = Object.freeze({
+    None: 0,
     FileGroupDescriptorW: 33333,
 });
 
@@ -82,32 +83,21 @@ const CbType = Object.freeze({
 });
 
 const CbGeneralFlags = Object.freeze({
-    UseLongFormatNames      = 0x00000002,
-    StreamFileclipEnabled   = 0x00000004,
-    FileclipNoFilePaths     = 0x00000008,
-    CanLockClipData         = 0x00000010,
-    HugeFileSupportEnabled  = 0x00000020
+    UseLongFormatNames:     0x00000002,
+    StreamFileclipEnabled:  0x00000004,
+    FileclipNoFilePaths:    0x00000008,
+    CanLockClipData:        0x00000010,
+    HugeFileSupportEnabled: 0x00000020
 })
-
-sendCbUtf8.onsubmit = (e) => {
-    e.preventDefault();
-    clipboard.sendFormat(CF.UTF16, 0, "");
-    rdpclient.sendBufferedData();
-};
-
-sendCbFile.onsubmit = (e) => {
-    e.preventDefault();
-    clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW");
-    rdpclient.sendBufferedData();
-};
 
 
 class Cliprdr
 {
     constructor(DOMBox, syncData, emccModule) {
+        // TODO DOMBox, syncData -> {addFormats, setFileGroupId, ...}
         this.emccModule = emccModule;
         this.syncData = syncData;
-        this.clipboard = nil;
+        this.clipboard = null;
         this.locks = {};
         this.formats = [];
         this.expectedFormatId = null;
@@ -117,7 +107,13 @@ class Cliprdr
         this.ifile = 0;
         this.streamId = 0;
 
-        this.channel_buffer = emccModule._malloc(1600);
+        const buflen = 1600;
+        const bufp = emccModule._malloc(buflen);
+        this.buffer = {
+            capacity: buflen,
+            i: bufp,
+            array: emccModule.HEAPU8.subarray(bufp, bufp + buflen)
+        }
 
         this.DOMBox = DOMBox;
         this.DOMFormats = this.DOMBox.appendChild(document.createElement('div'));
@@ -125,8 +121,9 @@ class Cliprdr
 
         this.DOMFormats.onclick = (e) => {
             e.preventDefault();
-            const formatId = e.originalTarget.dataset.id;
+            let formatId = e.originalTarget.dataset.formatId;
             if (formatId) {
+                formatId = Number(formatId);
                 console.log('DOMFormats.onclick:', formatId);
                 this.expectedFormatId = formatId;
                 const customCf = (formatId === this.fileGroupId)
@@ -139,9 +136,11 @@ class Cliprdr
 
         this.DOMFiles.onclick = (e) => {
             e.preventDefault();
-            const ifile = e.originalTarget.dataset.ifile;
+            let ifile = e.originalTarget.dataset.ifile;
             if (ifile) {
+                ifile = Number(ifile);
                 console.log('DOMFiles.onclick:', ifile);
+                console.log('streamId:', this.streamId);
                 // TODO lock + pos + hugeFileSupport
                 this.clipboard.sendFileContentsRequest(
                     FileContentsOp.Range, this.streamId, ifile, 0, 0, 0x7ffff, 0, 0);
@@ -152,9 +151,28 @@ class Cliprdr
     }
 
     delete() {
-        this.emccModule._free(this.channel_buffer);
+        this.emccModule._free(this.buffer.i);
         this.DOMBox.removeChild(this.DOMFormats);
         this.DOMBox.removeChild(this.DOMFiles);
+    }
+
+    _processWithBuffer(bufLen, f) {
+        const reallocBuf = (this.buffer.capacity < bufLen);
+        if (this.buffer.capacity < bufLen) {
+            const ibuf = this.emccModule._malloc(bufLen);
+            if (!ibuf) {
+                return false;
+            }
+            // TODO first parameter not used
+            f(this.emccModule.HEAPU8.subarray(ibuf, ibuf + bufLen), ibuf);
+            this.emccModule._free(ibuf);
+        }
+        else {
+            // TODO first parameter not used
+            f(this.buffer.array.subarray(0, bufLen), this.buffer.i)
+        }
+
+        return true;
     }
 
     setEmcChannel(chann) {
@@ -163,23 +181,23 @@ class Cliprdr
 
     setGeneralCapability(generalFlags) {
         console.log('setGeneralCapability:', generalFlags);
-        this.lockSupport = !!(generalFlags & CB.CanLockClipData);
-        // this.fileSupport = !!(generalFlags & CB.StreamFileclipEnabled);
-        // this.hugeFileSupport = !!(generalFlags & CB.HugeFileSupportEnabled);
+        this.lockSupport = !!(generalFlags & CbGeneralFlags.CanLockClipData);
+        // this.fileSupport = !!(generalFlags & CbGeneralFlags.StreamFileclipEnabled);
+        // this.hugeFileSupport = !!(generalFlags & CbGeneralFlags.HugeFileSupportEnabled);
         return generalFlags;
     }
 
-    receiveFormatStart() {
+    formatListStart() {
         this.DOMFiles.innerText = '';
         this.DOMFormats.innerText = '';
         this.fileGroupId = null;
     }
 
-    receiveFormat(dataName, formatId, isUTF8) {
-        console.log('receiveFormat:', formatId, isUTF8);
+    formatListFormat(dataName, formatId, customFormatId, isUTF8) {
+        console.log('formatList:', formatId, customFormatId, isUTF8);
 
         const button = document.createElement('button');
-        button.dataset.id = formatId;
+        button.dataset.formatId = formatId;
 
         switch (formatId) {
             case CF.UNICODETEXT: {
@@ -193,10 +211,16 @@ class Cliprdr
             }
 
             default: {
-                const name = (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(dataName);
-                button.appendChild(new Text(`${formatId}: ${name}`));
-                if (name === "FileGroupDescriptorW") {
-                    this.fileGroupId = formatId;
+                switch (customFormatId) {
+                    case CustomCF.FileGroupDescriptorW:
+                        button.appendChild(new Text(`${formatId}: FileGroupDescriptorW`));
+                        this.fileGroupId = formatId;
+                        break;
+
+                    case CustomCF.None:
+                        const name = (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(dataName);
+                        button.appendChild(new Text(`${formatId}: ${name}`));
+                        break;
                 }
                 break;
             }
@@ -205,22 +229,26 @@ class Cliprdr
         this.DOMFormats.appendChild(button);
     }
 
-    // receiveFormatStop() {}
+    formatListStop() {
+        console.log('formatListStop');
+    }
 
-    receiveData(data, remainingDataLen, channelFlags) {
-        console.log('receiveData:', this.expectedFormatId, remainingDataLen, channelFlags);
+    formatDataResponse(data, remainingDataLen, formatId, channelFlags) {
+        console.log('formatDataResponse:', remainingDataLen, formatId, channelFlags);
 
-        switch (this.expectedFormatId) {
+        switch (formatId) {
             case CF.UNICODETEXT: {
                 if (channelFlags & ChannelFlags.First) {
                     this.dataDecoder = new TextDecoder("utf-16");
                 }
 
                 if (channelFlags & ChannelFlags.Last) {
-                    this.dataDecoder.decode(data)
+                    const text = this.dataDecoder.decode(data)
+                    console.log(text);
                 }
                 else {
-                    this.dataDecoder.decode(data, {stream: true});
+                    const chunckedText = this.dataDecoder.decode(data, {stream: true});
+                    console.log(chunckedText)
                 }
                 break;
             }
@@ -234,25 +262,24 @@ class Cliprdr
         }
     }
 
-    receiveNbFileName(countFile) {
-        console.log('receiveNbFileName:', nb);
-        this.DOMFormats = replaceDiv(this.DOMBox, this.DOMFormats);
+    formatDataResponseNbFileName(countFile) {
+        console.log('formatDataResponseNbFileName:', countFile);
         this.countFile = countFile;
         this.ifile = 0;
         this.DOMFiles.innerText = '';
-    },
+    }
 
-    receiveFileName(utf16Name, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
+    formatDataResponseFile(utf16Name, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
         const filename = UTF16Decoder.decode(utf16Name);
-        console.log('receiveFileName:', filename, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
+        console.log('formatDataResponseFile:', filename, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
         const button = this.DOMFiles.appendChild(document.createElement('button'));
         button.appendChild(new Text(`${attr}, ${flags}, ${(sizeHigh << 32) | sizeLow}, ${(lastWriteTimeHigh << 32) | lastWriteTimeLow}  ${filename}`));
         button.dataset.ifile = this.ifile;
         ++this.ifile;
     }
 
-    receiveFileContents(data, streamId, remainingDataLen, channelFlags) {
-        console.log('receiveFileContents:', streamId, remainingDataLen, channelFlags);
+    fileContentsResponse(data, streamId, remainingDataLen, channelFlags) {
+        console.log('fileContentsResponse:', streamId, remainingDataLen, channelFlags);
         // TODO streamId
 
         if (channelFlags & ChannelFlags.First) {
@@ -271,27 +298,47 @@ class Cliprdr
         }
     }
 
-    receiveFormatId(formatId) {
-        console.log('receiveFormatId:', formatId);
+    formatDataRequest(formatId) {
+        console.log('formatDataRequest:', formatId);
 
-        const data = this.transferableData;
         switch (formatId) {
             case CF.UNICODETEXT: {
-                let len = data.length * 2 + 2;
-                const ptr = this.emccModule._malloc(len);
-                len = this.emccModule.stringToUTF16(data, ptr, len) + 2;
-                this.clipboard.sendDataWithHeader(CbType.DataResponse, ptr, len);
-                this.emccModule._free(ptr);
+                const data = sendCbUtf8_data.value;
+                const capacity = data.length * 2 + 2 /*"\0\0"*/ + 8 /* header size */;
+                if (!this._processWithBuffer(capacity, (arr, ibuffer) => {
+                    let len = this.emccModule.stringToUTF16(data, ibuffer + 8, capacity - 8) + 2;
+
+                    const stream = new OutStream(ibuffer, this.emccModule)
+                    stream.u16le(CbType.DataResponse);
+                    stream.u16le(MsgFlags.Ok);
+                    stream.u32le(len);
+
+                    if (capacity <= 1600) {
+                        this.clipboard.sendRawData(
+                            ibuffer, capacity, capacity, ChannelFlags.First | ChannelFlags.Last);
+                    }
+                    else {
+                        this.clipboard.sendRawData(ibuffer, 1600, capacity, ChannelFlags.First);
+                        let i = 1600;
+                        while (capacity - i > 1600) {
+                            this.clipboard.sendRawData(ibuffer + i, 1600, capacity, 0);
+                            i += 1600;
+                        }
+                        this.clipboard.sendRawData(
+                            ibuffer + i, capacity - i, capacity, ChannelFlags.Last);
+                    }
+                })) {
+                    // TODO malloc error
+                }
                 break;
             }
 
             case CustomCF.FileGroupDescriptorW: {
                 const file = sendCbFile_data.files[0]
 
-                const ptr = this.emccModule._malloc(700);
                 const flags = FileFlags.FileSize | FileFlags.ShowProgressUI /*| FileFlags.WriteTime*/;
                 const attrs = FileAttributes.Normal;
-                const stream = new OutStream(ptr);
+                const stream = new OutStream(this.channel_ibuffer, this.emccModule);
 
                 stream.u16le(CbType.DataResponse);
                 stream.u16le(MsgFlags.Ok);
@@ -309,20 +356,19 @@ class Cliprdr
                 stream.copyStringAsAlignedUTF16(file.name);
                 stream.bzero(520 - file.name.length * 2);
 
-                const totalLen = stream.i - ptr;
+                const totalLen = stream.i - this.channel_ibuffer;
                 stream.i = headerSizePos;
                 stream.u32le(totalLen);
 
                 console.log(totalLen);
 
-                this.clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
-                this.emccModule._free(ptr);
+                this.clipboard.sendRawData(this.channel_ibuffer, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
                 break;
             }
         }
     }
 
-    receiveFileContentsRequest(streamId, type, lindex, nposLow, nposHigh, szRequested) {
+    fileContentsRequest(streamId, type, lindex, nposLow, nposHigh, szRequested) {
         console.log("fileContentsRequest:", ...arguments);
 
         const file = sendCbFile_data.files[lindex];
@@ -331,8 +377,7 @@ class Cliprdr
         switch (type)
         {
         case FileContentsOp.Size: {
-            const ptr = Module._malloc(32);
-            const stream = new OutStream(ptr);
+            const stream = new OutStream(this.channel_ibuffer, this.emccModule);
 
             stream.u16le(CbType.FileContentsResponse);
             stream.u16le(MsgFlags.Ok);
@@ -342,28 +387,27 @@ class Cliprdr
             stream.u32le(streamId);
             stream.u64le(file.size);
 
-            const totalLen = stream.i - ptr;
+            const totalLen = stream.i - this.channel_ibuffer;
             stream.i = headerSizePos;
             stream.u32le(totalLen);
 
             console.log(totalLen);
 
-            clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+            clipboard.sendRawData(this.channel_ibuffer, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
 
-            Module._free(ptr);
             rdpclient.sendBufferedData();
             break;
         }
 
         case FileContentsOp.Range: {
+            // TODO chunk
             const reader = new FileReader();
 
             // Closure to capture the file information.
             reader.onload = function(e) {
                 const contents = new Uint8Array(e.target.result);
                 console.log(contents.length);
-                const ptr = Module._malloc(32 + contents.length);
-                const stream = new OutStream(ptr);
+                const stream = new OutStream(this.channel_ibuffer, this.emccModule);
 
                 stream.u16le(CbType.FileContentsResponse);
                 stream.u16le(MsgFlags.Ok);
@@ -373,15 +417,14 @@ class Cliprdr
                 stream.u32le(streamId);
                 stream.copyAsArray(contents);
 
-                const totalLen = stream.i - ptr;
+                const totalLen = stream.i - this.channel_ibuffer;
                 stream.i = headerSizePos;
                 stream.u32le(totalLen);
 
                 console.log(totalLen);
 
-                clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+                clipboard.sendRawData(this.channel_ibuffer, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
 
-                Module._free(ptr);
                 rdpclient.sendBufferedData();
             };
 
@@ -390,7 +433,16 @@ class Cliprdr
         }
         }
     }
-}
 
-return clipboard = newClipboardChannel(rdpclient.getCallback(), {
-}, 0x04000000);
+    lock(lockId) {
+        console.log("lock:", lockId);
+    }
+
+    unlock(lockId) {
+        console.log("unlock:", lockId);
+    }
+
+    receiveResponseFail(msgType) {
+        console.log("receiveResponseFail", msgType)
+    }
+}

@@ -63,16 +63,18 @@ struct DataChan : DataChan_tuple
 MAKE_BINDING_CALLBACKS(
     DataChan,
     (JS_x_f(setGeneralCapability, return generalFlags, uint32_t generalFlags))
-    (JS_c(receiveFormatStart))
-    (JS_d(receiveFormat, uint8_t, uint32_t formatId, bool isUTF8))
-    (JS_c(receiveFormatStop))
-    (JS_d(receiveData, uint8_t, uint32_t remainingDataLen, uint32_t channelFlags))
-    (JS_x(receiveNbFileName, uint32_t nb))
-    (JS_d(receiveFileName, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
-    (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
-    (JS_x(receiveFormatId, uint32_t format_id))
-    (JS_x(receiveFileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
+    (JS_c(formatListStart))
+    (JS_d(formatListFormat, uint8_t, uint32_t formatId, uint32_t customFormatId, bool isUTF8))
+    (JS_c(formatListStop))
+    (JS_d(formatDataResponse, uint8_t, uint32_t remainingDataLen, uint32_t formatId, uint32_t channelFlags))
+    (JS_x(formatDataResponseNbFileName, uint32_t nb))
+    (JS_d(formatDataResponseFile, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
+    (JS_d(fileContentsResponse, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
+    (JS_x(formatDataRequest, uint32_t format_id))
+    (JS_x(fileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
     (JS_x(receiveResponseFail, uint32_t messageType))
+    (JS_x(lock, uint32_t lockId))
+    (JS_x(unlock, uint32_t lockId))
     (JS_c(free))
 )
 
@@ -181,12 +183,12 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         "\x01\x00\x00\x00\x00\x00"
         "\x07\x00\x00\x00\x00\x00"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveFormatStart{});
-        CHECK_NEXT_DATA(receiveFormat{""_av, CF_UNICODETEXT, is_utf});
-        CHECK_NEXT_DATA(receiveFormat{""_av, CF_LOCALE, is_utf});
-        CHECK_NEXT_DATA(receiveFormat{""_av, CF_TEXT, is_utf});
-        CHECK_NEXT_DATA(receiveFormat{""_av, CF_OEMTEXT, is_utf});
-        CHECK_NEXT_DATA(receiveFormatStop{});
+        CHECK_NEXT_DATA(formatListStart{});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_UNICODETEXT, 0, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_LOCALE, 0, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_TEXT, 0, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_OEMTEXT, 0, is_utf});
+        CHECK_NEXT_DATA(formatListStop{});
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };
 
@@ -198,7 +200,9 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
     auto copy1 = "plop\0"_utf16_le;
     RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, copy1, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveData(copy1, 0, first_last_channel_flags));
+        // "\0\0" terminal automatically removed
+        CHECK_NEXT_DATA(formatDataResponse(
+            copy1.drop_back(2), 0, CF_UNICODETEXT, first_last_channel_flags));
     };
 
     // paste (client -> server)
@@ -214,7 +218,7 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
 
     RECEIVE_DATAS(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\x00\x00\x00"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveFormatId{CF_UNICODETEXT});
+        CHECK_NEXT_DATA(formatDataRequest{CF_UNICODETEXT});
     };
 
     const auto paste1 = "xyz\0"_utf16_le;
@@ -239,9 +243,10 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         "\x72\x00\x57\x00\x00\x00" //r.W... !
         ""_av, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveFormatStart{});
-        CHECK_NEXT_DATA(receiveFormat{"FileGroupDescriptorW"_utf16_le, 49262, not_utf});
-        CHECK_NEXT_DATA(receiveFormatStop{});
+        CHECK_NEXT_DATA(formatListStart{});
+        CHECK_NEXT_DATA(formatListFormat{"FileGroupDescriptorW"_utf16_le, 49262,
+            uint32_t(cbchan::CustomFormat::FileGroupDescriptorW), not_utf});
+        CHECK_NEXT_DATA(formatListStop{});
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };
 
@@ -293,8 +298,8 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         ""_av
         , Padding(4))
     {
-        CHECK_NEXT_DATA(receiveNbFileName{1});
-        CHECK_NEXT_DATA(receiveFileName{"abc"_utf16_le,
+        CHECK_NEXT_DATA(formatDataResponseNbFileName{1});
+        CHECK_NEXT_DATA(formatDataResponseFile{"abc"_utf16_le,
             /*.attr=*/0, /*.flags=*/0,
             /*.sizeLow=*/12, /*.sizeHigh=*/0,
             /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
@@ -312,7 +317,7 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
     RECEIVE_DATAS(CB_FILECONTENTS_RESPONSE, CB_RESPONSE__NONE_,
         "\x00\x00\x00\x00""abcdefghijkl"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(receiveFileContents{"\0\0\0\0""abcdefghijkl"_av, 0, 0,
+        CHECK_NEXT_DATA(fileContentsResponse{"\0\0\0\0""abcdefghijkl"_av, 0, 0,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST});
     };
 
@@ -321,5 +326,166 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
     RECEIVE_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_FAIL, ""_av, Padding(4))
     {
         CHECK_NEXT_DATA(receiveResponseFail{CB_FORMAT_LIST_RESPONSE});
+    };
+
+    // lock / unlock
+
+    RECEIVE_DATAS(CB_LOCK_CLIPDATA, CB_RESPONSE_OK, "\1\0\0\0"_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(lock{1});
+    };
+
+    RECEIVE_DATAS(CB_UNLOCK_CLIPDATA, CB_RESPONSE_OK, "\1\0\0\0"_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(unlock{1});
+    };
+
+    // long list
+
+    CALL_CB(send_request_format(49262, cbchan::CustomFormat::FileGroupDescriptorW))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_,
+            "\x6e\xc0\x00\x00"_av));
+    };
+
+    auto file_group_with_3_files =
+        "\x05\x00\x01\x00\xf0\x0a\x00\x00"
+        "\x03\x00\x00\x00\x00\x00\x00\x00" //....T........... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x0c\x00\x00\x00\x61\x00\x62\x00\x63\x00\x00\x00\x00\x00\x00\x00" //....a.b.c....... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
+        "\x00\x00\x00\x00" //....T........... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x0c\x00\x00\x00\x64\x00\x65\x00\x66\x00\x00\x00\x00\x00\x00\x00" //....d.e.f....... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
+        "\x00\x00\x00\x00" //....T........... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x0c\x00\x00\x00\x67\x00\x68\x00\x69\x00\x00\x00\x00\x00\x00\x00" //....g.h.i....... !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
+        ""_av;
+    clip.receive(file_group_with_3_files.first(1600),
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+    CTX_CHECK_DATAS()
+    {
+        CHECK_NEXT_DATA(formatDataResponseNbFileName{3});
+        CHECK_NEXT_DATA(formatDataResponseFile{"abc"_utf16_le,
+            /*.attr=*/0, /*.flags=*/0,
+            /*.sizeLow=*/12, /*.sizeHigh=*/0,
+            /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
+        CHECK_NEXT_DATA(formatDataResponseFile{"def"_utf16_le,
+            /*.attr=*/0, /*.flags=*/0,
+            /*.sizeLow=*/12, /*.sizeHigh=*/0,
+            /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
+    };
+    clip.receive(file_group_with_3_files.from_offset(1600),
+        CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+    CTX_CHECK_DATAS()
+    {
+        CHECK_NEXT_DATA(formatDataResponseFile{"ghi"_utf16_le,
+            /*.attr=*/0, /*.flags=*/0,
+            /*.sizeLow=*/12, /*.sizeHigh=*/0,
+            /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
     };
 }
