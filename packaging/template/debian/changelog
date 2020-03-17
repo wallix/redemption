@@ -1,3 +1,9 @@
+redemption (8.0.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix crash when generate metadate of session (BS).
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 17 Mar 2020 10:03:49 +0200
+
 redemption (8.0.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * BestSafe Integration: Forward event log
