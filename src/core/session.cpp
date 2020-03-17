@@ -291,7 +291,7 @@ private:
                     const char*    account              = ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
                     const char*    password             = ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
 
-                    rdp_api* rdpapi = mm.get_rdp_api(mod_wrapper);
+                    rdp_api* rdpapi = mod_wrapper.get_rdp_api();
 
                     if (!exec_result) {
                         //LOG(LOG_INFO,
@@ -450,7 +450,7 @@ private:
     }
 
 private:
-    void rt_display(Inifile & ini, ModuleManager & mm, ModWrapper & mod_wrapper, Front & front)
+    void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
     {
         if (ini.check_from_acl()) {
             auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
@@ -505,7 +505,7 @@ private:
         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){ return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
 
         // new value incoming from authentifier
-        this->rt_display(ini, mm, mod_wrapper, front);
+        this->rt_display(ini, mod_wrapper, front);
 
        if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
             auto& gd = mod_wrapper.get_graphic_wrapper();

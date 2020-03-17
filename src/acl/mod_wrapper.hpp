@@ -219,8 +219,12 @@ public:
     bool show_osd_flag = false;
     bool connected = false;
 
-    bool is_connected() {
+    bool is_connected() const {
         return this->connected;
+    }
+
+    rdp_api* get_rdp_api() const {
+        return this->rdpapi;
     }
 
     void last_disconnect()

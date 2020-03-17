@@ -314,11 +314,6 @@ public:
         }
     }
 
-public:
-    [[nodiscard]] rdp_api* get_rdp_api(ModWrapper & mod_wrapper) const {
-        return mod_wrapper.rdpapi;
-    }
-
 private:
     unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
     {
