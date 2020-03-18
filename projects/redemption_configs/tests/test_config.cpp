@@ -1948,7 +1948,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 RED_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
 {
    RED_CHECK_EQUAL(MAX_AUTHID, authid_from_string("unknown"_av));
-   RED_CHECK_SMEM("target_login"_av, string_from_authid(cfg::globals::target_user::index));
+   RED_CHECK("target_login"_av == string_from_authid(cfg::globals::target_user::index));
    RED_CHECK_EQUAL(cfg::globals::target_user::index, authid_from_string("target_login"_av));
    RED_CHECK_EQUAL(cfg::context::target_password::index, authid_from_string(string_from_authid(cfg::context::target_password::index)));
    RED_CHECK_EQUAL(cfg::globals::host::index, authid_from_string(string_from_authid(cfg::globals::host::index)));

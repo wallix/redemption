@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestParser)
         auto x = ServerCertCheck(2);
         configs::zstr_buffer_from<ServerCertCheck> buf;
         auto av = configs::assign_zbuf_from_cfg(buf, configs::cfg_s_type<ServerCertCheck>{}, x);
-        RED_CHECK_SMEM(av, "2"_av);
+        RED_CHECK(av == "2"_av);
     }
 
     // flags
@@ -59,7 +59,7 @@ RED_AUTO_TEST_CASE(TestParser)
         auto x = CaptureFlags(15);
         configs::zstr_buffer_from<CaptureFlags> buf;
         auto av = configs::assign_zbuf_from_cfg(buf, configs::cfg_s_type<CaptureFlags>{}, x);
-        RED_CHECK_SMEM(av, "15"_av);
+        RED_CHECK(av == "15"_av);
     }
 
     // str
@@ -78,6 +78,6 @@ RED_AUTO_TEST_CASE(TestParser)
         auto x = RdpModeConsole(2);
         configs::zstr_buffer_from<RdpModeConsole> buf;
         auto av = configs::assign_zbuf_from_cfg(buf, configs::cfg_s_type<RdpModeConsole>{}, x);
-        RED_CHECK_SMEM(av, "forbid"_av);
+        RED_CHECK(av == "forbid"_av);
     }
 }
