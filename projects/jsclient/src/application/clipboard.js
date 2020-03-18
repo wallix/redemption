@@ -90,6 +90,24 @@ const CbGeneralFlags = Object.freeze({
     HugeFileSupportEnabled: 0x00000020
 })
 
+class IdGenerator
+{
+    constructor() {
+        this.ids = [];
+        this.maxId = 0;
+    }
+
+    createId() {
+        if (this.ids.length) {
+            return this.ids.pop();
+        }
+        return this.maxId++;
+    }
+
+    releaseId(id) {
+        this.ids.push(id);
+    }
+}
 
 class Cliprdr
 {
@@ -98,16 +116,18 @@ class Cliprdr
         this.emccModule = emccModule;
         this.syncData = syncData;
         this.clipboard = null;
-        this.streams = {};
-        this.locks = {};
-        this.lockId = '_';
+        this.streams = [];
+        this.lockId = null;
         this.formats = [];
-        this.expectedFormatId = null;
         this.fileGroupId = null;
         this.dataDecoder = null;
         this.ifile = 0;
         this.files = []
         this.streamId = 0;
+        this.remoteFileGroups = [];
+        this.currentFileGroupId = 0;
+        this.fileGroupIdGenerator = new IdGenerator();
+        this.streamIdGenerator = new IdGenerator();
 
         const buflen = 1600;
         const bufp = emccModule._malloc(buflen);
@@ -127,7 +147,6 @@ class Cliprdr
             if (formatId) {
                 formatId = Number(formatId);
                 console.log('DOMFormats.onclick:', formatId);
-                this.expectedFormatId = formatId;
                 const customCf = (formatId === this.fileGroupId)
                     ? CustomCF.FileGroupDescriptorW
                     : 0;
@@ -142,18 +161,26 @@ class Cliprdr
             if (ifile) {
                 ifile = Number(ifile);
                 console.log('DOMFiles.onclick:', ifile);
-                console.log('streamId:', this.streamId);
                 // TODO lock + pos + hugeFileSupport
+                const bytesToRead = 0xffff;
                 this.clipboard.sendFileContentsRequest(
-                    FileContentsOp.Range, this.streamId, ifile, 0, 0, 0xffff, 0, 0);
-                    // FileContentsOp.Range, this.streamId, ifile, 0, 0, 0xffff, 
+                    FileContentsOp.Range, this.streamId, ifile, 0, 0, bytesToRead, 0, 0);
+                    // FileContentsOp.Range, this.streamId, ifile, 0, 0, 0xffff,
                     //   true, this.lockId);
-                
-                const lockId = e.originalTarget.parentNode.dataset.lockId;
-                this.streams[this.streamId] = {ifile, lockId, pos: 0, datas: []};
-                this.locks[lockId].streamIds[this.streamId] = true;
-                
-                ++this.streamId;
+
+                const fileGroupId = e.originalTarget.parentNode.dataset.fileGroupId;
+                const streamId = this.streamIdGenerator.createId();
+                const fileGroup = this.remoteFileGroups[fileGroupId];
+                ++fileGroup.countRef;
+                this.streams[streamId] = {
+                    fileGroup,
+                    ifile,
+                    file: fileGroup.files[ifile],
+                    offset: 0,
+                    bytesToRead,
+                    datas: [],
+                    isActive: true,
+                };
                 this.syncData();
             }
         };
@@ -192,20 +219,29 @@ class Cliprdr
         // TODO reset others values
         console.log('setGeneralCapability:', generalFlags);
         // TODO
-        // this.lockSupport = !!(generalFlags & CbGeneralFlags.CanLockClipData);
+        this.lockSupport = !!(generalFlags & CbGeneralFlags.CanLockClipData);
         // this.fileSupport = !!(generalFlags & CbGeneralFlags.StreamFileclipEnabled);
         // this.hugeFileSupport = !!(generalFlags & CbGeneralFlags.HugeFileSupportEnabled);
         return generalFlags & ~CbGeneralFlags.CanLockClipData;
+    }
+
+    _resetUnlockedFileGroup() {
+        // TODO remove streams
+        const fileGroup = this.remoteFileGroups.pop();
+        if (fileGroup) {
+            this.DOMFiles.removeChild(fileGroup.DOMElement);
+        }
     }
 
     formatListStart() {
         this.DOMFiles.innerText = '';
         this.DOMFormats.innerText = '';
         this.fileGroupId = null;
-        // TODO remove streams
-        const previous = this.locks._
-        if (previous) {
-            this.DOMFiles.removeChild(previous.DOMElement);
+        if (this.lockSupport) {
+            this.currentFileGroupId = this.fileGroupIdGenerator.createId();
+        }
+        else {
+            this._resetUnlockedFileGroup();
         }
     }
 
@@ -282,50 +318,73 @@ class Cliprdr
         console.log('formatDataResponseFileStart:', countFile);
         this.responseFiles = []
 
-        // TODO remove streamIds
-        const previous = this.locks._
-        if (previous) {
-            this.DOMFiles.removeChild(previous.DOMElement);
+        if (!this.lockSupport) {
+            this._resetUnlockedFileGroup();
         }
     }
 
     formatDataResponseFile(utf16Name, attributes, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
         const filename = UTF16Decoder.decode(utf16Name);
         console.log('formatDataResponseFile:', filename, attributes, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
-        this.responseFiles.push({filename, size: (sizeHigh << 32) + sizeLow,})
+        this.responseFiles.push({name: filename, size: (sizeHigh << 32) + sizeLow,})
     }
-    
+
     formatDataResponseFileStop() {
         console.log('formatDataResponseFileStop');
         const div = document.createElement('div');
-        div.dataset.lockId = this.lockId;
+        div.dataset.fileGroupId = this.currentFileGroupId;
         for (const i in this.responseFiles) {
             const button = div.appendChild(document.createElement('button'));
-            button.appendChild(new Text(this.responseFiles[i].filename));
+            button.appendChild(new Text(this.responseFiles[i].name));
             button.dataset.ifile = i;
         }
-        this.locks[this.lockId] = {files: this.responseFiles, DOMElement: div, streamIds: {}};
+        this.remoteFileGroups[this.currentFileGroupId] = {
+            // TODO used ?
+            fileGroupId: this.currentFileGroupId,
+            files: this.responseFiles,
+            streamIds: {},
+            countRef: 1,
+            DOMElement: div,
+        };
         this.DOMFiles.appendChild(div);
     }
 
     fileContentsResponse(data, streamId, remainingDataLen, channelFlags) {
         console.log('fileContentsResponse:', streamId, remainingDataLen, channelFlags);
-        
-        const file = this.streams[streamId];
+
+        const fileStream = this.streams[streamId];
+        console.log(data);
 
         if (channelFlags & ChannelFlags.Last) {
-            // TODO file.pos + chunkSize != file.size
-            file.datas.push(data);
-            const blob = new Blob(file.datas, {type: "application/octet-stream"});
-            cbDownload.href = URL.createObjectURL(blob);
-            cbDownload.download = this.locks[file.lockId].files[file.ifile].filename;
-            cbDownload.click();
-            delete this.streams[streamId];
-            delete this.locks[file.lockId].streamIds[this.streamId];
+            const newOffset = fileStream.offset + fileStream.bytesToRead;
+            if (fileStream.file.size > newOffset && fileStream.isActive) {
+                fileStream.datas.push(data.buffer.slice(
+                    data.byteOffset, data.byteOffset + data.byteLength));
+                // TODO lock + pos + hugeFileSupport
+                this.clipboard.sendFileContentsRequest(
+                    FileContentsOp.Range, streamId, fileStream.ifile,
+                    0, newOffset, fileStream.bytesToRead, 0, 0);
+                fileStream.offset = newOffset;
+            }
+            else {
+                // TODO remove this.remoteFileGroups[fileStream.fileGroup.fileGroupId] id countRef == 0
+                const byteLength = Math.min(
+                    data.byteLength, fileStream.file.size - fileStream.offset);
+                fileStream.datas.push(data.buffer.slice(
+                    data.byteOffset, data.byteOffset + byteLength));
+                --fileStream.fileGroup.countRef;
+                delete this.streams[streamId];
+                this.streamIdGenerator.releaseId(streamId);
+
+                const blob = new Blob(fileStream.datas, {type: "application/octet-stream"});
+                cbDownload.href = URL.createObjectURL(blob);
+                cbDownload.download = fileStream.file.name;
+                cbDownload.click();
+            }
         }
         else {
-            // copy data
-            file.datas.push(data.buffer.slice(0));
+            fileStream.datas.push(data.buffer.slice(
+                data.byteOffset, data.byteOffset + data.byteLength));
         }
     }
 
@@ -472,8 +531,7 @@ class Cliprdr
 
     unlock(lockId) {
         console.log("unlock:", lockId);
-        delete this.locks[lockId];
-        this.lockId = '_';
+        this.lockId = null;
     }
 
     receiveResponseFail(msgType) {

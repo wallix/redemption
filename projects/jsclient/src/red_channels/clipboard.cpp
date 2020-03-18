@@ -530,6 +530,8 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
         this->remaining_data_len = data_len;
     }
 
+    data = in_stream.remaining_bytes();
+
     this->response_state = bool(channel_flags & CHANNELS::CHANNEL_FLAG_LAST)
         ? ResponseState::None
         : ResponseState::FileContents;
