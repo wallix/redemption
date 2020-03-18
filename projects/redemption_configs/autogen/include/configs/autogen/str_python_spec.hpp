@@ -271,22 +271,6 @@ enable_remotefx = boolean(default=True)
 
 bogus_pointer_xormask_padding = boolean(default=False)
 
-# Disables supported drawing orders:
-#    0: DstBlt
-#    1: PatBlt
-#    2: ScrBlt
-#    3: MemBlt
-#    4: Mem3Blt
-#    8: LineTo
-#   15: MultiDstBlt
-#   16: MultiPatBlt
-#   17: MultiScrBlt
-#   18: MultiOpaqueRect
-#   22: Polyline
-# This option takes precedence over the option Extra orders of section mod_rdp.
-#_advanced
-disabled_orders = string_list(default=list())
-
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
 force_bitmap_cache_v2_with_am = boolean(default=True)
@@ -309,14 +293,21 @@ disconnect_on_logon_user_change = boolean(default=False)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
-# Enables support of additional drawing orders:
+# Disables supported drawing orders:
+#    0: DstBlt
+#    1: PatBlt
+#    2: ScrBlt
+#    3: MemBlt
+#    4: Mem3Blt
+#    8: LineTo
 #   15: MultiDstBlt
 #   16: MultiPatBlt
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
-#   22: PolylinePlease see also "Disabled orders" in "client" section.
-#_advanced
-extra_orders = string_list(default=list('15,16,17,18,22'))
+#   22: Polyline
+# This option takes precedence over the option Extra orders of section mod_rdp.
+#_hidden
+disabled_orders = string_list(default=list())
 
 # NLA authentication in secondary target.
 #_hidden

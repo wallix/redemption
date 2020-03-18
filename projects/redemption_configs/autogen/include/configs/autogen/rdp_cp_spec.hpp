@@ -41,6 +41,21 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [rdp]
 
+# Disables supported drawing orders:
+#    0: DstBlt
+#    1: PatBlt
+#    2: ScrBlt
+#    3: MemBlt
+#    4: Mem3Blt
+#    8: LineTo
+#   15: MultiDstBlt
+#   16: MultiPatBlt
+#   17: MultiScrBlt
+#   18: MultiOpaqueRect
+#   22: Polyline
+# This option takes precedence over the option Extra orders of section mod_rdp.
+disabled_orders = string_list(default=list())
+
 # NLA authentication in secondary target.
 enable_nla = boolean(default=True)
 

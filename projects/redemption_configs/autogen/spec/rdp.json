@@ -68,6 +68,14 @@
       "name": "rdp",
       "members": [
         {
+          "name": "disabled_orders",
+          "type": "integer",
+          "min": 0,
+          "multivalue": true,
+          "default": [],
+          "description": "Disables supported drawing orders:\n   0: DstBlt\n   1: PatBlt\n   2: ScrBlt\n   3: MemBlt\n   4: Mem3Blt\n   8: LineTo\n  15: MultiDstBlt\n  16: MultiPatBlt\n  17: MultiScrBlt\n  18: MultiOpaqueRect\n  22: Polyline\nThis option takes precedence over the option Extra orders of section mod_rdp."
+        },
+        {
           "name": "enable_nla",
           "type": "bool",
           "default": true,

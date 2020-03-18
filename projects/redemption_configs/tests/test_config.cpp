@@ -165,7 +165,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -315,7 +314,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
         "disconnect_on_logon_user_change=yes\n"
         "enable_nla=yes\n"
         "open_session_timeout=45\n"
-        "extra_orders=22\n"
         "persistent_disk_bitmap_cache=false\n"
         "cache_waiting_list=no\n"
         "persist_bitmap_cache_on_disk=true\n"
@@ -462,7 +460,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(45,                               ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("22",                             ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -667,7 +664,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(RdpCompression::rdp5,             ini.get<cfg::mod_rdp::rdp_compression>()); RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(30,                               ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -834,7 +830,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -1011,7 +1006,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -1163,7 +1157,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -1315,7 +1308,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -1453,7 +1445,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
@@ -1593,7 +1584,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
-    RED_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>());
