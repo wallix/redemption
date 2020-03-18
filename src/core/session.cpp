@@ -693,7 +693,7 @@ public:
             ClientExecute rail_client_execute(session_reactor, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
-            ModWrapper mod_wrapper(front, front.get_palette(), front, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
+            ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
             ModFactory mod_factory(mod_wrapper, session_reactor, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             EndSessionWarning end_session_warning;
 

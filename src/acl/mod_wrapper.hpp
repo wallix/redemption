@@ -281,9 +281,10 @@ private:
     bool bogus_refresh_rect_ex;
     const Font & glyphs;
     const Theme & theme;
+    Keymap2 & keymap;
 
 public:
-    explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : callback(*this)
     , gfilter(graphics, callback, palette, Rect{})
     , g(gfilter)
@@ -295,6 +296,7 @@ public:
     , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
     , theme(theme)
+    , keymap(keymap)
     {}
 
     ~ModWrapper(){
@@ -448,6 +450,25 @@ public:
     void set_mod_transport(SocketTransport * psocket_transport)
     {
         this->psocket_transport = psocket_transport;
+    }
+
+
+    void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi, windowing_api* winapi)
+    {
+        while (this->keymap.nb_char_available()) {
+            this->keymap.get_char();
+        }
+        while (this->keymap.nb_kevent_available()) {
+            this->keymap.get_kevent();
+        }
+
+        this->clear_osd_message();
+
+        this->set_mod(mod.get());
+
+        this->rail_module_host_mod_ptr = nullptr;
+        this->rdpapi = rdpapi;
+        this->winapi = winapi;
     }
 
     // push_mod or replace_mod
