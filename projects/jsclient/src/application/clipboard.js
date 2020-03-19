@@ -350,10 +350,9 @@ class Cliprdr
     }
 
     fileContentsResponse(data, streamId, remainingDataLen, channelFlags) {
-        console.log('fileContentsResponse:', streamId, remainingDataLen, channelFlags);
+        console.log('fileContentsResponse:', data.byteLength, streamId, remainingDataLen, channelFlags);
 
         const fileStream = this.streams[streamId];
-        console.log(data);
 
         if (channelFlags & ChannelFlags.Last) {
             const newOffset = fileStream.offset + fileStream.bytesToRead;
