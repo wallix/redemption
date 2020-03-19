@@ -848,14 +848,14 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                 !ini.get<cfg::globals::is_rec>()
             );
 
-            this->set_mod(mod_wrapper, host_mod, nullptr, &rail_client_execute);
+            mod_wrapper.set_mod(host_mod, nullptr, &rail_client_execute);
             mod_wrapper.rail_module_host_mod_ptr = host_mod;
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
             rdp_api*       rdpapi = &(new_mod.get()->mod);
             windowing_api* winapi = new_mod->mod.get_windowing_api();
-            this->set_mod(mod_wrapper, new_mod.release(), rdpapi, winapi);
+            mod_wrapper.set_mod(new_mod.release(), rdpapi, winapi);
         }
     }
     catch (...) {
