@@ -52,7 +52,7 @@ cfg::mod_rdp::disabled_orders ⇐ mod_rdp:disabled_orders   [std::string]
       17: MultiScrBlt
       18: MultiOpaqueRect
       22: Polyline
-    This option takes precedence over the option Extra orders of section mod_rdp.
+    
 cfg::mod_rdp::enable_nla ⇐ mod_rdp:enable_nla   [bool]
     NLA authentication in secondary target.
 cfg::mod_rdp::enable_kerberos ⇐ mod_rdp:enable_kerberos   [bool]

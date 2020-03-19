@@ -231,12 +231,7 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::ip_string>, 
 template<class T, class L>
 void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L const & s)
 {
-    if (is_empty(s)) {
-        out << "string_list(default=list())";
-    }
-    else {
-        out << "string_list(default=list('" << impl::quoted2(s) << "'))";
-    }
+    out << "string(default='" << impl::quoted2(s) << "')";
 }
 
 namespace impl

@@ -1183,7 +1183,6 @@ namespace cfg {
     ///   17: MultiScrBlt <br/>
     ///   18: MultiOpaqueRect <br/>
     ///   22: Polyline <br/>
-    /// This option takes precedence over the option Extra orders of section mod_rdp. <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:disabled_orders <br/>
