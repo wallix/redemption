@@ -54,6 +54,7 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 #   18: MultiOpaqueRect
 #   22: Polyline
 # 
+# (values are comma-separated)
 disabled_orders = string(default='')
 
 # NLA authentication in secondary target.

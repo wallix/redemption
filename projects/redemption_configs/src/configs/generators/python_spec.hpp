@@ -75,6 +75,10 @@ template<class T, class Ratio, long min, long max>
 void write_type_info(std::ostream& out, type_<types::range<std::chrono::duration<T, Ratio>, min, max>>)
 { write_type_info(out, type_<std::chrono::duration<T, Ratio>>{}); }
 
+template<class T>
+void write_type_info(std::ostream& out, type_<types::list<T>>)
+{ out << "(values are comma-separated)\n"; }
+
 
 template<class T, class Pack>
 void write_description(std::ostream& out, type_enumerations& enums, type_<T>, Pack const & pack)
