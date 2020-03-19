@@ -150,7 +150,6 @@ struct RdpClient
         mod_rdp_params.enable_new_pointer         = true;
         mod_rdp_params.enable_glyph_cache         = true;
         mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
-        mod_rdp_params.primary_drawing_orders_support = supported_orders;
         mod_rdp_params.ignore_auth_channel = true;
 
 
