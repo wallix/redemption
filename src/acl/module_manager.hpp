@@ -62,6 +62,8 @@
 #include "acl/mod_wrapper.hpp"
 #include "acl/acl_serializer.hpp"
 
+#include "acl/connect_to_target_host.hpp"
+
 class rdp_api;
 class AuthApi;
 class ReportMessageApi;
@@ -69,7 +71,6 @@ class ReportMessageApi;
 class ModuleManager
 {
     ModFactory & mod_factory;
-
 
 public:
 
@@ -248,7 +249,8 @@ public:
         break;
 
         case MODULE_XUP: {
-            unique_fd client_sck = this->connect_to_target_host(
+            unique_fd client_sck = connect_to_target_host(
+                    ini, session_reactor,
                     report_message, trkeys::authentification_x_fail);
 
             mod_wrapper.set_mod(mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
@@ -260,6 +262,8 @@ public:
 
         case MODULE_RDP:
         {
+            // %%% auto mod_rdp = mod_factory.create_mod_rdp(); %%%
+
             this->create_mod_rdp(mod_wrapper,
                 authentifier, report_message, this->ini,
                 mod_wrapper.get_graphics(), this->front, this->client_info,
@@ -296,54 +300,6 @@ public:
     }
 
 private:
-    unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
-    {
-        auto throw_error = [this, &report_message](char const* error_message, int id) {
-            LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
-                R"(target="%s" host="%s" port="%u" reason="%s")",
-                this->ini.get<cfg::globals::target_user>(),
-                this->ini.get<cfg::context::target_host>(),
-                this->ini.get<cfg::context::target_port>(),
-                error_message);
-
-            report_message.log6(LogId::CONNECTION_FAILED, this->session_reactor.get_current_time(), {});
-
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-
-            LOG(LOG_ERR, "%s", (id == 1)
-                ? "Failed to connect to remote TCP host (1)"
-                : "Failed to connect to remote TCP host (2)");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
-        };
-
-        LOG_PROXY_SIEM("TARGET_CONNECTION",
-            R"(target="%s" host="%s" port="%u")",
-            this->ini.get<cfg::globals::target_user>(),
-            this->ini.get<cfg::context::target_host>(),
-            this->ini.get<cfg::context::target_port>());
-
-        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-        char ip_addr[256] {};
-        in_addr s4_sin_addr;
-        if (auto error_message = resolve_ipv4_address(ip, s4_sin_addr)) {
-            // TODO: actually this is DNS Failure or invalid address
-            throw_error(error_message, 1);
-        }
-
-        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
-
-        char const* error_message = nullptr;
-        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), &error_message);
-
-        if (!client_sck.is_open()) {
-            throw_error(error_message, 2);
-        }
-
-        this->ini.set<cfg::context::auth_error_message>(TR(authentification_fail, language(this->ini)));
-        this->ini.set<cfg::context::ip_target>(ip_addr);
-
-        return client_sck;
-    }
 
 
     void create_mod_rdp(ModWrapper & mod_wrapper,

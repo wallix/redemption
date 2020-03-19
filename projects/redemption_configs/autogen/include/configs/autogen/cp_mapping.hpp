@@ -19,6 +19,9 @@ cp_spec = {
         ),
     },
     'rdp': {
+        u'mod_rdp:disabled_orders': (
+            'disabled_orders', u''
+        ),
         u'mod_rdp:enable_nla': (
             'enable_nla', True
         ),

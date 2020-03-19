@@ -119,15 +119,7 @@ struct ModRDPParams
 
     const char * device_id = "";
 
-    PrimaryDrawingOrdersSupport primary_drawing_orders_support{
-        TS_NEG_MEM3BLT_INDEX,
-        TS_NEG_GLYPH_INDEX,
-        TS_NEG_DSTBLT_INDEX,
-        TS_NEG_PATBLT_INDEX,
-        TS_NEG_SCRBLT_INDEX,
-        TS_NEG_MEMBLT_INDEX,
-        TS_NEG_LINETO_INDEX,
-    };
+    PrimaryDrawingOrdersSupport disabled_orders {};
 
     bool enable_persistent_disk_bitmap_cache = false;
     bool enable_cache_waiting_list = false;
@@ -244,7 +236,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.primary_user_id);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.target_application);
 
-        RDP_PARAMS_LOG("%" PRIx32, RDP_PARAMS_LOG_GET,  primary_drawing_orders_support.as_uint());
+        RDP_PARAMS_LOG("%" PRIx32, RDP_PARAMS_LOG_GET,  disabled_orders.as_uint());
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_tls);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_nla);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_krb);

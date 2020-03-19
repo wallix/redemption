@@ -210,7 +210,7 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
-    unique_fd client_sck = this->connect_to_target_host(
+    unique_fd client_sck = connect_to_target_host(ini, this->session_reactor,
         report_message, trkeys::authentification_vnc_fail);
 
     try {

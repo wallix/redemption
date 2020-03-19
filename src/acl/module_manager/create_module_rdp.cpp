@@ -42,6 +42,7 @@
 # include "mod/rdp/params/rdp_application_params.hpp"
 #include "capture/fdx_capture.hpp"
 #include "core/session_reactor.hpp"
+#include "acl/connect_to_target_host.hpp"
 
 namespace
 {
@@ -437,6 +438,13 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
+//    %%%
+//    glyphs,
+//    theme,
+//    session_reactor,
+//    timer_events_,
+//    front,
+//    %%%
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     switch (ini.get<cfg::context::mode_console>()) {
@@ -473,8 +481,8 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
       , ini.get<cfg::context::target_host>().c_str()
       , "0.0.0.0"   // client ip is silenced
       , key_flags
-      , this->glyphs
-      , this->theme
+      , glyphs
+      , theme
       , server_auto_reconnect_packet
       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
@@ -555,10 +563,9 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
     mod_rdp_params.password_printing_mode = ini.get<cfg::debug::password>();
     mod_rdp_params.cache_verbose = to_verbose_flags(ini.get<cfg::debug::cache>());
 
-    mod_rdp_params.primary_drawing_orders_support      += parse_primary_drawing_orders(
-        ini.get<cfg::mod_rdp::extra_orders>().c_str(),
-        bool(to_verbose_flags(ini.get<cfg::debug::mod_rdp>()) & (RDPVerbose::basic_trace | RDPVerbose::capabilities)),
-        OnlyThoseSupportedByModRdp::Yes);
+    mod_rdp_params.disabled_orders                     += parse_primary_drawing_orders(
+        ini.get<cfg::mod_rdp::disabled_orders>().c_str(),
+        bool(to_verbose_flags(ini.get<cfg::debug::mod_rdp>()) & (RDPVerbose::basic_trace | RDPVerbose::capabilities)));
 
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
@@ -690,7 +697,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                         report_message,
                         mod_rdp_params.validator_params.up_target_name,
                         mod_rdp_params.validator_params.down_target_name,
-                        this->session_reactor, this->timer_events_, this->front
+                        session_reactor, this->timer_events_, this->front
                     });
                 file_validator->service.send_infos({
                     "server_ip"_av, ini.get<cfg::context::target_host>(),
@@ -743,7 +750,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         // ================== End Metrics ======================
 
         unique_fd client_sck = 
-            this->connect_to_target_host(report_message, trkeys::authentification_rdp_fail);
+            connect_to_target_host(this->ini, this->session_reactor, report_message, trkeys::authentification_rdp_fail);
 
         auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
             mod_wrapper,

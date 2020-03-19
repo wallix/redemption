@@ -217,8 +217,17 @@ namespace json
     template<class T, class L>
     void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::list<T>>, L const& x)
     {
-        write_type(out, type_<T>{}, x);
-        out << "          \"multivalue\"=true,\n";
+        static_assert(sesman_default_map::python::is_integral_type_v<T>, "not implemented");
+        out <<
+            "          \"type\": \"integer\",\n"
+        ;
+        if (std::is_unsigned<T>::value || std::is_base_of<types::unsigned_base, T>::value) {
+            out << "          \"min\": 0,\n";
+        }
+        out <<
+            "          \"multivalue\": true,\n"
+            "          \"default\": [" << x << "],\n"
+        ;
     }
 
     namespace impl
