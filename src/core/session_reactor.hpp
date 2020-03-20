@@ -771,6 +771,7 @@ namespace jln
 
         bool exec_action(Ts&... xs)
         {
+            LOG(LOG_INFO, "TimerExecutor::exec_action");
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
@@ -874,6 +875,7 @@ namespace jln
 
         bool exec_action(Ts&... xs)
         {
+            LOG(LOG_INFO, "ActionExecutor::exec_action");
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
@@ -1526,6 +1528,7 @@ namespace jln
 
         bool exec_action(Ts&... xs)
         {
+            LOG(LOG_INFO, "TopExecutor::exec_action");
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
@@ -2152,6 +2155,7 @@ namespace jln
         template<class Predicate>
         bool exec_action(Predicate&& predicate, Ts... xs)
         {
+            LOG(LOG_INFO, "TopContainer::exec_action");
             return this->_exec(predicate, [&](Top& top) {
                 return top.exec_action(xs...);
             });
@@ -2317,6 +2321,7 @@ namespace jln
 
         bool exec_timer(timeval tv, Ts... xs)
         {
+            LOG(LOG_INFO, "TimerContainer::exec_timer");
             SharedDataBase* node = &this->node_executors;
             while (node->next) {
                 auto* cur = node->next;

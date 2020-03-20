@@ -44,25 +44,14 @@
 
 #include "transport/socket_transport.hpp"
 
-#include "utils/load_theme.hpp"
-#include "utils/netutils.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "utils/sugar/update_lock.hpp"
-#include "utils/log_siem.hpp"
-#include "utils/fileutils.hpp"
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include "acl/module_manager/enums.hpp"
-#include "core/back_event_t.hpp"
 
 #include "core/session_reactor.hpp"
 #include "acl/mod_wrapper.hpp"
 #include "acl/acl_serializer.hpp"
 
 #include "acl/connect_to_target_host.hpp"
+#include "acl/module_manager/create_module_rdp.hpp"
 
 class rdp_api;
 class AuthApi;
@@ -264,10 +253,15 @@ public:
         {
             // %%% auto mod_rdp = mod_factory.create_mod_rdp(); %%%
 
-            this->create_mod_rdp(mod_wrapper,
+            create_mod_rdp(mod_wrapper,
                 authentifier, report_message, this->ini,
                 mod_wrapper.get_graphics(), this->front, this->client_info,
                 this->rail_client_execute, this->keymap.key_flags,
+                this->glyphs, this->theme,
+                this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_,
+                this->sesman,
+                this->file_system_license_store,
+                this->gen, this->timeobj, this->cctx,
                 this->server_auto_reconnect_packet);
                 
             if (ini.get<cfg::globals::bogus_refresh_rect>() &&
@@ -300,13 +294,6 @@ public:
     }
 
 private:
-
-
-    void create_mod_rdp(ModWrapper & mod_wrapper,
-        AuthApi& authentifier, ReportMessageApi& report_message,
-        Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info,
-        ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
-        std::array<uint8_t, 28>& server_auto_reconnect_packet);
 
     void create_mod_vnc(ModWrapper & mod_wrapper,
         AuthApi& authentifier, ReportMessageApi& report_message,

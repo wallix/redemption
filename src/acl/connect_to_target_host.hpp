@@ -29,6 +29,21 @@
 #include "core/report_message_api.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/log_siem.hpp"
+#include "core/log_id.hpp"
+#include "utils/netutils.hpp"
+#include "utils/load_theme.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/update_lock.hpp"
+#include "utils/log_siem.hpp"
+#include "utils/fileutils.hpp"
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include "acl/module_manager/enums.hpp"
+#include "core/back_event_t.hpp"
 
 static inline unique_fd connect_to_target_host(Inifile & ini, const SessionReactor & session_reactor, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
 {

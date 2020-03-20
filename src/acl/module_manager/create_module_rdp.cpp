@@ -22,27 +22,72 @@
   find out the next module to run from context reading
 */
 
-#include "acl/module_manager.hpp"
-#include "configs/config.hpp"
-#include "core/channels_authorizations.hpp"
-#include "core/client_info.hpp"
-#include "core/report_message_api.hpp"
-#include "acl/dispatch_report_message.hpp"
-#include "keyboard/keymap2.hpp"
-#include "mod/metrics_hmac.hpp"
-#include "mod/rdp/rdp.hpp"
-#include "mod/rdp/rdp_params.hpp"
-#include "mod/rdp/rdp_verbose.hpp"
+#include "capture/fdx_capture.hpp"
+#include "acl/connect_to_target_host.hpp"
 #include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
-# include "mod/rdp/params/rdp_session_probe_params.hpp"
-# include "mod/rdp/params/rdp_application_params.hpp"
-#include "capture/fdx_capture.hpp"
-#include "core/session_reactor.hpp"
-#include "acl/connect_to_target_host.hpp"
+#include "mod/rdp/params/rdp_session_probe_params.hpp"
+#include "mod/rdp/params/rdp_application_params.hpp"
+#include "mod/metrics_hmac.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
+#include "acl/module_manager/create_module_rdp.hpp"
+#include "utils/sugar/bytes_view.hpp"
+
+
+
+//#include "acl/end_session_warning.hpp"
+
+//#include "acl/module_manager/mod_factory.hpp"
+//#include "acl/auth_api.hpp"
+//#include "acl/file_system_license_store.hpp"
+//#include "acl/module_manager/enums.hpp"
+//#include "configs/config.hpp"
+//#include "core/log_id.hpp"
+//#include "core/session_reactor.hpp"
+//#include "front/front.hpp"
+
+//#include "mod/internal/rail_module_host_mod.hpp"
+
+//#include "mod/mod_api.hpp"
+//#include "mod/null/null.hpp"
+//#include "mod/rdp/windowing_api.hpp"
+//#include "mod/xup/xup.hpp"
+
+//#include "transport/socket_transport.hpp"
+
+//#include "core/session_reactor.hpp"
+//#include "acl/mod_wrapper.hpp"
+//#include "acl/acl_serializer.hpp"
+
+//#include "acl/connect_to_target_host.hpp"
+
+//#include "utils/log.hpp"
+//#include "configs/config.hpp"
+//#include "core/session_reactor.hpp"
+//#include "core/report_message_api.hpp"
+//#include "utils/translation.hpp"
+//#include "utils/sugar/unique_fd.hpp"
+//#include "utils/log_siem.hpp"
+//#include "core/log_id.hpp"
+//#include "utils/netutils.hpp"
+//#include "utils/load_theme.hpp"
+//#include "utils/sugar/algostring.hpp"
+//#include "utils/sugar/scope_exit.hpp"
+//#include "utils/sugar/update_lock.hpp"
+//#include "utils/log_siem.hpp"
+//#include "utils/fileutils.hpp"
+
+//#include <sys/socket.h>
+//#include <netinet/in.h>
+//#include <arpa/inet.h>
+//#include "acl/module_manager/enums.hpp"
+//#include "core/back_event_t.hpp"
+
 
 namespace
 {
@@ -434,17 +479,23 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
 }
 
 
-void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
+void create_mod_rdp(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
-//    %%%
-//    glyphs,
-//    theme,
-//    session_reactor,
-//    timer_events_,
-//    front,
-//    %%%
+    Font & glyphs,
+    Theme & theme,
+    SessionReactor & session_reactor,
+    TopFdContainer& fd_events_,
+    GraphicFdContainer & graphic_fd_events_,
+    TimerContainer& timer_events_,
+    GraphicEventContainer& graphic_events_,
+    SesmanInterface & sesman,
+    LicenseApi & file_system_license_store,
+    Random & gen,
+    TimeObj & timeobj,
+    CryptoContext & cctx,
+
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     switch (ini.get<cfg::context::mode_console>()) {
@@ -697,7 +748,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                         report_message,
                         mod_rdp_params.validator_params.up_target_name,
                         mod_rdp_params.validator_params.down_target_name,
-                        session_reactor, this->timer_events_, this->front
+                        session_reactor, timer_events_, front
                     });
                 file_validator->service.send_infos({
                     "server_ip"_av, ini.get<cfg::context::target_host>(),
@@ -743,34 +794,34 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                     ini.get<cfg::globals::host>(),
                     client_info.screen_info,
                     ini.get<cfg::metrics::sign_key>()),
-                this->timeobj.get_time(),
+                timeobj.get_time(),
                 ini.get<cfg::metrics::log_file_turnover_interval>(),
                 ini.get<cfg::metrics::log_interval>());
         }
         // ================== End Metrics ======================
 
         unique_fd client_sck = 
-            connect_to_target_host(this->ini, this->session_reactor, report_message, trkeys::authentification_rdp_fail);
+            connect_to_target_host(ini, session_reactor, report_message, trkeys::authentification_rdp_fail);
 
         auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
             mod_wrapper,
-            this->ini,
+            ini,
             name,
             std::move(client_sck),
             ini.get<cfg::debug::mod_rdp>(),
             &ini.get_mutable_ref<cfg::context::auth_error_message>(),
-            this->session_reactor,
-            this->fd_events_,
-            this->graphic_fd_events_,
-            this->timer_events_,
-            this->graphic_events_,
-            this->sesman,
+            session_reactor,
+            fd_events_,
+            graphic_fd_events_,
+            timer_events_,
+            graphic_events_,
+            sesman,
             drawable,
             front,
             client_info,
             ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
-            this->gen,
-            this->timeobj,
+            gen,
+            timeobj,
             channels_authorizations,
             mod_rdp_params,
             tls_client_params,
@@ -786,7 +837,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         if (enable_validator) {
             new_mod->rdp_data.file_validator = std::move(file_validator);
             LOG(LOG_INFO, "create_module_rdp::fd_events_.create_top_executor");
-            new_mod->rdp_data.file_validator->validator_event = this->fd_events_.create_top_executor(this->session_reactor, validator_fd)
+            new_mod->rdp_data.file_validator->validator_event = fd_events_.create_top_executor(session_reactor, validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())
@@ -808,7 +859,7 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         }
 
         if (new_mod) {
-            assert(&ini == &this->ini);
+            assert(&ini == &ini);
             new_mod->get_rdp_factory().always_file_storage
               = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
             switch (ini.get<cfg::file_storage::store_file>())
@@ -821,8 +872,8 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                     }
                     [[fallthrough]];
                 case RdpStoreFile::always:
-                    new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), this]{
-                        return mod->get_fdx_capture(this->gen, this->ini, this->cctx);
+                    new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), &gen, &ini, &cctx]{
+                        return mod->get_fdx_capture(gen, ini, cctx);
                     };
             }
         }
@@ -839,9 +890,9 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
 
             auto* host_mod = new RailModuleHostMod(
                 ini,
-                this->session_reactor,
-                this->timer_events_,
-                this->graphic_events_,
+                session_reactor,
+                timer_events_,
+                graphic_events_,
                 drawable,
                 front,
                 client_info.screen_info.width,
@@ -849,8 +900,8 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
                 adjusted_client_execute_rect,
                 std::move(new_mod),
                 rail_client_execute,
-                this->glyphs,
-                this->theme,
+                glyphs,
+                theme,
                 client_info.cs_monitor,
                 !ini.get<cfg::globals::is_rec>()
             );
@@ -866,9 +917,9 @@ void ModuleManager::create_mod_rdp(ModWrapper & mod_wrapper,
         }
     }
     catch (...) {
-        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
+        report_message.log6(LogId::SESSION_CREATION_FAILED, session_reactor.get_current_time(), {});
 
-        this->front.must_be_stop_capture();
+        front.must_be_stop_capture();
 
         throw;
     }

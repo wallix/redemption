@@ -232,7 +232,7 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor");
+        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendDriveIOResponseTask::configure_event)");
         this->timer_ptr = timer_events_
         .create_timer_executor(session_reactor, 
             std::ref(*this), terminate_notifier)
@@ -312,7 +312,7 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor");
+        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendClientMessageTask::configure_events)");
         this->timer_ptr = timer_events_
         .create_timer_executor(session_reactor,
             std::ref(*this), terminate_notifier)
