@@ -49,8 +49,9 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
-# This option takes precedence over the option Extra orders of section mod_rdp.
-disabled_orders = string_list(default=list())
+# 
+# (values are comma-separated)
+disabled_orders = string(default='')
 
 # NLA authentication in secondary target.
 enable_nla = boolean(default=True)

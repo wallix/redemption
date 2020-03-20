@@ -1,3 +1,9 @@
+redemption (8.0.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix #26432 Move disabled_orders from Configuration Options to Connection Policy
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 19 Mar 2020 16:36:43 +0200
+
 redemption (8.0.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix crash when generate metadate of session (BS).

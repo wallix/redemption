@@ -363,7 +363,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
-# This option takes precedence over the option Extra orders of section mod_rdp.
+# 
 #_hidden
 #disabled_orders = 
 

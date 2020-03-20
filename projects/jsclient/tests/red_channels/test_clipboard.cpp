@@ -317,9 +317,9 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
     };
 
     RECEIVE_DATAS(CB_FILECONTENTS_RESPONSE, CB_RESPONSE__NONE_,
-        "\x00\x00\x00\x00""abcdefghijkl"_av, Padding(4))
+        "\x12\x34\x56\x78""abcdefghijkl"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(fileContentsResponse{"\0\0\0\0""abcdefghijkl"_av, 0, 0,
+        CHECK_NEXT_DATA(fileContentsResponse{"abcdefghijkl"_av, 0x78563412, 0,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST});
     };
 
@@ -332,14 +332,14 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
 
     // lock / unlock
 
-    RECEIVE_DATAS(CB_LOCK_CLIPDATA, CB_RESPONSE_OK, "\1\0\0\0"_av, Padding(4))
+    RECEIVE_DATAS(CB_LOCK_CLIPDATA, CB_RESPONSE_OK, "\x12\x34\x56\x78"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(lock{1});
+        CHECK_NEXT_DATA(lock{0x78563412});
     };
 
-    RECEIVE_DATAS(CB_UNLOCK_CLIPDATA, CB_RESPONSE_OK, "\1\0\0\0"_av, Padding(4))
+    RECEIVE_DATAS(CB_UNLOCK_CLIPDATA, CB_RESPONSE_OK, "\x12\x34\x56\x78"_av, Padding(4))
     {
-        CHECK_NEXT_DATA(unlock{1});
+        CHECK_NEXT_DATA(unlock{0x78563412});
     };
 
     // long list
