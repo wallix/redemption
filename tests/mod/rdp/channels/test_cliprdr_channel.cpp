@@ -519,8 +519,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                     GeneralCapabilitySet{CB_CAPS_VERSION_1, CB_USE_LONG_FORMAT_NAMES}.emit(out);
                 });
 
-                process_client_message(av);
                 process_server_message(av);
+                process_client_message(av);
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 1);
@@ -922,8 +922,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                     }.emit(out);
                 });
 
-                process_client_message(av);
                 process_server_message(av);
+                process_client_message(av);
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 1);
