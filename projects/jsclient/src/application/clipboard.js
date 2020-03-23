@@ -35,6 +35,11 @@ const CustomCF = Object.freeze({
     FileGroupDescriptorW: 33333,
 });
 
+const Charset = Object.freeze({
+    Ascii: 0,
+    Unicode: 1,
+});
+
 const FileContentsOp = Object.freeze({
     Size: 1,
     Range: 2,
@@ -427,7 +432,7 @@ class Cliprdr
 
                 const flags = FileFlags.FileSize | FileFlags.ShowProgressUI /*| FileFlags.WriteTime*/;
                 const attrs = FileAttributes.Normal;
-                const stream = new OutStream(this.channel_ibuffer, this.emccModule);
+                const stream = new OutStream(this.buffer.i, this.emccModule);
 
                 stream.u16le(CbType.DataResponse);
                 stream.u16le(MsgFlags.Ok);
@@ -445,13 +450,13 @@ class Cliprdr
                 stream.copyStringAsAlignedUTF16(file.name);
                 stream.bzero(520 - file.name.length * 2);
 
-                const totalLen = stream.i - this.channel_ibuffer;
+                const totalLen = stream.i - this.buffer.i;
                 stream.i = headerSizePos;
                 stream.u32le(totalLen);
 
                 console.log(totalLen);
 
-                this.clipboard.sendRawData(this.channel_ibuffer, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+                this.clipboard.sendRawData(this.buffer.i, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
                 break;
             }
         }
@@ -466,7 +471,7 @@ class Cliprdr
         switch (type)
         {
         case FileContentsOp.Size: {
-            const stream = new OutStream(this.channel_ibuffer, this.emccModule);
+            const stream = new OutStream(this.buffer.i, this.emccModule);
 
             stream.u16le(CbType.FileContentsResponse);
             stream.u16le(MsgFlags.Ok);
@@ -476,13 +481,13 @@ class Cliprdr
             stream.u32le(streamId);
             stream.u64le(file.size);
 
-            const totalLen = stream.i - this.channel_ibuffer;
+            const totalLen = stream.i - this.buffer.i;
             stream.i = headerSizePos;
             stream.u32le(totalLen);
 
             console.log(totalLen);
 
-            clipboard.sendRawData(this.channel_ibuffer, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+            this.clipboard.sendRawData(this.buffer.i, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
 
             rdpclient.sendBufferedData();
             break;
@@ -493,10 +498,10 @@ class Cliprdr
             const reader = new FileReader();
 
             // Closure to capture the file information.
-            reader.onload = function(e) {
+            reader.onload = (e) => {
                 const contents = new Uint8Array(e.target.result);
                 console.log(contents.length);
-                const stream = new OutStream(this.channel_ibuffer, this.emccModule);
+                const stream = new OutStream(this.buffer.i, this.emccModule);
 
                 stream.u16le(CbType.FileContentsResponse);
                 stream.u16le(MsgFlags.Ok);
@@ -506,13 +511,13 @@ class Cliprdr
                 stream.u32le(streamId);
                 stream.copyAsArray(contents);
 
-                const totalLen = stream.i - this.channel_ibuffer;
+                const totalLen = stream.i - this.buffer.i;
                 stream.i = headerSizePos;
                 stream.u32le(totalLen);
 
                 console.log(totalLen);
 
-                clipboard.sendRawData(this.channel_ibuffer, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+                this.clipboard.sendRawData(this.buffer.i, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
 
                 rdpclient.sendBufferedData();
             };

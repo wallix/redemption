@@ -303,7 +303,8 @@ function run()
 
         sendCbFile.onsubmit = (e) => {
             e.preventDefault();
-            clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW");
+            // TODO this is not Unicode
+            clipboard.sendFormat(CustomCF.FileGroupDescriptorW, Charset.Unicode, "FileGroupDescriptorW");
             rdpclient.sendBufferedData();
         };
 
