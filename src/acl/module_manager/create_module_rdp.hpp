@@ -35,7 +35,7 @@
 #include "acl/mod_pack.hpp"
 
 
-extern void create_mod_rdp(ModWrapper & mod_wrapper,
+extern ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,

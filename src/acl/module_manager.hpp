@@ -242,7 +242,8 @@ public:
                     ini, session_reactor,
                     report_message, trkeys::authentification_x_fail);
 
-            mod_wrapper.set_mod(mod_factory.create_xup_mod(client_sck));
+            auto mod_pack = mod_factory.create_xup_mod(client_sck);
+            mod_wrapper.set_mod(mod_pack);
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             mod_wrapper.connected = true;
             mod_wrapper.show_osd_flag = true;
@@ -254,29 +255,40 @@ public:
             // %%% auto mod = mod_factory.create_mod_rdp(); %%%
             // %%% mod_wrapper.set_mod(mod, nullptr, nullptr);
 
-            create_mod_rdp(mod_wrapper,
-                authentifier, report_message, this->ini,
-                mod_wrapper.get_graphics(), this->front, this->client_info,
-                this->rail_client_execute, this->keymap.key_flags,
-                this->glyphs, this->theme,
-                this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_,
-                this->sesman,
-                this->file_system_license_store,
-                this->gen, this->timeobj, this->cctx,
-                this->server_auto_reconnect_packet);
-                
-            if (ini.get<cfg::globals::bogus_refresh_rect>() &&
-                ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                (client_info.cs_monitor.monitorCount > 1)) {
-                mod_wrapper.get_mod()->rdp_suppress_display_updates();
-                mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
-                    client_info.screen_info.width, client_info.screen_info.height);
+            try {
+                auto mod_pack = create_mod_rdp(mod_wrapper,
+                    authentifier, report_message, this->ini,
+                    mod_wrapper.get_graphics(), this->front, this->client_info,
+                    this->rail_client_execute, this->keymap.key_flags,
+                    this->glyphs, this->theme,
+                    this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_,
+                    this->sesman,
+                    this->file_system_license_store,
+                    this->gen, this->timeobj, this->cctx,
+                    this->server_auto_reconnect_packet);
+
+                mod_wrapper.set_mod(mod_pack);
+
+                if (ini.get<cfg::globals::bogus_refresh_rect>() &&
+                    ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                    (client_info.cs_monitor.monitorCount > 1)) {
+                    mod_wrapper.get_mod()->rdp_suppress_display_updates();
+                    mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
+                        client_info.screen_info.width, client_info.screen_info.height);
+                }
+                mod_wrapper.get_mod()->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
+                ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+                mod_wrapper.show_osd_flag = true;
+                mod_wrapper.connected = true;
             }
-            mod_wrapper.get_mod()->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
-            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
-            ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-            mod_wrapper.show_osd_flag = true;
-            mod_wrapper.connected = true;
+            catch (...) {
+                report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
+                this->front.must_be_stop_capture();
+
+                throw;
+            }
+                
         }
         break;
 

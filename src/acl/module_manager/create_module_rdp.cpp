@@ -429,7 +429,7 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
 }
 
 
-void create_mod_rdp(ModWrapper & mod_wrapper,
+ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
@@ -640,235 +640,224 @@ void create_mod_rdp(ModWrapper & mod_wrapper,
     mod_rdp_params.enable_restricted_admin_mode = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
     mod_rdp_params.file_system_params.smartcard_passthrough        = smartcard_passthrough;
 
-    try {
-        using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
+    using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
 
-        LogCategoryFlags dont_log_category;
-        if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
-            dont_log_category |= LogCategoryId::Drive;
-        }
-        if (bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm)) {
-            dont_log_category |= LogCategoryId::Clipboard;
-        }
+    LogCategoryFlags dont_log_category;
+    if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
+        dont_log_category |= LogCategoryId::Drive;
+    }
+    if (bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm)) {
+        dont_log_category |= LogCategoryId::Clipboard;
+    }
 
-        const char * const name = "RDP Target";
+    const char * const name = "RDP Target";
 
-        Rect const adjusted_client_execute_rect =
-            rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
-                    client_info.screen_info.width,
-                    client_info.screen_info.height
-                ));
+    Rect const adjusted_client_execute_rect =
+        rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
+                client_info.screen_info.width,
+                client_info.screen_info.height
+            ));
 
-        const bool host_mod_in_widget = (client_info.remote_program 
-            && !mod_rdp_params.remote_app_params.enable_remote_program);
+    const bool host_mod_in_widget = (client_info.remote_program 
+        && !mod_rdp_params.remote_app_params.enable_remote_program);
 
-        if (host_mod_in_widget) {
-            client_info.screen_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
-            client_info.screen_info.height = adjusted_client_execute_rect.cy;
-            client_info.cs_monitor = GCC::UserData::CSMonitor{};
-        }
-        else {
-            rail_client_execute.reset(false);
-        }
+    if (host_mod_in_widget) {
+        client_info.screen_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
+        client_info.screen_info.height = adjusted_client_execute_rect.cy;
+        client_info.cs_monitor = GCC::UserData::CSMonitor{};
+    }
+    else {
+        rail_client_execute.reset(false);
+    }
 
-        // ================== FileValidator ============================
-        auto & vp = mod_rdp_params.validator_params;
-        vp.log_if_accepted = ini.get<cfg::file_verification::log_if_accepted>();
-        vp.enable_clipboard_text_up = ini.get<cfg::file_verification::clipboard_text_up>();
-        vp.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
-        vp.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
-        vp.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
+    // ================== FileValidator ============================
+    auto & vp = mod_rdp_params.validator_params;
+    vp.log_if_accepted = ini.get<cfg::file_verification::log_if_accepted>();
+    vp.enable_clipboard_text_up = ini.get<cfg::file_verification::clipboard_text_up>();
+    vp.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
+    vp.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
+    vp.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
 
-        bool enable_validator = ini.get<cfg::file_verification::enable_up>() 
-            || ini.get<cfg::file_verification::enable_down>();
+    bool enable_validator = ini.get<cfg::file_verification::enable_up>() 
+        || ini.get<cfg::file_verification::enable_down>();
 
-        std::unique_ptr<RdpData::FileValidator> file_validator;
-        int validator_fd = -1;
+    std::unique_ptr<RdpData::FileValidator> file_validator;
+    int validator_fd = -1;
 
-        if (enable_validator) {
-            auto const& socket_path = ini.get<cfg::file_verification::socket_path>();
-            bool const no_log_for_unix_socket = false;
-            unique_fd ufd = addr_connect(socket_path.c_str(), no_log_for_unix_socket);
-            if (ufd) {
-                validator_fd = ufd.fd();
-                fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
-                file_validator = std::make_unique<RdpData::FileValidator>(
-                    std::move(ufd),
-                    RdpData::FileValidator::CtxError{
-                        report_message,
-                        mod_rdp_params.validator_params.up_target_name,
-                        mod_rdp_params.validator_params.down_target_name,
-                        session_reactor, timer_events_, front
-                    });
-                file_validator->service.send_infos({
-                    "server_ip"_av, ini.get<cfg::context::target_host>(),
-                    "client_ip"_av, ini.get<cfg::globals::host>(),
-                    "auth_user"_av, ini.get<cfg::globals::auth_user>()
-                });
-            }
-            else {
-                LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
-                file_verification_error(
-                    front, session_reactor, report_message,
+    if (enable_validator) {
+        auto const& socket_path = ini.get<cfg::file_verification::socket_path>();
+        bool const no_log_for_unix_socket = false;
+        unique_fd ufd = addr_connect(socket_path.c_str(), no_log_for_unix_socket);
+        if (ufd) {
+            validator_fd = ufd.fd();
+            fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
+            file_validator = std::make_unique<RdpData::FileValidator>(
+                std::move(ufd),
+                RdpData::FileValidator::CtxError{
+                    report_message,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
-                    "Unable to connect to FileValidator service"_av
-                );
-                // enable_validator = false;
-                throw Error(ERR_SOCKET_CONNECT_FAILED);
-            }
-        }
-        // ================== End FileValidator =========================
-
-        // ================== Metrics =========================
-        bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
-            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
-
-        std::unique_ptr<RdpData::ModMetrics> metrics;
-
-        if (enable_metrics) {
-            metrics = std::make_unique<RdpData::ModMetrics>(
-                ini.get<cfg::metrics::log_dir_path>().as_string(),
-                ini.get<cfg::context::session_id>(),
-                hmac_user(
-                    ini.get<cfg::globals::auth_user>(),
-                    ini.get<cfg::metrics::sign_key>()),
-                hmac_account(
-                    ini.get<cfg::globals::target_user>(),
-                    ini.get<cfg::metrics::sign_key>()),
-                hmac_device_service(
-                    ini.get<cfg::globals::target_device>(),
-                    ini.get<cfg::context::target_service>(),
-                    ini.get<cfg::metrics::sign_key>()),
-                hmac_client_info(
-                    ini.get<cfg::globals::host>(),
-                    client_info.screen_info,
-                    ini.get<cfg::metrics::sign_key>()),
-                timeobj.get_time(),
-                ini.get<cfg::metrics::log_file_turnover_interval>(),
-                ini.get<cfg::metrics::log_interval>());
-        }
-        // ================== End Metrics ======================
-
-        unique_fd client_sck = 
-            connect_to_target_host(ini, session_reactor, report_message, trkeys::authentification_rdp_fail);
-
-        auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
-            mod_wrapper,
-            ini,
-            name,
-            std::move(client_sck),
-            ini.get<cfg::debug::mod_rdp>(),
-            &ini.get_mutable_ref<cfg::context::auth_error_message>(),
-            session_reactor,
-            fd_events_,
-            graphic_fd_events_,
-            timer_events_,
-            graphic_events_,
-            sesman,
-            drawable,
-            front,
-            client_info,
-            ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
-            gen,
-            timeobj,
-            channels_authorizations,
-            mod_rdp_params,
-            tls_client_params,
-            authentifier,
-            report_message,
-            dont_log_category,
-            file_system_license_store,
-            ini,
-            enable_metrics ? &metrics->protocol_metrics : nullptr,
-            enable_validator ? &file_validator->service : nullptr
-        );
-
-        if (enable_validator) {
-            new_mod->rdp_data.file_validator = std::move(file_validator);
-            LOG(LOG_INFO, "create_module_rdp::fd_events_.create_top_executor");
-            new_mod->rdp_data.file_validator->validator_event = fd_events_.create_top_executor(session_reactor, validator_fd)
-            .set_timeout(std::chrono::milliseconds::max())
-            .on_timeout(jln::always_ready([]{}))
-            .on_exit(jln::propagate_exit())
-            .on_action(jln::always_ready([rdp=new_mod.get()]() {
-                rdp->DLP_antivirus_check_channels_files();
-            }));
-        }
-
-        if (enable_metrics) {
-            new_mod->rdp_data.metrics = std::move(metrics);
-            LOG(LOG_INFO, "create_module_rdp::timer_events_.create_timer_executor");
-            new_mod->rdp_data.metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
-                .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->rdp_data.metrics.get()](JLN_TIMER_CTX ctx){
-                    metrics->log(ctx.get_current_time());
-                    return ctx.ready();
-                })
-            ;
-        }
-
-        if (new_mod) {
-            assert(&ini == &ini);
-            new_mod->get_rdp_factory().always_file_storage
-              = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
-            switch (ini.get<cfg::file_storage::store_file>())
-            {
-                case RdpStoreFile::never:
-                    break;
-                case RdpStoreFile::on_invalid_verification:
-                    if (!enable_validator) {
-                        break;
-                    }
-                    [[fallthrough]];
-                case RdpStoreFile::always:
-                    new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), &gen, &ini, &cctx]{
-                        return mod->get_fdx_capture(gen, ini, cctx);
-                    };
-            }
-        }
-
-        if (host_mod_in_widget) {
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
-
-            std::string target_info = str_concat(
-                ini.get<cfg::context::target_str>(),
-                ':',
-                ini.get<cfg::globals::primary_user_id>());
-
-            rail_client_execute.set_target_info(target_info);
-
-            auto* host_mod = new RailModuleHostMod(
-                ini,
-                session_reactor,
-                timer_events_,
-                graphic_events_,
-                drawable,
-                front,
-                client_info.screen_info.width,
-                client_info.screen_info.height,
-                adjusted_client_execute_rect,
-                std::move(new_mod),
-                rail_client_execute,
-                glyphs,
-                theme,
-                client_info.cs_monitor,
-                !ini.get<cfg::globals::is_rec>()
-            );
-
-            ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod};
-            mod_wrapper.set_mod(mod_pack);
+                    session_reactor, timer_events_, front
+                });
+            file_validator->service.send_infos({
+                "server_ip"_av, ini.get<cfg::context::target_host>(),
+                "client_ip"_av, ini.get<cfg::globals::host>(),
+                "auth_user"_av, ini.get<cfg::globals::auth_user>()
+            });
         }
         else {
-            ModPack mod_pack{new_mod.release(), &(new_mod.get()->mod), new_mod->mod.get_windowing_api(), nullptr};
-            mod_wrapper.set_mod(mod_pack);
+            LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
+            file_verification_error(
+                front, session_reactor, report_message,
+                mod_rdp_params.validator_params.up_target_name,
+                mod_rdp_params.validator_params.down_target_name,
+                "Unable to connect to FileValidator service"_av
+            );
+            // enable_validator = false;
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
         }
     }
-    catch (...) {
-        report_message.log6(LogId::SESSION_CREATION_FAILED, session_reactor.get_current_time(), {});
+    // ================== End FileValidator =========================
 
-        front.must_be_stop_capture();
+    // ================== Metrics =========================
+    bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
+        && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
-        throw;
+    std::unique_ptr<RdpData::ModMetrics> metrics;
+
+    if (enable_metrics) {
+        metrics = std::make_unique<RdpData::ModMetrics>(
+            ini.get<cfg::metrics::log_dir_path>().as_string(),
+            ini.get<cfg::context::session_id>(),
+            hmac_user(
+                ini.get<cfg::globals::auth_user>(),
+                ini.get<cfg::metrics::sign_key>()),
+            hmac_account(
+                ini.get<cfg::globals::target_user>(),
+                ini.get<cfg::metrics::sign_key>()),
+            hmac_device_service(
+                ini.get<cfg::globals::target_device>(),
+                ini.get<cfg::context::target_service>(),
+                ini.get<cfg::metrics::sign_key>()),
+            hmac_client_info(
+                ini.get<cfg::globals::host>(),
+                client_info.screen_info,
+                ini.get<cfg::metrics::sign_key>()),
+            timeobj.get_time(),
+            ini.get<cfg::metrics::log_file_turnover_interval>(),
+            ini.get<cfg::metrics::log_interval>());
     }
+    // ================== End Metrics ======================
+
+    unique_fd client_sck = 
+        connect_to_target_host(ini, session_reactor, report_message, trkeys::authentification_rdp_fail);
+
+    auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
+        mod_wrapper,
+        ini,
+        name,
+        std::move(client_sck),
+        ini.get<cfg::debug::mod_rdp>(),
+        &ini.get_mutable_ref<cfg::context::auth_error_message>(),
+        session_reactor,
+        fd_events_,
+        graphic_fd_events_,
+        timer_events_,
+        graphic_events_,
+        sesman,
+        drawable,
+        front,
+        client_info,
+        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        gen,
+        timeobj,
+        channels_authorizations,
+        mod_rdp_params,
+        tls_client_params,
+        authentifier,
+        report_message,
+        dont_log_category,
+        file_system_license_store,
+        ini,
+        enable_metrics ? &metrics->protocol_metrics : nullptr,
+        enable_validator ? &file_validator->service : nullptr
+    );
+
+    if (enable_validator) {
+        new_mod->rdp_data.file_validator = std::move(file_validator);
+        LOG(LOG_INFO, "create_module_rdp::fd_events_.create_top_executor");
+        new_mod->rdp_data.file_validator->validator_event = fd_events_.create_top_executor(session_reactor, validator_fd)
+        .set_timeout(std::chrono::milliseconds::max())
+        .on_timeout(jln::always_ready([]{}))
+        .on_exit(jln::propagate_exit())
+        .on_action(jln::always_ready([rdp=new_mod.get()]() {
+            rdp->DLP_antivirus_check_channels_files();
+        }));
+    }
+
+    if (enable_metrics) {
+        new_mod->rdp_data.metrics = std::move(metrics);
+        LOG(LOG_INFO, "create_module_rdp::timer_events_.create_timer_executor");
+        new_mod->rdp_data.metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
+            .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
+            .on_action([metrics = new_mod->rdp_data.metrics.get()](JLN_TIMER_CTX ctx){
+                metrics->log(ctx.get_current_time());
+                return ctx.ready();
+            })
+        ;
+    }
+
+    if (new_mod) {
+        assert(&ini == &ini);
+        new_mod->get_rdp_factory().always_file_storage  = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
+        switch (ini.get<cfg::file_storage::store_file>())
+        {
+            case RdpStoreFile::never:
+                break;
+            case RdpStoreFile::on_invalid_verification:
+                if (!enable_validator) {
+                    break;
+                }
+                [[fallthrough]];
+            case RdpStoreFile::always:
+                new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), &gen, &ini, &cctx]{ return mod->get_fdx_capture(gen, ini, cctx);};
+        }
+    }
+
+    if (!host_mod_in_widget) {
+        ModPack mod_pack{new_mod.release(), &(new_mod.get()->mod), new_mod->mod.get_windowing_api(), nullptr};
+        return mod_pack;
+    }
+
+    // TODO: this should move to mod_manager
+    // Host Mod In Widget
+    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+
+    std::string target_info = str_concat(
+        ini.get<cfg::context::target_str>(),
+        ':',
+        ini.get<cfg::globals::primary_user_id>());
+
+    rail_client_execute.set_target_info(target_info);
+
+    auto* host_mod = new RailModuleHostMod(
+        ini,
+        session_reactor,
+        timer_events_,
+        graphic_events_,
+        drawable,
+        front,
+        client_info.screen_info.width,
+        client_info.screen_info.height,
+        adjusted_client_execute_rect,
+        std::move(new_mod),
+        rail_client_execute,
+        glyphs,
+        theme,
+        client_info.cs_monitor,
+        !ini.get<cfg::globals::is_rec>()
+    );
+
+    ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod};
+    return mod_pack;
 }
