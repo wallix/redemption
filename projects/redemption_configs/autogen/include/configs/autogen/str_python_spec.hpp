@@ -144,8 +144,9 @@ hide_non_printable_kbd_input = boolean(default=False)
 [client]
 
 # cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic
+# (values are comma-separated)
 #_advanced
-keyboard_layout_proposals = string_list(default=list('en-US, fr-FR, de-DE, ru-RU'))
+keyboard_layout_proposals = string(default='en-US, fr-FR, de-DE, ru-RU')
 
 # If true, ignore password provided by RDP client, user need do login manually.
 #_advanced
@@ -271,22 +272,6 @@ enable_remotefx = boolean(default=True)
 
 bogus_pointer_xormask_padding = boolean(default=False)
 
-# Disables supported drawing orders:
-#    0: DstBlt
-#    1: PatBlt
-#    2: ScrBlt
-#    3: MemBlt
-#    4: Mem3Blt
-#    8: LineTo
-#   15: MultiDstBlt
-#   16: MultiPatBlt
-#   17: MultiScrBlt
-#   18: MultiOpaqueRect
-#   22: Polyline
-# This option takes precedence over the option Extra orders of section mod_rdp.
-#_advanced
-disabled_orders = string_list(default=list())
-
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
 force_bitmap_cache_v2_with_am = boolean(default=True)
@@ -309,14 +294,22 @@ disconnect_on_logon_user_change = boolean(default=False)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
-# Enables support of additional drawing orders:
+# Disables supported drawing orders:
+#    0: DstBlt
+#    1: PatBlt
+#    2: ScrBlt
+#    3: MemBlt
+#    4: Mem3Blt
+#    8: LineTo
 #   15: MultiDstBlt
 #   16: MultiPatBlt
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
-#   22: PolylinePlease see also "Disabled orders" in "client" section.
-#_advanced
-extra_orders = string_list(default=list('15,16,17,18,22'))
+#   22: Polyline
+# 
+# (values are comma-separated)
+#_hidden
+disabled_orders = string(default='')
 
 # NLA authentication in secondary target.
 #_hidden
@@ -340,12 +333,14 @@ cache_waiting_list = boolean(default=True)
 persist_bitmap_cache_on_disk = boolean(default=False)
 
 # Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# (values are comma-separated)
 #_hidden
-allow_channels = string_list(default=list('*'))
+allow_channels = string(default='*')
 
 # Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# (values are comma-separated)
 #_hidden
-deny_channels = string_list(default=list())
+deny_channels = string(default='')
 
 # Enables support of Client/Server Fast-Path Input/Update PDUs.
 # Fast-Path is required for Windows Server 2012 (or more recent)!
@@ -360,8 +355,9 @@ server_redirection_support = boolean(default=False)
 #_advanced
 bogus_sc_net_size = boolean(default=True)
 
+# (values are comma-separated)
 #_advanced
-proxy_managed_drives = string_list(default=list())
+proxy_managed_drives = string(default='')
 
 #_hidden
 ignore_auth_channel = boolean(default=False)
@@ -687,8 +683,9 @@ clipboard_down = boolean(default=False)
 #   2: RRE
 #   16: ZRLE
 #   -239 (0xFFFFFF11): Cursor pseudo-encoding
+# (values are comma-separated)
 #_advanced
-encodings = string_list(default=list())
+encodings = string(default='')
 
 # VNC server clipboard data encoding type.
 #_advanced

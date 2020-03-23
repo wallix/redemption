@@ -122,10 +122,14 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     //mod_rdp_params.disconnect_on_logon_user_change = false;
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
-    //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = true;
     mod_rdp_params.experimental_fix_input_event_sync = false;
     mod_rdp_params.use_license_store                 = false;
+    mod_rdp_params.disabled_orders                 = TS_NEG_DRAWNINEGRID_INDEX | TS_NEG_MULTI_DRAWNINEGRID_INDEX |
+                                                     TS_NEG_SAVEBITMAP_INDEX | TS_NEG_MULTIDSTBLT_INDEX | TS_NEG_MULTIPATBLT_INDEX |
+                                                     TS_NEG_MULTISCRBLT_INDEX | TS_NEG_MULTIOPAQUERECT_INDEX | TS_NEG_FAST_INDEX_INDEX |
+                                                     TS_NEG_POLYGON_SC_INDEX | TS_NEG_POLYGON_CB_INDEX | TS_NEG_POLYLINE_INDEX |
+                                                     TS_NEG_FAST_GLYPH_INDEX | TS_NEG_ELLIPSE_SC_INDEX | TS_NEG_ELLIPSE_CB_INDEX;
 
     // To always get the same client random, in tests
     LCGRandom gen;
@@ -228,7 +232,11 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     //mod_rdp_params.disconnect_on_logon_user_change = false;
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
-    //mod_rdp_params.extra_orders                    = "";
+    mod_rdp_params.disabled_orders                 = TS_NEG_DRAWNINEGRID_INDEX | TS_NEG_MULTI_DRAWNINEGRID_INDEX |
+                                                     TS_NEG_SAVEBITMAP_INDEX | TS_NEG_MULTIDSTBLT_INDEX | TS_NEG_MULTIPATBLT_INDEX |
+                                                     TS_NEG_MULTISCRBLT_INDEX | TS_NEG_MULTIOPAQUERECT_INDEX | TS_NEG_FAST_INDEX_INDEX |
+                                                     TS_NEG_POLYGON_SC_INDEX | TS_NEG_POLYGON_CB_INDEX | TS_NEG_POLYLINE_INDEX |
+                                                     TS_NEG_FAST_GLYPH_INDEX | TS_NEG_ELLIPSE_SC_INDEX | TS_NEG_ELLIPSE_CB_INDEX;
     mod_rdp_params.large_pointer_support             = true;
     mod_rdp_params.experimental_fix_input_event_sync = false;
     mod_rdp_params.use_license_store                 = false;

@@ -22,10 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "core/RDP/capabilities/order.hpp"
 
-enum class OnlyThoseSupportedByModRdp : bool { No, Yes };
-
-PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog,
-    OnlyThoseSupportedByModRdp only_those_supported_by_mod_rdp) noexcept;
+PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog) noexcept;
 
 inline static constexpr auto order_indexes_supported() noexcept
 {

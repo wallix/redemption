@@ -1996,16 +1996,15 @@ public:
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
         , primary_drawing_orders_support(
-            mod_rdp_params.primary_drawing_orders_support &
-            [](auto& order_support){
+            [](auto& order_support, PrimaryDrawingOrdersSupport const& disabled_orders){
                 PrimaryDrawingOrdersSupport client_support;
                 for (auto idx : order_indexes_supported()) {
-                    if (order_support[idx]) {
+                    if (order_support[idx] && !disabled_orders.test(idx)) {
                         client_support |= idx;
                     }
                 }
                 return client_support;
-            }(info.order_caps.orderSupport))
+            }(info.order_caps.orderSupport, mod_rdp_params.disabled_orders))
         // info.order_caps.orderSupport
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)

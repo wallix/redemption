@@ -96,7 +96,6 @@ namespace cfg {
         struct enable_osd_4_eyes;
         struct enable_remotefx;
         struct bogus_pointer_xormask_padding;
-        struct disabled_orders;
         struct force_bitmap_cache_v2_with_am;
     };
 
@@ -104,7 +103,7 @@ namespace cfg {
         struct rdp_compression;
         struct disconnect_on_logon_user_change;
         struct open_session_timeout;
-        struct extra_orders;
+        struct disabled_orders;
         struct enable_nla;
         struct enable_kerberos;
         struct tls_min_level;

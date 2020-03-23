@@ -39,6 +39,20 @@ cfg::client::keyboard_layout ⇒ keyboard_layout   [unsigned int]
 cfg::client::disable_tsk_switch_shortcuts ⇐ disable_tsk_switch_shortcuts   [bool]
     If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
 
+cfg::mod_rdp::disabled_orders ⇐ mod_rdp:disabled_orders   [std::string]
+    Disables supported drawing orders:
+       0: DstBlt
+       1: PatBlt
+       2: ScrBlt
+       3: MemBlt
+       4: Mem3Blt
+       8: LineTo
+      15: MultiDstBlt
+      16: MultiPatBlt
+      17: MultiScrBlt
+      18: MultiOpaqueRect
+      22: Polyline
+    
 cfg::mod_rdp::enable_nla ⇐ mod_rdp:enable_nla   [bool]
     NLA authentication in secondary target.
 cfg::mod_rdp::enable_kerberos ⇐ mod_rdp:enable_kerberos   [bool]

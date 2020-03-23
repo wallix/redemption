@@ -107,7 +107,7 @@ const redemptionLoadModule = function(Module, window)
         }
 
         delete() {
-            for (channel of this._channels) {
+            for (const channel of this._channels) {
                 channel.delete();
             }
             this.native.delete();
@@ -197,8 +197,9 @@ const redemptionLoadModule = function(Module, window)
         formatListFormat: wCb_em2js_U8p,
         formatListStop: identity,
         formatDataResponse: wCb_em2js_U8p,
-        formatDataResponseNbFileName: identity,
+        formatDataResponseFileStart: identity,
         formatDataResponseFile: wCb_em2js_U8p,
+        formatDataResponseFileStop: identity,
         formatDataRequest: identity,
         fileContentsRequest: identity,
         fileContentsResponse: wCb_em2js_U8p,

@@ -20,16 +20,11 @@ Author(s): Jonathan Poelen
 
 #include "utils/parse_primary_drawing_orders.hpp"
 
-PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog,
-    OnlyThoseSupportedByModRdp only_those_supported_by_mod_rdp) noexcept
+PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog) noexcept
 {
-    PrimaryDrawingOrdersSupport orders_support;
+    PrimaryDrawingOrdersSupport primary_orders;
 
-    bool const only_those_supported_by_mod_rdp_b = (OnlyThoseSupportedByModRdp::Yes == only_those_supported_by_mod_rdp);
-
-    const char* extra = (only_those_supported_by_mod_rdp_b ? "Extra" : "");
-
-    LOG_IF(bEnableLog, LOG_INFO, "RDP %sPrimaryDrawingOrders=\"%s\"", extra, orders);
+    LOG_IF(bEnableLog, LOG_INFO, "RDP PrimaryDrawingOrders=\"%s\"", orders);
 
     char * end;
     char const * p = orders;
@@ -42,98 +37,83 @@ PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, boo
         switch (order_number)
         {
         case TS_NEG_DSTBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=DstBlt", extra);
-            if (only_those_supported_by_mod_rdp_b) {
-                LOG(LOG_WARNING, "RDP ExtraPrimaryDrawingOrder=DstBlt (ignored)");
-            }
-            else {
-                orders_support.set(TS_NEG_DSTBLT_INDEX);
-            }
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=DstBlt");
+
+            primary_orders.set(TS_NEG_DSTBLT_INDEX);
             break;
         case TS_NEG_PATBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=PatBlt", extra);
-            if (only_those_supported_by_mod_rdp_b) {
-                LOG(LOG_WARNING, "RDP ExtraPrimaryDrawingOrder=PatBlt (ignored)");
-            }
-            else {
-                orders_support.set(TS_NEG_PATBLT_INDEX);
-            }
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=PatBlt");
+
+            primary_orders.set(TS_NEG_PATBLT_INDEX);
             break;
         case TS_NEG_SCRBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=ScrBlt", extra);
-            if (only_those_supported_by_mod_rdp_b) {
-                LOG(LOG_WARNING, "RDP ExtraPrimaryDrawingOrder=ScrBlt (ignored)");
-            }
-            else {
-                orders_support.set(TS_NEG_SCRBLT_INDEX);
-            }
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=ScrBlt");
+
+            primary_orders.set(TS_NEG_SCRBLT_INDEX);
             break;
         case TS_NEG_MEMBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=MemBlt", extra);
-            if (only_those_supported_by_mod_rdp_b) {
-                LOG(LOG_WARNING, "RDP ExtraPrimaryDrawingOrder=MemBlt (ignored)");
-            }
-            else {
-                orders_support.set(TS_NEG_MEMBLT_INDEX);
-            }
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MemBlt");
+
+            primary_orders.set(TS_NEG_MEMBLT_INDEX);
             break;
         case TS_NEG_MEM3BLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=Mem3Blt", extra);
-            if (only_those_supported_by_mod_rdp_b) {
-                LOG(LOG_WARNING, "RDP ExtraPrimaryDrawingOrder=Mem3Blt (ignored)");
-            }
-            else {
-                orders_support.set(TS_NEG_MEM3BLT_INDEX);
-            }
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=Mem3Blt");
+
+            primary_orders.set(TS_NEG_MEM3BLT_INDEX);
             break;
         case TS_NEG_LINETO_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=LineTo", extra);
-            if (only_those_supported_by_mod_rdp_b) {
-                LOG(LOG_WARNING, "RDP ExtraPrimaryDrawingOrder=LineTo (ignored)");
-            }
-            else {
-                orders_support.set(TS_NEG_LINETO_INDEX);
-            }
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=LineTo");
+
+            primary_orders.set(TS_NEG_LINETO_INDEX);
             break;
 
         case TS_NEG_MULTIDSTBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=MultiDstBlt", extra);
-            orders_support.set(TS_NEG_MULTIDSTBLT_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiDstBlt");
+
+            primary_orders.set(TS_NEG_MULTIDSTBLT_INDEX);
             break;
         case TS_NEG_MULTIPATBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=MultiPatBlt", extra);
-            orders_support.set(TS_NEG_MULTIPATBLT_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiPatBlt");
+
+            primary_orders.set(TS_NEG_MULTIPATBLT_INDEX);
             break;
         case TS_NEG_MULTISCRBLT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=MultiScrBlt", extra);
-            orders_support.set(TS_NEG_MULTISCRBLT_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiScrBlt");
+
+            primary_orders.set(TS_NEG_MULTISCRBLT_INDEX);
             break;
         case TS_NEG_MULTIOPAQUERECT_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=MultiOpaqueRect", extra);
-            orders_support.set(TS_NEG_MULTIOPAQUERECT_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=MultiOpaqueRect");
+
+            primary_orders.set(TS_NEG_MULTIOPAQUERECT_INDEX);
             break;
         case TS_NEG_POLYGON_SC_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=PolygonSC", extra);
-            orders_support.set(TS_NEG_POLYGON_SC_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=PolygonSC");
+
+            primary_orders.set(TS_NEG_POLYGON_SC_INDEX);
             break;
         case TS_NEG_POLYGON_CB_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=PolygonCB", extra);
-            orders_support.set(TS_NEG_POLYGON_CB_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=PolygonCB");
+
+            primary_orders.set(TS_NEG_POLYGON_CB_INDEX);
             break;
         case TS_NEG_POLYLINE_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=Polyline", extra);
-            orders_support.set(TS_NEG_POLYLINE_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=Polyline");
+
+            primary_orders.set(TS_NEG_POLYLINE_INDEX);
             break;
         case TS_NEG_ELLIPSE_SC_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=EllipseSC", extra);
-            orders_support.set(TS_NEG_ELLIPSE_SC_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=EllipseSC");
+
+            primary_orders.set(TS_NEG_ELLIPSE_SC_INDEX);
             break;
         case TS_NEG_ELLIPSE_CB_INDEX:
-            LOG_IF(bEnableLog, LOG_INFO, "RDP %sOrder=EllipseCB", extra);
-            orders_support.set(TS_NEG_ELLIPSE_SC_INDEX);
+            LOG_IF(bEnableLog, LOG_INFO, "RDP Order=EllipseCB");
+
+            primary_orders.set(TS_NEG_ELLIPSE_SC_INDEX);
             break;
         default:
-            LOG(LOG_WARNING, "Unknown RDP %sPrimaryDrawingOrder=%ld", extra, order_number);
+            LOG(LOG_WARNING, "Unknown RDP PrimaryDrawingOrder=%ld", order_number);
         }
 
         p = end;
@@ -142,5 +122,5 @@ PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, boo
         }
     }
 
-    return orders_support;
+    return primary_orders;
 }

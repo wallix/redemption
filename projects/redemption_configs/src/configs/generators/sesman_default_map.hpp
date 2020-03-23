@@ -42,8 +42,23 @@ using namespace cfg_attributes;
 
 namespace python
 {
+    template<class T, class R = void>
+    constexpr bool is_integral_type_v =
+        std::is_base_of<types::integer_base, T>::value
+     || std::is_integral<T>::value;
+
+    template<class T, class R = void>
+    using enable_if_integral_type = std::enable_if_t<is_integral_type_v<T>, R>;
+
     template<class T>
     void write_type(std::ostream& out, type_<std::string>, T const& x)
+    {
+        out << "u'" << io_quoted2{x} << "'";
+    }
+
+    template<class Int, class T>
+    enable_if_integral_type<Int>
+    write_type(std::ostream& out, type_<types::list<Int>>, T const& x)
     {
         out << "u'" << io_quoted2{x} << "'";
     }
@@ -54,11 +69,7 @@ namespace python
     }
 
     template<class Int, class T>
-    std::enable_if_t<
-        std::is_base_of<types::integer_base, Int>::value
-        or
-        std::is_integral<Int>::value
-    >
+    enable_if_integral_type<Int>
     write_type(std::ostream& out, type_<Int>, T const& i)
     {
         out << +python_spec_writer::impl::stringize_integral(i);

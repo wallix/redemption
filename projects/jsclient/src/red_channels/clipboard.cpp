@@ -442,7 +442,7 @@ void ClipboardChannel::process_format_data_response(
         if (is_first_packet)
         {
             auto nb_item = in_stream.in_uint32_le();
-            emval_call(this->callbacks, "formatDataResponseNbFileName", nb_item);
+            emval_call(this->callbacks, "formatDataResponseFileStart", nb_item);
         }
 
         namespace constants = constants::file_group_descriptor_w;
@@ -486,6 +486,7 @@ void ClipboardChannel::process_format_data_response(
         {
             this->requested_format_id = 0;
             this->requested_custom_format_id = CustomFormat::None;
+            emval_call(this->callbacks, "formatDataResponseFileStop");
         }
 
         break;
@@ -520,13 +521,13 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
 {
     const bool is_first_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_FIRST);
 
-    InStream in_stream(data);
-
     if (is_first_packet)
     {
+        InStream in_stream(data);
         ::check_throw(in_stream, 4, "FileContentsResponse::receive", ERR_RDP_DATA_TRUNCATED);
         this->stream_id = in_stream.in_uint32_le();
-        this->remaining_data_len = data_len;
+        this->remaining_data_len = data_len - 4u;
+        data = in_stream.remaining_bytes();
     }
 
     this->response_state = bool(channel_flags & CHANNELS::CHANNEL_FLAG_LAST)

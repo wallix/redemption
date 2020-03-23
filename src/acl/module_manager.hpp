@@ -350,6 +350,10 @@ public:
 
     void try_rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
     {
+        (void)left;
+        (void)top;
+        (void)right;
+        (void)bottom;
         if (this->is_disable_by_input) {
             this->graphics.begin_update();
             this->draw_osd_message_impl(this->graphics);
@@ -868,7 +872,7 @@ public:
         case MODULE_INTERNAL_TRANSITION:
             this->set_mod(mod_factory.create_transition_mod(), nullptr, nullptr);
         break;
-        case MODULE_INTERNAL_WIDGET_LOGIN: 
+        case MODULE_INTERNAL_WIDGET_LOGIN:
             this->set_mod(mod_factory.create_login_mod(), nullptr, nullptr);
         break;
 

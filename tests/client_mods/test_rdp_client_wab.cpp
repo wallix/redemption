@@ -99,7 +99,11 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.enable_krb                      = false;
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
-    mod_rdp_params.primary_drawing_orders_support  -= TS_NEG_MEM3BLT_INDEX;
+    mod_rdp_params.disabled_orders                 = TS_NEG_MEM3BLT_INDEX | TS_NEG_DRAWNINEGRID_INDEX | TS_NEG_MULTI_DRAWNINEGRID_INDEX |
+                                                     TS_NEG_SAVEBITMAP_INDEX | TS_NEG_MULTIDSTBLT_INDEX | TS_NEG_MULTIPATBLT_INDEX |
+                                                     TS_NEG_MULTISCRBLT_INDEX | TS_NEG_MULTIOPAQUERECT_INDEX | TS_NEG_FAST_INDEX_INDEX |
+                                                     TS_NEG_POLYGON_SC_INDEX | TS_NEG_POLYGON_CB_INDEX | TS_NEG_POLYLINE_INDEX |
+                                                     TS_NEG_FAST_GLYPH_INDEX | TS_NEG_ELLIPSE_SC_INDEX | TS_NEG_ELLIPSE_CB_INDEX;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;

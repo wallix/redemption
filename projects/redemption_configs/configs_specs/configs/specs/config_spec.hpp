@@ -265,22 +265,6 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_pointer_xormask_padding", set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "disabled_orders", desc{
-            "Disables supported drawing orders:\n"
-            "   0: DstBlt\n"
-            "   1: PatBlt\n"
-            "   2: ScrBlt\n"
-            "   3: MemBlt\n"
-            "   4: Mem3Blt\n"
-            "   8: LineTo\n"
-            "  15: MultiDstBlt\n"
-            "  16: MultiPatBlt\n"
-            "  17: MultiScrBlt\n"
-            "  18: MultiOpaqueRect\n"
-            "  22: Polyline\n"
-            "This option takes precedence over the option Extra orders of section mod_rdp."
-        }, set(""));
-
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
                  "force_bitmap_cache_v2_with_am",
                  desc{"Force usage of bitmap cache V2 for compatibility "
@@ -299,15 +283,20 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "open_session_timeout", set(0));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "extra_orders", desc{
-            "Enables support of additional drawing orders:\n"
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<types::list<unsigned>>(), "disabled_orders", desc{
+            "Disables supported drawing orders:\n"
+            "   0: DstBlt\n"
+            "   1: PatBlt\n"
+            "   2: ScrBlt\n"
+            "   3: MemBlt\n"
+            "   4: Mem3Blt\n"
+            "   8: LineTo\n"
             "  15: MultiDstBlt\n"
             "  16: MultiPatBlt\n"
             "  17: MultiScrBlt\n"
             "  18: MultiOpaqueRect\n"
-            "  22: Polyline"
-            "Please see also \"Disabled orders\" in \"client\" section."
-        }, set("15,16,17,18,22"));
+            "  22: Polyline\n"
+        }, set(""));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_kerberos", desc{
