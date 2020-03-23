@@ -37,57 +37,7 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "utils/sugar/bytes_view.hpp"
-
-
-
-//#include "acl/end_session_warning.hpp"
-
-//#include "acl/module_manager/mod_factory.hpp"
-//#include "acl/auth_api.hpp"
-//#include "acl/file_system_license_store.hpp"
-//#include "acl/module_manager/enums.hpp"
-//#include "configs/config.hpp"
-//#include "core/log_id.hpp"
-//#include "core/session_reactor.hpp"
-//#include "front/front.hpp"
-
-//#include "mod/internal/rail_module_host_mod.hpp"
-
-//#include "mod/mod_api.hpp"
-//#include "mod/null/null.hpp"
-//#include "mod/rdp/windowing_api.hpp"
-//#include "mod/xup/xup.hpp"
-
-//#include "transport/socket_transport.hpp"
-
-//#include "core/session_reactor.hpp"
-//#include "acl/mod_wrapper.hpp"
-//#include "acl/acl_serializer.hpp"
-
-//#include "acl/connect_to_target_host.hpp"
-
-//#include "utils/log.hpp"
-//#include "configs/config.hpp"
-//#include "core/session_reactor.hpp"
-//#include "core/report_message_api.hpp"
-//#include "utils/translation.hpp"
-//#include "utils/sugar/unique_fd.hpp"
-//#include "utils/log_siem.hpp"
-//#include "core/log_id.hpp"
-//#include "utils/netutils.hpp"
-//#include "utils/load_theme.hpp"
-//#include "utils/sugar/algostring.hpp"
-//#include "utils/sugar/scope_exit.hpp"
-//#include "utils/sugar/update_lock.hpp"
-//#include "utils/log_siem.hpp"
-//#include "utils/fileutils.hpp"
-
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
-//#include "acl/module_manager/enums.hpp"
-//#include "core/back_event_t.hpp"
-
+#include "acl/mod_pack.hpp"
 
 namespace
 {
@@ -906,14 +856,12 @@ void create_mod_rdp(ModWrapper & mod_wrapper,
                 !ini.get<cfg::globals::is_rec>()
             );
 
-            mod_wrapper.set_mod(host_mod, nullptr, &rail_client_execute);
-            mod_wrapper.rail_module_host_mod_ptr = host_mod;
-            LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
+            ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod};
+            mod_wrapper.set_mod(mod_pack);
         }
         else {
-            rdp_api*       rdpapi = &(new_mod.get()->mod);
-            windowing_api* winapi = new_mod->mod.get_windowing_api();
-            mod_wrapper.set_mod(new_mod.release(), rdpapi, winapi);
+            ModPack mod_pack{new_mod.release(), &(new_mod.get()->mod), new_mod->mod.get_windowing_api(), nullptr};
+            mod_wrapper.set_mod(mod_pack);
         }
     }
     catch (...) {

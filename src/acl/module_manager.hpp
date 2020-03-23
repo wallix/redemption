@@ -195,46 +195,46 @@ public:
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
-            mod_wrapper.set_mod(mod_factory.create_mod_bouncer(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_mod_bouncer());
         break;
         case MODULE_INTERNAL_TEST:
-            mod_wrapper.set_mod(mod_factory.create_mod_replay(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_mod_replay());
         break;
         case MODULE_INTERNAL_WIDGETTEST:
-            mod_wrapper.set_mod(mod_factory.create_widget_test_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_widget_test_mod());
         break;
         case MODULE_INTERNAL_CARD:
-            mod_wrapper.set_mod(mod_factory.create_test_card_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_test_card_mod());
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-            mod_wrapper.set_mod(mod_factory.create_selector_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_selector_mod());
         break;
         case MODULE_INTERNAL_CLOSE:
-            mod_wrapper.set_mod(mod_factory.create_close_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_close_mod());
         break;
         case MODULE_INTERNAL_CLOSE_BACK:
-            mod_wrapper.set_mod(mod_factory.create_close_mod_back_to_selector(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_close_mod_back_to_selector());
         break;
         case MODULE_INTERNAL_TARGET:
-            mod_wrapper.set_mod(mod_factory.create_interactive_target_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_interactive_target_mod());
         break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-            mod_wrapper.set_mod(mod_factory.create_valid_message_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_valid_message_mod());
         break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-            mod_wrapper.set_mod(mod_factory.create_display_message_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_display_message_mod());
         break;
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
-            mod_wrapper.set_mod(mod_factory.create_dialog_challenge_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_dialog_challenge_mod());
         break;
         case MODULE_INTERNAL_WAIT_INFO:
-            mod_wrapper.set_mod(mod_factory.create_wait_info_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_wait_info_mod());
         break;
         case MODULE_INTERNAL_TRANSITION:
-            mod_wrapper.set_mod(mod_factory.create_transition_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_transition_mod());
         break;
         case MODULE_INTERNAL_WIDGET_LOGIN: 
-            mod_wrapper.set_mod(mod_factory.create_login_mod(), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_login_mod());
         break;
 
         case MODULE_XUP: {
@@ -242,7 +242,7 @@ public:
                     ini, session_reactor,
                     report_message, trkeys::authentification_x_fail);
 
-            mod_wrapper.set_mod(mod_factory.create_xup_mod(client_sck), nullptr, nullptr);
+            mod_wrapper.set_mod(mod_factory.create_xup_mod(client_sck));
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             mod_wrapper.connected = true;
             mod_wrapper.show_osd_flag = true;
@@ -251,7 +251,8 @@ public:
 
         case MODULE_RDP:
         {
-            // %%% auto mod_rdp = mod_factory.create_mod_rdp(); %%%
+            // %%% auto mod = mod_factory.create_mod_rdp(); %%%
+            // %%% mod_wrapper.set_mod(mod, nullptr, nullptr);
 
             create_mod_rdp(mod_wrapper,
                 authentifier, report_message, this->ini,

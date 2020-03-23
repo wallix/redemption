@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "acl/mod_pack.hpp"
+
 #include "core/session_reactor.hpp" // for SessionReactor
 #include "core/client_info.hpp"     // for ClientInfo
 #include "core/front_api.hpp"       // for FrontAPI
@@ -97,7 +99,7 @@ public:
     {
     }
 
-    auto create_mod_bouncer() -> mod_api*
+    auto create_mod_bouncer() -> ModPack
     {
         auto new_mod = new Bouncer2Mod(
                             this->session_reactor,
@@ -106,10 +108,10 @@ public:
                             this->front,
                             this->client_info.screen_info.width,
                             this->client_info.screen_info.height);
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_mod_replay() -> mod_api*
+    auto create_mod_replay() -> ModPack
     {
             auto new_mod = new ReplayMod(
                 this->session_reactor,
@@ -133,10 +135,10 @@ public:
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
     
-    auto create_widget_test_mod() -> mod_api*
+    auto create_widget_test_mod() -> ModPack
     {
         auto new_mod = new WidgetTestMod(
             this->session_reactor,
@@ -146,10 +148,10 @@ public:
             this->client_info.screen_info.height,
             this->glyphs
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_test_card_mod() -> mod_api*
+    auto create_test_card_mod() -> ModPack
     {
         auto new_mod = new TestCardMod(
             this->session_reactor,
@@ -159,10 +161,10 @@ public:
             this->glyphs,
             false
         ); 
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_selector_mod() -> mod_api*
+    auto create_selector_mod() -> ModPack
     {
         auto new_mod = new SelectorMod(
             this->ini,
@@ -181,10 +183,10 @@ public:
             this->glyphs,
             this->theme
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_close_mod() -> mod_api*
+    auto create_close_mod() -> ModPack
     {
         bool back_to_selector = false;
         std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
@@ -211,10 +213,10 @@ public:
             true,
             back_to_selector
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_close_mod_back_to_selector() -> mod_api*
+    auto create_close_mod_back_to_selector() -> ModPack
     {
         bool back_to_selector = true;
         std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
@@ -241,10 +243,10 @@ public:
             true,
             back_to_selector
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_interactive_target_mod() -> mod_api*
+    auto create_interactive_target_mod() -> ModPack
     {
         auto new_mod = new InteractiveTargetMod(
             this->ini,
@@ -262,10 +264,10 @@ public:
             this->glyphs,
             this->theme
         ); 
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_valid_message_mod() -> mod_api*
+    auto create_valid_message_mod() -> ModPack
     {
         const char * message = this->ini.get<cfg::context::message>().c_str();
         const char * button = TR(trkeys::refused, language(this->ini));
@@ -289,10 +291,10 @@ public:
             this->glyphs,
             this->theme
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_display_message_mod() -> mod_api*
+    auto create_display_message_mod() -> ModPack
     {
         const char * message = this->ini.get<cfg::context::message>().c_str();
         const char * button = nullptr;
@@ -316,10 +318,10 @@ public:
             this->glyphs,
             this->theme
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
     
-    auto create_dialog_challenge_mod() -> mod_api*
+    auto create_dialog_challenge_mod() -> ModPack
     {
         const char * message = this->ini.get<cfg::context::message>().c_str();
         const char * button = nullptr;
@@ -350,10 +352,10 @@ public:
             this->theme,
             challenge
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
 
-    auto create_wait_info_mod() -> mod_api*
+    auto create_wait_info_mod() -> ModPack
     {
         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
         const char * message = this->ini.get<cfg::context::message>().c_str();
@@ -380,10 +382,10 @@ public:
             showform,
             flag
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
     
-    auto create_transition_mod() -> mod_api *
+    auto create_transition_mod() -> ModPack
     {
         auto new_mod = new TransitionMod(
             this->ini,
@@ -401,10 +403,10 @@ public:
             this->glyphs,
             this->theme
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }
     
-    auto create_login_mod() -> mod_api *    
+    auto create_login_mod() -> ModPack
     {
         char username[255]; // should use string
         username[0] = 0;
@@ -449,10 +451,10 @@ public:
             this->glyphs,
             this->theme
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }    
     
-    auto create_xup_mod(unique_fd & client_sck) -> mod_api *
+    auto create_xup_mod(unique_fd & client_sck) -> ModPack
     {
         const char * name = "XUP Target";
 
@@ -470,6 +472,6 @@ public:
             this->client_info.screen_info.height,
             safe_int(this->ini.get<cfg::context::opt_bpp>())
         );
-        return new_mod;
+        return {new_mod, nullptr, nullptr, nullptr};
     }    
 };

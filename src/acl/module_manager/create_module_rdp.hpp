@@ -32,6 +32,8 @@
 #include "keyboard/keymap2.hpp"
 #include "core/session_reactor.hpp"
 #include "acl/mod_wrapper.hpp"
+#include "acl/mod_pack.hpp"
+
 
 extern void create_mod_rdp(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,

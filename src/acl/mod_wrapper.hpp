@@ -68,6 +68,7 @@
 
 #include "core/callback_forwarder.hpp"
 #include "acl/time_before_closing.hpp"
+#include "acl/mod_pack.hpp"
 
 struct ModWrapper
 {
@@ -453,7 +454,7 @@ public:
     }
 
 
-    void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi, windowing_api* winapi)
+    void set_mod(ModPack mod_pack)
     {
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -464,11 +465,11 @@ public:
 
         this->clear_osd_message();
 
-        this->set_mod(mod.get());
+        this->set_mod(mod_pack.mod.get());
 
-        this->rail_module_host_mod_ptr = nullptr;
-        this->rdpapi = rdpapi;
-        this->winapi = winapi;
+        this->rail_module_host_mod_ptr = mod_pack.rail_module_host_ptr;
+        this->rdpapi = mod_pack.rdpapi;
+        this->winapi = mod_pack.winapi;
     }
 
     // push_mod or replace_mod

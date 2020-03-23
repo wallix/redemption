@@ -31,6 +31,7 @@
 
 #include "acl/module_manager.hpp"
 #include "mod/vnc/vnc.hpp"
+#include "acl/mod_pack.hpp"
 
 struct ModVNCWithMetrics : public mod_vnc
 {
@@ -326,12 +327,12 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
                 client_info.cs_monitor,
                 false
             );
-            mod_wrapper.set_mod(host_mod, nullptr, nullptr);
-            mod_wrapper.rail_module_host_mod_ptr = host_mod;
-            LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
+            ModPack mod_pack{host_mod, nullptr, nullptr, host_mod};
+            mod_wrapper.set_mod(mod_pack);
         }
         else {
-            mod_wrapper.set_mod(new_mod.release(), nullptr, nullptr);
+            ModPack mod_pack{new_mod.release(), nullptr, nullptr, nullptr};
+            mod_wrapper.set_mod(mod_pack);
         }
     }
     catch (...) {

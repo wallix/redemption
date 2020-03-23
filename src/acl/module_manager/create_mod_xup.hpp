@@ -25,6 +25,7 @@
 #include "acl/mod_wrapper.hpp"
 
 #include "transport/socket_transport.hpp"
+#include "acl/mod_pack.hpp"
 
 class XupModWithSocket final : public mod_api
 {
