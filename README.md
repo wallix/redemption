@@ -50,12 +50,24 @@ To compile ReDemPtion you need the following packages:
 - g++ >= 8.0 or clang++ >= 5.0 or other C++17 compiler
 
 ```sh
-apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng-dev
+apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng-dev libbz2-dev
 ```
 
 Submodule ($ `git submodule update --init`):
 - https://github.com/wallix/program_options
 - https://github.com/wallix/ppocr
+
+On Ubuntu SNAPPY dev files are broken and `SNAPPY_MAJOR`, `SNAPPY_MINOR` and `SNAPPY_PATCHLEVEL` macros are not defined.
+The simplest way to fix that is editing `/usr/include/snappy-stubs-public.h` and define these above `SNAPPY_VERSION`
+like below (change values depending on your snappy package). 
+
+```C
+#define SNAPPY_MAJOR 1
+#define SNAPPY_MINOR 1
+#define SNAPPY_PATCHLEVEL 7
+#define SNAPPY_VERSION \
+    ((SNAPPY_MAJOR << 16) | (SNAPPY_MINOR << 8) | SNAPPY_PATCHLEVEL)
+``
 
 
 ## FFmpeg
