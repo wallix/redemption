@@ -1,3 +1,8 @@
+redemption (8.0.13%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 24 Mar 2020 19:12:23 +0200
+
 redemption (8.0.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix #26432 Move disabled_orders from Configuration Options to Connection Policy
