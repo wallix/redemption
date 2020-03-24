@@ -46,6 +46,7 @@ To compile ReDemPtion you need the following packages:
 - libgssglue-dev (unnecessary since Ubuntu 17.10 and Debian 10)
 - libsnappy-dev
 - libpng-dev (libpng12-dev (< Debian 10))
+- libbz2-dev
 - libffmpeg-dev (see below)
 - g++ >= 8.0 or clang++ >= 5.0 or other C++17 compiler
 
