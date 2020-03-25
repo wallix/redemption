@@ -29,7 +29,7 @@ try:
     CRED_INDEX = "credentials"
     APPREQ_REQUIRED = 1
     APPREQ_OPTIONAL = 0
-except Exception as e:
+except Exception:
     import traceback
     tracelog = traceback.format_exc()
     try:
@@ -38,7 +38,7 @@ except Exception as e:
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
-    except Exception as e:
+    except Exception:
         # Logger().info("FAKE LOADING FAILED>>>>>> %s" %
         #               traceback.format_exc())
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
@@ -62,16 +62,6 @@ FINGERPRINT_SHA1 = 0
 FINGERPRINT_MD5 = 1
 FINGERPRINT_MD5_LEN = 16
 FINGERPRINT_SHA1_LEN = 20
-
-
-def tounicode(item):
-    if not item:
-        return u""
-    try:
-        return item.decode('utf8')
-    except:
-        pass
-    return item
 
 
 def _binary_ip(network, bits):
@@ -166,7 +156,7 @@ class Engine(object):
             if self.wabuser:
                 return self.wabuser.preferredLanguage
             return self.wabengine.who_am_i().preferredLanguage
-        except Exception as e:
+        except Exception:
             return 'en'
 
     def get_username(self):
@@ -174,13 +164,13 @@ class Engine(object):
             if not self.wabuser:
                 self.wabuser = self.wabengine.who_am_i()
             return self.wabuser.cn
-        except Exception as e:
+        except Exception:
             return self.wabuser.cn if self.wabuser else ""
 
     def get_otp_client(self):
         try:
             return self.wabengine.get_otp_client()
-        except Exception as e:
+        except Exception:
             return ''
 
     def check_license(self):
@@ -193,7 +183,7 @@ class Engine(object):
     def get_force_change_password(self):
         try:
             return self.wabuser.forceChangePwd
-        except Exception as e:
+        except Exception:
             return False
 
     def get_ssh_banner(self, lang=None):
@@ -247,7 +237,7 @@ class Engine(object):
         for i, char in enumerate(finger_raw):
             try:
                 finger_host += '%02x' % ord(char)
-            except:
+            except Exception:
                 finger_host += '%02x' % char
             if i < fingerprint_len - 1:
                 finger_host += ':'
@@ -360,9 +350,9 @@ class Engine(object):
             if self.challenge and self.challenge.recall:
                 return self.password_authenticate(
                     self.challenge.username, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
+        except AuthenticationFailed:
             self.challenge = None
-        except LicenseException as e:
+        except LicenseException:
             self.challenge = None
         except Exception:
             import traceback
@@ -397,9 +387,9 @@ class Engine(object):
             if self.challenge and self.challenge.recall:
                 return self.password_authenticate(
                     wab_login, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
+        except AuthenticationFailed:
             self.challenge = None
-        except LicenseException as e:
+        except LicenseException:
             self.challenge = None
         except Exception:
             self.challenge = None
@@ -420,9 +410,9 @@ class Engine(object):
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
-        except AuthenticationFailed as e:
+        except AuthenticationFailed:
             self.challenge = None
-        except LicenseException as e:
+        except LicenseException:
             self.challenge = None
         except Exception:
             import traceback
@@ -449,9 +439,9 @@ class Engine(object):
             if self.challenge and self.challenge.recall:
                 return self.password_authenticate(
                     wab_login, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
+        except AuthenticationFailed:
             self.challenge = None
-        except LicenseException as e:
+        except LicenseException:
             self.challenge = None
         except Exception:
             import traceback
@@ -481,9 +471,9 @@ class Engine(object):
             if self.challenge and self.challenge.recall:
                 return self.password_authenticate(
                     wab_login, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
+        except AuthenticationFailed:
             self.challenge = None
-        except LicenseException as e:
+        except LicenseException:
             self.challenge = None
         except Exception:
             self.challenge = None
@@ -714,11 +704,11 @@ class Engine(object):
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
             if not target_info.protocol == u"APP":
-                if (target_info.target_name == u'autotest' or
-                    target_info.target_name == u'bouncer2' or
-                    target_info.target_name == u'widget2_message' or
-                    target_info.target_name == u'widgettest' or
-                    target_info.target_name == u'test_card'):
+                if (target_info.target_name == u'autotest'
+                    or target_info.target_name == u'bouncer2'
+                    or target_info.target_name == u'widget2_message'
+                    or target_info.target_name == u'widgettest'
+                    or target_info.target_name == u'test_card'):
                     temp_service_login = target_info.service_login.replace(
                         u':RDP',
                         u':INTERNAL', 1)
@@ -727,9 +717,9 @@ class Engine(object):
             def fc(string):
                 return string if case_sensitive else string.lower()
 
-            if (not fc(group_filter) in fc(target_info.group) or
-                not fc(device_filter) in fc(temp_service_login) or
-                not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
+            if (not fc(group_filter) in fc(target_info.group)
+                or not fc(device_filter) in fc(temp_service_login)
+                or not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
                 item_filtered = True
                 continue
 
@@ -814,7 +804,7 @@ class Engine(object):
                 account_namedom = "%s@%s" % (account_name, account_domain)
             try:
                 group_name = right['auth_cn']
-            except:
+            except Exception:
                 group_name = right['target_group']
             if right['application_cn']:
                 target_name = right['application_cn']
@@ -833,23 +823,23 @@ class Engine(object):
             if target_context is not None:
                 if target_context.host and host is None:
                     continue
-                if (target_context.host and
-                    not is_device_in_subnet(target_context.host, host) and
-                    host != target_context.dnsname):
+                if (target_context.host
+                    and not is_device_in_subnet(target_context.host, host)
+                    and host != target_context.dnsname):
                     continue
-                if (target_context.login and
-                    account_login and
-                    target_context.login not in [
+                if (target_context.login
+                    and account_login
+                    and target_context.login not in [
                         account_login, account_logindom,
                         account_name, account_namedom]):
                     # match context login with login or name
                     # (with or without domain)
                     continue
-                if (target_context.service and
-                    service_name != target_context.service):
+                if (target_context.service
+                    and service_name != target_context.service):
                     continue
-                if (target_context.group and
-                    target_context.group != group_name):
+                if (target_context.group
+                    and target_context.group != group_name):
                     continue
 
             target_value = (service_name, group_name, right)
@@ -942,7 +932,7 @@ class Engine(object):
                 else:
                     # ambiguity on domain
                     results = []
-        except Exception as e:
+        except Exception:
             results = []
         return results
 
@@ -957,13 +947,16 @@ class Engine(object):
             if not results:
                 results = self._get_target_right_htable(
                     target_account, target_device, self.targets_alias)
-        except Exception as e:
+        except Exception:
             results = []
         right = None
-        filtered = [(r_service, r)
-                    for (r_service, r_groups, r) in results if (
-            ((not target_service) or (r_service == target_service)) and
-            ((not target_group) or (r_groups == target_group)))]
+        filtered = [
+            (r_service, r)
+            for (r_service, r_groups, r) in results if (
+                ((not target_service) or (r_service == target_service))
+                and ((not target_group) or (r_groups == target_group))
+            )
+        ]
         if filtered:
             filtered_service, right = filtered[0]
             # if ambiguity in group but not in service,
@@ -1049,7 +1042,7 @@ class Engine(object):
             return
         self.failed_secondary_set = True
         if reason:
-            self.session_diag = tounicode(reason)
+            self.session_diag = reason
         self.session_result = False
         Notify(self.wabengine, SECONDARY_CX_FAILED, {
             'user': wabuser,
@@ -1231,20 +1224,20 @@ class Engine(object):
                 target,
                 pid=pid,
                 subprotocol=subproto,
-                effective_login=tounicode(effective_login),
-                target_host=tounicode(self.host)
+                effective_login=effective_login,
+                target_host=self.host
             )
         except LicenseException:
             Logger().info("Engine start_session failed: License exception")
-            self.session_id = None
+            self.session_id, self.start_time = None, None
         except Exception:
             import traceback
-            self.session_id = None
+            self.session_id, self.start_time = None, None
             Logger().info("Engine start_session failed: (((%s)))" %
                           (traceback.format_exc()))
         Logger().debug("**** END wabengine START SESSION ")
         if self.session_id is None:
-            return None
+            return None, None
         self.service = target['service_cn']
         is_critical = target['auth_is_critical']
         device_host = target['device_host']
@@ -1314,7 +1307,7 @@ class Engine(object):
             self.wabengine.make_session_shadowing_response(
                 status=status, errmsg=errmsg, token=token, userdata=userdata
             )
-        except:
+        except Exception:
             import traceback
             Logger().info("Engine shadow_response failed: (((%s)))" %
                           (traceback.format_exc()))
@@ -1439,8 +1432,8 @@ class Engine(object):
 
     # RESTRICTIONS: NOTIFIER METHODS
     def pattern_found_notify(self, action, regex_found, current_line):
-        regex_found = tounicode(regex_found)
-        current_line = tounicode(current_line)
+        regex_found = regex_found
+        current_line = current_line
         self.session_diag = u'Restriction pattern detected (%s)' % current_line
         data = {
             "regexp": regex_found,
@@ -1667,7 +1660,7 @@ class Engine(object):
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
             authmethods = target['connection_policy_methods']
-        except:
+        except Exception:
             Logger().error("Error: Connection policy has no methods field")
             authmethods = []
         return authmethods
@@ -1680,7 +1673,7 @@ class Engine(object):
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
             conn_opts = target['connection_policy_data']
-        except:
+        except Exception:
             Logger().error("Error: Connection policy has no data field")
             conn_opts = {}
         return conn_opts
@@ -1739,7 +1732,7 @@ class Engine(object):
         login = right['account_login']
         try:
             domain = right['domain_name']
-        except:
+        except Exception:
             domain = ""
         if check_in_creds:
             login = (self.checkout.get_target_login(right)
@@ -1921,10 +1914,10 @@ class DisplayInfo(object):
         self.host = host
 
     def get_target_tuple(self):
-        return (self.target_login.encode('utf-8'),
-                self.target_name.encode('utf-8'),
-                self.service_name.encode('utf-8'),
-                self.group.encode('utf-8'))
+        return (self.target_login,
+                self.target_name,
+                self.service_name,
+                self.group)
 
 
 class ProtocolInfo(object):
