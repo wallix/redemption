@@ -1387,8 +1387,8 @@ class Sesman():
     def parse_duration(self, duration):
         if duration:
             try:
-                mpat = re.compile("(\d+)m")
-                hpat = re.compile("(\d+)h")
+                mpat = re.compile(r"(\d+)m")
+                hpat = re.compile(r"(\d+)h")
                 hres = hpat.search(duration)
                 mres = mpat.search(duration)
                 duration = 0
@@ -2489,7 +2489,7 @@ class Sesman():
 
     @staticmethod
     def convert_value(value, cotype):
-        if not isinstance(value, basestring):
+        if not isinstance(value, (str, text_type)):
             return value
         if cotype == 'int':
             return int(value)
