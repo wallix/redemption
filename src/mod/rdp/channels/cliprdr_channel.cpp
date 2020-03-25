@@ -43,7 +43,6 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 
 */
 
-
 namespace
 {
     enum class ClipDirection : bool
@@ -629,6 +628,7 @@ struct ClipboardVirtualChannel::D
 
     void reset_clip(ClipboardVirtualChannel& self, ClipCtx& clip)
     {
+        self.can_lock = false;
         this->stop_nolock_data(self, clip);
         for (ClipCtx::LockedData::LockedRange& locked_rng : clip.locked_data.ranges) {
             this->broken_file_transfer(self, clip, locked_rng.file_contents_range);
@@ -649,7 +649,7 @@ struct ClipboardVirtualChannel::D
 
     void monitor_ready(ClipboardVirtualChannel& self, ClipCtx& clip)
     {
-        bool has_lock_support = clip.optional_lock_id.is_enabled();
+        bool has_lock_support = self.can_lock;
         this->reset_clip(self, clip);
         clip.optional_lock_id.enable(has_lock_support);
     }
@@ -702,17 +702,17 @@ struct ClipboardVirtualChannel::D
         }
     }
 
-    void lock(ClipCtx& clip, bytes_view chunk_data, RDPVerbose verbose)
+    void lock(ClipboardVirtualChannel& self, ClipCtx& clip, bytes_view chunk_data)
     {
         RDPECLIP::LockClipboardDataPDU pdu;
         InStream in_stream(chunk_data);
         pdu.recv(in_stream);
 
-        if (bool(verbose & RDPVerbose::cliprdr)) {
+        if (bool(self.verbose & RDPVerbose::cliprdr)) {
             pdu.log();
         }
 
-        if (not clip.optional_lock_id.is_enabled()) {
+        if (not self.can_lock) {
             return ;
         }
 
@@ -729,7 +729,7 @@ struct ClipboardVirtualChannel::D
             pdu.log();
         }
 
-        if (not clip.optional_lock_id.is_enabled()) {
+        if (not self.can_lock) {
             return ;
         }
 
@@ -1003,9 +1003,7 @@ struct ClipboardVirtualChannel::D
         };
 
         // ignore lock if don't have CB_CAN_LOCK_CLIPDATA
-        if (not clip.optional_lock_id.is_enabled()
-         || not file_contents_request_pdu.has_optional_clipDataId()
-        ) {
+        if (not self.can_lock) {
             if (lindex >= clip.files.size()) {
                 FilecontentsRequestSendBack(
                     file_contents_request_pdu.dwFlags(),
@@ -1066,6 +1064,14 @@ struct ClipboardVirtualChannel::D
                         " double request");
                     throw Error(ERR_RDP_PROTOCOL);
             }
+        }
+        else if (not file_contents_request_pdu.has_optional_clipDataId()) {
+            LOG(LOG_ERR, "Not lock_id with CB_CAN_LOCK_CLIPDATA");
+            FilecontentsRequestSendBack(
+                file_contents_request_pdu.dwFlags(),
+                file_contents_request_pdu.streamId(),
+                sender);
+            return false;
         }
         else {
             const auto lock_id = LockId(file_contents_request_pdu.clipDataId());
@@ -1218,35 +1224,43 @@ struct ClipboardVirtualChannel::D
             }
         };
 
-        switch (clip.nolock_data)
-        {
-        case ClipCtx::TransferState::Text:
-        case ClipCtx::TransferState::Empty:
-            break;
+        if (not self.can_lock) {
+            auto check_stream_id = [&stream_id](StreamId current_stream_id){
+                if (current_stream_id != stream_id) {
+                    LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
+                        " invalid stream id %u, expected %u", stream_id, current_stream_id);
+                    throw Error(ERR_RDP_PROTOCOL);
+                }
+            };
 
-        case ClipCtx::TransferState::WaitingContinuationRange:
-            if (clip.nolock_data.range().stream_id == stream_id) {
+            switch (clip.nolock_data)
+            {
+            case ClipCtx::TransferState::Text:
+            case ClipCtx::TransferState::Empty:
+                break;
+
+            case ClipCtx::TransferState::WaitingContinuationRange:
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
                     " invalid state");
                 throw Error(ERR_RDP_PROTOCOL);
-            }
-            break;
 
-        case ClipCtx::TransferState::Size:
-            if (clip.nolock_data.size().stream_id == stream_id) {
+            case ClipCtx::TransferState::Size:
+                check_stream_id(clip.nolock_data.size().stream_id);
+
                 if (is_ok) {
                     update_file_size_or_throw(
                         clip.files, clip.nolock_data.size(), flags,
                         in_stream.remaining_bytes());
                 }
+
                 clip.nolock_data.delete_size();
                 clip.has_current_file_contents_stream_id = false;
-                return ;
-            }
-            break;
 
-        case ClipCtx::TransferState::RequestedRange:
-            if (clip.nolock_data.requested_range().stream_id == stream_id) {
+                break;
+
+            case ClipCtx::TransferState::RequestedRange:
+                check_stream_id(clip.nolock_data.requested_range().stream_id);
+
                 if (is_ok) {
                     auto tmp = std::move(clip.nolock_data.requested_range());
                     clip.nolock_data.delete_requested_range();
@@ -1258,15 +1272,12 @@ struct ClipboardVirtualChannel::D
                 else {
                     clip.has_current_file_contents_stream_id = false;
                     clip.nolock_data.delete_requested_range();
-                    return;
+                    break;
                 }
-            }
-            else {
-                break;
-            }
 
-        case ClipCtx::TransferState::Range:
-            if (clip.nolock_data.range().stream_id == stream_id) {
+            case ClipCtx::TransferState::Range:
+                check_stream_id(clip.nolock_data.range().stream_id);
+
                 if (is_ok) {
                     auto& rng = clip.nolock_data.range();
                     update_file_range_data(rng, in_stream.remaining_bytes());
@@ -1286,72 +1297,73 @@ struct ClipboardVirtualChannel::D
                     this->broken_file_transfer(self, clip, clip.nolock_data.range());
                     clip.nolock_data.delete_range();
                 }
-                return ;
-            }
-            break;
-        }
 
-        auto update_locked_file_range = [&](ClipCtx::LockedData::LockedRange& locked_file){
-            auto& rng = locked_file.file_contents_range;
-
-            update_file_range_data(rng, in_stream.remaining_bytes());
-
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                clip.has_current_file_contents_stream_id = false;
-                if (this->finalize_file_transfer(self, clip, rng)) {
-                    clip.locked_data.remove_locked_file_contents_range(&locked_file);
-                }
-                else {
-                    locked_file.state = ClipCtx::LockedData::LockedRange::State::WaitingRequest;
-                }
-            }
-        };
-
-        if (clip.locked_data.requested_range.is_stream_id(stream_id)) {
-            if (is_ok) {
-                auto& r = clip.locked_data.ranges.emplace_back(ClipCtx::LockedData::LockedRange{
-                    clip.locked_data.requested_range.lock_id,
-                    ClipCtx::LockedData::LockedRange::State::WaitingResponse,
-                    new_range(std::move(
-                        clip.locked_data.requested_range.file_contents_requested_range))
-                });
-
-                update_locked_file_range(r);
-            }
-            else {
-                clip.locked_data.requested_range.disable();
-            }
-
-            assert(not clip.locked_data.requested_range.is_stream_id(stream_id));
-        }
-        else if (auto* locked_contents_range = clip.locked_data.search_range_by_id(stream_id)) {
-            if (is_ok) {
-                update_locked_file_range(*locked_contents_range);
-            }
-            else {
-                clip.has_current_file_contents_stream_id = false;
-                this->broken_file_transfer(self, clip, locked_contents_range->file_contents_range);
-                clip.locked_data.remove_locked_file_contents_range(locked_contents_range);
-            }
-        }
-        else if (auto* locked_contents_size = clip.locked_data.search_size_by_id(stream_id)) {
-            if (is_ok) {
-                clip.has_current_file_contents_stream_id = false;
-                not_null_ptr lock_data = clip.locked_data.search_lock_by_id(locked_contents_size->lock_id);
-                update_file_size_or_throw(
-                    lock_data->files, locked_contents_size->file_contents_size,
-                    flags, in_stream.remaining_bytes());
-                clip.locked_data.remove_locked_file_contents_size(locked_contents_size);
-            }
-            else {
-                clip.has_current_file_contents_stream_id = false;
-                clip.locked_data.remove_locked_file_contents_size(locked_contents_size);
+                break;
             }
         }
         else {
-            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
-                " streamId (%u) not found", stream_id);
-            throw Error(ERR_RDP_PROTOCOL);
+            auto update_locked_file_range = [&](ClipCtx::LockedData::LockedRange& locked_file){
+                auto& rng = locked_file.file_contents_range;
+
+                update_file_range_data(rng, in_stream.remaining_bytes());
+
+                if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                    clip.has_current_file_contents_stream_id = false;
+                    if (this->finalize_file_transfer(self, clip, rng)) {
+                        clip.locked_data.remove_locked_file_contents_range(&locked_file);
+                    }
+                    else {
+                        locked_file.state = ClipCtx::LockedData::LockedRange::State::WaitingRequest;
+                    }
+                }
+            };
+
+            if (clip.locked_data.requested_range.is_stream_id(stream_id)) {
+                if (is_ok) {
+                    auto& r = clip.locked_data.ranges.emplace_back(ClipCtx::LockedData::LockedRange{
+                        clip.locked_data.requested_range.lock_id,
+                        ClipCtx::LockedData::LockedRange::State::WaitingResponse,
+                        new_range(std::move(
+                            clip.locked_data.requested_range.file_contents_requested_range))
+                    });
+
+                    update_locked_file_range(r);
+                }
+                else {
+                    clip.locked_data.requested_range.disable();
+                }
+
+                assert(not clip.locked_data.requested_range.is_stream_id(stream_id));
+            }
+            else if (auto* locked_contents_range = clip.locked_data.search_range_by_id(stream_id)) {
+                if (is_ok) {
+                    update_locked_file_range(*locked_contents_range);
+                }
+                else {
+                    clip.has_current_file_contents_stream_id = false;
+                    this->broken_file_transfer(self, clip, locked_contents_range->file_contents_range);
+                    clip.locked_data.remove_locked_file_contents_range(locked_contents_range);
+                }
+            }
+            else if (auto* locked_contents_size = clip.locked_data.search_size_by_id(stream_id)) {
+                if (is_ok) {
+                    clip.has_current_file_contents_stream_id = false;
+                    not_null_ptr lock_data = clip.locked_data.search_lock_by_id(locked_contents_size->lock_id);
+                    update_file_size_or_throw(
+                        lock_data->files, locked_contents_size->file_contents_size,
+                        flags, in_stream.remaining_bytes());
+                    clip.locked_data.remove_locked_file_contents_size(locked_contents_size);
+                }
+                else {
+                    clip.has_current_file_contents_stream_id = false;
+                    clip.locked_data.remove_locked_file_contents_size(locked_contents_size);
+                }
+            }
+            else {
+                LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
+                    " streamId (%u) not found", stream_id);
+                throw Error(ERR_RDP_PROTOCOL);
+            }
         }
     }
 
@@ -1561,11 +1573,11 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     }
     return p;
 }())
-, proxy_managed(to_client_sender_ == nullptr)
 , session_reactor(session_reactor)
 , file_validator(file_validator_service)
 , fdx_capture(file_storage.fdx_capture)
 , always_file_storage(file_storage.always_file_storage)
+, proxy_managed(to_client_sender_ == nullptr)
 {
     this->client_ctx.validator_target_name = this->params.validator_params.up_target_name;
     this->server_ctx.validator_target_name = this->params.validator_params.down_target_name;
@@ -1784,7 +1796,7 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
         break;
 
         case RDPECLIP::CB_LOCK_CLIPDATA: {
-            D().lock(this->client_ctx, chunk.remaining_bytes(), this->verbose);
+            D().lock(*this, this->client_ctx, chunk.remaining_bytes());
         }
         break;
 
@@ -1813,6 +1825,8 @@ void ClipboardVirtualChannel::process_client_message(
     {
         case RDPECLIP::CB_CLIP_CAPS: {
             D().clip_caps(*this, this->client_ctx, chunk.remaining_bytes());
+            this->can_lock = this->client_ctx.optional_lock_id.is_enabled()
+                          && this->server_ctx.optional_lock_id.is_enabled();
             send_message_to_server = true;
         }
         break;
@@ -1865,7 +1879,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_LOCK_CLIPDATA: {
-            D().lock(this->server_ctx, chunk.remaining_bytes(), this->verbose);
+            D().lock(*this, this->server_ctx, chunk.remaining_bytes());
         }
         break;
 

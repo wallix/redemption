@@ -565,6 +565,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "disabled_orders")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::disabled_orders&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::list<unsigned int>>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "force_bitmap_cache_v2_with_am")) {
             ::configs::parse_and_log(
                 context, key,

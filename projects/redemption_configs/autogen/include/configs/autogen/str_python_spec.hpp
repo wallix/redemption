@@ -272,6 +272,23 @@ enable_remotefx = boolean(default=True)
 
 bogus_pointer_xormask_padding = boolean(default=False)
 
+# Disables supported drawing orders:
+#    0: DstBlt
+#    1: PatBlt
+#    2: ScrBlt
+#    3: MemBlt
+#    4: Mem3Blt
+#    8: LineTo
+#   15: MultiDstBlt
+#   16: MultiPatBlt
+#   17: MultiScrBlt
+#   18: MultiOpaqueRect
+#   22: Polyline
+# 
+# (values are comma-separated)
+#_advanced
+disabled_orders = string(default='')
+
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
 force_bitmap_cache_v2_with_am = boolean(default=True)

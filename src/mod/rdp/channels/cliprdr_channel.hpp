@@ -94,14 +94,15 @@ private:
     SessionProbeLauncher* format_list_response_notifier    = nullptr;
     SessionProbeLauncher* format_data_request_notifier     = nullptr;
 
-    const bool proxy_managed;   // Has not client.
-
     SessionReactor& session_reactor;
 
     FileValidatorService * file_validator;
 
     FdxCapture * fdx_capture;
+
     bool always_file_storage;
+    bool can_lock = false;
+    const bool proxy_managed;   // Has not client.
 
 private:
     enum class LockId : uint32_t;
