@@ -1998,11 +1998,11 @@ public:
             [](auto& order_support, PrimaryDrawingOrdersSupport const& disabled_orders){
                 PrimaryDrawingOrdersSupport client_support;
                 for (auto idx : order_indexes_supported()) {
-                    if (order_support[idx] && !disabled_orders.test(idx)) {
+                    if (order_support[idx]) {
                         client_support |= idx;
                     }
                 }
-                return client_support;
+                return client_support - disabled_orders;
             }(info.order_caps.orderSupport, mod_rdp_params.disabled_orders))
         // info.order_caps.orderSupport
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)

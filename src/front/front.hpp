@@ -586,7 +586,6 @@ private:
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_client_active;
-    bool mem3blt_support;
     int clientRequestedProtocols;
 
     std::unique_ptr<NegoServer> nego_server;
@@ -619,6 +618,9 @@ private:
     SessionReactor::CallbackEventPtr incoming_event;
     SessionReactor::TimerPtr capture_timer;
     SessionReactor::TimerPtr flow_control_timer;
+
+    const std::chrono::milliseconds rdp_keepalive_connection_interval;
+    const PrimaryDrawingOrdersSupport supported_orders;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;
@@ -712,8 +714,6 @@ public:
 
     [[nodiscard]] BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
-    const std::chrono::milliseconds rdp_keepalive_connection_interval;
-
 public:
     Front( SessionReactor& session_reactor
          , Transport & trans
@@ -722,7 +722,6 @@ public:
          , CryptoContext & cctx
          , ReportMessageApi & report_message
          , bool fp_support // If true, fast-path must be supported
-         , bool mem3blt_support
          , std::string server_capabilities_filename = {}
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
@@ -737,7 +736,6 @@ public:
     , client_fastpath_input_event_support(fp_support)
     , server_fastpath_update_support(false)
     , tls_client_active(true)
-    , mem3blt_support(mem3blt_support)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , server_capabilities_filename(std::move(server_capabilities_filename))
     , report_message(report_message)
@@ -747,6 +745,8 @@ public:
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
              (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
           )
+    , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
+        this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
             this->handshake_timeout = session_reactor.create_timer()
@@ -3085,16 +3085,11 @@ private:
                 order_caps.pad4octetsA = 0x40420f00;
                 order_caps.numberFonts = 0x2f;
                 order_caps.orderFlags = NEGOTIATEORDERSUPPORT | COLORINDEXSUPPORT;
-                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
-                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
-                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
-                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
-                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = (this->mem3blt_support ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
-                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
-                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-                order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
-                order_caps.orderSupport[TS_NEG_OPAQUERECT_INDEX] = 1;
+
+                for (size_t i = 0; i < std::size(order_caps.orderSupport); ++i) {
+                     order_caps.orderSupport[i] = this->supported_orders.test(OrdersIndexes(i)) ? 1 : 0;
+                }
+
                 order_caps.textFlags = 0x06a1;
                 order_caps.pad4octetsB = 0x0f4240;
                 order_caps.desktopSaveSize = 0x0f4240;
@@ -3352,11 +3347,8 @@ private:
                         this->client_info.order_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
-                    PrimaryDrawingOrdersSupport const disabled_orders = parse_primary_drawing_orders(
-                        this->ini.get<cfg::client::disabled_orders>().c_str(),
-                        bool(this->verbose));
                     for (auto idx : order_indexes_supported()) {
-                        if (disabled_orders.test(idx)) {
+                        if (not this->supported_orders.test(idx)) {
                             this->client_info.order_caps.orderSupport[idx] = 0;
                         }
                     }

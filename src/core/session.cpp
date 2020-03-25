@@ -620,14 +620,13 @@ public:
         TRANSLATIONCONF.set_ini(&ini);
         std::string disconnection_message_error;
 
-        const bool mem3blt_support = true;
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         SessionReactor session_reactor;
         session_reactor.set_current_time(tvtime());
         Front front(
             session_reactor, front_trans, rnd, ini, cctx, authentifier,
-            ini.get<cfg::client::fast_path>(), mem3blt_support
+            ini.get<cfg::client::fast_path>()
         );
 
         std::unique_ptr<Acl> acl;

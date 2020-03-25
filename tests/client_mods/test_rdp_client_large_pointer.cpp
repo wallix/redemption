@@ -67,7 +67,16 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
                                  | PERF_DISABLE_FULLWINDOWDRAG
                                  | PERF_DISABLE_MENUANIMATIONS;
 
-    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = 1;
+    info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
+    info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
+    info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
+
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
     // Uncomment the code block below to generate testing data.
@@ -177,7 +186,16 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     info.multi_fragment_update_caps.MaxRequestSize = 38055;
 
-    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = 1;
+    info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
+    info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
+    info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
+
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
     // Uncomment the code block below to generate testing data.

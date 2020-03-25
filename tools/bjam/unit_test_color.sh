@@ -26,7 +26,7 @@ s/^\x1b\[0;39;49m//;tx
   s/(fatal )?error:? in "([^"]+)": (critical )?check/'$err'\1error'$reset' in "'$name'\2'$reset'": '$cat'\3check'$reset'/;tm
   :m
 
-  s/(check\x1b\[0m )(.*)( !=|==|<=|>=|>|< )(.*) has failed \[(.*)( !=|==|<=|>=|>|< )(.*)\](\]\. )?/\1'$code'\2'$op'\3'$code'\4'$reset' has failed ['$value'\5'$op'\6'$value'\7'$reset']/;t
+  s/(check\x1b\[0m )(.*)( !=|==|<=|>=|>|< )(.*) has failed \[(.*)( != | == | <= | >= | > | < )(.*)\](\]\. )?/\1'$code'\2'$op'\3'$code'\4'$reset' has failed ['$value'\5'$op'\6'$value'\7'$reset']/;t
 
   s/(check\x1b\[0m )(.*) (has )?failed$/\1'$code'\2'$reset' \3failed/;t
 
