@@ -57,7 +57,7 @@ inline static constexpr auto order_indexes_supported() noexcept
         TS_NEG_POLYLINE_INDEX,
         // TS_NEG_FAST_GLYPH_INDEX,
         TS_NEG_ELLIPSE_SC_INDEX,
-        TS_NEG_ELLIPSE_CB_INDEX,
+        // TS_NEG_ELLIPSE_CB_INDEX,
         TS_NEG_GLYPH_INDEX
     );
 }
