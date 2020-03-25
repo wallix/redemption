@@ -194,7 +194,6 @@ public:
     FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientRemoteAppGraphicAPI(controller, config, 0, 0) {}
 
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMultiDstBlt      const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPScrBlt           const & /*cmd*/, Rect /*clip*/) override {}

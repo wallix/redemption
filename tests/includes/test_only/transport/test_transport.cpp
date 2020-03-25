@@ -284,17 +284,10 @@ void CheckTransport::do_send(const uint8_t * const data, size_t len)
         while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
             ++differs;
         }
+        RED_TEST_INFO("current position: " << this->current);
         RED_CHECK(
             make_array_view(this->data.get() + this->current, available_len) ==
             make_array_view(data, len));
-        // RED_CHECK_MESSAGE(false, "\n"
-        //     "=============== Common Part =======\n" <<
-        //     (test_transport::hexdump{{data, differs}}) <<
-        //     "=============== Expected =======\n" <<
-        //     (test_transport::hexdump{{this->data.get() + this->current + differs, available_len - differs}}) <<
-        //     "=============== Got =======\n" <<
-        //     (test_transport::hexdump{{data + differs, available_len - differs}})
-        // );
         this->data.reset();
         this->remaining_is_error = false;
         throw Error(ERR_TRANSPORT_DIFFERS);

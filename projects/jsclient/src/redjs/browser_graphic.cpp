@@ -574,8 +574,6 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 
 void BrowserGraphic::set_palette(const BGRPalette& /*unused*/) { }
 
-void BrowserGraphic::draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) { }
-
 void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/) { }
 
 void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) { }

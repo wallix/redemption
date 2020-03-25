@@ -59,7 +59,6 @@ class GlyphCache;
 
 class RDPColCache;
 class RDPBrushCache;
-class RDPNineGrid;
 class RDPSetSurfaceCommand;
 class RDPSurfaceContent;
 
@@ -292,7 +291,6 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPPolyline         const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPEllipseSC        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
-    virtual void draw(RDPNineGrid         const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
     virtual void draw(RDPSetSurfaceCommand const & cmd) = 0;
     virtual void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) = 0;
@@ -360,7 +358,6 @@ public:
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
 #endif
-    void draw(RDPNineGrid         const & /*unused*/, Rect /*unused*/, ColorCtx /*unused*/, Bitmap const & /*unused*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}

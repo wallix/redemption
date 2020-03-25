@@ -35,6 +35,7 @@ Author(s): Jonathan Poelen
 #define RED_FAIL(...) BOOST_FAIL(__VA_ARGS__) /*NOLINT*/
 #define RED_ERROR(...) BOOST_ERROR(__VA_ARGS__) /*NOLINT*/
 
+#define RED_TEST_INFO BOOST_TEST_INFO
 #define RED_TEST_DONT_PRINT_LOG_VALUE BOOST_TEST_DONT_PRINT_LOG_VALUE
 #define RED_TEST_PRINT_TYPE_FUNCTION_NAME boost_test_print_type
 #define RED_TEST_PRINT_TYPE_STRUCT_NAME boost::test_tools::tt_detail::print_log_value

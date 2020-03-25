@@ -651,7 +651,6 @@ public:
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPSetSurfaceCommand const & cmd) override {
 
         if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec
@@ -3086,16 +3085,15 @@ private:
                 order_caps.pad4octetsA = 0x40420f00;
                 order_caps.numberFonts = 0x2f;
                 order_caps.orderFlags = NEGOTIATEORDERSUPPORT | COLORINDEXSUPPORT;
-                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
-                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
-                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
-                order_caps.orderSupport[TS_NEG_GLYPH_INDEX]              = 1;
+                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
+                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
+                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
+                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
+                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = (this->mem3blt_support ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
+                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
+                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
+                order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
                 order_caps.orderSupport[TS_NEG_OPAQUERECT_INDEX] = 1;
                 order_caps.textFlags = 0x06a1;
                 order_caps.pad4octetsB = 0x0f4240;

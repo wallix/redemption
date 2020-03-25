@@ -51,7 +51,6 @@
 #include "core/RDP/capabilities/compdesk.hpp"
 #include "core/RDP/capabilities/control.hpp"
 #include "core/RDP/capabilities/drawgdiplus.hpp"
-#include "core/RDP/capabilities/drawninegridcache.hpp"
 #include "core/RDP/capabilities/frameacknowledge.hpp"
 #include "core/RDP/capabilities/input.hpp"
 #include "core/RDP/capabilities/largepointer.hpp"
@@ -3556,13 +3555,13 @@ public:
                     }
                 }
 
-                if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {
-                    DrawNineGridCacheCaps ninegrid_caps(DRAW_NINEGRID_SUPPORTED, 0xffff, 256);
-                    confirm_active_pdu.emit_capability_set(ninegrid_caps);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        ninegrid_caps.log("Sending to server");
-                    }
-                }
+                // if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {
+                //     DrawNineGridCacheCaps ninegrid_caps(DRAW_NINEGRID_SUPPORTED, 0xffff, 256);
+                //     confirm_active_pdu.emit_capability_set(ninegrid_caps);
+                //     if (bool(this->verbose & RDPVerbose::capabilities)) {
+                //         ninegrid_caps.log("Sending to server");
+                //     }
+                // }
 
                 if (this->enable_remotefx && this->haveRemoteFx) {
                     /**

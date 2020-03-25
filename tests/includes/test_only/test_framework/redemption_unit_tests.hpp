@@ -121,6 +121,7 @@ bool operator!=(bytes_view, bytes_view);
 
 # define RED_FAIL(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_ERROR(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_TEST_INFO(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_CHECKPOINT(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_MESSAGE(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_PASSPOINT() do { } while(0)
