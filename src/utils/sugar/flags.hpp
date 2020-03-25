@@ -77,13 +77,13 @@ public:
     : value(bit(i))
     {}
 
-    [[nodiscard]] bool test(E idx) const noexcept { return this->value & bit(idx); }
-    void set(E idx) noexcept { this->value |= bit(idx); }
-    void clear(E idx) noexcept { this->value &= ~bit(idx); }
+    [[nodiscard]] constexpr bool test(E idx) const noexcept { return this->value & bit(idx); }
+    constexpr void set(E idx) noexcept { this->value |= bit(idx); }
+    constexpr void clear(E idx) noexcept { this->value &= ~bit(idx); }
 
-    void normalize() noexcept { this->value &= mask; }
+    constexpr void normalize() noexcept { this->value &= mask; }
 
-    [[nodiscard]] bitfield as_uint() const noexcept { return this->value & mask; }
+    [[nodiscard]] constexpr bitfield as_uint() const noexcept { return this->value & mask; }
 
     static constexpr std::size_t max_value() noexcept { return max; }
 
@@ -118,13 +118,13 @@ public:
         return *this;
     }
 
-    flags_t& operator+=(flags_t const& other) noexcept
+    constexpr flags_t& operator+=(flags_t const& other) noexcept
     {
         this->value |= other.value;
         return *this;
     }
 
-    flags_t& operator-=(flags_t const& other) noexcept
+    constexpr flags_t& operator-=(flags_t const& other) noexcept
     {
         this->value &= ~other.value;
         return *this;
