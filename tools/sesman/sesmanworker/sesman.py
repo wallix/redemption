@@ -93,7 +93,7 @@ def print_exception_caught(func):
     def method_wrapper(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
-        except Exception as e:
+        except Exception:
             import traceback
             Logger().info(traceback.format_exc())
             raise
@@ -330,7 +330,7 @@ class Sesman():
             seswabconfig = confwab.get(u'sesman', {})
             SESMANCONF.conf[u'sesman'].update(seswabconfig)
             # Logger().info(" WABCONFIG SESMANCONF = '%s'" % seswabconfig)
-        except Exception as e:
+        except Exception:
             Logger().info("Failed to load Sesman WabConfig")
         # Logger().info(" SESMANCONF = '%s'" % SESMANCONF[u'sesman'])
         if SESMANCONF[u'sesman'].get(u'debug', False):
@@ -446,7 +446,7 @@ class Sesman():
             msg_path = '/var/wab/etc/proxys/messages/login.%s' % self.language
             with open(msg_path) as f:
                 self.login_message = f.read().decode('utf-8')
-        except Exception as e:
+        except Exception:
             pass
 
     def set_language_from_keylayout(self):
@@ -461,7 +461,7 @@ class Sesman():
         if self.shared.get(u'keyboard_layout') != MAGICASK:
             try:
                 keylayout = int(self.shared.get(u'keyboard_layout'))
-            except:
+            except Exception:
                 pass
         if keylayout in french_layouts:
             self.language = 'fr'
@@ -540,7 +540,7 @@ class Sesman():
                 if not _is_multi_packet:
                     break
             _data = _data.decode('utf-8')
-        except Exception as e:
+        except Exception:
             # Logger().info("%s <<<%s>>>" % (
             #     u"Failed to read data from rdpproxy authentifier socket",
             #     traceback.format_exc(e))
@@ -820,7 +820,7 @@ class Sesman():
                     target_info = u"%s@%s" % (target_login, target_device)
             try:
                 target_info = target_info.encode('utf8')
-            except Exception as e:
+            except Exception:
                 target_info = None
 
             # Check if X509 Authentication is active
@@ -1079,7 +1079,7 @@ class Sesman():
                             return None, TR(u"Invalid user, try again")
 
                         _status = None  # One more loop
-                    except Exception as e:
+                    except Exception:
                         _emsg = u"Unexpected error in selector pagination"
                         if DEBUG:
                             import traceback
@@ -1243,7 +1243,7 @@ class Sesman():
                 motd_p = '/var/wab/etc/proxys/messages/motd.%s' % self.language
                 with open(motd_p) as f:
                     message = f.read().decode('utf-8')
-            except Exception as e:
+            except Exception:
                 pass
             data_to_send[u'message'] = cut_message(message, 8192)
 
@@ -1398,7 +1398,7 @@ class Sesman():
                     duration += 60 * 60 * int(hres.group(1))
                 if duration == 0:
                     duration = 3600
-            except Exception as e:
+            except Exception:
                 duration = 3600
         else:
             duration = 3600
@@ -2072,7 +2072,7 @@ class Sesman():
                             close_box = True
                         Logger().debug(u"End Of Keep Alive")
 
-                    except AuthentifierSocketClosed as e:
+                    except AuthentifierSocketClosed:
                         if DEBUG:
                             import traceback
                             Logger().info(
@@ -2547,7 +2547,7 @@ class Sesman():
             host_ip = socket.getaddrinfo(host, None)[0][4][0]
             Logger().info("Resolve DNS Hostname %s -> %s" % (host,
                                                              host_ip))
-        except Exception as e:
+        except Exception:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
 
