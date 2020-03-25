@@ -58,21 +58,20 @@ if sys.version_info[0] < 3:
         return data.encode(encoding)
     text_type = unicode
     binary_type = str
-    def iterable_bytes(data):
-        return data
+
     def to_syslog(data):
         return to_utf8(data)
+
     def bin2hex(bstr):
         return bstr.encode('hex')
 else:
-    from struct import unpack
     text_type = str
     binary_type = (bytes, bytearray)
     unicode = None
-    def iterable_bytes(data):
-        return unpack('%sc' % len(data), data)
+
     def to_syslog(data):
         return to_unicode(data)
+
     def bin2hex(bstr):
         return bstr.hex()
 
@@ -586,8 +585,8 @@ class Sesman():
             if not (expected_list and isinstance(expected_list, list)):
                 expected_list = []
             for key in expected_list:
-                if (key in _data and
-                    _data[key] != self.shared.get(key)):
+                if (key in _data
+                    and _data[key] != self.shared.get(key)):
                     self._changed_keys.append(key)
             self.shared.update(_data)
 
@@ -698,8 +697,8 @@ class Sesman():
         while (tries > 0) and (_status is None):
             tries -= 1
             interactive_data = {}
-            if (not extkv[u'target_password'] and
-                allow_interactive_password):
+            if (not extkv[u'target_password']
+                and allow_interactive_password):
                 interactive_data[u'target_password'] = MAGICASK
             if not extkv.get(u'target_login') and allow_interactive_login:
                 interactive_data[u'target_login'] = MAGICASK
@@ -809,11 +808,12 @@ class Sesman():
 
         try:
             target_info = None
-            if (target_login and target_device and
-                not target_login == MAGICASK and
-                not target_device == MAGICASK):
-                if (self.target_service_name and
-                    not self.target_service_name == MAGICASK):
+            if (target_login
+                and target_device
+                and not target_login == MAGICASK
+                and not target_device == MAGICASK):
+                if (self.target_service_name
+                    and not self.target_service_name == MAGICASK):
                     target_info = u"%s@%s:%s" % (target_login, target_device,
                                                  self.target_service_name)
                 else:
@@ -858,9 +858,9 @@ class Sesman():
                 # PASSWORD based Authentication
                 is_magic_password = self.shared.get(u'password') == MAGICASK
                 is_otp = wab_login.startswith('_OTP_')
-                method = ((is_otp and "OTP") or
-                          (self.engine.get_challenge() and "Challenge") or
-                          "Password")
+                method = ((is_otp and "OTP")
+                          or (self.engine.get_challenge() and "Challenge")
+                          or "Password")
                 self.rdplog.log("AUTHENTICATION_TRY", method=method)
                 if ((is_magic_password and not is_otp)  # one-time pwd
                     or not self.engine.password_authenticate(
@@ -1856,9 +1856,9 @@ class Sesman():
                     kv[u'target_host'] = physical_info.device_host
 
                 kv[u'target_login'] = physical_info.account_login
-                if (not kv.get(u'target_login') and
-                    self.target_context.login and
-                    not application):
+                if (not kv.get(u'target_login')
+                    and self.target_context.login
+                    and not application):
                     # on application,
                     # login in target_context is the login of application
                     kv[u'target_login'] = self.target_context.login
@@ -1890,8 +1890,8 @@ class Sesman():
                         )
                         target_password = u'\x01'.join(target_passwords)
 
-                    if (not target_password and
-                        PASSWORD_MAPPING in auth_policy_methods):
+                    if (not target_password
+                        and PASSWORD_MAPPING in auth_policy_methods):
                         target_password = (
                             self.engine.get_primary_password(physical_target)
                             or ''
@@ -1923,8 +1923,8 @@ class Sesman():
 
                     if self.target_context.host:
                         self._physical_target_host = self.target_context.host
-                    elif ('/' in physical_info.device_host and
-                          extra_kv.get(u'target_host') != MAGICASK):
+                    elif ('/' in physical_info.device_host
+                          and extra_kv.get(u'target_host') != MAGICASK):
                         self._physical_target_host = \
                             extra_kv.get(u'target_host')
                     else:
@@ -2217,8 +2217,8 @@ class Sesman():
             self.send_data({
                 u'disconnect_reason': TR(u"session_probe_keepalive_missed")
             })
-        elif (_reporting_reason ==
-              u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
+        elif (_reporting_reason
+              == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
             Logger().info(
                 u'RDP connection terminated. Reason: Session Probe failed '
                 u'to block outbound connection'
@@ -2247,8 +2247,8 @@ class Sesman():
                 u'disconnect_reason':
                 TR(u"session_probe_process_blocking_failed")
             })
-        elif (_reporting_reason ==
-              u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
+        elif (_reporting_reason
+              == u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
             Logger().info(
                 u'RDP connection terminated. Reason: Session Probe failed '
                 u'to run startup application'
