@@ -31,20 +31,13 @@
 #include "mod/mod_api.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/ws_transport.hpp"
-#include "utils/bitmap.hpp"
-#include "utils/colors.hpp"
 #include "utils/file.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/netutils.hpp"
-#include "utils/rect.hpp"
 #include "utils/select.hpp"
-#include "utils/stream.hpp"
-#include "utils/verbose_flags.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/load_theme.hpp"
-
-#include <array>
 
 #include <cassert>
 #include <cerrno>
