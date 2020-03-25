@@ -1,3 +1,8 @@
+redemption (8.0.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 25 Mar 2020 17:51:23 +0200
+
 redemption (8.0.15%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
