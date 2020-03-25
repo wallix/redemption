@@ -293,11 +293,21 @@ public:
         break;
 
         case MODULE_VNC:
-            this->create_mod_vnc(mod_wrapper, authentifier, report_message, this->ini,
-                mod_wrapper.get_graphics(), this->front, this->client_info,
-                this->rail_client_execute, this->keymap.key_flags);
+            try {
+                auto mod_pack = this->create_mod_vnc(mod_wrapper, authentifier, report_message, this->ini,
+                    mod_wrapper.get_graphics(), this->front, this->client_info,
+                    this->rail_client_execute, this->keymap.key_flags);
+
+                mod_wrapper.set_mod(mod_pack);
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
+                ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
                 mod_wrapper.show_osd_flag = true;
                 mod_wrapper.connected = true;
+            }
+            catch (...) {
+                report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
+                throw;
+            }
             break;
 
         default:
@@ -308,7 +318,7 @@ public:
 
 private:
 
-    void create_mod_vnc(ModWrapper & mod_wrapper,
+    ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
         ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags);

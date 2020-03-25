@@ -204,7 +204,7 @@ public:
 
 };
 
-void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
+ModPack ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags)
@@ -212,135 +212,119 @@ void ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
     unique_fd client_sck = connect_to_target_host(ini, this->session_reactor,
-        report_message, trkeys::authentification_vnc_fail);
+    report_message, trkeys::authentification_vnc_fail);
 
-    try {
-        const char * const name = "VNC Target";
+    const char * const name = "VNC Target";
 
-        bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
-            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
+    bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
+        && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
 
-        std::unique_ptr<ModVNCWithMetrics::ModMetrics> metrics;
+    std::unique_ptr<ModVNCWithMetrics::ModMetrics> metrics;
 
-        if (enable_metrics) {
-            metrics = std::make_unique<ModVNCWithMetrics::ModMetrics>(
-                ini.get<cfg::metrics::log_dir_path>().as_string(),
-                ini.get<cfg::context::session_id>(),
-                hmac_user(
-                    ini.get<cfg::globals::auth_user>(),
-                    ini.get<cfg::metrics::sign_key>()),
-                hmac_account(
-                    ini.get<cfg::globals::target_user>(),
-                    ini.get<cfg::metrics::sign_key>()),
-                hmac_device_service(
-                    ini.get<cfg::globals::target_device>(),
-                    ini.get<cfg::context::target_service>(),
-                    ini.get<cfg::metrics::sign_key>()),
-                hmac_client_info(
-                    ini.get<cfg::globals::host>(),
-                    client_info.screen_info,
-                    ini.get<cfg::metrics::sign_key>()),
-                this->timeobj.get_time(),
-                ini.get<cfg::metrics::log_file_turnover_interval>(),
-                ini.get<cfg::metrics::log_interval>());
-        }
+    if (enable_metrics) {
+        metrics = std::make_unique<ModVNCWithMetrics::ModMetrics>(
+            ini.get<cfg::metrics::log_dir_path>().as_string(),
+            ini.get<cfg::context::session_id>(),
+            hmac_user(
+                ini.get<cfg::globals::auth_user>(),
+                ini.get<cfg::metrics::sign_key>()),
+            hmac_account(
+                ini.get<cfg::globals::target_user>(),
+                ini.get<cfg::metrics::sign_key>()),
+            hmac_device_service(
+                ini.get<cfg::globals::target_device>(),
+                ini.get<cfg::context::target_service>(),
+                ini.get<cfg::metrics::sign_key>()),
+            hmac_client_info(
+                ini.get<cfg::globals::host>(),
+                client_info.screen_info,
+                ini.get<cfg::metrics::sign_key>()),
+            this->timeobj.get_time(),
+            ini.get<cfg::metrics::log_file_turnover_interval>(),
+            ini.get<cfg::metrics::log_interval>());
+    }
 
-        auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
-            mod_wrapper,
-            this->ini,
-            authentifier,
-            name,
-            std::move(client_sck),
-            ini.get<cfg::debug::mod_vnc>(),
-            nullptr,
-            this->session_reactor,
-            this->graphic_fd_events_,
-            this->timer_events_,
-            this->graphic_events_,
-            sesman,
-            ini.get<cfg::globals::target_user>().c_str(),
-            ini.get<cfg::context::target_password>().c_str(),
-            front,
+    auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
+        mod_wrapper,
+        this->ini,
+        authentifier,
+        name,
+        std::move(client_sck),
+        ini.get<cfg::debug::mod_vnc>(),
+        nullptr,
+        this->session_reactor,
+        this->graphic_fd_events_,
+        this->timer_events_,
+        this->graphic_events_,
+        sesman,
+        ini.get<cfg::globals::target_user>().c_str(),
+        ini.get<cfg::context::target_password>().c_str(),
+        front,
+        client_info.screen_info.width,
+        client_info.screen_info.height,
+        client_info.keylayout,
+        key_flags,
+        ini.get<cfg::mod_vnc::clipboard_up>(),
+        ini.get<cfg::mod_vnc::clipboard_down>(),
+        ini.get<cfg::mod_vnc::encodings>().c_str(),
+        ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
+            != ClipboardEncodingType::latin1
+            ? mod_vnc::ClipboardEncodingType::UTF8
+            : mod_vnc::ClipboardEncodingType::Latin1,
+        ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
+        report_message,
+        ini.get<cfg::mod_vnc::server_is_macos>(),
+        ini.get<cfg::mod_vnc::server_unix_alt>(),
+        ini.get<cfg::mod_vnc::support_cursor_pseudo_encoding>(),
+        (client_info.remote_program ? &rail_client_execute : nullptr),
+        to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
+        enable_metrics ? &metrics->protocol_metrics : nullptr
+    );
+
+    if (enable_metrics) {
+        new_mod->mod.metrics = std::move(metrics);
+        LOG(LOG_INFO, "create_module_vnc::timer_events_.create_timer_executor");
+        new_mod->mod.metrics_timer = timer_events_.create_timer_executor(session_reactor)
+            .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
+            .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
+                metrics->log(ctx.get_current_time());
+                return ctx.ready();
+            })
+        ;
+    }
+
+    if (!client_info.remote_program) {
+        auto mod = new_mod.release();
+        return ModPack{mod, nullptr, nullptr, nullptr};
+    }
+
+    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+    Rect adjusted_client_execute_rect =
+        rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
             client_info.screen_info.width,
-            client_info.screen_info.height,
-            client_info.keylayout,
-            key_flags,
-            ini.get<cfg::mod_vnc::clipboard_up>(),
-            ini.get<cfg::mod_vnc::clipboard_down>(),
-            ini.get<cfg::mod_vnc::encodings>().c_str(),
-            ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
-                != ClipboardEncodingType::latin1
-                ? mod_vnc::ClipboardEncodingType::UTF8
-                : mod_vnc::ClipboardEncodingType::Latin1,
-            ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
-            report_message,
-            ini.get<cfg::mod_vnc::server_is_macos>(),
-            ini.get<cfg::mod_vnc::server_unix_alt>(),
-            ini.get<cfg::mod_vnc::support_cursor_pseudo_encoding>(),
-            (client_info.remote_program ? &rail_client_execute : nullptr),
-            to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
-            enable_metrics ? &metrics->protocol_metrics : nullptr
-        );
+            client_info.screen_info.height
+        ));
 
-        if (enable_metrics) {
-            new_mod->mod.metrics = std::move(metrics);
-            LOG(LOG_INFO, "create_module_vnc::timer_events_.create_timer_executor");
-            new_mod->mod.metrics_timer = timer_events_.create_timer_executor(session_reactor)
-                .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
-                    metrics->log(ctx.get_current_time());
-                    return ctx.ready();
-                })
-            ;
-        }
+    std::string target_info = str_concat(ini.get<cfg::context::target_str>(),':', ini.get<cfg::globals::primary_user_id>());
 
-        if (client_info.remote_program) {
-            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+    rail_client_execute.set_target_info(target_info);
 
-            Rect adjusted_client_execute_rect =
-                rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
-                    client_info.screen_info.width,
-                    client_info.screen_info.height
-                ));
-
-            std::string target_info = str_concat(
-              ini.get<cfg::context::target_str>(),
-              ':',
-              ini.get<cfg::globals::primary_user_id>());
-
-            rail_client_execute.set_target_info(target_info);
-
-            auto* host_mod = new RailModuleHostMod(
-                ini,
-                this->session_reactor,
-                this->timer_events_,
-                this->graphic_events_,
-                drawable,
-                front,
-                client_info.screen_info.width,
-                client_info.screen_info.height,
-                adjusted_client_execute_rect,
-                std::move(new_mod),
-                rail_client_execute,
-                this->glyphs,
-                this->theme,
-                client_info.cs_monitor,
-                false
-            );
-            ModPack mod_pack{host_mod, nullptr, nullptr, host_mod};
-            mod_wrapper.set_mod(mod_pack);
-        }
-        else {
-            ModPack mod_pack{new_mod.release(), nullptr, nullptr, nullptr};
-            mod_wrapper.set_mod(mod_pack);
-        }
-    }
-    catch (...) {
-        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
-
-        throw;
-    }
-
-    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
-    ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+    auto* host_mod = new RailModuleHostMod(
+        ini,
+        this->session_reactor,
+        this->timer_events_,
+        this->graphic_events_,
+        drawable,
+        front,
+        client_info.screen_info.width,
+        client_info.screen_info.height,
+        adjusted_client_execute_rect,
+        std::move(new_mod),
+        rail_client_execute,
+        this->glyphs,
+        this->theme,
+        client_info.cs_monitor,
+        false
+    );
+    return ModPack{host_mod, nullptr, nullptr, host_mod};
 }

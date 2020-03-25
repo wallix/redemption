@@ -825,7 +825,8 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     }
 
     if (!host_mod_in_widget) {
-        ModPack mod_pack{new_mod.release(), &(new_mod.get()->mod), new_mod->mod.get_windowing_api(), nullptr};
+        auto mod = new_mod.release();
+        ModPack mod_pack{mod, &(mod->mod), mod->mod.get_windowing_api(), nullptr};
         return mod_pack;
     }
 
