@@ -338,9 +338,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
+#   25: EllipseSC
+#   27: GlyphIndex
 # 
 #_advanced
-#disabled_orders = 
+#disabled_orders = 25
 
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 # value: 0 or 1
@@ -379,6 +381,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
+#   25: EllipseSC
+#   27: GlyphIndex
 # 
 #_hidden
 #disabled_orders = 

@@ -112,7 +112,7 @@ void config_spec_definition(Writer && W)
     auto vnc_connpolicy = sesman::connection_policy{"vnc"};
     auto allow_connpolicy_and_gui = connpolicy::allow_connpolicy_and_gui;
 
-    char const* disable_orders_desc =
+    char const* disabled_orders_desc =
         "Disables supported drawing orders:\n"
         "   0: DstBlt\n"
         "   1: PatBlt\n"
@@ -125,6 +125,8 @@ void config_spec_definition(Writer && W)
         "  17: MultiScrBlt\n"
         "  18: MultiOpaqueRect\n"
         "  22: Polyline\n"
+        "  25: EllipseSC\n"
+        "  27: GlyphIndex\n"
     ;
 
     W.section("globals", [&]
@@ -280,7 +282,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_pointer_xormask_padding", set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disable_orders_desc}, set(""));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disabled_orders_desc}, set("25"));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
                  "force_bitmap_cache_v2_with_am",
@@ -300,7 +302,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "open_session_timeout", set(0));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disable_orders_desc}, set(""));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disabled_orders_desc}, set(""));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_kerberos", desc{

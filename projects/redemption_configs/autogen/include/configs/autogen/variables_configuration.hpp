@@ -1133,8 +1133,10 @@ namespace cfg {
     ///   17: MultiScrBlt <br/>
     ///   18: MultiOpaqueRect <br/>
     ///   22: Polyline <br/>
+    ///   25: EllipseSC <br/>
+    ///   27: GlyphIndex <br/>
     /// type: std::string <br/>
-    /// value = "" <br/>
+    /// value = "25" <br/>
     struct client::disabled_orders {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1143,7 +1145,7 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = ::configs::spec_types::list<unsigned int>;
         using mapped_type = sesman_and_spec_type;
-        type value = "";
+        type value = "25";
     };
     /// Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager. <br/>
     /// type: bool <br/>
@@ -1207,6 +1209,8 @@ namespace cfg {
     ///   17: MultiScrBlt <br/>
     ///   18: MultiOpaqueRect <br/>
     ///   22: Polyline <br/>
+    ///   25: EllipseSC <br/>
+    ///   27: GlyphIndex <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:disabled_orders <br/>

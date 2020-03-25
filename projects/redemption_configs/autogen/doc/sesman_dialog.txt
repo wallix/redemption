@@ -52,6 +52,8 @@ cfg::mod_rdp::disabled_orders ⇐ mod_rdp:disabled_orders   [std::string]
       17: MultiScrBlt
       18: MultiOpaqueRect
       22: Polyline
+      25: EllipseSC
+      27: GlyphIndex
     
 cfg::mod_rdp::enable_nla ⇐ mod_rdp:enable_nla   [bool]
     NLA authentication in secondary target.
