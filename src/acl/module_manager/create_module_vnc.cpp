@@ -29,9 +29,9 @@
 #include "mod/metrics_hmac.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
-#include "acl/module_manager.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "acl/mod_pack.hpp"
+#include "acl/module_manager/create_module_vnc.hpp"
 
 struct ModVNCWithMetrics : public mod_vnc
 {
@@ -204,14 +204,23 @@ public:
 
 };
 
-ModPack ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
+ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
-    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags)
+    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
+    Font & glyphs,
+    Theme & theme,
+    SessionReactor & session_reactor, 
+    GraphicFdContainer & graphic_fd_events_,
+    TimerContainer& timer_events_,
+    GraphicEventContainer& graphic_events_,
+    SesmanInterface & sesman,
+    TimeObj & timeobj
+    )
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
-    unique_fd client_sck = connect_to_target_host(ini, this->session_reactor,
+    unique_fd client_sck = connect_to_target_host(ini, session_reactor,
     report_message, trkeys::authentification_vnc_fail);
 
     const char * const name = "VNC Target";
@@ -239,23 +248,23 @@ ModPack ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
                 ini.get<cfg::globals::host>(),
                 client_info.screen_info,
                 ini.get<cfg::metrics::sign_key>()),
-            this->timeobj.get_time(),
+            timeobj.get_time(),
             ini.get<cfg::metrics::log_file_turnover_interval>(),
             ini.get<cfg::metrics::log_interval>());
     }
 
     auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
         mod_wrapper,
-        this->ini,
+        ini,
         authentifier,
         name,
         std::move(client_sck),
         ini.get<cfg::debug::mod_vnc>(),
         nullptr,
-        this->session_reactor,
-        this->graphic_fd_events_,
-        this->timer_events_,
-        this->graphic_events_,
+        session_reactor,
+        graphic_fd_events_,
+        timer_events_,
+        graphic_events_,
         sesman,
         ini.get<cfg::globals::target_user>().c_str(),
         ini.get<cfg::context::target_password>().c_str(),
@@ -311,9 +320,9 @@ ModPack ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
 
     auto* host_mod = new RailModuleHostMod(
         ini,
-        this->session_reactor,
-        this->timer_events_,
-        this->graphic_events_,
+        session_reactor,
+        timer_events_,
+        graphic_events_,
         drawable,
         front,
         client_info.screen_info.width,
@@ -321,8 +330,8 @@ ModPack ModuleManager::create_mod_vnc(ModWrapper & mod_wrapper,
         adjusted_client_execute_rect,
         std::move(new_mod),
         rail_client_execute,
-        this->glyphs,
-        this->theme,
+        glyphs,
+        theme,
         client_info.cs_monitor,
         false
     );

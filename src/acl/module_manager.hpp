@@ -44,14 +44,13 @@
 
 #include "transport/socket_transport.hpp"
 
-
-
 #include "core/session_reactor.hpp"
 #include "acl/mod_wrapper.hpp"
 #include "acl/acl_serializer.hpp"
 
 #include "acl/connect_to_target_host.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
+#include "acl/module_manager/create_module_vnc.hpp"
 
 class rdp_api;
 class AuthApi;
@@ -294,9 +293,17 @@ public:
 
         case MODULE_VNC:
             try {
-                auto mod_pack = this->create_mod_vnc(mod_wrapper, authentifier, report_message, this->ini,
+                auto mod_pack = create_mod_vnc(mod_wrapper, authentifier, report_message, this->ini,
                     mod_wrapper.get_graphics(), this->front, this->client_info,
-                    this->rail_client_execute, this->keymap.key_flags);
+                    this->rail_client_execute, this->keymap.key_flags,
+                    this->glyphs, this->theme,
+                    this->session_reactor,
+                    this->graphic_fd_events_,
+                    this->timer_events_,
+                    this->graphic_events_,
+                    this->sesman,
+                    this->timeobj
+                );
 
                 mod_wrapper.set_mod(mod_pack);
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
@@ -315,11 +322,4 @@ public:
             throw Error(ERR_SESSION_UNKNOWN_BACKEND);
         }
     }
-
-private:
-
-    ModPack create_mod_vnc(ModWrapper & mod_wrapper,
-        AuthApi& authentifier, ReportMessageApi& report_message,
-        Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
-        ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags);
 };

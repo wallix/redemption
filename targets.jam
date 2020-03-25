@@ -4873,6 +4873,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4931,6 +4932,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4989,6 +4991,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
