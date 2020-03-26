@@ -400,14 +400,13 @@ public:
                   , this->config.verbose
                 );
 
-                mod_rdp_params.device_id                       = "device_id";
-                mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
-                mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
-                mod_rdp_params.enable_fastpath                 = true;
-                mod_rdp_params.enable_new_pointer              = true;
-                mod_rdp_params.enable_glyph_cache              = true;
-//                 mod_rdp_params.enable_ninegrid_bitmap          = true;
-                mod_rdp_params.enable_remotefx                    = this->config.enable_remotefx;
+                mod_rdp_params.device_id          = "device_id";
+                mod_rdp_params.enable_tls         = this->config.modRDPParamsData.enable_tls;
+                mod_rdp_params.enable_nla         = this->config.modRDPParamsData.enable_nla;
+                mod_rdp_params.enable_fastpath    = true;
+                mod_rdp_params.enable_new_pointer = true;
+                mod_rdp_params.enable_glyph_cache = true;
+                mod_rdp_params.enable_remotefx    = this->config.enable_remotefx;
                 mod_rdp_params.file_system_params.enable_rdpdr_data_analysis = false;
 
                 const bool is_remote_app = this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
@@ -1198,13 +1197,6 @@ public:
 
     void draw(const RDP::FrameMarker& order) override {
         this->draw_impl(no_log{}, order);
-    }
-
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
-        (void) bmp;
     }
 
     void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override

@@ -284,10 +284,12 @@ bogus_pointer_xormask_padding = boolean(default=False)
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
+#   25: EllipseSC
+#   27: GlyphIndex
 # 
 # (values are comma-separated)
 #_advanced
-disabled_orders = string(default='')
+disabled_orders = string(default='25')
 
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
@@ -323,6 +325,8 @@ open_session_timeout = integer(min=0, default=0)
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
+#   25: EllipseSC
+#   27: GlyphIndex
 # 
 # (values are comma-separated)
 #_hidden

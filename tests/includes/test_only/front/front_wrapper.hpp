@@ -50,7 +50,6 @@ public:
         CryptoContext & cctx,
         ReportMessageApi & report_message,
         bool fp_support, // If true, fast-path must be supported
-        bool mem3blt_support,
         std::string server_capabilities_filename = {});
     ~FrontWrapper();
 

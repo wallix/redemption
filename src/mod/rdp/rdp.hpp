@@ -51,7 +51,6 @@
 #include "core/RDP/capabilities/compdesk.hpp"
 #include "core/RDP/capabilities/control.hpp"
 #include "core/RDP/capabilities/drawgdiplus.hpp"
-#include "core/RDP/capabilities/drawninegridcache.hpp"
 #include "core/RDP/capabilities/frameacknowledge.hpp"
 #include "core/RDP/capabilities/input.hpp"
 #include "core/RDP/capabilities/largepointer.hpp"
@@ -2056,11 +2055,11 @@ public:
             [](auto& order_support, PrimaryDrawingOrdersSupport const& disabled_orders){
                 PrimaryDrawingOrdersSupport client_support;
                 for (auto idx : order_indexes_supported()) {
-                    if (order_support[idx] && !disabled_orders.test(idx)) {
+                    if (order_support[idx]) {
                         client_support |= idx;
                     }
                 }
-                return client_support;
+                return client_support - disabled_orders;
             }(info.order_caps.orderSupport, mod_rdp_params.disabled_orders))
         // info.order_caps.orderSupport
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
@@ -3626,13 +3625,13 @@ public:
                     }
                 }
 
-                if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {
-                    DrawNineGridCacheCaps ninegrid_caps(DRAW_NINEGRID_SUPPORTED, 0xffff, 256);
-                    confirm_active_pdu.emit_capability_set(ninegrid_caps);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        ninegrid_caps.log("Sending to server");
-                    }
-                }
+                // if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {
+                //     DrawNineGridCacheCaps ninegrid_caps(DRAW_NINEGRID_SUPPORTED, 0xffff, 256);
+                //     confirm_active_pdu.emit_capability_set(ninegrid_caps);
+                //     if (bool(this->verbose & RDPVerbose::capabilities)) {
+                //         ninegrid_caps.log("Sending to server");
+                //     }
+                // }
 
                 if (this->enable_remotefx && this->haveRemoteFx) {
                     /**

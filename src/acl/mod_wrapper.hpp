@@ -89,8 +89,6 @@ struct ModWrapper
         template<class Command, class... Args>
         void draw(Command const & cmd)
             { this->sink.draw(cmd); }
-        void draw(RDPNineGrid const &  /*cmd*/, Rect /*clip*/, gdi::ColorCtx  /*color_ctx*/, Bitmap const &  /*bmp*/) 
-            {}
         void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
             { this->sink.draw(cmd, content); }
             

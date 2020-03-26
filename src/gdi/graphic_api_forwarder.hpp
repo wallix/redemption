@@ -89,8 +89,6 @@ public:
 #endif
     void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) 
             override { this->sink.draw(cmd, clip, color_ctx, gly_cache); }
-    void draw(RDPNineGrid const &  cmd, Rect clip, gdi::ColorCtx  color_ctx, Bitmap const &  bmp) 
-            override { this->sink.draw(cmd, clip, color_ctx, bmp);}
     void draw(RDPSetSurfaceCommand const & cmd)
             override { this->sink.draw(cmd); }
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)

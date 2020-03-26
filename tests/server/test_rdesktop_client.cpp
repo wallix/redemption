@@ -95,17 +95,17 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::globals::large_pointer_support>(false);
     ini.set<cfg::globals::unicode_keyboard_event_support>(false);
+    ini.set<cfg::client::disabled_orders>("4,15,16,17,18");
 
     LCGRandom gen;
     CryptoContext cctx;
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
     NullReportMessage report_message;
     SessionReactor session_reactor;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     SesmanInterface sesman(ini);
-    FrontWrapper front(session_reactor, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
+    FrontWrapper front(session_reactor, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 

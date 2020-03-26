@@ -152,14 +152,13 @@ FrontWrapper::FrontWrapper(
     CryptoContext & cctx,
     ReportMessageApi & report_message,
     bool fp_support, // If true, fast-path must be supported
-    bool mem3blt_support,
     std::string server_capabilities_filename)
 : d(new D{FrontWrapper::D::MyFront{
     session_reactor,
     timer_events_,
     sesman,
     trans, gen, ini, cctx, report_message,
-    fp_support, mem3blt_support, std::move(server_capabilities_filename)
+    fp_support, std::move(server_capabilities_filename)
 }})
 {}
 

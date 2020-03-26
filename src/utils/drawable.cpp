@@ -25,9 +25,7 @@
 
 #include "core/error.hpp"
 #include "utils/bitfu.hpp"
-#include "utils/bitmap.hpp"
 #include "utils/drawable_pointer.hpp"
-#include "utils/ellipse.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/log.hpp"
 #include "utils/pixel_io.hpp"

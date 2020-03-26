@@ -34,20 +34,13 @@
 #include "mod/mod_api.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/ws_transport.hpp"
-#include "utils/bitmap.hpp"
-#include "utils/colors.hpp"
 #include "utils/file.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/netutils.hpp"
-#include "utils/rect.hpp"
 #include "utils/select.hpp"
-#include "utils/stream.hpp"
-#include "utils/verbose_flags.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/load_theme.hpp"
-
-#include <array>
 
 #include <cassert>
 #include <cerrno>
@@ -663,7 +656,6 @@ public:
         TRANSLATIONCONF.set_ini(&ini);
         std::string disconnection_message_error;
 
-        const bool mem3blt_support = true;
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         SessionReactor session_reactor;
@@ -678,7 +670,7 @@ public:
         session_reactor.set_current_time(tvtime());
         SesmanInterface sesman(ini);
         Front front(session_reactor, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
-            ini.get<cfg::client::fast_path>(), mem3blt_support
+            ini.get<cfg::client::fast_path>()
         );
         std::unique_ptr<Acl> acl;
 

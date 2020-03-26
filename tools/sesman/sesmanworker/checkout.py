@@ -22,7 +22,7 @@ try:
     CRED_DATA_ACCOUNT_UID = "account_uid"
     CRED_INDEX = "credentials"
     CRED_DATA_DOMAIN = "domain_name"
-except Exception as e:
+except Exception:
     import traceback
     tracelog = traceback.format_exc()
     try:
@@ -42,7 +42,7 @@ except Exception as e:
             CRED_DATA_ACCOUNT_UID,
             CRED_INDEX,
         )
-    except Exception as e:
+    except Exception:
         Logger().info("Wabengine const LOADING FAILED %s" % tracelog)
 
 APPROVAL_ACCEPTED = "APPROVAL_ACCEPTED"

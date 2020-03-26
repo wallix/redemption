@@ -1355,10 +1355,6 @@ public:
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
     }
 
-    void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
-        LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
-    }
-
 //     using ClientOutputGraphicAPI::draw;
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
     }

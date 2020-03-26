@@ -303,13 +303,6 @@ public:
         ClientRedemption::draw(order);
     }
 
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
-        (void) bmp;
-    }
-
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
     }
 

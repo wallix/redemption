@@ -49,7 +49,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryCreateNinegridBitmap.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
@@ -212,9 +211,6 @@ void RDPDrawable::draw(const RDPDestBlt & cmd, Rect clip)
     this->drawable.destblt(trect, cmd.rop);
     this->last_update_index++;
 }
-
-void RDPDrawable::draw(RDPNineGrid const &  /*cmd*/, Rect  /*rect*/, gdi::ColorCtx  /*color_ctx*/, Bitmap const &  /*bmp*/)
-{}
 
 void RDPDrawable::draw(const RDPMultiDstBlt & cmd, Rect clip)
 {

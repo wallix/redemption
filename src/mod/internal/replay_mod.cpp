@@ -103,9 +103,6 @@ public:
     void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->drawable.draw(cmd, clip, color_ctx);
     }
-    void draw(RDPNineGrid         const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        this->drawable.draw(cmd, clip, color_ctx, bmp);
-    }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
         this->drawable.draw(cmd, clip, color_ctx, gly_cache);
     }

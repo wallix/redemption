@@ -83,7 +83,6 @@ public:
     void draw(const RDPBitmapData & cmd, const Bitmap & bmp) override;
 
     void set_palette(const BGRPalette& /*unused*/) override;
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) override;
     void draw(RDPSetSurfaceCommand const & cmd) override;
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & /*content*/) override;
 

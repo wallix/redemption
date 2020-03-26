@@ -145,7 +145,6 @@ RED_AUTO_TEST_CASE(TestFront)
     CryptoContext cctx;
 
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -171,7 +170,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     MyFront front(
         session_reactor, timer_events_, sesman, front_trans, gen1, ini , cctx,
-        report_message, fastpath_support, mem3blt_support);
+        report_message, fastpath_support);
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {
@@ -316,7 +315,6 @@ RED_AUTO_TEST_CASE(TestFront2)
     LCGRandom gen1;
     CryptoContext cctx;
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -336,10 +334,9 @@ RED_AUTO_TEST_CASE(TestFront2)
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
-    
     SesmanInterface sesman(ini);
     MyFront front(session_reactor, timer_events_, sesman, front_trans, gen1, ini
-                 , cctx, report_message, fastpath_support, mem3blt_support);
+                 , cctx, report_message, fastpath_support);
     null_mod no_mod;
 
     RED_TEST_PASSPOINT();
@@ -501,7 +498,6 @@ RED_AUTO_TEST_CASE(TestFront3)
     LCGRandom gen1;
     CryptoContext cctx;
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -513,7 +509,7 @@ RED_AUTO_TEST_CASE(TestFront3)
 
     NullReportMessage report_message;
     MyFront front( front_trans, gen1, ini
-                 , cctx, report_message, fastpath_support, mem3blt_support
+                 , cctx, report_message, fastpath_support
                  , now - ini.get<cfg::globals::handshake_timeout>().count());
     null_mod no_mod;
 

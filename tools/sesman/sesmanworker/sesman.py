@@ -26,9 +26,7 @@ from struct import unpack
 from struct import pack
 from select import select
 from time import time
-from time import strftime
 from time import ctime
-from time import sleep
 from time import mktime
 from datetime import datetime
 import socket
@@ -58,21 +56,20 @@ if sys.version_info[0] < 3:
         return data.encode(encoding)
     text_type = unicode
     binary_type = str
-    def iterable_bytes(data):
-        return data
+
     def to_syslog(data):
         return to_utf8(data)
+
     def bin2hex(bstr):
         return bstr.encode('hex')
 else:
-    from struct import unpack
     text_type = str
     binary_type = (bytes, bytearray)
     unicode = None
-    def iterable_bytes(data):
-        return unpack('%sc' % len(data), data)
+
     def to_syslog(data):
         return to_unicode(data)
+
     def bin2hex(bstr):
         return bstr.hex()
 
@@ -93,7 +90,7 @@ def print_exception_caught(func):
     def method_wrapper(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
-        except Exception as e:
+        except Exception:
             import traceback
             Logger().info(traceback.format_exc())
             raise
@@ -330,7 +327,7 @@ class Sesman():
             seswabconfig = confwab.get(u'sesman', {})
             SESMANCONF.conf[u'sesman'].update(seswabconfig)
             # Logger().info(" WABCONFIG SESMANCONF = '%s'" % seswabconfig)
-        except Exception as e:
+        except Exception:
             Logger().info("Failed to load Sesman WabConfig")
         # Logger().info(" SESMANCONF = '%s'" % SESMANCONF[u'sesman'])
         if SESMANCONF[u'sesman'].get(u'debug', False):
@@ -446,7 +443,7 @@ class Sesman():
             msg_path = '/var/wab/etc/proxys/messages/login.%s' % self.language
             with open(msg_path) as f:
                 self.login_message = f.read().decode('utf-8')
-        except Exception as e:
+        except Exception:
             pass
 
     def set_language_from_keylayout(self):
@@ -461,7 +458,7 @@ class Sesman():
         if self.shared.get(u'keyboard_layout') != MAGICASK:
             try:
                 keylayout = int(self.shared.get(u'keyboard_layout'))
-            except:
+            except Exception:
                 pass
         if keylayout in french_layouts:
             self.language = 'fr'
@@ -540,7 +537,7 @@ class Sesman():
                 if not _is_multi_packet:
                     break
             _data = _data.decode('utf-8')
-        except Exception as e:
+        except Exception:
             # Logger().info("%s <<<%s>>>" % (
             #     u"Failed to read data from rdpproxy authentifier socket",
             #     traceback.format_exc(e))
@@ -559,11 +556,11 @@ class Sesman():
         if _status:
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
-            except Exception as e:
+            except Exception:
                 if DEBUG:
                     Logger().info(
                         u"Error while parsing received data %s" %
-                        traceback.format_exc(e)
+                        traceback.format_exc()
                     )
                 _status = False
 
@@ -586,8 +583,8 @@ class Sesman():
             if not (expected_list and isinstance(expected_list, list)):
                 expected_list = []
             for key in expected_list:
-                if (key in _data and
-                    _data[key] != self.shared.get(key)):
+                if (key in _data
+                    and _data[key] != self.shared.get(key)):
                     self._changed_keys.append(key)
             self.shared.update(_data)
 
@@ -698,8 +695,8 @@ class Sesman():
         while (tries > 0) and (_status is None):
             tries -= 1
             interactive_data = {}
-            if (not extkv[u'target_password'] and
-                allow_interactive_password):
+            if (not extkv[u'target_password']
+                and allow_interactive_password):
                 interactive_data[u'target_password'] = MAGICASK
             if not extkv.get(u'target_login') and allow_interactive_login:
                 interactive_data[u'target_login'] = MAGICASK
@@ -809,18 +806,19 @@ class Sesman():
 
         try:
             target_info = None
-            if (target_login and target_device and
-                not target_login == MAGICASK and
-                not target_device == MAGICASK):
-                if (self.target_service_name and
-                    not self.target_service_name == MAGICASK):
+            if (target_login
+                and target_device
+                and not target_login == MAGICASK
+                and not target_device == MAGICASK):
+                if (self.target_service_name
+                    and not self.target_service_name == MAGICASK):
                     target_info = u"%s@%s:%s" % (target_login, target_device,
                                                  self.target_service_name)
                 else:
                     target_info = u"%s@%s" % (target_login, target_device)
             try:
                 target_info = target_info.encode('utf8')
-            except Exception as e:
+            except Exception:
                 target_info = None
 
             # Check if X509 Authentication is active
@@ -858,9 +856,9 @@ class Sesman():
                 # PASSWORD based Authentication
                 is_magic_password = self.shared.get(u'password') == MAGICASK
                 is_otp = wab_login.startswith('_OTP_')
-                method = ((is_otp and "OTP") or
-                          (self.engine.get_challenge() and "Challenge") or
-                          "Password")
+                method = ((is_otp and "OTP")
+                          or (self.engine.get_challenge() and "Challenge")
+                          or "Password")
                 self.rdplog.log("AUTHENTICATION_TRY", method=method)
                 if ((is_magic_password and not is_otp)  # one-time pwd
                     or not self.engine.password_authenticate(
@@ -896,10 +894,10 @@ class Sesman():
             self.rdplog.log("AUTHENTICATION_SUCCESS", method=method)
             Logger().info(u'lang=%s' % self.language)
 
-        except Exception as e:
+        except Exception:
             if DEBUG:
                 import traceback
-                Logger().info("<<<%s>>>" % traceback.format_exc(e))
+                Logger().info("<<<%s>>>" % traceback.format_exc())
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
 
@@ -1079,7 +1077,7 @@ class Sesman():
                             return None, TR(u"Invalid user, try again")
 
                         _status = None  # One more loop
-                    except Exception as e:
+                    except Exception:
                         _emsg = u"Unexpected error in selector pagination"
                         if DEBUG:
                             import traceback
@@ -1156,10 +1154,10 @@ class Sesman():
                 _status, _error = self.interactive_display_message({
                     u'message': message
                 })
-        except Exception as e:
+        except Exception:
             if DEBUG:
                 import traceback
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
         return _status, _error
 
     def create_record_path_directory(self, rec_path):
@@ -1243,7 +1241,7 @@ class Sesman():
                 motd_p = '/var/wab/etc/proxys/messages/motd.%s' % self.language
                 with open(motd_p) as f:
                     message = f.read().decode('utf-8')
-            except Exception as e:
+            except Exception:
                 pass
             data_to_send[u'message'] = cut_message(message, 8192)
 
@@ -1354,7 +1352,7 @@ class Sesman():
                 if DEBUG:
                     Logger().info("exception: '%s'" % e)
                     import traceback
-                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                    Logger().info("<<<<%s>>>>" % traceback.format_exc())
                     if e[0] != 4:
                         raise
                 Logger().info("Got Signal %s" % e)
@@ -1387,8 +1385,8 @@ class Sesman():
     def parse_duration(self, duration):
         if duration:
             try:
-                mpat = re.compile("(\d+)m")
-                hpat = re.compile("(\d+)h")
+                mpat = re.compile(r"(\d+)m")
+                hpat = re.compile(r"(\d+)h")
                 hres = hpat.search(duration)
                 mres = mpat.search(duration)
                 duration = 0
@@ -1398,7 +1396,7 @@ class Sesman():
                     duration += 60 * 60 * int(hres.group(1))
                 if duration == 0:
                     duration = 3600
-            except Exception as e:
+            except Exception:
                 duration = 3600
         else:
             duration = 3600
@@ -1703,9 +1701,9 @@ class Sesman():
                         encryption_key, sign_key = self.get_trace_keys()
                         kv['encryption_key'] = encryption_key
                         kv['sign_key'] = sign_key
-                except Exception as e:
+                except Exception:
                     import traceback
-                    Logger().debug("%s" % traceback.format_exc(e))
+                    Logger().debug("%s" % traceback.format_exc())
                     _status, _error = False, TR(u"Connection closed by client")
 
             if not _status:
@@ -1856,9 +1854,9 @@ class Sesman():
                     kv[u'target_host'] = physical_info.device_host
 
                 kv[u'target_login'] = physical_info.account_login
-                if (not kv.get(u'target_login') and
-                    self.target_context.login and
-                    not application):
+                if (not kv.get(u'target_login')
+                    and self.target_context.login
+                    and not application):
                     # on application,
                     # login in target_context is the login of application
                     kv[u'target_login'] = self.target_context.login
@@ -1890,8 +1888,8 @@ class Sesman():
                         )
                         target_password = u'\x01'.join(target_passwords)
 
-                    if (not target_password and
-                        PASSWORD_MAPPING in auth_policy_methods):
+                    if (not target_password
+                        and PASSWORD_MAPPING in auth_policy_methods):
                         target_password = (
                             self.engine.get_primary_password(physical_target)
                             or ''
@@ -1923,8 +1921,8 @@ class Sesman():
 
                     if self.target_context.host:
                         self._physical_target_host = self.target_context.host
-                    elif ('/' in physical_info.device_host and
-                          extra_kv.get(u'target_host') != MAGICASK):
+                    elif ('/' in physical_info.device_host
+                          and extra_kv.get(u'target_host') != MAGICASK):
                         self._physical_target_host = \
                             extra_kv.get(u'target_host')
                     else:
@@ -2008,7 +2006,7 @@ class Sesman():
                                     Logger().info("exception: '%s'" % e)
                                     import traceback
                                     Logger().info("<<<<%s>>>>" %
-                                                  traceback.format_exc(e))
+                                                  traceback.format_exc())
                                 if e[0] != 4:
                                     raise
                                 Logger().info("Got Signal %s" % e)
@@ -2072,7 +2070,7 @@ class Sesman():
                             close_box = True
                         Logger().debug(u"End Of Keep Alive")
 
-                    except AuthentifierSocketClosed as e:
+                    except AuthentifierSocketClosed:
                         if DEBUG:
                             import traceback
                             Logger().info(
@@ -2217,8 +2215,8 @@ class Sesman():
             self.send_data({
                 u'disconnect_reason': TR(u"session_probe_keepalive_missed")
             })
-        elif (_reporting_reason ==
-              u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
+        elif (_reporting_reason
+              == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
             Logger().info(
                 u'RDP connection terminated. Reason: Session Probe failed '
                 u'to block outbound connection'
@@ -2247,8 +2245,8 @@ class Sesman():
                 u'disconnect_reason':
                 TR(u"session_probe_process_blocking_failed")
             })
-        elif (_reporting_reason ==
-              u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
+        elif (_reporting_reason
+              == u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
             Logger().info(
                 u'RDP connection terminated. Reason: Session Probe failed '
                 u'to run startup application'
@@ -2489,7 +2487,7 @@ class Sesman():
 
     @staticmethod
     def convert_value(value, cotype):
-        if not isinstance(value, basestring):
+        if not isinstance(value, (str, text_type)):
             return value
         if cotype == 'int':
             return int(value)
@@ -2547,7 +2545,7 @@ class Sesman():
             host_ip = socket.getaddrinfo(host, None)[0][4][0]
             Logger().info("Resolve DNS Hostname %s -> %s" % (host,
                                                              host_ip))
-        except Exception as e:
+        except Exception:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
 
