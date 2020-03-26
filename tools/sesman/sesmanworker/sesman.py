@@ -26,9 +26,7 @@ from struct import unpack
 from struct import pack
 from select import select
 from time import time
-from time import strftime
 from time import ctime
-from time import sleep
 from time import mktime
 from datetime import datetime
 import socket
