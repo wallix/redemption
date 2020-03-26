@@ -558,11 +558,11 @@ class Sesman():
         if _status:
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
-            except Exception as e:
+            except Exception:
                 if DEBUG:
                     Logger().info(
                         u"Error while parsing received data %s" %
-                        traceback.format_exc(e)
+                        traceback.format_exc()
                     )
                 _status = False
 
@@ -896,10 +896,10 @@ class Sesman():
             self.rdplog.log("AUTHENTICATION_SUCCESS", method=method)
             Logger().info(u'lang=%s' % self.language)
 
-        except Exception as e:
+        except Exception:
             if DEBUG:
                 import traceback
-                Logger().info("<<<%s>>>" % traceback.format_exc(e))
+                Logger().info("<<<%s>>>" % traceback.format_exc())
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
 
@@ -1156,10 +1156,10 @@ class Sesman():
                 _status, _error = self.interactive_display_message({
                     u'message': message
                 })
-        except Exception as e:
+        except Exception:
             if DEBUG:
                 import traceback
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
         return _status, _error
 
     def create_record_path_directory(self, rec_path):
@@ -1354,7 +1354,7 @@ class Sesman():
                 if DEBUG:
                     Logger().info("exception: '%s'" % e)
                     import traceback
-                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                    Logger().info("<<<<%s>>>>" % traceback.format_exc())
                     if e[0] != 4:
                         raise
                 Logger().info("Got Signal %s" % e)
@@ -1703,9 +1703,9 @@ class Sesman():
                         encryption_key, sign_key = self.get_trace_keys()
                         kv['encryption_key'] = encryption_key
                         kv['sign_key'] = sign_key
-                except Exception as e:
+                except Exception:
                     import traceback
-                    Logger().debug("%s" % traceback.format_exc(e))
+                    Logger().debug("%s" % traceback.format_exc())
                     _status, _error = False, TR(u"Connection closed by client")
 
             if not _status:
@@ -2008,7 +2008,7 @@ class Sesman():
                                     Logger().info("exception: '%s'" % e)
                                     import traceback
                                     Logger().info("<<<<%s>>>>" %
-                                                  traceback.format_exc(e))
+                                                  traceback.format_exc())
                                 if e[0] != 4:
                                     raise
                                 Logger().info("Got Signal %s" % e)
