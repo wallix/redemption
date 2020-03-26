@@ -1,3 +1,9 @@
+redemption (8.0.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Review Python3 for Sesman
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 26 Mar 2020 12:30:52 +0200
+
 redemption (8.0.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
