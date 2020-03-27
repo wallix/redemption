@@ -315,7 +315,7 @@ public:
             break;
 
         default:
-            LOG(LOG_INFO, "ModuleManager::Unknown backend exception");
+            LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", target_module);
             throw Error(ERR_SESSION_UNKNOWN_BACKEND);
         }
     }

@@ -230,6 +230,8 @@ private:
                 auto module_id = get_module_id(module_cstr);
                 LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
 
+                next_state = module_id;
+
                 if (mod_wrapper.is_connected() 
                     && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
                     if (ini.get<cfg::context::auth_error_message>().empty()) {
@@ -248,7 +250,6 @@ private:
                     LOG(LOG_INFO, "===========> UNKNOWN MODULE (closing)");
                     next_state = MODULE_INTERNAL_CLOSE;
                 }
-                next_state = module_id;
 
                 if (next_state == MODULE_TRANSITORY) {
                     LOG(LOG_INFO, "check_acl TRANSITORY signal=%s", signal_name(signal));
