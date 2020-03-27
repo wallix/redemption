@@ -34,5 +34,7 @@ struct ModPack {
     rdp_api* rdpapi;
     windowing_api* winapi;
     RailModuleHostMod* rail_module_host_ptr;
+    bool enable_osd = false;
+    bool connected = false;
 };
 

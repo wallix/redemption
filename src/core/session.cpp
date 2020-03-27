@@ -173,7 +173,7 @@ private:
     // Returns run_session value
     bool check_acl(ModuleManager & mm, std::unique_ptr<Acl> & acl,
         Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
-        time_t now, SessionState & session_state, Inifile& ini)
+        time_t now, Inifile& ini)
     {
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
         if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
@@ -542,9 +542,7 @@ private:
             }
             bool run_session = this->check_acl(mm, acl,
                 authentifier, authentifier, mod_wrapper,
-                now.tv_sec, session_state,
-                ini
-            );
+                now.tv_sec, ini);
             if (!run_session) {
                 return false;
             }
@@ -687,7 +685,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, theme, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, session_reactor, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
+            ModFactory mod_factory(mod_wrapper, session_reactor, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier);
             EndSessionWarning end_session_warning;
 
             ModuleManager mm(mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);

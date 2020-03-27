@@ -181,64 +181,99 @@ public:
         }
         this->old_target_module = target_module;
 
-//        if ((target_module == MODULE_INTERNAL_WIDGET_SELECTOR)
-//        && (acl.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count())) {
-//            acl.update_inactivity_timeout();
-//        }
-
         mod_wrapper.show_osd_flag = false;
 
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
-            mod_wrapper.set_mod(mod_factory.create_mod_bouncer());
+        {
+            auto mod_pack = mod_factory.create_mod_bouncer();
+            mod_pack.enable_osd = true;
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_TEST:
-            mod_wrapper.set_mod(mod_factory.create_mod_replay());
+        {
+            auto mod_pack = mod_factory.create_mod_replay();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_WIDGETTEST:
-            mod_wrapper.set_mod(mod_factory.create_widget_test_mod());
+        {
+            auto mod_pack = mod_factory.create_widget_test_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_CARD:
-            mod_wrapper.set_mod(mod_factory.create_test_card_mod());
+        {
+            auto mod_pack = mod_factory.create_test_card_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-            mod_wrapper.set_mod(mod_factory.create_selector_mod());
+        {
+            auto mod_pack = mod_factory.create_selector_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_CLOSE:
-            mod_wrapper.set_mod(mod_factory.create_close_mod());
+        {
+            auto mod_pack = mod_factory.create_close_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_CLOSE_BACK:
-            mod_wrapper.set_mod(mod_factory.create_close_mod_back_to_selector());
+        {
+            auto mod_pack = mod_factory.create_close_mod_back_to_selector();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_TARGET:
-            mod_wrapper.set_mod(mod_factory.create_interactive_target_mod());
+        {
+            auto mod_pack = mod_factory.create_interactive_target_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-            mod_wrapper.set_mod(mod_factory.create_valid_message_mod());
+        {
+            auto mod_pack = mod_factory.create_valid_message_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-            mod_wrapper.set_mod(mod_factory.create_display_message_mod());
+        {
+            auto mod_pack = mod_factory.create_display_message_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
-            mod_wrapper.set_mod(mod_factory.create_dialog_challenge_mod());
+        {
+            auto mod_pack = mod_factory.create_dialog_challenge_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_WAIT_INFO:
-            mod_wrapper.set_mod(mod_factory.create_wait_info_mod());
+        {
+            auto mod_pack = mod_factory.create_wait_info_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_TRANSITION:
-            mod_wrapper.set_mod(mod_factory.create_transition_mod());
+        {
+            auto mod_pack = mod_factory.create_transition_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
         case MODULE_INTERNAL_WIDGET_LOGIN: 
-            mod_wrapper.set_mod(mod_factory.create_login_mod());
+        {
+            auto mod_pack = mod_factory.create_login_mod();
+            mod_wrapper.set_mod(mod_pack);
+        }
         break;
 
         case MODULE_XUP: {
-            unique_fd client_sck = connect_to_target_host(
-                    ini, session_reactor,
-                    report_message, trkeys::authentification_x_fail);
+            auto mod_pack = mod_factory.create_xup_mod();
 
-            auto mod_pack = mod_factory.create_xup_mod(client_sck);
             mod_wrapper.set_mod(mod_pack);
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
             mod_wrapper.connected = true;

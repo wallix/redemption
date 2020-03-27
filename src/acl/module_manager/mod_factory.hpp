@@ -51,6 +51,8 @@
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
+#include "core/report_message_api.hpp"
+#include "acl/connect_to_target_host.hpp"
 
 class ModFactory
 {
@@ -69,6 +71,7 @@ class ModFactory
     Font & glyphs;
     const Theme & theme;
     ClientExecute & rail_client_execute;
+    ReportMessageApi & report_message;
     
 
 public:
@@ -80,7 +83,15 @@ public:
                TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,
                GraphicTimerContainer & graphic_timer_events_,
-               ClientInfo & client_info, FrontAPI & front, gdi::GraphicApi & graphics, Inifile & ini, Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute)
+               ClientInfo & client_info,
+               FrontAPI & front,
+               gdi::GraphicApi & graphics,
+               Inifile & ini,
+               Font & glyphs,
+               const Theme & theme,
+               ClientExecute & rail_client_execute,
+               ReportMessageApi & report_message
+        )
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
         , sesman(sesman)
@@ -96,6 +107,7 @@ public:
         , glyphs(glyphs)
         , theme(theme)
         , rail_client_execute(rail_client_execute)
+        , report_message(report_message)
     {
     }
 
@@ -454,8 +466,12 @@ public:
         return {new_mod, nullptr, nullptr, nullptr};
     }    
     
-    auto create_xup_mod(unique_fd & client_sck) -> ModPack
+    auto create_xup_mod() -> ModPack
     {
+        unique_fd client_sck = connect_to_target_host(
+                    this->ini, this->session_reactor,
+                    this->report_message, trkeys::authentification_x_fail);
+
         const char * name = "XUP Target";
 
         auto new_mod = new XupModWithSocket(
