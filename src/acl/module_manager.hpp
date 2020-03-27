@@ -96,13 +96,11 @@ public:
 
 private:
 
-    EndSessionWarning & end_session_warning;
     Font & glyphs;
     Theme & theme;
 
 public:
-    ModuleManager(EndSessionWarning & end_session_warning,
-                  ModFactory & mod_factory,
+    ModuleManager(ModFactory & mod_factory,
                   SessionReactor& session_reactor,
                   TopFdContainer& fd_events_,
                   GraphicFdContainer & graphic_fd_events_,
@@ -126,7 +124,6 @@ public:
         , gen(gen)
         , timeobj(timeobj)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
-        , end_session_warning(end_session_warning)
         , glyphs(glyphs)
         , theme(theme)
     {
