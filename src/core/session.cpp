@@ -173,7 +173,7 @@ private:
     // Returns run_session value
     bool check_acl(ModuleManager & mm, std::unique_ptr<Acl> & acl,
         Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
-        time_t now, bool & has_user_activity, SessionState & session_state, Inifile& ini)
+        time_t now, SessionState & session_state, Inifile& ini)
     {
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
         if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
@@ -541,7 +541,7 @@ private:
             }
             bool run_session = this->check_acl(mm, acl,
                 authentifier, authentifier, mod_wrapper,
-                now.tv_sec, front.has_user_activity, session_state,
+                now.tv_sec, session_state,
                 ini
             );
             if (!run_session) {
@@ -675,7 +675,7 @@ public:
         std::unique_ptr<Acl> acl;
 
         try {
-            Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());;
+            Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
 
             auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
             LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
@@ -1057,12 +1057,6 @@ public:
 
                     switch (front.state) {
                     default:
-
-                    // Design a State to ensure ACL Start
-    //                if (acl){
-    //                    ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-    //                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-    //                }
                     {
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                             return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
