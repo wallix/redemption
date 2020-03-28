@@ -172,8 +172,8 @@ private:
 private:
     // Returns run_session value
     bool check_acl(ModuleManager & mm, std::unique_ptr<Acl> & acl,
-        Authentifier & authentifier, ReportMessageApi & report_message, ModWrapper & mod_wrapper,
-        time_t now, Inifile& ini)
+        Authentifier & authentifier, ModWrapper & mod_wrapper,
+        time_t now, Inifile& ini, ModuleIndex & old_target_module, Front & front, ClientExecute & rail_client_execute)
     {
         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
         if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
@@ -199,7 +199,21 @@ private:
                 acl->acl_serial.remote_answer = false;
                 acl->acl_serial.send_acl_data();
                 mod_wrapper.remove_mod();
-                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION, authentifier, report_message);
+                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_TRANSITION (was %s)", get_module_name(old_target_module));
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                mod_wrapper.connected = false;
+                if (old_target_module != MODULE_INTERNAL_TRANSITION) {
+                    front.must_be_stop_capture();
+                    switch (old_target_module){
+                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                    default:;
+                    }
+                }
+                old_target_module = MODULE_INTERNAL_TRANSITION;
+                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION);
             break;
             case BACK_EVENT_REFRESH:
                 acl->acl_serial.remote_answer = false;
@@ -213,58 +227,169 @@ private:
         if (acl->acl_serial.remote_answer) {
             LOG(LOG_INFO, "check_acl remote_answer signal=%s", signal_name(signal));
             acl->acl_serial.remote_answer = false;
+
             switch (signal){
             default:
             case BACK_EVENT_NONE:
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-            return true;
-            case BACK_EVENT_REFRESH:
-                LOG(LOG_INFO, "Remote Answer REFRESH");
-                // should not happen
+                LOG(LOG_INFO, "Back Event NONE");
                 mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
             return true;
             case BACK_EVENT_NEXT:
             {
-                ModuleIndex next_state = MODULE_INTERNAL_CLOSE;
+                LOG(LOG_INFO, "Remote Answer NEXT MODULE");
                 auto & module_cstr = ini.get<cfg::context::module>();
-                auto module_id = get_module_id(module_cstr);
-                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(module_id));
+                auto next_state = get_module_id(module_cstr);
+                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(next_state));
 
-                next_state = module_id;
-
-                if (mod_wrapper.is_connected() 
-                    && ((module_id == MODULE_RDP)||(module_id == MODULE_VNC))) {
-                    if (ini.get<cfg::context::auth_error_message>().empty()) {
-                        ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
-                    }
-                    next_state = MODULE_INTERNAL_CLOSE;
-                }
-                else if (module_id == MODULE_INTERNAL)
+                switch (next_state){
+                case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
                 {
-                    auto module_id = get_internal_module_id_from_target(ini.get<cfg::context::target_host>());
-                    LOG(LOG_INFO, "===========> %s (from target)", get_module_name(module_id));
-                    next_state = module_id;
-                }
-                else if (module_id == MODULE_UNKNOWN)
-                {
-                    LOG(LOG_INFO, "===========> UNKNOWN MODULE (closing)");
-                    next_state = MODULE_INTERNAL_CLOSE;
-                }
-
-                if (next_state == MODULE_TRANSITORY) {
                     LOG(LOG_INFO, "check_acl TRANSITORY signal=%s", signal_name(signal));
                     acl->acl_serial.remote_answer = false;
                     mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NEXT);
                     return true;
                 }
-                if (next_state == MODULE_INTERNAL_CLOSE) {
+                break;
+                case MODULE_RDP:
+                {
+                    LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(old_target_module));
+                    if (mod_wrapper.is_connected()) {
+                        if (ini.get<cfg::context::auth_error_message>().empty()) {
+                            ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
+                        }
+                        throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
+                    }
+                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                    log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                    mod_wrapper.connected = false;
+
+                    if (old_target_module != MODULE_RDP) {
+                        front.must_be_stop_capture();
+                        switch (old_target_module){
+                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                        default:;
+                        }
+                        authentifier.new_remote_mod();
+                    }
+                    old_target_module = MODULE_RDP;
+                    mm.new_mod(mod_wrapper, MODULE_RDP);
+                }
+                break;
+                case MODULE_VNC:
+                {
+                    LOG(LOG_INFO, "New_mod: MODULE_VNC (was %s)", get_module_name(old_target_module));
+                    if (mod_wrapper.is_connected()) {
+                        if (ini.get<cfg::context::auth_error_message>().empty()) {
+                            ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
+                        }
+                        throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
+                    }
+
+                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                    log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+
+                    mod_wrapper.connected = false;
+                    if (old_target_module != MODULE_VNC) {
+                        front.must_be_stop_capture();
+                        switch (old_target_module){
+                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                        default:;
+                        }
+                        authentifier.new_remote_mod();
+                    }
+                    old_target_module = MODULE_VNC;
+                    mm.new_mod(mod_wrapper, MODULE_VNC);
+                }
+                break;
+                case MODULE_INTERNAL:
+                {
+                    next_state = get_internal_module_id_from_target(ini.get<cfg::context::target_host>());
+                    LOG(LOG_INFO, "New_mod (internal from target): %s (was %s)", 
+                            get_module_name(next_state), get_module_name(old_target_module));
+                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                    log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                    mod_wrapper.connected = false;
+                    if (old_target_module != MODULE_INTERNAL) {
+                        front.must_be_stop_capture();
+                        switch (old_target_module){
+                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                        default:;
+                        }
+                    }
+                    old_target_module = next_state;
+                    mm.new_mod(mod_wrapper, next_state);
+                }
+                break;
+                case MODULE_UNKNOWN:
+                {
+                    LOG(LOG_INFO, "===========> UNKNOWN MODULE (closing)");
                     throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
                 }
-                if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
-                    LOG(LOG_INFO, "check_acl is INTERNAL CLOSE BACK signal=%s", signal_name(signal));
-                    acl->keepalive.stop();
+                case MODULE_INTERNAL_CLOSE:
+                {
+                    throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
                 }
-                mm.new_mod(mod_wrapper, next_state, authentifier, report_message);
+                case MODULE_INTERNAL_CLOSE_BACK:
+                {
+                    LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_CLOSE_BACK (was %s)", get_module_name(old_target_module));
+                    acl->keepalive.stop();
+                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                    log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+
+                    mod_wrapper.connected = false;
+
+                    if (old_target_module != MODULE_INTERNAL_CLOSE_BACK) {
+                        front.must_be_stop_capture();
+
+                        switch (old_target_module){
+                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                        default:;
+                        }
+                    }
+                    old_target_module = MODULE_INTERNAL_CLOSE_BACK;
+                    mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE_BACK);
+                }
+                break;
+                default:
+                {
+                    LOG(LOG_INFO, "New_mod (default): target_module=%s (was %s)", 
+                            get_module_name(next_state), get_module_name(old_target_module));
+
+                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                    switch (next_state) {
+                    case MODULE_INTERNAL_CLOSE:
+                        log_proxy::set_user("");
+                        break;
+                    case MODULE_INTERNAL_WIDGET_LOGIN:
+                        log_proxy::set_user("");
+                        break;
+                    default:
+                        log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                        break;
+                    }
+                    mod_wrapper.connected = false;
+                    if (old_target_module != next_state) {
+                        front.must_be_stop_capture();
+
+                        switch (old_target_module){
+                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                        default:;
+                        }
+                    }
+                    old_target_module = next_state;
+                    mm.new_mod(mod_wrapper, next_state);
+                }
+                }
             }
             return true;
             }
@@ -489,7 +614,9 @@ private:
                               EndSessionWarning & end_session_warning,
                               Front & front,
                               Authentifier & authentifier,
-                              SessionState & session_state)
+                              SessionState & session_state,
+                              ModuleIndex & old_target_module,
+                              ClientExecute & rail_client_execute)
     {
         auto const end_tv = session_reactor.get_current_time();
         timer_events_.exec_timer(end_tv);
@@ -541,8 +668,8 @@ private:
                 break;
             }
             bool run_session = this->check_acl(mm, acl,
-                authentifier, authentifier, mod_wrapper,
-                now.tv_sec, ini);
+                authentifier, mod_wrapper,
+                now.tv_sec, ini, old_target_module, front, rail_client_execute);
             if (!run_session) {
                 return false;
             }
@@ -688,7 +815,9 @@ public:
             ModFactory mod_factory(mod_wrapper, session_reactor, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier);
             EndSessionWarning end_session_warning;
 
-            ModuleManager mm(mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj);
+            ModuleManager mm(mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj, authentifier, authentifier);
+            ModuleIndex old_target_module = MODULE_UNKNOWN;
+
 
             if (ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -875,7 +1004,22 @@ public:
                             run_session = false;
                             LOG(LOG_INFO, "start acl failed");
                             if (ini.get<cfg::globals::enable_close_box>()) {
-                                mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, authentifier);
+                                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_CLOSE (was %s)", get_module_name(old_target_module));
+                                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                                log_proxy::set_user("");
+                                mod_wrapper.connected = false;
+
+                                if (old_target_module != MODULE_INTERNAL_CLOSE) {
+                                    front.must_be_stop_capture();
+                                    switch (old_target_module){
+                                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                                    default:;
+                                    }
+                                }
+                                old_target_module = MODULE_INTERNAL_CLOSE;
+                                mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE);
                                 run_session = true;
                             }
                             continue;
@@ -1093,7 +1237,7 @@ public:
                                 throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                             }
 
-                            run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, session_state);
+                            run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, session_state, old_target_module, rail_client_execute);
 
                         } catch (Error const& e) {
                             LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
@@ -1108,7 +1252,23 @@ public:
                                 authentifier.set_acl_serial(nullptr);
                                 acl.reset();
                                 if (ini.get<cfg::globals::enable_close_box>()) {
-                                    mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE, authentifier, authentifier);
+                                    LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_CLOSE (was %s)", get_module_name(old_target_module));
+                                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                                    log_proxy::set_user("");
+                                    mod_wrapper.connected = false;
+
+                                    if (old_target_module != MODULE_INTERNAL_CLOSE) {
+                                        front.must_be_stop_capture();
+
+                                        switch (old_target_module){
+                                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                                        default:;
+                                        }
+                                    }
+                                    old_target_module = MODULE_INTERNAL_CLOSE;
+                                    mm.new_mod(mod_wrapper, MODULE_INTERNAL_CLOSE);
                                     run_session = true;
                                 }
                             }
@@ -1117,7 +1277,23 @@ public:
                                 acl->acl_serial.remote_answer = false;
                                 LOG(LOG_INFO, "Retrying current module");
                                 mod_wrapper.remove_mod();
-                                mm.new_mod(mod_wrapper, MODULE_RDP, authentifier, authentifier);
+
+                                LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(old_target_module));
+                                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                                log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                                mod_wrapper.connected = false;
+                                if (old_target_module != MODULE_RDP) {
+                                    front.must_be_stop_capture();
+                                    switch (old_target_module){
+                                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                                    default:;
+                                    }
+                                    authentifier.new_remote_mod();
+                                }
+                                old_target_module = MODULE_RDP;
+                                mm.new_mod(mod_wrapper, MODULE_RDP);
                                 run_session = true;
                             break;
                             }

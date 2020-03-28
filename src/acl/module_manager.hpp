@@ -80,10 +80,10 @@ private:
     ClientExecute & rail_client_execute;
     Random & gen;
     TimeObj & timeobj;
+    ReportMessageApi & report_message;
+    AuthApi & authentifier;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
-
-    ModuleIndex old_target_module = MODULE_UNKNOWN;
 
 public:
 
@@ -107,7 +107,7 @@ public:
                   TimerContainer& timer_events_,
                   GraphicEventContainer& graphic_events_,
                   SesmanInterface & sesman,
-                  FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
+                  FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj, ReportMessageApi & report_message, AuthApi & authentifier)
         : mod_factory(mod_factory)
         , ini(ini)
         , session_reactor(session_reactor)
@@ -123,6 +123,8 @@ public:
         , rail_client_execute(rail_client_execute)
         , gen(gen)
         , timeobj(timeobj)
+        , report_message(report_message)
+        , authentifier(authentifier)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
         , glyphs(glyphs)
         , theme(theme)
@@ -135,54 +137,8 @@ public:
 
 public:
 
-    void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
+    void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module)
     {
-        LOG(LOG_INFO, "New_mod: target_module=%s (was %s)", 
-                get_module_name(target_module), get_module_name(this->old_target_module));
-
-        if (target_module != MODULE_INTERNAL_TRANSITION) {
-            LOG(LOG_INFO, "----------> new_mod <--------");
-            LOG(LOG_INFO, "target_module=%s(%d)",
-                get_module_name(target_module), target_module);
-        }
-
-        this->rail_client_execute.enable_remote_program(this->client_info.remote_program);
-
-        switch (target_module) {
-        case MODULE_INTERNAL_CLOSE:
-            log_proxy::set_user("");
-            break;
-        case MODULE_INTERNAL_WIDGET_LOGIN:
-            log_proxy::set_user("");
-            break;
-        default:
-            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-            break;
-        }
-
-        mod_wrapper.connected = false;
-
-        if (this->old_target_module != target_module) {
-            this->front.must_be_stop_capture();
-
-            switch (this->old_target_module){
-            case MODULE_XUP: authentifier.delete_remote_mod(); break;
-            case MODULE_RDP: authentifier.delete_remote_mod(); break;
-            case MODULE_VNC: authentifier.delete_remote_mod(); break;
-            default:;
-            }
-
-            switch (target_module){
-            case MODULE_XUP: authentifier.new_remote_mod(); break;
-            case MODULE_RDP: authentifier.new_remote_mod(); break;
-            case MODULE_VNC: authentifier.new_remote_mod(); break;
-            default:;
-            }
-        }
-        this->old_target_module = target_module;
-
-        mod_wrapper.show_osd_flag = false;
-
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
@@ -273,11 +229,10 @@ public:
 
         case MODULE_XUP: {
             auto mod_pack = mod_factory.create_xup_mod();
-
+            mod_pack.enable_osd = true;
+            mod_pack.connected = true;
             mod_wrapper.set_mod(mod_pack);
             this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-            mod_wrapper.connected = true;
-            mod_wrapper.show_osd_flag = true;
             break;
         }
 
@@ -288,7 +243,7 @@ public:
 
             try {
                 auto mod_pack = create_mod_rdp(mod_wrapper,
-                    authentifier, report_message, this->ini,
+                    this->authentifier, this->report_message, this->ini,
                     mod_wrapper.get_graphics(), this->front, this->client_info,
                     this->rail_client_execute, this->keymap.key_flags,
                     this->glyphs, this->theme,
@@ -297,6 +252,8 @@ public:
                     this->file_system_license_store,
                     this->gen, this->timeobj, this->cctx,
                     this->server_auto_reconnect_packet);
+                mod_pack.enable_osd = true;
+                mod_pack.connected = true;
 
                 mod_wrapper.set_mod(mod_pack);
 
@@ -310,11 +267,9 @@ public:
                 mod_wrapper.get_mod()->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
                 ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-                mod_wrapper.show_osd_flag = true;
-                mod_wrapper.connected = true;
             }
             catch (...) {
-                report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
+                this->report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
                 this->front.must_be_stop_capture();
 
                 throw;
@@ -325,7 +280,7 @@ public:
 
         case MODULE_VNC:
             try {
-                auto mod_pack = create_mod_vnc(mod_wrapper, authentifier, report_message, this->ini,
+                auto mod_pack = create_mod_vnc(mod_wrapper, this->authentifier, this->report_message, this->ini,
                     mod_wrapper.get_graphics(), this->front, this->client_info,
                     this->rail_client_execute, this->keymap.key_flags,
                     this->glyphs, this->theme,
@@ -336,15 +291,15 @@ public:
                     this->sesman,
                     this->timeobj
                 );
+                mod_pack.enable_osd = true;
+                mod_pack.connected = true;
 
                 mod_wrapper.set_mod(mod_pack);
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
                 ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-                mod_wrapper.show_osd_flag = true;
-                mod_wrapper.connected = true;
             }
             catch (...) {
-                report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
+                this->report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
                 throw;
             }
             break;

@@ -468,6 +468,8 @@ public:
         this->rail_module_host_mod_ptr = mod_pack.rail_module_host_ptr;
         this->rdpapi = mod_pack.rdpapi;
         this->winapi = mod_pack.winapi;
+        this->connected = mod_pack.connected;
+        this->show_osd_flag = mod_pack.enable_osd;
     }
 
     // push_mod or replace_mod
