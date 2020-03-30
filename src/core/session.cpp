@@ -505,6 +505,9 @@ private:
             if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                 this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
             }
+            else {
+                ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
+            }
             return 1;
         }
         else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
