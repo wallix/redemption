@@ -1,6 +1,6 @@
 # RDP Qt Client
 
-Le ClientQtGraphicAPI est une couche graphique Qt pour client RDP qui assure l'affichage 
+Le ClientQtGraphicAPI est une couche graphique Qt pour client RDP qui assure l'affichage
 d'ordre de tracé RDP et capture les entrées souris et clavier.
 Cette API est compatible avec un module de redemption (`mod_rdp`, `mod_vnc`...).
 
@@ -50,7 +50,7 @@ des boutons `[Play]`, `[Stop]` et `[Pause]`.
 
 
 ## Prerequies
-	
+
 Installer les lib Qt4 ou Qt5.
 
 To compile ReDemPtion you need the following packages:
@@ -84,9 +84,9 @@ Pour compiler avec la bibliothèque Qt5:
 
     bjam -s qt=5 client_rdp_Qt
 
-Note: Les includes de Qt peuvent être configurés avec les variables d'environnement `QT4_INCLUDE`, `QT5_INCLUDE` et `QT5_PHONON_INCLUDE` depuis le shell avec `export` ou avec `-s` de bjam.
+Note: Les includes de Qt peuvent être configurés avec les variables d'environnement `QT4_INCLUDE`, `QT5_INCLUDE` `QT5_TOOL_PATH` et `QT5_PHONON_INCLUDE` depuis le shell avec `export` ou avec `-s` de bjam.
 
-    bjam -s qt=5 -s QT4_INCLUDE=/usr/include/qt4 client_rdp_Qt
+    bjam -s qt=5 -s QT5_INCLUDE=/usr/include/qt client_rdp_Qt
 
 ## Utilisation du client Qt RDP
 
@@ -163,7 +163,7 @@ ainsi que la résolution.
 - Une combobox permet de spécifier la langue du clavier
 - Un tableau permet de configurer des touches du clavier (le Qt scan code et nécessaire
 ainsi que le scan code ou le code ascii de la touche.
-	
+
 
 ### Implémentation du client
 

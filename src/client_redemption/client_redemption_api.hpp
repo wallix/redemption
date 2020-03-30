@@ -29,8 +29,8 @@
 
 class ClientInputSocketAPI
 {
-    // TODO private
 public:
+    // TODO private
     mod_api * _callback = nullptr;
 
     virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
@@ -41,11 +41,10 @@ public:
 
 class ClientRedemptionAPI : public FrontAPI
 {
-
 public:
     virtual ~ClientRedemptionAPI() = default;
 
-    bool can_be_start_capture(SesmanInterface & sesman) override { return true; }
+    bool can_be_start_capture(SesmanInterface & /*sesman*/) override { return true; }
     bool is_capture_in_progress() const override { return true; }
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, bytes_view /*chunk_data*/
                         , std::size_t /*total_length*/, int  /*flags*/) override {}
@@ -61,13 +60,9 @@ public:
     virtual void update_keylayout() {}
 
     // Replay functions
-    virtual void replay( const std::string & /*unused*/, SesmanInterface & sesman) {}
-    virtual bool load_replay_mod(timeval /*unused*/, timeval /*unused*/, SesmanInterface & sesman) { return false; }
-    virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/, SesmanInterface & sesman) { return timeval{}; }
+    virtual void replay( const std::string & /*unused*/) {}
+    virtual bool load_replay_mod(timeval /*unused*/, timeval /*unused*/) { return false; }
+    virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
     virtual void delete_replay_mod() {}
     virtual void instant_play_client(std::chrono::microseconds /*time*/) {}
-
 };
-
-
-
