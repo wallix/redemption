@@ -317,8 +317,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.session_shadowing_support);
 
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.on_account_manipulation);
-
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_params.alternate_directory_environment_variable.c_str());
 #endif
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);

@@ -66,7 +66,6 @@ template class Inifile::Field<cfg::mod_rdp::session_probe_end_of_session_check_d
 template class Inifile::Field<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_disabled_features>;
-template class Inifile::Field<cfg::mod_rdp::session_probe_alternate_directory_environment_variable>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_public_session>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_on_account_manipulation>;
 template class Inifile::Field<cfg::mod_rdp::server_cert_store>;
