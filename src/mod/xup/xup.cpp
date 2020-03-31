@@ -84,7 +84,7 @@ namespace
 
 
 xup_mod::xup_mod(
-    Transport & t, SessionReactor& session_reactor, 
+    Transport & t, SessionReactor& session_reactor,
     GraphicFdContainer & graphic_fd_events_,
     FrontAPI & front,
     uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp)
@@ -92,8 +92,6 @@ xup_mod::xup_mod(
 , bpp(context_bpp)
 , t(t)
 , rop(0xCC)
-, session_reactor(session_reactor)
-, graphic_fd_events_(graphic_fd_events_)
 {
     StaticOutStream<256> stream;
     stream.out_skip_bytes(4);

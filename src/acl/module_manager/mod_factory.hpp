@@ -59,7 +59,6 @@ class ModFactory
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
     SesmanInterface & sesman;
-    TopFdContainer & fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -72,13 +71,12 @@ class ModFactory
     const Theme & theme;
     ClientExecute & rail_client_execute;
     ReportMessageApi & report_message;
-    
+
 
 public:
-    ModFactory(ModWrapper & mod_wrapper, 
+    ModFactory(ModWrapper & mod_wrapper,
                SessionReactor & session_reactor,
                SesmanInterface & sesman,
-               TopFdContainer & fd_events_,
                GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,
@@ -95,7 +93,6 @@ public:
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
         , sesman(sesman)
-        , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
@@ -133,7 +130,7 @@ public:
                 [this]{
                     auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()
                                     + this->ini.get<cfg::globals::target_user>();
-                    if (movie_path.size() < 5u 
+                    if (movie_path.size() < 5u
                     || !std::equal(movie_path.end() - 5u, movie_path.end(), ".mwrm")) {
                         movie_path += ".mwrm";
                     }
@@ -149,7 +146,7 @@ public:
             );
         return {new_mod, nullptr, nullptr, nullptr};
     }
-    
+
     auto create_widget_test_mod() -> ModPack
     {
         auto new_mod = new WidgetTestMod(
@@ -172,7 +169,7 @@ public:
             this->client_info.screen_info.height,
             this->glyphs,
             false
-        ); 
+        );
         return {new_mod, nullptr, nullptr, nullptr};
     }
 
@@ -275,7 +272,7 @@ public:
             this->rail_client_execute,
             this->glyphs,
             this->theme
-        ); 
+        );
         return {new_mod, nullptr, nullptr, nullptr};
     }
 
@@ -332,7 +329,7 @@ public:
         );
         return {new_mod, nullptr, nullptr, nullptr};
     }
-    
+
     auto create_dialog_challenge_mod() -> ModPack
     {
         const char * message = this->ini.get<cfg::context::message>().c_str();
@@ -396,7 +393,7 @@ public:
         );
         return {new_mod, nullptr, nullptr, nullptr};
     }
-    
+
     auto create_transition_mod() -> ModPack
     {
         auto new_mod = new TransitionMod(
@@ -417,7 +414,7 @@ public:
         );
         return {new_mod, nullptr, nullptr, nullptr};
     }
-    
+
     auto create_login_mod() -> ModPack
     {
         char username[255]; // should use string
@@ -464,8 +461,8 @@ public:
             this->theme
         );
         return {new_mod, nullptr, nullptr, nullptr};
-    }    
-    
+    }
+
     auto create_xup_mod() -> ModPack
     {
         unique_fd client_sck = connect_to_target_host(
@@ -489,5 +486,5 @@ public:
             safe_int(this->ini.get<cfg::context::opt_bpp>())
         );
         return {new_mod, nullptr, nullptr, nullptr};
-    }    
+    }
 };

@@ -72,8 +72,6 @@ mod_vnc::mod_vnc( Transport & t
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
-    , graphic_fd_events_(graphic_fd_events_)
-    , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
@@ -83,8 +81,8 @@ mod_vnc::mod_vnc( Transport & t
     , server_data_buf(*this)
     , tlsSwitch(false)
     , frame_buffer_update_ctx(this->zd, verbose)
-    , clipboard_data_ctx(verbose)
     , sesman(sesman)
+    , clipboard_data_ctx(verbose)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
 

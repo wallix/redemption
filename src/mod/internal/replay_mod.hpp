@@ -55,7 +55,6 @@ class ReplayMod : public mod_api
 
     bool replay_on_loop;
     bool play_video_with_corrupted_bitmap;
-    SessionReactor& session_reactor;
     SesmanInterface & sesman;
     GraphicTimerPtr timer;
 
@@ -158,6 +157,6 @@ public:
 
     [[nodiscard]] bool is_up_and_running() const override
     { return true; }
-    
+
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
 };

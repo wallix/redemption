@@ -26,9 +26,9 @@ Author(s): Jonathan Poelen
 # include <openssl/ssl.h>
 #endif
 
+
 namespace
 {
-
 #ifndef __EMSCRIPTEN__
     bool cert_to_escaped_string(X509& cert, std::string& output)
     {
@@ -55,8 +55,6 @@ namespace
         return true;
     }
 #endif
-
-    using PrivateRdpNegociationPtr = std::unique_ptr<PrivateRdpNegociation>;
 } // anonymous namespace
 
 void mod_rdp::init_negociate_event_(
@@ -105,25 +103,24 @@ void mod_rdp::init_negociate_event_(
         return er.to_result();
     };
 
-    this->private_rdp_negociation = 
-                 std::make_unique<PrivateRdpNegociation>(
-                    open_session_timeout, program, directory,
-                    this->channels.channels_authorizations, this->channels.mod_channel_list,
-                    this->channels.auth_channel, this->channels.checkout_channel,
-                    this->decrypt, this->encrypt, this->logon_info,
-                    this->channels.enable_auth_channel,
-                    this->trans, this->front, info, this->redir_info,
-                    gen, timeobj, mod_rdp_params, this->report_message, this->license_store,
-            #ifndef __EMSCRIPTEN__
-                    this->channels.drive.file_system_drive_manager.has_managed_drive()
-                    || this->channels.session_probe.enable_session_probe,
-                    this->channels.remote_app.convert_remoteapp_to_desktop,
-            #else
-                    false,
-                    false,
-            #endif
-                    tls_client_params
-                );
+    this->private_rdp_negociation = std::make_unique<PrivateRdpNegociation>(
+        open_session_timeout, program, directory,
+        this->channels.channels_authorizations, this->channels.mod_channel_list,
+        this->channels.auth_channel, this->channels.checkout_channel,
+        this->decrypt, this->encrypt, this->logon_info,
+        this->channels.enable_auth_channel,
+        this->trans, this->front, info, this->redir_info,
+        gen, timeobj, mod_rdp_params, this->report_message, this->license_store,
+#ifndef __EMSCRIPTEN__
+        this->channels.drive.file_system_drive_manager.has_managed_drive()
+     || this->channels.session_probe.enable_session_probe,
+        this->channels.remote_app.convert_remoteapp_to_desktop,
+#else
+        false,
+        false,
+#endif
+        tls_client_params
+    );
 
     RdpNegociation& rdp_negociation = this->private_rdp_negociation->rdp_negociation;
 
@@ -175,7 +172,7 @@ void mod_rdp::init_negociate_event_(
             this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
             if (this->buf.remaining()){
                 LOG(LOG_INFO, "rdp::graphic_events_.create_action_executor");
-                this->private_rdp_negociation->graphic_event 
+                this->private_rdp_negociation->graphic_event
                 = this->graphic_events_.create_action_executor(ctx.get_reactor())
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                     this->draw_event_impl(gd, sesman);

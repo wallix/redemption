@@ -285,7 +285,6 @@ ReplayMod::ReplayMod(
 , sync_setted(false)
 , replay_on_loop(replay_on_loop)
 , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
-, session_reactor(session_reactor)
 , sesman(sesman)
 {
     if (this->internal_reader->server_resize(drawable, front, sesman)) {

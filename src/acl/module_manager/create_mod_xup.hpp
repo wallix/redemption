@@ -38,7 +38,7 @@ private:
 
 public:
     XupModWithSocket(ModWrapper & mod_wrapper, Inifile & ini,
-        const char * name, unique_fd sck, uint32_t verbose, std::string * error_message, 
+        const char * name, unique_fd sck, uint32_t verbose, std::string * error_message,
         SessionReactor& session_reactor, GraphicFdContainer & graphic_fd_events_, FrontAPI& front, uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp)
     : socket_transport( name, std::move(sck)
                      , ini.get<cfg::context::target_host>().c_str()
@@ -64,7 +64,7 @@ public:
     void rdp_gdi_up_and_running(ScreenInfo &) override {}
 
     void rdp_gdi_down() override {}
-    
+
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
         this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);

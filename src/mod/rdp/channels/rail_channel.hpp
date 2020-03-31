@@ -1143,7 +1143,7 @@ public:
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task, SesmanInterface & sesman) override
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task, SesmanInterface & /*sesman*/) override
     {
         (void)out_asynchronous_task;
 
@@ -1515,5 +1515,5 @@ private:
 
     void sespro_ending_in_progress() override {}
 
-    void sespro_launch_process_ended(SesmanInterface & sesman) override {}
+    void sespro_launch_process_ended(SesmanInterface & /*sesman*/) override {}
 };

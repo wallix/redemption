@@ -50,7 +50,6 @@
 
 #include "transport/socket_transport.hpp"
 
-#include "utils/load_theme.hpp"
 #include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
@@ -279,11 +278,10 @@ private:
     bool is_disable_by_input = false;
     bool bogus_refresh_rect_ex;
     const Font & glyphs;
-    const Theme & theme;
     Keymap2 & keymap;
 
 public:
-    explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : callback(*this)
     , gfilter(graphics, callback, palette, Rect{})
     , g(gfilter)
@@ -294,7 +292,6 @@ public:
     , ini(ini)
     , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
-    , theme(theme)
     , keymap(keymap)
     {}
 

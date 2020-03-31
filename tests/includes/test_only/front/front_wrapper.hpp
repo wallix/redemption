@@ -53,7 +53,7 @@ public:
         std::string server_capabilities_filename = {});
     ~FrontWrapper();
 
-    bool can_be_start_capture(SesmanInterface & sesman) override { return false; }
+    bool can_be_start_capture(SesmanInterface & /*sesman*/) override { return false; }
     bool must_be_stop_capture() override { return false; }
     bool is_capture_in_progress() const override { return false; }
 

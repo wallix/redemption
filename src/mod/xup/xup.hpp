@@ -74,6 +74,4 @@ private:
     RDPPen pen;
 
     GraphicFdPtr fd_event;
-    SessionReactor& session_reactor;
-    GraphicFdContainer & graphic_fd_events_;
 };

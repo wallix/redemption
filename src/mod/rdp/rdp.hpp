@@ -136,29 +136,6 @@ struct FileValidatorService;
 #include <deque>
 #include <bitset>
 
-namespace { // anonymous namespace
-    struct PrivateRdpNegociation
-    {
-        RdpNegociation rdp_negociation;
-        GraphicEventPtr graphic_event;
-        const std::chrono::seconds open_session_timeout;
-#ifndef __EMSCRIPTEN__
-        CertificateResult result = CertificateResult::wait;
-#endif
-
-        template<class... Ts>
-        explicit PrivateRdpNegociation(
-            std::chrono::seconds open_session_timeout,
-            char const* program, char const* directory,
-            Ts&&... xs)
-        : rdp_negociation(static_cast<Ts&&>(xs)...)
-        , open_session_timeout(open_session_timeout)
-        {
-            this->rdp_negociation.set_program(program, directory);
-        }
-    };
-};
-
 
 #ifndef __EMSCRIPTEN__
 // TODO: isn't AsynchronousTaskContainer is general purpose class that should have it's own file ?
@@ -418,8 +395,6 @@ private:
     const RDPVerbose verbose;
 
     SessionReactor & session_reactor;
-    TopFdContainer & fd_events_;
-    GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
@@ -430,7 +405,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        SessionReactor & session_reactor, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
@@ -457,8 +432,6 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
-    , fd_events_(fd_events_)
-    , graphic_fd_events_(graphic_fd_events_)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
@@ -1917,7 +1890,6 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     SessionReactor& session_reactor;
-    TopFdContainer& fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -1985,13 +1957,32 @@ class mod_rdp : public mod_api, public rdp_api
     FileValidatorService * file_validator_service;
 #endif
 
+    struct PrivateRdpNegociation
+    {
+        RdpNegociation rdp_negociation;
+        GraphicEventPtr graphic_event;
+        const std::chrono::seconds open_session_timeout;
+#ifndef __EMSCRIPTEN__
+        CertificateResult result = CertificateResult::wait;
+#endif
+
+        template<class... Ts>
+        explicit PrivateRdpNegociation(
+            std::chrono::seconds open_session_timeout,
+            char const* program, char const* directory,
+            Ts&&... xs)
+        : rdp_negociation(static_cast<Ts&&>(xs)...)
+        , open_session_timeout(open_session_timeout)
+        {
+            this->rdp_negociation.set_program(program, directory);
+        }
+    };
+
+    std::unique_ptr<PrivateRdpNegociation> private_rdp_negociation;
+
 public:
     using Verbose = RDPVerbose;
-    
-    
-    
-    std::unique_ptr<PrivateRdpNegociation> private_rdp_negociation;
-    
+
     explicit mod_rdp(
         Transport & trans
       , Inifile & ini
@@ -2020,7 +2011,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, file_validator_service,
+            report_message, gen, metrics, session_reactor, timer_events_, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -2067,7 +2058,6 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
-        , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)

@@ -43,8 +43,6 @@ TestCardMod::TestCardMod(
 , front_height(height)
 , font(font)
 , unit_test(unit_test)
-, session_reactor(session_reactor)
-, graphic_events_(graphic_events_)
 {
     this->graphic_event = graphic_events_.create_action_executor(session_reactor)
     .on_action(jln::one_shot([this](gdi::GraphicApi& gd){

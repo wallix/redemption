@@ -324,8 +324,6 @@ private:
     Zdecompressor<> zd;
 
     SessionReactor& session_reactor;
-    GraphicFdContainer & graphic_fd_events_;
-    TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicFdPtr fd_event;
     GraphicEventPtr wait_client_up_and_running_event;

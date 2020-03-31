@@ -38,8 +38,6 @@ class TestCardMod : public mod_api
 
     bool unit_test;
 
-    SessionReactor& session_reactor;
-    GraphicEventContainer & graphic_events_;
     GraphicEventPtr graphic_event;
 
     [[nodiscard]] Rect get_screen_rect() const;
