@@ -155,6 +155,9 @@ cp_spec = {
         u'mod_rdp:session_probe_disabled_features': (
             'disabled_features', 864
         ),
+        u'mod_rdp:session_probe_alternate_directory_environment_variable': (
+            'alternate_directory_environment_variable', u''
+        ),
         u'mod_rdp:session_probe_public_session': (
             'public_session', False
         ),

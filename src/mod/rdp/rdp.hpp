@@ -1274,7 +1274,16 @@ public:
               ? std::string()
               : str_concat("/#", this->session_probe.target_informations, ' ');
 
-            this->remote_app.client_execute.working_dir = "%TMP%";
+            if (session_probe_params.alternate_directory_environment_variable.empty()) {
+                this->remote_app.client_execute.working_dir = "%TMP%";
+            }
+            else {
+                this->remote_app.client_execute.working_dir = "%";
+                this->remote_app.client_execute.working_dir.append(session_probe_params.alternate_directory_environment_variable);
+                this->remote_app.client_execute.working_dir.append("%");
+            }
+            LOG(LOG_INFO, "(SPADEV) WorkingDir: \"%s\"", this->remote_app.client_execute.working_dir.c_str());
+
             this->remote_app.client_execute.arguments   = session_probe_params.arguments;
             mod_rdp_channels::replace_probe_arguments(this->remote_app.client_execute.arguments,
                 "${EXE_VAR}", exe_var_str,
@@ -1370,12 +1379,23 @@ public:
             return str_concat("/#", this->session_probe.target_informations, ' ');
         }();
 
+        std::string cd_tmp;
+        if (session_probe_params.alternate_directory_environment_variable.empty()) {
+            cd_tmp = "CD %TMP%&";
+        }
+        else {
+            cd_tmp = "CD %";
+            cd_tmp.append(session_probe_params.alternate_directory_environment_variable);
+            cd_tmp.append("%&");
+        }
+            LOG(LOG_INFO, "(SPADEV) Chdir: \"%s\"", cd_tmp.c_str());
+
         std::string arguments = session_probe_params.arguments;
         mod_rdp_channels::replace_probe_arguments(arguments,
             "${EXE_VAR}", exe_var_str,
             "${TITLE_VAR} ", "",
             "/${COOKIE_VAR} ", cookie_param,
-            "${CBSPL_VAR} ", used_clipboard_based_launcher ? "CD %TMP%&" : ""
+            "${CBSPL_VAR} ", used_clipboard_based_launcher ? cd_tmp.c_str() : ""
         );
 
         std::string alternate_shell = session_probe_params.exe_or_file;
@@ -1416,9 +1436,15 @@ public:
         program[sizeof(program) - 1] = 0;
         //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
 
-        const char * session_probe_working_dir = "%TMP%";
-        strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
-        directory[sizeof(directory) - 1] = 0;
+        if (session_probe_params.alternate_directory_environment_variable.empty()) {
+            const char * session_probe_working_dir = "%TMP%";
+            strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
+            directory[sizeof(directory) - 1] = 0;
+        }
+        else {
+            snprintf(directory, sizeof(directory), "%%%s%%", session_probe_params.alternate_directory_environment_variable.c_str());
+        }
+        LOG(LOG_INFO, "(SPADEV) Directory: \"%s\"", directory);
 
         this->session_probe.session_probe_launcher =
             std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
