@@ -1,3 +1,10 @@
+redemption (8.0.25%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * remove bestsafe options
+  * disable bestsafe integration
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 31 Mar 2020 15:08:55 +0200
+
 redemption (8.0.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Improve bestsafe options
