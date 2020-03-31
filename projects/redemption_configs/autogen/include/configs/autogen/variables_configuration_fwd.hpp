@@ -162,6 +162,7 @@ namespace cfg {
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
         struct session_probe_childless_window_as_unidentified_input_field;
         struct session_probe_disabled_features;
+        struct enable_bestsafe_integration;
         struct session_probe_public_session;
         struct session_probe_on_account_manipulation;
         struct server_cert_store;

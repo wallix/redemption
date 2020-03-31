@@ -630,19 +630,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # min = 0, max = 1023
 #   0x000: none
-#   0x001: Java Access Bridge
-#   0x002: MS Active Accessbility
-#   0x004: MS UI Automation
-#   0x010: Inspect Edge location URL
-#   0x020: Inspect Chrome Address/Search bar
-#   0x040: Inspect Firefox Address/Search bar
-#   0x080: Monitor Internet Explorer event
-#   0x100: Inspect group membership of user
-#   0x200: BestSafe integration
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
+#   0x001: disable Java Access Bridge
+#   0x002: disable MS Active Accessbility
+#   0x004: disable MS UI Automation
+#   0x010: disable Inspect Edge location URL
+#   0x020: disable Inspect Chrome Address/Search bar
+#   0x040: disable Inspect Firefox Address/Search bar
+#   0x080: disable Monitor Internet Explorer event
+#   0x100: disable Inspect group membership of user
+# Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
-#session_probe_disabled_features = 864
+#session_probe_disabled_features = 352
+
+# value: 0 or 1
+#_hidden
+#enable_bestsafe_integration = 0
 
 # If enabled, disconnected session can be recovered by a different primary user.
 # value: 0 or 1

@@ -235,8 +235,9 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.vc_params.handle_usage_limit    = ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
     mod_rdp_params.session_probe_params.vc_params.memory_usage_limit    = ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
 
-    mod_rdp_params.session_probe_params.vc_params.disabled_features     = ini.get<cfg::mod_rdp::session_probe_disabled_features>();
-
+    const bool enable_bestsafe_integration = ini.get<cfg::mod_rdp::enable_bestsafe_integration>();
+    // bestsafe integration option should be in separate parameter for session probe
+    mod_rdp_params.session_probe_params.vc_params.disabled_features     = ini.get<cfg::mod_rdp::session_probe_disabled_features>() | (enable_bestsafe_integration ? SessionProbeDisabledFeature::none : SessionProbeDisabledFeature::reserved);
     mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
     mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
     mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());

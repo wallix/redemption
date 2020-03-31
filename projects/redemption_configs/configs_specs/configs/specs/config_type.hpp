@@ -198,7 +198,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("firefox_inspection", "Inspect Firefox Address/Search bar")
       .value("ie_monitoring", "Monitor Internet Explorer event")
       .value("group_membership", "Inspect group membership of user")
-      .value("bestsafe_integration", "BestSafe integration")
+      .value("reserved").exclude()  // former bestsafe enum to remove
     ;
 
     e.enumeration_list("RdpStoreFile")

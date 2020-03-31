@@ -434,7 +434,7 @@
           "type": "integer",
           "min": 0,
           "max": 1023,
-          "default": 864,
+          "default": 352,
           "subtype": "bitset",
           "values": [
             {
@@ -481,15 +481,17 @@
                "value": 256,
                "label": "Group membership",
                "description": "Inspect group membership of user"
-            },
-            {
-               "value": 512,
-               "label": "Bestsafe integration",
-               "description": "BestSafe integration"
             }
           ],
           "advanced": true,
           "prefered_representation": "hex",
+          "description": ""
+        },
+        {
+          "name": "enable_bestsafe_integration",
+          "type": "bool",
+          "default": false,
+          "advanced": true,
           "description": ""
         },
         {

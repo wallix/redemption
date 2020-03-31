@@ -523,8 +523,7 @@ enum class SessionProbeDisabledFeature : unsigned short
     ie_monitoring = 128,
     // Inspect group membership of user
     group_membership = 256,
-    // BestSafe integration
-    bestsafe_integration = 512,
+    reserved = 512,
 };
 
 inline bool is_valid_enum_value(SessionProbeDisabledFeature e)
