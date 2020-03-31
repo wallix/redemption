@@ -72,8 +72,7 @@ struct WsHttpHeader
         }
 
         auto extract_http_header_value = [&](array_view_const_char needle, auto cb){
-            auto it = std::search(in.begin(), in.end(),
-                std::boyer_moore_searcher(needle.begin(), needle.end()));
+            auto it = std::search(in.begin(), in.end(), needle.begin(), needle.end());
             if (it != in.end()) {
                 it += needle.size();
                 auto e = it;
