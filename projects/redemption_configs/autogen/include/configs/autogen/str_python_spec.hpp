@@ -549,6 +549,12 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 #_hex
 session_probe_disabled_features = integer(min=0, max=1023, default=864)
 
+# The name of an environment variable which points to the alternative directory for starting Session Probe.
+# The maximum length of this name is 3 bytes.
+# If empty, the environment variable TMP will be used.
+#_hidden
+session_probe_alternate_directory_environment_variable = string(default='')
+
 # If enabled, disconnected session can be recovered by a different primary user.
 #_hidden
 session_probe_public_session = boolean(default=False)
