@@ -100,7 +100,7 @@ private:
 
     FdxCapture * fdx_capture;
 
-    bool always_file_storage;
+    const bool always_file_storage;
     bool can_lock = false;
     const bool proxy_managed;   // Has not client.
 
@@ -164,9 +164,18 @@ private:
 
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
 
-            Sig sig = Sig();
+            enum class ValidatorState : uint8_t {
+                Wait,
+                Failure,
+                Success,
+                WaitValidatorBeforeTransfer,
+                TransferAfterValidation,
+            };
+            ValidatorState validator_state;
 
-            bool dlp_failure = false;
+            std::vector<uint8_t> file_content {};
+
+            Sig sig = Sig();
         };
 
         enum class TransferState :  uint8_t {
@@ -343,11 +352,13 @@ private:
             LockId _lock_id;
         };
 
+        ClipCtx(std::string const& target_name, bool verify_before_download);
 
         uint16_t message_type = 0;
 
         bool use_long_format_names = false;
         bool has_current_file_contents_stream_id = false;
+        const bool verify_before_download;
         StreamId current_file_contents_stream_id;
         uint32_t current_file_list_format_id;
         uint32_t requested_format_id;
@@ -358,7 +369,7 @@ private:
 
         Cliprdr::FormatNameInventory current_format_list;
 
-        std::string validator_target_name;
+        const std::string validator_target_name;
 
         std::vector<CliprdFileInfo> files;
 
@@ -370,11 +381,11 @@ private:
         void clear();
     };
 
-    using ClientCtx = ClipCtx;
-    using ServerCtx = ClipCtx;
-
     struct FileValidatorDataList;
     struct TextValidatorDataList;
+
+    using ClientCtx = ClipCtx;
+    using ServerCtx = ClipCtx;
 
     ClientCtx client_ctx;
     ServerCtx server_ctx;
