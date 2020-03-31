@@ -18,6 +18,7 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
+#include "core/session_reactor.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
@@ -39,6 +40,8 @@ Author(s): Jonathan Poelen
 #include "redjs/browser_transport.hpp"
 #include "redjs/browser_front.hpp"
 #include "redjs/channel_receiver.hpp"
+#include "acl/sesman.hpp"
+
 
 #include <chrono>
 
@@ -97,10 +100,10 @@ struct RdpClient
     TimerContainer timer_events;
     GraphicEventContainer graphic_events;
     GraphicTimerContainer graphic_timer_events;
-    SesmanEventContainer sesman_events;
     CallbackEventContainer front_events;
 
     Inifile ini;
+    SesmanInterface sesman;
 
     JsRandom js_rand;
     LCGTime lcg_timeobj;
@@ -119,6 +122,7 @@ struct RdpClient
         uint32_t disabled_orders, unsigned long verbose)
     : front(callbacks, width, height, RDPVerbose(verbose))
     , gd(front.graphic_api())
+    , sesman(ini)
     , js_rand(callbacks)
     {
         client_info.screen_info.width = width;
@@ -167,8 +171,8 @@ struct RdpClient
         const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
         this->mod = new_mod_rdp(
-            browser_trans, session_reactor,
-            fd_events, graphic_fd_events, timer_events, graphic_events, sesman_events,
+            browser_trans, ini, session_reactor,
+            fd_events, graphic_fd_events, timer_events, graphic_events, sesman,
             gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,

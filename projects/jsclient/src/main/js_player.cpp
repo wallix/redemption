@@ -63,7 +63,7 @@ struct WrmPlayer
     , gd(this->callbacks, 0, 0)
     {}
 
-    std::size_t remaining_data_size() const noexcept
+    std::size_t remaining_data_size() const // noexcept
     {
         return this->offset;
     }
@@ -101,7 +101,7 @@ struct WrmPlayer
         return false;
     }
 
-    bool next_order() noexcept
+    bool next_order() //noexcept
     {
         if (!this->chunk.count)
         {
@@ -395,7 +395,6 @@ private:
     redjs::BrowserGraphic gd;
 };
 
-
 EMSCRIPTEN_BINDINGS(player)
 {
     redjs::class_<WrmPlayer>("WrmPlayer")
@@ -407,7 +406,6 @@ EMSCRIPTEN_BINDINGS(player)
         .function("nextTimestampOrder", &WrmPlayer::next_timestamp_order)
     ;
 }
-
 
 void WrmPlayer::_interpret_secondary_order(uint8_t control)
 {
@@ -513,3 +511,5 @@ void WrmPlayer::_interpret_standard_order(uint8_t control)
             throw Error(ERR_WRM);
     }
 }
+
+

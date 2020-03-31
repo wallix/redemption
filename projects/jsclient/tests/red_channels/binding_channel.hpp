@@ -271,7 +271,8 @@ struct TestBindingSendModChannel : Callback
     void rdp_input_scancode(long, long, long, long, Keymap2*) override {}
     void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
     void refresh(Rect) override {}
-
+    void rdp_gdi_down() override {}
+    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override;
 };
 

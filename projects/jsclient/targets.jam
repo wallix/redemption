@@ -49,6 +49,7 @@ exe-js js_client :
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/parse_primary_drawing_orders.bc
+  src/utils/pattutils.bc
   src/utils/primitives/primitives.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
@@ -167,6 +168,7 @@ objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/parse_primary_drawing_orders.bc : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
+objjs src/utils/pattutils.bc : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 objjs src/utils/primitives/primitives.bc : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 objjs src/utils/rle.bc : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 objjs src/utils/stacktrace.bc : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;

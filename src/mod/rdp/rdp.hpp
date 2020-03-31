@@ -85,6 +85,7 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/rdp.hpp"
+#include "gdi/screen_functions.hpp"
 
 #ifdef __EMSCRIPTEN__
 class RDPMetrics;
