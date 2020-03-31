@@ -1,3 +1,9 @@
+redemption (8.0.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Improve bestsafe options
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 31 Mar 2020 13:18:45 +0200
+
 redemption (8.0.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Review Python3 for Sesman
