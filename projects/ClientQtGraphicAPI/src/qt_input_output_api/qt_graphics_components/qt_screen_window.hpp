@@ -484,8 +484,6 @@ public:
     time_t current_time_movie;
     time_t real_time_record;
 
-
-
 public:
     ReplayQtScreen (ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
         : QtScreen(win_data, callback, /*client_graphic_api,*/ cache, cache->width(), cache->height())

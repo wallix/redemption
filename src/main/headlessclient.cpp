@@ -74,15 +74,14 @@ private:
     ClientHeadlessSocket headless_socket;
 
 public:
-    ClientRedemptionHeadless(SessionReactor & session_reactor, 
+    ClientRedemptionHeadless(SessionReactor & session_reactor,
                              TopFdContainer& fd_events_,
                              GraphicFdContainer& graphic_fd_events_,
                              TimerContainer& timer_events_,
                              GraphicEventContainer & graphic_events_,
                              GraphicTimerContainer & graphic_timer_events_,
-                             SesmanInterface & sesman,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, sesman, config)
+        : ClientRedemption(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, config)
         , headless_socket(session_reactor, this)
     {
         this->cmd_launch_conn();
@@ -150,11 +149,7 @@ int main(int argc, char const** argv)
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     GraphicTimerContainer graphic_timer_events_;
-    Inifile ini;
-    SesmanInterface sesman(ini);
     ScopedSslInit scoped_ssl;
-
-                             
 
     ClientRedemptionHeadless client(session_reactor,
                                     fd_events_,
@@ -162,7 +157,6 @@ int main(int argc, char const** argv)
                                     timer_events_,
                                     graphic_events_,
                                     graphic_timer_events_,
-                                    sesman,
                                     config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);

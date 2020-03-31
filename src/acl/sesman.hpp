@@ -41,22 +41,24 @@ struct SesmanInterface
     std::string username;
     std::string domain;
     std::string password;
-    
+
     bool server_cert_sent = false;
     std::string blob_server_cert;
     Inifile & ini;
 
-    SesmanInterface(Inifile & ini) : ini(ini)
+    SesmanInterface(Inifile & ini)
+    : ini(ini)
     {
     }
 
-    void set_screen_info(ScreenInfo & screen_info)
+    void set_screen_info(ScreenInfo screen_info)
     {
         this->screen_info_sent = false;
         this->screen_info = screen_info;
     }
 
-    void set_acl_screen_info(){
+    void set_acl_screen_info()
+    {
         if (!this->screen_info_sent) {
             this->ini.set_acl<cfg::context::opt_width>(this->screen_info.width);
             this->ini.set_acl<cfg::context::opt_height>(this->screen_info.height);
@@ -65,7 +67,7 @@ struct SesmanInterface
         }
     }
 
-    void set_auth_info(std::string username, std::string domain, std::string password)
+    void set_auth_info(std::string const& username, std::string const& domain, std::string const& password)
     {
         this->auth_info_sent = false;
         this->username = username;
@@ -73,7 +75,8 @@ struct SesmanInterface
         this->password = password;
     }
 
-    void set_acl_auth_info(){
+    void set_acl_auth_info()
+    {
         if (!this->auth_info_sent) {
             std::string username = this->username;
             if (not domain.empty()
@@ -95,12 +98,14 @@ struct SesmanInterface
         }
     }
 
-    void set_server_cert(std::string blob_str){
+    void set_server_cert(std::string const& blob_str)
+    {
         this->blob_server_cert = blob_str;
         this->server_cert_sent = false;
     }
 
-    void set_acl_server_cert(){
+    void set_acl_server_cert()
+    {
         if (!this->server_cert_sent) {
             this->ini.set_acl<cfg::mod_rdp::server_cert>(this->blob_server_cert);
             this->ini.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
@@ -108,45 +113,48 @@ struct SesmanInterface
             this->server_cert_sent = true;
         }
     }
-    
-    void set_acl_recording_started(){
+
+    void set_acl_recording_started()
+    {
         this->ini.set_acl<cfg::context::recording_started>(true);
     }
-    
-    void set_acl_rt_ready(){
-         if (!this->ini.get<cfg::context::rt_ready>()) {
+
+    void set_acl_rt_ready()
+    {
+        if (!this->ini.get<cfg::context::rt_ready>()) {
             this->ini.set_acl<cfg::context::rt_ready>(true);
         }
     }
-    
+
     bool has_ocr_pattern_check()
     {
         return ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str());
+            || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str());
     }
 
     bool has_kbd_pattern_check()
     {
-          return ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str());
-    }
-    
-    bool is_capture_necessary()
-    {
-        return (!ini.get<cfg::globals::is_rec>() 
-        && bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-        && !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-        && !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+        return ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str());
     }
 
-    void show_session_config(){
+    bool is_capture_necessary()
+    {
+        return (!ini.get<cfg::globals::is_rec>()
+            && bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+            && !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+            && !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+    }
+
+    void show_session_config()
+    {
         LOG(LOG_INFO, "movie_path    = %s", ini.get<cfg::globals::movie_path>());
         LOG(LOG_INFO, "auth_user     = %s", ini.get<cfg::globals::auth_user>());
         LOG(LOG_INFO, "host          = %s", ini.get<cfg::globals::host>());
         LOG(LOG_INFO, "target_device = %s", ini.get<cfg::globals::target_device>());
         LOG(LOG_INFO, "target_user   = %s", ini.get<cfg::globals::target_user>());
     }
-    
+
     BitsPerPixel wrm_color_depth()
     {
         return (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16)

@@ -54,6 +54,7 @@ if $(qtversion) = 5
     # Need packages qttools5-dev libphonon4qt5-dev
     # TODO search include qt5 directory
     constant QT5_INCLUDE : [ setvar QT5_INCLUDE : /usr/include/x86_64-linux-gnu/qt$(qtversion) ] ;
+    constant QT5_TOOL_PATH : [ setvar QT5_TOOL_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
     # TODO search include phonon directory
     constant QT5_PHONON_INCLUDE : [ setvar QT5_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/phonon ] ;
 
@@ -165,7 +166,7 @@ if $(qtversion) = 4
 else
 {
     using qt5
-        : /usr/lib/x86_64-linux-gnu/qt5
+        : $(QT5_TOOL_PATH)
         : 5.3
         :
         :

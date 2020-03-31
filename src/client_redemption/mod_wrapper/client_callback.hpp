@@ -32,7 +32,6 @@ class ClientCallback
 private:
     Keymap2           keymap;
     StaticOutStream<256> decoded_data;    // currently not initialized
-    int                  _timer;
 
     mod_api            * mod = nullptr;
     ClientRedemptionAPI * client;
@@ -47,8 +46,7 @@ public:
     } mouse_data;
 
     ClientCallback(ClientRedemptionAPI * client)
-    :  _timer(0)
-    , client(client)
+    : client(client)
     , rdp_keyLayout_api(nullptr)
     {}
 
@@ -73,19 +71,17 @@ public:
         this->client->delete_replay_mod();
     }
 
-    void replay(const std::string & movie_path, SesmanInterface & sesman) {
-        this->client->replay(movie_path, sesman);
+    void replay(const std::string & movie_path) {
+        this->client->replay(movie_path);
     }
 
-    timeval reload_replay_mod(int begin, timeval now_stop, SesmanInterface & sesman) {
-        return this->client->reload_replay_mod(begin, now_stop, sesman);
+    timeval reload_replay_mod(int begin, timeval now_stop) {
+        return this->client->reload_replay_mod(begin, now_stop);
     }
 
-    bool load_replay_mod(timeval time_1, timeval time_2, SesmanInterface & sesman) {
-        return this->client->load_replay_mod(time_1, time_2, sesman);
+    bool load_replay_mod(timeval time_1, timeval time_2) {
+        return this->client->load_replay_mod(time_1, time_2);
     }
-
-
 
     void set_replay(ReplayMod * replay_mod) {
         this->replay_mod = replay_mod;
@@ -238,7 +234,7 @@ public:
             break;
         }
         if (this->mod != nullptr) {
-            this->mod->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->keymap));
+            this->mod->rdp_input_scancode(keyCode, 0, flag, /*timer=*/0, &(this->keymap));
         }
     }
 
@@ -251,5 +247,3 @@ public:
     }
 
 };
-
-

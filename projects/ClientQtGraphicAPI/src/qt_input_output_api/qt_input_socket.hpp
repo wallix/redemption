@@ -42,22 +42,39 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     SessionReactor& session_reactor;
+    TopFdContainer& fd_events;
+    GraphicFdContainer& graphic_fd_events;
+    TimerContainer& timer_events;
+    GraphicEventContainer & graphic_events;
+    GraphicTimerContainer & graphic_timer_events;
 
-    QSocketNotifier           * _sckListener;
+    QSocketNotifier * _sckListener;
 
     QTimer timer;
 
     ClientRedemptionAPI * client;
 
-
-    QtInputSocket(SessionReactor& session_reactor, ClientRedemptionAPI * client, QWidget * parent)
-        : QObject(parent)
-        , session_reactor(session_reactor)
-        , _sckListener(nullptr)
-        , timer(this)
-        , client(client)
+public:
+    QtInputSocket(
+        SessionReactor& session_reactor,
+        TopFdContainer& fd_events,
+        GraphicFdContainer& graphic_fd_events,
+        TimerContainer& timer_events,
+        GraphicEventContainer & graphic_events,
+        GraphicTimerContainer & graphic_timer_events,
+        ClientRedemptionAPI * client,
+        QWidget * parent)
+    : QObject(parent)
+    , session_reactor(session_reactor)
+    , fd_events(fd_events)
+    , graphic_fd_events(graphic_fd_events)
+    , timer_events(timer_events)
+    , graphic_events(graphic_events)
+    , graphic_timer_events(graphic_timer_events)
+    , _sckListener(nullptr)
+    , timer(this)
+    , client(client)
     {}
 
     ~QtInputSocket() {
@@ -110,25 +127,42 @@ public Q_SLOTS:
     }
 
 private:
-    void prepare_timer_event() {
-
+    void prepare_timer_event()
+    {
         timeval now = tvtime();
+        auto previous_time = this->session_reactor.get_current_time();
         this->session_reactor.set_current_time(now);
-        timeval const tv = this->session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true}, std::chrono::milliseconds(1000));
-        // LOG(LOG_DEBUG, "start timer: %ld %ld", tv.tv_sec, tv.tv_usec);
 
-        if (tv.tv_sec > -1) {
-
-            long time_to_wake = (1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
-
-            if (time_to_wake < 0) {
-                time_to_wake = 0;
-            }
-            this->timer.start(time_to_wake);
+        if (not this->graphic_events.is_empty()) {
+            this->timer.start(0);
         }
         else {
-            this->timer.stop();
+            std::chrono::milliseconds timeout(5000);
+            timeval tv = previous_time + timeout;
+
+            auto update_tv = [&](timeval const& tv2){
+                if (tv2.tv_sec >= 0) {
+                    tv = std::min(tv, tv2);
+                }
+            };
+            auto top_update_tv = [&](int /*fd*/, auto& top){
+                if (top.timer_data.is_enabled) {
+                    update_tv(top.timer_data.tv);
+                }
+            };
+            auto timer_update_tv = [&](auto& timer){
+                update_tv(timer.tv);
+            };
+
+            this->timer_events.for_each(timer_update_tv);
+            this->fd_events.for_each(top_update_tv);
+            this->graphic_timer_events.for_each(timer_update_tv);
+            this->graphic_fd_events.for_each(top_update_tv);
+
+            long time_to_wake = 1000 * (tv.tv_sec - now.tv_sec)
+                              + (tv.tv_usec - now.tv_usec) / 1000;
+
+            this->timer.start(std::max(0l, time_to_wake));
         }
     }
 };
-

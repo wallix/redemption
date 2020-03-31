@@ -29,7 +29,6 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
-#include "acl/sesman.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -62,15 +61,11 @@
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
-//
 #include "client_redemption/client_config/client_redemption_config.hpp"
-//
-// #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #include <iostream>
 
-#include <openssl/ssl.h>
 
 
 class ClientRedemption : public ClientRedemptionAPI, public gdi::GraphicApi
@@ -101,7 +96,6 @@ public:
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     GraphicTimerContainer & graphic_timer_events_;
-    SesmanInterface & sesman;
 
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
@@ -113,6 +107,7 @@ public:
     std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
+    SesmanInterface sesman {ini};
     Theme theme;
     Font font;
     std::string close_box_extra_message_ref;
@@ -247,7 +242,6 @@ public:
                      TimerContainer & timer_events_,
                      GraphicEventContainer & graphic_events_,
                      GraphicTimerContainer & graphic_timer_events_,
-                     SesmanInterface & sesman,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
@@ -258,7 +252,6 @@ public:
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
-        , sesman(sesman)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(session_reactor, timer_events_, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
@@ -748,12 +741,13 @@ public:
     }
 
 
-    bool load_replay_mod(timeval begin_read, timeval end_read, SesmanInterface & sesman) override {
+    bool load_replay_mod(timeval begin_read, timeval end_read) override
+    {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->session_reactor
               , this->graphic_timer_events_
-              , sesman
+              , this->sesman
               , *this
               , *this
               , this->config._movie_full_path.c_str()
@@ -788,8 +782,8 @@ public:
         return false;
     }
 
-    void replay( const std::string & movie_path, SesmanInterface & sesman) override {
-
+    void replay( const std::string & movie_path) override
+    {
         auto const last_delimiter_it = std::find(movie_path.rbegin(), movie_path.rend(), '/');
 //         int pos = movie_path.size() - (last_delimiter_it - movie_path.rbegin());
 
@@ -809,7 +803,7 @@ public:
         this->config.is_replaying = true;
         this->config.is_loading_replay_mod = true;
 
-        if (this->load_replay_mod({0, 0}, {0, 0}, sesman)) {
+        if (this->load_replay_mod({0, 0}, {0, 0})) {
 
             this->config.is_loading_replay_mod = false;
             this->wrmGraphicStat.reset();
@@ -819,10 +813,8 @@ public:
         this->config.is_loading_replay_mod = false;
     }
 
-
-
-    virtual void print_wrm_graphic_stat(const std::string & /*movie_path*/) {
-
+    virtual void print_wrm_graphic_stat(const std::string & /*movie_path*/)
+    {
         for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
             unsigned int to_count = this->wrmGraphicStat.get_count(i);
             std::string spacer("       ");
@@ -836,42 +828,38 @@ public:
         }
     }
 
-
-
- timeval reload_replay_mod(int begin, timeval now_stop, SesmanInterface & sesman) override {
-
+    timeval reload_replay_mod(int begin, timeval now_stop) override
+    {
         timeval movie_time_start;
 
         switch (this->replay_mod->get_wrm_version()) {
-
-                case WrmVersion::v1:
-                    if (this->load_replay_mod({0, 0}, {0, 0}, sesman)) {
-                        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
-                        movie_time_start = tvtime();
-                        return movie_time_start;
-                    }
-                    break;
-
-                case WrmVersion::v2:
-                {
-                    int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
-                    this->config.is_loading_replay_mod = true;
-                    if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0}, sesman)) {
-
-                        this->config.is_loading_replay_mod = false;
-
-                        this->instant_replay_client(begin, last_balised);
-
-                        movie_time_start = tvtime();
-                        timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
-                        timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
-                        this->replay_mod->set_wait_after_load_client(wait_duration);
-                    }
-                    this->config.is_loading_replay_mod = false;
-
+            case WrmVersion::v1:
+                if (this->load_replay_mod({0, 0}, {0, 0})) {
+                    this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+                    movie_time_start = tvtime();
                     return movie_time_start;
                 }
-                    break;
+                break;
+
+            case WrmVersion::v2:
+            {
+                int last_balised = (begin / ClientRedemptionConfig::BALISED_FRAME);
+                this->config.is_loading_replay_mod = true;
+                if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
+
+                    this->config.is_loading_replay_mod = false;
+
+                    this->instant_replay_client(begin, last_balised);
+
+                    movie_time_start = tvtime();
+                    timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
+                    timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
+                    this->replay_mod->set_wait_after_load_client(wait_duration);
+                }
+                this->config.is_loading_replay_mod = false;
+
+                return movie_time_start;
+            }
         }
 
         return movie_time_start;
