@@ -155,9 +155,6 @@ cp_spec = {
         u'mod_rdp:session_probe_disabled_features': (
             'disabled_features', 352
         ),
-        u'mod_rdp:enable_bestsafe_integration': (
-            'enable_bestsafe_integration', False
-        ),
         u'mod_rdp:session_probe_public_session': (
             'public_session', False
         ),

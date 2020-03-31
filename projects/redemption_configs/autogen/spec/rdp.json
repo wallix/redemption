@@ -488,13 +488,6 @@
           "description": ""
         },
         {
-          "name": "enable_bestsafe_integration",
-          "type": "bool",
-          "default": false,
-          "advanced": true,
-          "description": ""
-        },
-        {
           "name": "public_session",
           "type": "bool",
           "default": false,

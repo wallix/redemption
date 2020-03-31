@@ -235,9 +235,6 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #_hex
 disabled_features = integer(min=0, max=1023, default=352)
 
-#_advanced
-enable_bestsafe_integration = boolean(default=False)
-
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 
