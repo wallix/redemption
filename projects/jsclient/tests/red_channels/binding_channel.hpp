@@ -350,14 +350,10 @@ struct datas_checker
             << " elements, " << _data_checker.i << " checked"); \
     }, 0} = [&]([[maybe_unused]] datas_checker& _data_checker)
 
-#define CHECK_NEXT_DATA(...) do {                                \
-    if (_data_checker.i == ::g_channel_data_received.size()) {   \
-        RED_CHECK_MESSAGE(false, "there is only "                \
-            << ::g_channel_data_received.size() << " elements"); \
-        return;                                                  \
-    }                                                            \
-    RED_CHECK_V(_data_checker.i++, __VA_ARGS__);                 \
-} while (0);
+#define CHECK_NEXT_DATA(...) do {                                     \
+    RED_REQUIRE(_data_checker.i == ::g_channel_data_received.size()); \
+    RED_CHECK_V(_data_checker.i++, __VA_ARGS__);                      \
+} while (0)
 
 struct DataChanPrintable : DataChan_tuple
 {
