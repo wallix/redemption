@@ -58,6 +58,13 @@ rule emcc_flags ( properties * )
             <cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
             <cxxflags>"-s DEMANGLE_SUPPORT=1"
             <linkflags>"-s DEMANGLE_SUPPORT=1"
+            <cxxflags>"-s WASM=1"
+        ;
+    }
+    else
+    {
+        fs +=
+            <cxxflags>"-s WASM=0"
         ;
     }
 
@@ -119,7 +126,6 @@ project redjs
     # <cxx-lto>on
 
     # <cxxflags>"-s ASM_JS=0"
-    <cxxflags>"-s WASM=0"
     # <cxxflags>"-s BINARYEN_TRAP_MODE=js" # clamp, allow
     # <cxxflags>"-s EMCC_WASM_BACKEND=1"
 
