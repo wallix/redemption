@@ -361,6 +361,14 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.enable_restricted_admin_mode = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
     mod_rdp_params.file_system_params.smartcard_passthrough        = smartcard_passthrough;
 
+    mod_rdp_params.session_probe_params.alternate_directory_environment_variable = ini.get<cfg::mod_rdp::session_probe_alternate_directory_environment_variable>();
+    enum {
+        SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH = 3
+    };
+    if (mod_rdp_params.session_probe_params.alternate_directory_environment_variable.length() > SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH) {
+        mod_rdp_params.session_probe_params.alternate_directory_environment_variable.resize(SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH);
+    }
+
     try {
         using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
 

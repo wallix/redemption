@@ -488,6 +488,13 @@
           "description": ""
         },
         {
+          "name": "alternate_directory_environment_variable",
+          "type": "string",
+          "default": "",
+          "advanced": true,
+          "description": "The name of an environment variable which points to the alternative directory for starting Session Probe.\nThe maximum length of this name is 3 bytes.\nIf empty, the environment variable TMP will be used."
+        },
+        {
           "name": "public_session",
           "type": "bool",
           "default": false,
