@@ -644,8 +644,13 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     enum {
         SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH = 3
     };
-    if (mod_rdp_params.session_probe_params.alternate_directory_environment_variable.length() > SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH) {
-        mod_rdp_params.session_probe_params.alternate_directory_environment_variable.resize(SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH);
+    size_t const alternate_directory_environment_variable_length = mod_rdp_params.session_probe_params.alternate_directory_environment_variable.length();
+    if (alternate_directory_environment_variable_length) {
+        if (alternate_directory_environment_variable_length > SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH) {
+            mod_rdp_params.session_probe_params.alternate_directory_environment_variable.resize(SESSION_PROBE_ALTERNATE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH);
+        }
+
+        mod_rdp_params.session_probe_params.customize_executable_name = true;
     }
 
     using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
