@@ -2226,6 +2226,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "session_probe_at_end_of_session_freeze_connection_and_wait";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
     /// Keep known server certificates on WAB <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy    [name: server_cert::server_cert_store] <br/>
@@ -5555,6 +5567,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::session_probe_on_account_manipulation
+, cfg::mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message

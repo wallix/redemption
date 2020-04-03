@@ -411,6 +411,9 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     spp.vc_params.disabled_features = ini.get<cfg::mod_rdp::session_probe_disabled_features>();
     spp.used_to_launch_remote_program = ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
     spp.fix_too_long_cookie = ini.get<cfg::mod_rdp::experimental_fix_too_long_cookie>();
+
+    spp.vc_params.at_end_of_session_freeze_connection_and_wait =
+        ini.get<cfg::mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait>();
     return spp;
 }
 
