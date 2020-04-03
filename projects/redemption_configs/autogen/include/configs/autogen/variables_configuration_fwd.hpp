@@ -169,6 +169,7 @@ namespace cfg {
         struct session_probe_alternate_directory_environment_variable;
         struct session_probe_public_session;
         struct session_probe_on_account_manipulation;
+        struct session_probe_at_end_of_session_freeze_connection_and_wait;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;

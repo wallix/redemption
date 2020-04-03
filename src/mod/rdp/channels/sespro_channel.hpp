@@ -322,20 +322,47 @@ private:
     void process_event_ready()
     {
         if (!this->session_probe_keep_alive_received) {
+            LOG(LOG_ERR,
+                "SessionProbeVirtualChannel::process_event: "
+                    "No keep alive received from Session Probe!");
+
             if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
                 this->mod.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
-
-                LOG(LOG_ERR,
-                    "SessionProbeVirtualChannel::process_event: "
-                        "No keep alive received from Session Probe!");
             }
 
             if (!this->disconnection_reconnection_required) {
                 if (this->session_probe_ending_in_progress) {
-                    this->rdp.sespro_ending_in_progress();
+                    LOG(LOG_INFO,
+                        "SessionProbeVirtualChannel::process_event: "
+                            "Session ending is in progress.");
+
+                    if (this->sespro_params.at_end_of_session_freeze_connection_and_wait) {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_event: "
+                                "Freezes connection and wait end of session.");
+
+                        if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                            const bool disable_input_event     = true;
+                            const bool disable_graphics_update = true;
+                                this->mod.disable_input_event_and_graphics_update(
+                                    disable_input_event, disable_graphics_update);
+
+                            this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
+                        }
+                        this->request_keep_alive();
+                        this->mod.display_osd_message("No keep alive received from Session Probe! (End of session in progress.)");
+                    }
+                    else {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_event: "
+                                "Precipitates the end of the session.");
+
+                        this->rdp.sespro_ending_in_progress();
+                    }
+
                     return ;
                 }
 

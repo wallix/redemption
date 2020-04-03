@@ -169,6 +169,8 @@ struct SessionProbeVirtualChannelParams
     explicit SessionProbeVirtualChannelParams() = default;
 
     SessionProbeOnAccountManipulation on_account_manipulation = SessionProbeOnAccountManipulation::allow;
+
+    bool at_end_of_session_freeze_connection_and_wait = true;
 };
 
 
