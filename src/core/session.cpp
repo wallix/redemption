@@ -170,12 +170,210 @@ private:
     }
 
 private:
-    // Returns run_session value
-    bool check_acl(ModuleManager & mm, std::unique_ptr<Acl> & acl,
-        Authentifier & authentifier, ModWrapper & mod_wrapper,
-        time_t now, Inifile& ini, ModuleIndex & old_target_module, Front & front, ClientExecute & rail_client_execute)
+    int end_session_exception(Error const& e, Authentifier & authentifier, Inifile & ini) {
+        if ((e.id == ERR_SESSION_PROBE_LAUNCH)
+        ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
+        ||  (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)
+        ||  (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED)
+        ||  (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG)
+        ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
+            if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
+                    SessionProbeOnLaunchFailure::retry_without_session_probe)
+            {
+                LOG(LOG_INFO, "====> Retry without session probe");
+                ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
+                return 2;
+            }
+            if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
+                this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
+            }
+            else {
+                ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
+            }
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+            LOG(LOG_INFO, "====> Retry SESSION_PROBE_DISCONNECTION_RECONNECTION");
+            return true;
+        }
+        else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+            LOG(LOG_INFO, "====> Retry AUTOMATIC_RECONNECTION_REQUIRED");
+            ini.set<cfg::context::perform_automatic_reconnection>(true);
+            return 2;
+        }
+        else if (e.id == ERR_RAIL_NOT_ENABLED) {
+            LOG(LOG_INFO, "====> Retry witout Native remoteapp capability");
+            ini.get_mutable_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+            return 2;
+        }
+        else if (e.id == ERR_RDP_SERVER_REDIR){
+            if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
+                LOG(LOG_INFO, "====> Retry Server redirection");
+                set_server_redirection_target(ini, authentifier);
+                return 2;
+            }
+            else {
+                LOG(LOG_ERR, "Start Session Failed: forbidden redirection = %s", e.errmsg());
+                if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
+                    this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
+                }
+                return 1;
+            }
+        }
+        else if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
+            LOG(LOG_INFO, "check_acl: close by enddate");
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE){
+            // Close by rejeted message received
+            this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
+            LOG(LOG_INFO, "check_acl: close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
+            this->ini.set_acl<cfg::context::rejected>("");
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED) {
+            LOG(LOG_INFO, "check_acl: close by Missed keepalive");
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_USER_INACTIVITY) {
+            LOG(LOG_INFO, "check_acl: close by user Inactivity");
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
+            return 1;
+        }
+        else if (e.id == ERR_SESSION_CLOSE_MODULE_NEXT) {
+            LOG(LOG_INFO, "check_acl: next module is close box");
+            return 1;
+        }
+        LOG(LOG_ERR, "Start Session Failed = %s", e.errmsg());
+        if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
+            this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
+        }
+        return 1;
+    }
+
+private:
+    void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
     {
-        
+        if (ini.check_from_acl()) {
+            auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
+
+            if (ini.get<cfg::client::enable_osd_4_eyes>()) {
+                Translator tr(language(ini));
+                if (rt_status != Capture::RTDisplayResult::Unchanged) {
+                    std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
+                        ?trkeys::enable_rt_display
+                        :trkeys::disable_rt_display
+                            ).to_string();
+
+                    bool is_disable_by_input = true;
+                    if (message != mod_wrapper.get_message()) {
+                        mod_wrapper.clear_osd_message();
+                    }
+                    if (!message.empty()) {
+                        mod_wrapper.set_message(std::move(message), is_disable_by_input);
+                        mod_wrapper.draw_osd_message();
+                    }
+                }
+            }
+
+            if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
+                this->ini.set<cfg::context::forcemodule>(false);
+                // Do not send back the value to sesman.
+            }
+        }
+    }
+
+
+    bool front_up_and_running(std::unique_ptr<Acl> & acl, timeval & now,
+                              const time_t start_time, Inifile& ini,
+                              ModuleManager & mm, ModWrapper & mod_wrapper,
+                              EndSessionWarning & end_session_warning,
+                              Front & front,
+                              Authentifier & authentifier,
+                              ModuleIndex & old_target_module,
+                              ClientExecute & rail_client_execute)
+    {
+        if (ini.check_from_acl()) {
+            if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
+                ini.get<cfg::context::is_wabam>()) {
+                front.force_using_cache_bitmap_r2();
+            }
+        }
+
+        if (ini.get<cfg::globals::enable_osd>()) {
+            const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+            if (enddate && mod_wrapper.is_up_and_running()) {
+                LOG(LOG_INFO, "--------------------- End Session OSD Warning");
+                std::string mes = end_session_warning.update_osd_state(
+                    language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
+                if (!mes.empty()) {
+                    bool is_disable_by_input = true;
+                    if (mes != mod_wrapper.get_message()) {
+                        mod_wrapper.clear_osd_message();
+                    }
+                    mod_wrapper.set_message(std::move(mes), is_disable_by_input);
+                    mod_wrapper.draw_osd_message();
+                }
+            }
+        }
+
+        if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
+            acl->keepalive.start(now.tv_sec);
+        }
+
+        // There are modified fields to send to sesman
+        if (ini.changed_field_size()) {
+            LOG(LOG_INFO, "check_acl: data to send to sesman");
+            if (mod_wrapper.is_connected()) {
+                // send message to acl with changed values when connected to
+                // a module (rdp, vnc, xup ...) and something changed.
+                // used for authchannel and keepalive.
+                acl->acl_serial.send_acl_data();
+                return true;
+            }
+            BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
+            switch (signal){
+            case BACK_EVENT_STOP:
+            break;
+            case BACK_EVENT_NONE:
+            break;
+            case BACK_EVENT_NEXT:
+                acl->acl_serial.remote_answer = false;
+                acl->acl_serial.send_acl_data();
+                mod_wrapper.remove_mod();
+                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_TRANSITION (was %s)", get_module_name(old_target_module));
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                mod_wrapper.connected = false;
+                if (old_target_module != MODULE_INTERNAL_TRANSITION) {
+                    front.must_be_stop_capture();
+                    switch (old_target_module){
+                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                    default:;
+                    }
+                }
+                old_target_module = MODULE_INTERNAL_TRANSITION;
+                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION);
+            break;
+            case BACK_EVENT_REFRESH:
+                acl->acl_serial.remote_answer = false;
+                acl->acl_serial.send_acl_data();
+                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                return true;
+            break;
+            }
+            return true;
+        }
+
         if (acl->acl_serial.remote_answer) {
             BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
             LOG(LOG_INFO, "check_acl remote_answer signal=%s", signal_name(signal));
@@ -433,244 +631,7 @@ private:
             }
         }
         return true;
-    }
 
-private:
-    int end_session_exception(Error const& e, Authentifier & authentifier, Inifile & ini) {
-        if ((e.id == ERR_SESSION_PROBE_LAUNCH)
-        ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
-        ||  (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)
-        ||  (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON)
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE)
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE)
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET)
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS)
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED)
-        ||  (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG)
-        ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
-            if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
-                    SessionProbeOnLaunchFailure::retry_without_session_probe)
-            {
-                LOG(LOG_INFO, "====> Retry without session probe");
-                ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
-                return 2;
-            }
-            if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
-                this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-            }
-            else {
-                ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-            }
-            return 1;
-        }
-        else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
-            LOG(LOG_INFO, "====> Retry SESSION_PROBE_DISCONNECTION_RECONNECTION");
-            return true;
-        }
-        else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
-            LOG(LOG_INFO, "====> Retry AUTOMATIC_RECONNECTION_REQUIRED");
-            ini.set<cfg::context::perform_automatic_reconnection>(true);
-            return 2;
-        }
-        else if (e.id == ERR_RAIL_NOT_ENABLED) {
-            LOG(LOG_INFO, "====> Retry witout Native remoteapp capability");
-            ini.get_mutable_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
-            return 2;
-        }
-        else if (e.id == ERR_RDP_SERVER_REDIR){
-            if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                LOG(LOG_INFO, "====> Retry Server redirection");
-                set_server_redirection_target(ini, authentifier);
-                return 2;
-            }
-            else {
-                LOG(LOG_ERR, "Start Session Failed: forbidden redirection = %s", e.errmsg());
-                if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
-                    this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-                }
-                return 1;
-            }
-        }
-        else if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
-            LOG(LOG_INFO, "check_acl: close by enddate");
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
-            return 1;
-        }
-        else if (e.id == ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE){
-            // Close by rejeted message received
-            this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
-            LOG(LOG_INFO, "check_acl: close by Rejected message received : %s", this->ini.get<cfg::context::rejected>());
-            this->ini.set_acl<cfg::context::rejected>("");
-            return 1;
-        }
-        else if (e.id == ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED) {
-            LOG(LOG_INFO, "check_acl: close by Missed keepalive");
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
-            return 1;
-        }
-        else if (e.id == ERR_SESSION_CLOSE_USER_INACTIVITY) {
-            LOG(LOG_INFO, "check_acl: close by user Inactivity");
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
-            return 1;
-        }
-        else if (e.id == ERR_SESSION_CLOSE_MODULE_NEXT) {
-            LOG(LOG_INFO, "check_acl: next module is close box");
-            return 1;
-        }
-        LOG(LOG_ERR, "Start Session Failed = %s", e.errmsg());
-        if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
-            this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-        }
-        return 1;
-    }
-
-private:
-    void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
-    {
-        if (ini.check_from_acl()) {
-            auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
-
-            if (ini.get<cfg::client::enable_osd_4_eyes>()) {
-                Translator tr(language(ini));
-                if (rt_status != Capture::RTDisplayResult::Unchanged) {
-                    std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
-                        ?trkeys::enable_rt_display
-                        :trkeys::disable_rt_display
-                            ).to_string();
-
-                    bool is_disable_by_input = true;
-                    if (message != mod_wrapper.get_message()) {
-                        mod_wrapper.clear_osd_message();
-                    }
-                    if (!message.empty()) {
-                        mod_wrapper.set_message(std::move(message), is_disable_by_input);
-                        mod_wrapper.draw_osd_message();
-                    }
-                }
-            }
-
-            if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
-                this->ini.set<cfg::context::forcemodule>(false);
-                // Do not send back the value to sesman.
-            }
-        }
-    }
-
-
-    bool front_up_and_running(Select& ioswitch,
-                              SessionReactor& session_reactor,
-                              TopFdContainer & fd_events_,
-                              GraphicFdContainer & graphic_fd_events_,
-                              TimerContainer & timer_events_,
-                              GraphicEventContainer & graphic_events_,
-                              GraphicTimerContainer & graphic_timer_events_,
-                              std::unique_ptr<Acl> & acl, timeval & now,
-                              const time_t start_time, Inifile& ini,
-                              ModuleManager & mm, ModWrapper & mod_wrapper,
-                              EndSessionWarning & end_session_warning,
-                              Front & front,
-                              Authentifier & authentifier,
-                              SessionState & session_state,
-                              ModuleIndex & old_target_module,
-                              ClientExecute & rail_client_execute)
-    {
-        auto const end_tv = session_reactor.get_current_time();
-        timer_events_.exec_timer(end_tv);
-        fd_events_.exec_timeout(end_tv);
-        graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
-        graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
-        fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){ return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
-
-        // new value incoming from authentifier
-        this->rt_display(ini, mod_wrapper, front);
-
-       if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
-            auto& gd = mod_wrapper.get_graphic_wrapper();
-            graphic_events_.exec_action(gd);
-            graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                return fd != INVALID_SOCKET 
-                    &&  ioswitch.is_set_for_reading(fd);
-            }, gd);
-        }
-
-        if (ini.check_from_acl()) {
-            if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
-                ini.get<cfg::context::is_wabam>()) {
-                front.force_using_cache_bitmap_r2();
-            }
-        }
-
-        if (ini.get<cfg::globals::enable_osd>()) {
-            const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-            if (enddate && mod_wrapper.is_up_and_running()) {
-                LOG(LOG_INFO, "--------------------- End Session OSD Warning");
-                std::string mes = end_session_warning.update_osd_state(
-                    language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
-                if (!mes.empty()) {
-                    bool is_disable_by_input = true;
-                    if (mes != mod_wrapper.get_message()) {
-                        mod_wrapper.clear_osd_message();
-                    }
-                    mod_wrapper.set_message(std::move(mes), is_disable_by_input);
-                    mod_wrapper.draw_osd_message();
-                }
-            }
-        }
-
-        int i = 0;
-        if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
-            acl->keepalive.start(now.tv_sec);
-        }
-
-        // There are modified fields to send to sesman
-        if (ini.changed_field_size()) {
-            LOG(LOG_INFO, "check_acl: data to send to sesman");
-            if (mod_wrapper.is_connected()) {
-                // send message to acl with changed values when connected to
-                // a module (rdp, vnc, xup ...) and something changed.
-                // used for authchannel and keepalive.
-                acl->acl_serial.send_acl_data();
-                return true;
-            }
-            BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
-            switch (signal){
-            case BACK_EVENT_STOP:
-            break;
-            case BACK_EVENT_NONE:
-            break;
-            case BACK_EVENT_NEXT:
-                acl->acl_serial.remote_answer = false;
-                acl->acl_serial.send_acl_data();
-                mod_wrapper.remove_mod();
-                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_TRANSITION (was %s)", get_module_name(old_target_module));
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-                mod_wrapper.connected = false;
-                if (old_target_module != MODULE_INTERNAL_TRANSITION) {
-                    front.must_be_stop_capture();
-                    switch (old_target_module){
-                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                    default:;
-                    }
-                }
-                old_target_module = MODULE_INTERNAL_TRANSITION;
-                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION);
-            break;
-            case BACK_EVENT_REFRESH:
-                acl->acl_serial.remote_answer = false;
-                acl->acl_serial.send_acl_data();
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                return true;
-            break;
-            }
-            return true;
-        }
-
-        return this->check_acl(mm, acl,
-                authentifier, mod_wrapper,
-                now.tv_sec, ini, old_target_module, front, rail_client_execute);
     }
 
 
@@ -1227,7 +1188,27 @@ public:
                                 throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                             }
 
-                            run_session = this->front_up_and_running(ioswitch, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, session_state, old_target_module, rail_client_execute);
+                            auto const end_tv = session_reactor.get_current_time();
+                            timer_events_.exec_timer(end_tv);
+                            fd_events_.exec_timeout(end_tv);
+                            graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
+                            graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
+                            fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
+                                return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
+
+                            // new value incoming from authentifier
+                           this->rt_display(ini, mod_wrapper, front);
+
+                           if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
+                                auto& gd = mod_wrapper.get_graphic_wrapper();
+                                graphic_events_.exec_action(gd);
+                                graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
+                                    return fd != INVALID_SOCKET 
+                                        &&  ioswitch.is_set_for_reading(fd);
+                                }, gd);
+                            }
+
+                            run_session = this->front_up_and_running(acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, old_target_module, rail_client_execute);
 
                         } catch (Error const& e) {
                             LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
