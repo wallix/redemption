@@ -213,7 +213,7 @@ struct ModWrapper
 
 public:
     bool connected = false;
-
+    ModuleIndex old_target_module = MODULE_UNKNOWN;
 public:
 
     bool target_info_is_shown = false;
