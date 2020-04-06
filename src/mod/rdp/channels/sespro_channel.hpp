@@ -558,6 +558,8 @@ public:
 
                 this->rdp.sespro_launch_process_ended(sesman);
 
+                // The order of the messages sent is very important!
+
                 if (this->sespro_params.keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {
                         out_s.out_copy_bytes("Request=Keep-Alive"_av);
@@ -734,6 +736,17 @@ public:
                             this->sespro_params.handle_usage_limit,
                             this->sespro_params.memory_usage_limit);
                         out_s.out_copy_bytes(cstr, size_t(len));
+                    }
+                });
+
+                send_client_message([this](OutStream & out_s) {
+                    out_s.out_copy_bytes("BestSafeIntegration="_av);
+
+                    if (this->sespro_params.bestsafe_integration) {
+                        out_s.out_copy_bytes("Yes"_av);
+                    }
+                    else {
+                        out_s.out_copy_bytes("No"_av);
                     }
                 });
 

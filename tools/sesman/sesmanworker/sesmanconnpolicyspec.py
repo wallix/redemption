@@ -153,7 +153,10 @@ cp_spec = {
             'childless_window_as_unidentified_input_field', True
         ),
         u'mod_rdp:session_probe_disabled_features': (
-            'disabled_features', 864
+            'disabled_features', 352
+        ),
+        u'mod_rdp:session_probe_bestsafe_integration': (
+            'bestsafe_integration', False
         ),
         u'mod_rdp:session_probe_alternate_directory_environment_variable': (
             'alternate_directory_environment_variable', u''
