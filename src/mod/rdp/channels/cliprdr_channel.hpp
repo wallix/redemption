@@ -111,6 +111,8 @@ private:
     {
         struct Sig
         {
+            void reset();
+
             void update(bytes_view data);
 
             void final();
@@ -128,9 +130,9 @@ private:
         private:
             enum class Status : uint8_t;
 
-            SslSha256 sha256;
+            SslSha256_Delayed sha256;
             uint8_t array[digest_len];
-            Status status = Status();
+            Status status;
         };
 
         using StreamId = ClipboardVirtualChannel::StreamId;
@@ -153,17 +155,12 @@ private:
 
         struct FileContentsRange
         {
+            // FileContentsSize, FileContentsRequestedRange, FileContentsRange
             StreamId stream_id;
             FileGroupId lindex;
-            uint64_t file_offset;
-            uint64_t file_size_requested;
-            uint64_t file_size;
-            std::string file_name;
-
+            // TextData and FileContentsRange
             FileValidatorId file_validator_id;
-
-            std::unique_ptr<FdxCapture::TflFile> tfl_file;
-
+            // FileContentsRange
             enum class ValidatorState : uint8_t {
                 Wait,
                 Failure,
@@ -172,10 +169,21 @@ private:
                 TransferAfterValidation,
             };
             ValidatorState validator_state;
+            uint64_t file_offset;
+            // FileContentsRequestedRange, FileContentsRange
+            uint64_t file_size_requested;
+            uint64_t file_size;
+            std::string file_name;
 
-            std::vector<uint8_t> file_content {};
-
+            std::unique_ptr<FdxCapture::TflFile> tfl_file;
+            std::vector<uint8_t> file_content;
             Sig sig = Sig();
+        };
+
+        struct TextData
+        {
+            FileValidatorId file_validator_id;
+            bool is_unicode;
         };
 
         enum class TransferState :  uint8_t {
@@ -187,72 +195,35 @@ private:
             Text,
         };
 
-        struct TextData
-        {
-            FileValidatorId file_validator_id;
-            bool is_unicode;
-        };
-
-        union FileContentsData
-        {
-            FileContentsSize size;
-            FileContentsRequestedRange requested_range;
-            FileContentsRange range;
-            TextData text;
-
-            FileContentsData() {}
-            ~FileContentsData() {}
-        };
-
-        class NoLockData
+        struct NoLockData
         {
             TransferState transfer_state = TransferState::Empty;
-            FileContentsData data;
-
-        public:
-            #ifndef NDEBUG
-            ~NoLockData()
-            {
-                assert(this->transfer_state == TransferState::Empty);
-            }
-            #endif
-
-            FileContentsRequestedRange& requested_range();
-
-            FileContentsRange& range();
-
-            FileContentsSize& size();
-
-            TextData& text();
 
             operator TransferState() const
             {
                 return this->transfer_state;
             }
 
+            // TextData
+            bool is_unicode;
+
+            // TextData, FileContentsSize, FileContentsRequestedRange, FileContentsRange
+            FileContentsRange data;
+
+            using ValidatorState = FileContentsRange::ValidatorState;
+
+            void init_empty();
+            void init_text(FileValidatorId file_validator_id, bool is_unicode);
+            void init_size(StreamId stream_id, FileGroupId lindex);
+            void init_requested_range(
+                StreamId stream_id, FileGroupId lindex,
+                uint64_t file_size_requested, uint64_t file_size, std::string_view file_name);
+            void requested_range_to_range(
+                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl,
+                ValidatorState validator_state);
+
             void set_waiting_continuation_range();
-
             void set_range();
-
-            template<class F>
-            void new_range(F f);
-
-            template<class F>
-            void new_requested_range(F f);
-
-            template<class F>
-            void new_size(F f);
-
-            template<class F>
-            void new_text(F f);
-
-            void delete_range();
-
-            void delete_requested_range();
-
-            void delete_text();
-
-            void delete_size();
         };
 
         struct LockedData
