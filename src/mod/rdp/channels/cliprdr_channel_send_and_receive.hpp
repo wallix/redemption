@@ -95,11 +95,21 @@ struct CliprdFileInfo
 {
     uint64_t file_size;
     std::string file_name;
+
+    static const uint64_t invalid_size = ~uint64_t{};
 };
 
 struct FormatDataResponseReceiveFileList
 {
-    FormatDataResponseReceiveFileList(std::vector<CliprdFileInfo>& files, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* direction)
+    FormatDataResponseReceiveFileList(
+      std::vector<CliprdFileInfo>& files,
+      InStream & chunk, const RDPECLIP::CliprdrHeader & in_header,
+      bool param_dont_log_data_into_syslog,
+      const uint32_t file_list_format_id,
+      const uint32_t flags,
+      OutStream & file_descriptor_stream,
+      const RDPVerbose verbose,
+      char const* direction)
     {
         auto receive_file = [&](InStream& in_stream){
             RDPECLIP::FileDescriptor fd;
@@ -110,7 +120,10 @@ struct FormatDataResponseReceiveFileList
                 fd.log(LOG_INFO);
             }
 
-            files.push_back(CliprdFileInfo{fd.file_size(), std::move(fd.file_name)});
+            auto file_size = (fd.flags & RDPECLIP::FD_FILESIZE)
+                ? fd.file_size()
+                : CliprdFileInfo::invalid_size;
+            files.push_back(CliprdFileInfo{file_size, std::move(fd.file_name)});
         };
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -127,9 +140,8 @@ struct FormatDataResponseReceiveFileList
             }
         }
         else if (file_descriptor_stream.get_offset()) {
-            const uint32_t complementary_data_length =
-                RDPECLIP::FileDescriptor::size() -
-                    file_descriptor_stream.get_offset();
+            const uint32_t complementary_data_length
+                = RDPECLIP::FileDescriptor::size() - file_descriptor_stream.get_offset();
 
             assert(chunk.in_remain() >= complementary_data_length);
 

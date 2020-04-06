@@ -580,7 +580,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 Buffer buf;
                 auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
                     out.out_uint32_le(1);    // count item
-                    out.out_uint32_le(0);    // flags
+                    out.out_uint32_le(RDPECLIP::FD_FILESIZE);    // flags
                     out.out_clear_bytes(32); // reserved1
                     out.out_uint32_le(0);    // attributes
                     out.out_clear_bytes(16); // reserved2
@@ -596,7 +596,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             RED_REQUIRE(to_client_sender.total_in_stream == 2);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK(to_server_sender.back() ==
-                "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
+                "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x40\x00\x00\x00" //....T........... !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -1030,7 +1030,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 Buffer buf;
                 auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
                     out.out_uint32_le(1);    // count item
-                    out.out_uint32_le(0);    // flags
+                    out.out_uint32_le(RDPECLIP::FD_FILESIZE);    // flags
                     out.out_clear_bytes(32); // reserved1
                     out.out_uint32_le(0);    // attributes
                     out.out_clear_bytes(16); // reserved2
@@ -1046,7 +1046,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             RED_REQUIRE(to_client_sender.total_in_stream == 5);
             RED_REQUIRE(to_server_sender.total_in_stream == 3);
             RED_CHECK(to_server_sender.back() ==
-                "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
+                "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x40\x00\x00\x00" //....T........... !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
@@ -1225,7 +1225,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 Buffer buf;
                 auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
                     out.out_uint32_le(1);    // count item
-                    out.out_uint32_le(0);    // flags
+                    out.out_uint32_le(RDPECLIP::FD_FILESIZE);    // flags
                     out.out_clear_bytes(32); // reserved1
                     out.out_uint32_le(0);    // attributes
                     out.out_clear_bytes(16); // reserved2
@@ -1241,7 +1241,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             RED_REQUIRE(to_client_sender.total_in_stream == 10);
             RED_REQUIRE(to_server_sender.total_in_stream == 7);
             RED_CHECK(to_server_sender.back() ==
-                "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //....T........... !
+                "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x40\x00\x00\x00" //....T........... !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !

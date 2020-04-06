@@ -1269,7 +1269,12 @@ struct ClipboardVirtualChannel::D
             ClipCtx::FileContentsRange& file_rng
         ){
             if (file_rng.file_offset < file_rng.file_size) {
-                return FinalizeState::Unfinished;
+                if (file_rng.file_size != CliprdFileInfo::invalid_size) {
+                    return FinalizeState::Unfinished;
+                }
+                else {
+                    file_rng.file_size = file_rng.file_offset;
+                }
             }
 
             file_rng.sig.final();
@@ -1484,6 +1489,13 @@ struct ClipboardVirtualChannel::D
         return send_message_is_ok;
     }
 
+    static uint64_t real_file_size(ClipCtx::FileContentsRange& file_contents_range)
+    {
+        return (file_contents_range.file_size != CliprdFileInfo::invalid_size)
+            ? file_contents_range.file_size
+            : file_contents_range.file_offset + file_contents_range.file_size_requested;
+    }
+
     void log_file_info(
         ClipboardVirtualChannel& self,
         ClipCtx::FileContentsRange& file_contents_range,
@@ -1509,7 +1521,8 @@ struct ClipboardVirtualChannel::D
             digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
         char file_size[128];
-        size_t file_size_len = std::snprintf(file_size, std::size(file_size), "%lu", file_contents_range.file_size);
+        size_t file_size_len = std::snprintf(file_size, std::size(file_size), "%lu",
+            real_file_size(file_contents_range));
 
         self.report_message.log6(
             from_remote_session
