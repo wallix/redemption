@@ -237,7 +237,9 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 # Note: values can be added (disable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_advanced
 #_hex
-disabled_features = integer(min=0, max=1023, default=352)
+disabled_features = integer(min=0, max=511, default=352)
+
+bestsafe_integration = boolean(default=False)
 
 # The name of an environment variable which points to the alternative directory for starting Session Probe.
 # The maximum length of this name is 3 bytes.

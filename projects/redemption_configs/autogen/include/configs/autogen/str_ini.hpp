@@ -628,7 +628,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
-# min = 0, max = 1023
+# min = 0, max = 511
 #   0x000: none
 #   0x001: disable Java Access Bridge
 #   0x002: disable MS Active Accessbility
@@ -642,6 +642,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #_hex
 #session_probe_disabled_features = 352
+
+# value: 0 or 1
+#_hidden
+#session_probe_bestsafe_integration = 0
 
 # The name of an environment variable which points to the alternative directory for starting Session Probe.
 # The maximum length of this name is 3 bytes.

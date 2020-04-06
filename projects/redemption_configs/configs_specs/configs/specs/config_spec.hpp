@@ -411,6 +411,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", disable_prefix_val, connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_bestsafe_integration", connpolicy::name{"bestsafe_integration"}, set(false));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::string>(), "session_probe_alternate_directory_environment_variable", connpolicy::name{"alternate_directory_environment_variable"}, desc{
             "The name of an environment variable which points to the alternative directory for starting Session Probe.\n"
             "The maximum length of this name is 3 bytes.\n"
