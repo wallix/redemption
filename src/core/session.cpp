@@ -175,56 +175,9 @@ private:
         Authentifier & authentifier, ModWrapper & mod_wrapper,
         time_t now, Inifile& ini, ModuleIndex & old_target_module, Front & front, ClientExecute & rail_client_execute)
     {
-        BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
-        if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
-            acl->keepalive.start(now);
-        }
-
-        // There are modified fields to send to sesman
-        if (ini.changed_field_size()) {
-            LOG(LOG_INFO, "check_acl: data to send to sesman");
-            if (mod_wrapper.is_connected()) {
-                // send message to acl with changed values when connected to
-                // a module (rdp, vnc, xup ...) and something changed.
-                // used for authchannel and keepalive.
-                acl->acl_serial.send_acl_data();
-                return true;
-            }
-            switch (signal){
-            case BACK_EVENT_STOP:
-            break;
-            case BACK_EVENT_NONE:
-            break;
-            case BACK_EVENT_NEXT:
-                acl->acl_serial.remote_answer = false;
-                acl->acl_serial.send_acl_data();
-                mod_wrapper.remove_mod();
-                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_TRANSITION (was %s)", get_module_name(old_target_module));
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-                mod_wrapper.connected = false;
-                if (old_target_module != MODULE_INTERNAL_TRANSITION) {
-                    front.must_be_stop_capture();
-                    switch (old_target_module){
-                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                    default:;
-                    }
-                }
-                old_target_module = MODULE_INTERNAL_TRANSITION;
-                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION);
-            break;
-            case BACK_EVENT_REFRESH:
-                acl->acl_serial.remote_answer = false;
-                acl->acl_serial.send_acl_data();
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-            break;
-            }
-            return true;
-        }
         
         if (acl->acl_serial.remote_answer) {
+            BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
             LOG(LOG_INFO, "check_acl remote_answer signal=%s", signal_name(signal));
             acl->acl_serial.remote_answer = false;
 
@@ -665,19 +618,59 @@ private:
         }
 
         int i = 0;
-        do {
-            if (++i == 11) {
-                LOG(LOG_INFO, "module_sequencing: emergency exit");
-                break;
+        if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
+            acl->keepalive.start(now.tv_sec);
+        }
+
+        // There are modified fields to send to sesman
+        if (ini.changed_field_size()) {
+            LOG(LOG_INFO, "check_acl: data to send to sesman");
+            if (mod_wrapper.is_connected()) {
+                // send message to acl with changed values when connected to
+                // a module (rdp, vnc, xup ...) and something changed.
+                // used for authchannel and keepalive.
+                acl->acl_serial.send_acl_data();
+                return true;
             }
-            bool run_session = this->check_acl(mm, acl,
+            BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
+            switch (signal){
+            case BACK_EVENT_STOP:
+            break;
+            case BACK_EVENT_NONE:
+            break;
+            case BACK_EVENT_NEXT:
+                acl->acl_serial.remote_answer = false;
+                acl->acl_serial.send_acl_data();
+                mod_wrapper.remove_mod();
+                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_TRANSITION (was %s)", get_module_name(old_target_module));
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                mod_wrapper.connected = false;
+                if (old_target_module != MODULE_INTERNAL_TRANSITION) {
+                    front.must_be_stop_capture();
+                    switch (old_target_module){
+                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                    default:;
+                    }
+                }
+                old_target_module = MODULE_INTERNAL_TRANSITION;
+                mm.new_mod(mod_wrapper, MODULE_INTERNAL_TRANSITION);
+            break;
+            case BACK_EVENT_REFRESH:
+                acl->acl_serial.remote_answer = false;
+                acl->acl_serial.send_acl_data();
+                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                return true;
+            break;
+            }
+            return true;
+        }
+
+        return this->check_acl(mm, acl,
                 authentifier, mod_wrapper,
                 now.tv_sec, ini, old_target_module, front, rail_client_execute);
-            if (!run_session) {
-                return false;
-            }
-        } while (mod_wrapper.get_mod()->get_mod_signal() != BACK_EVENT_NONE);
-        return true;
     }
 
 
@@ -1165,12 +1158,6 @@ public:
 
                     bool acl_is_set = ioswitch.is_set_for_reading(acl->auth_trans.sck);
 
-                    bool mod_is_set = mod_data_pending
-                    || (mod_wrapper.has_mod()
-                        && mod_wrapper.get_mod_transport()
-                        && mod_wrapper.get_mod_transport()->sck != INVALID_SOCKET
-                        && ioswitch.is_set_for_reading(mod_wrapper.get_mod_transport()->sck));
-
                     try {
                         if (front_is_set){
                             this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
@@ -1311,6 +1298,7 @@ public:
                 case SessionState::SESSION_STATE_BACKEND_CLEANUP:
                 {
                 }
+                break;
 
                 case SessionState::SESSION_STATE_CLOSE_BOX:
                 {
