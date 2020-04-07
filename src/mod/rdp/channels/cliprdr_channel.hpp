@@ -190,6 +190,7 @@ private:
             Empty,
             Size,
             Range,
+            GetRange,
             RequestedRange,
             WaitingContinuationRange,
             Text,
@@ -219,11 +220,16 @@ private:
                 StreamId stream_id, FileGroupId lindex,
                 uint64_t file_size_requested, uint64_t file_size, std::string_view file_name);
             void requested_range_to_range(
-                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl,
-                ValidatorState validator_state);
+                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl);
+            void requested_range_to_get_range(
+                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl);
 
             void set_waiting_continuation_range();
+            void set_waiting_validator();
             void set_range();
+
+            class D;
+            friend class D;
         };
 
         struct LockedData
