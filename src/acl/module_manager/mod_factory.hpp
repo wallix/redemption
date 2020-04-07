@@ -53,12 +53,15 @@
 #include "utils/translation.hpp"
 #include "core/report_message_api.hpp"
 #include "acl/connect_to_target_host.hpp"
+#include "acl/file_system_license_store.hpp"
+#include "acl/module_manager/create_module_rdp.hpp"
 
 class ModFactory
 {
     ModWrapper & mod_wrapper;
     SessionReactor & session_reactor;
     SesmanInterface & sesman;
+    TopFdContainer& fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -68,15 +71,22 @@ class ModFactory
     gdi::GraphicApi & graphics;
     Inifile & ini;
     Font & glyphs;
-    const Theme & theme;
+    Theme & theme;
     ClientExecute & rail_client_execute;
     ReportMessageApi & report_message;
-
+    AuthApi & authentifier;
+    Keymap2 & keymap;
+    FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
+    Random & gen;
+    TimeObj & timeobj;
+    CryptoContext & cctx;
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
 public:
     ModFactory(ModWrapper & mod_wrapper,
                SessionReactor & session_reactor,
                SesmanInterface & sesman,
+               TopFdContainer& fd_events_,
                GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
                GraphicEventContainer & graphic_events_,
@@ -86,13 +96,19 @@ public:
                gdi::GraphicApi & graphics,
                Inifile & ini,
                Font & glyphs,
-               const Theme & theme,
+               Theme & theme,
                ClientExecute & rail_client_execute,
-               ReportMessageApi & report_message
+               ReportMessageApi & report_message,
+               AuthApi & authentifier,
+               Keymap2 & keymap,
+               Random & gen,
+               TimeObj & timeobj,
+               CryptoContext & cctx
         )
         : mod_wrapper(mod_wrapper)
         , session_reactor(session_reactor)
         , sesman(sesman)
+        , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
@@ -105,6 +121,11 @@ public:
         , theme(theme)
         , rail_client_execute(rail_client_execute)
         , report_message(report_message)
+        , authentifier(authentifier)
+        , keymap(keymap)
+        , gen(gen)
+        , timeobj(timeobj)
+        , cctx(cctx)
     {
     }
 
@@ -487,4 +508,33 @@ public:
         );
         return {new_mod, nullptr, nullptr, nullptr};
     }
+
+    auto create_rdp_mod() -> ModPack
+    {
+        auto new_mod_pack = create_mod_rdp(this->mod_wrapper,
+            this->authentifier,
+            this->report_message,
+            this->ini,
+            this->mod_wrapper.get_graphics(),
+            this->front,
+            this->client_info,
+            this->rail_client_execute,
+            this->keymap.key_flags,
+            this->glyphs, this->theme,
+            this->session_reactor,
+            this->fd_events_,
+            this->graphic_fd_events_,
+            this->timer_events_,
+            this->graphic_events_,
+            this->sesman,
+            this->file_system_license_store,
+            this->gen,
+            this->timeobj,
+            this->cctx,
+            this->server_auto_reconnect_packet);
+        return new_mod_pack;
+    }
+
+
+
 };

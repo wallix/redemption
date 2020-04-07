@@ -49,7 +49,6 @@
 #include "acl/acl_serializer.hpp"
 
 #include "acl/connect_to_target_host.hpp"
-#include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
 
 class rdp_api;
@@ -242,16 +241,7 @@ public:
             // %%% mod_wrapper.set_mod(mod, nullptr, nullptr);
 
             try {
-                auto mod_pack = create_mod_rdp(mod_wrapper,
-                    this->authentifier, this->report_message, this->ini,
-                    mod_wrapper.get_graphics(), this->front, this->client_info,
-                    this->rail_client_execute, this->keymap.key_flags,
-                    this->glyphs, this->theme,
-                    this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_,
-                    this->sesman,
-                    this->file_system_license_store,
-                    this->gen, this->timeobj, this->cctx,
-                    this->server_auto_reconnect_packet);
+                auto mod_pack = mod_factory.create_rdp_mod();
                 mod_pack.enable_osd = true;
                 mod_pack.connected = true;
 
