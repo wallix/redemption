@@ -55,6 +55,7 @@
 #include "acl/connect_to_target_host.hpp"
 #include "acl/file_system_license_store.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
+#include "acl/module_manager/create_module_vnc.hpp"
 
 class ModFactory
 {
@@ -535,6 +536,20 @@ public:
         return new_mod_pack;
     }
 
+    auto create_vnc_mod() -> ModPack
+    {
 
-
+        auto new_mod_pack = create_mod_vnc(this->mod_wrapper, this->authentifier, this->report_message, this->ini,
+            mod_wrapper.get_graphics(), this->front, this->client_info,
+            this->rail_client_execute, this->keymap.key_flags,
+            this->glyphs, this->theme,
+            this->session_reactor,
+            this->graphic_fd_events_,
+            this->timer_events_,
+            this->graphic_events_,
+            this->sesman,
+            this->timeobj
+        );
+        return new_mod_pack;
+    }
 };

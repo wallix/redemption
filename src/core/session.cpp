@@ -415,20 +415,41 @@ private:
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
+                    try {
+
+                        if (mod_wrapper.old_target_module != next_state) {
+                            front.must_be_stop_capture();
+                            switch (mod_wrapper.old_target_module){
+                            case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                            case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                            case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                            default:;
+                            }
+                            authentifier.new_remote_mod();
                         }
-                        authentifier.new_remote_mod();
+                        LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(mod_wrapper.old_target_module));
+                        mod_wrapper.old_target_module = next_state;
+                        mod_wrapper.connected = false;
+                        mm.new_mod(mod_wrapper, next_state);
+
+                        if (ini.get<cfg::globals::bogus_refresh_rect>() &&
+                            ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                            (front.client_info.cs_monitor.monitorCount > 1)) {
+                            mod_wrapper.get_mod()->rdp_suppress_display_updates();
+                            mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
+                                front.client_info.screen_info.width, front.client_info.screen_info.height);
+                        }
+                        mod_wrapper.get_mod()->rdp_input_invalidate(
+                                Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
+                        LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
+                        ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
                     }
-                    LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    mm.new_mod(mod_wrapper, next_state);
+                    catch (...) {
+                        authentifier.log6(LogId::SESSION_CREATION_FAILED, now, {});
+                        front.must_be_stop_capture();
+
+                        throw;
+                    }
                 }
                 break;
                 case MODULE_VNC:
@@ -441,22 +462,33 @@ private:
                     }
 
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+                    log_proxy::set_user(ini.get<cfg::globals::auth_user>().c_str());
 
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
+                    try {
+
+                        if (mod_wrapper.old_target_module != next_state) {
+                            front.must_be_stop_capture();
+                            switch (mod_wrapper.old_target_module){
+                            case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                            case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                            case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                            default:;
+                            }
+                            authentifier.new_remote_mod();
                         }
-                        authentifier.new_remote_mod();
+                        LOG(LOG_INFO, "New_mod: MODULE_VNC (was %s)", get_module_name(mod_wrapper.old_target_module));
+                        mod_wrapper.old_target_module = next_state;
+                        mod_wrapper.connected = false;
+                        mm.new_mod(mod_wrapper, next_state);
+
+                        LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
+                        ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
                     }
-                    LOG(LOG_INFO, "New_mod: MODULE_VNC (was %s)", get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    mm.new_mod(mod_wrapper, next_state);
+                    catch (...) {
+                        authentifier.log6(LogId::SESSION_CREATION_FAILED, now, {});
+                        throw;
+                    }
+
                 }
                 break;
                 case MODULE_INTERNAL:
@@ -1255,20 +1287,41 @@ public:
                                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
                                 auto next_state = MODULE_RDP;
-                                if (mod_wrapper.old_target_module != next_state) {
-                                    front.must_be_stop_capture();
-                                    switch (mod_wrapper.old_target_module){
-                                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                                    default:;
+                                try {
+                                    if (mod_wrapper.old_target_module != next_state) {
+                                        front.must_be_stop_capture();
+                                        switch (mod_wrapper.old_target_module){
+                                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
+                                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
+                                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
+                                        default:;
+                                        }
+                                        authentifier.new_remote_mod();
                                     }
-                                    authentifier.new_remote_mod();
+                                    LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(mod_wrapper.old_target_module));
+                                    mod_wrapper.old_target_module = next_state;
+                                    mod_wrapper.connected = false;
+                                    mm.new_mod(mod_wrapper, next_state);
+
+                                    if (ini.get<cfg::globals::bogus_refresh_rect>() &&
+                                        ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                                        (front.client_info.cs_monitor.monitorCount > 1)) {
+                                        mod_wrapper.get_mod()->rdp_suppress_display_updates();
+                                        mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
+                                            front.client_info.screen_info.width, front.client_info.screen_info.height);
+                                    }
+                                    mod_wrapper.get_mod()->rdp_input_invalidate(
+                                            Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
+                                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
+                                    ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
                                 }
-                                LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(mod_wrapper.old_target_module));
-                                mod_wrapper.old_target_module = next_state;
-                                mod_wrapper.connected = false;
-                                mm.new_mod(mod_wrapper, next_state);
+                                catch (...) {
+                                    authentifier.log6(LogId::SESSION_CREATION_FAILED, now, {});
+                                    front.must_be_stop_capture();
+
+                                    throw;
+                                }
+
                                 run_session = true;
                             break;
                             }
