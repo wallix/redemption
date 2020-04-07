@@ -239,49 +239,22 @@ public:
             // %%% auto mod = mod_factory.create_mod_rdp(); %%%
             // %%% mod_wrapper.set_mod(mod, nullptr, nullptr);
 
-            try {
                 auto mod_pack = mod_factory.create_rdp_mod();
                 mod_pack.enable_osd = true;
                 mod_pack.connected = true;
-
                 mod_wrapper.set_mod(mod_pack);
-
-                if (ini.get<cfg::globals::bogus_refresh_rect>() &&
-                    ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                    (client_info.cs_monitor.monitorCount > 1)) {
-                    mod_wrapper.get_mod()->rdp_suppress_display_updates();
-                    mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
-                        client_info.screen_info.width, client_info.screen_info.height);
-                }
-                mod_wrapper.get_mod()->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
-                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
-                ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-            }
-            catch (...) {
-                this->report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
-                this->front.must_be_stop_capture();
-
-                throw;
-            }
-                
         }
         break;
 
         case MODULE_VNC:
-            try {
+        {
                 auto mod_pack = mod_factory.create_vnc_mod();
                 mod_pack.enable_osd = true;
                 mod_pack.connected = true;
 
                 mod_wrapper.set_mod(mod_pack);
-                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
-                ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-            }
-            catch (...) {
-                this->report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
-                throw;
-            }
-            break;
+        }
+        break;
 
         default:
             LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", target_module);
