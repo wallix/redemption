@@ -1026,10 +1026,7 @@ struct ClipboardVirtualChannel::D
         // ignore lock if don't have CB_CAN_LOCK_CLIPDATA
         if (not self.can_lock) {
             if (lindex >= clip.files.size()) {
-                FilecontentsRequestSendBack(
-                    file_contents_request_pdu.dwFlags(),
-                    file_contents_request_pdu.streamId(),
-                    sender);
+                send_error();
                 return false;
                 // LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                 //     " Invalid lindex %u", lindex);
@@ -1063,7 +1060,8 @@ struct ClipboardVirtualChannel::D
                         if (file_contents_request_pdu.position() != 0) {
                             LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                                 " Unsupported random access for a FILECONTENTS_RANGE");
-                            throw Error(ERR_RDP_UNSUPPORTED);
+                            send_error();
+                            return false;
                         }
 
                         clip.nolock_data.init_requested_range(
@@ -1100,13 +1098,15 @@ struct ClipboardVirtualChannel::D
             if (not lock_data) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " unknown clipDataId (%u)", lock_id);
-                throw Error(ERR_RDP_PROTOCOL);
+                send_error();
+                return false;
             }
 
             if (lindex >= lock_data->files.size()) {
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " Invalid lindex %u", lindex);
-                throw Error(ERR_RDP_PROTOCOL);
+                send_error();
+                return false;
             }
 
             if (clip.locked_data.contains_stream_id(stream_id)) {
@@ -1126,6 +1126,7 @@ struct ClipboardVirtualChannel::D
                     else {
                         send_error();
                         this->stop_file_transfer(self, clip, r->file_contents_range);
+                        return false;
                     }
                 }
                 else {
