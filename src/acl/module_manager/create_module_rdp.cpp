@@ -766,8 +766,13 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     }
     // ================== End Metrics ======================
 
+    char clientAddress[INET_ADDRSTRLEN] { };
     unique_fd client_sck =
-        connect_to_target_host(ini, time_base, report_message, trkeys::authentification_rdp_fail);
+        connect_to_target_host(ini, time_base, report_message, trkeys::authentification_rdp_fail, clientAddress);
+
+    std::strncpy(mod_rdp_params.client_address,
+		 clientAddress,
+		 INET_ADDRSTRLEN);
 
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,

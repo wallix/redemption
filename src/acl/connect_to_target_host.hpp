@@ -45,7 +45,7 @@
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 
-static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & time_base, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
+static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & time_base, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail, char *clientAddress = nullptr)
 {
     auto throw_error = [&ini, time_base, &report_message](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
@@ -82,7 +82,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & t
     snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
     char const* error_message = nullptr;
-    unique_fd client_sck = ip_connect(ip, ini.get<cfg::context::target_port>(), &error_message);
+    unique_fd client_sck = ip_connect(ip, ini.get<cfg::context::target_port>(), clientAddress, &error_message);
 
     if (!client_sck.is_open()) {
         throw_error(error_message, 2);

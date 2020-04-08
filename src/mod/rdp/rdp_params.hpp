@@ -56,7 +56,7 @@ struct ModRDPParams
     const char * target_user;
     const char * target_password;
     const char * target_host;
-    const char * client_address;
+    char client_address[80] { };
 
     bool enable_tls = true;
     bool enable_nla = true;
@@ -207,14 +207,15 @@ struct ModRDPParams
         : target_user(target_user)
         , target_password(target_password)
         , target_host(target_host)
-        , client_address(client_address)
         , key_flags(key_flags)
         , font(font)
         , theme(theme)
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
         , close_box_extra_message_ref(close_box_extra_message_ref)
         , verbose(verbose)
-    {}
+    {
+      std::strcpy(this->client_address, client_address);
+    }
 
     void log() const
     {
