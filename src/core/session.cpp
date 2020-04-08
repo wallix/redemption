@@ -292,6 +292,36 @@ private:
     }
 
 
+    void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Authentifier & authentifier, Front & front)
+    {
+        if (mod_wrapper.old_target_module != next_state) {
+            front.must_be_stop_capture();
+            switch (mod_wrapper.old_target_module){
+            case MODULE_XUP: authentifier.delete_remote_mod(); break;
+            case MODULE_RDP: authentifier.delete_remote_mod(); break;
+            case MODULE_VNC: authentifier.delete_remote_mod(); break;
+            default:;
+            }
+        }
+        LOG(LOG_INFO, "New_mod %s (was %s)", 
+                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
+        mod_wrapper.old_target_module = next_state;
+        mod_wrapper.connected = false;
+        auto mod_pack = mod_factory.create_mod(next_state);
+        if (next_state == MODULE_INTERNAL_BOUNCER2){
+            mod_pack.enable_osd = true;
+        }
+
+        if ((next_state == MODULE_XUP)
+          ||(next_state == MODULE_RDP)
+          ||(next_state == MODULE_VNC)){
+            mod_pack.enable_osd = true;
+            mod_pack.connected = true;
+        }
+        mod_wrapper.set_mod(mod_pack);
+    }
+
+
     bool front_up_and_running(std::unique_ptr<Acl> & acl, timeval & now,
                               const time_t start_time, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
@@ -353,31 +383,7 @@ private:
                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                 auto next_state = MODULE_INTERNAL_TRANSITION;
-                if (mod_wrapper.old_target_module != next_state) {
-                    front.must_be_stop_capture();
-                    switch (mod_wrapper.old_target_module){
-                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                    default:;
-                    }
-                }
-                LOG(LOG_INFO, "New_mod %s (was %s)", 
-                        get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                mod_wrapper.old_target_module = next_state;
-                mod_wrapper.connected = false;
-                auto mod_pack = mod_factory.create_mod(next_state);
-                if (next_state == MODULE_INTERNAL_BOUNCER2){
-                    mod_pack.enable_osd = true;
-                }
-
-                if ((next_state == MODULE_XUP)
-                  ||(next_state == MODULE_RDP)
-                  ||(next_state == MODULE_VNC)){
-                    mod_pack.enable_osd = true;
-                    mod_pack.connected = true;
-                }
-                mod_wrapper.set_mod(mod_pack);
+                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
             }
             break;
             case BACK_EVENT_REFRESH:
@@ -429,34 +435,10 @@ private:
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
                     try {
-
                         if (mod_wrapper.old_target_module != next_state) {
-                            front.must_be_stop_capture();
-                            switch (mod_wrapper.old_target_module){
-                            case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                            case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                            case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                            default:;
-                            }
                             authentifier.new_remote_mod();
                         }
-                        LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                        mod_wrapper.old_target_module = next_state;
-                        mod_wrapper.connected = false;
-                        auto mod_pack = mod_factory.create_mod(next_state);
-                        if (next_state == MODULE_INTERNAL_BOUNCER2){
-                            mod_pack.enable_osd = true;
-                        }
-
-                        if ((next_state == MODULE_XUP)
-                          ||(next_state == MODULE_RDP)
-                          ||(next_state == MODULE_VNC)){
-                            mod_pack.enable_osd = true;
-                            mod_pack.connected = true;
-                        }
-                        mod_wrapper.set_mod(mod_pack);
-
+                        this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                         if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                             ini.get<cfg::globals::allow_using_multiple_monitors>() &&
                             (front.client_info.cs_monitor.monitorCount > 1)) {
@@ -490,33 +472,10 @@ private:
                     log_proxy::set_user(ini.get<cfg::globals::auth_user>().c_str());
 
                     try {
-
                         if (mod_wrapper.old_target_module != next_state) {
-                            front.must_be_stop_capture();
-                            switch (mod_wrapper.old_target_module){
-                            case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                            case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                            case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                            default:;
-                            }
                             authentifier.new_remote_mod();
                         }
-                        LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                        mod_wrapper.old_target_module = next_state;
-                        mod_wrapper.connected = false;
-                        auto mod_pack = mod_factory.create_mod(next_state);
-                        if (next_state == MODULE_INTERNAL_BOUNCER2){
-                            mod_pack.enable_osd = true;
-                        }
-
-                        if ((next_state == MODULE_XUP)
-                          ||(next_state == MODULE_RDP)
-                          ||(next_state == MODULE_VNC)){
-                            mod_pack.enable_osd = true;
-                            mod_pack.connected = true;
-                        }
-                        mod_wrapper.set_mod(mod_pack);
+                        this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
 
                         LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded");
                         ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
@@ -534,31 +493,7 @@ private:
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
-                        }
-                    }
-                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    auto mod_pack = mod_factory.create_mod(next_state);
-                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                        mod_pack.enable_osd = true;
-                    }
-
-                    if ((next_state == MODULE_XUP)
-                      ||(next_state == MODULE_RDP)
-                      ||(next_state == MODULE_VNC)){
-                        mod_pack.enable_osd = true;
-                        mod_pack.connected = true;
-                    }
-                    mod_wrapper.set_mod(mod_pack);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                 }
                 break;
                 case MODULE_UNKNOWN:
@@ -576,32 +511,7 @@ private:
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
-                        }
-                    }
-                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    auto mod_pack = mod_factory.create_mod(next_state);
-                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                        mod_pack.enable_osd = true;
-                    }
-
-                    if ((next_state == MODULE_XUP)
-                      ||(next_state == MODULE_RDP)
-                      ||(next_state == MODULE_VNC)){
-                        mod_pack.enable_osd = true;
-                        mod_pack.connected = true;
-                    }
-                    mod_wrapper.set_mod(mod_pack);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                 }
                 break;
                 default:
@@ -618,32 +528,7 @@ private:
                         log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                         break;
                     }
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
-                        }
-                    }
-                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    auto mod_pack = mod_factory.create_mod(next_state);
-                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                        mod_pack.enable_osd = true;
-                    }
-
-                    if ((next_state == MODULE_XUP)
-                      ||(next_state == MODULE_RDP)
-                      ||(next_state == MODULE_VNC)){
-                        mod_pack.enable_osd = true;
-                        mod_pack.connected = true;
-                    }
-                    mod_wrapper.set_mod(mod_pack);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                 }
                 }
             }
@@ -1066,31 +951,7 @@ public:
                                 log_proxy::set_user("");
 
                                 auto next_state = MODULE_INTERNAL_CLOSE;
-                                if (mod_wrapper.old_target_module != next_state) {
-                                    front.must_be_stop_capture();
-                                    switch (mod_wrapper.old_target_module){
-                                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                                    default:;
-                                    }
-                                }
-                                LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                        get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                                mod_wrapper.old_target_module = next_state;
-                                mod_wrapper.connected = false;
-                                auto mod_pack = mod_factory.create_mod(next_state);
-                                if (next_state == MODULE_INTERNAL_BOUNCER2){
-                                    mod_pack.enable_osd = true;
-                                }
-
-                                if ((next_state == MODULE_XUP)
-                                  ||(next_state == MODULE_RDP)
-                                  ||(next_state == MODULE_VNC)){
-                                    mod_pack.enable_osd = true;
-                                    mod_pack.connected = true;
-                                }
-                                mod_wrapper.set_mod(mod_pack);
+                                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                                 run_session = true;
                             }
                             continue;
@@ -1341,32 +1202,7 @@ public:
                                     log_proxy::set_user("");
 
                                     auto next_state = MODULE_INTERNAL_CLOSE;
-                                    if (mod_wrapper.old_target_module != next_state) {
-                                        front.must_be_stop_capture();
-
-                                        switch (mod_wrapper.old_target_module){
-                                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                                        default:;
-                                        }
-                                    }
-                                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                                    mod_wrapper.old_target_module = next_state;
-                                    mod_wrapper.connected = false;
-                                    auto mod_pack = mod_factory.create_mod(next_state);
-                                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                                        mod_pack.enable_osd = true;
-                                    }
-
-                                    if ((next_state == MODULE_XUP)
-                                      ||(next_state == MODULE_RDP)
-                                      ||(next_state == MODULE_VNC)){
-                                        mod_pack.enable_osd = true;
-                                        mod_pack.connected = true;
-                                    }
-                                    mod_wrapper.set_mod(mod_pack);
+                                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                                     run_session = true;
                                 }
                             }
@@ -1381,32 +1217,7 @@ public:
 
                                 auto next_state = MODULE_RDP;
                                 try {
-                                    if (mod_wrapper.old_target_module != next_state) {
-                                        front.must_be_stop_capture();
-                                        switch (mod_wrapper.old_target_module){
-                                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                                        default:;
-                                        }
-                                        authentifier.new_remote_mod();
-                                    }
-                                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                                    mod_wrapper.old_target_module = next_state;
-                                    mod_wrapper.connected = false;
-                                    auto mod_pack = mod_factory.create_mod(next_state);
-                                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                                        mod_pack.enable_osd = true;
-                                    }
-
-                                    if ((next_state == MODULE_XUP)
-                                      ||(next_state == MODULE_RDP)
-                                      ||(next_state == MODULE_VNC)){
-                                        mod_pack.enable_osd = true;
-                                        mod_pack.connected = true;
-                                    }
-                                    mod_wrapper.set_mod(mod_pack);
+                                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
 
                                     if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                                         ini.get<cfg::globals::allow_using_multiple_monitors>() &&
