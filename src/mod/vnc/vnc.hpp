@@ -1598,12 +1598,9 @@ private:
             return this->clipboard_down_is_really_enabled;
         }
 
-        [[nodiscard]] array_view_const_u8 clipboard_data() const noexcept
+        [[nodiscard]] bytes_view clipboard_data() const noexcept
         {
-            return {
-                this->to_rdp_clipboard_data.get_data(),
-                this->to_rdp_clipboard_data.get_offset()
-            };
+            return this->to_rdp_clipboard_data.get_consumed_bytes();
         }
 
         [[nodiscard]] bool clipboard_data_is_utf8_encoded() const noexcept
