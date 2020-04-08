@@ -894,12 +894,14 @@ class Sesman():
             self.rdplog.log("AUTHENTICATION_SUCCESS", method=method)
             Logger().info(u'lang=%s' % self.language)
 
-        except Exception:
+        except Exception as e:
             if DEBUG:
                 import traceback
                 Logger().info("<<<%s>>>" % traceback.format_exc())
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
+            self.send_data({u'rejected': "Internal Error: %s" % e})
+            raise
 
         return _status, _error
 
