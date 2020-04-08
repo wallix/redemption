@@ -258,7 +258,7 @@ public:
         return this->p.in_uint8p(n);
     }
 
-    bytes_view view_bytes(unsigned int n) noexcept {
+    bytes_view view_bytes(unsigned int n) const noexcept {
         assert(this->in_check_rem(n));
         return array_view_const_u8{this->get_current(), n};
     }

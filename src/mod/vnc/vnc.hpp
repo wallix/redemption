@@ -312,7 +312,7 @@ private:
     VeNCryptState vencryptState = WAIT_VENCRYPT_VERSION;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
-    int      clipboard_requested_format_id            = 0;
+    uint32_t clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
     ClipboardEncodingType clipboard_server_encoding_type;
     bool clipboard_owned_by_client = true;
