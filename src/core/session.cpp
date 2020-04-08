@@ -24,7 +24,6 @@
 #include "core/session.hpp"
 
 #include "acl/authentifier.hpp"
-#include "acl/module_manager.hpp"
 #include "acl/sesman.hpp"
 #include "acl/mod_pack.hpp"
 

@@ -21,8 +21,22 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
-
 #include "acl/end_session_warning.hpp"
+#include "acl/time_before_closing.hpp"
+
+
+RED_AUTO_TEST_CASE(TestStrTimeBeforeClosing)
+{
+    auto to_s = [](uint32_t t) {
+        return time_before_closing(t, Translator(Translation::EN));
+    };
+    RED_CHECK_EQ("23 seconds before closing", to_s(23));
+    RED_CHECK_EQ("36 minutes, 23 seconds before closing", to_s(23 + 36*60));
+    RED_CHECK_EQ("3 hours, 36 minutes, 23 seconds before closing", to_s(23 + 216*60));
+    RED_CHECK_EQ("1 hour, 1 minute, 1 second before closing", to_s(1 + 60 + 60*60));
+    RED_CHECK_EQ("1 hour, 0 minute, 1 second before closing", to_s(1 + 60*60));
+}
+
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning)
 {

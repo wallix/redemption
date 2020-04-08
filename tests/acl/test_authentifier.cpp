@@ -24,7 +24,6 @@
 #include "acl/authentifier.hpp"
 #include "core/session_reactor.hpp"
 #include "utils/genfstat.hpp"
-#include "acl/module_manager.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/front/fake_front.hpp"
