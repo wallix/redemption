@@ -38,7 +38,7 @@ RED_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
     StaticOutStream<1024> out_stream;
     largepointer_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_bytes());
+    InStream stream(out_stream.get_produced_bytes());
 
     LargePointerCaps largepointer_caps2;
 

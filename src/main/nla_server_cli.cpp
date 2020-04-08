@@ -154,7 +154,7 @@ public:
             (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)?X224::PROTOCOL_HYBRID:
             (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)?X224::PROTOCOL_TLS:
             X224::PROTOCOL_RDP);
-        trans.send(front_x224_stream.get_bytes());
+        trans.send(front_x224_stream.get_produced_bytes());
 
         if ((cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
         || (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {

@@ -39,7 +39,7 @@ public:
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
 
-        this->transport.send(stream.get_bytes());
+        this->transport.send(stream.get_produced_bytes());
         this->transport.send(chunk_data);
     }
 };

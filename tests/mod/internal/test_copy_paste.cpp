@@ -71,7 +71,7 @@ struct CopyPasteFront : FakeFront
                     out_s, Cliprdr::IsLongFormat(false),
                     std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                InStream in_s(out_s.get_bytes());
+                InStream in_s(out_s.get_produced_bytes());
                 this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
             }
             break;
@@ -94,7 +94,7 @@ struct CopyPasteFront : FakeFront
                 StaticOutStream<256> out_s;
                 header.emit(out_s);
                 format_data_response_pdu.emit(out_s, buf, unicode_data_length);
-                InStream in_s(out_s.get_bytes());
+                InStream in_s(out_s.get_produced_bytes());
                 this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
             }
             break;
@@ -111,7 +111,7 @@ struct CopyPasteFront : FakeFront
             out_s, Cliprdr::IsLongFormat(false),
             std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-        InStream in_s(out_s.get_bytes());
+        InStream in_s(out_s.get_produced_bytes());
         this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
     }
 
@@ -120,7 +120,7 @@ private:
 //    void send_to_server(PDU && pdu, Args && ...args) {
 //        StaticOutStream<256> out_s;
 //        pdu.emit(out_s, std::move(args)...);
-//        InStream in_s(out_s.get_bytes());
+//        InStream in_s(out_s.get_produced_bytes());
 //        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
 //    }
 

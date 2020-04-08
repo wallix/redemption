@@ -242,7 +242,7 @@ public:
                         clipboard_caps_pdu.emit(out_s);
                         general_cap_set.emit(out_s);
 
-                        InStream in_s(out_s.get_bytes());
+                        InStream in_s(out_s.get_produced_bytes());
                         const size_t totalLength = out_s.get_offset();
                         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                                       in_s,
@@ -262,7 +262,7 @@ public:
                                 : false),
                             std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                        InStream in_s(out_s.get_bytes());
+                        InStream in_s(out_s.get_produced_bytes());
                         const size_t totalLength = out_s.get_offset();
                         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                                       in_s,
@@ -316,7 +316,7 @@ public:
         header.emit(out_s);
         format_data_response_pdu.emit(out_s, byte_ptr_cast(this->alternate_shell.c_str()), alternate_shell_length);
 
-        InStream in_s(out_s.get_bytes());
+        InStream in_s(out_s.get_produced_bytes());
         const size_t totalLength = out_s.get_offset();
         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                       in_s,
@@ -417,7 +417,7 @@ public:
                             : false),
                         std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                    InStream in_s(out_s.get_bytes());
+                    InStream in_s(out_s.get_produced_bytes());
                     const size_t totalLength = out_s.get_offset();
                     self.mod.send_to_mod_channel(channel_names::cliprdr,
                                                  in_s,
@@ -588,7 +588,7 @@ public:
                           CHANNELS::CHANNEL_FLAG_FIRST
                         | CHANNELS::CHANNEL_FLAG_LAST
                         | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                        out_s.get_bytes());
+                        out_s.get_produced_bytes());
 
                 ret = false;
             }
@@ -698,7 +698,7 @@ private:
                 : false),
             std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-        InStream in_s(out_s.get_bytes());
+        InStream in_s(out_s.get_produced_bytes());
         const size_t totalLength = out_s.get_offset();
         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                       in_s,

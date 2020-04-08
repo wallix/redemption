@@ -1414,7 +1414,7 @@ public:
 
             StaticOutStream<256> stream;
             X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-            this->trans.send(stream.get_bytes());
+            this->trans.send(stream.get_produced_bytes());
         }
 
         if (this->tls_client_active) {
@@ -2113,17 +2113,17 @@ public:
 
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::incoming: Sec clear payload to send:");
-                    hexdump_d(stream.get_bytes());
+                    hexdump_d(stream.get_produced_bytes());
                 }
 
                 StaticOutStream<8> tmp_sec_header;
                 SEC::Sec_Send sec(
-                    tmp_sec_header, stream.get_bytes(),
+                    tmp_sec_header, stream.get_produced_bytes(),
                     SEC::SEC_LICENSE_PKT, this->encrypt, 0
                 );
                 (void)sec;
 
-                auto packet = hstream.copy_to_head(tmp_sec_header.get_bytes());
+                auto packet = hstream.copy_to_head(tmp_sec_header.get_produced_bytes());
                 sec_header = OutStream(packet);
                 sec_header.out_skip_bytes(packet.size());
             }
@@ -4385,7 +4385,7 @@ private:
                 ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_deactive: Sec clear payload to send:");
-                    hexdump_d(stream.get_bytes());
+                    hexdump_d(stream.get_produced_bytes());
                 }
             }
         );

@@ -217,7 +217,7 @@ inline void send_data_map(
 
     for (auto const& data : data_map) {
         if (!message.has_room(data.size() + 2u)) {
-            trans.send(message.get_bytes());
+            trans.send(message.get_produced_bytes());
             message.rewind();
         }
         assert(message.has_room(data.size() + 2u));
@@ -225,7 +225,7 @@ inline void send_data_map(
         message.out_copy_bytes(data);
     }
 
-    trans.send(message.get_bytes());
+    trans.send(message.get_produced_bytes());
 }
 
 inline FileValidatorId send_open_data(
@@ -300,7 +300,7 @@ inline void send_header(
 
     emit_file_id(message, file_id);
 
-    trans.send(message.get_bytes());
+    trans.send(message.get_produced_bytes());
 }
 
 inline void send_data_file(OutTransport trans, FileValidatorId file_id, bytes_view data)

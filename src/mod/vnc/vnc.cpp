@@ -148,7 +148,7 @@ bool mod_vnc::ms_logon(Buf64k & buf)
     out_stream.out_copy_bytes(cp_username, 256);
     out_stream.out_copy_bytes(cp_password, 64);
 
-    this->t.send(out_stream.get_bytes());
+    this->t.send(out_stream.get_produced_bytes());
     IF_ENABLE_METRICS(data_from_client(out_stream.get_offset()));
     // sec result
 
@@ -275,7 +275,7 @@ void mod_vnc::rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keyma
         return ;
     }
 
-    this->t.send(out_stream.get_bytes());
+    this->t.send(out_stream.get_produced_bytes());
 }
 
 void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/,
@@ -316,7 +316,7 @@ void mod_vnc::send_keyevent(uint8_t down_flag, uint32_t key) {
     stream.out_uint8(down_flag); /* down/up flag */
     stream.out_clear_bytes(2);
     stream.out_uint32_be(key);
-    this->t.send(stream.get_bytes());
+    this->t.send(stream.get_produced_bytes());
     IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 
 }
@@ -334,7 +334,7 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
             stream.out_uint32_be(str.size());   // length
             stream.out_skip_bytes(str.size());  // text
 
-            this->t.send(stream.get_bytes());
+            this->t.send(stream.get_produced_bytes());
             IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
             IF_ENABLE_METRICS(clipboard_data_from_client(this->to_vnc_clipboard_data.get_offset()));
         };
@@ -412,7 +412,7 @@ void mod_vnc::update_screen(Rect r, uint8_t incr) {
     stream.out_uint16_be(r.y);
     stream.out_uint16_be(r.cx);
     stream.out_uint16_be(r.cy);
-    this->t.send(stream.get_bytes());
+    this->t.send(stream.get_produced_bytes());
     IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 }
 
@@ -674,7 +674,7 @@ bool mod_vnc::treatVeNCrypt() {
 
         StaticOutStream<4> outStream;
         outStream.out_uint32_be(static_cast<uint32_t>(preferedAuth));
-        this->t.send(outStream.get_bytes());
+        this->t.send(outStream.get_produced_bytes());
 
         this->choosenAuth = preferedAuth;
         this->vencryptState = WAIT_VENCRYPT_AUTH_ANSWER;
@@ -1098,7 +1098,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         dsm->getResponse(outPacket);
 
         lenStream.out_uint16_le(outPacket.get_offset());
-        out.copy_to_head(lenStream.get_bytes());
+        out.copy_to_head(lenStream.get_produced_bytes());
         writable_bytes_view packet = out.get_packet();
         this->t.send(packet.begin(), packet.size());
 
@@ -1220,7 +1220,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
                 "\0\0\0"; // padding      : 3 bytes
 
             stream.out_copy_bytes(pixel_format, 16);
-            this->t.send(stream.get_bytes());
+            this->t.send(stream.get_produced_bytes());
             IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 
             this->bpp = BitsPerPixel{16};
@@ -1805,7 +1805,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                 auto to_rdp_clipboard_data =
                     ::linux_to_windows_newline_convert(
                         bytes_view(this->clipboard_data_ctx.clipboard_data()).as_chars(),
-                        out_stream.get_bytes().as_chars()
+                        out_stream.get_produced_bytes().as_chars()
                             .drop_front(RDPECLIP::CliprdrHeader::size())
                             // Null character
                             .drop_back(1)
@@ -1911,7 +1911,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     this->to_vnc_clipboard_data.out_copy_bytes(
                                 chunk.get_current(), header.dataLen());
 
-                    this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_bytes());
+                    this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_produced_bytes());
                 } // CHANNELS::CHANNEL_FLAG_LAST
                 else {
                     // Virtual channel data span in multiple Virtual Channel PDUs.
@@ -1994,7 +1994,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                 assert((this->to_vnc_clipboard_data.get_capacity() < this->to_vnc_clipboard_data_size) ||
                     !this->to_vnc_clipboard_data_remaining);
 
-                this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_bytes());
+                this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_produced_bytes());
             }
         break;
 

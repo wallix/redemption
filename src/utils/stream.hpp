@@ -421,7 +421,7 @@ public:
         return  n <= this->tailroom();
     }
 
-    [[nodiscard]] writable_bytes_view get_bytes() const noexcept {
+    [[nodiscard]] writable_bytes_view get_produced_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 

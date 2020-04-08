@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     CryptoContext cctx;
     init_keys(cctx);
 
-    GeneratorTransport trans(stream.get_bytes());
+    GeneratorTransport trans(stream.get_produced_bytes());
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");

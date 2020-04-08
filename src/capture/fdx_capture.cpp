@@ -212,7 +212,7 @@ void FdxCapture::close_tfl(
         sig,
         write_in_buf);
 
-    this->out_crypto_transport.send(out.get_bytes());
+    this->out_crypto_transport.send(out.get_produced_bytes());
 }
 
 void FdxCapture::close(OutCryptoTransport::HashArray& qhash, OutCryptoTransport::HashArray& fhash)

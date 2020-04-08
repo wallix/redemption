@@ -360,7 +360,7 @@ public:
 
                         rpduh.emit_end();
 
-                        InStream in_s(out_s.get_bytes());
+                        InStream in_s(out_s.get_produced_bytes());
 
                         this->mod.send_to_mod_channel(channel_names::rail,
                                                       in_s,

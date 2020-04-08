@@ -2155,7 +2155,7 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
     }
     
 //    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Sent)");
-//    hexdump_d(stream.get_bytes());
+//    hexdump_d(stream.get_produced_bytes());
     
     return message;
 }

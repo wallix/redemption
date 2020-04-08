@@ -109,7 +109,7 @@ struct Serializer
 
     operator bytes_view () const
     {
-        return out_stream.get_bytes();
+        return out_stream.get_produced_bytes();
     }
 };
 

@@ -612,7 +612,7 @@ private:
                                        this->credssp_verbose);
                 this->error_code = this->ts_request.error_code;
                 ts_request_emit.out_copy_bytes(v);
-                this->trans.send(ts_request_emit.get_bytes());
+                this->trans.send(ts_request_emit.get_produced_bytes());
                 this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.clear();
                 this->ts_request.authInfo.clear();
@@ -638,7 +638,7 @@ private:
                                        this->credssp_verbose);
                 this->error_code = this->ts_request.error_code;
                 ts_request_emit.out_copy_bytes(v);
-                this->trans.send(ts_request_emit.get_bytes());
+                this->trans.send(ts_request_emit.get_produced_bytes());
                 this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.clear();
                 this->ts_request.authInfo.clear();
@@ -657,7 +657,7 @@ private:
                                        this->credssp_verbose);
                 this->error_code = this->ts_request.error_code;
                 ts_request_emit.out_copy_bytes(v);
-                this->trans.send(ts_request_emit.get_bytes());
+                this->trans.send(ts_request_emit.get_produced_bytes());
                 this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.clear();
                 this->ts_request.authInfo.clear();
@@ -865,7 +865,7 @@ public:
                                    this->credssp_verbose);
             this->error_code = this->ts_request.error_code;
             ts_request_emit.out_copy_bytes(v);
-            this->trans.send(ts_request_emit.get_bytes());
+            this->trans.send(ts_request_emit.get_produced_bytes());
             this->ts_request.negoTokens.clear();
             this->ts_request.pubKeyAuth.clear();
             this->ts_request.authInfo.clear();
@@ -884,7 +884,7 @@ public:
                                    this->credssp_verbose);
             this->error_code = this->ts_request.error_code;
             ts_request_emit.out_copy_bytes(v);
-            this->trans.send(ts_request_emit.get_bytes());
+            this->trans.send(ts_request_emit.get_produced_bytes());
             this->ts_request.negoTokens.clear();
             this->ts_request.pubKeyAuth.clear();
             this->ts_request.authInfo.clear();
@@ -973,7 +973,7 @@ public:
                                        this->credssp_verbose);
                 this->error_code = this->ts_request.error_code;
                 ts_request_emit.out_copy_bytes(v);
-                this->trans.send(ts_request_emit.get_bytes());
+                this->trans.send(ts_request_emit.get_produced_bytes());
                 this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.clear();
                 this->ts_request.authInfo.clear();

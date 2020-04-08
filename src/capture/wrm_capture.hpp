@@ -72,7 +72,7 @@ public:
     void flush() override {
         if (this->stream.get_offset() > 0) {
             send_wrm_chunk(this->trans, WrmChunkType::LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
-            this->trans.send(this->stream.get_bytes());
+            this->trans.send(this->stream.get_produced_bytes());
             this->stream = OutStream(buf);
         }
     }
@@ -82,7 +82,7 @@ private:
         size_t to_buffer_len = len;
         while (this->stream.get_offset() + to_buffer_len > this->max) {
             send_wrm_chunk(this->trans, WrmChunkType::PARTIAL_IMAGE_CHUNK, this->max, 1);
-            this->trans.send(stream.get_bytes());
+            this->trans.send(stream.get_produced_bytes());
             size_t to_send = this->max - this->stream.get_offset();
             this->trans.send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
@@ -274,12 +274,12 @@ public:
 
             payload.out_uint8(/*ignore_time_interval*/ 0);
 
-            payload.out_copy_bytes(keyboard_buffer_32.get_bytes());
+            payload.out_copy_bytes(keyboard_buffer_32.get_produced_bytes());
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
 
         send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP, payload.get_offset(), 1);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
 
         this->last_sent_timer = this->timer;
     }
@@ -293,7 +293,7 @@ public:
         //------------------------------ missing variable length ---------------
 
         send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), 1);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
     void save_bmp_caches()
@@ -369,7 +369,7 @@ public:
     void send_orders_chunk()
     {
         send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
-        this->trans.send(this->stream_orders.get_bytes());
+        this->trans.send(this->stream_orders.get_produced_bytes());
         this->order_count = 0;
         this->stream_orders.rewind();
     }
@@ -393,7 +393,7 @@ public:
     void send_bitmaps_chunk()
     {
         send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP2, this->stream_bitmaps.get_offset(), this->bitmap_count);
-        this->trans.send(this->stream_bitmaps.get_bytes());
+        this->trans.send(this->stream_bitmaps.get_produced_bytes());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
     }
@@ -410,7 +410,7 @@ public:
         payload.out_uint16_le(min_image_frame_dim.h);
 
         send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
 protected:
@@ -428,7 +428,7 @@ protected:
             cursor.emit_pointer2(payload);
         }
         send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
     void cached_pointer_update(int cache_idx) override {
@@ -442,7 +442,7 @@ protected:
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
 public:
@@ -477,7 +477,7 @@ public:
         kvheader.out_uint8(kv_len);
 
         send_wrm_chunk(this->trans, WrmChunkType::SESSION_UPDATE, out_stream.get_offset(), 1);
-        this->trans.send(out_stream.get_bytes());
+        this->trans.send(out_stream.get_produced_bytes());
     }
 
     void possible_active_window_change() override {
@@ -494,7 +494,7 @@ public:
         StaticOutStream<1024> payload;
         monitor_layout_pdu.emit(payload);
 
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 };  // struct GraphicToFile
 

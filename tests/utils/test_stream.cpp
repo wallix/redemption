@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestStream_out_Stream)
     RED_CHECK_EQUAL((s.get_data())[11], 7);
     RED_CHECK_EQUAL((s.get_data())[12], 8);
 
-    RED_CHECK("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av == s.get_bytes());
+    RED_CHECK("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av == s.get_produced_bytes());
 
     // underflow because end is not yet moved at p
     RED_CHECK(s.tailroom());
@@ -258,7 +258,7 @@ RED_AUTO_TEST_CASE(TestStream_2BUE)
 
     stream.out_2BUE(0x1A1B);
 
-    InStream in_stream(stream.get_bytes());
+    InStream in_stream(stream.get_produced_bytes());
 
     RED_CHECK_EQUAL(0x1A1Bu, in_stream.in_2BUE());
 }
@@ -269,7 +269,7 @@ RED_AUTO_TEST_CASE(TestStream_4BUE)
 
     stream.out_4BUE(0x001A1B1C);
 
-    InStream in_stream(stream.get_bytes());
+    InStream in_stream(stream.get_produced_bytes());
 
     RED_CHECK_EQUAL(0x001A1B1Cu, in_stream.in_4BUE());
 }
@@ -282,7 +282,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
         RED_CHECK_EQUAL(int32_t(0xFFFCFDFE), ss_min_val.in_sint32_le());
         StaticOutStream<4> fs_min_val;
         fs_min_val.out_sint32_le(0xFFFCFDFE);
-        RED_CHECK(fs_min_val.get_bytes() == tmp);
+        RED_CHECK(fs_min_val.get_produced_bytes() == tmp);
     }
 
     {
@@ -291,7 +291,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
         RED_CHECK_EQUAL(0x7FFEFDFC, ss_max_val.in_sint32_le());
         StaticOutStream<4> fs_max_val;
         fs_max_val.out_sint32_le(0x7FFEFDFC);
-        RED_CHECK(fs_max_val.get_bytes() == tmp);
+        RED_CHECK(fs_max_val.get_produced_bytes() == tmp);
     }
 
 }
@@ -304,14 +304,14 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(stream.get_bytes() == "\x00\x0e\xfa\xd5\xfe\xff\xff\xff"_av);
+        RED_CHECK(stream.get_produced_bytes() == "\x00\x0e\xfa\xd5\xfe\xff\xff\xff"_av);
     }
 
     {
         StaticOutStream<8> stream;
         stream.out_sint64_le(0);
 
-        RED_CHECK(stream.get_bytes() == "\0\0\0\0\0\0\0\0"_av);
+        RED_CHECK(stream.get_produced_bytes() == "\0\0\0\0\0\0\0\0"_av);
     }
 
     {
@@ -320,7 +320,7 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(stream.get_bytes() == "\x00\xe4\x0b\x54\x02\x00\x00\x00"_av);
+        RED_CHECK(stream.get_produced_bytes() == "\x00\xe4\x0b\x54\x02\x00\x00\x00"_av);
     }
 }
 
@@ -347,9 +347,9 @@ RED_AUTO_TEST_CASE(TestStreamAt)
     StaticOutStream<12> stream;
     stream.out_copy_bytes("abcde"_av);
 
-    RED_CHECK(stream.get_bytes() == "abcde"_av);
+    RED_CHECK(stream.get_produced_bytes() == "abcde"_av);
     stream.stream_at(1).out_uint8('x');
-    RED_CHECK(stream.get_bytes() == "axcde"_av);
+    RED_CHECK(stream.get_produced_bytes() == "axcde"_av);
 }
 
 RED_AUTO_TEST_CASE(TestDynamicReservedStream)
@@ -360,7 +360,7 @@ RED_AUTO_TEST_CASE(TestDynamicReservedStream)
 	DynamicOutReservedStreamHelper dstream(2, 8+2);
 	dstream.get_data_stream().out_uint64_be(0x0203040506070809);
 
-	dstream.copy_to_head(ostream.get_bytes());
+	dstream.copy_to_head(ostream.get_produced_bytes());
 	RED_CHECK(dstream.get_packet() == "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"_av);
 
 	// dstream is supposed to be
@@ -373,7 +373,7 @@ RED_AUTO_TEST_CASE(TestDynamicReservedStream)
 	StaticOutStream<1> ostream2;
 	ostream2.out_uint8(0x00);
 
-	sub.copy_to_head(ostream2.get_bytes());
+	sub.copy_to_head(ostream2.get_produced_bytes());
 	RED_CHECK(sub.get_packet() == "\x00\x01\x02\x03"_av);
 }
 

@@ -53,9 +53,9 @@ RED_AUTO_TEST_CASE(TestMemBlt)
               3,    // srcx = 0 + 3 = 3
               4,    // srcy = 0 + 4 = 4
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -72,7 +72,7 @@ RED_AUTO_TEST_CASE(TestMemBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_memblt);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -101,9 +101,9 @@ RED_AUTO_TEST_CASE(TestMemBlt)
             0x04, 0x00,  // srcy = 4
             0x0F, 0      // cache_idx
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -118,6 +118,6 @@ RED_AUTO_TEST_CASE(TestMemBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_memblt);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 }

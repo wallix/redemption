@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
@@ -347,7 +347,7 @@ public:
 
     bytes_view back() const noexcept
     {
-        return streams[this->total_in_stream-1].get_bytes();
+        return streams[this->total_in_stream-1].get_produced_bytes();
     }
 };
 
@@ -364,7 +364,7 @@ struct Buffer
         f(this->out);
         OutStream stream_header(av);
         CliprdrHeader(msgType, msgFlags, out.get_offset() - av.size()).emit(stream_header);
-        return out.get_bytes();
+        return out.get_produced_bytes();
     }
 };
 
@@ -545,7 +545,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                     use_long_format,
                     std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
 
-                process_client_message(out.get_bytes());
+                process_client_message(out.get_produced_bytes());
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
@@ -696,7 +696,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
                     checked_int(status.size())}.emit(out);
                 out.out_copy_bytes(status);
-                auto av = out.get_bytes().as_chars();
+                auto av = out.get_produced_bytes().as_chars();
 
                 validator_transport.buf.assign(av.data(), av.size());
                 clipboard_virtual_channel.DLP_antivirus_check_channels_files();
@@ -725,7 +725,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                     Cliprdr::IsLongFormat(use_long_format),
                     std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr}});
 
-                process_client_message(out.get_bytes());
+                process_client_message(out.get_produced_bytes());
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 3);
             RED_REQUIRE(to_server_sender.total_in_stream == 5);
@@ -782,7 +782,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
                 FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(2),
                     checked_int(status.size())}.emit(out);
                 out.out_copy_bytes(status);
-                auto av = out.get_bytes().as_chars();
+                auto av = out.get_produced_bytes().as_chars();
                 validator_transport.buf.assign(av.data(), av.size());
 
                 clipboard_virtual_channel.DLP_antivirus_check_channels_files();
@@ -950,7 +950,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                     use_long_format,
                     std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
 
-                process_client_message(out.get_bytes());
+                process_client_message(out.get_produced_bytes());
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 1);
             RED_REQUIRE(to_server_sender.total_in_stream == 2);
@@ -1150,7 +1150,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                     use_long_format,
                     std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
 
-                process_client_message(out.get_bytes());
+                process_client_message(out.get_produced_bytes());
             }
             RED_REQUIRE(to_client_sender.total_in_stream == 6);
             RED_REQUIRE(to_server_sender.total_in_stream == 6);
@@ -1425,7 +1425,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
                 FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
                     checked_int(status.size())}.emit(out);
                 out.out_copy_bytes(status);
-                auto av = out.get_bytes().as_chars();
+                auto av = out.get_produced_bytes().as_chars();
 
                 validator_transport.buf.assign(av.data(), av.size());
                 clipboard_virtual_channel.DLP_antivirus_check_channels_files();

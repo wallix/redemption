@@ -121,7 +121,7 @@ void SnappyCompressionOutTransport::compress(const uint8_t * const data, size_t 
 
     data_stream.stream_at(compressed_data_length_offset).out_uint16_le(compressed_data_length);
 
-    this->target_transport.send(data_stream.get_bytes());
+    this->target_transport.send(data_stream.get_produced_bytes());
 }
 
 void SnappyCompressionOutTransport::do_send(const uint8_t * const buffer, size_t len)

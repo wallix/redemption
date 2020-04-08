@@ -57,7 +57,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
     af_to_send.emit(out_ServerAudioFormatsandVersion);
 
-    InStream chunk_ServerAudioFormatsandVersion(out_ServerAudioFormatsandVersion.get_bytes());
+    InStream chunk_ServerAudioFormatsandVersion(out_ServerAudioFormatsandVersion.get_produced_bytes());
 
 
     channel.receive(chunk_ServerAudioFormatsandVersion);
@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     header_TrainingPDU.emit(out_TrainingPDU);
     rdpsnd::TrainingPDU train(0x954e, 0);
     train.emit(out_TrainingPDU);
-    InStream chunk_TrainingPDU(out_TrainingPDU.get_bytes());
+    InStream chunk_TrainingPDU(out_TrainingPDU.get_produced_bytes());
 
     channel.receive(chunk_TrainingPDU);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
@@ -137,13 +137,13 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
     header.emit(out_WaveInfoPDU);
     rdpsnd::WaveInfoPDU waveInfo(0x58ea, 0x0000, 0x00);
     waveInfo.emit(out_WaveInfoPDU);
-    InStream chunk_WaveInfoPDU(out_WaveInfoPDU.get_bytes());
+    InStream chunk_WaveInfoPDU(out_WaveInfoPDU.get_produced_bytes());
 
     channel.receive(chunk_WaveInfoPDU);
 
     StaticOutStream<512> out_WavePDU;
     out_WavePDU.out_uint32_be(0);
-    InStream chunk_WavePDU(out_WavePDU.get_bytes());
+    InStream chunk_WavePDU(out_WavePDU.get_produced_bytes());
     channel.receive(chunk_WavePDU);
 
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
