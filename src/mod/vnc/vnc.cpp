@@ -1792,15 +1792,15 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
             && !this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                 StreamBufMaker<65536> buf_maker;
                 OutStream out_stream = buf_maker.reserve_out_stream(
-                        8 +                                         // clipHeader(8)
-                        this->clipboard_data_ctx.clipboard_data().size() * 2 +    // data
-                        1                                           // Null character
-                    );
+                    RDPECLIP::CliprdrHeader::size() +
+                    this->clipboard_data_ctx.clipboard_data().size() * 2 +    // data
+                    1                                           // Null character
+                );
 
                 auto to_rdp_clipboard_data =
                     ::linux_to_windows_newline_convert(
-                        bytes_view(this->clipboard_data_ctx.clipboard_data()).as_chars(),
-                        out_stream.get_bytes().as_chars()
+                        this->clipboard_data_ctx.clipboard_data().as_chars(),
+                        out_stream.get_tail().as_chars()
                             .drop_front(RDPECLIP::CliprdrHeader::size())
                             // Null character
                             .drop_back(1)
