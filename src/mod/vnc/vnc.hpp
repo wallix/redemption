@@ -196,7 +196,7 @@ private:
     VncState state = WAIT_SECURITY_TYPES;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
-    int      clipboard_requested_format_id            = 0;
+    uint32_t clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
     ClipboardEncodingType clipboard_server_encoding_type;
     bool clipboard_owned_by_client = true;
@@ -2731,13 +2731,13 @@ private:
     };
     ClipboardDataCtx clipboard_data_ctx;
 
-    //******************************************************************************
+    // ******************************************************************************
     // Entry point for VNC server clipboard content reception
     // Conversion to RDP behaviour :
     //  - store this content in a buffer, waiting for an explicit request from the front
     //  - send a notification to the front (Format List PDU) that the server clipboard
     //    status has changed
-    //******************************************************************************
+    // ******************************************************************************
     bool lib_clip_data(Buf64k & buf)
     {
         if (!this->clipboard_data_ctx.run(buf)) {
@@ -2751,13 +2751,8 @@ private:
                     RDPECLIP::CB_FORMAT_LIST);
             }
 
-            // TODO: very suspicious: if data is utf8 encoded then it is not 16 bits unicode text
             RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(
-                    this->clipboard_data_ctx.clipboard_data_is_utf8_encoded() ?
-                        RDPECLIP::CF_UNICODETEXT :
-                        RDPECLIP::CF_TEXT
-                );
+            format_list_pdu.add_format_name(RDPECLIP::CF_UNICODETEXT);
 
             const bool use_long_format_names = false;
             const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
@@ -2984,16 +2979,12 @@ private:
                 const bool contains_data_in_text_format        = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_TEXT);
                 const bool contains_data_in_unicodetext_format = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_UNICODETEXT);
 
-                if (this->enable_clipboard_up &&
-                        (contains_data_in_text_format || contains_data_in_unicodetext_format)) {
-                    if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                        this->clipboard_requested_format_id =
-                            (contains_data_in_unicodetext_format ? RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);
-                    }
-                    else {
-                        this->clipboard_requested_format_id =
-                            (contains_data_in_text_format ? RDPECLIP::CF_TEXT : RDPECLIP::CF_UNICODETEXT);
-                    }
+                if (this->enable_clipboard_up
+                 && ( contains_data_in_text_format || contains_data_in_unicodetext_format)
+                ) {
+                    this->clipboard_requested_format_id = contains_data_in_unicodetext_format
+                        ? RDPECLIP::CF_UNICODETEXT
+                        : RDPECLIP::CF_TEXT;
 
                     const microseconds usnow        = ustime();
                     const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
@@ -3064,11 +3055,7 @@ private:
                             }
 
                             RDPECLIP::FormatListPDUEx format_list_pdu;
-                            format_list_pdu.add_format_name(
-                                    (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) ?
-                                        RDPECLIP::CF_UNICODETEXT :
-                                        RDPECLIP::CF_TEXT
-                                );
+                            format_list_pdu.add_format_name(this->clipboard_requested_format_id);
 
                             const bool use_long_format_names = false;
                             const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
@@ -3312,8 +3299,6 @@ private:
 
                             this->to_vnc_clipboard_data.out_skip_bytes(latin1_overflow_message_length);
                             this->to_vnc_clipboard_data.out_clear_bytes(1); /* null-terminator */
-
-                            this->clipboard_requested_format_id = RDPECLIP::CF_TEXT;
                         }
                     } // else CHANNELS::CHANNEL_FLAG_LAST
                 } // RDPECLIP::CB_RESPONSE_OK
