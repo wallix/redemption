@@ -130,6 +130,51 @@ public:
     {
     }
 
+
+    auto create_mod(ModuleIndex target_module) -> ModPack
+    {
+        switch (target_module)
+        {
+        case MODULE_INTERNAL_BOUNCER2:
+            return this->create_mod_bouncer();
+        case MODULE_INTERNAL_TEST:
+            return this->create_mod_replay();
+        case MODULE_INTERNAL_WIDGETTEST:
+            return this->create_widget_test_mod();
+        case MODULE_INTERNAL_CARD:
+            return this->create_test_card_mod();
+        case MODULE_INTERNAL_WIDGET_SELECTOR:
+            return this->create_selector_mod();
+        case MODULE_INTERNAL_CLOSE:
+            return this->create_close_mod();
+        case MODULE_INTERNAL_CLOSE_BACK:
+            return this->create_close_mod_back_to_selector();
+        case MODULE_INTERNAL_TARGET:
+            return this->create_interactive_target_mod();
+        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
+            return this->create_valid_message_mod();
+        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
+            return this->create_display_message_mod();
+        case MODULE_INTERNAL_DIALOG_CHALLENGE:
+            return this->create_dialog_challenge_mod();
+        case MODULE_INTERNAL_WAIT_INFO:
+            return this->create_wait_info_mod();
+        case MODULE_INTERNAL_TRANSITION:
+            return this->create_transition_mod();
+        case MODULE_INTERNAL_WIDGET_LOGIN: 
+            return this->create_login_mod();
+        case MODULE_XUP:
+            return this->create_xup_mod();
+        case MODULE_RDP:
+            return this->create_rdp_mod();
+        case MODULE_VNC:
+            return this->create_vnc_mod();
+        default:
+            LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", target_module);
+            throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+        }
+    }
+
     auto create_mod_bouncer() -> ModPack
     {
         auto new_mod = new Bouncer2Mod(

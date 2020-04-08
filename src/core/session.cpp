@@ -26,6 +26,8 @@
 #include "acl/authentifier.hpp"
 #include "acl/module_manager.hpp"
 #include "acl/sesman.hpp"
+#include "acl/mod_pack.hpp"
+
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
 #include "core/session_reactor.hpp"
@@ -293,7 +295,7 @@ private:
 
     bool front_up_and_running(std::unique_ptr<Acl> & acl, timeval & now,
                               const time_t start_time, Inifile& ini,
-                              ModuleManager & mm, ModWrapper & mod_wrapper,
+                              ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               EndSessionWarning & end_session_warning,
                               Front & front,
                               Authentifier & authentifier,
@@ -361,10 +363,22 @@ private:
                     default:;
                     }
                 }
-                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_TRANSITION (was %s)", get_module_name(mod_wrapper.old_target_module));
+                LOG(LOG_INFO, "New_mod %s (was %s)", 
+                        get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                 mod_wrapper.old_target_module = next_state;
                 mod_wrapper.connected = false;
-                mm.new_mod(mod_wrapper, next_state);
+                auto mod_pack = mod_factory.create_mod(next_state);
+                if (next_state == MODULE_INTERNAL_BOUNCER2){
+                    mod_pack.enable_osd = true;
+                }
+
+                if ((next_state == MODULE_XUP)
+                  ||(next_state == MODULE_RDP)
+                  ||(next_state == MODULE_VNC)){
+                    mod_pack.enable_osd = true;
+                    mod_pack.connected = true;
+                }
+                mod_wrapper.set_mod(mod_pack);
             }
             break;
             case BACK_EVENT_REFRESH:
@@ -427,10 +441,22 @@ private:
                             }
                             authentifier.new_remote_mod();
                         }
-                        LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(mod_wrapper.old_target_module));
+                        LOG(LOG_INFO, "New_mod %s (was %s)", 
+                                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                         mod_wrapper.old_target_module = next_state;
                         mod_wrapper.connected = false;
-                        mm.new_mod(mod_wrapper, next_state);
+                        auto mod_pack = mod_factory.create_mod(next_state);
+                        if (next_state == MODULE_INTERNAL_BOUNCER2){
+                            mod_pack.enable_osd = true;
+                        }
+
+                        if ((next_state == MODULE_XUP)
+                          ||(next_state == MODULE_RDP)
+                          ||(next_state == MODULE_VNC)){
+                            mod_pack.enable_osd = true;
+                            mod_pack.connected = true;
+                        }
+                        mod_wrapper.set_mod(mod_pack);
 
                         if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                             ini.get<cfg::globals::allow_using_multiple_monitors>() &&
@@ -441,7 +467,7 @@ private:
                         }
                         mod_wrapper.get_mod()->rdp_input_invalidate(
                                 Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
-                        LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
+                        LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded");
                         ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
                     }
                     catch (...) {
@@ -476,12 +502,24 @@ private:
                             }
                             authentifier.new_remote_mod();
                         }
-                        LOG(LOG_INFO, "New_mod: MODULE_VNC (was %s)", get_module_name(mod_wrapper.old_target_module));
+                        LOG(LOG_INFO, "New_mod %s (was %s)", 
+                                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                         mod_wrapper.old_target_module = next_state;
                         mod_wrapper.connected = false;
-                        mm.new_mod(mod_wrapper, next_state);
+                        auto mod_pack = mod_factory.create_mod(next_state);
+                        if (next_state == MODULE_INTERNAL_BOUNCER2){
+                            mod_pack.enable_osd = true;
+                        }
 
-                        LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded");
+                        if ((next_state == MODULE_XUP)
+                          ||(next_state == MODULE_RDP)
+                          ||(next_state == MODULE_VNC)){
+                            mod_pack.enable_osd = true;
+                            mod_pack.connected = true;
+                        }
+                        mod_wrapper.set_mod(mod_pack);
+
+                        LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded");
                         ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
                     }
                     catch (...) {
@@ -506,11 +544,22 @@ private:
                         default:;
                         }
                     }
-                    LOG(LOG_INFO, "New_mod (internal from target): %s (was %s)", 
+                    LOG(LOG_INFO, "New_mod %s (was %s)", 
                             get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                     mod_wrapper.old_target_module = next_state;
                     mod_wrapper.connected = false;
-                    mm.new_mod(mod_wrapper, next_state);
+                    auto mod_pack = mod_factory.create_mod(next_state);
+                    if (next_state == MODULE_INTERNAL_BOUNCER2){
+                        mod_pack.enable_osd = true;
+                    }
+
+                    if ((next_state == MODULE_XUP)
+                      ||(next_state == MODULE_RDP)
+                      ||(next_state == MODULE_VNC)){
+                        mod_pack.enable_osd = true;
+                        mod_pack.connected = true;
+                    }
+                    mod_wrapper.set_mod(mod_pack);
                 }
                 break;
                 case MODULE_UNKNOWN:
@@ -538,10 +587,22 @@ private:
                         default:;
                         }
                     }
-                    LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_CLOSE_BACK (was %s)", get_module_name(mod_wrapper.old_target_module));
+                    LOG(LOG_INFO, "New_mod %s (was %s)", 
+                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                     mod_wrapper.old_target_module = next_state;
                     mod_wrapper.connected = false;
-                    mm.new_mod(mod_wrapper, next_state);
+                    auto mod_pack = mod_factory.create_mod(next_state);
+                    if (next_state == MODULE_INTERNAL_BOUNCER2){
+                        mod_pack.enable_osd = true;
+                    }
+
+                    if ((next_state == MODULE_XUP)
+                      ||(next_state == MODULE_RDP)
+                      ||(next_state == MODULE_VNC)){
+                        mod_pack.enable_osd = true;
+                        mod_pack.connected = true;
+                    }
+                    mod_wrapper.set_mod(mod_pack);
                 }
                 break;
                 default:
@@ -568,11 +629,22 @@ private:
                         default:;
                         }
                     }
-                    LOG(LOG_INFO, "New_mod (default): target_module=%s (was %s)", 
+                    LOG(LOG_INFO, "New_mod %s (was %s)", 
                             get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                     mod_wrapper.old_target_module = next_state;
                     mod_wrapper.connected = false;
-                    mm.new_mod(mod_wrapper, next_state);
+                    auto mod_pack = mod_factory.create_mod(next_state);
+                    if (next_state == MODULE_INTERNAL_BOUNCER2){
+                        mod_pack.enable_osd = true;
+                    }
+
+                    if ((next_state == MODULE_XUP)
+                      ||(next_state == MODULE_RDP)
+                      ||(next_state == MODULE_VNC)){
+                        mod_pack.enable_osd = true;
+                        mod_pack.connected = true;
+                    }
+                    mod_wrapper.set_mod(mod_pack);
                 }
                 }
             }
@@ -806,8 +878,6 @@ public:
             ModFactory mod_factory(mod_wrapper, session_reactor, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
-            ModuleManager mm(mod_factory, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front.keymap, front.client_info, rail_client_execute, glyphs, theme, this->ini, cctx, rnd, timeobj, authentifier, authentifier);
-
             if (ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
@@ -1006,10 +1076,22 @@ public:
                                     default:;
                                     }
                                 }
-                                LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_CLOSE (was %s)", get_module_name(mod_wrapper.old_target_module));
+                                LOG(LOG_INFO, "New_mod %s (was %s)", 
+                                        get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                                 mod_wrapper.old_target_module = next_state;
                                 mod_wrapper.connected = false;
-                                mm.new_mod(mod_wrapper, next_state);
+                                auto mod_pack = mod_factory.create_mod(next_state);
+                                if (next_state == MODULE_INTERNAL_BOUNCER2){
+                                    mod_pack.enable_osd = true;
+                                }
+
+                                if ((next_state == MODULE_XUP)
+                                  ||(next_state == MODULE_RDP)
+                                  ||(next_state == MODULE_VNC)){
+                                    mod_pack.enable_osd = true;
+                                    mod_pack.connected = true;
+                                }
+                                mod_wrapper.set_mod(mod_pack);
                                 run_session = true;
                             }
                             continue;
@@ -1241,7 +1323,7 @@ public:
                                 }, gd);
                             }
 
-                            run_session = this->front_up_and_running(acl, now, start_time, ini, mm, mod_wrapper, end_session_warning, front, authentifier, rail_client_execute);
+                            run_session = this->front_up_and_running(acl, now, start_time, ini, mod_factory, mod_wrapper, end_session_warning, front, authentifier, rail_client_execute);
 
                         } catch (Error const& e) {
                             LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
@@ -1270,10 +1352,22 @@ public:
                                         default:;
                                         }
                                     }
-                                    LOG(LOG_INFO, "New_mod: MODULE_INTERNAL_CLOSE (was %s)", get_module_name(mod_wrapper.old_target_module));
+                                    LOG(LOG_INFO, "New_mod %s (was %s)", 
+                                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                                     mod_wrapper.old_target_module = next_state;
                                     mod_wrapper.connected = false;
-                                    mm.new_mod(mod_wrapper, next_state);
+                                    auto mod_pack = mod_factory.create_mod(next_state);
+                                    if (next_state == MODULE_INTERNAL_BOUNCER2){
+                                        mod_pack.enable_osd = true;
+                                    }
+
+                                    if ((next_state == MODULE_XUP)
+                                      ||(next_state == MODULE_RDP)
+                                      ||(next_state == MODULE_VNC)){
+                                        mod_pack.enable_osd = true;
+                                        mod_pack.connected = true;
+                                    }
+                                    mod_wrapper.set_mod(mod_pack);
                                     run_session = true;
                                 }
                             }
@@ -1298,10 +1392,22 @@ public:
                                         }
                                         authentifier.new_remote_mod();
                                     }
-                                    LOG(LOG_INFO, "New_mod: MODULE_RDP (was %s)", get_module_name(mod_wrapper.old_target_module));
+                                    LOG(LOG_INFO, "New_mod %s (was %s)", 
+                                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
                                     mod_wrapper.old_target_module = next_state;
                                     mod_wrapper.connected = false;
-                                    mm.new_mod(mod_wrapper, next_state);
+                                    auto mod_pack = mod_factory.create_mod(next_state);
+                                    if (next_state == MODULE_INTERNAL_BOUNCER2){
+                                        mod_pack.enable_osd = true;
+                                    }
+
+                                    if ((next_state == MODULE_XUP)
+                                      ||(next_state == MODULE_RDP)
+                                      ||(next_state == MODULE_VNC)){
+                                        mod_pack.enable_osd = true;
+                                        mod_pack.connected = true;
+                                    }
+                                    mod_wrapper.set_mod(mod_pack);
 
                                     if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                                         ini.get<cfg::globals::allow_using_multiple_monitors>() &&

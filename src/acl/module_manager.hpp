@@ -50,215 +50,108 @@
 
 #include "acl/connect_to_target_host.hpp"
 
-class rdp_api;
-class AuthApi;
-class ReportMessageApi;
+//class rdp_api;
+//class AuthApi;
+//class ReportMessageApi;
 
-class ModuleManager
-{
-    ModFactory & mod_factory;
+//class ModuleManager
+//{
+//    ModFactory & mod_factory;
 
-public:
+//public:
 
-    Inifile& ini;
-    SessionReactor& session_reactor;
-    TopFdContainer& fd_events_;
-    GraphicFdContainer & graphic_fd_events_;
-    TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
-    SesmanInterface & sesman;
-    CryptoContext & cctx;
+//    Inifile& ini;
+//    SessionReactor& session_reactor;
+//    TopFdContainer& fd_events_;
+//    GraphicFdContainer & graphic_fd_events_;
+//    TimerContainer& timer_events_;
+//    GraphicEventContainer& graphic_events_;
+//    SesmanInterface & sesman;
+//    CryptoContext & cctx;
 
-    FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
+//    FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
 
-private:
-    FrontAPI & front;
-    Keymap2 & keymap;
-    ClientInfo & client_info;
-    ClientExecute & rail_client_execute;
-    Random & gen;
-    TimeObj & timeobj;
-    ReportMessageApi & report_message;
-    AuthApi & authentifier;
+//private:
+//    FrontAPI & front;
+//    Keymap2 & keymap;
+//    ClientInfo & client_info;
+//    ClientExecute & rail_client_execute;
+//    Random & gen;
+//    TimeObj & timeobj;
+//    ReportMessageApi & report_message;
+//    AuthApi & authentifier;
 
-    std::array<uint8_t, 28> server_auto_reconnect_packet {};
+//    std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
-public:
+//public:
 
 
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        new_mod = 0x1,
-    };
+//    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+//    {
+//        none,
+//        new_mod = 0x1,
+//    };
 
-private:
+//private:
 
-    Font & glyphs;
-    Theme & theme;
+//    Font & glyphs;
+//    Theme & theme;
 
-public:
-    ModuleManager(ModFactory & mod_factory,
-                  SessionReactor& session_reactor,
-                  TopFdContainer& fd_events_,
-                  GraphicFdContainer & graphic_fd_events_,
-                  TimerContainer& timer_events_,
-                  GraphicEventContainer& graphic_events_,
-                  SesmanInterface & sesman,
-                  FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj, ReportMessageApi & report_message, AuthApi & authentifier)
-        : mod_factory(mod_factory)
-        , ini(ini)
-        , session_reactor(session_reactor)
-        , fd_events_(fd_events_)
-        , graphic_fd_events_(graphic_fd_events_)
-        , timer_events_(timer_events_)
-        , graphic_events_(graphic_events_)
-        , sesman(sesman)
-        , cctx(cctx)
-        , front(front)
-        , keymap(keymap)
-        , client_info(client_info)
-        , rail_client_execute(rail_client_execute)
-        , gen(gen)
-        , timeobj(timeobj)
-        , report_message(report_message)
-        , authentifier(authentifier)
-        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
-        , glyphs(glyphs)
-        , theme(theme)
-    {
-    }
+//public:
+//    ModuleManager(ModFactory & mod_factory,
+//                  SessionReactor& session_reactor,
+//                  TopFdContainer& fd_events_,
+//                  GraphicFdContainer & graphic_fd_events_,
+//                  TimerContainer& timer_events_,
+//                  GraphicEventContainer& graphic_events_,
+//                  SesmanInterface & sesman,
+//                  FrontAPI & front, Keymap2 & keymap, ClientInfo & client_info, ClientExecute & rail_client_execute, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj, ReportMessageApi & report_message, AuthApi & authentifier)
+//        : mod_factory(mod_factory)
+//        , ini(ini)
+//        , session_reactor(session_reactor)
+//        , fd_events_(fd_events_)
+//        , graphic_fd_events_(graphic_fd_events_)
+//        , timer_events_(timer_events_)
+//        , graphic_events_(graphic_events_)
+//        , sesman(sesman)
+//        , cctx(cctx)
+//        , front(front)
+//        , keymap(keymap)
+//        , client_info(client_info)
+//        , rail_client_execute(rail_client_execute)
+//        , gen(gen)
+//        , timeobj(timeobj)
+//        , report_message(report_message)
+//        , authentifier(authentifier)
+//        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
+//        , glyphs(glyphs)
+//        , theme(theme)
+//    {
+//    }
 
-    ~ModuleManager()
-    {
-    }
+//    ~ModuleManager()
+//    {
+//    }
 
-public:
+//public:
 
-    void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module)
-    {
-        switch (target_module)
-        {
-        case MODULE_INTERNAL_BOUNCER2:
-        {
-            auto mod_pack = mod_factory.create_mod_bouncer();
-            mod_pack.enable_osd = true;
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_TEST:
-        {
-            auto mod_pack = mod_factory.create_mod_replay();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_WIDGETTEST:
-        {
-            auto mod_pack = mod_factory.create_widget_test_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_CARD:
-        {
-            auto mod_pack = mod_factory.create_test_card_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_WIDGET_SELECTOR:
-        {
-            auto mod_pack = mod_factory.create_selector_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_CLOSE:
-        {
-            auto mod_pack = mod_factory.create_close_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_CLOSE_BACK:
-        {
-            auto mod_pack = mod_factory.create_close_mod_back_to_selector();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_TARGET:
-        {
-            auto mod_pack = mod_factory.create_interactive_target_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-        {
-            auto mod_pack = mod_factory.create_valid_message_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-        {
-            auto mod_pack = mod_factory.create_display_message_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_DIALOG_CHALLENGE:
-        {
-            auto mod_pack = mod_factory.create_dialog_challenge_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_WAIT_INFO:
-        {
-            auto mod_pack = mod_factory.create_wait_info_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_TRANSITION:
-        {
-            auto mod_pack = mod_factory.create_transition_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-        case MODULE_INTERNAL_WIDGET_LOGIN: 
-        {
-            auto mod_pack = mod_factory.create_login_mod();
-            mod_wrapper.set_mod(mod_pack);
-        }
-        break;
+//    void new_mod(ModWrapper & mod_wrapper, ModuleIndex target_module)
+//    {
+//        auto mod_pack = mod_factory.create_mod(target_module);
+//        if (target_module == MODULE_INTERNAL_BOUNCER2){
+//            mod_pack.enable_osd = true;
+//        }
 
-        case MODULE_XUP: {
-            auto mod_pack = mod_factory.create_xup_mod();
-            mod_pack.enable_osd = true;
-            mod_pack.connected = true;
-            mod_wrapper.set_mod(mod_pack);
-            this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
-            break;
-        }
+//        if (target_module == MODULE_XUP){
+//            this->ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+//        }
 
-        case MODULE_RDP:
-        {
-            // %%% auto mod = mod_factory.create_mod_rdp(); %%%
-            // %%% mod_wrapper.set_mod(mod, nullptr, nullptr);
-
-                auto mod_pack = mod_factory.create_rdp_mod();
-                mod_pack.enable_osd = true;
-                mod_pack.connected = true;
-                mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-
-        case MODULE_VNC:
-        {
-                auto mod_pack = mod_factory.create_vnc_mod();
-                mod_pack.enable_osd = true;
-                mod_pack.connected = true;
-
-                mod_wrapper.set_mod(mod_pack);
-        }
-        break;
-
-        default:
-            LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", target_module);
-            throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-        }
-    }
-};
+//        if ((target_module == MODULE_XUP)
+//          ||(target_module == MODULE_RDP)
+//          ||(target_module == MODULE_VNC)){
+//            mod_pack.enable_osd = true;
+//            mod_pack.connected = true;
+//        }
+//        mod_wrapper.set_mod(mod_pack);
+//    }
+//};
