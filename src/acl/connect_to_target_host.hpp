@@ -82,7 +82,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & t
     snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
     char const* error_message = nullptr;
-    unique_fd client_sck = ip_connect(ip, ini.get<cfg::context::target_port>(), clientAddress, &error_message);
+    unique_fd client_sck = ip_connect(ip, ini.get<cfg::context::target_port>(), &error_message);
 
     if (!client_sck.is_open()) {
         throw_error(error_message, 2);
