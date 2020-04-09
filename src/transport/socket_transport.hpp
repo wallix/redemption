@@ -92,6 +92,8 @@ public:
 
     [[nodiscard]] bool has_tls_pending_data() const;
 
+    [[nodiscard]] const char *get_ip_address() const noexcept;
+
     [[nodiscard]] int get_fd() const override { return this->sck; }
 
     [[nodiscard]] array_view_const_u8 get_public_key() const override;

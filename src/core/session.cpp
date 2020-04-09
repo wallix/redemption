@@ -708,6 +708,9 @@ public:
         Front front(time_base, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
         );
+
+	std::strcpy(front.client_info.ipAddress, front_trans.get_ip_address());
+	
         std::unique_ptr<Acl> acl;
 
         try {
@@ -1510,10 +1513,12 @@ template<class SocketType, class... Args>
 void session_start_sck(
     char const* name, unique_fd sck,
     Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat,
+    const char *clientIPAddress,
+    int clientPort,
     Args&&... args)
 {
     Session session(SocketType(
-        name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
+        name, std::move(sck), clientIPAddress, clientPort, ini.get<cfg::client::recv_timeout>(),
         static_cast<Args&&>(args)...,
         to_verbose_flags(ini.get<cfg::debug::front>() | (!strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") ? uint64_t(SocketTransport::Verbose::watchdog) : 0))
     ), ini, cctx, rnd, fstat);
@@ -1521,20 +1526,20 @@ void session_start_sck(
 
 } // anonymous namespace
 
-void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat, const char *clientIPAddress, int clientPort)
 {
-    session_start_sck<SocketTransport>("RDP Client", std::move(sck), ini, cctx, rnd, fstat);
+  session_start_sck<SocketTransport>("RDP Client", std::move(sck), ini, cctx, rnd, fstat, clientIPAddress, clientPort);
 }
 
-void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat, const char *clientIPAddress, int clientPort)
 {
-    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat,
+  session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat, clientIPAddress, clientPort,
         WsTransport::UseTls(false), WsTransport::TlsOptions());
 }
 
-void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat, const char *clientIPAddress, int clientPort)
 {
-    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
+  session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat, clientIPAddress, clientPort,
         WsTransport::UseTls(true), WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),

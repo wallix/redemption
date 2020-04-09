@@ -89,6 +89,11 @@ bool SocketTransport::has_data_to_write() const
     return !this->async_buffers.empty();
 }
 
+const char *SocketTransport::get_ip_address() const noexcept
+{
+    return this->ip_address;
+}
+
 array_view_const_u8 SocketTransport::get_public_key() const
 {
     return this->tls ? this->tls->get_public_key() : nullptr;

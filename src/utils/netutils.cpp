@@ -164,7 +164,7 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, char const** error_result)
+unique_fd ip_connect(const char* ip, int port, char *clientAddress, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -213,8 +213,42 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     int nbretry = 3;
     int retry_delai_ms = 1000;
     bool const no_log = false;
-
-    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
+    unique_fd client_sck = connect_sck(sck,
+				       nbretry,
+				       retry_delai_ms,
+				       u.s,
+				       sizeof(u),
+				       text_target,
+				       no_log,
+				       error_result);
+    
+    if (clientAddress)
+      {
+	struct sockaddr_in addr;
+	socklen_t namelen = sizeof(addr);
+	
+	if (::getsockname(client_sck.fd(),
+			  reinterpret_cast<struct sockaddr *>(&addr),
+			  &namelen) == -1)
+	  {
+	    if (error_result)
+	      *error_result = "Cannot get ";
+	    LOG(LOG_ERR,
+		"getsockname failed with errno = %d (%s)",
+		errno,
+		strerror(errno));
+	    assert(false);
+	  }
+	else if(!::inet_ntop(AF_INET,
+			     &addr.sin_addr,
+			     clientAddress,
+			     INET_ADDRSTRLEN))
+	  LOG(LOG_WARNING,
+	      "inet_ntop failed with errno = %d (%s)",
+	      errno,
+	      strerror(errno));
+      }
+    return client_sck;
 }
 
 unique_fd local_connect(const char* sck_name, bool no_log)

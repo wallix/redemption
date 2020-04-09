@@ -216,7 +216,7 @@ namespace
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
 
-            char source_ip[256];
+            char source_ip[256] { };
             utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
             const bool source_is_localhost = (0 == strcmp(source_ip, "127.0.0.1"));
             REDEMPTION_DIAGNOSTIC_PUSH
@@ -367,16 +367,16 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-                        session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
+		      session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat, source_ip, source_port);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
-                        session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat, source_ip, source_port);
                         break;
                     case SocketType::Tls:
-                        session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
+		      session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat, source_ip, source_port);
                         break;
                 }
 
