@@ -312,7 +312,7 @@ private:
     VeNCryptState vencryptState = WAIT_VENCRYPT_VERSION;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
-    int      clipboard_requested_format_id            = 0;
+    uint32_t clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
     ClipboardEncodingType clipboard_server_encoding_type;
     bool clipboard_owned_by_client = true;
@@ -1598,12 +1598,9 @@ private:
             return this->clipboard_down_is_really_enabled;
         }
 
-        [[nodiscard]] array_view_const_u8 clipboard_data() const noexcept
+        [[nodiscard]] bytes_view clipboard_data() const noexcept
         {
-            return {
-                this->to_rdp_clipboard_data.get_data(),
-                this->to_rdp_clipboard_data.get_offset()
-            };
+            return this->to_rdp_clipboard_data.get_consumed_bytes();
         }
 
         [[nodiscard]] bool clipboard_data_is_utf8_encoded() const noexcept

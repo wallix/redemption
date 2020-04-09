@@ -2252,5 +2252,5 @@ void ClipboardVirtualChannel::empty_client_clipboard()
     this->send_message_to_server(
         totalLength,
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-        out_s.get_bytes());
+        out_s.get_produced_bytes());
 }

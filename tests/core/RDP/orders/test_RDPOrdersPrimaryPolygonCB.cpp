@@ -48,9 +48,9 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
             0x90,
             0x01,
             0x4C };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -68,7 +68,7 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_PolygonCB);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -102,7 +102,7 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
         deltaPoints.out_sint16_le(-160);
         deltaPoints.out_sint16_le(0);
 
-        InStream deltaPoints_in(deltaPoints.get_bytes());
+        InStream deltaPoints_in(deltaPoints.get_produced_bytes());
 
         RDPPolygonCB polygonCB(158, 230, 0x0D, 0, encode_color24()(BGRColor{0x0D080F}), encode_color24()(BGRColor{0xD41002}),
                                RDPBrush(3, 4, 3, 0xDD, byte_ptr_cast("\1\2\3\4\5\6\7")),
@@ -133,9 +133,9 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
             0x98, 0x24, 0x14, 0x80, 0xA0, 0x62, 0x32, 0x32,
             0x4E, 0x32, 0x62, 0xFF, 0x60
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_polygonCB);
         RED_CHECK(
-            out_stream.get_bytes().from_offset(1) ==
-            out_stream2.get_bytes().from_offset(1));
+            out_stream.get_produced_bytes().from_offset(1) ==
+            out_stream2.get_produced_bytes().from_offset(1));
     }
 }

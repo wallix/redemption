@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(195);
+constexpr authid_t MAX_AUTHID = authid_t(197);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -79,6 +79,8 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check"_av,
     "mod_rdp:session_probe_childless_window_as_unidentified_input_field"_av,
     "mod_rdp:session_probe_disabled_features"_av,
+    "mod_rdp:session_probe_bestsafe_integration"_av,
+    "mod_rdp:session_probe_alternate_directory_environment_variable"_av,
     "mod_rdp:session_probe_public_session"_av,
     "mod_rdp:session_probe_on_account_manipulation"_av,
     "mod_rdp:server_cert_store"_av,

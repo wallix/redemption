@@ -93,7 +93,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
                 Cliprdr::formats::file_group_descriptor_w.ascii_name},
         });
 
-    InStream chunk(stream.get_bytes());
+    InStream chunk(stream.get_produced_bytes());
 
     RDPECLIP::CliprdrHeader in_header;
     in_header.recv(chunk);
@@ -175,7 +175,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack)
 //
 //     stream.out_copy_bytes(data, 5);
 //
-//     InStream chunk(stream.get_bytes());
+//     InStream chunk(stream.get_produced_bytes());
 //
 //     const RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 9);
 //

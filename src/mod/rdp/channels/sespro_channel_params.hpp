@@ -144,6 +144,8 @@ struct SessionProbeVirtualChannelParams
 
     SessionProbeDisabledFeature disabled_features = SessionProbeDisabledFeature::none;
 
+    bool bestsafe_integration = false;
+
     bool enable_log = false;
     bool enable_log_rotation = true;
 
@@ -166,6 +168,8 @@ struct SessionProbeVirtualChannelParams
     explicit SessionProbeVirtualChannelParams() = default;
 
     SessionProbeOnAccountManipulation on_account_manipulation = SessionProbeOnAccountManipulation::allow;
+
+    bool at_end_of_session_freeze_connection_and_wait = true;
 };
 
 

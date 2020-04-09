@@ -1650,7 +1650,7 @@ public:
 
             to_server_sender(virtual_channel_stream.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                virtual_channel_stream.get_bytes());
+                virtual_channel_stream.get_produced_bytes());
 
             virtual_channel_stream.rewind();
         }
@@ -2230,7 +2230,7 @@ public:
         to_server_sender(
                 out_stream.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes()
+                out_stream.get_produced_bytes()
             );
 
         LOG_IF(bool(verbose & RDPVerbose::fsdrvmgr), LOG_INFO,

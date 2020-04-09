@@ -52,7 +52,7 @@ void RecorderFile::write_packet(PacketType type, bytes_view buffer)
     headers_stream.out_uint32_le(buffer.size());
     // LOG(LOG_DEBUG, "write_packet len=%lu", len);
 
-    this->file.send(headers_stream.get_bytes());
+    this->file.send(headers_stream.get_produced_bytes());
     this->file.send(buffer);
 }
 

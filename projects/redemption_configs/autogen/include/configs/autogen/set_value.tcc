@@ -1028,6 +1028,22 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "session_probe_bestsafe_integration")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_bestsafe_integration&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_alternate_directory_environment_variable")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_alternate_directory_environment_variable&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "session_probe_public_session")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1041,6 +1057,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_on_account_manipulation&>(this->variables).value,
                 ::configs::spec_type<SessionProbeOnAccountManipulation>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_at_end_of_session_freeze_connection_and_wait")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 av
             );
         }

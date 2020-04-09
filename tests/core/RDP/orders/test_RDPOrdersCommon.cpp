@@ -46,9 +46,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x90,
             0x01,
             0x4C };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -79,9 +79,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         newcmd.emit(out_stream, newcommon, state_common, state_orect);
 
         uint8_t datas[2] = {SMALL | DELTA | CHANGE | STANDARD, RECT};
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
 
@@ -113,9 +113,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             1, // x coordinate changed
             5, // +5 on x
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -148,9 +148,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             15,   // +15 on w
             20,   // +20 on h
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -164,7 +164,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
 
@@ -181,9 +181,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             2,  // y coordinate changed
             0x2C, 1 // y = 0x12C = 300
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -214,9 +214,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x05, 0, // x = 0x005 = 5
             0x2C, 1, // y = 0x12C = 300
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -230,7 +230,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -249,9 +249,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             25, 0,   // w = 25
             30, 0,   // h = 30
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -285,9 +285,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             30, 0,   // h = 30
             0x30, 0x20, 0x10  // RGB colors
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -301,7 +301,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -325,9 +325,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             30, 0,   // h = 30
             0x30, 0x20, 0x10  // RGB colors
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -341,7 +341,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
 
@@ -366,9 +366,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x5D, 2,   // H = 605
             0x30, 0x20, 0x10,  // RGB colors
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -382,7 +382,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
 
@@ -403,9 +403,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x5D, 2,   // H = 605
             0x30, 0x20, 0x10,  // RGB colors
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -419,7 +419,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
 
         StaticOutStream<65536> out_stream2;
         newcmd.emit(out_stream2, newcommon, state_common, state_orect);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 }
 

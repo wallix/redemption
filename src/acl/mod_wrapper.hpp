@@ -212,10 +212,12 @@ struct ModWrapper
     }
 
 public:
+    bool connected = false;
+    ModuleIndex old_target_module = MODULE_UNKNOWN;
+public:
 
     bool target_info_is_shown = false;
     bool show_osd_flag = false;
-    bool connected = false;
 
     bool is_connected() const {
         return this->connected;

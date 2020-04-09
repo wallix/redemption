@@ -191,7 +191,7 @@ public:
 
             assert(this->length);
 
-            this->to_server_sender(this->length, out_flags, out_stream.get_bytes());
+            this->to_server_sender(this->length, out_flags, out_stream.get_produced_bytes());
         }
         catch (const Error & e) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);

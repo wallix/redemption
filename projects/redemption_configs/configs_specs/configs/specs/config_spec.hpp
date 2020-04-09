@@ -409,13 +409,23 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership | SessionProbeDisabledFeature::bestsafe_integration));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_bestsafe_integration", connpolicy::name{"bestsafe_integration"}, set(false));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::string>(), "session_probe_alternate_directory_environment_variable", connpolicy::name{"alternate_directory_environment_variable"}, desc{
+            "The name of an environment variable which points to the alternative directory for starting Session Probe.\n"
+            "The maximum length of this name is 3 bytes.\n"
+            "If empty, the environment variable TMP will be used."
+        });
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnAccountManipulation>(), "session_probe_on_account_manipulation", connpolicy::name{"on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
+
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_at_end_of_session_freeze_connection_and_wait", set(true));
+
 
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));

@@ -628,7 +628,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
-# min = 0, max = 1023
+# min = 0, max = 511
 #   0x000: none
 #   0x001: Java Access Bridge
 #   0x002: MS Active Accessbility
@@ -638,11 +638,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-#   0x200: BestSafe integration
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
-#session_probe_disabled_features = 864
+#session_probe_disabled_features = 352
+
+# value: 0 or 1
+#_hidden
+#session_probe_bestsafe_integration = 0
+
+# The name of an environment variable which points to the alternative directory for starting Session Probe.
+# The maximum length of this name is 3 bytes.
+# If empty, the environment variable TMP will be used.
+#_hidden
+#session_probe_alternate_directory_environment_variable = 
 
 # If enabled, disconnected session can be recovered by a different primary user.
 # value: 0 or 1
@@ -656,6 +665,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: User action will be rejected
 #_hidden
 #session_probe_on_account_manipulation = 0
+
+# value: 0 or 1
+#_advanced
+#session_probe_at_end_of_session_freeze_connection_and_wait = 1
 
 # Keep known server certificates on WAB
 # value: 0 or 1

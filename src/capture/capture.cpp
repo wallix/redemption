@@ -588,7 +588,7 @@ public:
             this->hidden_masked_char_count = 0;
 
             this->report_message.log6(LogId::KBD_INPUT, tvtime(), {
-                KVLog("data"_av, this->kbd_stream.get_bytes().as_chars()),
+                KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
 
             this->kbd_stream.rewind();
@@ -1147,7 +1147,7 @@ private:
             }
             this->hidden_masked_char_count = 0;
             log_format_set_info(this->formatted_message, LogId::KBD_INPUT, {
-                KVLog("data"_av, this->kbd_stream.get_bytes().as_chars()),
+                KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
             this->send_data(this->last_time, this->formatted_message, '-');
             this->kbd_stream.rewind();

@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFileList)
     RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems);
     fdr.emit(ou_stream_fileList);
 
-    RED_CHECK(ou_stream_fileList.get_bytes() == "\x01\x00\x00\x00"_av);
+    RED_CHECK(ou_stream_fileList.get_produced_bytes() == "\x01\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFileList)
@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFilePic)
         "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00");
 
-    RED_CHECK(metafilepic_out_data == ou_stream_metaFilePic.get_bytes());
+    RED_CHECK(metafilepic_out_data == ou_stream_metaFilePic.get_produced_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
@@ -380,7 +380,7 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 
     file_descriptor.emit(out_stream);
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 
@@ -402,7 +402,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeEmit)
         "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
         "\x00\x00\x00\x00\x01\x00\x00\x00");
 
-    RED_CHECK(exp_data == out_stream.get_bytes());
+    RED_CHECK(exp_data == out_stream.get_produced_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeRecv)
@@ -444,7 +444,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeEmit)
         "\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
         "\x07\x00\x00\x00\x01\x00\x00\x00");
 
-    RED_CHECK(exp_data == out_stream.get_bytes());
+    RED_CHECK(exp_data == out_stream.get_produced_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeRecv)
@@ -591,12 +591,12 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
         Cliprdr::format_list_serialize_with_header(
             out_stream, data.is_long_format, data.formats);
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
         RDPECLIP::CliprdrHeader header;
         header.recv(in_stream);
         RED_CHECK(bool(header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) == bool(data.is_ascii));
 
-        RED_CHECK(data.expected_result == out_stream.get_bytes());
+        RED_CHECK(data.expected_result == out_stream.get_produced_bytes());
 
         auto format_ref = data.formats_ref.empty() ? data.formats : data.formats_ref;
         auto it = format_ref.begin();

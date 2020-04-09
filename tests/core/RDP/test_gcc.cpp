@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     StaticOutStream<65536> gcc_header;
     GCC::Create_Request_Send(gcc_header, gcc_user_data.size());
 
-    RED_CHECK(gcc_header.get_bytes() == gcc_conference_create_request_expected.first(
+    RED_CHECK(gcc_header.get_produced_bytes() == gcc_conference_create_request_expected.first(
         gcc_conference_create_request_expected.size() - gcc_user_data.size()));
 
     InStream in_stream(gcc_conference_create_request_expected);

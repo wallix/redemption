@@ -695,7 +695,7 @@ void ClientCLIPRDRChannel::send_UnlockPDU(uint32_t streamID) {
     StaticOutStream<32> out_stream_unlock;
     header.emit(out_stream_unlock);
     unlockClipboardDataPDU.emit(out_stream_unlock);
-    InStream chunk_unlock(out_stream_unlock.get_bytes());
+    InStream chunk_unlock(out_stream_unlock.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunk_unlock
@@ -780,7 +780,7 @@ void ClientCLIPRDRChannel::send_FormatListPDU() {
     Cliprdr::format_list_serialize_with_header(
         out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                 , chunk
@@ -807,7 +807,7 @@ void ClientCLIPRDRChannel::process_monitor_ready()
         general_cap_set.emit(out_stream);
 
         const uint32_t total_length = out_stream.get_offset();
-        InStream chunk(out_stream.get_bytes());
+        InStream chunk(out_stream.get_produced_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                                             , chunk
@@ -825,7 +825,7 @@ void ClientCLIPRDRChannel::process_monitor_ready()
             out_stream, Cliprdr::IsLongFormat(this->server_use_long_format_names),
             this->format_name_list);
 
-        InStream chunk(out_stream.get_bytes());
+        InStream chunk(out_stream.get_produced_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                     , chunk
@@ -881,7 +881,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     StaticOutStream<256> out_stream;
     RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
     formatListResponsePDUHeader.emit(out_stream);
-    InStream chunk_format_list(out_stream.get_bytes());
+    InStream chunk_format_list(out_stream.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunk_format_list
@@ -896,7 +896,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     StaticOutStream<32> out_stream_lock;
     lockClipboardDataHeader.emit(out_stream_lock);
     lockClipboardDataPDU.emit(out_stream_lock);
-    InStream chunk_lock(out_stream_lock.get_bytes());
+    InStream chunk_lock(out_stream_lock.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunk_lock
@@ -911,7 +911,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     StaticOutStream<256> out_streamRequest;
     formatListRequestPDUHeader.emit(out_streamRequest);
     formatDataRequestPDU.emit(out_streamRequest);
-    InStream chunkRequest(out_streamRequest.get_bytes());
+    InStream chunkRequest(out_streamRequest.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunkRequest
@@ -1019,7 +1019,7 @@ void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
                     out_stream_first_part.out_uint32_le(0);
                     data_sent += 4;
                 }
-                InStream chunk_first_part( out_stream_first_part.get_bytes());
+                InStream chunk_first_part( out_stream_first_part.get_produced_bytes());
 
                 this->callback->send_to_mod_channel( channel_names::cliprdr
                                                     , chunk_first_part
@@ -1050,7 +1050,7 @@ void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
                         data_sent += 4;
                     }
 
-                    InStream chunk_next_part(out_stream_next_part.get_bytes());
+                    InStream chunk_next_part(out_stream_next_part.get_produced_bytes());
 
                     this->callback->send_to_mod_channel( channel_names::cliprdr
                                                     , chunk_next_part
@@ -1088,7 +1088,7 @@ void ClientCLIPRDRChannel::process_filecontents_request(InStream & chunk) {
             fileSizeHeader.emit(out_stream);
             fileSize.emit(out_stream);
 
-            InStream chunk_to_send(out_stream.get_bytes());
+            InStream chunk_to_send(out_stream.get_produced_bytes());
             this->callback->send_to_mod_channel( channel_names::cliprdr
                                             , chunk_to_send
                                             , out_stream.get_offset()

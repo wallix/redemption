@@ -543,11 +543,19 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-#   0x200: BestSafe integration
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
-session_probe_disabled_features = integer(min=0, max=1023, default=864)
+session_probe_disabled_features = integer(min=0, max=511, default=352)
+
+#_hidden
+session_probe_bestsafe_integration = boolean(default=False)
+
+# The name of an environment variable which points to the alternative directory for starting Session Probe.
+# The maximum length of this name is 3 bytes.
+# If empty, the environment variable TMP will be used.
+#_hidden
+session_probe_alternate_directory_environment_variable = string(default='')
 
 # If enabled, disconnected session can be recovered by a different primary user.
 #_hidden
@@ -559,6 +567,9 @@ session_probe_public_session = boolean(default=False)
 #   2: User action will be rejected
 #_hidden
 session_probe_on_account_manipulation = option(0, 1, 2, default=0)
+
+#_advanced
+session_probe_at_end_of_session_freeze_connection_and_wait = boolean(default=True)
 
 # Keep known server certificates on WAB
 #_hidden

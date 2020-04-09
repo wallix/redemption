@@ -46,12 +46,12 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
     sc_net.channelDefArray[1].id = 1005;
     sc_net.channelDefArray[2].id = 1006;
     sc_net.emit(out_stream);
-    RED_CHECK(out_stream.get_bytes() == expected);
+    RED_CHECK(out_stream.get_produced_bytes() == expected);
 
     GCC::UserData::SCNet sc_net2;
 
     const bool bogus_sc_net_size = false;
-    InStream in_stream(out_stream.get_bytes());
+    InStream in_stream(out_stream.get_produced_bytes());
     RED_CHECK_NO_THROW(sc_net2.recv(in_stream, bogus_sc_net_size));
     RED_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
     RED_CHECK_EQUAL(1003, sc_net2.MCSChannelId);

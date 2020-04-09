@@ -274,7 +274,7 @@ private:
 
             this->send_message_to_server(out_s.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_s.get_bytes());
+                out_s.get_produced_bytes());
         }
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
@@ -329,20 +329,47 @@ private:
     void process_event_ready()
     {
         if (!this->session_probe_keep_alive_received) {
+            LOG(LOG_ERR,
+                "SessionProbeVirtualChannel::process_event: "
+                    "No keep alive received from Session Probe!");
+
             if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
                 this->mod.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
-
-                LOG(LOG_ERR,
-                    "SessionProbeVirtualChannel::process_event: "
-                        "No keep alive received from Session Probe!");
             }
 
             if (!this->disconnection_reconnection_required) {
                 if (this->session_probe_ending_in_progress) {
-                    this->rdp.sespro_ending_in_progress();
+                    LOG(LOG_INFO,
+                        "SessionProbeVirtualChannel::process_event: "
+                            "Session ending is in progress.");
+
+                    if (this->sespro_params.at_end_of_session_freeze_connection_and_wait) {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_event: "
+                                "Freezes connection and wait end of session.");
+
+                        if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                            const bool disable_input_event     = true;
+                            const bool disable_graphics_update = true;
+                                this->mod.disable_input_event_and_graphics_update(
+                                    disable_input_event, disable_graphics_update);
+
+                            this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
+                        }
+                        this->request_keep_alive();
+                        this->mod.display_osd_message("No keep alive received from Session Probe! (End of session in progress.)");
+                    }
+                    else {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_event: "
+                                "Precipitates the end of the session.");
+
+                        this->rdp.sespro_ending_in_progress();
+                    }
+
                     return ;
                 }
 
@@ -395,7 +422,7 @@ private:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
 public:
@@ -530,6 +557,8 @@ public:
                 this->session_probe_timer.reset();
 
                 this->rdp.sespro_launch_process_ended(sesman);
+
+                // The order of the messages sent is very important!
 
                 if (this->sespro_params.keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {
@@ -707,6 +736,17 @@ public:
                             this->sespro_params.handle_usage_limit,
                             this->sespro_params.memory_usage_limit);
                         out_s.out_copy_bytes(cstr, size_t(len));
+                    }
+                });
+
+                send_client_message([this](OutStream & out_s) {
+                    out_s.out_copy_bytes("BestSafeIntegration="_av);
+
+                    if (this->sespro_params.bestsafe_integration) {
+                        out_s.out_copy_bytes("Yes"_av);
+                    }
+                    else {
+                        out_s.out_copy_bytes("No"_av);
                     }
                 });
 
@@ -1586,7 +1626,7 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
     void rail_exec(const char* application_name, const char* command_line,
@@ -1633,7 +1673,7 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
     void create_shadow_session(const char * userdata, const char * type) {
