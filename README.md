@@ -15,10 +15,9 @@ Support of:
 <!-- https://github.com/jonathanpoelen/gh-md-toc -->
 <!-- toc -->
 1. [Dependencies](#dependencies)
-    1. [FFmpeg:](#ffmpeg)
+    1. [FFmpeg](#ffmpeg)
         1. [Ubuntu / Debian](#ubuntu--debian)
         2. [Other distros](#other-distros)
-        3. [Note](#note)
 2. [Compilation](#compilation)
     1. [Special runtime variables (shell variable)](#special-runtime-variables-shell-variable)
     2. [Setting build variables](#setting-build-variables)
@@ -62,13 +61,18 @@ On Ubuntu SNAPPY dev files are broken and `SNAPPY_MAJOR`, `SNAPPY_MINOR` and `SN
 The simplest way to fix that is editing `/usr/include/snappy-stubs-public.h` and define these above `SNAPPY_VERSION`
 like below (change values depending on your snappy package). 
 
+```bash
+$ apt show libsnappy-dev | grep Version
+Version: 1.1.7-1
+```
+
 ```C
 #define SNAPPY_MAJOR 1
 #define SNAPPY_MINOR 1
 #define SNAPPY_PATCHLEVEL 7
 #define SNAPPY_VERSION \
     ((SNAPPY_MAJOR << 16) | (SNAPPY_MINOR << 8) | SNAPPY_PATCHLEVEL)
-``
+```
 
 
 ## FFmpeg
@@ -100,9 +104,7 @@ And set the [build variables](#setting-build-variables) (optionally)
 - `FFMPEG_LIB_PATH=/my/ffmpeg/library/path` (/!\\ without `/` terminal)
 - `FFMPEG_LINK_MODE=shared` (static or shared, shared by default)
 
-### Note:
-
-Disable ffmpeg with `NO_FFMPEG=1`.
+Note: Disable ffmpeg with `NO_FFMPEG=1`.
 
 
 # Compilation
