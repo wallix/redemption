@@ -1,3 +1,11 @@
+redemption (8.0.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix encoding characters through copy/paste with VNC.
+  * Separate option to enable/disable BS Integration.
+  * Add capability to launch Session Probe from a location other than the temporary directory of user.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 09 Apr 2020 09:35:44 +0200
+
 redemption (8.0.25%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * remove bestsafe options
