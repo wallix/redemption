@@ -148,7 +148,7 @@ private:
         {
             StreamId stream_id;
             FileGroupId lindex;
-            uint64_t file_size_requested;
+            uint32_t file_size_requested;
             uint64_t file_size;
             std::string file_name;
         };
@@ -170,9 +170,14 @@ private:
             };
             ValidatorState validator_state;
             uint64_t file_offset;
+            // FileContentsRequestedRange
+            uint32_t first_file_size_requested;
             // FileContentsRequestedRange, FileContentsRange
             uint64_t file_size_requested;
             uint64_t file_size;
+            // GetRange
+            uint64_t response_size;
+            // FileContentsRequestedRange, FileContentsRange
             std::string file_name;
 
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
@@ -193,6 +198,7 @@ private:
             GetRange,
             RequestedRange,
             WaitingContinuationRange,
+            WaitingValidator,
             Text,
         };
 
@@ -218,7 +224,7 @@ private:
             void init_size(StreamId stream_id, FileGroupId lindex);
             void init_requested_range(
                 StreamId stream_id, FileGroupId lindex,
-                uint64_t file_size_requested, uint64_t file_size, std::string_view file_name);
+                uint32_t file_size_requested, uint64_t file_size, std::string_view file_name);
             void requested_range_to_range(
                 FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl);
             void requested_range_to_get_range(
