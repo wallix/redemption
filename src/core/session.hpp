@@ -299,6 +299,8 @@ public:
                                     signal = mm.mod->get_event().signal;
                                     mm.mod->get_event().reset_trigger_time();
                                 }
+                            } else if (mm.is_set_event(rfds)) {
+                                mm.mod->get_event().reset_trigger_time();
                             }
                         }
                         catch (Error const & e) {
