@@ -770,7 +770,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     unique_fd client_sck =
         connect_to_target_host(ini, time_base, report_message, trkeys::authentification_rdp_fail, clientAddress);
     
-    
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,
         ini,

@@ -367,16 +367,16 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-		      session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat, source_ip, source_port);
+		      session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
-                        session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat, source_ip, source_port);
+                        session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                     case SocketType::Tls:
-		      session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat, source_ip, source_port);
+		      session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                 }
 

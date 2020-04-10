@@ -81,7 +81,6 @@ struct ClientInfo
     //uint32_t desktop_cache = 0;
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
-    char ipAddress[16] = { };
     int build = 0;
     int keylayout = 0;
     char username[257] = {0};
