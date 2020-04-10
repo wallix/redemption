@@ -417,7 +417,9 @@ void mod_vnc::update_screen(Rect r, uint8_t incr) {
 }
 
 void mod_vnc::rdp_input_invalidate(Rect r) {
+    LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate");
     if (this->state != UP_AND_RUNNING) {
+        LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate not up and running");
         return;
     }
 
@@ -425,6 +427,9 @@ void mod_vnc::rdp_input_invalidate(Rect r) {
 
     if (!r_.isempty()) {
         this->update_screen(r_, 0);
+    }
+    else {
+        LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate empty rect");
     }
 }
 
@@ -452,7 +457,7 @@ bool mod_vnc::doTlsSwitch()
 
 void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
 {
-    LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
+    LOG_IF(true||bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
     if (this->tlsSwitch) {
         if (this->doTlsSwitch()) {
@@ -1379,13 +1384,13 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         case FrontAPI::ResizeResult::fail:
             // resizing failed
             // thow an Error ?
-            LOG(LOG_WARNING, "Older RDP client can't resize resolution from server, disconnecting");
+            LOG(LOG_ERR, "Older RDP client can't resize resolution from server, disconnecting");
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
         return true;
 
     case WAIT_CLIENT_UP_AND_RUNNING:
-        LOG(LOG_WARNING, "Waiting for client become up and running");
+        LOG(LOG_INFO, "Waiting for client become up and running");
         break;
 
     default:
@@ -2035,6 +2040,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 
 void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
 {
+    LOG(LOG_INFO, "mod_vnc::rdp_gdi_up_and_running");
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
         this->state = DO_INITIAL_CLEAR_SCREEN;

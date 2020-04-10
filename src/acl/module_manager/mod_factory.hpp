@@ -136,7 +136,11 @@ public:
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
-            return this->create_mod_bouncer();
+        {
+            auto mod_pack = this->create_mod_bouncer();
+            mod_pack.enable_osd = true;
+            return mod_pack;
+        }
         case MODULE_INTERNAL_TEST:
             return this->create_mod_replay();
         case MODULE_INTERNAL_WIDGETTEST:
@@ -164,11 +168,26 @@ public:
         case MODULE_INTERNAL_WIDGET_LOGIN: 
             return this->create_login_mod();
         case MODULE_XUP:
-            return this->create_xup_mod();
+        {
+            auto mod_pack = this->create_xup_mod();
+            mod_pack.enable_osd = true;
+            mod_pack.connected = false;
+            return mod_pack;
+        }
         case MODULE_RDP:
-            return this->create_rdp_mod();
+        {
+            auto mod_pack = this->create_rdp_mod();
+            mod_pack.enable_osd = true;
+            mod_pack.connected = false;
+            return mod_pack;
+        }
         case MODULE_VNC:
-            return this->create_vnc_mod();
+        {
+            auto mod_pack = this->create_vnc_mod();
+            mod_pack.enable_osd = true;
+            mod_pack.connected = false;
+            return mod_pack;
+        }
         default:
             LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", target_module);
             throw Error(ERR_SESSION_UNKNOWN_BACKEND);

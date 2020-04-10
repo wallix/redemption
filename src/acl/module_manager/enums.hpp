@@ -107,7 +107,6 @@ inline ModuleIndex get_module_id(std::string_view module_name)
 
     ModuleIndex mi = MODULE_UNKNOWN;
     for (auto f: names_id){
-        LOG(LOG_INFO, "%s %.*s ", f.name.data(), int(module_name.size()), module_name.data());
         if (f.name == module_name){
             mi = f.id;
             break;

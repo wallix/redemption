@@ -451,8 +451,12 @@ public:
     }
 
 
-    void set_mod(ModPack mod_pack)
+    void set_mod(ModuleIndex next_state, ModPack mod_pack)
     {
+        LOG(LOG_INFO, "Setting new mod %s (was %s)",
+            get_module_name(next_state),
+            get_module_name(this->old_target_module));
+
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
         }
@@ -460,6 +464,7 @@ public:
             this->keymap.get_kevent();
         }
 
+        this->old_target_module = next_state;
         this->clear_osd_message();
 
         this->set_mod(mod_pack.mod.get());
@@ -638,6 +643,7 @@ public:
 
     void refresh(Rect r)
     {
+        LOG(LOG_INFO, "ModWrapper::refresh");
         this->get_mod()->refresh(r);
     }
 

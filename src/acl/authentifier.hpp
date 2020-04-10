@@ -164,10 +164,9 @@ public:
 
     void delete_remote_mod() override
     {
-        if (this->acl_serial){
-            if (this->session_log_is_open) {
-                this->acl_serial->close_session_log();
-            }
+        if (this->acl_serial && this->session_log_is_open) {
+            this->acl_serial->close_session_log();
+            this->session_log_is_open = false;
         }
     }
 

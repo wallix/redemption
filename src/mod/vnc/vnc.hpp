@@ -859,6 +859,7 @@ public:
     void rdp_input_invalidate(Rect r) override;
 
     void refresh(Rect r) override {
+        LOG(LOG_INFO, "Front::refresh");
         this->rdp_input_invalidate(r);
     }
 

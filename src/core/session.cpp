@@ -260,34 +260,39 @@ private:
     }
 
 private:
+    void wabam_settings(Inifile & ini, Front & front){
+        if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>() 
+            &&  ini.get<cfg::context::is_wabam>()) {
+                front.force_using_cache_bitmap_r2();
+        }
+    }
+
     void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
     {
-        if (ini.check_from_acl()) {
-            auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
+        auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
 
-            if (ini.get<cfg::client::enable_osd_4_eyes>()) {
-                Translator tr(language(ini));
-                if (rt_status != Capture::RTDisplayResult::Unchanged) {
-                    std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
-                        ?trkeys::enable_rt_display
-                        :trkeys::disable_rt_display
-                            ).to_string();
+        if (ini.get<cfg::client::enable_osd_4_eyes>()) {
+            Translator tr(language(ini));
+            if (rt_status != Capture::RTDisplayResult::Unchanged) {
+                std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
+                    ?trkeys::enable_rt_display
+                    :trkeys::disable_rt_display
+                        ).to_string();
 
-                    bool is_disable_by_input = true;
-                    if (message != mod_wrapper.get_message()) {
-                        mod_wrapper.clear_osd_message();
-                    }
-                    if (!message.empty()) {
-                        mod_wrapper.set_message(std::move(message), is_disable_by_input);
-                        mod_wrapper.draw_osd_message();
-                    }
+                bool is_disable_by_input = true;
+                if (message != mod_wrapper.get_message()) {
+                    mod_wrapper.clear_osd_message();
+                }
+                if (!message.empty()) {
+                    mod_wrapper.set_message(std::move(message), is_disable_by_input);
+                    mod_wrapper.draw_osd_message();
                 }
             }
+        }
 
-            if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
-                this->ini.set<cfg::context::forcemodule>(false);
-                // Do not send back the value to sesman.
-            }
+        if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
+            this->ini.set<cfg::context::forcemodule>(false);
+            // Do not send back the value to sesman.
         }
     }
 
@@ -296,31 +301,12 @@ private:
     {
         if (mod_wrapper.old_target_module != next_state) {
             front.must_be_stop_capture();
-            switch (mod_wrapper.old_target_module){
-            case MODULE_XUP: authentifier.delete_remote_mod(); break;
-            case MODULE_RDP: authentifier.delete_remote_mod(); break;
-            case MODULE_VNC: authentifier.delete_remote_mod(); break;
-            default:;
-            }
+            authentifier.delete_remote_mod();
         }
-        LOG(LOG_INFO, "New_mod %s (was %s)", 
-                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-        mod_wrapper.old_target_module = next_state;
-        mod_wrapper.connected = false;
+
         auto mod_pack = mod_factory.create_mod(next_state);
-        if (next_state == MODULE_INTERNAL_BOUNCER2){
-            mod_pack.enable_osd = true;
-        }
-
-        if ((next_state == MODULE_XUP)
-          ||(next_state == MODULE_RDP)
-          ||(next_state == MODULE_VNC)){
-            mod_pack.enable_osd = true;
-            mod_pack.connected = true;
-        }
-        mod_wrapper.set_mod(mod_pack);
+        mod_wrapper.set_mod(next_state, mod_pack);
     }
-
 
     bool front_up_and_running(std::unique_ptr<Acl> & acl, timeval & now,
                               const time_t start_time, Inifile& ini,
@@ -330,34 +316,9 @@ private:
                               Authentifier & authentifier,
                               ClientExecute & rail_client_execute)
     {
-        if (ini.check_from_acl()) {
-            if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
-                ini.get<cfg::context::is_wabam>()) {
-                front.force_using_cache_bitmap_r2();
-            }
-        }
-
-        if (ini.get<cfg::globals::enable_osd>()) {
-            const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-            if (enddate && mod_wrapper.is_up_and_running()) {
-                LOG(LOG_INFO, "--------------------- End Session OSD Warning");
-                std::string mes = end_session_warning.update_osd_state(
-                    language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
-                if (!mes.empty()) {
-                    bool is_disable_by_input = true;
-                    if (mes != mod_wrapper.get_message()) {
-                        mod_wrapper.clear_osd_message();
-                    }
-                    mod_wrapper.set_message(std::move(mes), is_disable_by_input);
-                    mod_wrapper.draw_osd_message();
-                }
-            }
-        }
-
         if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
             acl->keepalive.start(now.tv_sec);
         }
-
 
         // There are modified fields to send to sesman
         if (ini.changed_field_size()) {
@@ -699,7 +660,9 @@ private:
 
     void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & sesman)
     {
+        LOG(LOG_INFO, "front_incoming_data");
         if (front.front_must_notify_resize) {
+            LOG(LOG_INFO, "front_incoming_data::notify resize");
             front.notify_resize(mod_wrapper.get_callback());
         }
 
@@ -1172,7 +1135,27 @@ public:
                                 return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
 
                             // new value incoming from authentifier
-                           this->rt_display(ini, mod_wrapper, front);
+                            if (ini.check_from_acl()) {
+                               this->wabam_settings(ini, front);
+                               this->rt_display(ini, mod_wrapper, front);
+                            }
+
+                            if (ini.get<cfg::globals::enable_osd>()) {
+                                const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+                                if (enddate && mod_wrapper.is_up_and_running()) {
+                                    LOG(LOG_INFO, "--------------------- End Session OSD Warning");
+                                    std::string mes = end_session_warning.update_osd_state(
+                                        language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
+                                    if (!mes.empty()) {
+                                        bool is_disable_by_input = true;
+                                        if (mes != mod_wrapper.get_message()) {
+                                            mod_wrapper.clear_osd_message();
+                                        }
+                                        mod_wrapper.set_message(std::move(mes), is_disable_by_input);
+                                        mod_wrapper.draw_osd_message();
+                                    }
+                                }
+                            }
 
                            if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
                                 auto& gd = mod_wrapper.get_graphic_wrapper();

@@ -112,9 +112,15 @@ public:
     }
 
     // from RdpInput
-    void rdp_gdi_up_and_running(ScreenInfo &) override {}
+    void rdp_gdi_up_and_running(ScreenInfo & si) override 
+    {
+        this->mod.rdp_gdi_up_and_running(si);
+    }
 
-    void rdp_gdi_down() override {}
+    void rdp_gdi_down() override 
+    {
+        this->mod.rdp_gdi_down();
+    }
     
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {

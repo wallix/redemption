@@ -658,14 +658,19 @@ public:
 
     void notify_resize(Callback & cb)
     {
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::notify_resize()");
+
         if (this->state != FRONT_UP_AND_RUNNING) {
+            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::notify_resize() callback to rdp_gdi_down()");
             cb.rdp_gdi_down();
         }
         else {
+            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::notify_resize() callback to refresh()");
             // TODO: see if we could use UP_AND_RUNNING notification instead
             cb.refresh(Rect(0, 0, this->client_info.screen_info.width, this->client_info.screen_info.height));
         }
-        front_must_notify_resize = false;
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Clear Must Notify resize");
+        this->front_must_notify_resize = false;
     }
 
     bool ignore_rdesktop_bogus_clip = false;
@@ -3050,8 +3055,6 @@ private:
     /*****************************************************************************/
     void send_demand_active()
     {
-        LOG(LOG_INFO, "Front::send_demand_active()");
-
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::send_demand_active");
 
@@ -3082,7 +3085,7 @@ private:
                 if (!this->server_capabilities_filename.empty()) {
                     general_caps_load(general_caps, this->server_capabilities_filename);
                 }
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     general_caps.log("Front::send_demand_active: Sending to client");
                 }
                 general_caps.emit(stream);
@@ -3096,14 +3099,14 @@ private:
                 if (!this->server_capabilities_filename.empty()) {
                     bitmap_caps_load(bitmap_caps, this->server_capabilities_filename);
                 }
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     bitmap_caps.log("Front::send_demand_active: Sending to client");
                 }
                 bitmap_caps.emit(stream);
                 caps_count++;
 
                 FontCaps font_caps;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     font_caps.log("Front::send_demand_active: Sending to client");
                 }
                 font_caps.emit(stream);
@@ -3125,7 +3128,7 @@ private:
                 if (!this->server_capabilities_filename.empty()) {
                     order_caps_load(order_caps, this->server_capabilities_filename);
                 }
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     order_caps.log("Front::send_demand_active: Sending to client");
                 }
                 order_caps.emit(stream);
@@ -3134,7 +3137,7 @@ private:
                 PointerCaps pointer_caps;
                 pointer_caps.colorPointerCacheSize = 0x19;
                 pointer_caps.pointerCacheSize = 0x19;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     pointer_caps.log("Front::send_demand_active: Sending to client");
                 }
                 pointer_caps.emit(stream);
@@ -3152,14 +3155,14 @@ private:
                 input_caps.keyboardType        = 0;
                 input_caps.keyboardSubType     = 0;
                 input_caps.keyboardFunctionKey = 0;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     input_caps.log("Front::send_demand_active: Sending to client");
                 }
                 input_caps.emit(stream);
                 caps_count++;
 
                 VirtualChannelCaps virtual_channel_caps;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     virtual_channel_caps.log("Front::send_demand_active: Sending to client");
                 }
                 virtual_channel_caps.emit(stream);
@@ -3167,7 +3170,7 @@ private:
 
                 if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
                     BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         bitmap_cache_host_support_caps.log("Front::send_demand_active: Sending to client");
                     }
                     bitmap_cache_host_support_caps.emit(stream);
@@ -3177,14 +3180,14 @@ private:
                 ShareCaps share_caps;
                 share_caps.nodeId = this->userid + GCC::MCS_USERCHANNEL_BASE;
                 share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     share_caps.log("Front::send_demand_active: Sending to client");
                 }
                 share_caps.emit(stream);
                 caps_count++;
 
                 ColorCacheCaps colorcache_caps;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     colorcache_caps.log("Front::send_demand_active: Sending to client");
                 }
                 colorcache_caps.emit(stream);
@@ -3194,7 +3197,7 @@ private:
                 if (this->client_info.remote_program) {
                     RailCaps rail_caps;
                     rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         rail_caps.log("Front::send_demand_active: Sending to client");
                     }
                     rail_caps.emit(stream);
@@ -3204,7 +3207,7 @@ private:
                     window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
                     window_list_caps.NumIconCaches = 3;
                     window_list_caps.NumIconCacheEntries = 12;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         window_list_caps.log("Front::send_demand_active: Sending to client");
                     }
                     window_list_caps.emit(stream);
@@ -3219,7 +3222,7 @@ private:
                     LargePointerCaps large_pointer_caps;
 
                     large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         large_pointer_caps.log("Front::send_demand_active: Sending to client");
                     }
                     large_pointer_caps.emit(stream);
@@ -3238,7 +3241,7 @@ private:
                     std::vector<uint8_t> supported_codecs = {CODEC_GUID_REMOTEFX};
                     bitmap_codec_caps.emit(stream, supported_codecs);
 
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         bitmap_codec_caps.log("Front::send_demand_active: Sending to client");
                     }
 
@@ -3249,7 +3252,7 @@ private:
                 if (send_multifrag_caps) {
                     multifrag_caps.MaxRequestSize = maxRequestSize;
 
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         multifrag_caps.log("Front::send_demand_active: Sending to client");
                     }
 
@@ -3281,7 +3284,6 @@ private:
 
     void process_confirm_active(InStream & stream)
     {
-        LOG(LOG_INFO, "Front::process_confirm_active()");
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::process_confirm_active");
         // TODO We should separate the parts relevant to caps processing and the part relevant to actual confirm active
@@ -3297,7 +3299,7 @@ private:
         ::check_throw(stream, lengthSourceDescriptor, "Front::process_confirm_active", ERR_MCS_PDU_TRUNCATED);
         stream.in_skip_bytes(lengthSourceDescriptor);
 
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & Verbose::basic_trace3)) {
             LOG(LOG_INFO, "Front::process_confirm_active: lengthSourceDescriptor = %u", lengthSourceDescriptor);
             LOG(LOG_INFO, "Front::process_confirm_active: lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
         }
@@ -3337,7 +3339,7 @@ private:
             switch (capset_type) {
             case CAPSTYPE_GENERAL: {
                     this->client_info.general_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.general_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.use_compact_packets =
@@ -3351,7 +3353,7 @@ private:
                 break;
             case CAPSTYPE_BITMAP: {
                     this->client_info.bitmap_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.bitmap_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 /*
@@ -3371,7 +3373,7 @@ private:
             case CAPSTYPE_ORDER: { /* 3 */
                     this->client_info.order_caps.recv(stream, capset_length);
 
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.order_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
@@ -3390,7 +3392,7 @@ private:
                 break;
             case CAPSTYPE_BITMAPCACHE: {
                     this->client_info.bmp_cache_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.bmp_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.number_of_cache      = 3;
@@ -3410,17 +3412,17 @@ private:
                 }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_CONTROL");
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_ACTIVATION");
                 break;
             case CAPSTYPE_POINTER: {  /* 8 */
                     PointerCaps pointer_caps;
                     pointer_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         pointer_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
@@ -3431,39 +3433,41 @@ private:
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_SHARE");
                 break;
             case CAPSTYPE_COLORCACHE: /* 10 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_COLORCACHE");
                 break;
             case CAPSTYPE_SOUND:
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_SOUND");
                 break;
             case CAPSTYPE_INPUT: /* 13 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_INPUT");
                 break;
             case CAPSTYPE_FONT: /* 14 */
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                    "Front::process_confirm_active: Receiving from client CAPSTYPE_FONT");
                 break;
             case CAPSTYPE_BRUSH: { /* 15 */
-                    LOG_IF(bool(this->verbose), LOG_INFO,
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                         "Front::process_confirm_active: Receiving from client CAPSTYPE_BRUSH");
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         brushcache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
             case CAPSTYPE_GLYPHCACHE: { /* 16 */
-                    LOG_IF(bool(this->verbose), LOG_INFO,
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                         "Front::process_confirm_active: Receiving from client CAPSTYPE_GLYPHCACHE");
                     this->client_info.glyph_cache_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.glyph_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     if (ini.get<cfg::client::bogus_ios_glyph_support_level>() &&
@@ -3484,7 +3488,7 @@ private:
                 }
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_OFFSCREENCACHE");
                 this->client_info.off_screen_cache_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
@@ -3492,12 +3496,12 @@ private:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
                     this->client_info.bmp_cache_2_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.bmp_cache_2_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
@@ -3555,40 +3559,40 @@ private:
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_VIRTUALCHANNEL");
                 break;
             case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
                 break;
             case CAPSTYPE_DRAWGDIPLUS: /* 22 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_DRAWGDIPLUS");
                 break;
             case CAPSTYPE_RAIL: /* 23 */
                 this->client_info.rail_caps.recv(stream, capset_length);
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     this->client_info.rail_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
                 this->client_info.window_list_caps.recv(stream, capset_length);
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     this->client_info.window_list_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps cap;
                     cap.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         cap.log("Front::process_confirm_active: Receiving from client");
                     }
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
                 this->client_info.multi_fragment_update_caps.recv(stream, capset_length);
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     this->client_info.multi_fragment_update_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
@@ -3599,20 +3603,20 @@ private:
                 }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
                 this->client_info.bitmap_codec_caps.recv(stream, capset_length);
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_BITMAP_CODECS");
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
                 break;
             default:
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client unknown caps %u", capset_type);
                 break;
             }
@@ -3696,7 +3700,7 @@ private:
         stream.get_data_stream().out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
         stream.get_data_stream().out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SYNCHRONIZE
                             , false
@@ -3747,7 +3751,7 @@ private:
         stream.get_data_stream().out_uint16_le(0); // userid
         stream.get_data_stream().out_uint32_le(1002); // control id
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_CONTROL
                             , false
@@ -3768,7 +3772,7 @@ private:
     /*****************************************************************************/
     void send_fontmap()
     {
-        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_fontmap");
+        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO, "Front::send_fontmap");
 
         static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
                                           0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
@@ -3799,7 +3803,7 @@ private:
         // Payload
         stream.get_data_stream().out_copy_bytes(g_fontmap, 172);
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_FONTMAP
                             , false
@@ -3813,7 +3817,7 @@ private:
                             , underlying_cast(this->verbose)
                             );
 
-        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_fontmap: done");
+        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO, "Front::send_fontmap: done");
     }
 
 public:
@@ -3829,7 +3833,7 @@ public:
         RDP::LogonInfoVersion1_Send sender(
             stream.get_data_stream(), "", ini.get<cfg::globals::auth_user>(), getpid());
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SAVE_SESSION_INFO
                             , false
@@ -3874,7 +3878,7 @@ private:
         // Payload
         monitor_layout_pdu.emit(stream.get_data_stream());
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_MONITOR_LAYOUT_PDU
                             , false
@@ -4169,7 +4173,7 @@ private:
 
                 StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
-                const uint32_t log_condition = (128 | 8);
+                const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::channel);
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
                                     , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)

@@ -847,9 +847,9 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         return mod_pack;
     }
 
-    // TODO: this should move to mod_manager
+    // TODO: this should be external, not in mod_factory
     // Host Mod In Widget
-    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+    LOG(LOG_INFO, "Creation of internal module 'RailModuleHostMod'");
 
     std::string target_info = str_concat(
         ini.get<cfg::context::target_str>(),
