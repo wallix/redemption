@@ -38,6 +38,7 @@
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "acl/mod_pack.hpp"
+#include "configs/autogen/enums.hpp"
 
 namespace
 {
@@ -765,9 +766,10 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
             ini.get<cfg::metrics::log_interval>());
     }
     // ================== End Metrics ======================
-
+    
     unique_fd client_sck =
         connect_to_target_host(ini, time_base, report_message, trkeys::authentification_rdp_fail, clientAddress);
+    
     
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,

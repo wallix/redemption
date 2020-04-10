@@ -217,7 +217,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("primary_client_address")
       .value("wab_address")
       .value("no_address")
-      .set_string_parser()
     ;
 }
 
