@@ -2299,7 +2299,7 @@ public:
         virtual_channel_pdu.send_to_server(stc, this->channels.auth_channel_chanid
                                           , stream_data.get_offset()
                                           , this->channels.auth_channel_flags
-                                          , stream_data.get_bytes());
+                                          , stream_data.get_produced_bytes());
 #else
         (void)string_data;
 #endif
@@ -2324,7 +2324,7 @@ public:
         virtual_channel_pdu.send_to_server(stc, this->channels.checkout_channel_chanid
           , stream_data.get_offset()
           , this->channels.checkout_channel_flags
-          , stream_data.get_bytes());
+          , stream_data.get_produced_bytes());
 #else
         (void)string_data;
 #endif
@@ -2438,7 +2438,7 @@ public:
                 }
             }
 
-            InStream fud(this->multifragment_update_data.get_bytes());
+            InStream fud(this->multifragment_update_data.get_produced_bytes());
 
             InStream& stream = ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ? upd.payload : fud);
 
@@ -3302,7 +3302,7 @@ public:
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                     try {
-                        this->trans.send(stream.get_bytes());
+                        this->trans.send(stream.get_produced_bytes());
                         LOG(LOG_INFO, "Connection to server closed");
                     }
                     catch(Error const & e){

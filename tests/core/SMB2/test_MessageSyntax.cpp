@@ -35,7 +35,7 @@ RED_AUTO_TEST_CASE(ChangeNotifyResponse)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {

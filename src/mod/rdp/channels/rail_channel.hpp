@@ -182,7 +182,7 @@ private:
             pdu.emit(out_s);
             header.emit_end();
 
-            this->send_message_to_server(out_s.get_offset(), flags, out_s.get_bytes());
+            this->send_message_to_server(out_s.get_offset(), flags, out_s.get_produced_bytes());
 
             return false;
         }
@@ -212,7 +212,7 @@ private:
             pdu.emit(out_s);
             header.emit_end();
 
-            this->send_message_to_client(out_s.get_offset(), flags, out_s.get_bytes());
+            this->send_message_to_client(out_s.get_offset(), flags, out_s.get_produced_bytes());
 
             return false;
         }
@@ -435,7 +435,7 @@ private:
                 {
                     const bool send              = true;
                     const bool from_or_to_client = false;
-                    ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                    ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
                 }
                 if (bool(this->verbose & RDPVerbose::rail)) {
                     LOG(LOG_INFO,
@@ -444,7 +444,7 @@ private:
                     cepdu.log(LOG_INFO);
                 }
 
-                this->send_message_to_server(length, flags, out_s.get_bytes());
+                this->send_message_to_server(length, flags, out_s.get_produced_bytes());
             }
 
             this->client_execute_pdu_sent = true;
@@ -801,7 +801,7 @@ public:
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_produced_bytes());
             }
             if (bool(this->verbose & RDPVerbose::rail)) {
                 LOG(LOG_INFO,
@@ -810,7 +810,7 @@ public:
                 serpdu.log(LOG_INFO);
             }
 
-            this->send_message_to_client(length, flags_, out_s.get_bytes());
+            this->send_message_to_client(length, flags_, out_s.get_produced_bytes());
 
             return false;
         }
@@ -939,7 +939,7 @@ public:
                 {
                     const bool send              = true;
                     const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_bytes());
+                    ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_produced_bytes());
                 }
                 if (bool(this->verbose & RDPVerbose::rail)) {
                     LOG(LOG_INFO,
@@ -948,7 +948,7 @@ public:
                     pdu.log(LOG_INFO);
                 }
 
-                this->send_message_to_server(length, flags_, out_s.get_bytes());
+                this->send_message_to_server(length, flags_, out_s.get_produced_bytes());
             };
 
             {
@@ -1363,7 +1363,7 @@ public:
             {
                 const bool send              = true;
                 const bool from_or_to_client = false;
-                ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_produced_bytes());
             }
             if (bool(this->verbose & RDPVerbose::rail)) {
                 LOG(LOG_INFO,
@@ -1372,7 +1372,7 @@ public:
                 cepdu.log(LOG_INFO);
             }
 
-            this->send_message_to_server(length, flags_, out_s.get_bytes());
+            this->send_message_to_server(length, flags_, out_s.get_produced_bytes());
         }
     }
 
@@ -1406,7 +1406,7 @@ public:
         {
             const bool send              = true;
             const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_bytes());
+            ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_produced_bytes());
         }
         if (bool(this->verbose & RDPVerbose::rail)) {
             LOG(LOG_INFO,
@@ -1415,7 +1415,7 @@ public:
             serpdu.log(LOG_INFO);
         }
 
-        this->send_message_to_client(length, flags_, out_s.get_bytes());
+        this->send_message_to_client(length, flags_, out_s.get_produced_bytes());
     }
 
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
@@ -1449,7 +1449,7 @@ public:
         {
             const bool send              = true;
             const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_bytes());
+            ::msgdump_c(send, from_or_to_client, length, flags_, out_s.get_produced_bytes());
         }
         if (bool(this->verbose & RDPVerbose::rail)) {
             LOG(LOG_INFO,
@@ -1458,7 +1458,7 @@ public:
             serpdu.log(LOG_INFO);
         }
 
-        this->send_message_to_client(length, flags_, out_s.get_bytes());
+        this->send_message_to_client(length, flags_, out_s.get_produced_bytes());
     }
 
     void confirm_session_probe_launch() {
@@ -1503,14 +1503,14 @@ private:
         {
             const bool send              = true;
             const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+            ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
         }
         LOG(LOG_INFO,
             "RemoteProgramsVirtualChannel::try_launch_application: "
                 "Send to server - Client Execute PDU (2)");
         cepdu.log(LOG_INFO);
 
-        this->send_message_to_server(length, flags, out_s.get_bytes());
+        this->send_message_to_server(length, flags, out_s.get_produced_bytes());
     }
 
     void sespro_ending_in_progress() override {}

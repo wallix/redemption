@@ -76,9 +76,9 @@ RED_AUTO_TEST_CASE(TestPatBlt)
             0xDD,        // brush.hatch
             1, 2, 3, 4, 5, 6, 7   // brush.extra
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -93,7 +93,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_patblt);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -126,9 +126,9 @@ RED_AUTO_TEST_CASE(TestPatBlt)
             0x01,        // brush.style
             0xDD,        // brush.hatch
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_patblt);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 
     {
@@ -175,9 +175,9 @@ RED_AUTO_TEST_CASE(TestPatBlt)
             0x04,        // brush_org_y
             1, 2, 3, 4, 5, 6, 7   // brush_extra
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -192,6 +192,6 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_patblt);
-        RED_CHECK(out_stream.get_bytes() == out_stream2.get_bytes());
+        RED_CHECK(out_stream.get_produced_bytes() == out_stream2.get_produced_bytes());
     }
 }

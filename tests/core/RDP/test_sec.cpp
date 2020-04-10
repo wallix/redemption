@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
     StaticOutStream<1024> stream;
     SEC::SecExchangePacket_Send sec(stream, make_array_view(client_encrypted_key));
 
-    RED_CHECK(sec_pkt == stream.get_bytes());
+    RED_CHECK(sec_pkt == stream.get_produced_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_SecExchangePacket)

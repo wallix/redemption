@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
     deltaPoints.out_sint16_le(-160);
     deltaPoints.out_sint16_le(0);
 
-    InStream dp(deltaPoints.get_bytes());
+    InStream dp(deltaPoints.get_produced_bytes());
 
     gd.draw(RDPPolyline(158, 230, 0x06, 0, encode_color24()(WHITE), 7, dp), screen_rect, color_cxt);
 
@@ -223,7 +223,7 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
         out_rect(deltaRectangles, 10, 10, 10, 10);
     }
 
-    InStream deltaRectangles_in(deltaRectangles.get_bytes());
+    InStream deltaRectangles_in(deltaRectangles.get_produced_bytes());
 
     gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles_in), screen_rect);
 
@@ -248,7 +248,7 @@ RED_AUTO_TEST_CASE(TestMultiScrBlt)
     out_rect(deltaRectangles, 0, -4, 462, 4);
     out_rect(deltaRectangles, 70, 0, 463, 4);
 
-    InStream deltaRectangles_in(deltaRectangles.get_bytes());
+    InStream deltaRectangles_in(deltaRectangles.get_produced_bytes());
 
     gd.draw(RDP::RDPMultiScrBlt(Rect(0, 173, 1263, 534), 0xCC, 0, -105, 3, deltaRectangles_in), screen_rect);
 
@@ -274,7 +274,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
         out_rect(deltaRectangles, 10, 10, 10, 10);
     }
 
-    InStream deltaRectangles_in(deltaRectangles.get_bytes());
+    InStream deltaRectangles_in(deltaRectangles.get_produced_bytes());
 
     gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, encode_color24()(BLACK), 20, deltaRectangles_in), screen_rect, color_cxt);
 

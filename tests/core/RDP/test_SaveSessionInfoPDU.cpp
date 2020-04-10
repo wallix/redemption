@@ -72,7 +72,7 @@ RED_AUTO_TEST_CASE(TestLogonInfoV1)
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x67, 0x45, 0x23, 0x01  // ............gE#.
     };   
     RED_CHECK_EQUAL(sizeof(expected), 512+52+4+4+4);
-    RED_CHECK_EQUAL(ostream.get_bytes(), make_array_view(expected));
+    RED_CHECK_EQUAL(ostream.get_produced_bytes(), make_array_view(expected));
 
     InStream istream({ostream.get_data(), ostream.get_offset()});
     RDP::LogonInfoVersion1_Recv recv_logon_info_v1(istream);

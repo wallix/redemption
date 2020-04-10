@@ -576,13 +576,13 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
             LOG(LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Min Max Info PDU (0)");
             smmipdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
     }
 
     int move_size_type = 0;
@@ -629,13 +629,13 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
             LOG(LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Move/Size Start PDU (0)");
             smssoepdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
     }   // if (move_size_type)
 
     this->move_size_initialized = true;
@@ -1290,13 +1290,13 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     {
                         const bool send              = true;
                         const bool from_or_to_client = true;
-                        ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                        ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
                     }
                     LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (1)");
                     smssoepdu.log(LOG_INFO);
                 }
 
-                this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+                this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
 
                 this->move_size_initialized = false;
             }   // if (0 != move_size_type)
@@ -1694,7 +1694,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
             if (TS_RAIL_ORDER_HANDSHAKE == orderType) {
                 LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server Handshake PDU");
@@ -1706,7 +1706,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             }
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
     }
 
     {
@@ -1729,13 +1729,13 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
             LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
             server_system_parameters_update_pdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
     }
 
     {
@@ -1758,13 +1758,13 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
             LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
             server_system_parameters_update_pdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
     }
 }   // ready
 
@@ -1956,7 +1956,7 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
             LOG(LOG_INFO,
                 "ClientExecute::process_client_get_application_id_pdu: "
@@ -1964,7 +1964,7 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
             server_get_application_id_response_pdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
 
         server_execute_result_sent = true;
     }
@@ -2678,13 +2678,13 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
                 {
                     const bool send              = true;
                     const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_bytes());
+                    ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
                 }
                 LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send to client - Server Move/Size End PDU");
                 smssoepdu.log(LOG_INFO);
             }
 
-            this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
+            this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
 
             this->move_size_initialized = false;
         }

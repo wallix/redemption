@@ -193,7 +193,7 @@ public:
                 ssc.send(payload, sc);
 
                 send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), chunk_count);
-                this->trans.send(payload.get_bytes());
+                this->trans.send(payload.get_produced_bytes());
             }
             break;
 

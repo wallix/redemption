@@ -150,7 +150,7 @@ void ClipboardChannel::send_file_contents_request(
 
     header.emit(out_stream);
     request.emit(out_stream);
-    this->send_data(out_stream.get_bytes());
+    this->send_data(out_stream.get_produced_bytes());
 }
 
 void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat custom_format_id)
@@ -163,12 +163,12 @@ void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat cust
     StaticOutStream<256> out_stream;
     formatListRequestPDUHeader.emit(out_stream);
     formatDataRequestPDU.emit(out_stream);
-    InStream chunkRequest(out_stream.get_bytes());
+    InStream chunkRequest(out_stream.get_produced_bytes());
 
     this->requested_format_id = format_id;
     this->requested_custom_format_id = custom_format_id;
 
-    this->send_data(out_stream.get_bytes());
+    this->send_data(out_stream.get_produced_bytes());
 }
 
 void ClipboardChannel::receive(bytes_view data, uint32_t channel_flags)
@@ -380,7 +380,7 @@ void ClipboardChannel::send_format(uint32_t format_id, Charset charset, bytes_vi
                 std::array<Cliprdr::FormatNameRef, 1>{{{format_id, name}}});
     }
 
-    this->send_data(out_stream.get_bytes());
+    this->send_data(out_stream.get_produced_bytes());
 }
 
 void ClipboardChannel::send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags)
@@ -390,7 +390,7 @@ void ClipboardChannel::send_header(uint16_t type, uint16_t flags, uint32_t total
     RDPECLIP::CliprdrHeader header(type, flags, total_data_len);
     header.emit(out_stream);
 
-    this->send_data(out_stream.get_bytes(), total_data_len + out_stream.get_offset(),
+    this->send_data(out_stream.get_produced_bytes(), total_data_len + out_stream.get_offset(),
         channel_flags | CHANNELS::CHANNEL_FLAG_FIRST);
 }
 
@@ -572,7 +572,7 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_f
     RDPECLIP::CliprdrHeader formatListResponsePDUHeader(
         RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
     formatListResponsePDUHeader.emit(out_stream);
-    this->send_data(out_stream.get_bytes());
+    this->send_data(out_stream.get_produced_bytes());
 }
 
 void ClipboardChannel::process_capabilities(InStream& chunk)
@@ -603,7 +603,7 @@ void ClipboardChannel::process_monitor_ready()
         clipboard_caps_pdu.emit(out_stream);
         general_cap_set.emit(out_stream);
 
-        this->send_data(out_stream.get_bytes());
+        this->send_data(out_stream.get_produced_bytes());
 
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Capabilities PDU");
     }
@@ -619,7 +619,7 @@ void ClipboardChannel::process_monitor_ready()
 
         header.emit(out_stream);
 
-        this->send_data(out_stream.get_bytes());
+        this->send_data(out_stream.get_produced_bytes());
 
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Empty Format List PDU");
     }

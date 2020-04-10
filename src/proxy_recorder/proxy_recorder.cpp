@@ -51,8 +51,8 @@ void ProxyRecorder::front_step1(Transport & frontConn)
         (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)?X224::PROTOCOL_HYBRID:
         (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)?X224::PROTOCOL_TLS:
         X224::PROTOCOL_RDP);
-    outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
-    frontConn.send(front_x224_stream.get_bytes());
+    outFile.write_packet(PacketType::DataIn, front_x224_stream.get_produced_bytes());
+    frontConn.send(front_x224_stream.get_produced_bytes());
 
     if ((this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
     || (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
@@ -97,8 +97,8 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::str
         this->front_CR_TPDU.rdp_neg_flags,
         !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
 
-    outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
-    backConn.send(back_x224_stream.get_bytes());
+    outFile.write_packet(PacketType::DataOut, back_x224_stream.get_produced_bytes());
+    backConn.send(back_x224_stream.get_produced_bytes());
 }
 
 void ProxyRecorder::front_nla(Transport & frontConn)

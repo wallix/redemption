@@ -68,7 +68,7 @@ struct FilecontentsRequestSendBack
         sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_bytes());
+            out_stream.get_produced_bytes());
     }
 };
 
@@ -87,7 +87,7 @@ struct FormatDataRequestSendBack
         sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_bytes());
+            out_stream.get_produced_bytes());
     }
 };
 
@@ -138,7 +138,7 @@ struct FormatDataResponseReceiveFileList
 
             chunk.in_skip_bytes(complementary_data_length);
 
-            InStream in_stream(file_descriptor_stream.get_bytes());
+            InStream in_stream(file_descriptor_stream.get_produced_bytes());
 
             receive_file(in_stream);
 
@@ -184,7 +184,7 @@ struct ServerMonitorReadySendBack
         sender->operator()(
             caps_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            caps_stream.get_bytes());
+            caps_stream.get_produced_bytes());
 
         LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
@@ -198,7 +198,7 @@ struct ServerMonitorReadySendBack
         sender->operator()(
             list_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            list_stream.get_bytes());
+            list_stream.get_produced_bytes());
     }
 };
 
@@ -271,5 +271,5 @@ inline void format_list_send_back(VirtualChannelDataSender* sender)
     sender->operator()(
         out_stream.get_offset(),
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-        out_stream.get_bytes());
+        out_stream.get_produced_bytes());
 }

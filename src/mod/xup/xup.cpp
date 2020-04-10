@@ -104,7 +104,7 @@ xup_mod::xup_mod(
     stream.out_uint32_le(0);
     stream.out_uint32_le(0);
     stream.stream_at(0).out_uint32_le(stream.get_offset());
-    this->t.send(stream.get_bytes());
+    this->t.send(stream.get_produced_bytes());
 
     this->fd_event = graphic_fd_events_.create_top_executor(session_reactor, this->t.get_fd())
     .set_timeout(std::chrono::milliseconds(0))

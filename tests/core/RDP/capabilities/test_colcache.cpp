@@ -28,7 +28,7 @@ int main()
     StaticOutStream<1024> out_stream;
     cap.emit(out_stream);
 
-    InStream stream(out_stream.get_bytes());
+    InStream stream(out_stream.get_produced_bytes());
 
     ColorCacheCaps cap2;
     cap2.recv(stream, CAPLEN_COLORCACHE);

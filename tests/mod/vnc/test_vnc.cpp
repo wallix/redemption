@@ -26,7 +26,7 @@ RED_AUTO_TEST_CASE(vnc_mouse)
 {
     StaticOutStream<128> out_stream;
     auto get_bytes = [&]{
-        auto av = out_stream.get_bytes();
+        auto av = out_stream.get_produced_bytes();
         out_stream.rewind();
         return av;
     };

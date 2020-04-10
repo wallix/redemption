@@ -274,7 +274,7 @@ private:
 
             this->send_message_to_server(out_s.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_s.get_bytes());
+                out_s.get_produced_bytes());
         }
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
@@ -422,7 +422,7 @@ private:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
 public:
@@ -1626,7 +1626,7 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
     void rail_exec(const char* application_name, const char* command_line,
@@ -1673,7 +1673,7 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
     void create_shadow_session(const char * userdata, const char * type) {

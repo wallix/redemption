@@ -509,7 +509,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         chunk.in_skip_bytes(needed_data_length);
 
                         remaining_device_announce_request_header_stream_in = InStream(
-                            this->remaining_device_announce_request_header_stream.get_bytes());
+                            this->remaining_device_announce_request_header_stream.get_produced_bytes());
                         device_announce_request_header_stream =
                             &remaining_device_announce_request_header_stream_in;
 
@@ -648,10 +648,10 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                             const bool from_or_to_client = true;
                             ::msgdump_c(send,
                                 from_or_to_client, total_length_, flags_,
-                                out_stream.get_bytes());
+                                out_stream.get_produced_bytes());
                         }
 
-                        (*this->to_client_sender)(total_length_, flags_, out_stream.get_bytes());
+                        (*this->to_client_sender)(total_length_, flags_, out_stream.get_produced_bytes());
                     }
                 }   // if (!this->length_of_remaining_device_data_to_be_processed &&
 
@@ -780,13 +780,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                     const bool send              = true;
                     const bool from_or_to_client = false;
                     ::msgdump_c(send, from_or_to_client, total_length_, flags_,
-                        client_drive_device_list_remove_stream.get_bytes());
+                        client_drive_device_list_remove_stream.get_produced_bytes());
                 }
 
                 (*this->to_server_sender)(
                     total_length_,
                     flags_,
-                    client_drive_device_list_remove_stream.get_bytes());
+                    client_drive_device_list_remove_stream.get_produced_bytes());
             }
         }
 
@@ -1803,11 +1803,11 @@ public:
             StaticOutStream<65536> out_chunk;
             out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
 
-            OutStream out_stream(out_chunk.get_bytes());
+            OutStream out_stream(out_chunk.get_produced_bytes());
             out_stream.rewind(chunk_offset);
             this->client_device_io_response.emit(out_stream);
 
-            this->send_message_to_server(total_length, flags, out_chunk.get_bytes());
+            this->send_message_to_server(total_length, flags, out_chunk.get_produced_bytes());
 
             send_message_to_server = false;
         }
@@ -2032,7 +2032,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         {
@@ -2056,7 +2056,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         return false;
@@ -2163,7 +2163,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         return false;
@@ -2245,7 +2245,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
 
             return false;
         }
@@ -2396,7 +2396,7 @@ public:
                 }
                 server_drive_query_information_request.emit(out_stream);
 
-                this->send_message_to_client(out_stream.get_offset(), flags, out_stream.get_bytes());
+                this->send_message_to_client(out_stream.get_offset(), flags, out_stream.get_produced_bytes());
 
                 this->device_io_request_info_inventory.push_back({
                     this->server_device_io_request.DeviceId(),
@@ -2660,11 +2660,11 @@ public:
             StaticOutStream<65536> out_chunk;
             out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
 
-            OutStream out_stream(out_chunk.get_bytes());
+            OutStream out_stream(out_chunk.get_produced_bytes());
             out_stream.rewind(chunk_offset);
             this->server_device_io_request.emit(out_stream);
 
-            this->send_message_to_client(total_length, flags, out_chunk.get_bytes());
+            this->send_message_to_client(total_length, flags, out_chunk.get_produced_bytes());
 
             send_message_to_client          = false;
             send_replaced_message_to_client = true;
@@ -2868,7 +2868,7 @@ private:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         {
@@ -2892,7 +2892,7 @@ private:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         LOG(LOG_INFO,

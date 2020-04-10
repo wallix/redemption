@@ -258,7 +258,7 @@ public:
         return this->p.in_uint8p(n);
     }
 
-    bytes_view view_bytes(unsigned int n) noexcept {
+    bytes_view view_bytes(unsigned int n) const noexcept {
         assert(this->in_check_rem(n));
         return array_view_const_u8{this->get_current(), n};
     }
@@ -421,7 +421,7 @@ public:
         return  n <= this->tailroom();
     }
 
-    [[nodiscard]] writable_bytes_view get_bytes() const noexcept {
+    [[nodiscard]] writable_bytes_view get_produced_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 

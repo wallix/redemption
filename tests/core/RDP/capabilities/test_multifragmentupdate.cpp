@@ -38,7 +38,7 @@ RED_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
     StaticOutStream<1024> out_stream;
     multifragmentupdate_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_bytes());
+    InStream stream(out_stream.get_produced_bytes());
 
     MultiFragmentUpdateCaps multifragmentupdate_caps2;
 

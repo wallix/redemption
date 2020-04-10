@@ -40,11 +40,11 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_core)
     sc_core.clientRequestedProtocols = 0;
     StaticOutStream<12> out_stream;
     sc_core.emit(out_stream);
-    RED_CHECK(out_stream.get_bytes() == expected);
+    RED_CHECK(out_stream.get_produced_bytes() == expected);
 
     GCC::UserData::SCCore sc_core2;
 
-    InStream in_stream(out_stream.get_bytes());
+    InStream in_stream(out_stream.get_produced_bytes());
     sc_core2.recv(in_stream);
     RED_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
     RED_CHECK_EQUAL(12, sc_core2.length);

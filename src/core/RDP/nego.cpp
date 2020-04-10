@@ -568,7 +568,7 @@ void RdpNego::send_negotiation_request(OutTransport trans)
                             return 0;
                        }(this->restricted_admin_mode),
                        rdp_neg_requestedProtocols);
-    trans.send(stream.get_bytes());
+    trans.send(stream.get_produced_bytes());
     LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::send_x224_connection_request_pdu: done.");
 }
 

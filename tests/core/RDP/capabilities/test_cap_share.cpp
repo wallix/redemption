@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestCapabilityShareEmit)
     StaticOutStream<1024> out_stream;
     share_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_bytes());
+    InStream stream(out_stream.get_produced_bytes());
 
     ShareCaps share_caps2;
 

@@ -73,6 +73,7 @@
           "min": 0,
           "multivalue": true,
           "default": [],
+          "advanced": true,
           "description": "Disables supported drawing orders:\n   0: DstBlt\n   1: PatBlt\n   2: ScrBlt\n   3: MemBlt\n   4: Mem3Blt\n   8: LineTo\n  15: MultiDstBlt\n  16: MultiPatBlt\n  17: MultiScrBlt\n  18: MultiOpaqueRect\n  22: Polyline\n  25: EllipseSC\n  27: GlyphIndex\n"
         },
         {

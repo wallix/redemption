@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
         deltaPoints.out_sint16_le(-160);
         deltaPoints.out_sint16_le(0);
 
-        InStream deltaPoints_in(deltaPoints.get_bytes());
+        InStream deltaPoints_in(deltaPoints.get_produced_bytes());
 
         RDPPolyline polyline(158, 230, 0x0D, 0, encode_color24()(BGRColor{0x000000}), 7, deltaPoints_in);
 
@@ -81,9 +81,9 @@ RED_AUTO_TEST_CASE(TestPolyline)
             0x98, 0x24, 0x14, 0x80, 0xA0, 0x62, 0x32, 0x32,
             0x4E, 0x32, 0x62, 0xFF, 0x60
         };
-        RED_CHECK(out_stream.get_bytes() == make_array_view(datas));
+        RED_CHECK(out_stream.get_produced_bytes() == make_array_view(datas));
 
-        InStream in_stream(out_stream.get_bytes());
+        InStream in_stream(out_stream.get_produced_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_polyline);
         RED_CHECK(
-            out_stream.get_bytes().from_offset(1) ==
-            out_stream2.get_bytes().from_offset(1));
+            out_stream.get_produced_bytes().from_offset(1) ==
+            out_stream2.get_produced_bytes().from_offset(1));
     }
 }
