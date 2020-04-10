@@ -57,6 +57,7 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 #   27: GlyphIndex
 # 
 # (values are comma-separated)
+#_advanced
 disabled_orders = string(default='')
 
 # NLA authentication in secondary target.
