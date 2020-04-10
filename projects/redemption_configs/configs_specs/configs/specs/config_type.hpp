@@ -212,6 +212,13 @@ inline void config_type_definition(type_enumerations & e)
       .value("notify", "(Same thing as 'allow') ")
       .value("deny",   "User action will be rejected")
     ;
+
+    e.enumeration_list("ChoiceClientIPAddressSent", "For set clientAddress field when create RDP module.")
+      .value("primary_client_address")
+      .value("wab_address")
+      .value("no_address")
+      .set_string_parser()
+    ;
 }
 
 }

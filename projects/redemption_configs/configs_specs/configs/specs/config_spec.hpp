@@ -325,6 +325,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, connpolicy::name{"server_redirection"}, set(false));
 
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<ChoiceClientIPAddressSent>(), "choice_client_ip_address_sent", desc { "Enables to set clientAddress field when RDP module is created for info packet" }, set(ChoiceClientIPAddressSent::no_address));
+
         W.member(no_ini_no_gui, no_sesman, L, type_<RedirectionInfo>(), "redir_info");
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "load_balance_info", desc{"Load balancing information"});
 

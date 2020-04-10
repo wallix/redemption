@@ -164,7 +164,7 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, char *clientAddress, char const** error_result)
+unique_fd ip_connect(const char* ip, int port, char *localIPAddress, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -222,7 +222,7 @@ unique_fd ip_connect(const char* ip, int port, char *clientAddress, char const**
 				       no_log,
 				       error_result);
     
-    if (clientAddress)
+    if (localIPAddress)
       {
 	struct sockaddr_in addr;
 	socklen_t namelen = sizeof(addr);
@@ -241,7 +241,7 @@ unique_fd ip_connect(const char* ip, int port, char *clientAddress, char const**
 	  }
 	else if(!::inet_ntop(AF_INET,
 			     &addr.sin_addr,
-			     clientAddress,
+			     localIPAddress,
 			     INET_ADDRSTRLEN))
 	  LOG(LOG_WARNING,
 	      "inet_ntop failed with errno = %d (%s)",
