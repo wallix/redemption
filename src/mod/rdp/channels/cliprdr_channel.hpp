@@ -176,12 +176,12 @@ private:
             uint64_t file_size_requested;
             uint64_t file_size;
             // GetRange
-            uint64_t response_size;
+            uint32_t response_size;
             // FileContentsRequestedRange, FileContentsRange
             std::string file_name;
 
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
-            std::vector<uint8_t> file_content;
+            std::vector<uint8_t> file_contents;
             Sig sig = Sig();
         };
 
@@ -196,6 +196,7 @@ private:
             Size,
             Range,
             GetRange,
+            SyncRange,
             RequestedRange,
             WaitingContinuationRange,
             WaitingValidator,
@@ -232,6 +233,7 @@ private:
 
             void set_waiting_continuation_range();
             void set_waiting_validator();
+            void set_sync_range();
             void set_range();
 
             class D;
