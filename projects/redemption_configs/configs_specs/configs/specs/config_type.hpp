@@ -214,9 +214,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("ChoiceClientIPAddressSent", "For set clientAddress field when create RDP module.")
+      .value("no_address")
       .value("primary_client_address")
       .value("wab_address")
-      .value("no_address")
     ;
 }
 
