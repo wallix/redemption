@@ -619,13 +619,6 @@ struct ClipboardVirtualChannel::D
         }
     }
 
-    enum class FinalizeState : uint8_t
-    {
-        Unfinished,
-        Terminated,
-        WaitValidatorForTransfer,
-    };
-
     void stop_nolock_data(ClipboardVirtualChannel& self, ClipCtx& clip)
     {
         switch (clip.nolock_data)
@@ -1409,7 +1402,9 @@ struct ClipboardVirtualChannel::D
 
                         // send header without data
                         {
-                            uint32_t data_len = in_header.dataLen();
+                            uint32_t data_len = checked_int(std::min(
+                                uint64_t(in_header.dataLen()) - 4u /* streamId */,
+                                file_rng.file_size));
                             file_rng.response_size = data_len;
 
                             StaticOutStream<128> out_stream;
@@ -1485,40 +1480,91 @@ struct ClipboardVirtualChannel::D
 
                 constexpr uint32_t max_len_channel_message = CHANNELS::CHANNEL_CHUNK_LENGTH;
 
-                auto send_file_contents_range_data = [&](
-                    auto get_view, uint32_t last_flag = CHANNELS::CHANNEL_FLAG_LAST
-                ){
-                    // send fake data of FileContentsResponse
-
+                struct PreSender
+                {
                     uint32_t offset = 0;
                     uint32_t max_pkt_len = max_len_channel_message - 4 /* streamId */;
-                    uint32_t remaining = file_rng.response_size;
-                    while (max_pkt_len < remaining) {
-                        sender(file_rng.response_size, 0, get_view(offset, max_pkt_len));
-                        remaining -= max_pkt_len;
-                        offset += max_pkt_len;
-                        max_pkt_len = max_len_channel_message;
+                    uint32_t remaining;
+                };
+
+                auto pre_send = [&](uint32_t remaining, auto get_view)
+                {
+                    PreSender pre_sender;
+                    pre_sender.remaining = remaining;
+
+                    while (pre_sender.max_pkt_len < pre_sender.remaining) {
+                        sender(
+                            file_rng.response_size,
+                            0,
+                            get_view(pre_sender.offset, pre_sender.max_pkt_len));
+                        pre_sender.remaining -= pre_sender.max_pkt_len;
+                        pre_sender.offset += pre_sender.max_pkt_len;
+                        pre_sender.max_pkt_len = max_len_channel_message;
                     }
 
-                    sender(file_rng.response_size, last_flag, get_view(offset, remaining));
+                    return pre_sender;
                 };
+
+                static const char zeros[max_len_channel_message] {};
 
                 auto send_fake_data = [&]{
                     // send fake data of FileContentsResponse
-                    static const char zeros[max_len_channel_message] {};
+                    auto pre_sender = pre_send(
+                        file_rng.response_size,
+                        [&](uint32_t /*offset*/, uint64_t len){
+                            return array_view{zeros, len};
+                        });
 
-                    send_file_contents_range_data([&](uint32_t /*offset*/, uint64_t len){
-                        return array_view{zeros, len};
-                    });
+                    sender(
+                        file_rng.response_size,
+                        CHANNELS::CHANNEL_FLAG_LAST,
+                        array_view{zeros, pre_sender.remaining});
                 };
 
                 auto send_file_data = [&]{
                     // send first packet of FileContentsResponse
-                    file_rng.file_contents.resize(file_rng.response_size);
                     bytes_view av = file_rng.file_contents;
-                    send_file_contents_range_data([&](uint32_t offset, uint64_t len){
+                    auto get_view = [&](uint32_t offset, uint64_t len){
                         return av.subarray(offset, len);
-                    });
+                    };
+
+                    if (av.size() < file_rng.response_size) {
+                        auto padding = file_rng.response_size - av.size();
+                        auto pre_sender = pre_send(av.size(), get_view);
+
+                        char buffer[max_len_channel_message];
+                        OutStream out_s({buffer, pre_sender.max_pkt_len});
+                        out_s.out_copy_bytes(av.from_offset(pre_sender.offset));
+
+                        if (padding <= out_s.tailroom()) {
+                            out_s.out_clear_bytes(padding);
+                            sender(
+                                file_rng.response_size,
+                                CHANNELS::CHANNEL_FLAG_LAST,
+                                out_s.get_produced_bytes());
+                        }
+                        else {
+                            out_s.out_clear_bytes(out_s.tailroom());
+                            sender(file_rng.response_size, 0, out_s.get_produced_bytes());
+                            while (padding > max_len_channel_message) {
+                                sender(file_rng.response_size, 0, make_array_view(zeros));
+                                padding -= max_len_channel_message;
+                            }
+                            sender(
+                                file_rng.response_size,
+                                CHANNELS::CHANNEL_FLAG_LAST,
+                                make_array_view(zeros).first(padding));
+                        }
+                    }
+                    else {
+                        auto pre_sender = pre_send(file_rng.response_size, get_view);
+                        sender(
+                            file_rng.response_size,
+                            CHANNELS::CHANNEL_FLAG_LAST,
+                            av.subarray(pre_sender.offset, pre_sender.remaining));
+                    }
+
+                    return (av.size() <= file_rng.response_size);
                 };
 
                 auto post_process = [&, this](
@@ -1529,7 +1575,6 @@ struct ClipboardVirtualChannel::D
                     {
                         case ValidatorState::TransferAfterValidation:
                             send_file_data();
-                            // TODO empty if already sync
                             clip.nolock_data.set_sync_range();
                             break;
 
@@ -1550,8 +1595,6 @@ struct ClipboardVirtualChannel::D
                             assert(false);
                             break;
                     }
-
-                    return FinalizeState::Terminated;
                 };
 
                 if (is_ok) {
