@@ -532,6 +532,9 @@ session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, defaul
 session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_hidden
+session_probe_update_disabled_features = boolean(default=True)
+
+#_hidden
 session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
 
 #   0x000: none

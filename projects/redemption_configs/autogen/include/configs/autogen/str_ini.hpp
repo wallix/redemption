@@ -626,6 +626,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
+#session_probe_update_disabled_features = 1
+
+# value: 0 or 1
+#_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
 # min = 0, max = 511

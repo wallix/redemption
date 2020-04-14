@@ -149,6 +149,9 @@ cp_spec = {
         u'mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check': (
             'ignore_ui_less_processes_during_end_of_session_check', True
         ),
+        u'mod_rdp:session_probe_update_disabled_features': (
+            'update_disabled_features', True
+        ),
         u'mod_rdp:session_probe_childless_window_as_unidentified_input_field': (
             'childless_window_as_unidentified_input_field', True
         ),

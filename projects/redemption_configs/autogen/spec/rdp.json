@@ -424,6 +424,13 @@
           "description": ""
         },
         {
+          "name": "update_disabled_features",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "childless_window_as_unidentified_input_field",
           "type": "bool",
           "default": true,

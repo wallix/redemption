@@ -56,7 +56,8 @@ enum {
 
 // Session Probe Options
 enum {
-    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
+    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001,
+    OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002
 };
 
 
@@ -566,6 +567,10 @@ public:
 
                     if (this->sespro_params.ignore_ui_less_processes_during_end_of_session_check) {
                         options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
+                    }
+
+                    if (this->sespro_params.update_disabled_features) {
+                        options |= OPTION_UPDATE_DISABLED_FEATURES;
                     }
 
                     if (options)

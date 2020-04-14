@@ -199,6 +199,7 @@ void ModuleManager::create_mod_rdp(
                                                         ini.get<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>();
 
     mod_rdp_params.session_probe_params.vc_params.ignore_ui_less_processes_during_end_of_session_check = ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
+    mod_rdp_params.session_probe_params.vc_params.update_disabled_features                             = ini.get<cfg::mod_rdp::session_probe_update_disabled_features>();
 
     mod_rdp_params.session_probe_params.vc_params.childless_window_as_unidentified_input_field = ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
 
@@ -237,7 +238,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_params.vc_params.disabled_features     = ini.get<cfg::mod_rdp::session_probe_disabled_features>();
 
-    mod_rdp_params.session_probe_params.vc_params.bestsafe_integration  = ini.get<cfg::mod_rdp::session_probe_bestsafe_integration>();
+    mod_rdp_params.session_probe_params.vc_params.bestsafe_integration  = true;
 
     mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
     mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
