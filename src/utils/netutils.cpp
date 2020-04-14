@@ -223,31 +223,42 @@ unique_fd ip_connect(const char* ip, int port, char *localIPAddress, char const*
 				       error_result);
     
     if (localIPAddress)
-      {
-	struct sockaddr_in addr;
-	socklen_t namelen = sizeof(addr);
-	
-	if (::getsockname(client_sck.fd(),
-			  reinterpret_cast<struct sockaddr *>(&addr),
-			  &namelen) == -1)
-	  {
-	    if (error_result)
-	      *error_result = "Cannot get ";
-	    LOG(LOG_ERR,
-		"getsockname failed with errno = %d (%s)",
-		errno,
-		strerror(errno));
-	    assert(false);
-	  }
-	else if(!::inet_ntop(AF_INET,
-			     &addr.sin_addr,
-			     localIPAddress,
-			     INET_ADDRSTRLEN))
-	  LOG(LOG_WARNING,
-	      "inet_ntop failed with errno = %d (%s)",
-	      errno,
-	      strerror(errno));
-      }
+        {
+            struct sockaddr_storage addr;
+            socklen_t namelen = sizeof(addr);
+            
+            if (::getsockname(client_sck.fd(),
+                              reinterpret_cast<sockaddr *>(&addr),
+                              &namelen) == -1)
+                {
+                    if (error_result)
+                        *error_result = "Cannot get ";
+                    LOG(LOG_ERR,
+                        "getsockname failed with errno = %d (%s)",
+                        errno,
+                        strerror(errno));
+                    assert(false);
+                }
+            else
+                {
+                    const char *res = nullptr; 
+                    
+                    res = (addr.ss_family == AF_INET) ?
+                        inet_ntop(AF_INET,
+                                  &reinterpret_cast<sockaddr_in *>(&addr)->sin_addr,
+                                  localIPAddress,
+                                  INET_ADDRSTRLEN) :
+                        inet_ntop(AF_INET6,
+                                  &reinterpret_cast<sockaddr_in6 *>(&addr)->sin6_addr,
+                                  localIPAddress,
+                                  INET6_ADDRSTRLEN);
+                    if (!res)
+                        LOG(LOG_WARNING,
+                            "inet_ntop failed with errno = %d (%s)",
+                            errno,
+                            strerror(errno));
+                }
+        }
     return client_sck;
 }
 
