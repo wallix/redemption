@@ -213,10 +213,10 @@ inline void config_type_definition(type_enumerations & e)
       .value("deny",   "User action will be rejected")
     ;
 
-    e.enumeration_list("ClientAddressSent", "For set clientAddress field when RDP module is created.")
-      .value("no_address", "send 0.0.0.0")
-      .value("proxy", "send proxy client address or target connexion")
-      .value("front", "send user client address of front connexion")
+    e.enumeration_list("ClientAddressSent", "Client Address to send to target(in InfoPacket)")
+      .value("no_address", "Send 0.0.0.0")
+      .value("proxy", "Send proxy client address or target connexion")
+      .value("front", "Send user client address of front connexion")
     ;
 }
 
