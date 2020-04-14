@@ -28,7 +28,7 @@
 #include "utils/sugar/update_lock.hpp"
 
 Bouncer2Mod::Bouncer2Mod(
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     GraphicTimerContainer & graphic_timer_events_,
     SesmanInterface & sesman,
     FrontAPI & front,
@@ -38,9 +38,9 @@ Bouncer2Mod::Bouncer2Mod(
 , front(front)
 , sesman(sesman)
 , dancing_rect(0,0,100,100)
-, session_reactor(session_reactor)
+, time_base(time_base)
 , timer(graphic_timer_events_
-    .create_timer_executor(session_reactor)
+    .create_timer_executor(time_base)
     .set_delay(std::chrono::milliseconds(33))
     .on_action(jln::always_ready([this](gdi::GraphicApi& gd){
         this->draw_event(gd);

@@ -94,7 +94,7 @@ struct RdpClient
     redjs::BrowserFront front;
     gdi::GraphicApi& gd;
     JsReportMessage report_message;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events;
     GraphicFdContainer graphic_fd_events;
     TimerContainer timer_events;
@@ -171,7 +171,7 @@ struct RdpClient
         const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
         this->mod = new_mod_rdp(
-            browser_trans, ini, session_reactor,
+            browser_trans, ini, time_base,
             fd_events, graphic_fd_events, timer_events, graphic_events, sesman,
             gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
@@ -181,7 +181,7 @@ struct RdpClient
 
     void send_first_packet()
     {
-        graphic_fd_events.exec_timeout(session_reactor.get_current_time(), this->gd);
+        graphic_fd_events.exec_timeout(time_base.get_current_time(), this->gd);
     }
 
     bytes_view get_sending_data_view() const
@@ -209,7 +209,7 @@ struct RdpClient
     {
         this->mod->rdp_input_scancode(
             key, 0, flag,
-            session_reactor.get_current_time().tv_sec,
+            time_base.get_current_time().tv_sec,
             nullptr);
     }
 

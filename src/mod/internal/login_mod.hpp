@@ -80,7 +80,7 @@ class LoginMod : public mod_api, public NotifyApi
 
     MouseOwner current_mouse_owner;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
     GraphicEventContainer& graphic_events_;
 
@@ -112,7 +112,7 @@ private:
 public:
     LoginMod(
         LoginModVariables vars,
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
         GraphicEventContainer& graphic_events_,
         char const * username, char const * password,

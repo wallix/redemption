@@ -36,7 +36,7 @@ enum class ExecuteEventsResult
 
 inline ExecuteEventsResult execute_events(
     std::chrono::milliseconds timeout,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TopFdContainer& fd_events_,
     GraphicFdContainer& graphic_fd_events_,
     TimerContainer& timer_events_,
@@ -59,7 +59,7 @@ inline ExecuteEventsResult execute_events(
         graphic_fd_events_.for_each(g);
     }
 
-    session_reactor.set_current_time(tvtime());
+    time_base.set_current_time(tvtime());
     // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
     timeval tv =  timeval{0,0} + timeout;
     if (!enable_graphics || graphic_events_.is_empty()) 
@@ -97,8 +97,8 @@ inline ExecuteEventsResult execute_events(
         return ExecuteEventsResult::Error;
     }
 
-    session_reactor.set_current_time(tvtime());
-    auto const end_tv = session_reactor.get_current_time();
+    time_base.set_current_time(tvtime());
+    auto const end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
     fd_events_.exec_timeout(end_tv);
     if (enable_graphics) {

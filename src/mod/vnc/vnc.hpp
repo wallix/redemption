@@ -323,7 +323,7 @@ private:
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     GraphicEventContainer & graphic_events_;
     GraphicFdPtr fd_event;
     GraphicEventPtr wait_client_up_and_running_event;
@@ -358,7 +358,7 @@ private:
 
 public:
     mod_vnc( Transport & t
-           , SessionReactor& session_reactor
+           , TimeBase& time_base
            , GraphicFdContainer & graphic_fd_events_
            , TimerContainer & timer_events_
            , GraphicEventContainer & graphic_events_

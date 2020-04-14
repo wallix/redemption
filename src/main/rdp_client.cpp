@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
     TimeSystem system_timeobj;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
@@ -184,7 +184,7 @@ int main(int argc, char** argv)
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
         return run_test_client(
-            is_vnc ? "VNC" : "RDP", session_reactor, 
+            is_vnc ? "VNC" : "RDP", time_base, 
                                     fd_events_,
                                     graphic_fd_events_,
                                     timer_events_,
@@ -211,7 +211,7 @@ int main(int argc, char** argv)
         return run([&](Transport& trans){
             return new_mod_vnc(
                 trans
-              , session_reactor
+              , time_base
               , fd_events_
               , graphic_fd_events_
               , timer_events_
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, ini, session_reactor,
+                trans, ini, time_base,
                 fd_events_,
                 graphic_fd_events_,
                 timer_events_,

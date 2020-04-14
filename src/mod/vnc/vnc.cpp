@@ -30,7 +30,7 @@
 #endif
 
 mod_vnc::mod_vnc( Transport & t
-           , SessionReactor& session_reactor
+           , TimeBase& time_base
            , GraphicFdContainer & graphic_fd_events_
            , TimerContainer & timer_events_
            , GraphicEventContainer & graphic_events_
@@ -71,7 +71,7 @@ mod_vnc::mod_vnc( Transport & t
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , graphic_events_(graphic_events_)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
@@ -93,7 +93,7 @@ mod_vnc::mod_vnc( Transport & t
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-    this->fd_event = graphic_fd_events_.create_top_executor(session_reactor, this->t.get_fd())
+    this->fd_event = graphic_fd_events_.create_top_executor(time_base, this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
         .on_action([this, &sesman](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
@@ -164,7 +164,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface &
 
     this->report_message.log6(
         LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-        this->session_reactor.get_current_time(),
+        this->time_base.get_current_time(),
         {}
     );
 
@@ -1662,7 +1662,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     ? RDPECLIP::CF_UNICODETEXT
                     : RDPECLIP::CF_TEXT;
 
-                const microseconds usnow        = ustime(this->session_reactor.get_current_time());
+                const microseconds usnow        = ustime(this->time_base.get_current_time());
                 const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                 //LOG(LOG_INFO,
                 //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
@@ -2029,7 +2029,7 @@ void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->session_reactor)
+        this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->time_base)
         .on_action([this](auto ctx, gdi::GraphicApi & drawable){
             this->initial_clear_screen(drawable, this->sesman);
             return ctx.terminate();
@@ -2060,7 +2060,7 @@ void mod_vnc::draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawab
 
 void mod_vnc::disconnect()
 {
-    uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
+    uint64_t seconds = this->time_base.get_current_time().tv_sec - this->beginning;
     LOG(LOG_INFO, "Client disconnect from VNC module");
 
     char duration_str[128];
@@ -2071,7 +2071,7 @@ void mod_vnc::disconnect()
 
     this->report_message.log6(
         LogId::SESSION_DISCONNECTION,
-        this->session_reactor.get_current_time(), {
+        this->time_base.get_current_time(), {
         KVLog("duration"_av, {duration_str, len}),
     });
 

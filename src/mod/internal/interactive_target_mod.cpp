@@ -63,7 +63,7 @@ void InteractiveTargetMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            this->first_click_down_timer = timer_events_.create_timer_executor(this->session_reactor)
+                            this->first_click_down_timer = timer_events_.create_timer_executor(this->time_base)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;
@@ -189,7 +189,7 @@ bool InteractiveTargetMod::is_resizing_hosted_desktop_allowed() const
 
 InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
-    SessionReactor& session_reactor, 
+    TimeBase& time_base, 
     TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front,
@@ -204,7 +204,7 @@ InteractiveTargetMod::InteractiveTargetMod(
     , dc_state(DCState::Wait)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , ask_device(vars.is_asked<cfg::context::target_host>())
@@ -227,7 +227,7 @@ InteractiveTargetMod::InteractiveTargetMod(
 {
     this->screen.set_wh(width, height);
     if (this->rail_enabled) {
-        this->graphic_event = graphic_events_.create_action_executor(session_reactor)
+        this->graphic_event = graphic_events_.create_action_executor(time_base)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(
@@ -256,7 +256,7 @@ InteractiveTargetMod::InteractiveTargetMod(
     }
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->started_copy_past_event = graphic_events_.create_action_executor(session_reactor)
+    this->started_copy_past_event = graphic_events_.create_action_executor(time_base)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

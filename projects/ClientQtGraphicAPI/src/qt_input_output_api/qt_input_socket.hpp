@@ -42,7 +42,7 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TopFdContainer& fd_events;
     GraphicFdContainer& graphic_fd_events;
     TimerContainer& timer_events;
@@ -57,7 +57,7 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QtInputSocket(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TopFdContainer& fd_events,
         GraphicFdContainer& graphic_fd_events,
         TimerContainer& timer_events,
@@ -66,7 +66,7 @@ public:
         ClientRedemptionAPI * client,
         QWidget * parent)
     : QObject(parent)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , fd_events(fd_events)
     , graphic_fd_events(graphic_fd_events)
     , timer_events(timer_events)
@@ -130,8 +130,8 @@ private:
     void prepare_timer_event()
     {
         timeval now = tvtime();
-        auto previous_time = this->session_reactor.get_current_time();
-        this->session_reactor.set_current_time(now);
+        auto previous_time = this->time_base.get_current_time();
+        this->time_base.set_current_time(now);
 
         if (not this->graphic_events.is_empty()) {
             this->timer.start(0);

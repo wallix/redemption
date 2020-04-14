@@ -35,7 +35,7 @@
 
 
 TestCardMod::TestCardMod(
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     GraphicEventContainer & graphic_events_,
     uint16_t width, uint16_t height,
     Font const & font, bool unit_test)
@@ -44,7 +44,7 @@ TestCardMod::TestCardMod(
 , font(font)
 , unit_test(unit_test)
 {
-    this->graphic_event = graphic_events_.create_action_executor(session_reactor)
+    this->graphic_event = graphic_events_.create_action_executor(time_base)
     .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
         this->draw_event(gd);
     }));

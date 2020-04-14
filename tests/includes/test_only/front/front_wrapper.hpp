@@ -29,7 +29,7 @@ Author(s): Jonathan Poelen
 #include <memory>
 #include <string>
 
-class SessionReactor;
+class TimeBase;
 class Transport;
 class Random;
 class CryptoContext;
@@ -41,7 +41,7 @@ class FrontWrapper : public FrontAPI
 {
 public:
     FrontWrapper(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
         SesmanInterface & sesman,
         Transport & trans,

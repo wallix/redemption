@@ -90,7 +90,7 @@ private:
 public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TopFdContainer& fd_events_;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
@@ -236,7 +236,7 @@ public:
 
 
 public:
-    ClientRedemption(SessionReactor & session_reactor,
+    ClientRedemption(TimeBase & time_base,
                      TopFdContainer& fd_events_,
                      GraphicFdContainer& graphic_fd_events_,
                      TimerContainer & timer_events_,
@@ -246,14 +246,14 @@ public:
         : config(config)
         , client_sck(-1)
         , _callback(this)
-        , session_reactor(session_reactor)
+        , time_base(time_base)
         , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , graphic_timer_events_(graphic_timer_events_)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(session_reactor, timer_events_, *this, *this, this->config.info.window_list_caps, false)
+        , rail_client_execute(time_base, timer_events_, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
@@ -303,7 +303,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_, this->graphic_timer_events_, EnableGraphics{true},
+            timeout, this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_, this->graphic_timer_events_, EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
@@ -429,7 +429,7 @@ public:
                 this->unique_mod = new_mod_rdp(
                     *this->socket
                   , this->ini
-                  , this->session_reactor
+                  , this->time_base
                   , this->fd_events_
                   , this->graphic_fd_events_
                   , this->timer_events_
@@ -467,7 +467,7 @@ public:
             case ClientRedemptionConfig::MOD_VNC:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
-                  , this->session_reactor
+                  , this->time_base
                   , this->fd_events_
                   , this->graphic_fd_events_
                   , this->timer_events_
@@ -745,7 +745,7 @@ public:
     {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
-                this->session_reactor
+                this->time_base
               , this->graphic_timer_events_
               , this->sesman
               , *this
@@ -994,7 +994,7 @@ public:
 
         try {
             if (is_timeout) {
-                auto const end_tv = session_reactor.get_current_time();
+                auto const end_tv = time_base.get_current_time();
                 this->timer_events_.exec_timer(end_tv);
                 this->fd_events_.exec_timeout(end_tv);
                 this->graphic_timer_events_.exec_timer(end_tv, *this);

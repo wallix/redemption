@@ -122,12 +122,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToClientSender to_client_sender(t);
         TestToServerSender to_server_sender(t);
 
-        SessionReactor session_reactor;
+        TimeBase time_base;
         Inifile ini;
         SesmanInterface sesman(ini);
 
         ClipboardVirtualChannel clipboard_virtual_channel(
-            &to_client_sender, &to_server_sender, session_reactor,
+            &to_client_sender, &to_server_sender, time_base,
             base_params, d.cb_params, ipca_service, {nullptr, false});
 
         RED_CHECK_EXCEPTION_ERROR_ID(
@@ -158,10 +158,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, session_reactor,
+        &to_client_sender, &to_server_sender, time_base,
         base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -197,12 +197,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
     Inifile ini;
     SesmanInterface sesman(ini);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, session_reactor,
+        &to_client_sender, &to_server_sender, time_base,
         base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
@@ -456,11 +456,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
         }();
 
         {
-            SessionReactor session_reactor;
+            TimeBase time_base;
             timeval time_test;
             time_test.tv_sec = 12345;
             time_test.tv_usec = 54321;
-            session_reactor.set_current_time(time_test);
+            time_base.set_current_time(time_test);
 
             ReportMessageStorage report_message;
             BufTransport validator_transport;
@@ -481,7 +481,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFileWithoutLock)
             TestResponseSender to_server_sender;
 
             ClipboardVirtualChannel clipboard_virtual_channel(
-                &to_client_sender, &to_server_sender, session_reactor,
+                &to_client_sender, &to_server_sender, time_base,
                 base_params, clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
                 ClipboardVirtualChannel::FileStorage{
@@ -858,11 +858,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
         }();
 
         {
-            SessionReactor session_reactor;
+            TimeBase time_base;
             timeval time_test;
             time_test.tv_sec = 12345;
             time_test.tv_usec = 54321;
-            session_reactor.set_current_time(time_test);
+            time_base.set_current_time(time_test);
 
             ReportMessageStorage report_message;
             BufTransport validator_transport;
@@ -882,7 +882,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataMultiFileWithLock)
             TestResponseSender to_server_sender;
 
             ClipboardVirtualChannel clipboard_virtual_channel(
-                &to_client_sender, &to_server_sender, session_reactor,
+                &to_client_sender, &to_server_sender, time_base,
                 base_params, clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
                 ClipboardVirtualChannel::FileStorage{

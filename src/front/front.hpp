@@ -642,7 +642,7 @@ private:
 
     bool is_first_memblt = true;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
     SesmanInterface & sesman;
     TimerPtr handshake_timeout;
@@ -765,7 +765,7 @@ public:
     [[nodiscard]] BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
 public:
-    Front( SessionReactor& session_reactor
+    Front( TimeBase& time_base
          , TimerContainer& timer_events_
          , SesmanInterface & sesman
          , Transport & trans
@@ -791,7 +791,7 @@ public:
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , server_capabilities_filename(std::move(server_capabilities_filename))
     , report_message(report_message)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , sesman(sesman)
     , rdp_keepalive_connection_interval(
@@ -802,7 +802,7 @@ public:
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            this->handshake_timeout = this->timer_events_.create_timer_executor(this->session_reactor)
+            this->handshake_timeout = this->timer_events_.create_timer_executor(this->time_base)
             .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
             .on_action([](JLN_TIMER_CTX ctx){
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
@@ -842,7 +842,7 @@ public:
 
         if (this->rdp_keepalive_connection_interval.count()) {
             this->flow_control_timer = this->timer_events_
-            .create_timer_executor(this->session_reactor)
+            .create_timer_executor(this->time_base)
             .set_delay(std::chrono::milliseconds(0))
             .on_action([this](auto ctx){
                 if (this->state == FRONT_UP_AND_RUNNING) {
@@ -1088,7 +1088,7 @@ public:
         );
 
         CaptureParams capture_params{
-            this->session_reactor.get_current_time(),
+            this->time_base.get_current_time(),
             basename,
             record_tmp_path,
             record_path.c_str(),
@@ -1124,7 +1124,7 @@ public:
         }
 
         this->capture_timer = this->timer_events_
-        .create_timer_executor(this->session_reactor)
+        .create_timer_executor(this->time_base)
         .set_delay(std::chrono::milliseconds(0))
         .on_action([this](auto ctx){
             auto const capture_ms = this->capture->periodic_snapshot(
@@ -3024,7 +3024,7 @@ public:
 
     void session_update(LogId id, KVList kv_list) override {
         if (this->capture) {
-            this->capture->session_update(this->session_reactor.get_current_time(), id, kv_list);
+            this->capture->session_update(this->time_base.get_current_time(), id, kv_list);
         }
     }
 
@@ -5041,7 +5041,7 @@ private:
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                auto const timeval = this->session_reactor.get_current_time();
+                auto const timeval = this->time_base.get_current_time();
                 bool const send_to_mod = !this->capture 
                     || (0 == decoded_keys.count)
                     || (1 == decoded_keys.count 

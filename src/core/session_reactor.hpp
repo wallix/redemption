@@ -45,11 +45,11 @@ Author(s): Jonathan Poelen
 # define REDEMPTION_DEBUG_ONLY(...)
 #endif
 
-class SessionReactor;
+class TimeBase;
 
 namespace jln
 {
-    using Reactor = SessionReactor;
+    using Reactor = TimeBase;
 
     template<class... Ts> class TopExecutor;
     template<class... Ts> class GroupExecutor;
@@ -750,9 +750,9 @@ namespace jln
         std::function<R(TimerContext<Ts...>, Ts...)> on_timer;
         timeval tv {};
         std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
-        SessionReactor& reactor;
+        TimeBase& reactor;
 
-        TimerExecutor(SessionReactor& reactor) noexcept
+        TimerExecutor(TimeBase& reactor) noexcept
         : reactor(reactor)
         {}
 
@@ -820,7 +820,7 @@ namespace jln
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         template<class... Us>
-        TimerExecutorWithValues(SessionReactor& reactor, Us&&... xs)
+        TimerExecutorWithValues(TimeBase& reactor, Us&&... xs)
         : TimerExecutor<Ts...>(reactor)
         , t{static_cast<Us&&>(xs)...}
         {}
@@ -2866,8 +2866,8 @@ struct EnableGraphics
 };
 
 
-// TODO: could be renamed GlobalClock (and 'session_reactor' renamed 'clock')
-struct SessionReactor
+// TODO: could be renamed GlobalClock (and 'time_base' renamed 'clock')
+struct TimeBase
 {
     timeval current_time {};
 

@@ -152,7 +152,7 @@ private:
     int old_mouse_y = 0;
 
 protected:
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
     GraphicEventContainer& graphic_events_;
 
@@ -173,7 +173,7 @@ private:
 public:
     WaitMod(
         WaitModVariables vars,
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
         GraphicEventContainer & graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front,

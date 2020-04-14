@@ -153,15 +153,15 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(SessionReactor& session_reactor, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_)
-        : session_reactor(session_reactor), fd_events_(fd_events_), graphic_fd_events_(graphic_fd_events_), timer_events_(timer_events_)
+    explicit AsynchronousTaskContainer(TimeBase& time_base, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_)
+        : time_base(time_base), fd_events_(fd_events_), graphic_fd_events_(graphic_fd_events_), timer_events_(timer_events_)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
@@ -169,13 +169,13 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
     std::deque<std::unique_ptr<AsynchronousTask>> tasks;
 public:
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TopFdContainer& fd_events_;
     GraphicFdContainer& graphic_fd_events_;
     TimerContainer& timer_events_;
@@ -183,7 +183,7 @@ public:
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(SessionReactor&, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer&)
+    explicit AsynchronousTaskContainer(TimeBase&, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer&)
     {}
 };
 #endif
@@ -394,7 +394,7 @@ private:
 
     const RDPVerbose verbose;
 
-    SessionReactor & session_reactor;
+    TimeBase & time_base;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
@@ -405,7 +405,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        TimeBase & time_base, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
@@ -431,7 +431,7 @@ public:
     , mod_rdp_factory(mod_rdp_factory)
     , report_message(report_message)
     , verbose(verbose)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
@@ -458,7 +458,7 @@ public:
 
         // Something like:
 
-        // if probe: init_session_probe(... session_reactor);
+        // if probe: init_session_probe(... time_base);
         // if remote_prog: init_remote_program(... lang, font, identifier, program, directory);
 
         // This could probably work like two consecutive filters
@@ -492,7 +492,7 @@ public:
             }
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-                this->session_reactor, this->timer_events_, gd, mod_rdp, mod_rdp_params.lang,
+                this->time_base, this->timer_events_, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, authentifier,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
@@ -584,7 +584,7 @@ private:
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
-            this->session_reactor,
+            this->time_base,
             base_params,
             std::move(cvc_params),
             file_validator_service,
@@ -741,7 +741,7 @@ private:
         fsvc_params.smartcard_passthrough = this->file_system.smartcard_passthrough;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
-                asynchronous_tasks.session_reactor,
+                asynchronous_tasks.time_base,
                 asynchronous_tasks.timer_events_,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
@@ -801,7 +801,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->session_probe_to_server_sender.get(),
@@ -1423,7 +1423,7 @@ public:
         else if (used_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
-                    this->session_reactor,
+                    this->time_base,
                     this->timer_events_,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
@@ -1915,7 +1915,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::string * error_message;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -2012,7 +2012,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , Inifile & ini
-      , SessionReactor& session_reactor
+      , TimeBase& time_base
       , TopFdContainer & fd_events_
       , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
@@ -2037,7 +2037,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, session_reactor, timer_events_, graphic_events_, file_validator_service,
+            report_message, gen, metrics, time_base, timer_events_, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -2083,13 +2083,13 @@ public:
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
-        , session_reactor(session_reactor)
+        , time_base(time_base)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(session_reactor, fd_events_, graphic_fd_events_, timer_events_)
+        , asynchronous_tasks(time_base, fd_events_, graphic_fd_events_, timer_events_)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
@@ -2965,7 +2965,7 @@ public:
                             if (!this->deactivation_reactivation_in_progress) {
                                 this->report_message.log6(
                                     LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-                                    this->session_reactor.get_current_time(), {});
+                                    this->time_base.get_current_time(), {});
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -4958,7 +4958,7 @@ public:
                     }
                     else {
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->timer_events_
-                        .create_timer_executor(this->session_reactor)
+                        .create_timer_executor(this->time_base)
                         .on_action(jln::sequencer(
                             [this](JLN_TIMER_CTX ctx) {
                                 LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
@@ -5772,7 +5772,7 @@ private:
     void log_disconnection(bool enable_verbose)
     {
         if (this->session_time_start.count()) {
-            uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->session_time_start.count();
+            uint64_t seconds = this->time_base.get_current_time().tv_sec - this->session_time_start.count();
             this->session_time_start = std::chrono::seconds::zero();
 
             char duration_str[128];
@@ -5783,7 +5783,7 @@ private:
 
             this->report_message.log6(
                 LogId::SESSION_DISCONNECTION,
-                this->session_reactor.get_current_time(), {
+                this->time_base.get_current_time(), {
                 KVLog("duration"_av, {duration_str, len}),
             });
 

@@ -694,7 +694,7 @@ public:
 
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
-        SessionReactor session_reactor;
+        TimeBase time_base;
         TopFdContainer fd_events_;
         GraphicFdContainer graphic_fd_events_;
         TimerContainer timer_events_;
@@ -703,9 +703,9 @@ public:
         
         TimeSystem timeobj;
 
-        session_reactor.set_current_time(tvtime());
+        time_base.set_current_time(tvtime());
         SesmanInterface sesman(ini);
-        Front front(session_reactor, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
+        Front front(time_base, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
         );
         std::unique_ptr<Acl> acl;
@@ -718,11 +718,11 @@ public:
             Theme theme;
             ::load_theme(theme, theme_name);
 
-            ClientExecute rail_client_execute(session_reactor, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
+            ClientExecute rail_client_execute(time_base, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, session_reactor, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             if (ini.get<cfg::debug::session>()) {
@@ -770,7 +770,7 @@ public:
             while (run_session) {
 
                 timeval now = tvtime();
-                session_reactor.set_current_time(now);
+                time_base.set_current_time(now);
 
                 Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
 
@@ -853,7 +853,7 @@ public:
                     }
 
                     now = tvtime();
-                    session_reactor.set_current_time(now);
+                    time_base.set_current_time(now);
                     
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
@@ -1045,7 +1045,7 @@ public:
                     }
 
                     now = tvtime();
-                    session_reactor.set_current_time(now);
+                    time_base.set_current_time(now);
                     
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
@@ -1126,7 +1126,7 @@ public:
                                 throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                             }
 
-                            auto const end_tv = session_reactor.get_current_time();
+                            auto const end_tv = time_base.get_current_time();
                             timer_events_.exec_timer(end_tv);
                             fd_events_.exec_timeout(end_tv);
                             graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
@@ -1318,7 +1318,7 @@ public:
                     }
 
                     now = tvtime();
-                    session_reactor.set_current_time(now);
+                    time_base.set_current_time(now);
                     
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
@@ -1332,7 +1332,7 @@ public:
                             this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
                         }
 
-                        auto const end_tv = session_reactor.get_current_time();
+                        auto const end_tv = time_base.get_current_time();
                         timer_events_.exec_timer(end_tv);
                         fd_events_.exec_timeout(end_tv);
                         if (EnableGraphics{true}) {

@@ -96,9 +96,9 @@ int main(){}
 //    Theme theme;
 //    ::load_theme(theme, theme_name);
 
-//    SessionReactor session_reactor;
+//    TimeBase time_base;
 
-//    ClientExecute rail_client_execute(session_reactor, front.gd(), front,
+//    ClientExecute rail_client_execute(time_base, front.gd(), front,
 //                                    info.window_list_caps,
 //                                    ini.get<cfg::debug::mod_internal>() & 1);
 
@@ -112,7 +112,7 @@ int main(){}
 
 //    Keymap2 keymap;
 
-//    ModuleManager mm(session_reactor, front, front.gd(), keymap, info, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, ini, cctx1, rnd1, timeobj);
+//    ModuleManager mm(time_base, front, front.gd(), keymap, info, winapi, mod_wrapper, rail_client_execute, mod_osd, font, theme, ini, cctx1, rnd1, timeobj);
 
 //    auto outdata =
 //        // Time: 10011
@@ -212,8 +212,8 @@ int main(){}
 //    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
 //    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
 
-//    SessionReactor session_reactor;
-//    MMIni mm(session_reactor, ini);
+//    TimeBase time_base;
+//    MMIni mm(time_base, ini);
 
 //    auto outdata =
 //        // Time 10011
@@ -345,8 +345,8 @@ int main(){}
 //    Inifile ini;
 //    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
 //    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{240}); // = 8*30 = 240secs inactivity>
-//    SessionReactor session_reactor;
-//    MMIni mm(session_reactor, ini);
+//    TimeBase time_base;
+//    MMIni mm(time_base, ini);
 
 //    auto outdata =
 //        // Time 10011

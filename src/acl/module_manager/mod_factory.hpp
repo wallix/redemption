@@ -25,7 +25,7 @@
 
 #include "acl/mod_pack.hpp"
 
-#include "core/session_reactor.hpp" // for SessionReactor
+#include "core/session_reactor.hpp" // for TimeBase
 #include "core/client_info.hpp"     // for ClientInfo
 #include "core/front_api.hpp"       // for FrontAPI
 #include "gdi/graphic_api.hpp"      // for GraphicApi
@@ -60,7 +60,7 @@
 class ModFactory
 {
     ModWrapper & mod_wrapper;
-    SessionReactor & session_reactor;
+    TimeBase & time_base;
     SesmanInterface & sesman;
     TopFdContainer& fd_events_;
     GraphicFdContainer & graphic_fd_events_;
@@ -85,7 +85,7 @@ class ModFactory
 
 public:
     ModFactory(ModWrapper & mod_wrapper,
-               SessionReactor & session_reactor,
+               TimeBase & time_base,
                SesmanInterface & sesman,
                TopFdContainer& fd_events_,
                GraphicFdContainer & graphic_fd_events_,
@@ -107,7 +107,7 @@ public:
                CryptoContext & cctx
         )
         : mod_wrapper(mod_wrapper)
-        , session_reactor(session_reactor)
+        , time_base(time_base)
         , sesman(sesman)
         , fd_events_(fd_events_)
         , graphic_fd_events_(graphic_fd_events_)
@@ -197,7 +197,7 @@ public:
     auto create_mod_bouncer() -> ModPack
     {
         auto new_mod = new Bouncer2Mod(
-                            this->session_reactor,
+                            this->time_base,
                             this->graphic_timer_events_,
                             this->sesman,
                             this->front,
@@ -209,7 +209,7 @@ public:
     auto create_mod_replay() -> ModPack
     {
             auto new_mod = new ReplayMod(
-                this->session_reactor,
+                this->time_base,
                 this->graphic_timer_events_,
                 this->sesman,
                 this->graphics, this->front,
@@ -236,7 +236,7 @@ public:
     auto create_widget_test_mod() -> ModPack
     {
         auto new_mod = new WidgetTestMod(
-            this->session_reactor,
+            this->time_base,
             this->graphic_timer_events_,
             this->front,
             this->client_info.screen_info.width,
@@ -249,7 +249,7 @@ public:
     auto create_test_card_mod() -> ModPack
     {
         auto new_mod = new TestCardMod(
-            this->session_reactor,
+            this->time_base,
             this->graphic_events_,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -264,7 +264,7 @@ public:
         auto new_mod = new SelectorMod(
             this->ini,
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -292,7 +292,7 @@ public:
         auto new_mod = new CloseMod(
             auth_error_message,
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -322,7 +322,7 @@ public:
         auto new_mod = new CloseMod(
             auth_error_message,
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -345,7 +345,7 @@ public:
     {
         auto new_mod = new InteractiveTargetMod(
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -369,7 +369,7 @@ public:
         const char * caption = "Information";
         auto new_mod = new DialogMod(
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -396,7 +396,7 @@ public:
         const char * caption = "Information";
         auto new_mod = new DialogMod(
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -429,7 +429,7 @@ public:
         this->ini.ask<cfg::context::password>();
         auto new_mod = new DialogMod(
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -459,7 +459,7 @@ public:
         uint flag = this->ini.get<cfg::context::formflag>();
         auto new_mod = new WaitMod(
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -484,7 +484,7 @@ public:
     {
         auto new_mod = new TransitionMod(
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->graphics, this->front,
@@ -530,7 +530,7 @@ public:
 
         auto new_mod = new LoginMod(
             this->ini,
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             username,
@@ -552,7 +552,7 @@ public:
     auto create_xup_mod() -> ModPack
     {
         unique_fd client_sck = connect_to_target_host(
-                    this->ini, this->session_reactor,
+                    this->ini, this->time_base,
                     this->report_message, trkeys::authentification_x_fail);
 
         const char * name = "XUP Target";
@@ -564,7 +564,7 @@ public:
             std::move(client_sck),
             this->ini.get<cfg::debug::mod_xup>(),
             nullptr,
-            this->session_reactor,
+            this->time_base,
             this->graphic_fd_events_,
             this->front,
             this->client_info.screen_info.width,
@@ -586,7 +586,7 @@ public:
             this->rail_client_execute,
             this->keymap.key_flags,
             this->glyphs, this->theme,
-            this->session_reactor,
+            this->time_base,
             this->fd_events_,
             this->graphic_fd_events_,
             this->timer_events_,
@@ -607,7 +607,7 @@ public:
             mod_wrapper.get_graphics(), this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
-            this->session_reactor,
+            this->time_base,
             this->graphic_fd_events_,
             this->timer_events_,
             this->graphic_events_,

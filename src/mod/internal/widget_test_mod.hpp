@@ -22,14 +22,14 @@
 
 #include "mod/mod_api.hpp"
 
-class SessionReactor;
+class TimeBase;
 class FrontAPI;
 class Font;
 
 class WidgetTestMod : public mod_api
 {
 public:
-    WidgetTestMod(SessionReactor& session_reactor,
+    WidgetTestMod(TimeBase& time_base,
         GraphicTimerContainer & graphic_timer_events_,
         FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font);

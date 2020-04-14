@@ -45,9 +45,9 @@
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 
-static inline unique_fd connect_to_target_host(Inifile & ini, const SessionReactor & session_reactor, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
+static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & time_base, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
 {
-    auto throw_error = [&ini, session_reactor, &report_message](char const* error_message, int id) {
+    auto throw_error = [&ini, time_base, &report_message](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
             R"(target="%s" host="%s" port="%u" reason="%s")",
             ini.get<cfg::globals::target_user>(),
@@ -55,7 +55,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, const SessionReact
             ini.get<cfg::context::target_port>(),
             error_message);
 
-        report_message.log6(LogId::CONNECTION_FAILED, session_reactor.get_current_time(), {});
+        report_message.log6(LogId::CONNECTION_FAILED, time_base.get_current_time(), {});
 
        ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(ini)));
 

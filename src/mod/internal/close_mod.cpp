@@ -58,7 +58,7 @@ namespace
 CloseMod::CloseMod(
     std::string auth_error_message,
     CloseModVariables vars, 
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
@@ -86,14 +86,14 @@ CloseMod::CloseMod(
     , dc_state(DCState::Wait)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
 {
     this->screen.set_wh(this->front_width, this->front_height);
     if (this->rail_enabled) {
         this->graphic_event = 
-        graphic_events_.create_action_executor(session_reactor)
+        graphic_events_.create_action_executor(time_base)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(
@@ -124,7 +124,7 @@ CloseMod::CloseMod(
             start_timer = delay;
         }
         this->timeout_timer = timer_events_
-        .create_timer_executor(session_reactor, start_timer)
+        .create_timer_executor(time_base, start_timer)
         .set_delay(delay)
         .on_action([this](JLN_TIMER_CTX ctx, std::chrono::seconds& seconds){
             // TODO milliseconds += ctx.time() - previous_time
@@ -201,7 +201,7 @@ void CloseMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                         }
                         else {
                             this->first_click_down_timer = this->timer_events_
-                            .create_timer_executor(this->session_reactor)
+                            .create_timer_executor(this->time_base)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;

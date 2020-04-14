@@ -157,12 +157,12 @@ class ClientExecute : public windowing_api
 
     bool verbose;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
 
 public:
     ClientExecute(
-        SessionReactor& session_reactor, TimerContainer& timer_events_, 
+        TimeBase& time_base, TimerContainer& timer_events_, 
         gdi::GraphicApi & drawable, FrontAPI & front,
         WindowListCaps const & window_list_caps, bool verbose);
 

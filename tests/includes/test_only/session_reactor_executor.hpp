@@ -26,9 +26,9 @@ Author(s): Jonathan Poelen
 #include "mod/mod_api.hpp"
 
 inline void execute_negociate_mod(
-    SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
+    TimeBase& time_base, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd)
 {
-    auto end_tv = session_reactor.get_current_time();
+    auto end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
     fd_events_.exec_timeout(end_tv);
     // also gd enabled
@@ -48,9 +48,9 @@ inline void execute_negociate_mod(
     RED_REQUIRE_LT(n, limit);
 }
 
-inline void execute_mod(SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd, int n)
+inline void execute_mod(TimeBase& time_base, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_, GraphicTimerContainer & graphic_timer_events_, mod_api& mod, gdi::GraphicApi& gd, int n)
 {
-    execute_negociate_mod(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, mod, gd);
+    execute_negociate_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, mod, gd);
     int count = 0;
     for (; count < n && (!graphic_events_.is_empty() || !graphic_fd_events_.is_empty()); ++count) {
         // LOG(LOG_INFO, "===================> count = %u", count);

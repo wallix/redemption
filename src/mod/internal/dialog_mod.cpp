@@ -30,7 +30,7 @@
 
 DialogMod::DialogMod(
     DialogModVariables vars,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
     GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
@@ -47,7 +47,7 @@ DialogMod::DialogMod(
     , dc_state(DCState::Wait)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , language_button(
@@ -64,7 +64,7 @@ DialogMod::DialogMod(
     this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
         this->graphic_event = 
-        this->graphic_events_.create_action_executor(this->session_reactor)
+        this->graphic_events_.create_action_executor(this->time_base)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(
@@ -87,7 +87,7 @@ DialogMod::DialogMod(
 
     if (vars.get<cfg::debug::pass_dialog_box>()) {
         this->timeout_timer = this->timer_events_
-        .create_timer_executor(this->session_reactor)
+        .create_timer_executor(this->time_base)
         .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
         .on_action([this](JLN_TIMER_CTX ctx){
             this->accepted();
@@ -96,7 +96,7 @@ DialogMod::DialogMod(
     }
 
     this->started_copy_past_event = 
-    this->graphic_events_.create_action_executor(this->session_reactor)
+    this->graphic_events_.create_action_executor(this->time_base)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));
@@ -139,7 +139,7 @@ void DialogMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap
                         }
                         else {
                             this->first_click_down_timer = this->timer_events_
-                            .create_timer_executor(this->session_reactor)
+                            .create_timer_executor(this->time_base)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;

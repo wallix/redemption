@@ -113,11 +113,11 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(SessionReactor& session_reactor, TopFdContainer & fd_events_, GraphicFdContainer & /*graphic_fd_events_*/, TimerContainer& /*timer_events_*/, TerminateEventNotifier terminate_notifier) override
+    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, GraphicFdContainer & /*graphic_fd_events_*/, TimerContainer& /*timer_events_*/, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
         LOG(LOG_INFO, "rdpdr_asynchronous_task::fd_events_.create_top_executor");
-        this->fdobject = fd_events_.create_top_executor(session_reactor,
+        this->fdobject = fd_events_.create_top_executor(time_base,
             this->file_descriptor, std::ref(*this), terminate_notifier)
         .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
             if (self.run()) {
@@ -228,13 +228,13 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TopFdContainer & /*fd_events_*/, GraphicFdContainer & /*graphic_fd_events_*/, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
+    void configure_event(TimeBase& time_base, TopFdContainer & /*fd_events_*/, GraphicFdContainer & /*graphic_fd_events_*/, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
         LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendDriveIOResponseTask::configure_event)");
         this->timer_ptr = timer_events_
-        .create_timer_executor(session_reactor, 
+        .create_timer_executor(time_base, 
             std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
@@ -308,13 +308,13 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TopFdContainer & /*fd_events_*/, GraphicFdContainer & /*graphic_fd_events_*/, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
+    void configure_event(TimeBase& time_base, TopFdContainer & /*fd_events_*/, GraphicFdContainer & /*graphic_fd_events_*/, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
         LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendClientMessageTask::configure_events)");
         this->timer_ptr = timer_events_
-        .create_timer_executor(session_reactor,
+        .create_timer_executor(time_base,
             std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))

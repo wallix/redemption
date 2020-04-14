@@ -35,8 +35,8 @@ RED_AUTO_TEST_CASE(TestShowTestCard)
     uint16_t height = 600;
     TestGraphic gd(width, height);
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
     GraphicEventContainer graphic_events_;
-    TestCardMod mod(session_reactor, graphic_events_, width, height, global_font());
+    TestCardMod mod(time_base, graphic_events_, width, height, global_font());
     RED_CHECK_NO_THROW(mod.draw_event(gd));
 }

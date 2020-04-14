@@ -63,7 +63,7 @@ void WaitMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                         }
                         else {
                             this->first_click_down_timer = timer_events_
-                            .create_timer_executor(this->session_reactor)
+                            .create_timer_executor(this->time_base)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;
@@ -190,7 +190,7 @@ bool WaitMod::is_resizing_hosted_desktop_allowed() const
 
 WaitMod::WaitMod(
     WaitModVariables vars,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
     GraphicEventContainer & graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
@@ -207,7 +207,7 @@ WaitMod::WaitMod(
     , dc_state(DCState::Wait)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
@@ -220,7 +220,7 @@ WaitMod::WaitMod(
 {
     this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
-        this->graphic_event = graphic_events_.create_action_executor(session_reactor)
+        this->graphic_event = graphic_events_.create_action_executor(time_base)
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
             if (!this->rail_client_execute) {
                 this->rail_client_execute.ready(
@@ -243,14 +243,14 @@ WaitMod::WaitMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->timeout_timer = timer_events_
-    .create_timer_executor(session_reactor)
+    .create_timer_executor(time_base)
     .set_delay(std::chrono::seconds(600))
     .on_action(jln::one_shot([this]{
         this->refused();
     }));
 
     this->started_copy_past_event = 
-    graphic_events_.create_action_executor(session_reactor)
+    graphic_events_.create_action_executor(time_base)
     .on_action(jln::one_shot([this](gdi::GraphicApi&){
         this->copy_paste.ready(this->front);
     }));

@@ -44,7 +44,7 @@ class TestCardMod : public mod_api
 
 public:
     TestCardMod(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         GraphicEventContainer & graphic_events_,
         uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true); /*NOLINT*/
