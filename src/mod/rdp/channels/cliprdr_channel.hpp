@@ -183,6 +183,11 @@ private:
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
             std::vector<uint8_t> file_contents;
             Sig sig = Sig();
+
+            bool is_finalized() const
+            {
+                return this->sig.has_digest();
+            }
         };
 
         struct TextData
