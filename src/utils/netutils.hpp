@@ -37,7 +37,7 @@ bool try_again(int errnum);
 /// \return nullptr if ok, view string if error
 char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
-unique_fd ip_connect(const char* ip, int port, char *localIPAddress = nullptr, char const** error_result = nullptr);
+unique_fd ip_connect(const char* ip, int port, char const** error_result = nullptr, char *localIPAddress = nullptr);
 
 unique_fd local_connect(const char* sck_name, bool no_log);
 

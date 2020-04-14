@@ -164,7 +164,7 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, char *localIPAddress, char const** error_result)
+unique_fd ip_connect(const char* ip, int port, char const** error_result, char *localIPAddress)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
