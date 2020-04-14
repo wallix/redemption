@@ -215,7 +215,9 @@ struct ModRDPParams
         , close_box_extra_message_ref(close_box_extra_message_ref)
         , verbose(verbose)
     {
-      std::strcpy(this->client_address, client_address);
+        std::strncpy(this->client_address,
+                     client_address,
+                     sizeof(this->client_address));
     }
 
     void log() const
