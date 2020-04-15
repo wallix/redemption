@@ -98,6 +98,17 @@ def read_config_file(modulename="sesman",
     return Config(modulename=modulename, confdir=confdir, specdir=specdir)
 
 
+def decode_rawtext_data(data):
+    encoding_try = ['utf-8', 'iso-8859-1']
+    for encoding in encoding_try:
+        try:
+            data = data.decode(encoding)
+        except Exception:
+            continue
+        break
+    return data
+
+
 class Engine(object):
     def __init__(self):
         self.wabengine = None
@@ -186,33 +197,42 @@ class Engine(object):
         except Exception:
             return False
 
-    def get_ssh_banner(self, lang=None):
+    @staticmethod
+    def format_terminal(message):
+        message += '\n'
+        message = message.replace('\n', '\r\n')
+        return message
+
+    def get_banner(self, lang=None, format_terminal=False):
         if not lang:
             lang = self.get_language()
-        banner = ("Warning! Your remote session may be recorded and "
-                  "kept in electronic format.\n")
+        banner = (u"Warning! Your remotée session may be recorded and "
+                  u"kept in electronic format.")
         try:
-            with open('/var/wab/etc/proxys/messages/motd.%s' % lang) as f:
+            motdfile = '/var/wab/etc/proxys/messages/motd.%s' % lang
+            with open(motdfile, "rb") as f:
                 banner = f.read()
-            banner += '\n'
+            banner = decode_rawtext_data(banner)
         except IOError:
             pass
-
-        banner = banner.replace('\n', '\r\n')
+        if format_terminal:
+            banner = self.format_terminal(banner)
         return banner
 
-    def get_warning_message(self, lang=None):
+    def get_warning_message(self, lang=None, format_terminal=False):
         if not lang:
             lang = self.get_language()
-        msg = (u"Warning! Unauthorized access to this system is"
-               u" forbidden and will be prosecuted by law.\n")
+        msg = (u"Warning! Unauthorizedé access to this system is"
+               u" forbidden and will be prosecuted by law.")
         try:
-            with open('/var/wab/etc/proxys/messages/login.%s' % lang) as f:
+            loginfile = '/var/wab/etc/proxys/messages/login.%s' % lang
+            with open(loginfile, "rb") as f:
                 msg = f.read()
-                msg += '\n'
+            msg = decode_rawtext_data(msg)
         except IOError:
             pass
-        msg = msg.replace('\n', '\r\n')
+        if format_terminal:
+            msg = self.format_terminal(msg)
         return msg
 
     def get_deconnection_time_msg(self, lang):
