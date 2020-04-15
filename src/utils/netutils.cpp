@@ -221,44 +221,9 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result, char *
 				       text_target,
 				       no_log,
 				       error_result);
-    
-    if (localIPAddress)
-        {
-            struct sockaddr_storage addr;
-            socklen_t namelen = sizeof(addr);
-            
-            if (::getsockname(client_sck.fd(),
-                              reinterpret_cast<sockaddr *>(&addr),
-                              &namelen) == -1)
-                {
-                    if (error_result)
-                        *error_result = "Cannot get ";
-                    LOG(LOG_ERR,
-                        "getsockname failed with errno = %d (%s)",
-                        errno,
-                        strerror(errno));
-                    assert(false);
-                }
-            else
-                {
-                    const char *res = nullptr; 
-                    
-                    res = (addr.ss_family == AF_INET) ?
-                        inet_ntop(AF_INET,
-                                  &reinterpret_cast<sockaddr_in *>(&addr)->sin_addr,
-                                  localIPAddress,
-                                  INET_ADDRSTRLEN) :
-                        inet_ntop(AF_INET6,
-                                  &reinterpret_cast<sockaddr_in6 *>(&addr)->sin6_addr,
-                                  localIPAddress,
-                                  INET6_ADDRSTRLEN);
-                    if (!res)
-                        LOG(LOG_WARNING,
-                            "inet_ntop failed with errno = %d (%s)",
-                            errno,
-                            strerror(errno));
-                }
-        }
+
+    if (client_sck.is_open())
+        set_client_address(localIPAddress, client_sck.fd(), error_result); 
     return client_sck;
 }
 
@@ -450,4 +415,50 @@ FILE* popen_conntrack(const char* source_ip, int source_port, int target_port)
     sprintf(cmd, "/usr/sbin/conntrack -L -p tcp --src %s --sport %d --dport %d",
             source_ip, source_port, target_port);
     return popen(cmd, "r");
+}
+
+void set_client_address(char *ipAddress, int fd, const char **error_result)
+{
+    if (!ipAddress)
+        {
+            return;
+        }
+    
+    struct sockaddr_storage addr;
+    socklen_t namelen = sizeof(addr);
+    
+    if (::getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &namelen) == -1)
+        {
+            if (error_result)
+                {
+                    *error_result = "Cannot get local ip address";
+                }
+            LOG(LOG_ERR,
+                "getsockname failed with errno = %d (%s)",
+                errno,
+                strerror(errno));
+            assert(false);
+        }
+    else
+        {
+            const char *res = nullptr; 
+                    
+            res = (addr.ss_family == AF_INET) ?
+                inet_ntop(AF_INET,
+                          &reinterpret_cast<sockaddr_in *>(&addr)->sin_addr,
+                          ipAddress,
+                          INET_ADDRSTRLEN) :
+                inet_ntop(AF_INET6,
+                          &reinterpret_cast<sockaddr_in6 *>(&addr)->sin6_addr,
+                          ipAddress,
+                          INET6_ADDRSTRLEN);
+            if (!res)
+                {
+                    LOG(LOG_ERR,
+                        "inet_ntop failed with errno = %d (%s)",
+                        errno,
+                        strerror(errno));
+                    assert(false);
+                }
+        }
 }

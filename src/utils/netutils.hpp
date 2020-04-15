@@ -47,3 +47,5 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
                        writable_bytes_view transparent_dest, uint32_t verbose);
 
 FILE* popen_conntrack(const char* source_ip, int source_port, int target_port);
+
+void set_client_address(char *ipAddress, int fd, const char **error_result);

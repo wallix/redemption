@@ -367,7 +367,7 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-		      session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
@@ -376,7 +376,7 @@ namespace
                         session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                     case SocketType::Tls:
-		      session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
                         break;
                 }
 
