@@ -668,6 +668,33 @@ class Sesman():
 
         return _status, _error
 
+    def check_deconnection_time(self, selected_target):
+        Logger().info(u"Checking timeframe")
+        _status, _error = True, ""
+        timeclose = None
+        infinite_connection = False
+        deconnection_time = self.engine.get_deconnection_time(selected_target)
+        if not deconnection_time:
+            Logger().error("No timeframe available, "
+                           "Timeframe has not been checked !")
+            _status = False
+        if (deconnection_time == u"-"
+            or deconnection_time[0:4] >= u"2034"):
+            deconnection_time = u"2034-12-31 23:59:59"
+            infinite_connection = True
+
+        now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
+        if _status and not infinite_connection and now < deconnection_time:
+            # deconnection time to epoch
+            tt = datetime.strptime(
+                deconnection_time, "%Y-%m-%d %H:%M:%S"
+            ).timetuple()
+            timeclose = int(mktime(tt))
+            _status, _error = self.interactive_display_message(
+                {u'message': TR(u'session_closed_at %s') % deconnection_time}
+            )
+        return timeclose, _status, _error
+
     def interactive_target(self, data_to_send):
         data_to_send.update({u'module': u'interactive_target'})
         self.send_data(data_to_send)
@@ -1206,6 +1233,29 @@ class Sesman():
         formated_sign_key = bin2hex(sign_key)
         return formated_encryption_key, formated_sign_key
 
+    def interactive_ask_recording(self, user):
+        message = (u"Warning! Your remote session may be recorded and"
+                   u"kept in electronic format.")
+        try:
+            message = self.engine.get_banner(self.language)
+            _status, _error = self.interactive_accept_message(
+                {u'message': cut_message(message, 8192)}
+            )
+        except Exception:
+            if DEBUG:
+                import traceback
+                Logger().debug("%s" % traceback.format_exc())
+            _status, _error = False, TR(u"Connection closed by client")
+        Logger().info(u"Recording agreement of %s to %s@%s : %s" %
+                      (user,
+                       self.shared.get(u'target_login'),
+                       self.shared.get(u'target_device'),
+                       ["NO", "YES"][_status]))
+        if _status is False:
+            reason = u"Session recording rejected by user"
+            self.engine.set_session_status(result=False, diag=reason)
+        return _status, _error
+
     def load_video_recording(self, rec_path, user):
         Logger().info(u"Checking video")
 
@@ -1231,24 +1281,7 @@ class Sesman():
         #      (/!\ break the compatibility)
         data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
 
-        record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
-        if record_warning:
-            message = (u"Warning! Your remote session may be recorded "
-                       u"and kept in electronic format.")
-            try:
-                message = self.engine.get_banner(self.language)
-            except Exception:
-                pass
-            data_to_send[u'message'] = cut_message(message, 8192)
-
-            _status, _error = self.interactive_accept_message(data_to_send)
-            Logger().info(u"Recording agreement of %s to %s@%s : %s" %
-                          (user,
-                           self.shared.get(u'target_login'),
-                           self.shared.get(u'target_device'),
-                           ["NO", "YES"][_status]))
-        else:
-            self.send_data(data_to_send)
+        self.send_data(data_to_send)
 
         return _status, _error
 
@@ -1666,44 +1699,58 @@ class Sesman():
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
 
-            if _status:
-                # add "Year-Month-Day" subdirectory to record path
-                date_path = start_time.strftime("%Y-%m-%d")
-                rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
-                self.record_filebase = self.generate_record_filebase(
-                    session_id,
-                    user,
-                    uname,
-                    start_time
+        if _status:
+            record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
+            if record_warning and extra_info.is_recorded:
+                _status, _error = self.interactive_ask_recording(
+                    user
                 )
-                kv['record_filebase'] = self.record_filebase
-                kv['record_subdirectory'] = date_path
-                # TODO kv[u'record_path'] = LOCAL_TRACE_PATH_RDP
-                Logger().info(u"Session will be recorded in %s" %
-                              self.record_filebase)
-                try:
-                    _status, _error = self.create_record_path_directory(
+
+        if _status:
+            timeclose, _status, _error = self.check_deconnection_time(
+                selected_target
+            )
+            if timeclose is not None:
+                kv['timeclose'] = timeclose
+
+        if _status:
+            # add "Year-Month-Day" subdirectory to record path
+            date_path = start_time.strftime("%Y-%m-%d")
+            rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
+            self.record_filebase = self.generate_record_filebase(
+                session_id,
+                user,
+                uname,
+                start_time
+            )
+            kv['record_filebase'] = self.record_filebase
+            kv['record_subdirectory'] = date_path
+            # TODO kv[u'record_path'] = LOCAL_TRACE_PATH_RDP
+            Logger().info(u"Session will be recorded in %s" %
+                          self.record_filebase)
+            try:
+                _status, _error = self.create_record_path_directory(
+                    rec_path
+                )
+                if _status and extra_info.is_recorded:
+                    _status, _error = self.load_video_recording(
+                        rec_path, user
+                    )
+                if _status:
+                    _status, _error = self.load_session_log_redirection(
                         rec_path
                     )
-                    if _status and extra_info.is_recorded:
-                        _status, _error = self.load_video_recording(
-                            rec_path, user
-                        )
-                    if _status:
-                        _status, _error = self.load_session_log_redirection(
-                            rec_path
-                        )
-                    if _status:
-                        encryption_key, sign_key = self.get_trace_keys()
-                        kv['encryption_key'] = encryption_key
-                        kv['sign_key'] = sign_key
-                except Exception:
-                    import traceback
-                    Logger().debug("%s" % traceback.format_exc())
-                    _status, _error = False, TR(u"Connection closed by client")
+                if _status:
+                    encryption_key, sign_key = self.get_trace_keys()
+                    kv['encryption_key'] = encryption_key
+                    kv['sign_key'] = sign_key
+            except Exception:
+                import traceback
+                Logger().debug("%s" % traceback.format_exc())
+                _status, _error = False, TR(u"Connection closed by client")
 
-            if not _status:
-                self.send_data({u'rejected': _error})
+        if not _status:
+            self.send_data({u'rejected': _error})
 
         if _status:
             kv[u'session_id'] = session_id
@@ -1719,41 +1766,14 @@ class Sesman():
                                 u'pattern_notify': pattern_notify})
 
         if _status:
-            Logger().info(u"Checking timeframe")
-            self.infinite_connection = False
-            deconnection_time = self.engine.get_deconnection_time(
-                selected_target
-            )
-            if not deconnection_time:
-                Logger().error("No timeframe available, "
-                               "Timeframe has not been checked !")
-                _status = False
-            if (deconnection_time == u"-"
-                or deconnection_time[0:4] >= u"2034"):
-                deconnection_time = u"2034-12-31 23:59:59"
-                self.infinite_connection = True
-
-            now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
-            if (_status
-                and not self.infinite_connection
-                and now < deconnection_time):
-                # deconnection time to epoch
-                tt = datetime.strptime(
-                    deconnection_time, "%Y-%m-%d %H:%M:%S"
-                ).timetuple()
-                kv[u'timeclose'] = int(mktime(tt))
-                _status, _error = self.interactive_display_message({
-                    u'message': TR(u'session_closed_at %s') % deconnection_time
-                })
-
-        module = kv.get(u'proto_dest')
-        if module not in [u'RDP', u'VNC', u'INTERNAL']:
-            module = u'RDP'
-        if self.internal_target:
-            module = u'INTERNAL'
-        kv[u'module'] = module
-        # proto = u'RDP' if kv.get(u'proto_dest') != u'VNC' else u'VNC'
-        kv[u'mode_console'] = u"allow"
+            module = kv.get(u'proto_dest')
+            if module not in [u'RDP', u'VNC', u'INTERNAL']:
+                module = u'RDP'
+            if self.internal_target:
+                module = u'INTERNAL'
+            kv[u'module'] = module
+            # proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
+            kv[u'mode_console'] = u"allow"
 
         self.shared[u'recording_started'] = 'False'
 
