@@ -27,6 +27,7 @@
 #include "mod/rdp/channels/validator_params.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
+#include "utils/ip_address.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/RDP/capabilities/order.hpp"
 
@@ -56,7 +57,7 @@ struct ModRDPParams
     const char * target_user;
     const char * target_password;
     const char * target_host;
-    char client_address[46];
+    IpAddress client_address;
 
     bool enable_tls = true;
     bool enable_nla = true;
@@ -207,18 +208,14 @@ struct ModRDPParams
         : target_user(target_user)
         , target_password(target_password)
         , target_host(target_host)
-	, client_address { }
+	, client_address(client_address)
         , key_flags(key_flags)
         , font(font)
         , theme(theme)
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
         , close_box_extra_message_ref(close_box_extra_message_ref)
         , verbose(verbose)
-    {
-        std::strncpy(this->client_address,
-                     client_address,
-                     sizeof(this->client_address));
-    }
+    { }
 
     void log() const
     {

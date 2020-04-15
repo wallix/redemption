@@ -26,6 +26,7 @@
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/select.hpp"
+#include "utils/ip_address.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -164,7 +165,7 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, char const** error_result, char *localIPAddress)
+unique_fd ip_connect(const char* ip, int port, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -213,18 +214,8 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result, char *
     int nbretry = 3;
     int retry_delai_ms = 1000;
     bool const no_log = false;
-    unique_fd client_sck = connect_sck(sck,
-				       nbretry,
-				       retry_delai_ms,
-				       u.s,
-				       sizeof(u),
-				       text_target,
-				       no_log,
-				       error_result);
-
-    if (client_sck.is_open())
-        set_client_address(localIPAddress, client_sck.fd(), error_result); 
-    return client_sck;
+    
+    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
 }
 
 unique_fd local_connect(const char* sck_name, bool no_log)
@@ -417,13 +408,8 @@ FILE* popen_conntrack(const char* source_ip, int source_port, int target_port)
     return popen(cmd, "r");
 }
 
-void set_client_address(char *ipAddress, int fd, const char **error_result)
+bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_result)
 {
-    if (!ipAddress)
-        {
-            return;
-        }
-    
     struct sockaddr_storage addr;
     socklen_t namelen = sizeof(addr);
     
@@ -438,6 +424,7 @@ void set_client_address(char *ipAddress, int fd, const char **error_result)
                 errno,
                 strerror(errno));
             assert(false);
+            return false;
         }
     else
         {
@@ -446,19 +433,25 @@ void set_client_address(char *ipAddress, int fd, const char **error_result)
             res = (addr.ss_family == AF_INET) ?
                 inet_ntop(AF_INET,
                           &reinterpret_cast<sockaddr_in *>(&addr)->sin_addr,
-                          ipAddress,
+                          client_address.ip_addr,
                           INET_ADDRSTRLEN) :
                 inet_ntop(AF_INET6,
                           &reinterpret_cast<sockaddr_in6 *>(&addr)->sin6_addr,
-                          ipAddress,
+                          client_address.ip_addr,
                           INET6_ADDRSTRLEN);
             if (!res)
                 {
+                    if (error_result)
+                        {
+                            *error_result = "Cannot convert ip address";
+                        }
                     LOG(LOG_ERR,
                         "inet_ntop failed with errno = %d (%s)",
                         errno,
                         strerror(errno));
                     assert(false);
+                    return false;
                 }
         }
+    return true;
 }
