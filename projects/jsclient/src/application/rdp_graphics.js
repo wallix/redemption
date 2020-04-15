@@ -181,9 +181,15 @@ class RDPGraphics
             case 0x5a: this._transformPixels(x,y,w,h, (src) => color ^ src); break;
             case 0x5f: this._transformPixels(x,y,w,h, (src) => ~(color & src)); break;
             case 0xa0: this._transformPixels(x,y,w,h, (src) => color & src); break;
-            // case 0xaa: break;
+            case 0xa5: this._transformPixels(x,y,w,h, (src) => ~(color ^ src)); break;
+            case 0xaa: break;
             case 0xaf: this._transformPixels(x,y,w,h, (src) => color | ~src); break;
-            case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~target); break;
+            case 0xf0:
+                this.canvas.fillStyle = rgbToCss(color);
+                this.canvas.fillRect(x,y,w,h);
+                break;
+            case 0xfa: this._transformPixels(x,y,w,h, (src) => src | color); break;
+            case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~color); break;
             case 0xff:
                 this.canvas.fillStyle = "#fff";
                 this.canvas.fillRect(x,y,w,h);
