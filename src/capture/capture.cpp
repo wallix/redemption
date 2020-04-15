@@ -1495,6 +1495,14 @@ Capture::Capture(
 
         this->graphic_api = std::make_unique<Graphic>(this->mouse_info, this->gds, this->caps);
 
+        if (png_params.allow_rt_without_recording)
+            {
+                this->png_capture_real_time_obj =
+                    std::make_unique<PngCaptureRT>(capture_params,
+                                                   png_params,
+                                                   *this->gd_drawable,
+                                                   *this->video_cropper_real_time);
+            }
         if (capture_png) {
             if (png_params.real_time_image_capture) {
                 not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = this->gd_drawable;
@@ -1512,16 +1520,20 @@ Capture::Capture(
 
                     image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
                 }
-
-                this->png_capture_real_time_obj = std::make_unique<PngCaptureRT>(
-                    capture_params, png_params, *this->gd_drawable, *image_frame_api_real_time_ptr);
+                if (!this->png_capture_real_time_obj)
+                    {
+                        this->png_capture_real_time_obj =
+                            std::make_unique<PngCaptureRT>(capture_params,
+                                                           png_params,
+                                                           *this->gd_drawable,
+                                                           *image_frame_api_real_time_ptr);
+                    }
             }
             else {
                 this->png_capture_obj = std::make_unique<PngCapture>(
                     capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr);
             }
         }
-
         if (capture_wrm) {
             this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
                 capture_params, wrm_params, *this->gd_drawable);
