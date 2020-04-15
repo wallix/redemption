@@ -264,7 +264,7 @@ RdpNegociation::RdpNegociation(
     LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
         "RdpNegociation: enable_session_probe=%s", (this->enable_session_probe ? "yes" : "no"));
 
-    strncpy(this->clientAddr, mod_rdp_params.client_address.ip_addr, sizeof(this->clientAddr) - 1);
+    strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
 
     // Password is a multi-sz!
     // A multi-sz contains a sequence of null-terminated strings,
