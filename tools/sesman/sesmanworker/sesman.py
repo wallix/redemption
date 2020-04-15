@@ -440,9 +440,7 @@ class Sesman():
 
     def load_login_message(self):
         try:
-            msg_path = '/var/wab/etc/proxys/messages/login.%s' % self.language
-            with open(msg_path) as f:
-                self.login_message = f.read().decode('utf-8')
+            self.login_message = self.engine.get_warning_message(self.language)
         except Exception:
             pass
 
@@ -1240,9 +1238,7 @@ class Sesman():
             message = (u"Warning! Your remote session may be recorded "
                        u"and kept in electronic format.")
             try:
-                motd_p = '/var/wab/etc/proxys/messages/motd.%s' % self.language
-                with open(motd_p) as f:
-                    message = f.read().decode('utf-8')
+                message = self.engine.get_banner(self.language)
             except Exception:
                 pass
             data_to_send[u'message'] = cut_message(message, 8192)
