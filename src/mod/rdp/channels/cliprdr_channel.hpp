@@ -173,7 +173,7 @@ private:
             // FileContentsRequestedRange
             uint32_t first_file_size_requested;
             // FileContentsRequestedRange, FileContentsRange
-            uint64_t file_size_requested;
+            uint32_t file_size_requested;
             uint64_t file_size;
             // GetRange
             uint32_t response_size;
