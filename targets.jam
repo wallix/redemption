@@ -231,6 +231,7 @@ exe rdpproxy :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>src/utils/ip_address.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(EXE_DEPENDENCIES)
@@ -5804,6 +5805,7 @@ obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
+obj src/utils/ip_address.o : $(REDEMPTION_SRC_PATH)/utils/ip_address.cpp ;
 obj src/utils/parse_primary_drawing_orders.o : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
