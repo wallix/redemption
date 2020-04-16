@@ -203,6 +203,7 @@ private:
             GetRange,
             SyncRange,
             RequestedRange,
+            RequestedSyncRange,
             WaitingContinuationRange,
             WaitingValidator,
             Text,
@@ -239,6 +240,7 @@ private:
             void set_waiting_continuation_range();
             void set_waiting_validator();
             void set_sync_range();
+            void set_requested_sync_range();
             void set_range();
 
             class D;

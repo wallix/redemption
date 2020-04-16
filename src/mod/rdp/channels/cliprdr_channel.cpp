@@ -195,6 +195,12 @@ void ClipboardVirtualChannel::ClipCtx::NoLockData::set_sync_range()
     this->transfer_state = TransferState::SyncRange;
 }
 
+void ClipboardVirtualChannel::ClipCtx::NoLockData::set_requested_sync_range()
+{
+    assert(this->transfer_state == TransferState::SyncRange);
+    this->transfer_state = TransferState::RequestedSyncRange;
+}
+
 void ClipboardVirtualChannel::ClipCtx::NoLockData::set_range()
 {
     assert(this->transfer_state == TransferState::WaitingContinuationRange);
@@ -1257,7 +1263,13 @@ struct ClipboardVirtualChannel::D
 
                         bytes_view file_contents = file_rng.file_contents;
 
-                        if (file_rng.is_finalized()) {
+                        assert(file_rng.file_offset == file_contents.size());
+
+                        if (file_rng.is_finalized()
+                         || file_contents_request_pdu.position()
+                          + file_contents_request_pdu.cbRequested()
+                          <= file_contents.size()
+                        ) {
                             auto offset = std::min<uint64_t>(
                                 file_contents_request_pdu.position(),
                                 file_contents.size());
@@ -1269,21 +1281,19 @@ struct ClipboardVirtualChannel::D
                                 sender, safe_int(stream_id),
                                 file_contents.subarray(offset, len));
                         }
-                        else if (file_contents_request_pdu.position() <= file_rng.file_offset) {
-                            // TODO RequestedSyncRang state
+                        else if (file_contents_request_pdu.position() <= file_contents.size()) {
                             auto already_known
-                                = file_rng.file_offset - file_contents_request_pdu.position();
-                            uint32_t offset
-                                = file_contents_request_pdu.position() - already_known;
-                            if (file_contents_request_pdu.cbRequested() <= already_known) {
-                                send_response_data(
-                                    sender, safe_int(stream_id),
-                                    file_contents.subarray(
-                                        offset, file_contents_request_pdu.cbRequested()));
-                            }
-                            else {
-                                file_rng.file_offset = offset;
-                            }
+                                = file_contents.size() - file_contents_request_pdu.position();
+                            uint64_t offset
+                                = file_contents_request_pdu.position() + already_known;
+                            uint64_t len
+                                = file_contents_request_pdu.cbRequested() - already_known;
+
+                            clip.nolock_data.set_requested_sync_range();
+
+                            send_response_data(
+                                sender, safe_int(stream_id),
+                                file_contents.subarray(offset, len));
                         }
                         else {
                             LOG(LOG_ERR,
@@ -1335,6 +1345,8 @@ struct ClipboardVirtualChannel::D
 
                 case ClipCtx::TransferState::Size:
                 case ClipCtx::TransferState::RequestedRange:
+                case ClipCtx::TransferState::RequestedSyncRange:
+                case ClipCtx::TransferState::GetRange:
                 case ClipCtx::TransferState::Range:
                 case ClipCtx::TransferState::Text:
                     LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"

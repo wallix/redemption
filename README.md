@@ -38,7 +38,7 @@ Support of:
 # Dependencies
 
 To compile ReDemPtion you need the following packages:
-- libboost-tools-dev (contains bjam: software build tool) (https://github.com/boostorg/build)
+- libboost-tools-dev (contains bjam and b2: software build tool) (https://github.com/boostorg/build)
 - libboost-test-dev (unit-test dependency)
 - zlib1g-dev
 - libssl-dev
@@ -60,7 +60,7 @@ Submodule ($ `git submodule update --init`):
 
 On Ubuntu SNAPPY dev files are broken and `SNAPPY_MAJOR`, `SNAPPY_MINOR` and `SNAPPY_PATCHLEVEL` macros are not defined.
 The simplest way to fix that is editing `/usr/include/snappy-stubs-public.h` and define these above `SNAPPY_VERSION`
-like below (change values depending on your snappy package). 
+like below (change values depending on your snappy package).
 
 ```C
 #define SNAPPY_MAJOR 1
@@ -166,7 +166,7 @@ $ `bjam [variant=]{release|debug|san} [-s cxx_option=value] [target...]`
 
 - `release`: default
 - `debug`: debug mode
-- `san`: debug + enable sanitizers: asan, lsan, usan
+- `san`: debug + sanitizers (asan, lsan, usan)
 
 - `-s cxx_color`: default auto never always
 - `-s cxx_lto`: off on fat linker-plugin
