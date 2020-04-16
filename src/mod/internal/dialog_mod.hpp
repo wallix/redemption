@@ -145,10 +145,8 @@ private:
 protected:
     TimeBase& time_base;
     TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
 
 private:
-    GraphicEventPtr graphic_event;
     LanguageButton language_button;
     FlatDialog dialog_widget;
 
@@ -163,7 +161,6 @@ public:
         DialogModVariables vars,
         TimeBase& time_base,
         TimerContainer& timer_events_,
-        GraphicEventContainer& graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, ClientExecute & rail_client_execute,
@@ -186,6 +183,8 @@ public:
     {
         this->dialog_widget.move_size_widget(left, top, width, height);
     }
+
+    void init() override;
 
     void rdp_gdi_up_and_running(ScreenInfo &) override {}
 

@@ -321,6 +321,7 @@ exe rdpclient :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/capture/fdx_capture.o
+  <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -365,11 +366,13 @@ exe rdpclient :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
+  <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o

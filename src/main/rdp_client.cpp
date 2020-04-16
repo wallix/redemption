@@ -25,7 +25,7 @@
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/set_server_redirection_target.hpp"
-#include "front/client_front.hpp"
+#include "client_redemption/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"

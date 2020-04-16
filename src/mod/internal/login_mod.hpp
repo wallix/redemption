@@ -121,7 +121,7 @@ public:
 
     ~LoginMod() override;
 
-    void init();
+    void init() override;
 
     std::string module_name() override {return "LoginMod";}
 
