@@ -46,6 +46,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     DialogMod d(ini, time_base, timer_events_, front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", client_execute, global_font(), theme);
+    d.init();
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -70,6 +71,8 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
 
     DialogMod d(ini, time_base, timer_events_, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
         "Title", "Hello, World", "Cancel", client_execute, global_font(), theme);
+    d.init();
+
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -93,7 +96,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
 
     DialogMod d(ini, time_base, timer_events_, front.gd(), front, 800, 600, Rect(0, 0, 799, 599),
         "Title", "Hello, World", "Cancel", client_execute, global_font(), theme, CHALLENGE_ECHO);
-
+    d.init();
 
     bool ctrl_alt_del;
 
@@ -136,6 +139,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
 
     DialogMod d(ini, time_base, timer_events_, front.gd(), front, 1600, 1200, Rect(800, 600, 799, 599),
         "Title", "Hello, World", "Cancel", client_execute, global_font(), theme, CHALLENGE_ECHO);
+    d.init();
 
     bool ctrl_alt_del;
 
