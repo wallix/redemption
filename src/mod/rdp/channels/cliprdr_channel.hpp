@@ -127,8 +127,9 @@ private:
 
             bytes_view digest_as_av() const noexcept;
 
-        private:
             enum class Status : uint8_t;
+            operator Status () const { return this->status; }
+        private:
 
             SslSha256_Delayed sha256;
             uint8_t array[digest_len];

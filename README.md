@@ -143,7 +143,7 @@ Use `bjam --help` for more information.
 
 ## Special runtime variables (shell variable)
 
-- `REDEMPTION_FILTER_ERROR`: Only with `BOOST_STACKTRACE=1`. no backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
+- `REDEMPTION_FILTER_ERROR` (Only if `BOOST_STACKTRACE != 0`): No backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
 
 
 ## Setting build variables

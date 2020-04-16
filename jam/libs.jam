@@ -51,13 +51,20 @@ else
 
 
 ## boost_stacktrace {
-if $(BOOST_STACKTRACE) = 1
+if $(BOOST_STACKTRACE) != 0
 {
     # boost_stacktrace_addr2line
     # boost_stacktrace_backtrace
     # boost_stacktrace_basic
     # boost_stacktrace_noop
-    lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
+    if $(BOOST_STACKTRACE) = 1
+    {
+        lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
+    }
+    else
+    {
+        lib boost_stacktrace : : <name>boost_stacktrace_$(BOOST_STACKTRACE) ;
+    }
     REDEMPTION_BOOST_STACKTRACE_FLAGS = <linkflags>-rdynamic ;
     BOOST_STACKTRACE_CXXFLAGS = <define>BOOST_STACKTRACE_DYN_LINK ;
     BOOST_STACKTRACE_LIBFLAGS = <library>boost_stacktrace ;
