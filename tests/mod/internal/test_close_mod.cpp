@@ -44,6 +44,7 @@ int main()
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    CloseMod d("message", ini, time_base, timer_events_, graphic_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme, true);
+    CloseMod d("message", ini, time_base, timer_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme, true);
+    d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

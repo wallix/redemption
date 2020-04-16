@@ -60,7 +60,6 @@ CloseMod::CloseMod(
     CloseModVariables vars, 
     TimeBase& time_base,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool showtimer, bool back_selector)
@@ -88,22 +87,9 @@ CloseMod::CloseMod(
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
 {
     this->screen.set_wh(this->front_width, this->front_height);
-    if (this->rail_enabled) {
-        this->graphic_event = 
-        graphic_events_.create_action_executor(time_base)
-        .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (!this->rail_client_execute) {
-                this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height, this->font(),
-                    this->is_resizing_hosted_desktop_allowed());
 
-                this->dvc_manager.ready(this->front);
-            }
-        }));
-    }
     if (vars.get<cfg::globals::close_timeout>().count()) {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
             static_cast<unsigned>(vars.get<cfg::globals::close_timeout>().count()));
@@ -145,6 +131,17 @@ CloseMod::~CloseMod()
     this->vars.set<cfg::context::close_box_extra_message>("");
     this->screen.clear();
     this->rail_client_execute.reset(true);
+}
+
+void CloseMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+            *this, this->front_width, this->front_height, this->font(),
+            this->is_resizing_hosted_desktop_allowed());
+
+        this->dvc_manager.ready(this->front);
+    }
 }
 
 void CloseMod::notify(Widget* sender, notify_event_t event)
