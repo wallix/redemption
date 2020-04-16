@@ -157,10 +157,8 @@ private:
 protected:
     TimeBase& time_base;
     TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
 
 private:
-    GraphicEventPtr graphic_event;
     LanguageButton language_button;
 
     WidgetSelectorParams selector_params;
@@ -181,7 +179,6 @@ public:
     SelectorMod(
         Inifile & ini, SelectorModVariables vars, TimeBase& time_base,
         TimerContainer& timer_events_,
-        GraphicEventContainer& graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);
@@ -191,6 +188,8 @@ public:
         this->screen.clear();
         this->rail_client_execute.reset(true);
     }
+
+    void init() override;
 
     void acl_update() override;
 

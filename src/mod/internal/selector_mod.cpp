@@ -197,7 +197,6 @@ SelectorMod::SelectorMod(
     SelectorModVariables vars,
     TimeBase& time_base,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
@@ -213,7 +212,6 @@ SelectorMod::SelectorMod(
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
@@ -252,18 +250,6 @@ SelectorMod::SelectorMod(
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
     this->screen.set_wh(front_width, front_height);
-    if (this->rail_enabled) {
-        this->graphic_event = graphic_events_.create_action_executor(time_base)
-        .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (!this->rail_client_execute) {
-                this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height, this->font(),
-                    this->is_resizing_hosted_desktop_allowed());
-
-                this->dvc_manager.ready(this->front);
-            }
-        }));
-    }
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     this->screen.add_widget(&this->selector);
     this->screen.set_widget_focus(&this->selector, Widget::focus_reason_tabkey);
@@ -278,11 +264,19 @@ SelectorMod::SelectorMod(
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
+}
 
-    this->started_copy_past_event = graphic_events_.create_action_executor(time_base)
-    .on_action(jln::one_shot([this](gdi::GraphicApi&){
-        this->copy_paste.ready(this->front);
-    }));
+
+void SelectorMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+            *this, this->front_width, this->front_height, this->font(),
+            this->is_resizing_hosted_desktop_allowed());
+
+        this->dvc_manager.ready(this->front);
+    }
+    this->copy_paste.ready(this->front);
 }
 
 
