@@ -1058,8 +1058,7 @@ public:
             (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::png_limit>() : 0),
             true,
             this->client_info.remote_program,
-            ini.get<cfg::video::rt_display>(),
-            ini.get<cfg::video::allow_rt_without_recording>()
+            ini.get<cfg::video::rt_display>()
         };
         const bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
