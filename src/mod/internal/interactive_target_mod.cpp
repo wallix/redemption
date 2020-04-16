@@ -191,7 +191,6 @@ InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
     TimeBase& time_base, 
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme)
@@ -206,7 +205,6 @@ InteractiveTargetMod::InteractiveTargetMod(
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
@@ -226,46 +224,36 @@ InteractiveTargetMod::InteractiveTargetMod(
     , vars(vars)
 {
     this->screen.set_wh(width, height);
-    if (this->rail_enabled) {
-        this->graphic_event = graphic_events_.create_action_executor(time_base)
-        .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (!this->rail_client_execute) {
-                this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height, this->font(),
-                    this->is_resizing_hosted_desktop_allowed());
-
-                this->dvc_manager.ready(this->front);
-            }
-        }));
-    }
     this->screen.add_widget(&this->challenge);
     this->challenge.password_edit.set_text("");
-    this->screen.set_widget_focus(
-        &this->challenge, Widget::focus_reason_tabkey);
+    this->screen.set_widget_focus(&this->challenge, Widget::focus_reason_tabkey);
     if (this->ask_device) {
-        this->challenge.set_widget_focus(
-            &this->challenge.device_edit, Widget::focus_reason_tabkey);
+        this->challenge.set_widget_focus(&this->challenge.device_edit, Widget::focus_reason_tabkey);
     }
     else if (this->ask_login) {
-        this->challenge.set_widget_focus(
-            &this->challenge.login_edit, Widget::focus_reason_tabkey);
+        this->challenge.set_widget_focus(&this->challenge.login_edit, Widget::focus_reason_tabkey);
     }
     else {
-        this->challenge.set_widget_focus(
-            &this->challenge.password_edit, Widget::focus_reason_tabkey);
+        this->challenge.set_widget_focus(&this->challenge.password_edit, Widget::focus_reason_tabkey);
     }
     this->screen.rdp_input_invalidate(this->screen.get_rect());
-
-    this->started_copy_past_event = graphic_events_.create_action_executor(time_base)
-    .on_action(jln::one_shot([this](gdi::GraphicApi&){
-        this->copy_paste.ready(this->front);
-    }));
 }
 
 InteractiveTargetMod::~InteractiveTargetMod()
 {
     this->rail_client_execute.reset(true);
     this->screen.clear();
+}
+
+void InteractiveTargetMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+                    *this, this->front_width, this->front_height,
+                    this->font(), this->is_resizing_hosted_desktop_allowed());
+        this->dvc_manager.ready(this->front);
+    }
+    this->copy_paste.ready(this->front);
 }
 
 void InteractiveTargetMod::notify(Widget* sender, notify_event_t event)

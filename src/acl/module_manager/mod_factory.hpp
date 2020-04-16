@@ -345,7 +345,6 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
-            this->graphic_events_,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
