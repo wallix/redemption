@@ -299,7 +299,7 @@ private:
 
     void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Authentifier & authentifier, Front & front)
     {
-        if (mod_wrapper.old_target_module != next_state) {
+        if (mod_wrapper.current_mod != next_state) {
             front.must_be_stop_capture();
             authentifier.delete_remote_mod();
         }
@@ -396,7 +396,7 @@ private:
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
                     try {
-                        if (mod_wrapper.old_target_module != next_state) {
+                        if (mod_wrapper.current_mod != next_state) {
                             authentifier.new_remote_mod();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
@@ -433,7 +433,7 @@ private:
                     log_proxy::set_user(ini.get<cfg::globals::auth_user>().c_str());
 
                     try {
-                        if (mod_wrapper.old_target_module != next_state) {
+                        if (mod_wrapper.current_mod != next_state) {
                             authentifier.new_remote_mod();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
@@ -645,10 +645,10 @@ private:
             this->show_ultimatum("(mod tls pending)", ultimatum, now);
         }
 
-        if ((front.state == Front::FRONT_UP_AND_RUNNING and !graphic_events_.is_empty())) {
-            ultimatum = now;
-            this->show_ultimatum("(mod graphic event)", ultimatum, now);
-        }
+//        if ((front.state == Front::FRONT_UP_AND_RUNNING and !graphic_events_.is_empty())) {
+//            ultimatum = now;
+//            this->show_ultimatum("(mod graphic event)", ultimatum, now);
+//        }
 
         if (front_pending) {
             ultimatum = now;

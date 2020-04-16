@@ -532,7 +532,6 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
-            this->graphic_events_,
             username,
             "", // password
             this->graphics, this->front,

@@ -34,7 +34,7 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
 #include "cxx/cxx.hpp"
-#include "front/execute_events.hpp"
+#include "client_redemption/execute_events.hpp"
 #include "gdi/graphic_cmd_color.hpp"
 
 

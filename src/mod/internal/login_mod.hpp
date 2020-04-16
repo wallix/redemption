@@ -82,7 +82,6 @@ class LoginMod : public mod_api, public NotifyApi
 
     TimeBase& time_base;
     TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
 
     LanguageButton language_button;
     FlatLogin login;
@@ -114,7 +113,6 @@ public:
         LoginModVariables vars,
         TimeBase& time_base,
         TimerContainer& timer_events_,
-        GraphicEventContainer& graphic_events_,
         char const * username, char const * password,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
@@ -122,6 +120,8 @@ public:
     );
 
     ~LoginMod() override;
+
+    void init();
 
     std::string module_name() override {return "LoginMod";}
 

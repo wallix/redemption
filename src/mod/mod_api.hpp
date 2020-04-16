@@ -49,6 +49,8 @@ public:
 
     [[nodiscard]] virtual bool is_up_and_running() const { return false; }
 
+    virtual void init() {}
+
     // support auto-reconnection
     virtual bool is_auto_reconnectable() { return false; }
 

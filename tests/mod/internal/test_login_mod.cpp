@@ -31,7 +31,7 @@
 #include "test_only/core/font.hpp"
 
 
-RED_AUTO_TEST_CASE(TestDialogMod)
+RED_AUTO_TEST_CASE(TestLoginMod)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
@@ -39,7 +39,6 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     TimeBase time_base;
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
@@ -52,8 +51,9 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     RED_CHECK_NE(ini.get<cfg::globals::auth_user>(), "user");
     RED_CHECK_NE(ini.get<cfg::context::password>(), "pass");
 
-    LoginMod d(ini, time_base, timer_events_, graphic_events_, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, time_base, timer_events_, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    d.init();
 
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -61,17 +61,14 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     RED_CHECK_EQUAL(ini.get<cfg::context::password>(), "pass");
 }
 
-RED_AUTO_TEST_CASE(TestDialogMod2)
+RED_AUTO_TEST_CASE(TestLoginMod2)
 {
     ScreenInfo screen_info{2048, 1536, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     TimeBase time_base;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
@@ -83,8 +80,9 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
 
     ini.set<cfg::globals::authentication_timeout>(std::chrono::seconds(1));
 
-    LoginMod d(ini, time_base, timer_events_, graphic_events_, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, time_base, timer_events_, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
+    d.init();
 
     timeval tv = time_base.get_current_time();
     timer_events_.exec_timer(tv);

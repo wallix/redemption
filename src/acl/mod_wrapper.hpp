@@ -213,7 +213,7 @@ struct ModWrapper
 
 public:
     bool connected = false;
-    ModuleIndex old_target_module = MODULE_UNKNOWN;
+    ModuleIndex current_mod = MODULE_UNKNOWN;
 public:
 
     bool target_info_is_shown = false;
@@ -455,7 +455,7 @@ public:
     {
         LOG(LOG_INFO, "Setting new mod %s (was %s)",
             get_module_name(next_state),
-            get_module_name(this->old_target_module));
+            get_module_name(this->current_mod));
 
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -464,25 +464,19 @@ public:
             this->keymap.get_kevent();
         }
 
-        this->old_target_module = next_state;
+        this->current_mod = next_state;
         this->clear_osd_message();
 
-        this->set_mod(mod_pack.mod.get());
+        this->modi = mod_pack.mod.get();
 
         this->rail_module_host_mod_ptr = mod_pack.rail_module_host_ptr;
         this->rdpapi = mod_pack.rdpapi;
         this->winapi = mod_pack.winapi;
         this->connected = mod_pack.connected;
         this->show_osd_flag = mod_pack.enable_osd;
+        this->modi->init();
     }
 
-    // push_mod or replace_mod
-    void set_mod(mod_api* mod)
-    {
-        // TODO: check we are using no_mod, otherwise it is an error
-        this->modi = mod;
-    }
-    
     [[nodiscard]] SocketTransport* get_mod_transport() const noexcept
     {
         return this->psocket_transport;

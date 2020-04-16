@@ -53,7 +53,7 @@
 #include "capture/capture_params.hpp"
 #include "capture/wrm_capture.hpp"
 
-#include "front/execute_events.hpp"
+#include "client_redemption/execute_events.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
