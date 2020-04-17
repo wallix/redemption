@@ -1696,7 +1696,6 @@ class Sesman():
             )
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
-                self.send_data({u'rejected': TR(u'start_session_failed')})
 
         if _status:
             record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
