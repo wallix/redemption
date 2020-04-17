@@ -1000,6 +1000,9 @@ smart_video_cropping = option(0, 1, 2, default=0)
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
 
+# Allow Realtime display (4eyes) without recording of session
+allow_rt_without_recording = boolean(default=False)
+
 [crypto]
 
 #_hidden

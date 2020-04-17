@@ -1015,8 +1015,9 @@ public:
         bool const capture_pattern_checker = sesman.has_ocr_pattern_check();
 
         const CaptureFlags capture_flags = 
-            (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::capture_flags>() :
-            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none));
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
+            ini.get<cfg::video::capture_flags>() :
+            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none);
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
 
@@ -1055,7 +1056,8 @@ public:
             0, 0,
             ini.get<cfg::video::png_interval>(),
             100u,
-            (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::png_limit>() : 0),
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
+            ini.get<cfg::video::png_limit>() : 0,
             true,
             this->client_info.remote_program,
             ini.get<cfg::video::rt_display>()
