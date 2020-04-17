@@ -33,6 +33,7 @@
 #include "core/listen.hpp"
 #include "core/session_server.hpp"
 #include "utils/netutils.hpp"
+#include "utils/log_siem.hpp"
 
 #include "configs/config.hpp"
 
@@ -184,6 +185,10 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
     getpeername(0, &u.s, reinterpret_cast<socklen_t *>(&sock_len));
     strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
+    const int source_port = ntohs(u.s4.sin_port);
+    REDEMPTION_DIAGNOSTIC_POP
 
     union
     {
@@ -222,6 +227,16 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
     if (ini.get<cfg::debug::session>()){
         LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+    }
+
+    {
+        long long const sec = tvtime().tv_sec;
+        int const pid = getpid();
+        char psid[128];
+        std::sprintf(psid, "%lld%d", sec, pid);
+        psid[sizeof(psid)-1] = '\0';
+        ini.set_acl<cfg::context::psid>(psid);
+        log_proxy::init(psid, source_ip, source_port);
     }
 
     int nodelay = 1;

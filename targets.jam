@@ -98,6 +98,7 @@ exe rdpproxy :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -286,6 +287,7 @@ exe rdptproxy :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -376,6 +378,7 @@ exe vncclient :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -525,6 +528,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -619,6 +623,7 @@ test-run tests/acl/test_authentifier :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -713,6 +718,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -1952,6 +1958,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2051,6 +2058,7 @@ test-run tests/core/test_session :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2140,6 +2148,7 @@ test-run tests/core/test_session_server :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -4362,6 +4371,7 @@ obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
+obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
