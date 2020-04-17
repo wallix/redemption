@@ -40,6 +40,7 @@
 #include "utils/select.hpp"
 #include "utils/stream.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/log_siem.hpp"
 
 #include <array>
 
@@ -72,6 +73,7 @@ public:
         : ini(ini)
     {
         TRANSLATIONCONF.set_ini(&ini);
+        std::string disconnection_message_error;
 
         SessionReactor session_reactor;
 
@@ -468,18 +470,23 @@ public:
             front.disconnect();
         }
         catch (Error const& e) {
+            disconnection_message_error = e.errmsg();
             LOG(LOG_INFO, "Session::Session Init exception = %s!\n", e.errmsg());
         }
         catch (const std::exception & e) {
+            disconnection_message_error = e.what();
             LOG(LOG_ERR, "Session::Session exception (3) = %s!\n", e.what());
         }
         catch(...) {
+            disconnection_message_error = "Exception in Session::Session";
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
-        if (!this->ini.is_asked<cfg::globals::host>()
-        && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
-            LOG(LOG_INFO, "Session::Client Session Disconnected\n");
+        if (this->ini.get<cfg::globals::host>() != "127.0.0.1") {
+            if (!this->ini.is_asked<cfg::globals::host>()) {
+                LOG(LOG_INFO, "Session::Client Session Disconnected\n");
+            }
+            log_proxy::disconnection(disconnection_message_error.c_str());
         }
         front.must_be_stop_capture();
     }

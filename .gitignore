@@ -1,4 +1,6 @@
 #.gitignore
+/projects/jsclient/
+*.pyo
 
 # editor/IDE project
 *.kdev*

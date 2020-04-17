@@ -93,7 +93,7 @@ namespace
     }
 
     unique_fd connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr,
-                          socklen_t addr_len, const char * target)
+                          socklen_t addr_len, const char * target, char const** error_result = nullptr)
     {
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
@@ -107,7 +107,11 @@ namespace
 
             int const err =  errno;
             if (trial > 0){
-                LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", target, err, strerror(err));
+                char const* errmes = strerror(err);
+                if (error_result) {
+                    *error_result = errmes;
+                }
+                LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", target, err, errmes);
             }
 
             if ((err == EINPROGRESS) || (err == EALREADY)){
@@ -132,6 +136,9 @@ namespace
         }
 
         if (trial >= nbretry){
+            if (error_result) {
+                *error_result = "All trials done";
+            }
             LOG(LOG_ERR, "All trials done connecting to %s", target);
             return unique_fd{-1};
         }
@@ -141,24 +148,24 @@ namespace
     }
 } // namespace
 
-int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
+char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 {
     if (!inet_aton(ip, &s4_sin_addr)) {
         struct addrinfo * addr_info = nullptr;
         int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
         if (result) {
+            char const* error = (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result);
             LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)",
-                ip, (result == EAI_SYSTEM) ? errno : result
-                  , (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result));
-            return -1;
+                ip, (result == EAI_SYSTEM) ? errno : result, error);
+            return error;
         }
         s4_sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr; /*NOLINT*/
         freeaddrinfo(addr_info);
     }
-    return 0;
+    return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/)
+unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -182,15 +189,20 @@ unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_de
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
     u.s4.sin_port = htons(port);
     REDEMPTION_DIAGNOSTIC_POP
-    int status = resolve_ipv4_address(ip, u.s4.sin_addr);
-    if (status){
+    if(auto error = resolve_ipv4_address(ip, u.s4.sin_addr)) {
         LOG(LOG_ERR, "Connecting to %s:%d failed", ip, port);
+        if (error_result) {
+            *error_result = error;
+        }
         close(sck);
         return unique_fd{-1};
     }
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
+        if (error_result) {
+            *error_result = "Cannot set socket buffer size";
+        }
         LOG(LOG_ERR, "Connecting to %s:%d failed : cannot set socket buffer size", ip, port);
         close(sck);
         return unique_fd{-1};
@@ -200,7 +212,7 @@ unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_de
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
-    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target);
+    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, error_result);
 }
 
 

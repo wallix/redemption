@@ -59,7 +59,7 @@
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/translation.hpp"
-
+#include "utils/log_siem.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -557,6 +557,16 @@ public:
 
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
+        switch (target_module) {
+        case MODULE_INTERNAL_CLOSE:
+        case MODULE_INTERNAL_WIDGET_LOGIN:
+            log_proxy::set_user("");
+            break;
+        default:
+            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+            break;
+        }
+
         this->connected = false;
 
         if (this->old_target_module != target_module) {
@@ -1015,11 +1025,13 @@ public:
 private:
     unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
     {
-        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-        char ip_addr[256] {};
-        in_addr s4_sin_addr;
-        int status = resolve_ipv4_address(ip, s4_sin_addr);
-        if (status){
+        auto throw_error = [&](char const* error_message, int id){
+            LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
+                R"(target="%s" host="%s" port="%u" reason="%s")",
+                this->ini.get<cfg::globals::target_user>(),
+                this->ini.get<cfg::context::target_host>(),
+                this->ini.get<cfg::context::target_port>(),
+                error_message);
 
             ArcsightLogInfo arc_info;
             arc_info.name = "CONNECTION";
@@ -1032,24 +1044,21 @@ private:
             // TODO: actually this is DNS Failure or invalid address
             LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
             throw Error(ERR_SOCKET_CONNECT_FAILED);
+        };
+        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
+        char ip_addr[256] {};
+        in_addr s4_sin_addr;
+        if(auto error_message = resolve_ipv4_address(ip, s4_sin_addr)) {
+            throw_error(error_message, 1);
         }
 
         snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
-        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
+        char const* error_message = "";
+        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000, &error_message);
 
         if (!client_sck.is_open()){
-
-            ArcsightLogInfo arc_info;
-            arc_info.name = "CONNECTION";
-            arc_info.ApplicationProtocol = "xup";
-            arc_info.WallixBastionStatus = "FAIL";
-            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
-            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info, this->session_reactor.get_current_time());
-
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-            LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
+            throw_error(error_message, 2);
         }
 
         this->ini.set<cfg::context::auth_error_message>(TR(authentification_fail, language(this->ini)));

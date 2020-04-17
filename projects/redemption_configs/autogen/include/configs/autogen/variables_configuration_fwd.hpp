@@ -299,6 +299,7 @@ namespace cfg {
     };
 
     struct context {
+        struct psid;
         struct opt_bitrate;
         struct opt_framerate;
         struct opt_qscale;
