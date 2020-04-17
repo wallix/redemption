@@ -145,7 +145,7 @@ struct SesmanInterface
             && !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str());
 
         return ini.get<cfg::video::allow_rt_without_recording>() ?
-            (res == false) : (!ini.get<cfg::globals::is_rec>() && res);
+            res : (!ini.get<cfg::globals::is_rec>() && res);
     }
 
     void show_session_config()
