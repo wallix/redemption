@@ -1233,12 +1233,12 @@ class Sesman():
         return formated_encryption_key, formated_sign_key
 
     def interactive_ask_recording(self, user):
-        message =  (u"Warning! Your remote session may be recorded and"
-                    u"kept in electronic format.")
+        message = (u"Warning! Your remote session may be recorded and"
+                   u"kept in electronic format.")
         try:
             message = self.engine.get_banner(self.language)
             _status, _error = self.interactive_accept_message(
-                { u'message': cut_message(message, 8192) }
+                {u'message': cut_message(message, 8192)}
             )
         except Exception:
             if DEBUG:
