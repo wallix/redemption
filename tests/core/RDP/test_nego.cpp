@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE(TestNego)
     NullServerNotifier null_server_notifier;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    RdpNego nego(true, "test", true, "127.0.0.1", false, rand, timeobj, extra_message, lang);
+    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, timeobj, extra_message, lang);
     nego.set_identity(user, domain, pass, host);
 
     const bool server_cert_store = true;
