@@ -30,7 +30,14 @@
 #include <cstdio>
 
 class in_addr;
-struct IpAddress;
+
+struct IpAddress
+{
+    char ip_addr[46];
+    
+    IpAddress();
+    IpAddress(const char *ip_addr);
+};
 
 bool try_again(int errnum);
 

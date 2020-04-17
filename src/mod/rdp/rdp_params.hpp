@@ -27,7 +27,6 @@
 #include "mod/rdp/channels/validator_params.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
-#include "utils/ip_address.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/RDP/capabilities/order.hpp"
 

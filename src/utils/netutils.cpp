@@ -26,7 +26,6 @@
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/select.hpp"
-#include "utils/ip_address.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -41,7 +40,17 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <sys/un.h>
+#include <netinet/in.h>
 
+static_assert(sizeof(IpAddress::ip_addr) >= INET6_ADDRSTRLEN);
+
+IpAddress::IpAddress() : ip_addr { }
+{ }
+
+IpAddress::IpAddress(const char *ip_addr)
+{
+    std::strncpy(this->ip_addr, ip_addr, sizeof(this->ip_addr));
+}
 
 bool try_again(int errnum)
 {
@@ -423,7 +432,6 @@ bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_
                 "getsockname failed with errno = %d (%s)",
                 errno,
                 strerror(errno));
-            assert(false);
             return false;
         }
     else
@@ -449,7 +457,6 @@ bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_
                         "inet_ntop failed with errno = %d (%s)",
                         errno,
                         strerror(errno));
-                    assert(false);
                     return false;
                 }
         }
