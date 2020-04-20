@@ -978,7 +978,7 @@ public:
             return false;
         }
 
-        if (sesman.is_capture_necessary())
+        if (!sesman.is_capture_necessary())
         {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
