@@ -423,42 +423,36 @@ bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_
     socklen_t namelen = sizeof(addr);
     
     if (::getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &namelen) == -1)
+    {
+        if (error_result)
+        {
+            *error_result = "Cannot get local ip address";
+        }
+        LOG(LOG_ERR, "getsockname failed with errno = %d (%s)", errno, strerror(errno));
+        return false;
+    }
+    else
+    {
+        const char *res = nullptr; 
+        
+        res = (addr.ss_family == AF_INET) ?
+            inet_ntop(AF_INET,
+                      &reinterpret_cast<sockaddr_in *>(&addr)->sin_addr,
+                      client_address.ip_addr,
+                      INET_ADDRSTRLEN) :
+            inet_ntop(AF_INET6,
+                      &reinterpret_cast<sockaddr_in6 *>(&addr)->sin6_addr,
+                      client_address.ip_addr,
+                      INET6_ADDRSTRLEN);
+        if (!res)
         {
             if (error_result)
-                {
-                    *error_result = "Cannot get local ip address";
-                }
-            LOG(LOG_ERR,
-                "getsockname failed with errno = %d (%s)",
-                errno,
-                strerror(errno));
+            {
+                *error_result = "Cannot convert ip address";
+            }
+            LOG(LOG_ERR, "inet_ntop failed with errno = %d (%s)", errno, strerror(errno));
             return false;
         }
-    else
-        {
-            const char *res = nullptr; 
-                    
-            res = (addr.ss_family == AF_INET) ?
-                inet_ntop(AF_INET,
-                          &reinterpret_cast<sockaddr_in *>(&addr)->sin_addr,
-                          client_address.ip_addr,
-                          INET_ADDRSTRLEN) :
-                inet_ntop(AF_INET6,
-                          &reinterpret_cast<sockaddr_in6 *>(&addr)->sin6_addr,
-                          client_address.ip_addr,
-                          INET6_ADDRSTRLEN);
-            if (!res)
-                {
-                    if (error_result)
-                        {
-                            *error_result = "Cannot convert ip address";
-                        }
-                    LOG(LOG_ERR,
-                        "inet_ntop failed with errno = %d (%s)",
-                        errno,
-                        strerror(errno));
-                    return false;
-                }
-        }
+    }
     return true;
 }

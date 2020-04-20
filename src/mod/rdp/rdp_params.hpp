@@ -207,7 +207,7 @@ struct ModRDPParams
         : target_user(target_user)
         , target_password(target_password)
         , target_host(target_host)
-	, client_address(client_address)
+        , client_address(client_address)
         , key_flags(key_flags)
         , font(font)
         , theme(theme)

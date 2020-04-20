@@ -774,7 +774,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     IpAddress local_ip_address;
     
     switch (ini.get<cfg::mod_rdp::client_address_sent>())
-        {
+    {
         case ClientAddressSent::no_address :
             break;
         case ClientAddressSent::front :
@@ -783,12 +783,12 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
             break;
         case ClientAddressSent::proxy :
             if (!get_local_ip_address(local_ip_address, client_sck.fd()))
-                {
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
+            {
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
             mod_rdp_params.client_address = local_ip_address.ip_addr;
             break;
-        }
+    }
     
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,
