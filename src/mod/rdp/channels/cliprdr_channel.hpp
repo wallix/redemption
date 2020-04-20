@@ -166,8 +166,6 @@ private:
                 Wait,
                 Failure,
                 Success,
-                WaitValidatorBeforeTransfer,
-                TransferAfterValidation,
             };
             ValidatorState validator_state;
             uint64_t file_offset;
