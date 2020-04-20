@@ -56,5 +56,5 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
 
 FILE* popen_conntrack(const char* source_ip, int source_port, int target_port);
 
-[[no_discard]]
+[[nodiscard]]
 bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_result = nullptr);
