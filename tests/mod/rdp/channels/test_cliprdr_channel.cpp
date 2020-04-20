@@ -327,49 +327,49 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 }
 
 
-class TestResponseSender : public VirtualChannelDataSender
-{
-
-public:
-    StaticOutStream<1600> streams[13];
-    size_t total_in_stream = 0;
-
-
-    explicit TestResponseSender() = default;
-
-    void operator()(uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view chunk_data)
-            override
-    {
-        RED_CHECK(this->total_in_stream < std::size(this->streams));
-        this->streams[this->total_in_stream].out_copy_bytes(chunk_data);
-        this->total_in_stream++;
-    }
-
-    bytes_view back() const noexcept
-    {
-        return streams[this->total_in_stream-1].get_produced_bytes();
-    }
-};
-
-
-struct Buffer
-{
-    StaticOutStream<1600> out;
-
-    template<class F>
-    bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
-    {
-        using namespace RDPECLIP;
-        array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
-        f(this->out);
-        OutStream stream_header(av);
-        CliprdrHeader(msgType, msgFlags, out.get_offset() - av.size()).emit(stream_header);
-        return out.get_produced_bytes();
-    }
-};
-
 namespace
 {
+    class TestResponseSender : public VirtualChannelDataSender
+    {
+
+    public:
+        StaticOutStream<1600> streams[13];
+        size_t total_in_stream = 0;
+
+
+        explicit TestResponseSender() = default;
+
+        void operator()(uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view chunk_data)
+                override
+        {
+            RED_REQUIRE(this->total_in_stream < std::size(this->streams));
+            this->streams[this->total_in_stream].out_copy_bytes(chunk_data);
+            this->total_in_stream++;
+        }
+
+        bytes_view back() const noexcept
+        {
+            return streams[this->total_in_stream-1].get_produced_bytes();
+        }
+    };
+
+
+    struct Buffer
+    {
+        StaticOutStream<1600> out;
+
+        template<class F>
+        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
+        {
+            using namespace RDPECLIP;
+            array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
+            f(this->out);
+            OutStream stream_header(av);
+            CliprdrHeader(msgType, msgFlags, out.get_offset() - av.size()).emit(stream_header);
+            return out.get_produced_bytes();
+        }
+    };
+
     using namespace std::string_view_literals;
 
     inline constexpr auto fdx_basename = "sid,blabla.fdx"sv;

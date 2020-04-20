@@ -30,4 +30,5 @@ struct ValidatorParams
     bool log_if_accepted = false;
     bool enable_clipboard_text_up = false;
     bool enable_clipboard_text_down = false;
+    bool verify_before_download = false;
 };

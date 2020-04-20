@@ -4266,6 +4266,33 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <covfile>src/mod/rdp/channels/cliprdr_channel.cpp
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
 ;
+test-run tests/mod/rdp/channels/test_cliprdr_channel2 :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel2.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/capture/fdx_capture.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/report_error.o
+  <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  <library>tests/includes/test_only/transport/test_transport.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_send_and_receive.cpp
 :
@@ -6161,6 +6188,7 @@ alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
+alias test_cliprdr_channel2 : tests/mod/rdp/channels/test_cliprdr_channel2 ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
 alias test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task ;
@@ -6889,6 +6917,7 @@ alias tests/mod/null.norec :
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
   tests/mod/rdp/channels/test_cliprdr_channel
+  tests/mod/rdp/channels/test_cliprdr_channel2
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager
   tests/mod/rdp/channels/test_rdpdr_asynchronous_task
