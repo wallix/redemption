@@ -5,17 +5,18 @@ JAM_INCLUDE_PATH ?= jam ;
 #
 # # Setting build variables
 #
-# List with `sed -E 's/.*\[ setvar ([^ ]+).*\] ;/\1/;t;d' jam/defines.jam`
+# List with `bjam env_help`.
 #
-#   bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ....
+#     bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
 #
-# `BOOST_STACKTRACE=1`: (debug only) compile with `boost_stacktrace_backtrace`.
-# `REDEMPTION_FILTER_ERROR` (Only if `BOOST_STACKTRACE != 0`): No backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
-# `NO_FFMPEG=1`: disable ffmpeg
+# Or with a shell variable
+#
+#     export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
+#     bjam ....
 #
 # # Compilation
 #
-# (Extra `cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
+# (show `cxx_*` options with `bjam cxx_help`)
 #
 # Compile executables without tests (as user):
 #
@@ -103,6 +104,13 @@ actions gen_targets
 explicit targets.jam ;
 make targets.jam : : @gen_targets ;
 
+actions env_help { HELP_COLOR=$(jln_env_color) ./tools/bjam/bjam_help.sh project }
+explicit env_help ;
+make env_help : : @env_help ;
+
+actions cxx_help { HELP_COLOR=$(jln_env_color) ./tools/bjam/bjam_help.sh compiler }
+explicit cxx_help ;
+make cxx_help : : @cxx_help ;
 
 
 ## { test_web_video_mp4

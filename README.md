@@ -148,7 +148,7 @@ Use `bjam --help` for more information.
 
 ## Setting build variables
 
-List with `sed -E 's/.*\[ setvar ([^ ]+).*\] ;/\1/;t;d' jam/defines.jam`
+List with `bjam env_help`.
 
     bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
 
@@ -156,8 +156,6 @@ Or with a shell variable
 
     export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
     bjam ....
-
-List default values with `sed -E 's/^([A-Z_]+)_DEFAULT [^=]+= (.*) ;/\1 = \2/;t;d' jam/defines.jam`
 
 
 ## Modes and options
@@ -174,7 +172,7 @@ $ `bjam [variant=]{release|debug|san} [-s cxx_option=value] [target...]`
 - `-s cxx_stack_protector`: off on strong all
 - ...
 
-(`cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
+Complet list with `bjam cxx_help`.
 
 
 # Run ReDemPtion
