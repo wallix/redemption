@@ -432,6 +432,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #server_redirection_support = 0
 
+# Client Address to send to target (in InfoPacket)
+# min = 0, max = 2
+#   0: Send 0.0.0.0
+#   1: Send proxy client address or target connexion
+#   2: Send user client address of front connexion
+#_advanced
+#client_address_sent = 0
+
 # Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
 # value: 0 or 1
 #_advanced
