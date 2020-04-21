@@ -36,7 +36,6 @@ namespace cfg {
         struct enable_transparent_mode;
         struct certificate_password;
         struct is_rec;
-        struct movie_path;
         struct enable_bitmap_update;
         struct enable_close_box;
         struct enable_osd;

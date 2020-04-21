@@ -24,7 +24,6 @@ cfg::globals::trace_type ⇐ trace_type   [TraceType]
       2: Encryption enabled.
     When session records are encrypted, they can be read only by the WAB where they have been generated.
 cfg::globals::is_rec ⇐ is_rec   [bool]
-cfg::globals::movie_path ⇐ rec_path   [std::string]
 cfg::globals::unicode_keyboard_event_support ⇐ unicode_keyboard_event_support   [bool]
 cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds]
 
