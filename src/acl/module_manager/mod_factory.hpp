@@ -249,8 +249,7 @@ public:
     auto create_test_card_mod() -> ModPack
     {
         auto new_mod = new TestCardMod(
-            this->time_base,
-            this->graphic_events_,
+            this->mod_wrapper,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->glyphs,

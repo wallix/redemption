@@ -24,6 +24,7 @@
 
 #include "mod/mod_api.hpp"
 #include "core/session_reactor.hpp"
+#include "acl/gd_provider.hpp"
 
 class BGRPalette;
 class Font;
@@ -38,16 +39,17 @@ class TestCardMod : public mod_api
 
     bool unit_test;
 
-    GraphicEventPtr graphic_event;
+    GdProvider & gd_provider;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     TestCardMod(
-        TimeBase& time_base,
-        GraphicEventContainer & graphic_events_,
+        GdProvider & gd_provider,
         uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true); /*NOLINT*/
+
+    void init() override;
 
     std::string module_name() override {return "Test Card Mod";}
 

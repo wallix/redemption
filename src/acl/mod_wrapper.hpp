@@ -68,8 +68,9 @@
 #include "core/callback_forwarder.hpp"
 #include "acl/time_before_closing.hpp"
 #include "acl/mod_pack.hpp"
+#include "acl/gd_provider.hpp"
 
-struct ModWrapper
+struct ModWrapper : public GdProvider
 {
     struct InputFilter {
     };
@@ -240,7 +241,7 @@ public:
         this->remove_mod();
     }
 
-    gdi::GraphicApi & get_graphics() 
+    gdi::GraphicApi & get_graphics() override
     {
         return this->g;
     }

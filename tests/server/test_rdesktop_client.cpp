@@ -116,8 +116,9 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.is_up_and_running());
-    TestCardMod mod(time_base, graphic_events_, front.screen_info().width, front.screen_info().height, global_font());
-    mod.draw_event(front);
+    GdForwarder<FrontWrapper> gd_forwarder(front);
+    TestCardMod mod(gd_forwarder, front.screen_info().width, front.screen_info().height, global_font());
+    mod.init();
 
     // Uncomment the code block below to generate testing data.
     //sleep(5);

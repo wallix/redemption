@@ -3202,6 +3202,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3209,10 +3210,14 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/mod/internal/test_card_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
+  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/test_card_mod.cpp
   <covfile>src/mod/internal/test_card_mod.hpp
