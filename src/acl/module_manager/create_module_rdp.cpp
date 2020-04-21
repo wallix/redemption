@@ -238,7 +238,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_params.vc_params.disabled_features     = ini.get<cfg::mod_rdp::session_probe_disabled_features>();
 
-    mod_rdp_params.session_probe_params.vc_params.bestsafe_integration  = true;
+    mod_rdp_params.session_probe_params.vc_params.bestsafe_integration  = ini.get<cfg::mod_rdp::session_probe_bestsafe_integration>();
 
     mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
     mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
