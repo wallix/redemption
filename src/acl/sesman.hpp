@@ -140,10 +140,11 @@ struct SesmanInterface
 
     bool is_capture_necessary()
     {
-        return (!ini.get<cfg::globals::is_rec>()
-            && bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-            && !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-            && !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+        return (ini.get<cfg::video::allow_rt_without_recording>()
+            || ini.get<cfg::globals::is_rec>()
+            || !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+            || ::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
     }
 
     void show_session_config()
