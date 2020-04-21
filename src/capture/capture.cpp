@@ -1512,16 +1512,17 @@ Capture::Capture(
 
                     image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
                 }
-
-                this->png_capture_real_time_obj = std::make_unique<PngCaptureRT>(
-                    capture_params, png_params, *this->gd_drawable, *image_frame_api_real_time_ptr);
+                this->png_capture_real_time_obj =
+                    std::make_unique<PngCaptureRT>(capture_params,
+                                                   png_params,
+                                                   *this->gd_drawable,
+                                                   *image_frame_api_real_time_ptr);
             }
             else {
                 this->png_capture_obj = std::make_unique<PngCapture>(
                     capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr);
             }
         }
-
         if (capture_wrm) {
             this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
                 capture_params, wrm_params, *this->gd_drawable);

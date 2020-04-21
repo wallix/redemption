@@ -372,6 +372,13 @@ fast_path = boolean(default=True)
 #_hidden
 server_redirection_support = boolean(default=False)
 
+# Client Address to send to target (in InfoPacket)
+#   0: Send 0.0.0.0
+#   1: Send proxy client address or target connexion
+#   2: Send user client address of front connexion
+#_advanced
+client_address_sent = option(0, 1, 2, default=0)
+
 # Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
 #_advanced
 bogus_sc_net_size = boolean(default=True)
@@ -992,6 +999,9 @@ smart_video_cropping = option(0, 1, 2, default=0)
 # Note: Useless with mpv and mplayer.
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
+
+# Allow Realtime display (4eyes) without recording of session
+allow_rt_without_recording = boolean(default=False)
 
 [crypto]
 

@@ -325,6 +325,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, connpolicy::name{"server_redirection"}, set(false));
 
+        W.member(advanced_in_gui, no_sesman, L, type_<ClientAddressSent>(), "client_address_sent", desc { "Client Address to send to target (in InfoPacket)" }, set(ClientAddressSent::no_address));
+
         W.member(no_ini_no_gui, no_sesman, L, type_<RedirectionInfo>(), "redir_info");
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "load_balance_info", desc{"Load balancing information"});
 
@@ -597,6 +599,8 @@ void config_spec_definition(Writer && W)
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update.\nNote: Useless with mpv and mplayer."}, set(false));
+
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_rt_without_recording", desc { "Allow Realtime display (4eyes) without recording of session" }, set(false));
     });
 
     W.section("capture", [&]

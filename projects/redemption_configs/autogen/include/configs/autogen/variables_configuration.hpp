@@ -1442,6 +1442,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Client Address to send to target (in InfoPacket) <br/>
+    /// type: ClientAddressSent <br/>
+    /// value = static_cast<type>(0) <br/>
+    struct mod_rdp::client_address_sent {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "client_address_sent";
+        using type = ClientAddressSent;
+        using sesman_and_spec_type = ClientAddressSent;
+        using mapped_type = sesman_and_spec_type;
+        type value = static_cast<type>(0);
+    };
     /// type: RedirectionInfo <br/>
     /// value{} <br/>
     struct mod_rdp::redir_info {
@@ -3568,6 +3581,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Allow Realtime display (4eyes) without recording of session <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct video::allow_rt_without_recording {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "video";
+        static constexpr char const * name = "allow_rt_without_recording";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// basename without extension <br/>
     /// type: std::string <br/>
@@ -5547,6 +5573,7 @@ struct mod_rdp
 , cfg::mod_rdp::deny_channels
 , cfg::mod_rdp::fast_path
 , cfg::mod_rdp::server_redirection_support
+, cfg::mod_rdp::client_address_sent
 , cfg::mod_rdp::redir_info
 , cfg::mod_rdp::bogus_sc_net_size
 , cfg::mod_rdp::proxy_managed_drives
@@ -5699,6 +5726,7 @@ struct video
 , cfg::video::notimestamp
 , cfg::video::smart_video_cropping
 , cfg::video::play_video_with_corrupted_bitmap
+, cfg::video::allow_rt_without_recording
 { static constexpr bool is_section = true; };
 
 struct capture

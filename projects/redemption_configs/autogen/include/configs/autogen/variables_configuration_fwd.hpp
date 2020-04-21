@@ -118,6 +118,7 @@ namespace cfg {
         struct deny_channels;
         struct fast_path;
         struct server_redirection_support;
+        struct client_address_sent;
         struct redir_info;
         struct load_balance_info;
         struct bogus_sc_net_size;
@@ -284,6 +285,7 @@ namespace cfg {
         struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
+        struct allow_rt_without_recording;
     };
 
     struct capture {

@@ -765,10 +765,31 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
             ini.get<cfg::metrics::log_interval>());
     }
     // ================== End Metrics ======================
-
-    unique_fd client_sck =
-        connect_to_target_host(ini, time_base, report_message, trkeys::authentification_rdp_fail);
-
+    
+    unique_fd client_sck =        
+        connect_to_target_host(ini,
+                               time_base,
+                               report_message,
+                               trkeys::authentification_rdp_fail);   
+    IpAddress local_ip_address;
+    
+    switch (ini.get<cfg::mod_rdp::client_address_sent>())
+    {
+        case ClientAddressSent::no_address :
+            break;
+        case ClientAddressSent::front :
+            mod_rdp_params.client_address =
+                ini.get<cfg::globals::host>().c_str();
+            break;
+        case ClientAddressSent::proxy :
+            if (!get_local_ip_address(local_ip_address, client_sck.fd()))
+            {
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+            mod_rdp_params.client_address = local_ip_address.ip_addr;
+            break;
+    }
+    
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,
         ini,
