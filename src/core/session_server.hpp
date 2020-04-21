@@ -25,6 +25,7 @@
 #include "core/server.hpp"
 #include "core/session.hpp"
 #include "utils/netutils.hpp"
+#include "utils/difftimeval.hpp"
 
 class SessionServer : public Server
 {
@@ -56,6 +57,8 @@ public:
 
     Server_status start(int incoming_sck) override
     {
+        timeval start_time = tvtime();
+
         union
         {
             struct sockaddr s;
@@ -188,7 +191,8 @@ public:
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
-                    Session session(unique_fd{sck}, ini, this->cctx, this->rnd, this->fstat);
+                    Session session(unique_fd{sck}, start_time,
+                        ini, this->cctx, this->rnd, this->fstat);
 
                     // Suppress session file
                     unlink(session_file);

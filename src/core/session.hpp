@@ -88,11 +88,13 @@ class Session
     static const time_t select_timeout_tv_sec = 3;
 
 public:
-    Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
-        : ini(ini)
-        , perf_last_info_collect_time(0)
-        , perf_pid(getpid())
-        , perf_file(nullptr)
+    Session(
+        unique_fd sck, const timeval sck_start_time,
+        Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
+    : ini(ini)
+    , perf_last_info_collect_time(0)
+    , perf_pid(getpid())
+    , perf_file(nullptr)
     {
         TRANSLATIONCONF.set_ini(&ini);
         std::string disconnection_message_error;
@@ -107,7 +109,27 @@ public:
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
         time_t now = time(nullptr);
 
-        Front front(
+        struct SessionFront : Front
+        {
+            ModuleManager* mm_ptr = nullptr;
+            Inifile* ini_ptr = nullptr;
+
+            using Front::Front;
+
+            bool can_be_start_capture() override
+            {
+                if (this->mm_ptr && this->mm_ptr->target_connection_start_time != timeval{}) {
+                    auto elapsed = difftimeval(this->mm_ptr->target_connection_start_time, tvtime());
+                    this->ini_ptr->set_acl<cfg::globals::target_connection_time>(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
+                    this->mm_ptr->target_connection_start_time = {};
+                }
+
+                this->Front::can_be_start_capture();
+            }
+        };
+
+        SessionFront front(
             front_trans, rnd, this->ini, cctx, authentifier,
             this->ini.get<cfg::client::fast_path>(), mem3blt_support, now
         );
@@ -117,6 +139,9 @@ public:
         try {
             TimeSystem timeobj;
             ModuleManager mm(front, this->ini, rnd, timeobj);
+
+            front.mm_ptr = &mm;
+            front.ini_ptr = &ini;
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
@@ -414,6 +439,11 @@ public:
                                     ));
                                     authentifier.set_acl_serial(&acl->acl_serial);
                                     signal = BACK_EVENT_NEXT;
+
+                                    auto elapsed = difftimeval(sck_start_time, tvtime());
+                                    this->ini.set_acl<cfg::globals::front_connection_time>(
+                                        std::chrono::duration_cast<std::chrono::milliseconds>(
+                                            elapsed));
                                 }
                                 catch (...) {
                                     mm.invoke_close_box("No authentifier available",signal, now, authentifier, authentifier);

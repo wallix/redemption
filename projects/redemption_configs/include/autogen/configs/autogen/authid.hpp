@@ -5,6 +5,8 @@
 #pragma once
 
 enum authid_t : unsigned {
+    AUTHID_GLOBALS_FRONT_CONNECTION_TIME,
+    AUTHID_GLOBALS_TARGET_CONNECTION_TIME,
     AUTHID_GLOBALS_CAPTURE_CHUNK,
     AUTHID_GLOBALS_AUTH_USER,
     AUTHID_GLOBALS_HOST,
@@ -168,6 +170,8 @@ enum authid_t : unsigned {
     AUTHID_UNKNOWN
 };
 constexpr char const * const authstr[] = {
+    "front_connection_time",
+    "target_connection_time",
     "capture_chunk",
     "login",
     "ip_client",

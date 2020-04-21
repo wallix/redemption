@@ -168,6 +168,8 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
     int target_port = 0;
     char real_target_ip[256];
 
+    timeval start_time = tvtime();
+
     union
     {
         struct sockaddr s;
@@ -241,7 +243,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
     int nodelay = 1;
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&nodelay), sizeof(nodelay))){
-        Session session(unique_fd{sck}, ini, cctx, rnd, fstat);
+        Session session(unique_fd{sck}, start_time, ini, cctx, rnd, fstat);
 
         if (ini.get<cfg::debug::session>()){
             LOG(LOG_INFO, "Session::end of Session(%d)", sck);

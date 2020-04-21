@@ -8,6 +8,8 @@ enum authid_t : unsigned;
 
 namespace cfg {
     struct globals {
+        struct front_connection_time;
+        struct target_connection_time;
         struct capture_chunk;
         struct auth_user;
         struct host;

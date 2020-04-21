@@ -855,6 +855,8 @@ public:
 
     ClientExecute client_execute;
 
+    timeval target_connection_start_time {};
+
     int old_target_module = MODULE_UNKNOWN;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -902,6 +904,8 @@ public:
     }
 
     void remove_mod() override {
+        this->target_connection_start_time = {};
+
         if (this->internal_mod != &this->no_mod) {
             this->clear_osd_message();
 
@@ -1371,6 +1375,8 @@ public:
         case MODULE_RDP:
             {
                 this->end_session_warning.initialize();
+
+                this->target_connection_start_time = tvtime();
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
 
