@@ -154,19 +154,14 @@ private:
 protected:
     TimeBase& time_base;
     TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
 
 private:
-    GraphicEventPtr graphic_event;
-
-
     LanguageButton language_button;
     FlatWait wait_widget;
 
     WaitModVariables vars;
 
     TimerPtr timeout_timer;
-    GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 
@@ -175,13 +170,14 @@ public:
         WaitModVariables vars,
         TimeBase& time_base,
         TimerContainer& timer_events_,
-        GraphicEventContainer & graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect, const char * caption,
         const char * message, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, bool showform = false, uint32_t flag = 0);
 
     ~WaitMod() override;
+
+    void init() override;
 
     std::string module_name() override {return "WaitMod";}
 
