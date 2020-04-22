@@ -778,7 +778,8 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         connect_to_target_host(ini,
                                time_base,
                                report_message,
-                               trkeys::authentification_rdp_fail);
+                               trkeys::authentification_rdp_fail,
+                               ini.get<cfg::mod_rdp::enable_ipv6>());
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())

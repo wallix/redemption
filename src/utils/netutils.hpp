@@ -28,8 +28,10 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <memory>
 
 class in_addr;
+class addrinfo;
 
 struct IpAddress
 {
@@ -39,6 +41,13 @@ struct IpAddress
     IpAddress(const char *ip_addr);
 };
 
+struct AddrInfoDeleter
+{
+    void operator()(addrinfo *addr_info) noexcept;
+};
+
+using AddrInfoPtrWithDel_t = std::unique_ptr<addrinfo, AddrInfoDeleter>;
+
 bool try_again(int errnum);
 
 /// std::expected
@@ -46,6 +55,13 @@ bool try_again(int errnum);
 char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
 unique_fd ip_connect(const char* ip, int port, char const** error_result = nullptr);
+
+[[nodiscard]]
+AddrInfoPtrWithDel_t resolve_both_ipv4_and_ipv6_address
+(const char *ip, int port, const char **error_result = nullptr) noexcept;
+
+unique_fd ip_connect_both_ipv4_and_ipv6
+(const char* ip, int port, const char **error_result = nullptr) noexcept;
 
 unique_fd local_connect(const char* sck_name, bool no_log);
 
@@ -57,4 +73,6 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
 FILE* popen_conntrack(const char* source_ip, int source_port, int target_port);
 
 [[nodiscard]]
-bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_result = nullptr);
+bool get_local_ip_address(IpAddress& client_address,
+                          int fd,
+                          const char **error_result = nullptr) noexcept;

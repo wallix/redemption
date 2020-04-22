@@ -31,6 +31,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <charconv>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -50,6 +51,11 @@ IpAddress::IpAddress() : ip_addr { }
 IpAddress::IpAddress(const char *ip_addr)
 {
     std::strncpy(this->ip_addr, ip_addr, sizeof(this->ip_addr));
+}
+
+void AddrInfoDeleter::operator()(addrinfo *addr_info) noexcept
+{
+    freeaddrinfo(addr_info);
 }
 
 bool try_again(int errnum)
@@ -225,6 +231,130 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     bool const no_log = false;
     
     return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
+}
+
+AddrInfoPtrWithDel_t
+resolve_both_ipv4_and_ipv6_address(const char *ip,
+                                   int port,
+                                   const char **error_result) noexcept
+{
+    addrinfo *addr_info = nullptr;
+    addrinfo hints { };
+    char port_buf[16] { };
+
+    hints.ai_flags |= AI_V4MAPPED;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    std::to_chars(port_buf, port_buf + sizeof(port_buf), port);
+    if (int res = ::getaddrinfo(ip, port_buf, &hints, &addr_info))
+    {
+        const char *error = (res == EAI_SYSTEM) ?
+            strerror(errno) : gai_strerror(res);
+
+        if (error_result)
+        {
+            *error_result = error;
+        }
+        LOG(LOG_ERR,
+            "DNS resolution failed for %s with errno = %d (%s)",
+            ip,
+            (res == EAI_SYSTEM) ? errno : res, error);
+    }
+    return AddrInfoPtrWithDel_t(addr_info);
+}
+
+unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
+                                        int port,
+                                        const char **error_result) noexcept
+{
+    AddrInfoPtrWithDel_t addr_info_ptr =
+        resolve_both_ipv4_and_ipv6_address(ip, port, error_result);
+    
+    if (!addr_info_ptr)
+    {
+        return unique_fd { -1 };
+    }
+    
+    LOG(LOG_INFO, "connecting to %s:%d", ip, port);
+
+    // we will try connection several time
+    // the trial process include "socket opening, hostname resolution, etc
+    // because some problems can come from the local endpoint,
+    // not necessarily from the remote endpoint.
+
+    int sck = socket(addr_info_ptr->ai_family,
+                     addr_info_ptr->ai_socktype,
+                     addr_info_ptr->ai_protocol);
+
+    if (sck == -1)
+    {
+        if (error_result)
+        {
+            *error_result = "Cannot create socket";
+        }
+        LOG(LOG_ERR, "socket failed : %s", ::strerror(errno));
+        close(sck);
+        return unique_fd { -1 };
+    }
+    
+    /* set snd buffer to at least 32 Kbytes */
+    if (!set_snd_buffer(sck, 32768))
+    {
+        if (error_result)
+        {
+            *error_result = "Cannot set socket buffer size";
+        }
+        LOG(LOG_ERR,
+            "Connecting to %s:%d failed : cannot set socket buffer size",
+            ip,
+            port);
+        close(sck);
+        return unique_fd{-1};
+    }
+
+    char resolved_ip_addr[NI_MAXHOST] { };
+
+    if (int res = ::getnameinfo(addr_info_ptr->ai_addr,
+                                addr_info_ptr->ai_addrlen,
+                                resolved_ip_addr,
+                                sizeof(resolved_ip_addr),
+                                nullptr,
+                                0,
+                                NI_NUMERICHOST))
+    {        
+        if (error_result)
+        {
+            *error_result = "Cannot get ip address";
+        }
+        LOG(LOG_ERR,
+            "getnameinfo failed : %s",
+            (res == EAI_SYSTEM) ?
+            ::strerror(errno) : ::gai_strerror(res));
+        close(sck);
+        return unique_fd { -1 };
+    }
+    
+    char text_target[2048] { };
+    
+    snprintf(text_target,
+             sizeof(text_target),
+             "%s:%d (%s)",
+             ip,
+             port,
+             resolved_ip_addr);
+
+    int nbretry = 3;
+    int retry_delai_ms = 1000;
+    const bool no_log = false;
+    
+    return connect_sck(sck,
+                       nbretry,
+                       retry_delai_ms,
+                       *addr_info_ptr->ai_addr,
+                       addr_info_ptr->ai_addrlen,
+                       text_target,
+                       no_log,
+                       error_result);
 }
 
 unique_fd local_connect(const char* sck_name, bool no_log)
@@ -417,40 +547,47 @@ FILE* popen_conntrack(const char* source_ip, int source_port, int target_port)
     return popen(cmd, "r");
 }
 
-bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_result)
+bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_result) noexcept
 {
-    struct sockaddr_storage addr;
-    socklen_t namelen = sizeof(addr);
+    union
+    {
+        sockaddr s;
+        sockaddr_in s4;
+        sockaddr_in6 s6;
+        sockaddr_storage ss;
+    } u;
+    socklen_t namelen = sizeof(u);
     
-    if (::getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &namelen) == -1)
+    std::memset(&u, 0, namelen);
+    if (::getsockname(fd, &u.s, &namelen) == -1)
     {
         if (error_result)
         {
             *error_result = "Cannot get local ip address";
         }
-        LOG(LOG_ERR, "getsockname failed with errno = %d (%s)", errno, strerror(errno));
+        LOG(LOG_ERR, "getsockname failed with errno = %d (%s)",
+            errno,
+            strerror(errno));
         return false;
     }
     else
     {
-        const char *res = nullptr; 
-        
-        res = (addr.ss_family == AF_INET) ?
-            inet_ntop(AF_INET,
-                      &reinterpret_cast<sockaddr_in *>(&addr)->sin_addr,
-                      client_address.ip_addr,
-                      INET_ADDRSTRLEN) :
-            inet_ntop(AF_INET6,
-                      &reinterpret_cast<sockaddr_in6 *>(&addr)->sin6_addr,
-                      client_address.ip_addr,
-                      INET6_ADDRSTRLEN);
-        if (!res)
+        if (int res = ::getnameinfo(&u.s,
+                                    sizeof(u.ss),
+                                    client_address.ip_addr,
+                                    sizeof(client_address.ip_addr),
+                                    nullptr,
+                                    0,
+                                    NI_NUMERICHOST))
         {
             if (error_result)
             {
-                *error_result = "Cannot convert ip address";
+                *error_result = "Cannot get local ip address";
             }
-            LOG(LOG_ERR, "inet_ntop failed with errno = %d (%s)", errno, strerror(errno));
+            LOG(LOG_ERR,
+                "getnameinfo failed : %s",
+                (res == EAI_SYSTEM) ?
+                ::strerror(errno) : ::gai_strerror(res));
             return false;
         }
     }

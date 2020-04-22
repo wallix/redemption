@@ -196,6 +196,7 @@ namespace cfg {
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;
         struct force_smartcard_authentication;
+        struct enable_ipv6;
     };
 
     struct mod_vnc {
@@ -207,6 +208,7 @@ namespace cfg {
         struct server_is_macos;
         struct server_unix_alt;
         struct support_cursor_pseudo_encoding;
+        struct enable_ipv6;
     };
 
     struct metrics {

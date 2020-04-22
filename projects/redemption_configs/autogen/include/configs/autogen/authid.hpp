@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(198);
+constexpr authid_t MAX_AUTHID = authid_t(200);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -98,6 +98,7 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:enable_remotefx"_av,
     "mod_rdp:enable_restricted_admin_mode"_av,
     "mod_rdp:force_smartcard_authentication"_av,
+    "mod_rdp:enable_ipv6"_av,
     "clipboard_up"_av,
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,
@@ -105,6 +106,7 @@ constexpr array_view_const_char const authstr[] = {
     "mod_vnc:server_is_macos"_av,
     "mod_vnc:server_unix_alt"_av,
     "mod_vnc:support_cursor_pseudo_encoding"_av,
+    "mod_vnc:enable_ipv6"_av,
     "file_verification:enable_up"_av,
     "file_verification:enable_down"_av,
     "file_verification:clipboard_text_up"_av,
