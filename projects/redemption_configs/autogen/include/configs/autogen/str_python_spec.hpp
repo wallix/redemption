@@ -705,6 +705,10 @@ enable_restricted_admin_mode = boolean(default=False)
 #_hidden
 force_smartcard_authentication = boolean(default=False)
 
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -741,6 +745,10 @@ server_unix_alt = boolean(default=False)
 
 #_hidden
 support_cursor_pseudo_encoding = boolean(default=True)
+
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
 
 [metrics]
 

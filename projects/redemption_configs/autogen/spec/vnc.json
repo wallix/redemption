@@ -37,6 +37,12 @@
           "type": "bool",
           "default": true,
           "description": ""
+        },
+        {
+          "name": "enable_ipv6",
+          "type": "bool",
+          "default": false,
+          "description": "Enable target connection on ipv6"
         }
       ]
     }

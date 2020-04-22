@@ -827,6 +827,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #force_smartcard_authentication = 0
 
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -869,6 +874,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #support_cursor_pseudo_encoding = 1
+
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
 
 [metrics]
 

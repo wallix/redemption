@@ -1260,6 +1260,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "enable_ipv6")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::enable_ipv6&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1327,6 +1335,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_vnc::support_cursor_pseudo_encoding&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_ipv6")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_vnc::enable_ipv6&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
