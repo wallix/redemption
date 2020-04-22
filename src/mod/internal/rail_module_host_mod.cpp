@@ -81,7 +81,6 @@ RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
     TimeBase& time_base,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
@@ -97,7 +96,6 @@ RailModuleHostMod::RailModuleHostMod(
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , rail_module_host(drawable, widget_rect.x, widget_rect.y,
                        widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
@@ -105,33 +103,25 @@ RailModuleHostMod::RailModuleHostMod(
     , vars(vars)
     , can_resize_hosted_desktop(can_resize_hosted_desktop)
 {
-    {
-        this->screen.set_wh(width, height);
-        if (this->rail_enabled) {
-            this->graphic_event = graphic_events_.create_action_executor(time_base)
-            .on_action(jln::one_shot([this](gdi::GraphicApi&){
-                if (!this->rail_client_execute) {
-                    this->rail_client_execute.ready(
-                        *this, this->front_width, this->front_height, this->font(),
-                        this->is_resizing_hosted_desktop_allowed());
-
-                    this->dvc_manager.ready(this->front);
-                }
-            }));
-        }
-    }
-
+    this->screen.set_wh(width, height);
     this->screen.move_xy(widget_rect.x, widget_rect.y);
-
     this->screen.add_widget(&this->rail_module_host);
-
-    this->screen.set_widget_focus(&this->rail_module_host,
-        Widget::focus_reason_tabkey);
-
+    this->screen.set_widget_focus(&this->rail_module_host, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->vars.set<cfg::context::rail_module_host_mod_is_active>(true);
 }
+
+void RailModuleHostMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+                    *this, this->front_width, this->front_height,
+                    this->font(), this->is_resizing_hosted_desktop_allowed());
+        this->dvc_manager.ready(this->front);
+    }
+}
+
 
 RailModuleHost& RailModuleHostMod::get_module_host()
 {

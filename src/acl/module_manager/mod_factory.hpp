@@ -189,7 +189,7 @@ public:
             return mod_pack;
         }
         default:
-            LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", target_module);
+            LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", unsigned(target_module));
             throw Error(ERR_SESSION_UNKNOWN_BACKEND);
         }
     }

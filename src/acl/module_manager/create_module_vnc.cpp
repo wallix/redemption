@@ -328,7 +328,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         ini,
         time_base,
         timer_events_,
-        graphic_events_,
         drawable,
         front,
         client_info.screen_info.width,
@@ -341,5 +340,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         client_info.cs_monitor,
         false
     );
+    host_mod->init();
     return ModPack{host_mod, nullptr, nullptr, host_mod};
 }

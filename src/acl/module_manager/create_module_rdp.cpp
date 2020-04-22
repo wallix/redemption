@@ -883,7 +883,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         ini,
         time_base,
         timer_events_,
-        graphic_events_,
         drawable,
         front,
         client_info.screen_info.width,
@@ -896,6 +895,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         client_info.cs_monitor,
         !ini.get<cfg::globals::is_rec>()
     );
+    host_mod->init();
 
     ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod};
     return mod_pack;
