@@ -1,3 +1,9 @@
+redemption (8.0.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Update Session Probe.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 22 Apr 2020 16:02:47 +0200
+
 redemption (8.0.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix encoding characters through copy/paste with VNC.
