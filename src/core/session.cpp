@@ -601,7 +601,6 @@ private:
                 TopFdContainer & fd_events_,
                 GraphicTimerContainer & graphic_timer_events_,
                 GraphicFdContainer & graphic_fd_events_,
-                const GraphicEventContainer & graphic_events_,
                 bool front_pending,
                 bool mod_pending)
     {
@@ -644,11 +643,6 @@ private:
             ultimatum = now;
             this->show_ultimatum("(mod tls pending)", ultimatum, now);
         }
-
-//        if ((front.state == Front::FRONT_UP_AND_RUNNING and !graphic_events_.is_empty())) {
-//            ultimatum = now;
-//            this->show_ultimatum("(mod graphic event)", ultimatum, now);
-//        }
 
         if (front_pending) {
             ultimatum = now;
@@ -832,7 +826,6 @@ public:
                             fd_events_,
                             graphic_timer_events_,
                             graphic_fd_events_,
-                            graphic_events_,
                             front_trans.has_tls_pending_data(),
                             false
                             );
@@ -1024,7 +1017,6 @@ public:
                             fd_events_,
                             graphic_timer_events_,
                             graphic_fd_events_,
-                            graphic_events_,
                             front_trans.has_tls_pending_data(),
                             mod_data_pending
                             );
@@ -1298,7 +1290,6 @@ public:
                             fd_events_,
                             graphic_timer_events_,
                             graphic_fd_events_,
-                            graphic_events_,
                             front_trans.has_tls_pending_data(),
                             false
                             );

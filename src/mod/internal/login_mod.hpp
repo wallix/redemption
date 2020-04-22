@@ -98,10 +98,7 @@ class LoginMod : public mod_api, public NotifyApi
     int old_mouse_x = 0;
     int old_mouse_y = 0;
 
-    GraphicEventPtr graphic_event;
-
     TimerPtr timeout_timer;
-    GraphicEventPtr started_copy_past_event;
 
 private:
     void cancel_double_click_detection();
