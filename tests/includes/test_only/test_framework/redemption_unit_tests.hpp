@@ -28,16 +28,31 @@ Author(s): Jonathan Poelen
 
 namespace ut
 {
-    struct flagged_bytes_view : bytes_view
+    enum class PatternView : char
     {
-        char flag;
-        size_t min_len;
+        deduced = 'a',
+        ascii = 'c',
+        ascii_nl = 'C',
+        utf8 = 's',
+        utf8_nl = 'S',
+        hex = 'b',
+        dump = 'd',
     };
 
-    inline flagged_bytes_view ascii(bytes_view v, size_t min_len = 0) { return {v, 'c', min_len}; }
-    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's', 0}; }
-    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b', 0}; }
-    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd', 0}; }
+    struct flagged_bytes_view : bytes_view
+    {
+        PatternView pattern = PatternView::deduced;
+        size_t min_len = 0;
+    };
+
+    inline flagged_bytes_view dump(bytes_view v) { return {v, PatternView::dump, 0}; }
+    inline flagged_bytes_view hex(bytes_view v) { return {v, PatternView::hex, 0}; }
+    inline flagged_bytes_view utf8(bytes_view v) { return {v, PatternView::utf8, 0}; }
+    inline flagged_bytes_view ascii(bytes_view v, size_t min_len = 0)
+    { return {v, PatternView::ascii, min_len}; }
+
+    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
+    void put_view(size_t pos, std::ostream& out, flagged_bytes_view x);
 } // namespace ut
 
 namespace redemption_unit_test__

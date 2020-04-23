@@ -290,8 +290,6 @@ namespace redemption_unit_test__
         friend std::ostream & operator<<(std::ostream & out, Put2Mem const & x);
     };
 
-    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
-
     boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
     boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
     boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
@@ -498,11 +496,11 @@ struct name<T, U, std::enable_if_t<                                       \
             char flag = 'a';                                              \
             std::size_t min_len = 0;                                      \
             if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {  \
-               flag = lhs.flag;                                           \
+               flag = char(lhs.flag);                                     \
                min_len = lhs.min_len;                                     \
             }                                                             \
             if constexpr (std::is_same_v<U, ::ut::flagged_bytes_view>) {  \
-               flag = rhs.flag;                                           \
+               flag = char(rhs.flag);                                     \
                min_len = rhs.min_len;                                     \
             }                                                             \
             return ::redemption_unit_test__                               \
