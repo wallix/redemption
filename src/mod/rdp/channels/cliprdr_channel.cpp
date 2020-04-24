@@ -55,6 +55,19 @@ namespace
     };
 
     using Direction = ClipDirection;
+
+    constexpr uint32_t send_first_last_flags
+        = CHANNELS::CHANNEL_FLAG_FIRST
+        | CHANNELS::CHANNEL_FLAG_LAST
+        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+
+    constexpr uint32_t send_first_flags
+        = CHANNELS::CHANNEL_FLAG_FIRST
+        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+
+    constexpr uint32_t send_last_flags
+        = CHANNELS::CHANNEL_FLAG_LAST
+        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 }
 
 enum class ClipboardVirtualChannel::ClipCtx::Sig::Status : uint8_t
@@ -195,7 +208,8 @@ void ClipboardVirtualChannel::ClipCtx::NoLockData::set_sync_range()
 {
     assert(
         this->transfer_state == TransferState::GetRange
-     || this->transfer_state == TransferState::RequestedSyncRange);
+     || this->transfer_state == TransferState::RequestedSyncRange
+     || this->transfer_state == TransferState::WaitingValidator);
     this->transfer_state = TransferState::SyncRange;
 }
 
@@ -593,7 +607,7 @@ namespace
         for (; remaining > max_len; remaining -= max_len, offset += max_len) {
             sender(total_pkt_size, 0, get_view(offset, max_len));
         }
-        sender(total_pkt_size, CHANNELS::CHANNEL_FLAG_LAST, get_view(offset, remaining));
+        sender(total_pkt_size, send_last_flags, get_view(offset, remaining));
     }
 
     void filecontents_response_zerodata(
@@ -1594,7 +1608,7 @@ struct ClipboardVirtualChannel::D
             // TODO bad sender
             sender(
                 out_stream.get_produced_bytes().size(),
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                send_first_last_flags,
                 out_stream.get_produced_bytes());
         };
 
@@ -1616,7 +1630,7 @@ struct ClipboardVirtualChannel::D
             file_rng.response_size = file_rng.file_contents.size() + out_stream.get_offset();
             sender(
                 file_rng.response_size,
-                CHANNELS::CHANNEL_FLAG_FIRST,
+                send_first_flags,
                 out_stream.get_produced_bytes());
         };
 
@@ -1769,7 +1783,7 @@ struct ClipboardVirtualChannel::D
                                 out_stream.out_copy_bytes(data);
                                 sender(
                                     out_stream.get_offset(),
-                                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                                    send_first_last_flags,
                                     out_stream.get_produced_bytes());
                             }
                             else {
@@ -1777,7 +1791,7 @@ struct ClipboardVirtualChannel::D
                                 out_stream.out_copy_bytes(data.first(out_stream.tailroom()));
                                 sender(
                                     total,
-                                    CHANNELS::CHANNEL_FLAG_FIRST,
+                                    send_first_flags,
                                     out_stream.get_produced_bytes());
                                 send_until_last2(
                                     sender,
@@ -2438,7 +2452,7 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            auto* sender = this->to_server_sender_ptr();
+            auto* sender = this->to_client_sender_ptr();
             if (sender) {
                 send_message_to_client = D().filecontents_request(
                     *this, this->client_ctx, flags, chunk.remaining_bytes(), *sender);
@@ -2447,7 +2461,7 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            auto* sender = this->to_server_sender_ptr();
+            auto* sender = this->to_client_sender_ptr();
             if (sender) {
                 send_message_to_client = D().filecontents_response(
                     *this, header, this->server_ctx, flags, chunk.remaining_bytes(), *sender);
@@ -2526,7 +2540,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            auto* sender = this->to_client_sender_ptr();
+            auto* sender = this->to_server_sender_ptr();
             if (sender) {
                 send_message_to_server = D().filecontents_request(
                     *this, this->server_ctx, flags, chunk.remaining_bytes(), *sender);
@@ -2535,7 +2549,7 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-            auto* sender = this->to_client_sender_ptr();
+            auto* sender = this->to_server_sender_ptr();
             if (sender) {
                 send_message_to_server = D().filecontents_response(
                     *this, header, this->client_ctx, flags, chunk.remaining_bytes(), *sender);
@@ -2680,6 +2694,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                 case ClipCtx::TransferState::WaitingValidator:
                     if (clip.nolock_data.data.file_validator_id == file_validator_id) {
                         auto& file_rng = clip.nolock_data.data;
+                        process_file(D().to_direction(*this, clip), file_rng.file_name);
                         auto& sender = D().get_sender(*this, clip);
                         if (is_accepted) {
                             filecontents_response_data(

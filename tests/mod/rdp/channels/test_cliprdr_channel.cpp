@@ -575,17 +575,19 @@ namespace
         }
     };
 
-#define TEST_PROCESS TEST_ITEM(Msg::Missing{}), [&]
-#define TEST_ITEM(...) [&](Msg const& msg_) { \
-    RED_CHECK(Msg(__VA_ARGS__) == msg_);      \
-    return true; \
+#define TEST_PROCESS TEST_BUF(Msg::Missing{}), [&]
+
+#define TEST_BUF(...) [&](Msg const& msg_) { \
+    RED_CHECK(Msg(__VA_ARGS__) == msg_);     \
+    return true;                             \
 }
-#define TEST_ITEM_IF(cond, ...) [&](Msg const& msg_) { \
-    if (cond) {                                        \
-        RED_CHECK(Msg(__VA_ARGS__) == msg_);           \
-        return true;                                   \
-    }                                                  \
-    return false;                                      \
+
+#define TEST_BUF_IF(cond, ...) [&](Msg const& msg_) { \
+    if (cond) {                                       \
+        RED_CHECK(Msg(__VA_ARGS__) == msg_);          \
+        return true;                                  \
+    }                                                 \
+    return false;                                     \
 }
 
 
@@ -854,7 +856,6 @@ namespace
     void test_name##__case(type_value)
 
 using D = ClipDataTest;
-using namespace std::string_view_literals;
 
 RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d, {
     D{true, false, true},
@@ -893,12 +894,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
 
         msg_comparator.run(
             TEST_PROCESS { channel_ctx->process_server_message(av); },
-            TEST_ITEM(Msg::ToFront{24, first_last_flags, capabilities_msg})
+            TEST_BUF(Msg::ToFront{24, first_last_flags, capabilities_msg})
         );
 
         msg_comparator.run(
             TEST_PROCESS { channel_ctx->process_client_message(av); },
-            TEST_ITEM(Msg::ToMod{24, first_last_flags, capabilities_msg})
+            TEST_BUF(Msg::ToMod{24, first_last_flags, capabilities_msg})
         );
     }
 
@@ -911,7 +912,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
                 std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
             channel_ctx->process_client_message(out.get_produced_bytes());
         },
-        TEST_ITEM(Msg::ToMod{54, first_last_flags,
+        TEST_BUF(Msg::ToMod{54, first_last_flags,
             "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
             "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
             "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
@@ -928,7 +929,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"_av})
     );
 
@@ -992,10 +993,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
             });
             channel_ctx->process_client_message(av);
         },
-        TEST_ITEM(Msg::Log6{
+        TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=FileGroupDescriptorW(49262) size=596"_av}),
-        TEST_ITEM(Msg::ToMod{604, first_last_flags, msg_files})
+        TEST_BUF(Msg::ToMod{604, first_last_flags, msg_files})
     );
 
     msg_comparator.run(
@@ -1007,7 +1008,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{36, first_last_flags,
+        TEST_BUF(Msg::ToFront{36, first_last_flags,
             "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
             "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00" //................ !
             "\x00\x00\x00\x00"_av})
@@ -1025,19 +1026,19 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
             });
             channel_ctx->process_client_message(av);
         },
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up"
             "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x10\x00\x00\x00\x01"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{"data_abcdefg"_av}),
-        TEST_ITEM(Msg::Log6{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"data_abcdefg"_av}),
+        TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION"
             " file_name=abc size=12 sha256="
             "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av}),
-        TEST_ITEM(Msg::ToMod{24, 19,
+        TEST_BUF(Msg::ToMod{24, first_last_flags,
             "\t\x00\x01\x00\x10\x00\x00\x00\x00\x00\x00\x00""data_abcdefg"_av})
     );
 
@@ -1057,7 +1058,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
                 clipboard_virtual_channel.DLP_antivirus_check_channels_files();
                 RED_TEST(validator_transport.buf_reader.size() == 0);
             },
-            TEST_ITEM(Msg::Log6{
+            TEST_BUF(Msg::Log6{
                 "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av})
         );
     }
@@ -1077,7 +1078,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
                 std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr}});
             channel_ctx->process_client_message(out.get_produced_bytes());
         },
-        TEST_ITEM(Msg::ToMod{14, first_last_flags,
+        TEST_BUF(Msg::ToMod{14, first_last_flags,
             "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
             ""_av})
     );
@@ -1092,7 +1093,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
             ""_av})
     );
@@ -1106,22 +1107,22 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
             });
             channel_ctx->process_client_message(av);
         },
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up"
             "\x00\x01\x00\x13microsoft_locale_id\x00\x01""0"_av
         }),
-        TEST_ITEM(Msg::Log6{
+        TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
             " format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av
         }),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x07\x00\x00\x00\x02"_av
         }),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{"abc"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"abc"_av}),
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av
         }),
-        TEST_ITEM(Msg::ToMod{14, first_last_flags,
+        TEST_BUF(Msg::ToMod{14, first_last_flags,
             "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av
             ""_av})
     );
@@ -1142,7 +1143,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
                 clipboard_virtual_channel.DLP_antivirus_check_channels_files();
                 RED_TEST(validator_transport.buf_reader.size() == 0);
             },
-            TEST_ITEM(Msg::Log6{
+            TEST_BUF(Msg::Log6{
                 "TEXT_VERIFICATION direction=UP copy_id=2 status=ok"_av})
         );
     }
@@ -1213,12 +1214,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
 
         msg_comparator.run(
             TEST_PROCESS { channel_ctx->process_server_message(av); },
-            TEST_ITEM(Msg::ToFront{24, first_last_flags, capabilities_msg})
+            TEST_BUF(Msg::ToFront{24, first_last_flags, capabilities_msg})
         );
 
         msg_comparator.run(
             TEST_PROCESS { channel_ctx->process_client_message(av); },
-            TEST_ITEM(Msg::ToMod{24, first_last_flags, capabilities_msg})
+            TEST_BUF(Msg::ToMod{24, first_last_flags, capabilities_msg})
         );
     }
 
@@ -1232,7 +1233,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
 
             channel_ctx->process_client_message(out.get_produced_bytes());
         },
-        TEST_ITEM(Msg::ToMod{54, first_last_flags,
+        TEST_BUF(Msg::ToMod{54, first_last_flags,
             "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
             "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
             "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
@@ -1248,7 +1249,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x0A\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00"_av})
     );
 
@@ -1260,7 +1261,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"_av})
     );
 
@@ -1272,7 +1273,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"_av})
     );
 
@@ -1284,7 +1285,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"_av})
     );
 
@@ -1348,10 +1349,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_client_message(av);
         },
-        TEST_ITEM(Msg::Log6{
+        TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=FileGroupDescriptorW(49262) size=596"_av}),
-        TEST_ITEM(Msg::ToMod{604, first_last_flags, msg_files1})
+        TEST_BUF(Msg::ToMod{604, first_last_flags, msg_files1})
     );
 
     msg_comparator.run(
@@ -1363,7 +1364,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{36, first_last_flags,
+        TEST_BUF(Msg::ToFront{36, first_last_flags,
             "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
             "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00" //................ !
             "\x00\x00\x00\x00"_av})
@@ -1381,13 +1382,13 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_client_message(av, CHANNELS::CHANNEL_FLAG_FIRST);
         },
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
             "filename\x00\x03""abc"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x06\x00\x00\x00\x01"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{"da"_av}),
-        TEST_ITEM(Msg::ToMod{14, first_flags,
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"da"_av}),
+        TEST_BUF(Msg::ToMod{14, first_flags,
             "\x09\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00""da"_av})
     );
 
@@ -1395,10 +1396,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
         TEST_PROCESS {
             channel_ctx->process_client_message("ta_"_av, CHANNELS::CHANNEL_FLAG_LAST);
         },
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x07\x00\x00\x00\x01"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{"ta_"_av}),
-        TEST_ITEM(Msg::ToMod{3, last_flags, "ta_"_av})
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"ta_"_av}),
+        TEST_BUF(Msg::ToMod{3, last_flags, "ta_"_av})
     );
 
     msg_comparator.run(
@@ -1410,7 +1411,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
                 std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
             channel_ctx->process_client_message(out.get_produced_bytes());
         },
-        TEST_ITEM(Msg::ToMod{54, first_last_flags,
+        TEST_BUF(Msg::ToMod{54, first_last_flags,
             "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
             "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
             "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
@@ -1426,7 +1427,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x0A\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
             ""_av})
     );
@@ -1439,7 +1440,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
             ""_av})
     );
@@ -1454,7 +1455,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
                 });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
             ""_av})
     );
@@ -1467,7 +1468,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
             ""_av})
     );
@@ -1532,10 +1533,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_client_message(av);
         },
-        TEST_ITEM(Msg::Log6{
+        TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=FileGroupDescriptorW(49262) size=596"_av}),
-        TEST_ITEM(Msg::ToMod{604, first_last_flags, msg_files2})
+        TEST_BUF(Msg::ToMod{604, first_last_flags, msg_files2})
     );
 
     msg_comparator.run(
@@ -1547,7 +1548,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{36, first_last_flags,
+        TEST_BUF(Msg::ToFront{36, first_last_flags,
             "\x08\x00\x01\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................ !
             "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00" //................ !
             "\x01\x00\x00\x00"_av})
@@ -1565,18 +1566,18 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_client_message(av);
         },
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\b"
             "filename\x00\x03""def"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x0e\x00\x00\x00\x02"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{"plopploppl"_av}),
-        TEST_ITEM(Msg::Log6{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"plopploppl"_av}),
+        TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=def size=10"
             " sha256=dda098fc2804923ceeef1b65f26b78be8789535b7b9dddb6fda8de6a2dacf190"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av}),
-        TEST_ITEM(Msg::ToMod{22, first_last_flags,
+        TEST_BUF(Msg::ToMod{22, first_last_flags,
             "\t\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00""plopploppl"
             ""_av})
     );
@@ -1589,7 +1590,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{12, first_last_flags,
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x0B\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
             ""_av})
     );
@@ -1603,7 +1604,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_server_message(av);
         },
-        TEST_ITEM(Msg::ToFront{36, first_last_flags,
+        TEST_BUF(Msg::ToFront{36, first_last_flags,
             "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x02\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00"
             "\x00\x00\x00\x00"_av})
@@ -1621,15 +1622,15 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             });
             channel_ctx->process_client_message(av);
         },
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x0b\x00\x00\x00\x01"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{"abcdefg"_av}),
-        TEST_ITEM(Msg::Log6{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"abcdefg"_av}),
+        TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION file_name=abc size=12"
             " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
-        TEST_ITEM_IF(d.with_validator, Msg::ToValidator{
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av}),
-        TEST_ITEM(Msg::ToMod{19, first_last_flags,
+        TEST_BUF(Msg::ToMod{19, first_last_flags,
             "\t\x00\x01\x00\x0b\x00\x00\x00\x00\x00\x00\x00""abcdefg"_av})
     );
 
@@ -1649,13 +1650,13 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
                 clipboard_virtual_channel.DLP_antivirus_check_channels_files();
                 RED_TEST(validator_transport.buf_reader.size() == 0);
             },
-            TEST_ITEM(Msg::Log6{"FILE_VERIFICATION direction=UP file_name=abc status=ok"_av})
+            TEST_BUF(Msg::Log6{"FILE_VERIFICATION direction=UP file_name=abc status=ok"_av})
         );
     }
 
     msg_comparator.run(
         TEST_PROCESS {channel_ctx.reset();},
-        TEST_ITEM_IF(d.with_validator, Msg::Log6{
+        TEST_BUF_IF(d.with_validator, Msg::Log6{
             "FILE_VERIFICATION direction=UP file_name=def status=Connexion closed"_av})
     );
 
