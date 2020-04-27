@@ -47,6 +47,15 @@ from engine import TargetContext
 import syslog
 
 
+def to_utf8(string):
+    if isinstance(string, unicode):
+        return string.encode("utf-8")
+    return string
+
+def to_syslog(data):
+    return to_utf8(data)
+
+
 class RdpProxyLog(object):
     def __init__(self):
         syslog.openlog('rdpproxy')
@@ -686,7 +695,7 @@ class Sesman():
                 is_magic_password = self.shared.get(u'password') == MAGICASK
                 is_otp = wab_login.startswith('_OTP_')
                 method = ((is_otp and "OTP") or
-                          (self.engine.get_challenge() and "Challenge") or
+                          (self.engine.challenge and "Challenge") or
                           "Password")
                 self.rdplog.log("AUTHENTICATION_TRY", method=method)
                 if ((is_magic_password and not is_otp)  # one-time pwd
