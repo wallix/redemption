@@ -64,7 +64,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -357,7 +356,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
     configuration_load(ini.configuration_holder(), oss);
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -564,7 +562,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -741,7 +738,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -918,7 +914,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -1068,7 +1063,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -1219,7 +1213,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -1355,7 +1348,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
 
 
     // TODO video related values should go to [video] section
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -1494,7 +1486,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());

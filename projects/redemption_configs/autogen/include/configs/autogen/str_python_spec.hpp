@@ -72,9 +72,6 @@ enable_transparent_mode = boolean(default=False)
 #_password
 certificate_password = string(max=254, default='inquisition')
 
-#_advanced
-movie_path = string(default='')
-
 # Support of Bitmap Update.
 #_advanced
 enable_bitmap_update = boolean(default=True)

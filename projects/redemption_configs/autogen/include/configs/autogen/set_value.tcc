@@ -127,14 +127,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "movie_path")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::movie_path&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "enable_bitmap_update")) {
             ::configs::parse_and_log(
                 context, key,

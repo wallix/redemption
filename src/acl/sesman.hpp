@@ -149,7 +149,7 @@ struct SesmanInterface
 
     void show_session_config()
     {
-        LOG(LOG_INFO, "movie_path    = %s", ini.get<cfg::globals::movie_path>());
+        LOG(LOG_INFO, "record_filebase    = %s", ini.get<cfg::capture::record_filebase>());
         LOG(LOG_INFO, "auth_user     = %s", ini.get<cfg::globals::auth_user>());
         LOG(LOG_INFO, "host          = %s", ini.get<cfg::globals::host>());
         LOG(LOG_INFO, "target_device = %s", ini.get<cfg::globals::target_device>());
