@@ -46,6 +46,15 @@ from .engine import TargetContext
 import syslog
 
 
+def to_utf8(string):
+    if isinstance(string, unicode):
+        return string.encode("utf-8")
+    return string
+
+def to_syslog(data):
+    return to_utf8(data)
+
+
 class RdpProxyLog(object):
     def __init__(self):
         syslog.openlog('rdpproxy')
