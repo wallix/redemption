@@ -1,3 +1,9 @@
+redemption (1.1.189%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix: psid value for RDP Proxy log
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 28 Apr 2020 19:01:39 +0200
+
 redemption (1.1.187%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * fix: psid value for RDP Proxy log
