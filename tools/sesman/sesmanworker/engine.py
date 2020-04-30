@@ -43,6 +43,7 @@ except Exception:
         #               traceback.format_exc())
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
+from .logtime import logtime_function_pause
 import time
 import socket
 from .checkout import CheckoutEngine
@@ -357,6 +358,7 @@ class Engine(object):
                           traceback.format_exc())
         return result
 
+    @logtime_function_pause
     def x509_authenticate(self, ip_client=None, ip_server=None):
         try:
             self.wabengine = self.auth_x509.get_proxy()
