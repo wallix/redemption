@@ -41,6 +41,7 @@ except Exception, e:
         # Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
+from logtime import logtime_function_pause
 import time
 import socket
 
@@ -285,6 +286,7 @@ class Engine(object):
                           traceback.format_exc(e))
         return result
 
+    @logtime_function_pause
     def x509_authenticate(self):
         try:
             self.wabengine = self.auth_x509.get_proxy()
