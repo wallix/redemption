@@ -356,15 +356,43 @@ namespace
         return 0x20 <= c && c < 127;
     }
 
-    static bool put_unprintable_char(std::ostream& out, uint8_t c, char const* newline = "\\n")
+    static bool is_escapable_ascii(uint8_t c)
     {
-        switch (c) {
-            case '"': out << "\\\""; return false;
-            case '\b': out << "\\b"; return false;
-            case '\t': out << "\\t"; return false;
-            case '\r': out << "\\r"; return false;
-            case '\n': out << newline; return false;
+        return c == '\b'
+            || c == '\t'
+            || c == '\r'
+            || c == '\n';
+    }
+
+    enum class UnpritableMode
+    {
+        cstr,
+        cstr_with_raw_newline,
+        hex,
+    };
+
+    static bool put_unprintable_char(
+        std::ostream& out, uint8_t c, UnpritableMode mode = UnpritableMode::cstr)
+    {
+        switch (mode)
+        {
+            case UnpritableMode::cstr:
+            case UnpritableMode::cstr_with_raw_newline:
+                switch (c) {
+                    case '"': out << "\\\""; return false;
+                    case '\b': out << "\\b"; return false;
+                    case '\t': out << "\\t"; return false;
+                    case '\r': out << "\\r"; return false;
+                    case '\n':
+                        out << ((mode == UnpritableMode::cstr) ? "\\n" : "\n");
+                        return false;
+                }
+                break;
+
+            case UnpritableMode::hex:
+                break;
         }
+
         out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
         return true;
     }
@@ -382,12 +410,12 @@ namespace
     {
         bool previous_is_printable = true;
 
-        void put(std::ostream& out, uint8_t c, char const* newline = "\\n")
+        void put(std::ostream& out, uint8_t c, UnpritableMode mode = UnpritableMode::cstr)
         {
-            this->put_cond(out, c, newline, is_printable_ascii(c));
+            this->put_cond(out, c, mode, is_printable_ascii(c));
         }
 
-        void put_cond(std::ostream& out, uint8_t c, char const* newline, bool is_printable)
+        void put_cond(std::ostream& out, uint8_t c, UnpritableMode mode, bool is_printable)
         {
             if (is_printable) {
                 if (!previous_is_printable) {
@@ -406,7 +434,7 @@ namespace
                 }
             }
             else {
-                previous_is_printable = !put_unprintable_char(out, c, newline);
+                previous_is_printable = !put_unprintable_char(out, c, mode);
             }
         }
     };
@@ -484,7 +512,7 @@ namespace
 
     static void put_utf8_bytes(
         size_t pos, std::ostream& out, bytes_view v,
-        size_t /*min_len*/, char const* newline = "\\n")
+        size_t /*min_len*/, UnpritableMode mode = UnpritableMode::cstr)
     {
         PutCharCtx putc_ctx;
         auto print = [&](bytes_view x, bool is_markable){
@@ -494,7 +522,7 @@ namespace
             while (p < end) {
                 utf8_char_process(p, end-p, [&](std::size_t n){
                     if (n <= 1) {
-                        putc_ctx.put(out, *p, newline);
+                        putc_ctx.put(out, *p, mode);
                         ++p;
                     }
                     else {
@@ -520,12 +548,12 @@ namespace
 
     static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
     {
-        put_utf8_bytes(pos, out, v, min_len, "\n");
+        put_utf8_bytes(pos, out, v, min_len, UnpritableMode::cstr_with_raw_newline);
     }
 
     static void put_ascii_bytes(
         size_t pos, std::ostream& out, bytes_view v,
-        size_t min_len, char const* newline = "\\n")
+        size_t min_len, UnpritableMode mode = UnpritableMode::cstr)
     {
         PutCharCtx putc_ctx;
 
@@ -569,7 +597,7 @@ namespace
 
             put_bytes([&](bytes_view x){
                 for (uint8_t c : x) {
-                    putc_ctx.put_cond(out, c, newline, *pmask);
+                    putc_ctx.put_cond(out, c, mode, *pmask);
                     ++pmask;
                 }
             });
@@ -577,7 +605,7 @@ namespace
         else {
             put_bytes([&](bytes_view x){
                 for (uint8_t c : x) {
-                    putc_ctx.put(out, c, newline);
+                    putc_ctx.put(out, c, mode);
                 }
             });
         }
@@ -585,7 +613,7 @@ namespace
 
     static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
     {
-        put_ascii_bytes(pos, out, v, min_len, "\n");
+        put_ascii_bytes(pos, out, v, min_len, UnpritableMode::cstr_with_raw_newline);
     }
 
     static void put_hex_bytes(size_t pos, std::ostream& out, bytes_view v, size_t /*min_len*/)
@@ -610,6 +638,8 @@ namespace
         auto* p = v.as_u8p();
         auto* end = p + n;
         int count_invalid = 0;
+        int count_alpha = 0;
+        int count_escaped = 0;
         while (p < end) {
             utf8_char_process(p, end-p, [&](std::size_t n){
                 if (n == 0) {
@@ -617,8 +647,16 @@ namespace
                     ++p;
                 }
                 else {
-                    if (n == 1 && !is_printable_ascii(*p)) {
-                        ++count_invalid;
+                    if (n == 1) {
+                        if (is_printable_ascii(*p)) {
+                            ++count_alpha;
+                        }
+                        else {
+                            if (is_escapable_ascii(*p)) {
+                                ++count_escaped;
+                            }
+                            ++count_invalid;
+                        }
                     }
                     p += n;
                 }
@@ -626,10 +664,16 @@ namespace
         }
 
         if (count_invalid > n / 6) {
-            put_ascii_bytes(pos, out, v, min_len);
+            put_ascii_bytes(pos, out, v, min_len,
+                (count_alpha / 4 > count_escaped)
+                    ? UnpritableMode::cstr
+                    : UnpritableMode::hex);
         }
         else {
-            put_utf8_bytes(pos, out, v, min_len);
+            put_utf8_bytes(pos, out, v, min_len,
+                (v.size() < 255)
+                    ? UnpritableMode::cstr
+                    : UnpritableMode::cstr_with_raw_newline);
         }
     }
 }
