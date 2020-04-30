@@ -29,6 +29,7 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
+#include "acl/gd_provider.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -232,8 +233,7 @@ public:
 
     std::string       local_IP;
     bool wab_diag_channel_on = false;
-
-
+    GdForwarder<class ClientRedemption> gd_forwarder;
 
 public:
     ClientRedemption(TimeBase & time_base,
@@ -262,6 +262,7 @@ public:
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
         , local_IP("unknown_local_IP")
+        , gd_forwarder(*this)
     {
         this->rail_client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
     }
@@ -468,10 +469,10 @@ public:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
                   , this->time_base
+                  , this->gd_forwarder
                   , this->fd_events_
                   , this->graphic_fd_events_
                   , this->timer_events_
-                  , this->graphic_events_
                   , this->sesman
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()

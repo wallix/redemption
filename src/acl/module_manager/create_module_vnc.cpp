@@ -65,7 +65,6 @@ public:
         TimeBase& time_base,
         GraphicFdContainer & graphic_fd_events_,
         TimerContainer& timer_events_,
-        GraphicEventContainer& graphic_events_,
         SesmanInterface & sesman,
         const char* username,
         const char* password,
@@ -92,7 +91,7 @@ public:
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
-    , mod(this->socket_transport, time_base, graphic_fd_events_, timer_events_, graphic_events_, username, password, front, front_width, front_height,
+    , mod(this->socket_transport, time_base, mod_wrapper, graphic_fd_events_, timer_events_, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings, 
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported, 
@@ -219,7 +218,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     TimeBase & time_base, 
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     TimeObj & timeobj
     )
@@ -270,7 +268,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         time_base,
         graphic_fd_events_,
         timer_events_,
-        graphic_events_,
         sesman,
         ini.get<cfg::globals::target_user>().c_str(),
         ini.get<cfg::context::target_password>().c_str(),

@@ -31,6 +31,28 @@
 #include "gdi/graphic_api.hpp"
 #include "mod/mod_api.hpp"
 
+//RED_AUTO_TEST_CASE(TestREvent)
+//{
+//    struct ResizableGraphic 
+//    {
+//        bool up_and_running = true;
+//        void action(REventDispatcher & dispatcher) {
+//            if (!this->up_and_running){
+//                this->up_and_running = true;
+//                REventGdiUpAndRunning event;
+//                dispatcher.postEvent(event);
+//            }
+//        }
+//        void resize(REventDispatcher & dispatcher) {
+//            this->up_and_running = false;
+//            REventGdiDown event;
+//            dispatcher.postEvent(event);
+//        }
+//    };
+//}
+
+
+
 RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
 RED_AUTO_TEST_CASE(TestSequencer)

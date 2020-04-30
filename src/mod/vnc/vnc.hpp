@@ -76,6 +76,8 @@ class VNCMetrics;
 #include "mod/vnc/newline_convert.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
+#include "acl/gd_provider.hpp"
+
 class UltraDSM;
 class mod_vnc;
 
@@ -324,7 +326,7 @@ private:
     Zdecompressor<> zd;
 
     TimeBase& time_base;
-    GraphicEventContainer & graphic_events_;
+    GdProvider & gd_provider;
     GraphicFdPtr fd_event;
     GraphicEventPtr wait_client_up_and_running_event;
 
@@ -359,9 +361,9 @@ private:
 public:
     mod_vnc( Transport & t
            , TimeBase& time_base
+           , GdProvider & gd_provider
            , GraphicFdContainer & graphic_fd_events_
            , TimerContainer & timer_events_
-           , GraphicEventContainer & graphic_events_
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -385,6 +387,8 @@ public:
            , SesmanInterface & sesman);
 
     std::string module_name() override {return "VNC Mod";}
+
+    void init() override;
 
     template<std::size_t MaxLen>
     class MessageCtx

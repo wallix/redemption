@@ -45,6 +45,35 @@ Author(s): Jonathan Poelen
 # define REDEMPTION_DEBUG_ONLY(...)
 #endif
 
+
+class REvent {
+public:
+    enum Type {
+        None,
+        GdiUpAndRunning,
+        GdiDown
+    };
+    Type type;
+
+    REvent(Type type) : type(type) {}
+};
+
+class REventNone : public REvent {REventNone() : REvent(Type::None) {}};
+class REventGdiUpAndRunning : public REvent {REventGdiUpAndRunning() : REvent(Type::GdiUpAndRunning) {}};
+class REventGdiDown : public REvent {REventGdiDown() : REvent(Type::GdiDown) {}};
+
+class REventHandler {
+    public:
+    virtual bool event(REvent * event) = 0;
+};
+
+class REventDispatcher {
+    virtual bool notify(REventHandler * receiver, REvent * event){}
+    void postEvent(REventHandler * receiver, REvent * event, int priority) {}
+    void sendEvent(REventHandler * receiver, REvent & event) {}
+    void processEvents(int flags) {}
+};
+
 class TimeBase;
 
 namespace jln

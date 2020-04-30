@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 #include "mod/vnc/vnc_verbose.hpp"
 #include "core/session_reactor.hpp"
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 
 
 #include <memory>
@@ -38,10 +39,10 @@ class VNCMetrics;
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
     TimeBase& time_base,
+    GdProvider & gd_provider,
     TopFdContainer & fd_events_,
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     const char* username,
     const char* password,

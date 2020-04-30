@@ -246,6 +246,8 @@ public:
         return this->g;
     }
 
+    bool is_ready_to_draw() override { return true; }
+
     // FIXME: we should always be able to use graphic_wrapper directly
     // finding out the actual internal graphics interface should never be necessary
     gdi::GraphicApi & get_graphic_wrapper()

@@ -45,10 +45,9 @@ extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
-    TimeBase & time_base, 
+    TimeBase & time_base,
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     TimeObj & timeobj
 );

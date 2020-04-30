@@ -599,7 +599,6 @@ public:
             this->time_base,
             this->graphic_fd_events_,
             this->timer_events_,
-            this->graphic_events_,
             this->sesman,
             this->timeobj
         );

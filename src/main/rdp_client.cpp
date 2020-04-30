@@ -206,16 +206,17 @@ int main(int argc, char** argv)
     NullAuthentifier authentifier;
     NullLicenseStore licensestore;
     RedirectionInfo redir_info;
+    GdForwarder<gdi::GraphicApi> gd_forwarder(gdi::null_gd());
 
     if (is_vnc) {
         return run([&](Transport& trans){
             return new_mod_vnc(
                 trans
               , time_base
+              , gd_forwarder
               , fd_events_
               , graphic_fd_events_
               , timer_events_
-              , graphic_events_
               , sesman
               , username.c_str()
               , password.c_str()

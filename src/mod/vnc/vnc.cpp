@@ -31,9 +31,9 @@
 
 mod_vnc::mod_vnc( Transport & t
            , TimeBase& time_base
+           , GdProvider & gd_provider
            , GraphicFdContainer & graphic_fd_events_
            , TimerContainer & timer_events_
-           , GraphicEventContainer & graphic_events_
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -72,7 +72,7 @@ mod_vnc::mod_vnc( Transport & t
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , time_base(time_base)
-    , graphic_events_(graphic_events_)
+    , gd_provider(gd_provider)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
 #endif
@@ -2023,17 +2023,22 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 }
 
 
+void mod_vnc::init()
+{
+    if (this->gd_provider.is_ready_to_draw() 
+    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
+        this->state = DO_INITIAL_CLEAR_SCREEN;
+        this->initial_clear_screen(this->gd_provider.get_graphics(), this->sesman);
+    }
+}
+
+
 void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
 {
-    LOG(LOG_INFO, "mod_vnc::rdp_gdi_up_and_running");
-    if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
+    if (this->gd_provider.is_ready_to_draw() 
+    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->time_base)
-        .on_action([this](auto ctx, gdi::GraphicApi & drawable){
-            this->initial_clear_screen(drawable, this->sesman);
-            return ctx.terminate();
-        });
+        this->initial_clear_screen(this->gd_provider.get_graphics(), this->sesman);
     }
 }
 
