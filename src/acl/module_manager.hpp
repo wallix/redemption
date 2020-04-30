@@ -1779,6 +1779,8 @@ public:
             {
                 this->end_session_warning.initialize();
 
+                this->target_connection_start_time = tvtime();
+
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
 
                 unique_fd client_sck = this->connect_to_target_host(
