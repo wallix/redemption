@@ -49,6 +49,8 @@ from .engine import TargetContext
 
 import syslog
 
+from .logtime import logtimer
+from .logtime import logtime_function_pause
 
 # Python 2.7 compatibility layer
 if sys.version_info[0] < 3:
@@ -528,6 +530,7 @@ class Sesman():
             self.proxy_conx.sendall(pack(">L", _remaining))
             self.proxy_conx.sendall(_r_data[_len - _remaining:_len])
 
+    @logtime_function_pause
     def receive_data(self, expected_list=None):
         """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
 
@@ -1385,11 +1388,14 @@ class Sesman():
             try:
                 Logger().info(u"Start Select ...")
                 timeout = None if status != APPROVAL_PENDING else 5
+                logtimer.pause()
                 r, w, x = select([self.proxy_conx], [], [], timeout)
+                logtimer.resume()
             except BastionSignal as e:
                 Logger().info("Got Signal %s" % e)
                 got_signal = True
             except Exception as e:
+                logtimer.resume()
                 if DEBUG:
                     Logger().info("exception: '%s'" % e)
                     import traceback
@@ -1531,6 +1537,7 @@ class Sesman():
 
             # AUTHENTIFY
             # [ LOGIN ]
+            logtimer.start("PRIMARY_AUTH")
             _status, _error = self.authentify()
 
             if _status is None and self.engine.get_challenge():
@@ -1613,22 +1620,27 @@ class Sesman():
                 _status = None
                 while _status is None:
                     # [ SELECTOR ]
+                    logtimer.start("FETCH_RIGHTS")
                     _status, _error = self.get_service()
                     Logger().info("get service end :%s" % _status)
                     if not _status:
                         # logout or error in selector
                         self.engine.reset_proxy_rights()
+                        logtimer.stop("FETCH_RIGHTS")
                         break
+                    logtimer.start("CHECKOUT_TARGET")
                     selected_target, _status, _error = self.select_target()
                     Logger().info("select_target end :%s" % _status)
                     if not _status:
                         # target not available
                         self.engine.reset_proxy_rights()
+                        logtimer.stop("CHECKOUT_TARGET")
                         break
                     # [ WAIT INFO ]
                     _status, _error = self.check_target(selected_target)
                     Logger().info("check_target end :%s" % _status)
                     if not _status:
+                        logtimer.stop("CHECKOUT_TARGET")
                         if _status is None:
                             continue
                         self.engine.reset_proxy_rights()
@@ -1644,6 +1656,7 @@ class Sesman():
                             "(%s)" % e
                         )
                         _status, _error = False, "End of Session"
+                        logtimer.stop()
                         self.engine.release_all_target()
                         self.engine.stop_session()
                     self.reset_target_session_vars()
@@ -2007,7 +2020,7 @@ class Sesman():
                         }
 
                     try_next = False
-
+                    logtimer.stop("CHECKOUT_TARGET")
                     try:
                         ###########
                         # SEND KV #
@@ -2048,6 +2061,9 @@ class Sesman():
                                     self.update_session_data(
                                         self._changed_keys
                                     )
+
+                                self.process_target_connection_time()
+
                                 if self.shared.get(u'auth_notify'):
                                     self.handle_auth_notify(physical_target)
                                     self.shared[u'auth_notify'] = u''
@@ -2299,6 +2315,21 @@ class Sesman():
                 u'disconnect_reason': TR(u"session_probe_reconnection")
             })
         return True
+
+    def process_target_connection_time(self):
+        if self.shared.get(u"target_connection_time"):
+            try:
+                tct = int(self.shared.get(u"target_connection_time", 0))
+                fct = int(self.shared.get(u"front_connection_time", 0))
+                logtimer.add_step_time("TARGET_CONN", tct / 1000.0)
+                logtimer.add_step_time("PRIMARY_CONN", fct / 1000.0)
+                metrics = logtimer.report_metrics()
+                self.rdplog.log("TIME_METRICS",
+                                session_id=self.shared.get(u'session_id'),
+                                **metrics)
+            except Exception as e:
+                pass
+            self.shared[u"target_connection_time"] = None
 
     def process_report(self, reason, target, message):
         if reason == u'CLOSE_SESSION_SUCCESSFUL':

@@ -45,6 +45,7 @@ except Exception:
         #               traceback.format_exc())
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
+from .logtime import logtime_function_pause
 import time
 import socket
 from .checkout import CheckoutEngine
@@ -345,6 +346,7 @@ class Engine(object):
     def is_x509_validated(self):
         return self.authenticator.is_x509_validated()
 
+    @logtime_function_pause
     def x509_authenticate(self, ip_client=None, ip_server=None):
         return self.authenticator.x509_authenticate(
             self, ip_client, ip_server
