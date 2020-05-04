@@ -64,6 +64,6 @@ public:
         ptr_function  f = [](void* /*unused*/, AsynchronousTask& /*unused*/) noexcept {};
     };
 
-    virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer&, TerminateEventNotifier) = 0;
+    virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, TimerContainer&, TerminateEventNotifier) = 0;
 };
 

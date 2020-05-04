@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     rdpdr_drive_read_task.configure_event(
-        time_base, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
 
@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     rdpdr_send_drive_io_response_task.configure_event(
-        time_base, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
     RED_CHECK(fd_events_.is_empty());

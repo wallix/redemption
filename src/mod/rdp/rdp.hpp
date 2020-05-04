@@ -131,6 +131,7 @@ struct FileValidatorService;
 #include "utils/sugar/splitter.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 
 #include <cstdlib>
 #include <deque>
@@ -153,15 +154,15 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_)
-        : time_base(time_base), fd_events_(fd_events_), graphic_fd_events_(graphic_fd_events_), timer_events_(timer_events_)
+    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, GraphicFdContainer& graphic_fd_events_, TopFdContainer& fd_events_, TimerContainer& timer_events_)
+        : time_base(time_base), gd_provider(gd_provider), graphic_fd_events_(graphic_fd_events_), fd_events_(fd_events_), timer_events_(timer_events_)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
@@ -169,21 +170,22 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
     std::deque<std::unique_ptr<AsynchronousTask>> tasks;
 public:
     TimeBase& time_base;
-    TopFdContainer& fd_events_;
+    GdProvider & gd_provider;
     GraphicFdContainer& graphic_fd_events_;
+    TopFdContainer& fd_events_;
     TimerContainer& timer_events_;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(TimeBase&, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer&)
+    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, GraphicFdContainer& graphic_fd_events_, TopFdContainer& fd_events_, TimerContainer&)
     {}
 };
 #endif
@@ -395,6 +397,7 @@ private:
     const RDPVerbose verbose;
 
     TimeBase & time_base;
+    GdProvider & gd_provider;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
@@ -405,7 +408,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
@@ -432,6 +435,7 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , time_base(time_base)
+    , gd_provider(gd_provider)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
@@ -742,6 +746,7 @@ private:
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.time_base,
+                asynchronous_tasks.gd_provider,
                 asynchronous_tasks.timer_events_,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
@@ -802,6 +807,7 @@ public:
 #ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
+            this->gd_provider,
             this->timer_events_,
             this->graphic_events_,
             this->session_probe_to_server_sender.get(),
@@ -1916,11 +1922,12 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     TimeBase& time_base;
-    GraphicFdContainer & graphic_fd_events_;
-    TimerContainer& timer_events_;
+    GdProvider & gd_provider;
     GraphicEventContainer & graphic_events_;
-    SesmanInterface & sesman;
+    GraphicFdContainer & graphic_fd_events_;
     GraphicFdPtr fd_event;
+    TimerContainer& timer_events_;
+    SesmanInterface & sesman;
 
 #ifndef __EMSCRIPTEN__
     TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
@@ -2013,10 +2020,11 @@ public:
         Transport & trans
       , Inifile & ini
       , TimeBase& time_base
-      , TopFdContainer & fd_events_
-      , GraphicFdContainer & graphic_fd_events_
-      , TimerContainer& timer_events_
+      , GdProvider & gd_provider
       , GraphicEventContainer & graphic_events_
+      , GraphicFdContainer & graphic_fd_events_
+      , TopFdContainer & fd_events_
+      , TimerContainer& timer_events_
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -2037,7 +2045,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, timer_events_, graphic_events_, file_validator_service,
+            report_message, gen, metrics, time_base, gd_provider, timer_events_, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -2084,12 +2092,13 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
+        , gd_provider(gd_provider)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(time_base, fd_events_, graphic_fd_events_, timer_events_)
+        , asynchronous_tasks(time_base, gd_provider, graphic_fd_events_, fd_events_, timer_events_)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
