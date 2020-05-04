@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/channels_authorizations.hpp"
 #include "core/session_reactor.hpp"
+#include "acl/gd_provider.hpp"
 #include "acl/sesman.hpp"
 
 #include <memory>
@@ -50,10 +51,11 @@ std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     Inifile & ini,
     TimeBase& time_base,
-    TopFdContainer & fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
-    TimerContainer& timer_events_,
+    GdProvider & gd_provider,
     GraphicEventContainer & graphic_events_,
+    GraphicFdContainer & graphic_fd_events_,
+    TopFdContainer & fd_events_,
+    TimerContainer& timer_events_,
     SesmanInterface & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,

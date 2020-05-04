@@ -237,11 +237,11 @@ public:
 
 public:
     ClientRedemption(TimeBase & time_base,
-                     TopFdContainer& fd_events_,
-                     GraphicFdContainer& graphic_fd_events_,
-                     TimerContainer & timer_events_,
                      GraphicEventContainer & graphic_events_,
+                     GraphicFdContainer& graphic_fd_events_,
                      GraphicTimerContainer & graphic_timer_events_,
+                     TopFdContainer& fd_events_,
+                     TimerContainer & timer_events_,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
@@ -431,10 +431,11 @@ public:
                     *this->socket
                   , this->ini
                   , this->time_base
-                  , this->fd_events_
-                  , this->graphic_fd_events_
-                  , this->timer_events_
+                  , this->gd_forwarder
                   , this->graphic_events_
+                  , this->graphic_fd_events_
+                  , this->fd_events_
+                  , this->timer_events_
                   , this->sesman
                   , *this
                   , *this

@@ -81,7 +81,7 @@ public:
                              GraphicEventContainer & graphic_events_,
                              GraphicTimerContainer & graphic_timer_events_,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, config)
+        : ClientRedemption(time_base, graphic_events_, graphic_fd_events_, graphic_timer_events_, fd_events_, timer_events_, config)
         , headless_socket(time_base, this)
     {
         this->cmd_launch_conn();

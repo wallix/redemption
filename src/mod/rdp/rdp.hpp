@@ -746,7 +746,6 @@ private:
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.time_base,
-                asynchronous_tasks.gd_provider,
                 asynchronous_tasks.timer_events_,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),

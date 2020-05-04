@@ -36,6 +36,8 @@
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "acl/gd_provider.hpp"
+
 
 #include <chrono>
 #include <memory>
@@ -109,6 +111,7 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     TimeBase& time_base;
+    GdProvider & gd_provider;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
@@ -161,6 +164,7 @@ public:
 
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
+        GdProvider & gd_provider,
         TimerContainer& timer_events_,
         GraphicEventContainer & graphic_events_,
         VirtualChannelDataSender* to_server_sender_,
@@ -189,6 +193,7 @@ public:
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , time_base(time_base)
+    , gd_provider(gd_provider)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     {

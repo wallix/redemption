@@ -39,6 +39,7 @@
 #include "test_only/core/font.hpp"
 #include <chrono>
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
@@ -244,8 +245,9 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     SesmanInterface sesman(ini);
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
+    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
 
-    auto mod = new_mod_rdp(t, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, ini, time_base, gd_provider, graphic_events_, graphic_fd_events_, fd_events_, timer_events_, sesman, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
         nullptr, nullptr, mod_rdp_factory);
