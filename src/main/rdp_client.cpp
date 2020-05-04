@@ -282,11 +282,13 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, ini, time_base,
-                fd_events_,
-                graphic_fd_events_,
-                timer_events_,
+                trans, ini, 
+                time_base,
+                gd_forwarder,
                 graphic_events_,
+                graphic_fd_events_,
+                fd_events_,
+                timer_events_,
                 sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,

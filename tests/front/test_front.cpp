@@ -173,6 +173,8 @@ RED_AUTO_TEST_CASE(TestFront)
         report_message, fastpath_support);
     null_mod no_mod;
 
+    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
+
     while (!front.is_up_and_running()) {
         front.incoming(no_mod, sesman);
         RED_CHECK(timer_events_.is_empty());
@@ -242,7 +244,7 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        t, ini, time_base, gd_provider, graphic_events_, graphic_fd_events_, fd_events_, timer_events_, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
