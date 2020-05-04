@@ -29,6 +29,9 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+// uncomment to use dump_png24()
+//#include "utils/png.hpp"
+
 RED_AUTO_TEST_CASE(TraceFlatWabClose)
 {
     TestGraphic drawable(800, 600);
@@ -232,4 +235,42 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     flat_wab_close.rdp_input_scancode(0, 0, 0, 0, &keymap);
+}
+
+RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
+{
+    TestGraphic drawable(800, 600);
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, { });
+    
+    parent.set_wh(800, 600);
+    
+    NotifyApi *notifier = nullptr;
+    const char *extra_message = nullptr;
+    Theme colors;
+
+    colors.global.logo = true;
+    colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
+    
+    FlatWabClose flat_wab_close(drawable,
+                                0,
+                                0,
+                                800,
+                                600,
+                                parent,
+                                notifier,
+                                "abc<br>def",
+                                "rec",
+                                "rec",
+                                false,
+                                extra_message,
+                                global_font_deja_vu_14(),
+                                colors,
+                                Translation::EN);
+
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
+
+    // uncomment to see result in png file
+    //dump_png24("flat_wab_close9.png", drawable, true);
+
+    RED_CHECK_SIG(drawable, "\x41\xe2\xcb\xac\xe5\x73\x22\x6d\x12\x22\x61\xaf\x22\x0b\x9c\xf3\xd0\x28\x8e\xbd");
 }

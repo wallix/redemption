@@ -25,12 +25,14 @@
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 
-WidgetImage::WidgetImage(
-    gdi::GraphicApi & drawable, const char * filename, Widget & parent,
-    NotifyApi* notifier, int group_id
-)
-    : Widget(drawable, parent, notifier, group_id)
-    , bmp(bitmap_from_file(filename))
+WidgetImage::WidgetImage(gdi::GraphicApi& drawable,
+                         const char *filename,
+                         Widget& parent,
+                         NotifyApi *notifier,
+                         int group_id,
+                         const BGRColor *bg_color) :
+    Widget(drawable, parent, notifier, group_id),
+    bmp(bitmap_from_file(filename, bg_color))
 {
     this->tab_flag   = IGNORE_TAB;
     this->focus_flag = IGNORE_FOCUS;

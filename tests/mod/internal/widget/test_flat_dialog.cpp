@@ -30,6 +30,8 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+// uncomment to use dump_png24()
+//#include "utils/png.hpp"
 
 RED_AUTO_TEST_CASE(TraceFlatDialog)
 {
@@ -452,4 +454,47 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
 
     notifier.sender = nullptr;
     notifier.event = 0;
+}
+
+
+
+RED_AUTO_TEST_CASE(TraceFlatDialog_transparent_png_with_theme_color)
+{
+    TestGraphic drawable(800, 600);
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, { });
+
+    parent.set_wh(800, 600);
+    
+    NotifyApi *notifier = nullptr;
+    Theme colors;
+    
+    colors.global.bgcolor = DARK_BLUE_BIS;
+    colors.global.fgcolor = WHITE;
+    colors.global.logo = true;
+    colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
+    
+    WidgetFlatButton *extra_button = nullptr;
+    FlatDialog flat_dialog(drawable,
+                           0,
+                           0,
+                           800,
+                           600,
+                           parent,
+                           notifier,
+                           "test1",
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           extra_button,
+                           colors,
+                           global_font_deja_vu_14());
+
+    flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
+
+    // uncomment to see result in png file
+    //dump_png24("flat_dialog9.png", drawable, true);
+
+    RED_CHECK_SIG(drawable, "\xf3\x3f\x00\xe1\xae\xa3\x8f\xfd\x4c\xf4\xa2\x2f\x29\x12\xe1\x55\x4c\xdc\x07\x93");
 }

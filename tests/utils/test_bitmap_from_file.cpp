@@ -22,6 +22,8 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "utils/colors.hpp"
+
 #include "utils/bitmap_from_file.hpp"
 
 
@@ -53,6 +55,32 @@ RED_AUTO_TEST_CASE(TestBitmapOpenFiles)
     {
         const char * filename = FIXTURES_PATH "/xrdp24b.png";
         Bitmap bmp = bitmap_from_file_impl(filename);
+        RED_REQUIRE(bmp.is_valid());
+        RED_CHECK_EQUAL(bmp.cx(), 256);
+        RED_CHECK_EQUAL(bmp.cy(), 150);
+        RED_CHECK_EQUAL(bmp.bpp(), BitsPerPixel{24});
+    }
+    {
+        const char * filename = FIXTURES_PATH "/xrdp24b.png";
+        BGRColor bgcolor = DARK_BLUE_BIS;
+        Bitmap bmp = bitmap_from_file_impl(filename, &bgcolor);
+        RED_REQUIRE(bmp.is_valid());
+        RED_CHECK_EQUAL(bmp.cx(), 256);
+        RED_CHECK_EQUAL(bmp.cy(), 150);
+        RED_CHECK_EQUAL(bmp.bpp(), BitsPerPixel{24});
+    }
+    {
+        const char * filename = FIXTURES_PATH "/xrdp24b-transparent.png";
+        Bitmap bmp = bitmap_from_file_impl(filename);
+        RED_REQUIRE(bmp.is_valid());
+        RED_CHECK_EQUAL(bmp.cx(), 256);
+        RED_CHECK_EQUAL(bmp.cy(), 150);
+        RED_CHECK_EQUAL(bmp.bpp(), BitsPerPixel{24});
+    }
+    {
+        const char * filename = FIXTURES_PATH "/xrdp24b-transparent.png";
+        BGRColor bgcolor = DARK_BLUE_BIS;
+        Bitmap bmp = bitmap_from_file_impl(filename, &bgcolor);
         RED_REQUIRE(bmp.is_valid());
         RED_CHECK_EQUAL(bmp.cx(), 256);
         RED_CHECK_EQUAL(bmp.cy(), 150);
