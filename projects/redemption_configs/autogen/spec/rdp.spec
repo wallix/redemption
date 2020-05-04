@@ -77,11 +77,11 @@ show_common_cipher_list = boolean(default=False)
 
 # List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
 #_advanced
-allow_dynamic_channels = string(default='*')
+allowed_dynamic_channels = string(default='*')
 
 # List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.
 #_advanced
-deny_dynamic_channels = string(default='')
+denied_dynamic_channels = string(default='')
 
 # Enables Server Redirection Support.
 server_redirection = boolean(default=False)

@@ -115,14 +115,14 @@
           "description": "Show common cipher list supported by client and server"
         },
         {
-          "name": "allow_dynamic_channels",
+          "name": "allowed_dynamic_channels",
           "type": "string",
           "default": "*",
           "advanced": true,
           "description": "List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."
         },
         {
-          "name": "deny_dynamic_channels",
+          "name": "denied_dynamic_channels",
           "type": "string",
           "default": "",
           "advanced": true,

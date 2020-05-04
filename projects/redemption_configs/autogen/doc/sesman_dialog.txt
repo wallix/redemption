@@ -71,9 +71,9 @@ cfg::mod_rdp::allow_channels ⇐ allow_channels   [std::string]
     List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 cfg::mod_rdp::deny_channels ⇐ deny_channels   [std::string]
     List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
-cfg::mod_rdp::allow_dynamic_channels ⇐ mod_rdp:allow_dynamic_channels   [std::string]
+cfg::mod_rdp::allowed_dynamic_channels ⇐ mod_rdp:allowed_dynamic_channels   [std::string]
     List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
-cfg::mod_rdp::deny_dynamic_channels ⇐ mod_rdp:deny_dynamic_channels   [std::string]
+cfg::mod_rdp::denied_dynamic_channels ⇐ mod_rdp:denied_dynamic_channels   [std::string]
     List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.
 cfg::mod_rdp::server_redirection_support ⇐ mod_rdp:server_redirection_support   [bool]
     Enables Server Redirection Support.

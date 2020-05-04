@@ -1396,13 +1396,13 @@ namespace cfg {
     /// List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all. <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
-    /// sesman::name: mod_rdp:allow_dynamic_channels <br/>
+    /// sesman::name: mod_rdp:allowed_dynamic_channels <br/>
     /// value = "*" <br/>
-    struct mod_rdp::allow_dynamic_channels {
+    struct mod_rdp::allowed_dynamic_channels {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "mod_rdp";
-        static constexpr char const * name = "allow_dynamic_channels";
+        static constexpr char const * name = "allowed_dynamic_channels";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(29);
@@ -1414,13 +1414,13 @@ namespace cfg {
     /// List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all. <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
-    /// sesman::name: mod_rdp:deny_dynamic_channels <br/>
+    /// sesman::name: mod_rdp:denied_dynamic_channels <br/>
     /// value{} <br/>
-    struct mod_rdp::deny_dynamic_channels {
+    struct mod_rdp::denied_dynamic_channels {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "mod_rdp";
-        static constexpr char const * name = "deny_dynamic_channels";
+        static constexpr char const * name = "denied_dynamic_channels";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(30);
@@ -5562,8 +5562,8 @@ struct client
 struct mod_rdp
 : cfg::mod_rdp::open_session_timeout
 , cfg::mod_rdp::cipher_string
-, cfg::mod_rdp::allow_dynamic_channels
-, cfg::mod_rdp::deny_dynamic_channels
+, cfg::mod_rdp::allowed_dynamic_channels
+, cfg::mod_rdp::denied_dynamic_channels
 , cfg::mod_rdp::load_balance_info
 , cfg::mod_rdp::alternate_shell
 , cfg::mod_rdp::shell_arguments
@@ -5951,8 +5951,8 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::show_common_cipher_list
 , cfg::mod_rdp::allow_channels
 , cfg::mod_rdp::deny_channels
-, cfg::mod_rdp::allow_dynamic_channels
-, cfg::mod_rdp::deny_dynamic_channels
+, cfg::mod_rdp::allowed_dynamic_channels
+, cfg::mod_rdp::denied_dynamic_channels
 , cfg::mod_rdp::server_redirection_support
 , cfg::mod_rdp::load_balance_info
 , cfg::mod_rdp::bogus_sc_net_size

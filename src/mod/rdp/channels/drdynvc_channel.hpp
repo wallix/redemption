@@ -29,8 +29,8 @@
 
 struct DynamicChannelVirtualChannelParam
 {
-    const char * allow_channels = "*";
-    const char * deny_channels  = "";
+    const char * allowed_channels = "*";
+    const char * denied_channels  = "";
 };
 
 class DynamicChannelVirtualChannel final : public BaseVirtualChannel
@@ -49,7 +49,7 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
-    , dynamic_channels_authorizations(params.allow_channels, params.deny_channels)
+    , dynamic_channels_authorizations(params.allowed_channels, params.denied_channels)
     , time_base(time_base)
     {}
 

@@ -295,12 +295,12 @@ private:
 
     struct DynamicChannels
     {
-        const char * allow_channels;
-        const char * deny_channels;
+        const char * allowed_channels;
+        const char * denied_channels;
 
         DynamicChannels(ModRDPParams::DynamicChannelsParams const& dynamic_channels_params)
-        : allow_channels(dynamic_channels_params.allow_channels)
-        , deny_channels(dynamic_channels_params.deny_channels)
+        : allowed_channels(dynamic_channels_params.allowed_channels)
+        , denied_channels(dynamic_channels_params.denied_channels)
         {}
     } dynamic_channels;
 
@@ -719,10 +719,10 @@ private:
 
         DynamicChannelVirtualChannelParam dynamic_channel_virtual_channel_params;
 
-        dynamic_channel_virtual_channel_params.allow_channels =
-            this->dynamic_channels.allow_channels;
-        dynamic_channel_virtual_channel_params.deny_channels =
-            this->dynamic_channels.deny_channels;
+        dynamic_channel_virtual_channel_params.allowed_channels =
+            this->dynamic_channels.allowed_channels;
+        dynamic_channel_virtual_channel_params.denied_channels =
+            this->dynamic_channels.denied_channels;
 
         this->dynamic_channel_virtual_channel =
             std::make_unique<DynamicChannelVirtualChannel>(

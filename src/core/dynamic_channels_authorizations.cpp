@@ -51,51 +51,51 @@ DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
         return false;
     };
 
-    this->all_allow = extract(allow, this->allow_names);
-    this->all_deny  = extract(deny, this->deny_names);
+    this->all_allowed = extract(allow, this->allowed_names);
+    this->all_denied  = extract(deny, this->denied_names);
 
-    if (this->allow_names.empty() && !this->all_allow) {
-        this->all_deny = true;
+    if (this->allowed_names.empty() && !this->all_allowed) {
+        this->all_denied = true;
 
-        this->deny_names.clear();
+        this->denied_names.clear();
     }
 
-    if (this->deny_names.empty() && !this->all_deny) {
-        this->all_allow = true;
+    if (this->denied_names.empty() && !this->all_denied) {
+        this->all_allowed = true;
 
-        this->allow_names.clear();
+        this->allowed_names.clear();
     }
 
-    if (!this->allow_names.empty() && !this->deny_names.empty()) {
-        this->all_deny = true;
+    if (!this->allowed_names.empty() && !this->denied_names.empty()) {
+        this->all_denied = true;
 
-        this->deny_names.clear();
+        this->denied_names.clear();
     }
 
-    if (this->all_allow && this->all_deny) {
-        this->all_allow = false;
+    if (this->all_allowed && this->all_denied) {
+        this->all_allowed = false;
     }
 
-    LOG(LOG_INFO, "all_allow=%s", (this->all_allow ? "Yes" : "No"));
-    LOG(LOG_INFO, "all_deny=%s",  (this->all_deny ? "Yes" : "No"));
+    LOG(LOG_INFO, "all_allowed=%s", (this->all_allowed ? "Yes" : "No"));
+    LOG(LOG_INFO, "all_denied=%s",  (this->all_denied ? "Yes" : "No"));
 
-    assert((this->all_allow && !this->all_deny) ||
-           (!this->all_allow && this->all_deny));
+    assert((this->all_allowed && !this->all_denied) ||
+           (!this->all_allowed && this->all_denied));
 
-    assert((this->all_allow && this->allow_names.empty()) ||
-           !this->all_allow);
+    assert((this->all_allowed && this->allowed_names.empty()) ||
+           !this->all_allowed);
 
-    assert((this->all_deny && this->deny_names.empty()) ||
-           !this->all_deny);
+    assert((this->all_denied && this->denied_names.empty()) ||
+           !this->all_denied);
 }
 
 bool DynamicChannelsAuthorizations::is_authorized(const char * name) const noexcept
 {
-    if (this->all_allow) {
-        return (std::find(this->deny_names.begin(), this->deny_names.end(), name) == this->deny_names.end());
+    if (this->all_allowed) {
+        return (std::find(this->denied_names.begin(), this->denied_names.end(), name) == this->denied_names.end());
     }
 
-    assert(this->all_deny);
+    assert(this->all_denied);
 
-    return (std::find(this->allow_names.begin(), this->allow_names.end(), name) != this->allow_names.end());
+    return (std::find(this->allowed_names.begin(), this->allowed_names.end(), name) != this->allowed_names.end());
 }

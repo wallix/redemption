@@ -31,9 +31,9 @@ public:
     [[nodiscard]] bool is_authorized(const char * name) const noexcept;
 
 private:
-    bool all_allow = true;
-    bool all_deny  = false;
+    bool all_allowed = true;
+    bool all_denied  = false;
 
-    std::vector<std::string> allow_names;
-    std::vector<std::string> deny_names;
+    std::vector<std::string> allowed_names;
+    std::vector<std::string> denied_names;
 };
