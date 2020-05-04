@@ -496,12 +496,12 @@ struct name<T, U, std::enable_if_t<                                       \
             char flag = 'a';                                              \
             std::size_t min_len = 0;                                      \
             if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {  \
-               flag = char(lhs.flag);                                     \
-               min_len = lhs.min_len;                                     \
+               flag = char(lhs.pattern);                                  \
+               min_len = std::max(min_len, lhs.min_len);                  \
             }                                                             \
             if constexpr (std::is_same_v<U, ::ut::flagged_bytes_view>) {  \
-               flag = char(rhs.flag);                                     \
-               min_len = rhs.min_len;                                     \
+               flag = char(rhs.pattern);                                  \
+               min_len = std::max(min_len, rhs.min_len);                  \
             }                                                             \
             return ::redemption_unit_test__                               \
                 ::bytes_##name(lhs, rhs, flag, min_len);                  \
