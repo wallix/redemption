@@ -4290,7 +4290,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel2 :
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/test_framework/working_directory.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
