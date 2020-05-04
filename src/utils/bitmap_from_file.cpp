@@ -37,6 +37,7 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/colors.hpp"
 #include "cxx/cxx.hpp"
 
 #include <png.h>
@@ -65,12 +66,18 @@ namespace
         return true;
     }
 
-    Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename);
-    Bitmap bitmap_from_png_without_sig(int fd, const char * filename);
+    Bitmap
+    bitmap_from_bmp_without_sig(int fd,
+                                const char * filename);
+    
+    Bitmap
+    bitmap_from_png_without_sig(int fd,
+                                const char * filename,
+                                const BGRColor *bg_color = nullptr);
 } // namespace
 
 
-Bitmap bitmap_from_file_impl(const char * filename)
+Bitmap bitmap_from_file_impl(const char * filename, const BGRColor *bg_color)
 {
     using png_byte = uint8_t;
     png_byte type1[8];
@@ -98,7 +105,7 @@ Bitmap bitmap_from_file_impl(const char * filename)
     }
     if (png_sig_cmp(type1, 0, 8) == 0) {
         //LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file", filename);
-        return bitmap_from_png_without_sig(file.fd(), filename);
+        return bitmap_from_png_without_sig(file.fd(), filename, bg_color);
     }
 
     LOG(LOG_ERR, "Bitmap: error bitmap file [%s] not BMP or PNG file", filename);
@@ -106,9 +113,10 @@ Bitmap bitmap_from_file_impl(const char * filename)
 }
 
 
-Bitmap bitmap_from_file(const char * filename)
+Bitmap bitmap_from_file(const char * filename,
+                        const BGRColor *bg_color)
 {
-    Bitmap bitmap = bitmap_from_file_impl(filename);
+    Bitmap bitmap = bitmap_from_file_impl(filename, bg_color);
     if (bitmap.is_valid()) {
         return bitmap;
     }
@@ -117,7 +125,9 @@ Bitmap bitmap_from_file(const char * filename)
 
 namespace
 {
-Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
+    Bitmap bitmap_from_png_without_sig(int fd,
+                                       const char * /*filename*/,
+                                       const BGRColor *bg_color)
 {
     Bitmap bitmap;
 
@@ -190,6 +200,34 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
         png_set_strip_alpha(png_ptr);
     }
     png_set_bgr(png_ptr);
+    
+    if (bg_color)
+    {    
+        png_color_16p img_background;
+
+        if (png_get_bKGD(png_ptr, info_ptr, &img_background))
+        {
+            png_set_background(png_ptr,
+                               img_background,
+                               PNG_BACKGROUND_GAMMA_FILE,
+                               1,
+                               1.0);
+        }
+        else
+        {
+            png_color_16 bg_color_16;
+
+            bg_color_16.red = bg_color->red();
+            bg_color_16.green = bg_color->green();
+            bg_color_16.blue = bg_color->blue();
+            png_set_background(png_ptr,
+                               &bg_color_16,
+                               PNG_BACKGROUND_GAMMA_SCREEN,
+                               0,
+                               1.0);
+        }
+    }
+    
     png_read_update_info(png_ptr, info_ptr);
 
     // TODO Looks like there's a shift when width is not divisible by 4
