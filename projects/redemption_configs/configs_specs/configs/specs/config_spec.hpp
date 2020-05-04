@@ -317,8 +317,11 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persist_bitmap_cache_on_disk", desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "allow_channels", desc{"List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "deny_channels", desc{"List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), "allow_dynamic_channels", desc{"List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."}, set("*"));
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), "deny_dynamic_channels", desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
 

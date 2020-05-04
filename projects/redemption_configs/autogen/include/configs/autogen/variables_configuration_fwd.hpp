@@ -115,6 +115,8 @@ namespace cfg {
         struct persist_bitmap_cache_on_disk;
         struct allow_channels;
         struct deny_channels;
+        struct allow_dynamic_channels;
+        struct deny_dynamic_channels;
         struct fast_path;
         struct server_redirection_support;
         struct client_address_sent;

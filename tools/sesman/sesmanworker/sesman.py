@@ -1275,7 +1275,7 @@ class Sesman():
             data_to_send[u"trace_type"] = u'1'
 
         self.full_path = os.path.join(rec_path, self.record_filebase)
-        
+
         self.send_data(data_to_send)
 
         return _status, _error
@@ -2072,7 +2072,7 @@ class Sesman():
                             # r can be empty
                             else:
                                 # (if self.proxy_conx in r)
-                                if not self.internal_target and not got_signal:
+                                if not self.internal_target and not got_signal and False:
                                     Logger().info(u'Missing Keepalive')
                                     Logger().error(u'break connection')
                                     break

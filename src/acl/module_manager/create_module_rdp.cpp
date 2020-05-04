@@ -628,6 +628,14 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     }
     // ======================= End File System Params ===================
 
+
+    // ======================= Dynamic Channel Params ===================
+
+    mod_rdp_params.dynamic_channels_params.allow_channels = ini.get<cfg::mod_rdp::allow_dynamic_channels>().c_str();
+    mod_rdp_params.dynamic_channels_params.deny_channels  = ini.get<cfg::mod_rdp::deny_dynamic_channels>().c_str();
+
+    // ======================= End Dynamic Channel Params ===================
+
     mod_rdp_params.experimental_fix_input_event_sync =
         ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
     mod_rdp_params.support_connection_redirection_during_recording =
@@ -765,14 +773,14 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
             ini.get<cfg::metrics::log_interval>());
     }
     // ================== End Metrics ======================
-    
-    unique_fd client_sck =        
+
+    unique_fd client_sck =
         connect_to_target_host(ini,
                                time_base,
                                report_message,
-                               trkeys::authentification_rdp_fail);   
+                               trkeys::authentification_rdp_fail);
     IpAddress local_ip_address;
-    
+
     switch (ini.get<cfg::mod_rdp::client_address_sent>())
     {
         case ClientAddressSent::no_address :
@@ -789,7 +797,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
             mod_rdp_params.client_address = local_ip_address.ip_addr;
             break;
     }
-    
+
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,
         ini,

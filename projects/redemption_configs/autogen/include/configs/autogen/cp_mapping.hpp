@@ -40,6 +40,12 @@ cp_spec = {
         u'mod_rdp:show_common_cipher_list': (
             'show_common_cipher_list', False
         ),
+        u'mod_rdp:allow_dynamic_channels': (
+            'allow_dynamic_channels', u'*'
+        ),
+        u'mod_rdp:deny_dynamic_channels': (
+            'deny_dynamic_channels', u''
+        ),
         u'mod_rdp:server_redirection_support': (
             'server_redirection', False
         ),

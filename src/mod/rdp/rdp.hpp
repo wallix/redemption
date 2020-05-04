@@ -293,6 +293,17 @@ private:
         {}
     } clipboard;
 
+    struct DynamicChannels
+    {
+        const char * allow_channels;
+        const char * deny_channels;
+
+        DynamicChannels(ModRDPParams::DynamicChannelsParams const& dynamic_channels_params)
+        : allow_channels(dynamic_channels_params.allow_channels)
+        , deny_channels(dynamic_channels_params.deny_channels)
+        {}
+    } dynamic_channels;
+
 public:
     struct FileSystem
     {
@@ -426,6 +437,7 @@ public:
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params)
     , clipboard(mod_rdp_params.clipboard_params)
+    , dynamic_channels(mod_rdp_params.dynamic_channels_params)
     , file_system(mod_rdp_params.file_system_params)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
     , mod_rdp_factory(mod_rdp_factory)
@@ -703,13 +715,22 @@ private:
         this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
         this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
-        DynamicChannelVirtualChannel::Params dcvc_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+
+        DynamicChannelVirtualChannelParam dynamic_channel_virtual_channel_params;
+
+        dynamic_channel_virtual_channel_params.allow_channels =
+            this->dynamic_channels.allow_channels;
+        dynamic_channel_virtual_channel_params.deny_channels =
+            this->dynamic_channels.deny_channels;
 
         this->dynamic_channel_virtual_channel =
             std::make_unique<DynamicChannelVirtualChannel>(
                 this->dynamic_channel_to_client_sender.get(),
                 this->dynamic_channel_to_server_sender.get(),
-                dcvc_params);
+                this->time_base,
+                base_params,
+                dynamic_channel_virtual_channel_params);
     }
 
     inline void create_file_system_virtual_channel(
@@ -5328,7 +5349,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-        
+
         [[maybe_unused]] std::size_t channel_data_size = this->enable_fastpath_client_input_event
             ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
             : this->send_input_slowpath(time, message_type, device_flags, param1, param2);
@@ -5340,7 +5361,7 @@ public:
 
     void rdp_gdi_up_and_running(ScreenInfo & ) override {}
     void rdp_gdi_down() override {}
-    
+
     void rdp_input_invalidate(Rect r) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,

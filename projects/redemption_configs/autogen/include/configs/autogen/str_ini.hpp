@@ -410,11 +410,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #persist_bitmap_cache_on_disk = 0
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 #_hidden
 #allow_channels = *
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 #_hidden
 #deny_channels = 
 
