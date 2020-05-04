@@ -39,20 +39,41 @@ namespace ut
         dump = 'd',
     };
 
+    extern PatternView default_pattern_view;
+    extern unsigned default_ascii_min_len;
+
     struct flagged_bytes_view : bytes_view
     {
-        PatternView pattern = PatternView::deduced;
-        size_t min_len = 0;
+        PatternView pattern = default_pattern_view;
+        unsigned min_len = default_ascii_min_len;
     };
 
     inline flagged_bytes_view dump(bytes_view v) { return {v, PatternView::dump, 0}; }
     inline flagged_bytes_view hex(bytes_view v) { return {v, PatternView::hex, 0}; }
     inline flagged_bytes_view utf8(bytes_view v) { return {v, PatternView::utf8, 0}; }
-    inline flagged_bytes_view ascii(bytes_view v, size_t min_len = 0)
+    inline flagged_bytes_view ascii(bytes_view v, unsigned min_len = default_ascii_min_len)
     { return {v, PatternView::ascii, min_len}; }
 
     bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
     void put_view(size_t pos, std::ostream& out, flagged_bytes_view x);
+
+    struct PatternViewSaver
+    {
+        PatternViewSaver(PatternView pattern) noexcept;
+        ~PatternViewSaver();
+
+    private:
+        PatternView pattern;
+    };
+
+    struct AsciiMinLenSaver
+    {
+        AsciiMinLenSaver(unsigned min_len) noexcept;
+        ~AsciiMinLenSaver();
+
+    private:
+        unsigned min_len;
+    };
 } // namespace ut
 
 namespace redemption_unit_test__

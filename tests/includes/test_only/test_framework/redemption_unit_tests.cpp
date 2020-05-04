@@ -50,7 +50,7 @@ namespace redemption_unit_test__
     // }
 
     // based on element_compare from boost/test/tools/collection_comparison_op.hpp
-    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
+    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
         boost::test_tools::assertion_result ar(true);
 
@@ -76,7 +76,7 @@ namespace redemption_unit_test__
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
+    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
         boost::test_tools::assertion_result ar(true);
 
@@ -91,7 +91,7 @@ namespace redemption_unit_test__
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
+    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
         boost::test_tools::assertion_result ar(true);
 
@@ -110,7 +110,7 @@ namespace redemption_unit_test__
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
+    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
         boost::test_tools::assertion_result ar(true);
 
@@ -129,7 +129,7 @@ namespace redemption_unit_test__
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
+    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
         boost::test_tools::assertion_result ar(true);
 
@@ -148,7 +148,7 @@ namespace redemption_unit_test__
         return ar;
     }
 
-    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern, std::size_t min_len)
+    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
         boost::test_tools::assertion_result ar(true);
 
@@ -169,9 +169,9 @@ namespace redemption_unit_test__
 
     std::ostream & operator<<(std::ostream & out, Put2Mem const & x)
     {
-        ut::put_view(x.pos, out, {x.lhs, ut::PatternView(x.pattern), x.min_len});
+        ut::put_view(x.pos, out, {x.lhs, x.pattern, x.min_len});
         out << x.revert;
-        ut::put_view(x.pos, out, {x.rhs, ut::PatternView(x.pattern), x.min_len});
+        ut::put_view(x.pos, out, {x.rhs, x.pattern, x.min_len});
         return out;
     }
 
@@ -546,14 +546,14 @@ namespace
         }
     }
 
-    static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
+    static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v, unsigned min_len)
     {
         put_utf8_bytes(pos, out, v, min_len, UnpritableMode::cstr_with_raw_newline);
     }
 
     static void put_ascii_bytes(
         size_t pos, std::ostream& out, bytes_view v,
-        size_t min_len, UnpritableMode mode = UnpritableMode::cstr)
+        unsigned min_len, UnpritableMode mode = UnpritableMode::cstr)
     {
         PutCharCtx putc_ctx;
 
@@ -568,32 +568,32 @@ namespace
 
         if (min_len)
         {
-            std::vector<bool> is_ascii_mask(v.size());
+            std::vector<bool> is_ascii_mask(v.size(), false);
 
             auto pmask = is_ascii_mask.begin();
             auto first = v.begin();
             auto last = v.end();
 
+            auto is_printable = [](uint8_t c){
+                return is_printable_ascii(c);
+            };
+
             while (first != last) {
-                auto pos = std::find_if(first, last, [](uint8_t c){
-                    return not is_printable_ascii(c);
-                });
+                auto first_ascii = std::find_if(first, last, is_printable);
+                if (first_ascii == last) {
+                    break;
+                }
+                auto next_not_ascii = std::find_if_not(first_ascii+1, last, is_printable);
+                auto dist = next_not_ascii - first_ascii;
 
-                if (pos == first) {
-                    ++first;
-                    ++pmask;
-                    continue;
+                if (min_len <= dist) {
+                    auto mask_index = first_ascii - v.begin();
+                    auto begin_mask = pmask + mask_index;
+                    std::fill(begin_mask, begin_mask + dist, true);
                 }
 
-                auto end = pmask + (pos - first);
-                if (size_t(pos - first) > min_len) {
-                    std::fill(pmask, end, true);
-                }
-                pmask = end;
-                first = pos;
+                first = next_not_ascii;
             }
-
-            pmask = is_ascii_mask.begin();
 
             put_bytes([&](bytes_view x){
                 for (uint8_t c : x) {
@@ -611,7 +611,7 @@ namespace
         }
     }
 
-    static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
+    static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v, unsigned min_len)
     {
         put_ascii_bytes(pos, out, v, min_len, UnpritableMode::cstr_with_raw_newline);
     }
@@ -632,7 +632,7 @@ namespace
         }
     }
 
-    static void put_auto_bytes(size_t pos, std::ostream& out, bytes_view v, size_t min_len)
+    static void put_auto_bytes(size_t pos, std::ostream& out, bytes_view v, unsigned min_len)
     {
         auto n = std::min(int(v.size()), 36);
         auto* p = v.as_u8p();
@@ -688,22 +688,43 @@ namespace ut
 
     void put_view(size_t pos, std::ostream& out, flagged_bytes_view x)
     {
-        char const* sep = (x.pattern == PatternView('d')) ? "" : "\"";
+        char const* sep = (x.pattern == PatternView::dump) ? "" : "\"";
         out << sep;
         switch (x.pattern) {
-            #define CASE(c, print) case PatternView(c): \
+            #define CASE(c, print) case PatternView::c: \
                 print(pos, out, x, x.min_len);          \
                 break
-            CASE('c', put_ascii_bytes);
-            CASE('C', put_ascii_bytes2);
-            CASE('s', put_utf8_bytes);
-            CASE('S', put_utf8_bytes2);
-            CASE('b', put_hex_bytes);
-            CASE('d', put_dump_bytes);
+            CASE(ascii, put_ascii_bytes);
+            CASE(ascii_nl, put_ascii_bytes2);
+            CASE(utf8, put_utf8_bytes);
+            CASE(utf8_nl, put_utf8_bytes2);
+            CASE(hex, put_hex_bytes);
+            CASE(dump, put_dump_bytes);
             default:
-            CASE('a', put_auto_bytes);
+            CASE(deduced, put_auto_bytes);
             #undef CASE
         }
         out << sep;
+    }
+
+    PatternView default_pattern_view = PatternView::deduced;
+    unsigned default_ascii_min_len = 3;
+
+    PatternViewSaver::PatternViewSaver(PatternView pattern) noexcept
+    : pattern(std::exchange(default_pattern_view, pattern))
+    {}
+
+    PatternViewSaver::~PatternViewSaver()
+    {
+        default_pattern_view = pattern;
+    }
+
+    AsciiMinLenSaver::AsciiMinLenSaver(unsigned min_len) noexcept
+    : min_len(std::exchange(default_ascii_min_len, min_len))
+    {}
+
+    AsciiMinLenSaver::~AsciiMinLenSaver()
+    {
+        default_ascii_min_len = min_len;
     }
 }
