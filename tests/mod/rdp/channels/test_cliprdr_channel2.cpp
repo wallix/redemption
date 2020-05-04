@@ -241,7 +241,7 @@ namespace
 
             ~ExceptionLock()
             {
-                if (std::uncaught_exception()) {
+                if (std::uncaught_exceptions()) {
                     self.has_exception = true;
                 }
             }
@@ -305,7 +305,9 @@ namespace
 #define TEST_PROCESS TEST_BUF(Msg::Missing{}), [&]
 
 #define TEST_BUF(...) [&](Msg const& msg_) { \
-    RED_CHECK(Msg(__VA_ARGS__) == msg_);     \
+    [&](Msg const& expected) {               \
+        RED_CHECK(expected == msg_);         \
+    }(Msg(__VA_ARGS__));                     \
     return true;                             \
 }
 
@@ -1053,7 +1055,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, D const& d, d, {
     //@{
     msg_comparator.run(
         TEST_PROCESS {
-            requested.client_file_request(0, 6, StreamId(2));
+            requested.client_file_request(0, 7, StreamId(2));
         },
         TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
     );
@@ -1064,20 +1066,20 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, D const& d, d, {
             Buffer buf;
             temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(2);
-                out.out_copy_bytes(requested.file_contents.first(6));
+                out.out_copy_bytes(requested.file_contents.first(7));
             });
             channel_ctx->process_server_message(temp_av);
         },
         TEST_BUF(Msg::ToValidator{
             "\x07\x00\x00\x00\x1b\x00\x00\x00\x02\x00\x04""down"
             "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
-        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x02"_av}),
-        TEST_BUF(Msg::ToValidator{requested.file_contents.first(6)}),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0b\x00\x00\x00\x02"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.first(7)}),
         TEST_BUF(Msg::ToMod{32, first_last_flags,
             "\x08\x00\x01\x00\x18\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00"
-            "\x02\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00"_av}),
+            "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"_av}),
         // without file_contents
-        TEST_BUF(Msg::ToFront{18, first_flags, temp_av.first(12)})
+        TEST_BUF(Msg::ToFront{19, first_flags, temp_av.first(12)})
     );
 
     // requested.prepare_range_max_len(requested.file_contents.size() / 2);
@@ -1089,34 +1091,37 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, D const& d, d, {
             using namespace Cliprdr;
             Buffer buf;
             temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
-                out.out_uint32_le(0);
-                out.out_copy_bytes(requested.file_contents);
+                out.out_uint32_le(2);
+                out.out_copy_bytes(requested.file_contents.from_offset(7));
             });
             channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToValidator{
-            "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up"
-            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
-        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x10\x00\x00\x00\x01"_av}),
-        TEST_BUF(Msg::ToValidator{requested.file_contents}),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x02"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.from_offset(7)}),
         TEST_BUF(Msg::Log6{
-            "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION"
-            " file_name=abc size=12 sha256="
-            "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
-        TEST_BUF(Msg::ToValidator{"\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av}),
-        // without file_contents
-        TEST_BUF(Msg::ToFront{24, first_flags, temp_av.first(12)})
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=13 sha256="
+            "67f40662fd7aae2942e02a35a519fa2cf628498df498ab3b9c3a74e69f572e4e"_av}),
+        TEST_BUF(Msg::ToValidator{"\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS { RED_TEST(channel_ctx->dlp_message_accept(FileValidatorId(2))); },
-        TEST_BUF(Msg::Log6{"FILE_VERIFICATION direction=UP file_name=abc status=ok"_av}),
-        TEST_BUF(Msg::ToFront{24, last_flags, requested.file_contents})
+        TEST_BUF(Msg::Log6{"FILE_VERIFICATION direction=DOWN file_name=abc status=ok"_av}),
+        TEST_BUF(Msg::ToFront{19, last_flags, requested.file_contents.first(7)})
     );
 
     if (fdx_ctx && d.always_file_storage) {
         RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000002.tfl"), requested.file_contents);
     }
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(7, 6, StreamId(2));
+        },
+        TEST_BUF(Msg::ToFront{18, first_last_flags,
+             "\x09\x00\x01\x00\x0a\x00\x00\x00\x02\x00\x00\x00""cdefgf"_av})
+    );
     //@}
 
 
@@ -1137,9 +1142,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, D const& d, d, {
         if (d.always_file_storage) {
             RED_CHECK_FILE_CONTENTS(fdx_path,
                 "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00,\x03\x00\x26\x00""abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9"
-                "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
-                "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
+                "\x00\x00""4\x03\x00&\x00""abcmy_session_id/my_session_id,000001.tfl"
+                "\xd1\xb9\xc9\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98"
+                "\xf7\xf5\xe0\x7f,\x96.\x10x\xc0""5\x9f^\x04\x00\x02\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00""4\x03\x00&\x00"
+                "abcmy_session_id/my_session_id,000002.tflg\xf4\x06""b\xfdz\xae)B"
+                "\xe0*5\xa5\x19\xfa,\xf6(I\x8d\xf4\x98\xab;\x9c:t\xe6\x9fW.N"_av);
         }
         else {
             RED_CHECK_FILE_CONTENTS(fdx_path, "v3\n"_av);

@@ -147,6 +147,10 @@ NoLockData::init_requested_range(
     StreamId stream_id, FileGroupId lindex,
     uint32_t file_size_requested, uint64_t file_size, std::string_view file_name)
 {
+    LOG(LOG_DEBUG, "init_requested_range:"
+        "  streamid: %u  lindex: %u  size requested: %u  fsize: %lu  fname: %s",
+        unsigned(stream_id), unsigned(lindex), file_size_requested,
+        file_size, file_name.data());
     this->data.stream_id = stream_id;
     this->data.lindex = lindex;
     this->data.first_file_size_requested = file_size_requested;
@@ -162,6 +166,7 @@ struct ClipboardVirtualChannel::ClipCtx::NoLockData::D
         FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl)
     {
         assert(nolock_data.transfer_state == TransferState::RequestedRange);
+
         nolock_data.data.file_validator_id = file_validator_id;
         nolock_data.data.file_offset = 0;
         nolock_data.data.file_size_requested = std::min(
@@ -170,6 +175,9 @@ struct ClipboardVirtualChannel::ClipCtx::NoLockData::D
         nolock_data.data.file_contents.clear();
         nolock_data.data.sig.reset();
         nolock_data.data.validator_state = ValidatorState::Wait;
+
+        LOG(LOG_DEBUG, "requested_to_rng_base:  validator id: %u  file_size_requested: %u",
+            unsigned(file_validator_id), unsigned(nolock_data.data.file_size_requested));
     }
 };
 
@@ -1536,9 +1544,13 @@ struct ClipboardVirtualChannel::D
         auto update_file_range_data = [&self](
             ClipCtx::FileContentsRange& file_rng, bytes_view data
         ){
+            LOG(LOG_DEBUG, "fsize: %lu/%lu  data.size: %zu/%u ->",
+                file_rng.file_offset, file_rng.file_size,
+                data.size(), file_rng.file_size_requested);
             if (data.size() >= file_rng.file_size_requested) {
                 data = data.first(file_rng.file_size_requested);
             }
+            LOG(LOG_DEBUG, "data.size: %zu", data.size());
 
             file_rng.sig.update(data);
             file_rng.file_offset += data.size();
@@ -1612,6 +1624,8 @@ struct ClipboardVirtualChannel::D
                 out_stream.get_produced_bytes().size(),
                 send_first_last_flags,
                 out_stream.get_produced_bytes());
+
+            file_rng.file_size_requested = file_rng.first_file_size_requested;
         };
 
         auto send_stream_id_without_data = [&sender, &self](
@@ -1873,6 +1887,8 @@ struct ClipboardVirtualChannel::D
                     }
                 };
 
+                LOG(LOG_DEBUG, "state: GetRange");
+
                 if (is_ok) {
                     send_message_is_ok = false;
 
@@ -1883,19 +1899,22 @@ struct ClipboardVirtualChannel::D
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                         clip.has_current_file_contents_stream_id = false;
 
+                        LOG(LOG_DEBUG, "last");
+
                         if (file_rng.response_size == 0) {
+                            LOG(LOG_DEBUG, "send stream id without data");
                             /// TODO to RequestedRange
                             send_stream_id_without_data(file_rng);
                         }
 
                         if (set_finalize_file_transfer(file_rng)) {
-                            file_rng.sig.final();
-                            this->log_file_info(self, file_rng, (&clip == &self.server_ctx));
+                            LOG(LOG_DEBUG, "set finalize = ok");
                             post_process(file_rng, Mwrm3::TransferedStatus::Completed);
                         }
                         else switch (file_rng.validator_state)
                         {
                             case ValidatorState::Failure:
+                                LOG(LOG_DEBUG, "validator = Failure");
                                 this->_close_file_rng_tfl(self, file_rng,
                                     Mwrm3::TransferedStatus::Broken);
                                 send_fake_data();
@@ -1903,11 +1922,13 @@ struct ClipboardVirtualChannel::D
                                 break;
 
                             case ValidatorState::Success:
+                                LOG(LOG_DEBUG, "validator = Success");
                                 send_file_data();
                                 clip.nolock_data.set_sync_range();
                                 break;
 
                             case ValidatorState::Wait:
+                                LOG(LOG_DEBUG, "validator = Wait");
                                 send_file_contents_request(file_rng);
                                 break;
                         }
