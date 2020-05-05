@@ -107,7 +107,6 @@ namespace
 #else
         std::string_view comp_type = "__";
 #endif
-        std::string test_module = master_test_suite().p_name.get();
         return str_concat(
             tempbase(),
             '@',
