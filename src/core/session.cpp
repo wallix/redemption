@@ -96,8 +96,8 @@ class Session
                     - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
             }
 
-//            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us", 
-//                now.tv_sec, now.tv_usec, this->timeout.tv_sec, this->timeout.tv_usec, 
+//            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us",
+//                now.tv_sec, now.tv_usec, this->timeout.tv_sec, this->timeout.tv_usec,
 //                timeoutastv.tv_sec, timeoutastv.tv_usec);
             return ::select(
                 this->max + 1, &this->rfds,
@@ -261,7 +261,7 @@ private:
 
 private:
     void wabam_settings(Inifile & ini, Front & front){
-        if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>() 
+        if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>()
             &&  ini.get<cfg::context::is_wabam>()) {
                 front.force_using_cache_bitmap_r2();
         }
@@ -300,8 +300,11 @@ private:
     void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Authentifier & authentifier, Front & front)
     {
         if (mod_wrapper.current_mod != next_state) {
-            front.must_be_stop_capture();
-            authentifier.delete_remote_mod();
+            if ((mod_wrapper.current_mod == MODULE_RDP) ||
+                (mod_wrapper.current_mod == MODULE_VNC)) {
+                front.must_be_stop_capture();
+                authentifier.delete_remote_mod();
+            }
         }
 
         auto mod_pack = mod_factory.create_mod(next_state);
@@ -586,7 +589,7 @@ private:
     }
 
 
-    void show_ultimatum(std::string info, timeval ultimatum, timeval now) 
+    void show_ultimatum(std::string info, timeval ultimatum, timeval now)
     {
         timeval timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
                     - std::chrono::seconds(now.tv_sec) - std::chrono::microseconds(now.tv_usec));
@@ -694,7 +697,7 @@ public:
         TimerContainer timer_events_;
         GraphicEventContainer graphic_events_;
         GraphicTimerContainer graphic_timer_events_;
-        
+
         TimeSystem timeobj;
 
         time_base.set_current_time(tvtime());
@@ -702,7 +705,7 @@ public:
         Front front(time_base, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
         );
-	
+
         std::unique_ptr<Acl> acl;
 
         try {
@@ -739,27 +742,27 @@ public:
             //      This state is the initial state of the session when RDP client just connected
             //      to the socket. The connection to the socket has not yet been opened.
             //      No Module.
-            
+
             // SESSION_STATE_RUNNING:         FRONT CONNECTED, ACL, MODULE
             //        Front is still connected (either performaning initial negotiation or
             //        already connected and up and running). ACL is connected.
-            //        For now from proxy point of view we don't make any difference 
+            //        For now from proxy point of view we don't make any difference
             //        if ACL has performed primary authentication or not.
             //        A module is available through mod_wrapper (can be either null module
             //        some internal module of a module actually connected to a remote server)
-            
+
             // SESSION_STATE_BACKEND_CLEANUP: FRONT DISCONNECTED: CLOSING BACKEND (ACL, MODULE)
             //        The front socket raised an error which means it has been disconnected
             //        but we may still have to prperly disconnect from target server,
             //        and to disconnect from ACL.
-            
+
             // SESSION_STATE_CLOSE_BOX:       FRONT CONNECTED: BACKEND CLOSED (NO ACL, NO MODULE)
             //        The front socket is still connected, but the connection to ACL has been closed
             //        the close of ACL may have occured from sesman side or from proxy side
             //        and be caused either a deconnexion (or hang) of proxy, a failure to
             //        reply to keepalive, or as a consequence of disconnection from target server.
 
-           
+
             SessionState session_state = SessionState::SESSION_STATE_INCOMING;
 
             while (run_session) {
@@ -802,7 +805,7 @@ public:
                         if (num > 0) { continue; }
                         // if the select stopped on timeout or EINTR we will give a try to reading
                     }
-                    
+
                     // =============================================================
                     // Now prepare select for listening on all read sockets
                     // timeout or immediate wakeups are managed using timeout
@@ -815,13 +818,13 @@ public:
                         ioswitch.set_read_sck(front_trans.sck);
                     }
 
-                    // if event lists are waiting for incoming data 
-                    fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                    // if event lists are waiting for incoming data
+                    fd_events_.for_each([&](int fd, auto& /*top*/){
                             if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}
                     });
-                    
+
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
+                            front,
                             timer_events_,
                             fd_events_,
                             graphic_timer_events_,
@@ -848,13 +851,13 @@ public:
 
                     now = tvtime();
                     time_base.set_current_time(now);
-                    
+
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
                     }
 
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
-                    || (front_trans.sck != INVALID_SOCKET 
+                    bool const front_is_set = front_trans.has_tls_pending_data()
+                    || (front_trans.sck != INVALID_SOCKET
                     && ioswitch.is_set_for_reading(front_trans.sck));
 
                     try {
@@ -952,8 +955,8 @@ public:
                                 continue;
                             }
                         }
-                        if (mod_wrapper.has_mod() 
-                        && mod_wrapper.get_mod_transport() 
+                        if (mod_wrapper.has_mod()
+                        && mod_wrapper.get_mod_transport()
                         && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
                             mod_wrapper.get_mod_transport()->send_waiting_data();
                         }
@@ -965,7 +968,7 @@ public:
                         if (num > 0) { continue; }
                         // if the select stopped on timeout or EINTR we will give a try to reading
                     }
-                    
+
                     // =============================================================
                     // Now prepare select for listening on all read sockets
                     // timeout or immediate wakeups are managed using timeout
@@ -986,18 +989,18 @@ public:
                         ioswitch.set_read_sck(front_trans.sck);
                     }
 
-                    // if event lists are waiting for incoming data 
+                    // if event lists are waiting for incoming data
                     fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
+                        [&](int fd, auto& /*top*/){
     //                        LOG(LOG_INFO, "Wait for read event on fd=%d", fd);
                             if (fd != INVALID_SOCKET){
                                 ioswitch.set_read_sck(fd);
                             }
                     });
-                    
+
                     if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
                         graphic_fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
+                        [&](int fd, auto& /*top*/){
     //                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
                             if (fd != INVALID_SOCKET){
                                 ioswitch.set_read_sck(fd);
@@ -1012,7 +1015,7 @@ public:
                             && mod_wrapper.get_mod_transport()->has_tls_pending_data());
 
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
+                            front,
                             timer_events_,
                             fd_events_,
                             graphic_timer_events_,
@@ -1039,13 +1042,13 @@ public:
 
                     now = tvtime();
                     time_base.set_current_time(now);
-                    
+
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
                     }
 
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
-                    || (front_trans.sck != INVALID_SOCKET 
+                    bool const front_is_set = front_trans.has_tls_pending_data()
+                    || (front_trans.sck != INVALID_SOCKET
                     && ioswitch.is_set_for_reading(front_trans.sck));
 
                     bool acl_is_set = ioswitch.is_set_for_reading(acl->auth_trans.sck);
@@ -1154,7 +1157,7 @@ public:
                                 auto& gd = mod_wrapper.get_graphic_wrapper();
                                 graphic_events_.exec_action(gd);
                                 graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                                    return fd != INVALID_SOCKET 
+                                    return fd != INVALID_SOCKET
                                         &&  ioswitch.is_set_for_reading(fd);
                                 }, gd);
                             }
@@ -1221,7 +1224,7 @@ public:
                     }
                     break;
                     } // switch
-    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");            
+    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");
                 }
                 break;
 
@@ -1264,28 +1267,28 @@ public:
                         if (num > 0) { continue; }
                         // if the select stopped on timeout or EINTR we will give a try to reading
                     }
-                    
+
                     // =============================================================
                     // Now prepare select for listening on all read sockets
                     // timeout or immediate wakeups are managed using timeout
                     // =============================================================
-                    
+
                     // sockets for mod or front aren't managed using fd events
                     if (front_trans.sck != INVALID_SOCKET) {
                         ioswitch.set_read_sck(front_trans.sck);
                     }
 
-                    // if event lists are waiting for incoming data 
-                    fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                    // if event lists are waiting for incoming data
+                    fd_events_.for_each([&](int fd, auto& /*top*/){
                             if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
 
                     if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                        graphic_fd_events_.for_each([&](int fd, auto& /*top*/){
                             if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
                     }
 
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
+                            front,
                             timer_events_,
                             fd_events_,
                             graphic_timer_events_,
@@ -1311,12 +1314,12 @@ public:
 
                     now = tvtime();
                     time_base.set_current_time(now);
-                    
+
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
                     }
 
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
+                    bool const front_is_set = front_trans.has_tls_pending_data()
                     || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
 
                     try {
@@ -1332,7 +1335,7 @@ public:
                             graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
                         }
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
-                                                { return fd != INVALID_SOCKET 
+                                                { return fd != INVALID_SOCKET
                                                         &&  ioswitch.is_set_for_reading(fd);
                                                 });
                         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
