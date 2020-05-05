@@ -2016,13 +2016,9 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 void mod_vnc::rdp_input_up_and_running()
 {
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
-        this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->wait_client_up_and_running_event = this->session_reactor.create_graphic_event()
-        .on_action([this](auto ctx, gdi::GraphicApi & drawable){
-            this->initial_clear_screen(drawable);
-            return ctx.terminate();
-        });
+        Rect const screen_rect(0, 0, this->width, this->height);
+        this->update_screen(screen_rect, 1);
+        this->state = UP_AND_RUNNING;
     }
 }
 
