@@ -118,6 +118,7 @@ private:
     TimerPtr session_probe_timer;
     GraphicEventPtr freeze_mod_screen;
     std::function<void()> freeze_screen;
+    std::function<bool(bool,bool)> disable_input_event_and_graphic_update;
 
     bool launch_aborted = false;
 
@@ -178,7 +179,8 @@ public:
         Random & gen,
         const BaseVirtualChannel::Params & base_params,
         const Params& params,
-        std::function<void()> freeze_screen)
+        std::function<void()> freeze_screen,
+        std::function<bool(bool,bool)> disable_input_event_and_graphic_update)
     : BaseVirtualChannel(nullptr, to_server_sender_, base_params)
     , sespro_params(params.sespro_params)
     , param_target_informations(params.target_informations)
@@ -200,6 +202,7 @@ public:
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , freeze_screen(freeze_screen)
+    , disable_input_event_and_graphic_update(disable_input_event_and_graphic_update)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
@@ -392,8 +395,7 @@ private:
                     if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                         const bool disable_input_event     = true;
                         const bool disable_graphics_update = true;
-                            this->mod.disable_input_event_and_graphics_update(
-                                disable_input_event, disable_graphics_update);
+                        this->mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 

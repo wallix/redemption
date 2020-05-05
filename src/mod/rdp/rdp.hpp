@@ -818,7 +818,11 @@ public:
             this->gen,
             base_params,
             sp_vc_params,
-            []{});
+            []{},
+            [&mod](bool disable_input_event,bool disable_graphics_update) -> bool
+            {
+                return mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+            });
 #endif
 
     }
