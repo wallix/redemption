@@ -817,7 +817,8 @@ public:
             file_system_virtual_channel,
             this->gen,
             base_params,
-            sp_vc_params);
+            sp_vc_params,
+            []{});
 #endif
 
     }
@@ -2143,14 +2144,17 @@ public:
 #ifndef __EMSCRIPTEN__
         this->channels.init_remote_program_and_session_probe(
             gd, *this, mod_rdp_params, this->authentifier, info, program, directory);
-#else
-        (void)gd;
 #endif
 
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
 
-        gdi_clear_screen(gd, this->get_dim());
+        Dimension const& dim = this->get_dim();
+        Rect const r(0, 0, dim.w, dim.h);
+        RDPOpaqueRect cmd(r, color_encode(BLACK, BitsPerPixel{24}));
+        gd.begin_update();
+        gd.draw(cmd, r, gdi::ColorCtx::depth24());
+        gd.end_update();
 
         this->init_negociate_event_(
             info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,

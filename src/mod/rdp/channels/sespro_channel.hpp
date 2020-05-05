@@ -37,6 +37,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "acl/gd_provider.hpp"
+#include <functional>
 
 
 #include <chrono>
@@ -116,6 +117,7 @@ private:
     GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
     GraphicEventPtr freeze_mod_screen;
+    std::function<void()> freeze_screen;
 
     bool launch_aborted = false;
 
@@ -175,7 +177,8 @@ public:
         FileSystemVirtualChannel& file_system_virtual_channel,
         Random & gen,
         const BaseVirtualChannel::Params & base_params,
-        const Params& params)
+        const Params& params,
+        std::function<void()> freeze_screen)
     : BaseVirtualChannel(nullptr, to_server_sender_, base_params)
     , sespro_params(params.sespro_params)
     , param_target_informations(params.target_informations)
@@ -196,6 +199,7 @@ public:
     , gd_provider(gd_provider)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
+    , freeze_screen(freeze_screen)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
@@ -397,6 +401,7 @@ private:
                         .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
                             gdi_freeze_screen(drawable, dim);
                         }));
+                        this->freeze_screen();
                     }
                     this->request_keep_alive();
                     this->mod.display_osd_message("No keep alive received from Session Probe!");
