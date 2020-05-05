@@ -1674,9 +1674,8 @@ struct ClipboardVirtualChannel::D
                 throw Error(ERR_RDP_PROTOCOL);
 
             case ClipCtx::TransferState::Size:
-                check_stream_id(clip.nolock_data.data.stream_id);
-
                 if (is_ok) {
+                    check_stream_id(clip.nolock_data.data.stream_id);
                     update_file_size_or_throw(
                         clip.files, clip.nolock_data.data.lindex,
                         in_stream.remaining_bytes());
@@ -1688,9 +1687,8 @@ struct ClipboardVirtualChannel::D
                 break;
 
             case ClipCtx::TransferState::RequestedRange: {
-                check_stream_id(clip.nolock_data.data.stream_id);
-
                 if (is_ok) {
+                    check_stream_id(clip.nolock_data.data.stream_id);
                     ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
 
                     auto validator_id = new_file_validator_id(file_rng.file_name);
@@ -1738,9 +1736,8 @@ struct ClipboardVirtualChannel::D
             }
 
             case ClipCtx::TransferState::Range: {
-                check_stream_id(clip.nolock_data.data.stream_id);
-
                 if (is_ok) {
+                    check_stream_id(clip.nolock_data.data.stream_id);
                     update_file_range_data(clip.nolock_data.data, in_stream.remaining_bytes());
 
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
@@ -1763,11 +1760,10 @@ struct ClipboardVirtualChannel::D
             }
 
             case ClipCtx::TransferState::RequestedSyncRange: {
-                check_stream_id(clip.nolock_data.data.stream_id);
-
                 ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
 
                 if (is_ok) {
+                    check_stream_id(clip.nolock_data.data.stream_id);
                     send_message_is_ok = false;
 
                     auto contents = update_file_range_data(
@@ -1842,8 +1838,6 @@ struct ClipboardVirtualChannel::D
             }
 
             case ClipCtx::TransferState::GetRange: {
-                check_stream_id(clip.nolock_data.data.stream_id);
-
                 ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
 
                 auto send_fake_data = [&]{
@@ -1873,7 +1867,13 @@ struct ClipboardVirtualChannel::D
                             break;
 
                         case ValidatorState::Wait:
-                            self.file_validator->send_eof(file_rng.file_validator_id);
+                            if (transfered_status == Mwrm3::TransferedStatus::Broken) {
+                                self.file_validator->send_abort(file_rng.file_validator_id);
+                                file_rng.file_validator_id = FileValidatorId();
+                            }
+                            else {
+                                self.file_validator->send_eof(file_rng.file_validator_id);
+                            }
                             /// TODO file not checked
                             this->_close_file_rng_tfl(self, file_rng, transfered_status);
                             clip.nolock_data.set_waiting_validator();
@@ -1890,6 +1890,8 @@ struct ClipboardVirtualChannel::D
                 LOG(LOG_DEBUG, "state: GetRange");
 
                 if (is_ok) {
+                    check_stream_id(clip.nolock_data.data.stream_id);
+
                     send_message_is_ok = false;
 
                     auto contents = update_file_range_data(
