@@ -2072,7 +2072,7 @@ class Sesman():
                             # r can be empty
                             else:
                                 # (if self.proxy_conx in r)
-                                if not self.internal_target and not got_signal and False:
+                                if not self.internal_target and not got_signal:
                                     Logger().info(u'Missing Keepalive')
                                     Logger().error(u'break connection')
                                     break
