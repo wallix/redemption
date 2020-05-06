@@ -20,8 +20,7 @@
 
 #pragma once
 
-#include "utils/sugar/array_view.hpp"
-
 class Theme;
+class Inifile;
 
-void load_theme(Theme& theme, chars_view theme_name);
+void load_theme(Theme& theme, Inifile& ini) noexcept;
