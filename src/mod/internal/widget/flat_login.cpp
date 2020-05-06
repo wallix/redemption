@@ -83,12 +83,14 @@ FlatLogin::FlatLogin(
     gdi::GraphicApi & drawable,
     int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
     NotifyApi* notifier, const char* caption,
-    const char * login, const char * password,
+    const char * login, const char * password, const char * target,
     const char * label_text_login,
     const char * label_text_password,
+    const char * label_text_target,
     const char * label_error_message,
     const char * label_login_message,
     WidgetFlatButton * extra_button,
+    bool enable_target_field,
     Font const & font, Translator tr, Theme const & theme
 )
     : WidgetParent(drawable, parent, notifier)
@@ -98,17 +100,23 @@ FlatLogin::FlatLogin(
     , login_label(drawable, *this, nullptr, label_text_login, -11,
                     theme.global.fgcolor, theme.global.bgcolor, font)
     , login_edit(drawable, *this, this,
-                    login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
-                    theme.edit.focus_color, theme.global.bgcolor, font,
-                    label_text_login, (width <= 640), -1u, 1, 1, false)
+                 login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
+                 theme.edit.focus_color, theme.global.bgcolor, font,
+                 label_text_login, (width <= 640), -1u, 1, 1, false)
     , password_label(drawable, *this, nullptr, label_text_password, -13,
-                        theme.global.fgcolor, theme.global.bgcolor,
-                        font)
+                     theme.global.fgcolor, theme.global.bgcolor,
+                     font)
     , password_edit(drawable, *this, this,
                     password, -14, theme.edit.fgcolor,
                     theme.edit.bgcolor, theme.edit.focus_color, theme.global.bgcolor,
                     font, label_text_password, (width <= 640),
                     -1u, 1, 1, true)
+    , target_label(drawable, *this, nullptr, label_text_target, -17,
+                   theme.global.fgcolor, theme.global.bgcolor, font)
+    , target_edit(drawable, *this, this,
+                  target, -18, theme.edit.fgcolor, theme.edit.bgcolor,
+                  theme.edit.focus_color, theme.global.bgcolor, font,
+                  label_text_target, (width <= 640), -1u, 1, 1, false)
     , login_message_label(drawable, *this, nullptr, label_login_message, -10,
              theme.global.fgcolor, theme.global.bgcolor, font,
              WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
@@ -130,6 +138,7 @@ FlatLogin::FlatLogin(
     , font(font)
     , login_message(label_login_message)
     , tr(tr)
+    , show_target(enable_target_field)
     , bg_color(theme.global.bgcolor)
 {
     this->impl = &this->composite_array;
@@ -137,6 +146,9 @@ FlatLogin::FlatLogin(
     this->add_widget(&this->img);
     this->add_widget(&this->helpicon);
 
+    if (this->show_target) {
+        this->add_widget(&this->target_edit);
+    }
     this->add_widget(&this->login_edit);
     this->add_widget(&this->password_edit);
 
@@ -172,6 +184,9 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
 
     if (width > 640) {
         if (!this->labels_added) {
+            if (this->show_target) {
+                this->add_widget(&this->target_label);
+            }
             this->add_widget(&this->login_label);
             this->add_widget(&this->password_label);
 
@@ -181,20 +196,31 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
         dim = this->login_label.get_optimal_dim();
         this->login_label.set_wh(dim);
 
+        dim = this->target_label.get_optimal_dim();
+        this->target_label.set_wh(dim);
+
         dim = this->password_label.get_optimal_dim();
         this->password_label.set_wh(dim);
     }
     else {
         if (this->labels_added) {
+            if (this->show_target) {
+                this->remove_widget(&this->target_label);
+            }
             this->remove_widget(&this->login_label);
             this->remove_widget(&this->password_label);
 
             this->labels_added = false;
         }
 
+        this->target_label.set_wh(0, 0);
         this->login_label.set_wh(0, 0);
         this->password_label.set_wh(0, 0);
     }
+
+    this->target_edit.use_title(width < 640);
+    dim = this->target_edit.get_optimal_dim();
+    this->target_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
 
     this->login_edit.use_title(width < 640);
     dim = this->login_edit.get_optimal_dim();
@@ -206,9 +232,14 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     dim = this->password_edit.get_optimal_dim();
     this->password_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
 
-    const int cbloc_w = std::max(this->login_label.cx()    + 10 + this->login_edit.cx(),
-                                 this->password_label.cx() + 10 + this->password_edit.cx());
-
+    const int target_bloc_w =
+        this->show_target
+        ? this->target_label.cx() + 10 + this->target_edit.cx()
+        : 0;
+    const int cbloc_w =
+        std::max({this->login_label.cx() + 10 + this->login_edit.cx(),
+                  this->password_label.cx() + 10 + this->password_edit.cx(),
+                  target_bloc_w});
 
     std::string formatted_login_message;
     gdi::MultiLineTextMetricsEx mltm_ex(this->font, this->login_message.c_str(), WIDGET_MULTILINE_BORDER_Y,
@@ -220,15 +251,30 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->error_message_label.set_wh(dim);
 
 
-    const int cbloc_h = this->login_message_label.cy() + 60 +
-        this->login_label.cy() + offset_y + this->login_label.cy() + offset_y + this->password_label.cy() +
-        60;
+    const int targetlabel_h =
+        this->show_target
+        ?  offset_y + this->target_label.cy()
+        : 0;
+
+    const int cbloc_h
+        = this->login_message_label.cy() + 60
+        + this->login_label.cy()
+        + offset_y + this->login_label.cy()
+        + targetlabel_h
+        + offset_y + this->password_label.cy()
+        + 60;
 
     const int cbloc_x = (width  - cbloc_w) / 2;
     const int cbloc_y = (height - cbloc_h) / 2;
 
+    const int targetedit_h =
+        this->show_target
+        ?  offset_y + 4 + this->target_edit.cy()
+        : 0;
+
     auto const bottom_size
       = this->error_message_label.cy()
+      + targetedit_h
       + this->login_edit.cy()
       + this->password_edit.cy()
       + this->version_label.cy()
@@ -272,14 +318,29 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
 
     this->error_message_label.set_xy(left + cbloc_x, top + login_message_bottom);
 
+    int last_offset = this->error_message_label.y() + this->error_message_label.cy();
+
+    if (this->show_target) {
+        this->target_label.set_xy(left + cbloc_x,
+                                  last_offset
+                                  + offset_y + 4);
+        last_offset = this->target_label.y() + this->target_label.cy();
+    }
+
     this->login_label.set_xy(left + cbloc_x,
-                             this->error_message_label.y() + this->error_message_label.cy() + offset_y + 4);
+                             last_offset
+                             + offset_y + 4);
+    last_offset = this->login_label.y() + this->login_label.cy();
 
     this->password_label.set_xy(left + cbloc_x,
-                                this->login_label.y() + this->error_message_label.cy() + offset_y + 4);
+                                last_offset
+                                + offset_y + 4);
 
     const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
 
+    if (this->show_target) {
+        this->target_edit.set_xy(left + cbloc_x + labels_w + 10, this->target_label.y() - this->target_edit.get_border_height() - 3);
+    }
     this->login_edit.set_xy(left + cbloc_x + labels_w + 10, this->login_label.y() - this->login_edit.get_border_height() - 3);
     this->password_edit.set_xy(left + cbloc_x + labels_w + 10, this->password_label.y() - this->password_edit.get_border_height() - 3);
 
@@ -328,6 +389,7 @@ BGRColor FlatLogin::get_bg_color() const
 void FlatLogin::notify(Widget* widget, NotifyApi::notify_event_t event)
 {
     if ((widget == &this->login_edit
+            || widget == &this->target_edit
             || widget == &this->password_edit)
             && event == NOTIFY_SUBMIT) {
         this->send_notify(NOTIFY_SUBMIT);

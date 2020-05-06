@@ -54,6 +54,8 @@ public:
     WidgetEditValid    login_edit;
     WidgetLabel        password_label;
     WidgetEditValid    password_edit;
+    WidgetLabel        target_label;
+    WidgetEditValid    target_edit;
     WidgetMultiLine    login_message_label;
     ScrollableMessage  scrollable_login_message_label;
     WidgetImage        img;
@@ -70,6 +72,7 @@ private:
 
     bool labels_added = false;
     bool scroll_added = false;
+    bool show_target = false;
 
     BGRColor bg_color;
 
@@ -77,12 +80,14 @@ public:
     FlatLogin(gdi::GraphicApi & drawable,
               int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
               NotifyApi* notifier, const char* caption,
-              const char * login, const char * password,
+              const char * login, const char * password, const char * target,
               const char * label_text_login,
               const char * label_text_password,
+              const char * label_text_target,
               const char * label_error_message,
               const char * label_login_message,
               WidgetFlatButton * extra_button,
+              bool enable_target_field,
               Font const & font, Translator tr, Theme const & theme);
 
     ~FlatLogin() override;

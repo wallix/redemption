@@ -4182,6 +4182,19 @@ namespace cfg {
         type value{};
     };
 
+    /// Enable target edit field in login page. <br/>
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct internal_mod::enable_target_field {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "internal_mod";
+        static constexpr char const * name = "enable_target_field";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
     /// type: std::string <br/>
     /// value{} <br/>
     struct internal_mod::theme {
@@ -6259,6 +6272,7 @@ struct translation
 
 struct internal_mod
 : cfg::internal_mod::theme
+, cfg::internal_mod::enable_target_field
 { static constexpr bool is_section = true; };
 
 struct context
