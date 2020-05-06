@@ -58,8 +58,8 @@ namespace Cliprdr
     {
         struct Names
         {
-            array_view_const_char ascii_name;
-            array_view_const_char unicode_name;
+            chars_view ascii_name;
+            chars_view unicode_name;
 
             operator AsciiName () const noexcept { return AsciiName(this->ascii_name); }
             operator UnicodeName () const noexcept { return UnicodeName(this->unicode_name); }
@@ -93,7 +93,7 @@ namespace Cliprdr
 
         FormatName(FormatId format_id, UnicodeName unicode_name) noexcept
         : format_id_(format_id)
-        , len_(UTF16toUTF8_buf(unicode_name.bytes, make_array_view(this->utf8_buffer_)).size())
+        , len_(UTF16toUTF8_buf(unicode_name.bytes, make_writable_array_view(this->utf8_buffer_)).size())
         {}
 
         FormatName(FormatId format_id, AsciiName ascii_name) noexcept

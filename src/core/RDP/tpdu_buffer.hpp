@@ -82,7 +82,7 @@ namespace Extractors
                 return HeaderResult::fail();
             }
 
-            array_view_u8 av = buf.av(4);
+            auto av = buf.av(4);
             uint16_t len;
 
             switch (FastPath::FASTPATH_OUTPUT(av[0] & 0x03))
@@ -176,7 +176,7 @@ namespace Extractors
                 return HeaderResult::fail();
             }
 
-            array_view_u8 av = buf.av(4);
+            auto av = buf.av(4);
 
             if (av[1] <= 0x7F) { return HeaderResult::ok(av[1] + 2); }
             if (av[1] == 0x81) { return HeaderResult::ok(av[2] + 3); }
@@ -208,7 +208,7 @@ struct TpduBuffer
         return this->buf.remaining();
     }
 
-    array_view_u8 remaining_data() noexcept
+    u8_array_view remaining_data() noexcept
     {
         return this->buf.av();
     }
@@ -247,7 +247,7 @@ struct TpduBuffer
 
     // Works the same way for CREDSSP or PDU
     // We can use it to trace CREDSSP buffer
-    array_view_u8 current_pdu_buffer() noexcept
+    writable_u8_array_view current_pdu_buffer() noexcept
     {
         assert(this->pdu_len);
         auto av = this->buf.av(this->pdu_len);

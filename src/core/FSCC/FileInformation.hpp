@@ -1170,7 +1170,7 @@ public:
                                  uint64_t LastWriteTime, uint64_t ChangeTime,
                                  int64_t EndOfFile, int64_t AllocationSize,
                                  uint32_t FileAttributes,
-                                 array_view_const_char file_name)
+                                 chars_view file_name)
     : CreationTime(CreationTime)
     , LastAccessTime(LastAccessTime)
     , LastWriteTime(LastWriteTime)
@@ -1448,7 +1448,7 @@ public:
     explicit FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
                              uint64_t CreationTime, uint64_t LastAccessTime,
                              uint64_t LastWriteTime, uint64_t ChangeTime,
-                             uint32_t FileAttributes, array_view_const_char file_name)
+                             uint32_t FileAttributes, chars_view file_name)
     : NextEntryOffset(NextEntryOffset)
     , FileIndex(FileIndex)
     , CreationTime(CreationTime)
@@ -1724,7 +1724,7 @@ struct FileFsLabelInformation {
 
     explicit FileFsLabelInformation() = default;
 
-    explicit FileFsLabelInformation(array_view_const_char volume_label)
+    explicit FileFsLabelInformation(chars_view volume_label)
     {
         this->VolumeLabelLength =
             ::UTF8toUTF16(volume_label, this->volume_label_UTF16, sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
@@ -1927,7 +1927,7 @@ public:
                                  uint64_t LastWriteTime, uint64_t ChangeTime,
                                  int64_t EndOfFile, int64_t AllocationSize,
                                  uint32_t FileAttributes,
-                                 array_view_const_char file_name)
+                                 chars_view file_name)
     : CreationTime(CreationTime)
     , LastAccessTime(LastAccessTime)
     , LastWriteTime(LastWriteTime)
@@ -2145,7 +2145,7 @@ class FileNamesInformation {
 public:
     explicit FileNamesInformation() = default;
 
-    explicit FileNamesInformation(array_view_const_char file_name)
+    explicit FileNamesInformation(chars_view file_name)
     {
         this->FileNameLength =
             ::UTF8toUTF16(file_name, this->file_name_UTF16, sizeof(this->file_name_UTF16));
@@ -2331,7 +2331,7 @@ struct FileRenameInformation {
 
     explicit FileRenameInformation( uint8_t ReplaceIfExists
                          , uint64_t RootDirectory
-                         , array_view_const_char file_name)
+                         , chars_view file_name)
       : ReplaceIfExists(ReplaceIfExists)
       , RootDirectory(RootDirectory)
     {
@@ -2724,7 +2724,7 @@ public:
 
     explicit FileFsAttributeInformation(uint32_t FileSystemAttributes,
                                uint32_t MaximumComponentNameLength,
-                               array_view_const_char file_system_name)
+                               chars_view file_system_name)
     : FileSystemAttributes_(FileSystemAttributes)
     , MaximumComponentNameLength(MaximumComponentNameLength)
     {
@@ -3218,7 +3218,7 @@ public:
     explicit FileFsVolumeInformation() = default;
 
     explicit FileFsVolumeInformation(uint64_t VolumeCreationTime, uint32_t VolumeSerialNumber,
-                         uint8_t SupportsObjects, array_view_const_char volume_label)
+                         uint8_t SupportsObjects, chars_view volume_label)
     : VolumeCreationTime(VolumeCreationTime)
     , VolumeSerialNumber(VolumeSerialNumber)
     , SupportsObjects(SupportsObjects)
@@ -3670,7 +3670,7 @@ struct FileNotifyInformation {
 
     explicit FileNotifyInformation() = default;
 
-    explicit FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, array_view_const_char file_name)
+    explicit FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, chars_view file_name)
       : NextEntryOffset(NextEntryOffset)
       , Action(Action)
     {

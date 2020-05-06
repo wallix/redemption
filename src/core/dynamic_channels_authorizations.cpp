@@ -31,7 +31,7 @@ DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
     std::string const & allow, std::string const & deny)
 {
     auto extract = [](
-        array_view_const_char list,
+        chars_view list,
         std::vector<std::string> & names)
     {
         for (auto && r : get_split(list.begin(), list.end(), ',')) {

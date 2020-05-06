@@ -2410,7 +2410,7 @@ public:
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
-    void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
+    void connected_fast_path(gdi::GraphicApi & drawable, writable_u8_array_view array)
     {
         InStream stream(array);
         IF_ENABLE_METRICS(server_main_channel_data(stream.in_remain()));
@@ -5384,7 +5384,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate2(array_view<Rect const> vr) override {
+    void rdp_input_invalidate2(array_view<Rect> vr) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
                 "mod_rdp::rdp_input_invalidate 2");

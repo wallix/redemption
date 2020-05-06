@@ -425,7 +425,7 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
     }
 }
 
-void WidgetSelector::add_device(array_view<const array_view_const_char> entries)
+void WidgetSelector::add_device(array_view<chars_view> entries)
 {
     this->selector_lines.add_line(entries);
 }

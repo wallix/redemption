@@ -250,7 +250,7 @@ private:
         , manager_(self)
         {}
 
-        void refresh_rects(array_view<Rect const> av) override
+        void refresh_rects(array_view<Rect> av) override
         { this->manager_.mod.rdp_input_invalidate2(av); }
     };
 

@@ -51,7 +51,7 @@ public:
 
 public:
     WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
-                NotifyApi* notifier, array_view_const_char text,
+                NotifyApi* notifier, chars_view text,
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0); /*NOLINT*/
 
@@ -65,7 +65,7 @@ public:
     ~WidgetLabel() override;
 
     void set_text(char const* text);
-    void set_text(array_view_const_char text);
+    void set_text(chars_view text);
 
     [[nodiscard]] const char * get_text() const;
 

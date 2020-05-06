@@ -48,7 +48,7 @@ public:
 
     ~ReplayTransport();
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] u8_array_view get_public_key() const override;
 
     TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override;
 
@@ -87,7 +87,7 @@ private:
         PacketType type;
         std::chrono::milliseconds time;
 
-        [[nodiscard]] array_view_const_u8 av() const noexcept;
+        [[nodiscard]] u8_array_view av() const noexcept;
     };
 
     Data *read_single_chunk();

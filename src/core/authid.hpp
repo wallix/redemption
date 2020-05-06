@@ -25,7 +25,7 @@
 
 #include <cstring>
 
-inline authid_t authid_from_string(array_view_const_char strauthid) noexcept
+inline authid_t authid_from_string(chars_view strauthid) noexcept
 {
     for (unsigned i = 0; i < MAX_AUTHID; ++i) {
         if (authstr[i].size() == strauthid.size()
@@ -36,7 +36,7 @@ inline authid_t authid_from_string(array_view_const_char strauthid) noexcept
     return MAX_AUTHID;
 }
 
-inline array_view_const_char string_from_authid(authid_t authid) noexcept
+inline chars_view string_from_authid(authid_t authid) noexcept
 {
     return (authid >= MAX_AUTHID)
         ? ""_av

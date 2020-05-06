@@ -476,7 +476,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
         char const* name;
         Cliprdr::IsLongFormat is_long_format;
         Cliprdr::IsAscii is_ascii;
-        array_view_const_char expected_result;
+        chars_view expected_result;
         std::vector<Cliprdr::FormatNameRef> formats;
         std::vector<Cliprdr::FormatNameRef> formats_ref {};
     };

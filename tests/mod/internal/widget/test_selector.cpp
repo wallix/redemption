@@ -49,23 +49,23 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av, "RDP"_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "rdp"_av, "administrateur@qa@10.10.14.111"_av, "RDP"_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "rdp"_av, "administrateur@qa@10.10.14.27"_av, "RDP"_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "rdp"_av, "administrateur@qa@10.10.14.103"_av, "RDP"_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "rdp"_av, "administrateur@qa@10.10.14.33"_av, "RDP"_av};
     selector.add_device(add5);
 
@@ -115,27 +115,27 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
                                 "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "rdp"_av, "administrateur@qa@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "rdp"_av, "administrateur@qa@10.10.14.27"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "rdp"_av, "administrateur@qa@10.10.14.103"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "rdp"_av, "administrateur@qa@10.10.14.33"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
@@ -285,27 +285,27 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "rdp"_av, "administrateur@qa@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "rdp"_av, "administrateur@qa@10.10.14.27"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "rdp"_av, "administrateur@qa@10.10.14.103"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "rdp"_av, "administrateur@qa@10.10.14.33"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
@@ -414,27 +414,27 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "reptile"_av, "snake@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "bird"_av, "raven@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "reptile"_av, "lezard@10.10.14.27"_av,
         "VNC"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "fish"_av, "shark@10.10.14.103"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "bird"_av, "eagle@10.10.14.33"_av,
         "VNC"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);

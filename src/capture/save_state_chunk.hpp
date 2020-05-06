@@ -88,7 +88,7 @@ private:
     static void io_copy_bytes(OutStream & stream, uint8_t * buf, unsigned n) { stream.out_copy_bytes(buf, n); }
 
     template<class Stream>
-    static void io_delta_encoded_rects(Stream & stream, array_view<RDP::DeltaEncodedRectangle> delta_rectangles) {
+    static void io_delta_encoded_rects(Stream & stream, writable_array_view<RDP::DeltaEncodedRectangle> delta_rectangles) {
         // TODO: check room to write or enough data to read, another io unified function necessary io_avail()
         for (RDP::DeltaEncodedRectangle & delta_rectangle : delta_rectangles) {
             io_sint16_le(stream, delta_rectangle.leftDelta);
@@ -221,10 +221,10 @@ private:
             io_sint16_le(stream, sc.multidstblt.nHeight);
             io_uint8(stream, sc.multidstblt.bRop);
             io_uint8(stream, sc.multidstblt.nDeltaEntries);
-            io_delta_encoded_rects(stream, {
+            io_delta_encoded_rects(stream, make_writable_array_view(
                 sc.multidstblt.deltaEncodedRectangles,
                 sc.multidstblt.nDeltaEntries
-            });
+            ));
         }
 
         // RDPMultiOpaqueRect multiopaquerect;
@@ -235,10 +235,10 @@ private:
             io_sint16_le(stream, sc.multiopaquerect.nHeight);
             io_color(stream, sc.multiopaquerect._Color);
             io_uint8(stream, sc.multiopaquerect.nDeltaEntries);
-            io_delta_encoded_rects(stream, {
+            io_delta_encoded_rects(stream, make_writable_array_view(
                 sc.multiopaquerect.deltaEncodedRectangles,
                 sc.multiopaquerect.nDeltaEntries
-            });
+            ));
         }
 
         // RDPMultiPatBlt multipatblt;
@@ -249,10 +249,10 @@ private:
             io_uint32_le(stream, sc.multipatblt.ForeColor);
             io_brush(stream, sc.multipatblt.brush);
             io_uint8(stream, sc.multipatblt.nDeltaEntries);
-            io_delta_encoded_rects(stream, {
+            io_delta_encoded_rects(stream, make_writable_array_view(
                 sc.multipatblt.deltaEncodedRectangles,
                 sc.multipatblt.nDeltaEntries
-            });
+            ));
         }
 
         // RDPMultiScrBlt multiscrblt;
@@ -262,10 +262,10 @@ private:
             io_sint16_le(stream, sc.multiscrblt.nXSrc);
             io_sint16_le(stream, sc.multiscrblt.nYSrc);
             io_uint8(stream, sc.multiscrblt.nDeltaEntries);
-            io_delta_encoded_rects(stream, {
+            io_delta_encoded_rects(stream, make_writable_array_view(
                 sc.multiscrblt.deltaEncodedRectangles,
                 sc.multiscrblt.nDeltaEntries
-            });
+            ));
         }
     }
 };

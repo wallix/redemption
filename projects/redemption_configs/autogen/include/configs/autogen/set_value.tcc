@@ -3,7 +3,7 @@
 //
 
 void Inifile::ConfigurationHolder::set_value(const char * context, const char * key, const char * value) {
-    array_view_const_char av {value, strlen(value)};
+    chars_view av {value, strlen(value)};
     if (0) {}
     else if (0 == strcmp(context, "globals")) {
         if (0) {}

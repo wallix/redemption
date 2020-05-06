@@ -91,7 +91,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
 
     case State::Ws: {
         len = SocketTransport::do_partial_read(buffer, len);
-        array_view_u8 data{buffer, len};
+        writable_u8_array_view data{buffer, len};
         size_t res = 0;
 
         while (!data.empty()) {
@@ -122,7 +122,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             case Parse::Ok:
                 memmove(buffer + res, frame.data.data(), frame.data.size());
                 res += frame.data.size();
-                data = {frame.data.end(), data.end()};
+                data = writable_u8_array_view{frame.data.end(), data.end()};
             }
         }
 

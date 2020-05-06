@@ -10,7 +10,7 @@ enum authid_t : unsigned;
 
 constexpr authid_t MAX_AUTHID = authid_t(200);
 
-constexpr array_view_const_char const authstr[] = {
+constexpr chars_view const authstr[] = {
     "capture_chunk"_av,
     "nla_login"_av,
     "login"_av,

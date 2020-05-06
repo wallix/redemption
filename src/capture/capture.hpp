@@ -196,7 +196,7 @@ private:
 
         explicit NotifyTitleChanged(Capture & capture) : capture(capture) {}
 
-        void notify_title_changed(timeval const & now, array_view_const_char title);
+        void notify_title_changed(timeval const & now, chars_view title);
     } notifier_title_changed{*this};
     //@}
 

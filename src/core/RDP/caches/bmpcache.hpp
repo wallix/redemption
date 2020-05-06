@@ -253,7 +253,7 @@ private:
             return {first, last};
         }
 
-        array_view<const T> view() const noexcept
+        array_view<T> view() const noexcept
         {
             return {first, last};
         }

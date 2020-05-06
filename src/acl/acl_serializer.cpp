@@ -191,7 +191,7 @@ void SessionLogFile::close()
     }
 }
 
-void SessionLogFile::write_line(std::time_t time, array_view_const_char av)
+void SessionLogFile::write_line(std::time_t time, chars_view av)
 {
     assert(this->ct.is_open());
 
@@ -321,7 +321,7 @@ namespace
         return buf;
     }
 
-    constexpr inline array_view_const_char ints_s[]{
+    constexpr inline chars_view ints_s[]{
         "0"_av, "1"_av, "2"_av, "3"_av, "4"_av, "5"_av, "6"_av, "7"_av, "8"_av, "9"_av,
         "10"_av, "11"_av, "12"_av, "13"_av, "14"_av, "15"_av, "16"_av, "17"_av, "18"_av,
         "19"_av, "20"_av, "21"_av, "22"_av, "23"_av, "24"_av, "25"_av, "26"_av, "27"_av,
@@ -356,17 +356,17 @@ namespace
 
     inline void log_format_set_siem(
         std::string& buffer,
-        array_view_const_char session_type,
-        array_view_const_char user,
-        array_view_const_char account,
-        array_view_const_char session_id,
-        array_view_const_char host,
-        array_view_const_char target_ip,
-        array_view_const_char device,
-        array_view_const_char service)
+        chars_view session_type,
+        chars_view user,
+        chars_view account,
+        chars_view session_id,
+        chars_view host,
+        chars_view target_ip,
+        chars_view device,
+        chars_view service)
     {
         buffer.clear();
-        auto append = [&](auto* key, array_view_const_char value){
+        auto append = [&](auto* key, chars_view value){
             buffer += key;
             escaped_qvalue(buffer, value, table_formats::siem_table);
             buffer += "\" ";
@@ -393,14 +393,14 @@ namespace
         std::string& buffer,
         LogId id,
         std::time_t time,
-        array_view_const_char session_type,
-        array_view_const_char user,
-        array_view_const_char account,
-        array_view_const_char session_id,
-        array_view_const_char host,
-        array_view_const_char target_ip,
-        array_view_const_char device,
-        array_view_const_char service,
+        chars_view session_type,
+        chars_view user,
+        chars_view account,
+        chars_view session_id,
+        chars_view host,
+        chars_view target_ip,
+        chars_view device,
+        chars_view service,
         KVList kv_list)
     {
         static_assert(std::size(ints_s) >= std::size(detail::log_id_string_map));
@@ -434,7 +434,7 @@ void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
 
     auto target_ip = [this]{
         char c = this->ini.get<cfg::context::target_host>()[0];
-        using av = array_view_const_char;
+        using av = chars_view;
         return ('0' <= c && '9' <= c)
             ? av(this->ini.get<cfg::context::target_host>())
             : av(this->ini.get<cfg::context::ip_target>());
@@ -529,7 +529,7 @@ namespace
             this->safe_read_packet();
         }
 
-        array_view_const_char key()
+        chars_view key()
         {
             auto m = std::find(this->p, this->e, '\n');
             if (m == this->e) {
@@ -574,7 +574,7 @@ namespace
             return this->getc() == '\n';
         }
 
-        array_view_const_char get_val()
+        chars_view get_val()
         {
             if (this->p == this->e) {
                 this->read_packet();
@@ -655,15 +655,15 @@ namespace
 void AclSerializer::in_items()
 {
     Reader reader(this->auth_trans, this->verbose);
-    array_view_const_char key;
+    chars_view key;
 
     while (!(key = reader.key()).empty()) {
         auto authid = authid_from_string(key);
         if (auto field = this->ini.get_acl_field(authid)) {
             if (reader.is_set_value()) {
                 if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
-                    array_view_const_char val         = field.to_string_view();
-                    array_view_const_char display_val = field.is_loggable()
+                    chars_view val         = field.to_string_view();
+                    chars_view display_val = field.is_loggable()
                         ? val : ::get_printable_password(val, this->ini.get<cfg::debug::password>());
                     LOG(LOG_INFO, "receiving '%s'='%.*s'",
                         string_from_authid(authid).data(),
@@ -748,7 +748,7 @@ namespace
             this->buf.data[this->buf.sz++] = c;
         }
 
-        void push(array_view_const_char av)
+        void push(chars_view av)
         {
             do {
                 auto n = std::min<std::size_t>(av.size(), this->buf_len - this->buf.sz);
@@ -799,7 +799,7 @@ void AclSerializer::send_acl_data()
             Buffers buffers(this->auth_trans, this->verbose);
 
             for (auto field : this->ini.get_fields_changed()) {
-                array_view_const_char key = string_from_authid(field.authid());
+                chars_view key = string_from_authid(field.authid());
                 buffers.push(key);
                 buffers.push('\n');
                 if (field.is_asked()) {
@@ -812,7 +812,7 @@ void AclSerializer::send_acl_data()
                     buffers.push('!');
                     buffers.push(val);
                     buffers.push('\n');
-                    array_view_const_char display_val = field.is_loggable()
+                    chars_view display_val = field.is_loggable()
                         ? val : get_printable_password(val, password_printing_mode);
                     LOG_IF(bool(this->verbose & Verbose::variable),
                         LOG_INFO, "sending %.*s=%.*s", int(key.size()), key.data(),

@@ -28,7 +28,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     LOG(LOG_INFO, "front step 1");
 
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_STEP1 frontbuffer content ======");
-    array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
+    writable_u8_array_view currentPacket = this->frontBuffer.current_pdu_buffer();
     LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
 
     InStream x224_stream(currentPacket);
@@ -60,7 +60,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     }
 }
 
-void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::string nla_username, std::string nla_password)
+void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn, std::string nla_username, std::string nla_password)
 {
 
     if (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
@@ -141,7 +141,7 @@ void ProxyRecorder::front_initial_pdu_negociation(Transport & backConn, bool is_
 {
     if (this->frontBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_INITIAL_PDU : front receive : frontbuffer content ======");
-        array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
+        writable_u8_array_view currentPacket = this->frontBuffer.current_pdu_buffer();
         LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_INITIAL_PDU frontbuffer content >>>>>>");
 
         if (is_nla) {
@@ -190,7 +190,7 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn, bool is_
 {
     if (backBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== BACK_INITIAL_PDU_NEGOCIATION  : back receive : backbuffer content ======");
-        array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
+        writable_u8_array_view currentPacket = backBuffer.current_pdu_buffer();
         LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> BACK_INITIAL_PDU_NEGOCIATION backbuffer content >>>>>>");
 
         if (is_nla) {

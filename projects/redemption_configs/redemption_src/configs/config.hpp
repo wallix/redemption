@@ -170,8 +170,8 @@ private:
     struct FieldBase
     {
         [[nodiscard]] bool is_asked() const { return this->asked_; }
-        virtual bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) = 0;
-        virtual array_view_const_char
+        virtual bool parse(configs::VariablesConfiguration & variables, chars_view value) = 0;
+        virtual chars_view
         to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const = 0;
         virtual ~FieldBase() = default;
 
@@ -183,10 +183,10 @@ private:
     template<class T>
     struct Field : FieldBase
     {
-        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) override final;
+        bool parse(configs::VariablesConfiguration & variables, chars_view value) override final;
 
-        /// \return array_view_const_char::data() guarantee with null terminal
-        array_view_const_char
+        /// \return chars_view::data() guarantee with null terminal
+        chars_view
         to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const override final;
     };
 
@@ -219,7 +219,7 @@ private:
             return this->field->asked_;
         }
 
-        [[nodiscard]] array_view_const_char to_string_view() const {
+        [[nodiscard]] chars_view to_string_view() const {
             return this->field->to_string_view(this->ini->variables, this->ini->buffers);
         }
 
@@ -273,7 +273,7 @@ public:
 
         bool set(char const *) = delete; // use `set(cstr_array_view("blah blah"))` instead
 
-        bool set(array_view_const_char value) {
+        bool set(chars_view value) {
             auto const err = this->field->parse(this->ini->variables, value);
             if (err) {
                 this->field->asked_ = false;

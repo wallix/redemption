@@ -110,7 +110,7 @@ class NLAServer
     X224::CR_TPDU_Data front_CR_TPDU;
 
     uint8_t front_public_key[1024] = {};
-    array_view_u8 front_public_key_av;
+    writable_u8_array_view front_public_key_av;
 
 public:
     NLAServer(std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
@@ -161,7 +161,7 @@ public:
             trans.enable_server_tls("inquisition", nullptr, 0 /* tls_min_level */, 0  /* tls_max_level */, true);
             bytes_view key = trans.get_public_key();
             memcpy(this->front_public_key, key.data(), key.size());
-            this->front_public_key_av = array_view{this->front_public_key, key.size()};
+            this->front_public_key_av = writable_array_view{this->front_public_key, key.size()};
         }
 
         if (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
@@ -210,7 +210,7 @@ public:
     void front_initial_pdu_negociation(TpduBuffer & buffer)
     {
         LOG(LOG_INFO, "RDP Init");
-        array_view_u8 currentPacket = buffer.current_pdu_buffer();
+        writable_u8_array_view currentPacket = buffer.current_pdu_buffer();
 
         if (!this->nla_username.empty()) {
             if (this->verbosity > 4) {
@@ -262,8 +262,6 @@ public:
             SocketTransport trans("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
 
             try {
-                array_view_u8 front_public_key_av;
-
                 fd_set rset;
                 int const front_fd = trans.get_fd();
 

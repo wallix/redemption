@@ -88,7 +88,7 @@ struct Pointer
                            uint16_t dlen, const uint8_t * data,
                            uint16_t mlen, const uint8_t * mask,
                            bool clean_up_32_bpp_cursor);
-    friend Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, array_view_const_u8 vncdata, array_view_const_u8 vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
+    friend Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, u8_array_view vncdata, u8_array_view vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
     friend Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor);
     friend Pointer predefined_pointer(const unsigned width, const unsigned height,
                                       const char * def,
@@ -162,13 +162,13 @@ public:
     }
 
     // size is a multiple of 2
-    [[nodiscard]] array_view_const_u8 get_monochrome_and_mask() const
+    [[nodiscard]] u8_array_view get_monochrome_and_mask() const
     {
         return {this->mask, this->bit_mask_size()};
     }
 
     // size is a multiple of 2
-    [[nodiscard]] array_view_const_u8 get_24bits_xor_mask() const
+    [[nodiscard]] u8_array_view get_24bits_xor_mask() const
     {
         return {this->data, this->xor_data_size()};
     }
@@ -613,7 +613,7 @@ struct ARGB32Pointer {
         return this->hotspot;
     }
 
-    [[nodiscard]] array_view_const_u8 get_alpha_q() const
+    [[nodiscard]] u8_array_view get_alpha_q() const
     {
         return {this->data, this->dimensions.width * this->dimensions.height * 4};
     }
@@ -745,7 +745,7 @@ inline Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, cons
     return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor);
 }
 
-inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, array_view_const_u8 vncdata, array_view_const_u8 vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
+inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, u8_array_view vncdata, u8_array_view vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
 {
 // VNC Pointer format
 // ==================

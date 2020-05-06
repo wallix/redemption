@@ -122,7 +122,7 @@ public:
 
     void close();
 
-    void write_line(std::time_t time, array_view_const_char av);
+    void write_line(std::time_t time, chars_view av);
 };
 
 

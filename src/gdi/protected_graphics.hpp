@@ -116,7 +116,7 @@ public:
     { this->protected_rect = rect; }
 
 protected:
-    virtual void refresh_rects(array_view<Rect const>) = 0;
+    virtual void refresh_rects(array_view<Rect>) = 0;
 
 private:
     [[nodiscard]] gdi::GraphicApi & get_graphic_proxy() const

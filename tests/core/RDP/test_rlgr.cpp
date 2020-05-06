@@ -567,5 +567,5 @@ RED_AUTO_TEST_CASE(TestRlgr) {
 
     static_assert(sizeof(output) == sizeof(refOutput));
     RED_CHECK_EQUAL_RANGES(
-        refOutput, array_view_const_u8(reinterpret_cast<uint8_t *>(output), sizeof(output)));
+        refOutput, u8_array_view(reinterpret_cast<uint8_t *>(output), sizeof(output)));
 }

@@ -39,7 +39,7 @@
  *
  * With \c conf_regex = KBD_INPUT, exact-content and exact-regex are respectively equivalent to content and regex
  */
-PatternValue get_pattern_value(array_view_const_char const pattern_rule)
+PatternValue get_pattern_value(chars_view const pattern_rule)
 {
     using Cat = PatternValue::Cat;
 
@@ -53,16 +53,16 @@ PatternValue get_pattern_value(array_view_const_char const pattern_rule)
     PatternValue pattern_value;
     constexpr PatternValue empty_pattern_value {};
 
-    auto av = array_view_const_char{
+    auto av = chars_view{
         ltrim(pattern_rule.begin(), pattern_rule.end()), pattern_rule.end()};
 
     if (not av.empty() && av.front() == '$') {
         auto end_option_list = std::find(av.begin()+1, av.end(), ':');
         if (end_option_list != av.end() && end_option_list+1 != av.end()) {
-            array_view_const_char options(av.begin()+1, end_option_list);
+            chars_view options(av.begin()+1, end_option_list);
             bool is_exact = false;
             for (auto token : get_split(options, IsWordSeparator{})) {
-                auto eq = [](range<char const*> b, array_view_const_char a) {
+                auto eq = [](range<char const*> b, chars_view a) {
                     return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
                 };
 

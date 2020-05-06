@@ -30,12 +30,12 @@ struct PatternValue
     Cat cat = is_reg;
     bool is_ocr = false;
     bool is_kbd = false;
-    array_view_const_char pattern = cstr_array_view("");
+    chars_view pattern = cstr_array_view("");
 };
 
 constexpr char string_pattern_separator = '\x01';
 
-PatternValue get_pattern_value(array_view_const_char pattern_rule);
+PatternValue get_pattern_value(chars_view pattern_rule);
 
 bool contains_ocr_pattern(const char * soh_separated_patterns);
 bool contains_kbd_pattern(const char * soh_separated_patterns);

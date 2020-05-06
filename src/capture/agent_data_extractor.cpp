@@ -33,7 +33,7 @@ using std::end;
 
 namespace
 {
-    using Av = array_view_const_char;
+    using Av = chars_view;
 
     using Pair = std::pair<std::string_view, LogId>;
 

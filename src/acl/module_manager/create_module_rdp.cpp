@@ -45,9 +45,9 @@ namespace
         FrontAPI& front,
         TimeBase& time_base,
         ReportMessageApi& report_message,
-        array_view_const_char up_target_name,
-        array_view_const_char down_target_name,
-        array_view_const_char msg)
+        chars_view up_target_name,
+        chars_view down_target_name,
+        chars_view msg)
     {
         for (auto&& service : {up_target_name, down_target_name}) {
             if (not service.empty()) {

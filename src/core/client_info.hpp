@@ -178,7 +178,7 @@ struct ClientInfo
         }
         else{
             if (verbose){
-                array_view_const_char const av = ::get_printable_password(
+                chars_view const av = ::get_printable_password(
                     {this->password, strlen(this->password)}, password_printing_mode);
                 LOG(LOG_INFO, "client info: logon password %.*s ignored",
                     int(av.size()), av.data());

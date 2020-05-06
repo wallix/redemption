@@ -42,6 +42,11 @@ struct writable_buffer_view : writable_bytes_view
     writable_buffer_view(T (& a)[n]) noexcept
     : writable_bytes_view(a, n)
     {}
+
+    template<class T>
+    writable_buffer_view(T&& a) noexcept(noexcept(writable_bytes_view(static_cast<T&&>(a))))
+    : writable_bytes_view(static_cast<T&&>(a))
+    {}
 };
 
 /**

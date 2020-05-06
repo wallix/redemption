@@ -520,7 +520,7 @@ public:
         }
     }
 
-    void write(array_view_const_char data)
+    void write(chars_view data)
     {
         this->file.send(data);
     }

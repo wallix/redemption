@@ -58,10 +58,10 @@ public:
     virtual uint16_t get_buffer_type_id() = 0;
     virtual int get_citems_number() = 0;
 
-    virtual array_view_const_u8 get_cliboard_text() = 0;
+    virtual u8_array_view get_cliboard_text() = 0;
     virtual ConstImageDataView get_image() = 0;
     virtual std::string get_file_item_name(int index) = 0;
-    virtual array_view_const_char get_file_item(int index) = 0;
+    virtual chars_view get_file_item(int index) = 0;
 
     virtual size_t get_cliboard_data_length() = 0;
 };
@@ -102,7 +102,7 @@ public:
         int    pic_height = 0;
         int    pic_bpp = 0;
 
-        [[nodiscard]] array_view_const_u8 av() const noexcept
+        [[nodiscard]] u8_array_view av() const noexcept
         {
             return {this->data.get(), size_t(this->size)};
         }

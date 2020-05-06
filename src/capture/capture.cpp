@@ -367,7 +367,7 @@ public:
                     }
                 }
             },
-            [this](array_view_const_char const & /*noprintable_char*/) {
+            [this](chars_view const & /*noprintable_char*/) {
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
             },
@@ -427,7 +427,7 @@ private:
                     this->copy_bytes({buf_char, char_len});
                 }
             },
-            [this](array_view_const_char no_printable_str) {
+            [this](chars_view no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
             filter_slash{}
@@ -503,8 +503,8 @@ private:
 
 
 namespace {
-    constexpr array_view_const_char session_log_prefix() { return cstr_array_view("data='"); }
-    constexpr array_view_const_char session_log_suffix() { return cstr_array_view("'"); }
+    constexpr chars_view session_log_prefix() { return cstr_array_view("data='"); }
+    constexpr chars_view session_log_suffix() { return cstr_array_view("'"); }
 }
 
 
@@ -542,7 +542,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
                     this->copy_bytes({buf_char, char_len});
                 }
             },
-            [this](array_view_const_char no_printable_str) {
+            [this](chars_view no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
             filter_slash{}
@@ -627,7 +627,7 @@ public:
         return !this->regexes_filter_kill.empty() || !this->regexes_filter_notify.empty();
     }
 
-    void operator()(array_view_const_char str) {
+    void operator()(chars_view str) {
         assert(str.data() && not str.empty());
         this->check_filter(this->regexes_filter_kill, str.data());
         this->check_filter(this->regexes_filter_notify, str.data());
@@ -902,7 +902,7 @@ bool is_logable_kvlist(LogId id, KVList kv_list, MetaParams meta_params)
             }
 
             if (bool(meta_params.log_only_relevant_clipboard_activities)) {
-                auto is = [&](array_view_const_char format){
+                auto is = [&](chars_view format){
                     return format.size() > kv_list[0].value.size()
                         && 0 == strncasecmp(format.data(), kv_list[0].value.data(), format.size());
                 };
@@ -934,8 +934,8 @@ bool is_logable_kvlist(LogId id, KVList kv_list, MetaParams meta_params)
 } // anonymous namespace
 
 namespace {
-    constexpr array_view_const_char session_meta_kbd_prefix() noexcept { return cstr_array_view("[Kbd]"); }
-    constexpr array_view_const_char session_meta_kbd_suffix() noexcept { return cstr_array_view("\n"); }
+    constexpr chars_view session_meta_kbd_prefix() noexcept { return cstr_array_view("[Kbd]"); }
+    constexpr chars_view session_meta_kbd_suffix() noexcept { return cstr_array_view("\n"); }
 }
 
 /*
@@ -1008,7 +1008,7 @@ public:
         return true;
     }
 
-    void send_line(time_t rawtime, array_view_const_char data) {
+    void send_line(time_t rawtime, chars_view data) {
         this->send_data(rawtime, data, '-');
     }
 
@@ -1020,7 +1020,7 @@ private:
     std::string formatted_message;
 
 public:
-    void title_changed(time_t rawtime, array_view_const_char title) {
+    void title_changed(time_t rawtime, chars_view title) {
         log_format_set_info(this->formatted_message, LogId::TITLE_BAR, {
             KVLog("data"_av, title),
         });
@@ -1067,7 +1067,7 @@ private:
                     ++this->kbd_char_pos;
                 }
             },
-            [this, uchar](array_view_const_char no_printable_str) {
+            [this, uchar](chars_view no_printable_str) {
                 if (uchar == 0x08 && this->kbd_char_pos) {
                     --this->kbd_char_pos;
                     this->kbd_stream.rewind(
@@ -1107,7 +1107,7 @@ private:
         this->kbd_stream.out_copy_bytes(bytes);
     }
 
-    void send_data(time_t rawtime, array_view_const_char data, char sep) {
+    void send_data(time_t rawtime, chars_view data, char sep) {
         this->send_date(rawtime, sep);
         this->trans.send(data);
         this->trans.send("\n"_av);
@@ -1275,7 +1275,7 @@ public:
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
 
-            array_view_const_char title = this->title_extractor.get().extract_title();
+            chars_view title = this->title_extractor.get().extract_title();
 
             if (title.data()/* && title.size()*/) {
                 notify_title_changed.notify_title_changed(now, title);
@@ -1393,7 +1393,7 @@ public:
 
 
 void Capture::NotifyTitleChanged::notify_title_changed(
-    timeval const & now, array_view_const_char title
+    timeval const & now, chars_view title
 ) {
     if (this->capture.patterns_checker) {
         this->capture.patterns_checker->operator()(title);
