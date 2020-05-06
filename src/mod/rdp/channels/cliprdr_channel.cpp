@@ -31,8 +31,6 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 
 #include <cassert>
 
-// TODO SyncRange -> other : clear file_contents
-
 /*
 
         Client                      Server
@@ -194,7 +192,6 @@ NoLockData::requested_range_to_get_range(
     FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl)
 {
     D::requested_to_rng_base(*this, file_validator_id, std::move(tfl));
-    this->data.response_size = 0;
     this->transfer_state = TransferState::GetRange;
 }
 
@@ -1426,7 +1423,6 @@ struct ClipboardVirtualChannel::D
             }
 
             if (clip.locked_data.contains_stream_id(stream_id)) {
-                // TODO broken_file_transfer + remove_locked_file_contents_range/size ?
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " streamId already used (%u)", stream_id);
                 throw Error(ERR_RDP_PROTOCOL);
@@ -1606,7 +1602,6 @@ struct ClipboardVirtualChannel::D
                 safe_int(file_rng.stream_id),
                 safe_int(file_rng.lindex),
                 RDPECLIP::FILECONTENTS_RANGE,
-                // TODO big file capabilities
                 uint32_t(file_rng.file_offset),
                 uint32_t(file_rng.file_offset >> 32),
                 file_rng.first_file_size_requested,
@@ -1626,28 +1621,6 @@ struct ClipboardVirtualChannel::D
                 out_stream.get_produced_bytes());
 
             file_rng.file_size_requested = file_rng.first_file_size_requested;
-        };
-
-        auto send_stream_id_without_data = [&sender, &self](
-            ClipCtx::FileContentsRange& file_rng
-        ){
-            LOG_IF(bool(self.verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_filecontents_response_pdu:"
-                " Send header without data");
-
-            StaticOutStream<128> out_stream;
-            RDPECLIP::CliprdrHeader header(
-                RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                RDPECLIP::CB_RESPONSE_OK,
-                file_rng.file_contents.size() + 4u /* streamId */);
-            header.emit(out_stream);
-            out_stream.out_uint32_le(safe_int(file_rng.stream_id));
-
-            file_rng.response_size = file_rng.file_contents.size() + out_stream.get_offset();
-            sender(
-                file_rng.response_size,
-                send_first_flags,
-                out_stream.get_produced_bytes());
         };
 
 
@@ -1705,11 +1678,12 @@ struct ClipboardVirtualChannel::D
                             file_rng, in_stream.remaining_bytes());
                         append(file_rng.file_contents, contents);
 
+                        uint32_t data_len;
+
                         if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                             clip.has_current_file_contents_stream_id = false;
                             if (set_finalize_file_transfer(file_rng)) {
                                 self.file_validator->send_eof(file_rng.file_validator_id);
-                                /// TODO file not checked
                                 this->_close_file_rng_tfl(self, file_rng,
                                     Mwrm3::TransferedStatus::Completed);
                                 clip.nolock_data.set_waiting_validator();
@@ -1718,8 +1692,26 @@ struct ClipboardVirtualChannel::D
                                 send_file_contents_request(file_rng);
                             }
 
-                            send_stream_id_without_data(file_rng);
+                            data_len = file_rng.file_contents.size();
                         }
+                        else {
+                            data_len = std::min(
+                                in_header.dataLen(), file_rng.file_size_requested);
+                        }
+
+                        StaticOutStream<128> out_stream;
+                        RDPECLIP::CliprdrHeader header(
+                            RDPECLIP::CB_FILECONTENTS_RESPONSE,
+                            RDPECLIP::CB_RESPONSE_OK,
+                            data_len + 4u /* streamId */);
+                        header.emit(out_stream);
+                        out_stream.out_uint32_le(safe_int(file_rng.stream_id));
+
+                        file_rng.response_size = data_len + out_stream.get_offset();
+                        sender(
+                            file_rng.response_size,
+                            send_first_flags,
+                            out_stream.get_produced_bytes());
 
                         break;
                     }
@@ -1878,7 +1870,6 @@ struct ClipboardVirtualChannel::D
                             }
                             else {
                                 self.file_validator->send_eof(file_rng.file_validator_id);
-                                /// TODO file not checked
                                 this->_close_file_rng_tfl(self, file_rng, transfered_status);
                                 clip.nolock_data.set_waiting_validator();
                             }
@@ -1907,12 +1898,6 @@ struct ClipboardVirtualChannel::D
                         clip.has_current_file_contents_stream_id = false;
 
                         LOG(LOG_DEBUG, "last");
-
-                        if (file_rng.response_size == 0) {
-                            LOG(LOG_DEBUG, "send stream id without data");
-                            /// TODO to RequestedRange
-                            send_stream_id_without_data(file_rng);
-                        }
 
                         if (set_finalize_file_transfer(file_rng)) {
                             LOG(LOG_DEBUG, "set finalize = ok");
@@ -1946,11 +1931,6 @@ struct ClipboardVirtualChannel::D
 
                     file_rng.sig.broken();
                     this->log_file_info(self, file_rng, (&clip == &self.server_ctx));
-
-                    if (file_rng.response_size == 0) {
-                        /// TODO to RequestedRange
-                        send_stream_id_without_data(file_rng);
-                    }
 
                     post_process(file_rng, Mwrm3::TransferedStatus::Broken);
                 }

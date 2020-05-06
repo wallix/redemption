@@ -401,21 +401,23 @@ namespace
         Buffer() {}
 
         template<class F>
-        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f)
+        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len = -1u)
         {
             using namespace RDPECLIP;
             array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
             f(this->out);
+            if (data_len == -1u) {
+                data_len = uint32_t(out.get_offset() - av.size());
+            }
             OutStream stream_header(av);
-            CliprdrHeader(msgType, msgFlags, uint32_t(out.get_offset() - av.size()))
-                .emit(stream_header);
+            CliprdrHeader(msgType, msgFlags, data_len).emit(stream_header);
             return out.get_produced_bytes();
         }
 
         template<class F>
-        bytes_view build_ok(uint16_t msgType, F f)
+        bytes_view build_ok(uint16_t msgType, F f, uint32_t data_len = -1u)
         {
-            return this->build(msgType, RDPECLIP::CB_RESPONSE_OK, f);
+            return this->build(msgType, RDPECLIP::CB_RESPONSE_OK, f, data_len);
         }
 
         template<class F>
@@ -565,9 +567,9 @@ namespace
                     checked_int(status.size())}.emit(out);
                 out.out_copy_bytes(status);
 
-                validator_transport.buf_reader = out.get_produced_bytes();
-                clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-                return validator_transport.buf_reader.size() == 0;
+                this->validator_transport.buf_reader = out.get_produced_bytes();
+                this->clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+                return this->validator_transport.buf_reader.size() == 0;
             }
 
         private:
@@ -576,23 +578,30 @@ namespace
             SesmanInterface sesman{ini};
 
         public:
-            void process_server_message(bytes_view av)
+            void process_server_message(
+                bytes_view av,
+                uint32_t total_len = -1u,
+                uint32_t flags = first_last_flags)
             {
-                auto flags
-                    = CHANNELS::CHANNEL_FLAG_FIRST
-                    | CHANNELS::CHANNEL_FLAG_LAST
-                    | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-                clipboard_virtual_channel.process_server_message(
-                    av.size(), flags, av, out_asynchronous_task, sesman);
+                if (total_len == -1u) {
+                    total_len = uint32_t(av.size());
+                }
+                flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+                this->clipboard_virtual_channel.process_server_message(
+                    total_len, flags, av, this->out_asynchronous_task, sesman);
                 // RED_TEST(!this->out_asynchronous_task);
             }
 
-            void process_client_message(bytes_view av, int flags
-                = CHANNELS::CHANNEL_FLAG_FIRST
-                | CHANNELS::CHANNEL_FLAG_LAST)
+            void process_client_message(
+                bytes_view av,
+                uint32_t total_len = -1u,
+                uint32_t flags = first_last_flags)
             {
+                if (total_len == -1u) {
+                    total_len = uint32_t(av.size());
+                }
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-                clipboard_virtual_channel.process_client_message(av.size(), flags, av);
+                this->clipboard_virtual_channel.process_client_message(total_len, flags, av);
             }
         };
     };
@@ -1377,6 +1386,67 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, D const& d, d, {
     //@}
 
 
+    requested.prepare_file("data_abcdefg"_av);
+
+    // validator=success while response
+    // TODO loop with validation = true | false
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_full_file_request(StreamId(1));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                // no data
+            }, 16);
+            channel_ctx->process_server_message(temp_av, 24, first_flags);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x06\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{24, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_server_message(
+                requested.file_contents.first(6), 20, /*flag=*/0);
+        },
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x06"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.first(6)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS { RED_TEST(channel_ctx->dlp_message_accept(FileValidatorId(6))); },
+        TEST_BUF(Msg::Log6{"FILE_VERIFICATION direction=DOWN file_name=abc status=ok"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_server_message(
+                requested.file_contents.from_offset(6), 20, last_flags);
+        },
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
+        TEST_BUF(Msg::ToFront{24, last_flags, requested.file_contents})
+    );
+
+    if (fdx_ctx && d.always_file_storage) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000006.tfl"), requested.file_contents);
+    }
+    //@}
+
+
     msg_comparator.run(TEST_PROCESS {
         channel_ctx.reset();
     });
@@ -1424,6 +1494,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, D const& d, d, {
                 "abcmy_session_id/my_session_id,000005.tflg\xf4\x06\x62"
                 "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
                 "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
+
+                "\x04\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000006.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
 
                 ""_av, 5));
         }
