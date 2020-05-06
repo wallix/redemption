@@ -343,6 +343,7 @@ namespace cfg {
     };
 
     struct internal_mod {
+        struct enable_target_field;
         struct theme;
     };
 

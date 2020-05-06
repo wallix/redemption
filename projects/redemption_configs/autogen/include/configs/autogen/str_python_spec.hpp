@@ -1129,6 +1129,10 @@ password_fr = string(default='')
 
 [internal_mod]
 
+# Enable target edit field in login page.
+#_advanced
+enable_target_field = boolean(default=True)
+
 #_advanced
 load_theme = string(default='')
 

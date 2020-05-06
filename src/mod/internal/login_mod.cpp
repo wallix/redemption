@@ -25,6 +25,33 @@
 #include "configs/config.hpp"
 #include "core/front_api.hpp"
 
+#include <string>
+#include <utility>
+
+namespace
+{
+    inline std::pair<std::string, std::string> rpartition(std::string text,
+                                                          const char* seps) {
+        size_t sep_pos = text.find_last_of(seps);
+        if (sep_pos != std::string::npos) {
+            return std::make_pair(text.substr(0, sep_pos),
+                                  text.substr(sep_pos + 1));
+        }
+        return std::make_pair(std::string(),
+                              text);
+    }
+
+    inline std::string concat_target_login(std::string login, std::string target) {
+        if (target.empty()) {
+            return login;
+        }
+        size_t sep_pos = target.find_last_of("+:");
+        if (sep_pos != std::string::npos) {
+            return str_concat(target, target[sep_pos], login);
+        }
+        return str_concat(target, ':', login);
+    }
+}
 
 LoginMod::LoginMod(
     LoginModVariables vars, SessionReactor& session_reactor,
@@ -40,12 +67,15 @@ LoginMod::LoginMod(
     , login(
         drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this, "Redemption " VERSION,
-        nullptr, nullptr,
+        nullptr, nullptr, nullptr,
         TR(trkeys::login, language(vars)),
         TR(trkeys::password, language(vars)),
+        TR(trkeys::target, language(vars)),
         vars.get<cfg::context::opt_message>().c_str(),
         vars.get<cfg::context::login_message>().c_str(),
-        &this->language_button, font, Translator(language(vars)), theme)
+        &this->language_button,
+        vars.get<cfg::internal_mod::enable_target_field>(),
+        font, Translator(language(vars)), theme)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
 {
@@ -55,7 +85,15 @@ LoginMod::LoginMod(
     }
     this->screen.add_widget(&this->login);
 
-    this->login.login_edit.set_text(username);
+
+    if (vars.get<cfg::internal_mod::enable_target_field>()) {
+        auto [target, login] = rpartition(username, ":+");
+        this->login.login_edit.set_text(login.c_str());
+        this->login.target_edit.set_text(target.c_str());
+    } else {
+        this->login.login_edit.set_text(username);
+        this->login.target_edit.set_text(nullptr);
+    }
     this->login.password_edit.set_text(password);
 
     this->screen.set_widget_focus(&this->login, Widget::focus_reason_tabkey);
@@ -91,7 +129,11 @@ void LoginMod::notify(Widget* sender, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_SUBMIT: {
-        this->vars.set_acl<cfg::globals::auth_user>(this->login.login_edit.get_text());
+        std::string auth_user = concat_target_login(
+            this->login.login_edit.get_text(),
+            this->login.target_edit.get_text()
+        );
+        this->vars.set_acl<cfg::globals::auth_user>(auth_user);
         this->vars.ask<cfg::context::selector>();
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();

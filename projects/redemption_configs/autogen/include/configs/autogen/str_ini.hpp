@@ -1325,6 +1325,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [internal_mod]
 
+# Enable target edit field in login page.
+# value: 0 or 1
+#_advanced
+#enable_target_field = 1
+
 #_advanced
 #load_theme = 
 

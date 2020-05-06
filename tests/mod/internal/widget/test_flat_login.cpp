@@ -29,6 +29,9 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+// uncomment to use dump_png24()
+// #include "utils/png.hpp"
+
 constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
 
 RED_AUTO_TEST_CASE(TraceFlatLogin)
@@ -43,8 +46,10 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         "rec", "rec", "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
+    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier,
+                         "test1", "rec", "rec", "",
+                         "Login", "Password", "Target", "", LOGON_MESSAGE,
+                         extra_button, false, global_font_deja_vu_14(),
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -67,7 +72,10 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test2",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
+                         nullptr, nullptr, nullptr,
+                         "Login", "Password", "Target", "",
+                         LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(),
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -104,8 +112,9 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
     parent.set_wh(800, 600);
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget::focus_reason_tabkey);
 
@@ -151,8 +160,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test4",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(flat_login.x(),
@@ -168,9 +178,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
                                flat_login.helpicon.y() + flat_login.helpicon.cy() / 2, nullptr);
 
-    // drawable.save_to_png("flat_login-help2.png");
+    // dump_png24("flat_login-help2.png", drawable, true);
 
-    RED_CHECK_SIG(drawable, "\x3c\xc2\xc8\xcb\xf6\xb4\xa8\x3b\x22\xb3\xef\x54\x59\x5c\xc5\x37\xd8\x51\xb3\x10");
+    RED_CHECK_SIG(drawable, "\xc6\x28\xf1\x9a\x68\xa5\xe4\x26\x2e\x34\xff\x2f\x42\x3e\x90\x5f\x70\x49\x1e\xd4");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -186,8 +196,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
@@ -213,8 +224,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
@@ -250,8 +262,9 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
@@ -270,10 +283,11 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         "rec", "rec", "Login", "Password", "",
+                         "rec", "rec", "rec", "Login", "Password", "Target", "",
                          "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>"
                              "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
-                         extra_button, global_font_deja_vu_14(),
+                         extra_button, false,
+                         global_font_deja_vu_14(),
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position

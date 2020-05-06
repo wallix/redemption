@@ -99,10 +99,7 @@ namespace trkeys
         "  by a semi colon as login@target:service:Bastionlogin<br>"
         "- or a valid Bastion authentication user.<br>"
         "<br>"
-        "In password edit box enter your password<br>"
-        "for user.<br>"
-        "<br>"
-        "Both fields are case sensitive.<br>"
+        "Fields are case sensitive.<br>"
         "<br>"
         "Contact your system administrator if you are<br>"
         "experiencing problems.",
@@ -112,10 +109,7 @@ namespace trkeys
         "  du compte Bastion sous la forme login@serveur:service:Bastionlogin<br>"
         "- ou un nom de compte Bastion valide.<br>"
         "<br>"
-        "Dans la zone de saisie mot de passe,<br>"
-        "entrez le mot de passe du compte.<br>"
-        "<br>"
-        "Les deux champs sont sensibles à la casse.<br>"
+        "Les champs sont sensibles à la casse.<br>"
         "<br>"
         "Contactez votre administrateur système en<br>"
         "cas de problème pour vous connecter.");

@@ -674,6 +674,8 @@ void config_spec_definition(Writer && W)
 
     W.section("internal_mod", [&]
     {
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_target_field",
+                 desc{"Enable target edit field in login page."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "theme", spec::name{"load_theme"});
     });
 

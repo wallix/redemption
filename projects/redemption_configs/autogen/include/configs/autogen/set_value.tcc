@@ -2133,6 +2133,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     }
     else if (0 == strcmp(context, "internal_mod")) {
         if (0) {}
+        else if (0 == strcmp(key, "enable_target_field")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::internal_mod::enable_target_field&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "load_theme")) {
             ::configs::parse_and_log(
                 context, key,
