@@ -72,9 +72,6 @@ enable_transparent_mode = boolean(default=False)
 #_password
 certificate_password = string(max=254, default='inquisition')
 
-#_advanced
-movie_path = string(default='')
-
 # Support of Bitmap Update.
 #_advanced
 enable_bitmap_update = boolean(default=True)
@@ -353,12 +350,12 @@ cache_waiting_list = boolean(default=True)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 # (values are comma-separated)
 #_hidden
 allow_channels = string(default='*')
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 # (values are comma-separated)
 #_hidden
 deny_channels = string(default='')
@@ -708,6 +705,10 @@ enable_restricted_admin_mode = boolean(default=False)
 #_hidden
 force_smartcard_authentication = boolean(default=False)
 
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -744,6 +745,10 @@ server_unix_alt = boolean(default=False)
 
 #_hidden
 support_cursor_pseudo_encoding = boolean(default=True)
+
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
 
 [metrics]
 

@@ -26,7 +26,7 @@
 /**
  * \c array_view on \c uint8_t* and \c char*
  */
-struct writable_bytes_view : array_view<uint8_t>
+struct writable_bytes_view : writable_array_view<uint8_t>
 {
     writable_bytes_view() = default;
     writable_bytes_view(writable_bytes_view &&) = default;
@@ -43,49 +43,54 @@ struct writable_bytes_view : array_view<uint8_t>
 
 
     constexpr writable_bytes_view(std::nullptr_t) noexcept
-    : array_view<uint8_t>(nullptr)
+    : writable_array_view(nullptr)
     {}
 
     constexpr writable_bytes_view(writable_byte_ptr const p, std::size_t sz) noexcept
-    : array_view<uint8_t>(p.as_u8p(), sz)
+    : writable_array_view(p.as_u8p(), sz)
     {}
 
-    constexpr writable_bytes_view(writable_byte_ptr p, writable_byte_ptr pright) noexcept
-    : array_view<uint8_t>(p.as_u8p(), pright.as_u8p())
+    constexpr writable_bytes_view(writable_byte_ptr first, writable_byte_ptr last) noexcept
+    : writable_array_view(first.as_u8p(), last.as_u8p())
     {}
 
-    writable_bytes_view(array_view<char> av) noexcept /*NOLINT*/
-    : array_view<uint8_t>(byte_ptr_cast(av.data()), av.size())
+    writable_bytes_view(writable_array_view<char> av) noexcept /*NOLINT*/
+    : writable_array_view(byte_ptr_cast(av.data()), av.size())
     {}
 
-    template<class U, typename std::enable_if<
-      std::is_constructible<array_view<uint8_t>, U&&>::value, bool
-    >::type = 1>
-    constexpr writable_bytes_view(U && a) noexcept /*NOLINT*/
-    : array_view<uint8_t>(a)
+    writable_bytes_view(writable_array_view<uint8_t> av) noexcept /*NOLINT*/
+    : writable_array_view(av.data(), av.size())
     {}
 
     template<class U, typename std::enable_if<
-      std::is_constructible<array_view<char>, U&&>::value, bool
+      std::is_constructible<writable_array_view<uint8_t>, U&&>::value, bool
     >::type = 1>
-    constexpr writable_bytes_view(U && a) noexcept /*NOLINT*/
-    : writable_bytes_view(array_view<char>(a))
+    explicit constexpr writable_bytes_view(U && a) noexcept /*NOLINT*/
+    : writable_array_view(a)
+    {}
+
+    template<class U, typename std::enable_if<
+      std::is_constructible<writable_array_view<char>, U&&>::value, bool
+    >::type = 1>
+    explicit constexpr writable_bytes_view(U && a) noexcept /*NOLINT*/
+    : writable_bytes_view(writable_array_view<char>(a))
     {}
 
 
-    char       * as_charp() noexcept { return char_ptr_cast(this->data()); }
+    [[nodiscard]] char       * as_charp() noexcept { return char_ptr_cast(this->data()); }
     [[nodiscard]] char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
-    constexpr uint8_t       * as_u8p() noexcept { return this->data(); }
+    [[nodiscard]] constexpr uint8_t       * as_u8p() noexcept { return this->data(); }
     [[nodiscard]] constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
 
-    array_view_char       as_chars() noexcept { return {this->as_charp(), this->size()}; }
-    [[nodiscard]] array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
+    [[nodiscard]] writable_array_view<char> as_chars() noexcept
+    { return writable_array_view<char>{this->as_charp(), this->size()}; }
+    [[nodiscard]]          array_view<char> as_chars() const noexcept { return {this->as_charp(), this->size()}; }
 };
 
 /**
  * \c array_view on constant \c uint8_t* and \c char*
  */
-struct bytes_view : array_view<const uint8_t>
+struct bytes_view : array_view<uint8_t>
 {
     bytes_view() = default;
     bytes_view(bytes_view &&) = default;
@@ -102,38 +107,38 @@ struct bytes_view : array_view<const uint8_t>
 
 
     constexpr bytes_view(std::nullptr_t) noexcept
-    : array_view<const uint8_t>(nullptr)
+    : array_view<uint8_t>(nullptr)
     {}
 
     constexpr bytes_view(byte_ptr p, std::size_t sz) noexcept
-    : array_view<const uint8_t>(p.as_u8p(), sz)
+    : array_view<uint8_t>(p.as_u8p(), sz)
     {}
 
-    constexpr bytes_view(byte_ptr p, byte_ptr pright) noexcept
-    : array_view<const uint8_t>(p.as_u8p(), pright.as_u8p())
+    constexpr bytes_view(byte_ptr first, byte_ptr last) noexcept
+    : array_view<uint8_t>(first.as_u8p(), last.as_u8p())
     {}
 
-    bytes_view(array_view<const char> const av) noexcept /*NOLINT*/
-    : array_view<const uint8_t>(byte_ptr_cast(av.data()), av.size())
-    {}
-
-    template<class U, typename std::enable_if<
-      std::is_constructible<array_view<const uint8_t>, U&&>::value, bool
-    >::type = 1>
-    constexpr bytes_view(U && a) noexcept /*NOLINT*/
-    : array_view<const uint8_t>(a)
+    bytes_view(array_view<char> av) noexcept /*NOLINT*/
+    : array_view<uint8_t>(byte_ptr_cast(av.data()), av.size())
     {}
 
     template<class U, typename std::enable_if<
-      std::is_constructible<array_view<const char>, U&&>::value, bool
+      std::is_constructible<array_view<uint8_t>, U&&>::value, bool
     >::type = 1>
     constexpr bytes_view(U && a) noexcept /*NOLINT*/
-    : bytes_view(array_view<const char>(a))
+    : array_view<uint8_t>(a)
+    {}
+
+    template<class U, typename std::enable_if<
+      std::is_constructible<array_view<char>, U&&>::value, bool
+    >::type = 1>
+    constexpr bytes_view(U && a) noexcept /*NOLINT*/
+    : bytes_view(array_view<char>(a))
     {}
 
 
     [[nodiscard]] char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
     [[nodiscard]] constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
 
-    [[nodiscard]] array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
+    [[nodiscard]] array_view<char> as_chars() const noexcept { return {this->as_charp(), this->size()}; }
 };

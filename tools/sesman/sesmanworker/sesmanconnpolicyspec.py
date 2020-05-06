@@ -36,6 +36,12 @@ cp_spec = {
         u'mod_rdp:show_common_cipher_list': (
             'show_common_cipher_list', False
         ),
+        u'mod_rdp:allowed_dynamic_channels': (
+            'allowed_dynamic_channels', u'*'
+        ),
+        u'mod_rdp:denied_dynamic_channels': (
+            'denied_dynamic_channels', u''
+        ),
         u'mod_rdp:server_redirection_support': (
             'server_redirection', False
         ),
@@ -62,6 +68,9 @@ cp_spec = {
         ),
         u'mod_rdp:force_smartcard_authentication': (
             'force_smartcard_authentication', False
+        ),
+        u'mod_rdp:enable_ipv6': (
+            'enable_ipv6', False
         ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
@@ -236,6 +245,9 @@ cp_spec = {
         ),
         u'mod_vnc:support_cursor_pseudo_encoding': (
             'support_cursor_pseudo_encoding', True
+        ),
+        u'mod_vnc:enable_ipv6': (
+            'enable_ipv6', False
         ),
     },
 }

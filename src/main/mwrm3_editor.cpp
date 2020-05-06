@@ -260,7 +260,7 @@ struct print_value_impl<T, decltype(void(std::declval<T&>().bytes))>
 };
 
 
-void print_chars_view(array_view_const_char chars)
+void print_chars_view(chars_view chars)
 {
     std::cout.write(chars.data(), chars.size());
 }

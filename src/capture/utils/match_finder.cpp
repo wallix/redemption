@@ -110,7 +110,7 @@ void MatchFinder::configure_regexes(
     unsigned filter_number = 0;
 
     for (auto rng : get_line(tmp_filters, string_pattern_separator)) {
-        array_view_char av{rng.begin(), rng.end()};
+        writable_chars_view av{rng.begin(), rng.end()};
         av.data()[av.size()] = '\0';
 
         LOG_IF(verbose, LOG_INFO, "filter=\"%s\"", av.data());

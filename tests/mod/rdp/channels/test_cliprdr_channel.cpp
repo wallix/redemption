@@ -360,7 +360,7 @@ struct Buffer
     bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
     {
         using namespace RDPECLIP;
-        array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
+        auto av = out.out_skip_bytes(CliprdrHeader::size());
         f(this->out);
         OutStream stream_header(av);
         CliprdrHeader(msgType, msgFlags, out.get_offset() - av.size()).emit(stream_header);

@@ -41,7 +41,7 @@ using namespace std::string_view_literals;
 
 RED_TEST_DELEGATE_PRINT_ENUM(RDPVerbose);
 
-inline void write_file(std::string const& filename, array_view_const_char data)
+inline void write_file(std::string const& filename, chars_view data)
 {
     unique_fd fd(filename, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     RED_CHECK_EQ(

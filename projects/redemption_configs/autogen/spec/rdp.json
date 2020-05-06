@@ -115,6 +115,20 @@
           "description": "Show common cipher list supported by client and server"
         },
         {
+          "name": "allowed_dynamic_channels",
+          "type": "string",
+          "default": "*",
+          "advanced": true,
+          "description": "List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."
+        },
+        {
+          "name": "denied_dynamic_channels",
+          "type": "string",
+          "default": "",
+          "advanced": true,
+          "description": "List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."
+        },
+        {
           "name": "server_redirection",
           "type": "bool",
           "default": false,
@@ -167,6 +181,12 @@
           "type": "bool",
           "default": false,
           "description": "NLA will be disabled.\nTarget must be set for interactive login, otherwise server connection may not be guaranteed.\nSmartcard device must be available on client desktop.\nSmartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
+        },
+        {
+          "name": "enable_ipv6",
+          "type": "bool",
+          "default": false,
+          "description": "Enable target connection on ipv6"
         },
         {
           "name": "remote_programs_disconnect_message_delay",

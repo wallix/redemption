@@ -33,7 +33,7 @@ namespace detail
     {
         static constexpr char const value[sizeof...(cs)+2]{cs..., '\0', '\0'};
 
-        static constexpr array_view_const_char av() noexcept { return {value, sizeof...(cs)}; }
+        static constexpr chars_view av() noexcept { return {value, sizeof...(cs)}; }
     };
 
     template<class C, C... cs, std::size_t... ints>
@@ -48,7 +48,7 @@ REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
 template<class C, C... cs>
-constexpr array_view<C const> operator "" _utf16_le() noexcept
+constexpr array_view<C> operator "" _utf16_le() noexcept
 {
     static_assert(((cs >= 0 && cs <= 127) && ...), "only ascii char are supported");
     return detail::utf16_le_impl<C, cs...>(std::make_index_sequence<sizeof...(cs) * 2>{});

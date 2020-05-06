@@ -2979,7 +2979,7 @@ void ClientExecute::destroy_auxiliary_window()
     this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 }
 
-void ClientExecute::set_target_info(array_view_const_char ti)
+void ClientExecute::set_target_info(chars_view ti)
 {
     str_append(this->window_title, ti, (ti.empty() ? "" : " - "), INTERNAL_MODULE_WINDOW_TITLE);
 }

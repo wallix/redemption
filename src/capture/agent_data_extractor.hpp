@@ -27,7 +27,7 @@ Author(s): Jonathan Poelen
 
 struct AgentDataExtractor
 {
-    bool extract_list(array_view_const_char data);
+    bool extract_list(chars_view data);
 
     [[nodiscard]] KVList kvlist() const noexcept
     {

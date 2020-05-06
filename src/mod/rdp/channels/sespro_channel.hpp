@@ -1412,7 +1412,7 @@ public:
                             KVLog("text"_av,         parameters_[0]),
                             KVLog("class_name"_av,   parameters_[1]),
                             KVLog("command_line"_av, (parameters_.size() == 2)
-                                ? array_view_const_char{} : parameters_[2]),
+                                ? chars_view{} : parameters_[2]),
                         });
                     }
                     else {

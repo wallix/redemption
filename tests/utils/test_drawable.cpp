@@ -294,7 +294,7 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     struct Data
     {
         int cx, cy;
-        array_view_const_char sig;
+        chars_view sig;
     };
 
     RED_TEST_CONTEXT_DATA(Data const& data, "cx: " << data.cx << "  cy: " << data.cy, {
@@ -384,7 +384,7 @@ RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
         uint8_t rop;
         int cx, cy;
         char const* name;
-        array_view_const_char sig;
+        chars_view sig;
     };
     Drawable gd(640, 480);
     RED_TEST_CONTEXT_DATA(Data const& data, "name: " << data.name, {

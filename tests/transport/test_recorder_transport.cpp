@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
 
     struct {
         Pck type;
-        array_view_const_char s;
+        chars_view s;
     } a[] {
         {Pck::DataOut,    cstr_array_view("abc")},
         {Pck::DataOut,    cstr_array_view("defg")},
@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         ZeroTime timeobj;
         ReplayTransport trans(wf, "", 0, timeobj, ReplayTransport::FdType::AlwaysReady);
         char buf[10];
-        auto av = make_array_view(buf);
+        auto av = make_writable_array_view(buf);
         auto in = cstr_array_view("123456789");
         timeval timeout{0, 0};
         fd_set rfd;
@@ -181,7 +181,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         ZeroTime timeobj;
         ReplayTransport trans(wf, "", 0, timeobj, ReplayTransport::FdType::Timer);
         char buf[10];
-        auto av = make_array_view(buf);
+        auto av = make_writable_array_view(buf);
         auto in = cstr_array_view("123456789");
         fd_set rfd;
         int fd = trans.get_fd();

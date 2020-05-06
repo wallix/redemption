@@ -39,30 +39,30 @@ struct BasicStaticBuffer
         return size_type(this->len - this->idx);
     }
 
-    array_view_u8 av() noexcept
+    writable_bytes_view av() noexcept
     {
-        return {this->buf + this->idx, this->remaining()};
+        return writable_bytes_view{this->buf + this->idx, this->remaining()};
     }
 
-    array_view_u8 av(std::size_t n) noexcept
+    writable_bytes_view av(std::size_t n) noexcept
+    {
+        assert(n <= this->remaining());
+        return writable_bytes_view{this->buf + this->idx, n};
+    }
+
+    [[nodiscard]] bytes_view av(std::size_t n) const noexcept
     {
         assert(n <= this->remaining());
         return {this->buf + this->idx, n};
     }
 
-    [[nodiscard]] array_view_const_u8 av(std::size_t n) const noexcept
+    writable_bytes_view sub(std::size_t i, std::size_t n) noexcept
     {
         assert(n <= this->remaining());
-        return {this->buf + this->idx, n};
+        return writable_bytes_view{this->buf + this->idx + i, n};
     }
 
-    array_view_u8 sub(std::size_t i, std::size_t n) noexcept
-    {
-        assert(n <= this->remaining());
-        return {this->buf + this->idx + i, n};
-    }
-
-    [[nodiscard]] array_view_const_u8 sub(std::size_t i, std::size_t n) const noexcept
+    [[nodiscard]] bytes_view sub(std::size_t i, std::size_t n) const noexcept
     {
         assert(n <= this->remaining());
         return {this->buf + this->idx + i, n};
@@ -74,7 +74,7 @@ struct BasicStaticBuffer
         this->idx += n;
     }
 
-    array_view_u8 get_buffer_and_advance(std::size_t n) noexcept
+    writable_bytes_view get_buffer_and_advance(std::size_t n) noexcept
     {
         auto av = this->av(n);
         this->advance(n);

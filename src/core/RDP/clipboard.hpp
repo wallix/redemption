@@ -66,7 +66,7 @@ enum CF : uint16_t
     , CF_GDIOBJLAST      = 1023
 };
 
-inline array_view_const_char get_FormatId_name_av(uint32_t FormatId) noexcept
+inline chars_view get_FormatId_name_av(uint32_t FormatId) noexcept
 {
     switch (FormatId) {
         case CF_TEXT:            return "CF_TEXT"_av;
@@ -120,7 +120,7 @@ namespace Cliprdr
     inline void log_format_name(char const* prefix, uint32_t format_id, UnicodeName unicode_name)
     {
         char buf[256];
-        auto utf8_name = UTF16toUTF8_buf(unicode_name.bytes, make_array_view(buf));
+        auto utf8_name = UTF16toUTF8_buf(unicode_name.bytes, make_writable_array_view(buf));
         log_format_name(prefix, format_id, AsciiName{utf8_name});
     }
 } // namespace Cliprdr

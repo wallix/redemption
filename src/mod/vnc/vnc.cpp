@@ -1018,7 +1018,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
             // sec result
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
+            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                 if (status) {
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok");
                 }
@@ -1052,7 +1052,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         {
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
+            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                 if (status) {
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok");
                 }
@@ -1072,7 +1072,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         {
             LOG(LOG_ERR, "VNC INVALID Auth");
 
-            if (!this->invalid_auth_ctx.run(this->server_data_buf, [](array_view_u8 av){
+            if (!this->invalid_auth_ctx.run(this->server_data_buf, [](bytes_view av){
                 hexdump_c(av);
             })) {
                 return false;

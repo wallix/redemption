@@ -79,9 +79,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_password
 #certificate_password = inquisition
 
-#_advanced
-#movie_path = 
-
 # Support of Bitmap Update.
 # value: 0 or 1
 #_advanced
@@ -413,11 +410,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #persist_bitmap_cache_on_disk = 0
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 #_hidden
 #allow_channels = *
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 #_hidden
 #deny_channels = 
 
@@ -830,6 +827,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #force_smartcard_authentication = 0
 
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -872,6 +874,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #support_cursor_pseudo_encoding = 1
+
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
 
 [metrics]
 

@@ -62,8 +62,8 @@ public:
 
     public:
         uint64_t VolumeCreationTime             = 0;
-        array_view_const_char VolumeLabel       = ""_av;
-        array_view_const_char FileSystemName    = "ext4"_av;
+        chars_view VolumeLabel       = ""_av;
+        chars_view FileSystemName    = "ext4"_av;
 
         uint32_t FileSystemAttributes           = _default_FileSystemAttributes();
         uint32_t SectorsPerAllocationUnit       = 8;

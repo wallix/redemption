@@ -107,7 +107,7 @@ public:
         return SSL_pending(this->allocated_ssl);
     }
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const noexcept
+    [[nodiscard]] u8_array_view get_public_key() const noexcept
     {
         return {this->public_key.get(), this->public_key_length};
     }

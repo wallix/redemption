@@ -545,7 +545,7 @@ void MwrmWriterBuf::write_hash_file(
         with_hash, qhash, fhash);
 }
 
-array_view_const_char MwrmWriterBuf::buffer() const noexcept
+chars_view MwrmWriterBuf::buffer() const noexcept
 {
     return {this->mes, this->len};
 }

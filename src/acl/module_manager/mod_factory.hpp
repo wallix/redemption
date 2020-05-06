@@ -171,21 +171,21 @@ public:
         {
             auto mod_pack = this->create_xup_mod();
             mod_pack.enable_osd = true;
-            mod_pack.connected = false;
+            mod_pack.connected = true;
             return mod_pack;
         }
         case MODULE_RDP:
         {
             auto mod_pack = this->create_rdp_mod();
             mod_pack.enable_osd = true;
-            mod_pack.connected = false;
+            mod_pack.connected = true;
             return mod_pack;
         }
         case MODULE_VNC:
         {
             auto mod_pack = this->create_vnc_mod();
             mod_pack.enable_osd = true;
-            mod_pack.connected = false;
+            mod_pack.connected = true;
             return mod_pack;
         }
         default:

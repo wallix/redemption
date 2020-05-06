@@ -1884,7 +1884,7 @@ RED_AUTO_TEST_CASE(TestReload)
     struct Test
     {
         char const* name;
-        array_view_const_char data;
+        chars_view data;
         unsigned file_len;
         time_t time;
     };

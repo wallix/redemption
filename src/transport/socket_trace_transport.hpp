@@ -59,7 +59,7 @@ public:
         return this->strans.sck;
     }
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const override
+    [[nodiscard]] u8_array_view get_public_key() const override
     {
         return this->strans.get_public_key();
     }

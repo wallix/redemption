@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestUTF16ByteLen)
 RED_AUTO_TEST_CASE(TestUTF16ToUTF8_buf)
 {
     uint8_t source[24];
-    auto buf = make_array_view(source);
+    auto buf = make_writable_array_view(source);
     RED_CHECK(""_av == UTF16toUTF8_buf("\0\0"_av, buf));
     RED_CHECK(""_av == UTF16toUTF8_buf("\0"_av, buf));
     RED_CHECK("abc"_av == UTF16toUTF8_buf("a\0b\0c\0\0\0"_av, buf));
@@ -62,19 +62,19 @@ RED_AUTO_TEST_CASE(TestUTF16ToUTF8_buf)
 RED_AUTO_TEST_CASE(TestUTF8InsertUtf16)
 {
     uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f'};
-    RED_CHECK(UTF8InsertUtf16(make_array_view(source), 8, 'x'));
+    RED_CHECK(UTF8InsertUtf16(make_writable_array_view(source), 8, 'x'));
     RED_CHECK(make_array_view(source).first(9) == "xabcedef\x00"_av);
-    RED_CHECK(!UTF8InsertUtf16(make_array_view(source).first(9), 9, 'y'));
+    RED_CHECK(!UTF8InsertUtf16(make_writable_array_view(source).first(9), 9, 'y'));
     RED_CHECK(make_array_view(source).first(9) == "xabcedef\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos0)
 {
     uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f'};
-    UTF8RemoveOne(make_array_view(source).first(8));
+    UTF8RemoveOne(make_writable_array_view(source).first(8));
     RED_CHECK(make_array_view(source).first(8) == "bcedef\x00\x00"_av);
     source[7] = 'x';
-    UTF8RemoveOne(make_array_view(source).drop_front(6));
+    UTF8RemoveOne(make_writable_array_view(source).drop_front(6));
     RED_CHECK(make_array_view(source).first(9) == "bcedef\x00x\00"_av);
 }
 

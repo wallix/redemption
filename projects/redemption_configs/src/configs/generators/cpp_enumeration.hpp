@@ -69,7 +69,7 @@ namespace cpp_enumeration_writer
                 out << "zstr_buffer_traits<" << (e.is_string_parser ? "void" : "unsigned long") << "> {};\n\n";
             }
             write(e,
-                "array_view_const_char assign_zbuf_from_cfg(\n"
+                "chars_view assign_zbuf_from_cfg(\n"
                 "    zstr_buffer_from<%e> & buf,\n"
                 "    cfg_s_type<%e> /*type*/,\n"
                 "    %e x\n"
@@ -84,7 +84,7 @@ namespace cpp_enumeration_writer
                 if (e.is_string_parser) {
                     out <<
                         "    (void)buf;"
-                        "    static constexpr array_view_const_char arr[]{\n";
+                        "    static constexpr chars_view arr[]{\n";
                     loop(e, "        cstr_array_view(\"%s\"),\n");
                     write(e,
                         "    };\n"
@@ -95,7 +95,7 @@ namespace cpp_enumeration_writer
                 else {
                     write(e,
                         "    int sz = snprintf(buf.get(), buf.size(), \"%%lu\", static_cast<unsigned long>(x));\n"
-                        "    return array_view_const_char(buf.get(), sz);\n"
+                        "    return chars_view(buf.get(), sz);\n"
                     );
                 }
                 out << "}\n\n";
@@ -104,7 +104,7 @@ namespace cpp_enumeration_writer
 
         auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
             write(e,
-                "parse_error parse(%e & x, spec_type<%e> /*type*/, array_view_const_char value)\n"
+                "parse_error parse(%e & x, spec_type<%e> /*type*/, chars_view value)\n"
             );
 
             if (is_hpp) {

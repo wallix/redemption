@@ -50,13 +50,13 @@ static const uint8_t server_seal_magic[] =
 #include "transport/transport.hpp"
 
 
-static inline std::vector<AvPair> && operator<<(std::vector<AvPair>&& v, array_view<AvPair const> a)
+static inline std::vector<AvPair> && operator<<(std::vector<AvPair>&& v, array_view<AvPair> a)
 {
     v.insert(v.end(), a.begin(), a.end());
     return std::move(v);
 }
 
-static inline std::vector<AvPair> & operator<<(std::vector<AvPair> & v, array_view<AvPair const> a)
+static inline std::vector<AvPair> & operator<<(std::vector<AvPair> & v, array_view<AvPair> a)
 {
     v.insert(v.end(), a.begin(), a.end());
     return v;
@@ -376,7 +376,7 @@ public:
                     }
 
                     // this->authentication_token.pubKeyAuth [signature][data_buffer]
-                    array_view_u8 data_buffer = {this->authentication_token.pubKeyAuth.data()+cbMaxSignature, this->authentication_token.pubKeyAuth.size()-cbMaxSignature};
+                    u8_array_view data_buffer = {this->authentication_token.pubKeyAuth.data()+cbMaxSignature, this->authentication_token.pubKeyAuth.size()-cbMaxSignature};
                     std::vector<uint8_t> result_buffer(data_buffer.size());
 
                     /* Decrypt message using RC4 */
@@ -466,7 +466,7 @@ public:
                         // if we are server and protocol is 2,3,4
                         // then echos the public key +1
                         check_key.assign(public_key.data(),public_key.data()+public_key.size());
-                        ::ap_integer_increment_le(check_key);
+                        ::ap_integer_increment_le(make_writable_array_view(check_key));
                     }
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
@@ -475,14 +475,14 @@ public:
                     std::vector<uint8_t> data_out(cbMaxSignature+check_key.size());
                     // data_buffer
                     {
-                        array_view_u8 data_buffer = {data_out.data()+cbMaxSignature, check_key.size()};
+                        writable_u8_array_view data_buffer {data_out.data()+cbMaxSignature, check_key.size()};
                         this->SendRc4Seal.crypt(check_key.size(), check_key.data(), data_buffer.data());
                     }
                     // signature
                     {
                         unsigned long MessageSeqNo = this->send_seq_num++;
                         array_md5 digest = HmacMd5(this->ServerSigningKey, out_uint32_le(MessageSeqNo), check_key);
-                        array_view_u8 signature{data_out.data(), cbMaxSignature};
+                        writable_u8_array_view signature{data_out.data(), cbMaxSignature};
                         uint8_t checksum[8];
                         /* RC4-encrypt first 8 bytes of digest */
                         this->SendRc4Seal.crypt(8, digest.data(), checksum);
@@ -540,7 +540,7 @@ public:
         unsigned long MessageSeqNo = this->recv_seq_num++;
         // auth_info [signature][data_buffer]
 
-        array_view_const_u8 data_buffer = {auth_info.data()+cbMaxSignature, auth_info.size()-cbMaxSignature};
+        u8_array_view data_buffer = {auth_info.data()+cbMaxSignature, auth_info.size()-cbMaxSignature};
         auto decrypted_creds = std::vector<uint8_t>(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */

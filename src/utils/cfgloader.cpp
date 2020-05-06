@@ -81,7 +81,7 @@ bool configuration_load(ConfigurationHolder & configuration_holder, std::istream
         if (*first_char_line == '#') continue;
         last_char_ptr = rtrim(first_char_line, last_char_ptr, is_blank_in_line);
 
-        array_view_const_char const line {first_char_line, last_char_ptr};
+        chars_view const line {first_char_line, last_char_ptr};
         auto err_msg = [&configuration_holder, &new_key, &new_value, &context, &line]() -> char const *
         {
             if (line.empty()) return nullptr;
@@ -101,8 +101,8 @@ bool configuration_load(ConfigurationHolder & configuration_holder, std::istream
                 const char * endkey = std::find(line.begin(), line.end(), '=');
                 if (endkey == line.end()) return "Bad line format";
 
-                array_view_const_char const key (line.begin(), rtrim(line.begin(), endkey));
-                array_view_const_char const value (ltrim(endkey+1, line.end()), line.end());
+                chars_view const key (line.begin(), rtrim(line.begin(), endkey));
+                chars_view const value (ltrim(endkey+1, line.end()), line.end());
                 if (key.empty()) return "Empty Key";
 
                 memcpy(new_key, key.begin(), key.size()); new_key[key.size()] = 0;

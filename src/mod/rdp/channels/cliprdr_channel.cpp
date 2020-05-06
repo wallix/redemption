@@ -415,7 +415,7 @@ void ClipboardVirtualChannel::remove_text_validator(TextValidatorDataList* p)
 
 namespace
 {
-    array_view_const_char to_dlpav_str_direction(Direction direction)
+    chars_view to_dlpav_str_direction(Direction direction)
     {
         return (direction == Direction::FileFromClient)
             ? "UP"_av
@@ -890,7 +890,7 @@ struct ClipboardVirtualChannel::D
                     }
 
                     uint8_t utf8_buf[32*1024];
-                    auto utf8_av = UTF16toUTF8_buf(chunk_data, make_array_view(utf8_buf));
+                    auto utf8_av = UTF16toUTF8_buf(chunk_data, make_writable_array_view(utf8_buf));
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                         if (not utf8_av.empty() && utf8_av.back() == '\0') {
@@ -1488,7 +1488,7 @@ struct ClipboardVirtualChannel::D
 
                         auto av = ::UTF16toUTF8_buf(
                             data_to_dump.first(length_of_data_to_dump),
-                            make_array_view(data_to_dump_buf));
+                            make_writable_array_view(data_to_dump_buf));
                         utf8_string = {av.as_charp(), av.size()};
                         if (not utf8_string.empty() && not utf8_string.back()) {
                             utf8_string.remove_suffix(1);

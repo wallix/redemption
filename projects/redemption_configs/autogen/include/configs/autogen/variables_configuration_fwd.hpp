@@ -36,7 +36,6 @@ namespace cfg {
         struct enable_transparent_mode;
         struct certificate_password;
         struct is_rec;
-        struct movie_path;
         struct enable_bitmap_update;
         struct enable_close_box;
         struct enable_osd;
@@ -116,6 +115,8 @@ namespace cfg {
         struct persist_bitmap_cache_on_disk;
         struct allow_channels;
         struct deny_channels;
+        struct allowed_dynamic_channels;
+        struct denied_dynamic_channels;
         struct fast_path;
         struct server_redirection_support;
         struct client_address_sent;
@@ -195,6 +196,7 @@ namespace cfg {
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;
         struct force_smartcard_authentication;
+        struct enable_ipv6;
     };
 
     struct mod_vnc {
@@ -206,6 +208,7 @@ namespace cfg {
         struct server_is_macos;
         struct server_unix_alt;
         struct support_cursor_pseudo_encoding;
+        struct enable_ipv6;
     };
 
     struct metrics {

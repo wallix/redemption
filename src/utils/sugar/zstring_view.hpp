@@ -55,7 +55,7 @@ struct zstring_view
         assert(s[len] == 0);
     }
 
-    constexpr zstring_view(is_zero_terminated const& /*tag*/, array_view_const_char str) noexcept
+    constexpr zstring_view(is_zero_terminated const& /*tag*/, chars_view str) noexcept
     : zstring_view(is_zero_terminated{}, str.data(), str.size())
     {}
 

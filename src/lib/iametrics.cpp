@@ -54,7 +54,7 @@ extern "C"
                          , const int    log_delay_seconds   // delay between 2 logs
                          ) noexcept
     {
-        auto av = [](char const* s){ return array_view_const_char{s, strlen(s)}; };
+        auto av = [](char const* s){ return chars_view{s, strlen(s)}; };
         using std::chrono::seconds;
         using std::chrono::hours;
         timeval now{static_cast<time_t>(now_seconds), 0};

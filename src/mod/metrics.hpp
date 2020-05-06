@@ -36,10 +36,10 @@ class Metrics
 public:
     Metrics( std::string const& path
            , std::string session_id
-           , array_view_const_char primary_user_sig     // hashed primary user account
-           , array_view_const_char account_sig          // hashed secondary account
-           , array_view_const_char target_service_sig   // hashed (target service name + device name)
-           , array_view_const_char session_info_sig     // hashed (source_host + client info)
+           , chars_view primary_user_sig     // hashed primary user account
+           , chars_view account_sig          // hashed secondary account
+           , chars_view target_service_sig   // hashed (target service name + device name)
+           , chars_view session_info_sig     // hashed (source_host + client info)
            , timeval now                                // time at beginning of metrics
            , std::chrono::hours file_interval           // daily rotation of filename
            , std::chrono::seconds log_delay             // delay between 2 logs flush

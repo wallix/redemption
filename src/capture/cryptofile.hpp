@@ -76,7 +76,7 @@ public:
     }
 
     // for test only
-    [[nodiscard]] array_view<const uint8_t> get_master_key() const
+    [[nodiscard]] array_view<uint8_t> get_master_key() const
     {
         assert(this->master_key_loaded);
         return make_array_view(this->master_key);

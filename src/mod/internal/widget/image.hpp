@@ -24,12 +24,19 @@
 #include "mod/internal/widget/widget.hpp"
 #include "utils/bitmap.hpp"
 
+struct BGRColor;
+
 class WidgetImage : public Widget
 {
     Bitmap bmp;
 
 public:
-    WidgetImage(gdi::GraphicApi & drawable, const char * filename, Widget & parent, NotifyApi* notifier, int group_id = 0); /*NOLINT*/
+    WidgetImage(gdi::GraphicApi& drawable,
+                const char *filename,
+                Widget& parent,
+                NotifyApi *notifier,
+                int group_id = 0,
+                const BGRColor *bg_color = nullptr); /*NOLINT*/
 
     ~WidgetImage() override;
 

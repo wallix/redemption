@@ -45,7 +45,7 @@ public:
         uint8_t data[1600] = {0};
         size_t size = 0;
 
-        array_view_const_u8 av() noexcept
+        u8_array_view av() noexcept
         {
             return {data, size};
         }
@@ -140,7 +140,7 @@ public:
         this->data_text = str;
     }
 
-    array_view_const_u8 get_cliboard_text() override {
+    u8_array_view get_cliboard_text() override {
         return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
@@ -159,7 +159,7 @@ public:
         this->offset += data.size();
     }
 
-    array_view_const_char get_file_item(int /*index*/) override {
+    chars_view get_file_item(int /*index*/) override {
         return {char_ptr_cast(this->_chunk.get()), this->size};
     }
 

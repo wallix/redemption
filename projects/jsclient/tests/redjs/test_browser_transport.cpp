@@ -31,10 +31,10 @@ RED_AUTO_TEST_CASE(TestBrowserTransport)
     RED_CHECK(trans.get_out_buffer() == ""_av);
 
     char buffer[10];
-    RED_CHECK(3 == trans.partial_read(make_array_view(buffer)));
+    RED_CHECK(3 == trans.partial_read(make_writable_array_view(buffer)));
     RED_CHECK(array_view(buffer, 3) == "abc"_av);
     RED_CHECK_EXCEPTION_ERROR_ID(
-        (void)trans.partial_read(make_array_view(buffer)),
+        (void)trans.partial_read(make_writable_array_view(buffer)),
         ERR_TRANSPORT_NO_MORE_DATA);
 
     trans.add_in_buffer("def");
@@ -45,15 +45,15 @@ RED_AUTO_TEST_CASE(TestBrowserTransport)
     trans.add_in_buffer("stu");
     trans.add_in_buffer("vwx");
     trans.add_in_buffer("yz");
-    RED_CHECK(3 == trans.partial_read(array_view(buffer, 3)));
+    RED_CHECK(3 == trans.partial_read(writable_array_view(buffer, 3)));
     RED_CHECK(array_view(buffer, 3) == "def"_av);
-    RED_CHECK(6 == trans.partial_read(array_view(buffer, 6)));
+    RED_CHECK(6 == trans.partial_read(writable_array_view(buffer, 6)));
     RED_CHECK(array_view(buffer, 6) == "ghijkl"_av);
-    RED_CHECK(5 == trans.partial_read(array_view(buffer, 5)));
+    RED_CHECK(5 == trans.partial_read(writable_array_view(buffer, 5)));
     RED_CHECK(array_view(buffer, 5) == "mnopq"_av);
-    RED_CHECK(6 == trans.partial_read(array_view(buffer, 6)));
+    RED_CHECK(6 == trans.partial_read(writable_array_view(buffer, 6)));
     RED_CHECK(array_view(buffer, 6) == "rstuvw"_av);
-    RED_CHECK(3 == trans.partial_read(array_view(buffer, 6)));
+    RED_CHECK(3 == trans.partial_read(writable_array_view(buffer, 6)));
     RED_CHECK(array_view(buffer, 3) == "xyz"_av);
 
     trans.send("123"_av);

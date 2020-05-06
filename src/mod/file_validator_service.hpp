@@ -201,7 +201,7 @@ struct FileValidatorResultHeader
     }
 };
 
-inline std::size_t open_data_map_len(array_view<const bytes_view> data_map)
+inline std::size_t open_data_map_len(array_view<bytes_view> data_map)
 {
     assert(0 == (data_map.size() & 1));
 
@@ -211,7 +211,7 @@ inline std::size_t open_data_map_len(array_view<const bytes_view> data_map)
 }
 
 inline void send_data_map(
-    OutTransport trans, OutStream& message, array_view<const bytes_view> data_map)
+    OutTransport trans, OutStream& message, array_view<bytes_view> data_map)
 {
     message.out_uint16_be(data_map.size() / 2);
 
@@ -230,7 +230,7 @@ inline void send_data_map(
 
 inline FileValidatorId send_open_data(
     OutTransport trans, FileValidatorId file_id, std::string_view target_name,
-    array_view<const bytes_view> data_map)
+    array_view<bytes_view> data_map)
 {
     /*
     NewData
@@ -389,7 +389,7 @@ struct FileValidatorService
             data_map_array("microsoft_locale_id"_av, bytes_view{buf, n}));
     }
 
-    using DataMap = array_view<const bytes_view>;
+    using DataMap = array_view<bytes_view>;
 
     FileValidatorId open_raw_data(std::string_view target_name, DataMap data_map)
     {

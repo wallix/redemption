@@ -28,19 +28,21 @@ using namespace std::string_view_literals;
 RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
 {
     char rawbuf[32];
-    auto buf = make_array_view(rawbuf);
+    auto buf = make_writable_array_view(rawbuf);
 
-#define TEST(s, r) do {                                                                 \
-    std::string in = s; /*NOLINT*/                                                      \
-    std::string in2 = s; /*NOLINT*/                                                     \
-    auto expected = r ""_av;                                                            \
-    auto minilen = std::min(expected.size(), size_t(4));                                \
-    RED_CHECK(windows_to_linux_newline_convert(in, buf) == expected);                   \
-    RED_CHECK(windows_to_linux_newline_convert(in, buf.first(4)) ==                     \
-        expected.first(minilen));                                                       \
-    RED_CHECK(windows_to_linux_newline_convert(in, in) == expected);                    \
-    RED_CHECK(windows_to_linux_newline_convert(in2, array_view(in2.data(), minilen)) == \
-        expected.first(minilen));                                                       \
+#define TEST(s, r) do {                                               \
+    std::string in = s; /*NOLINT*/                                    \
+    std::string in2 = s; /*NOLINT*/                                   \
+    auto expected = r ""_av;                                          \
+    auto minilen = std::min(expected.size(), size_t(4));              \
+    RED_CHECK(windows_to_linux_newline_convert(in, buf) == expected); \
+    RED_CHECK(windows_to_linux_newline_convert(in, buf.first(4)) ==   \
+        expected.first(minilen));                                     \
+    RED_CHECK(windows_to_linux_newline_convert(in,                    \
+        make_writable_array_view(in)) == expected);                   \
+    RED_CHECK(windows_to_linux_newline_convert(in2,                   \
+        writable_array_view(in2.data(), minilen)) ==                  \
+            expected.first(minilen));                                 \
 } while(0)
 
     TEST("", "");
@@ -257,13 +259,13 @@ RED_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
     //
     // {
     //     char d[8];
-    //     RED_CHECK(linux_to_windows_newline_convert(nullptr, 0, make_array_view(d)) == 0);
+    //     RED_CHECK(linux_to_windows_newline_convert(nullptr, 0, make_writable_array_view(d)) == 0);
     // }
 
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("text"_av.first(0), make_array_view(d)) == ""sv);
+        RED_CHECK(linux_to_windows_newline_convert("text"_av.first(0), make_writable_array_view(d)) == ""sv);
     }
 
     {
@@ -276,43 +278,43 @@ RED_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
     {
         char d[2];
         RED_CHECK_EXCEPTION_ERROR_ID(
-            linux_to_windows_newline_convert("text"sv, make_array_view(d)),
+            linux_to_windows_newline_convert("text"sv, make_writable_array_view(d)),
             ERR_STREAM_MEMORY_TOO_SMALL
         );
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("\0"sv, make_array_view(d)) == "\0"sv);
+        RED_CHECK(linux_to_windows_newline_convert("\0"sv, make_writable_array_view(d)) == "\0"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("toto"sv, make_array_view(d)) == "toto"sv);
+        RED_CHECK(linux_to_windows_newline_convert("toto"sv, make_writable_array_view(d)) == "toto"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("toto\n"sv, make_array_view(d)) == "toto\r\n"sv);
+        RED_CHECK(linux_to_windows_newline_convert("toto\n"sv, make_writable_array_view(d)) == "toto\r\n"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("toto\n\0"sv, make_array_view(d)) == "toto\r\n\0"sv);
+        RED_CHECK(linux_to_windows_newline_convert("toto\n\0"sv, make_writable_array_view(d)) == "toto\r\n\0"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("\ntoto"sv, make_array_view(d)) == "\r\ntoto"sv);
+        RED_CHECK(linux_to_windows_newline_convert("\ntoto"sv, make_writable_array_view(d)) == "\r\ntoto"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("to\nto"sv, make_array_view(d)) == "to\r\nto"sv);
+        RED_CHECK(linux_to_windows_newline_convert("to\nto"sv, make_writable_array_view(d)) == "to\r\nto"sv);
     }
 
     {
         char d[12];
-        RED_CHECK(linux_to_windows_newline_convert("\nto\nto\n"sv, make_array_view(d)) == "\r\nto\r\nto\r\n"sv);
+        RED_CHECK(linux_to_windows_newline_convert("\nto\nto\n"sv, make_writable_array_view(d)) == "\r\nto\r\nto\r\n"sv);
     }
 }

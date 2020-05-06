@@ -187,7 +187,7 @@ private:
     Theme & theme;
 };
 
-void load_theme(Theme& theme, array_view_const_char theme_name)
+void load_theme(Theme& theme, chars_view theme_name)
 {
     // load theme
     char const* cfg_path = app_path(AppPath::Cfg).c_str();

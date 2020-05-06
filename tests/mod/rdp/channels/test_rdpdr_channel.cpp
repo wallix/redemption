@@ -136,8 +136,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     struct D
     {
         char const* name;
-        array_view_const_char indata;
-        array_view_const_char outdata;
+        chars_view indata;
+        chars_view outdata;
         FileSystemVirtualChannelParams const& file_system_virtual_channel_params;
         bool enable_drive;
     };

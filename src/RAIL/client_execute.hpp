@@ -211,7 +211,7 @@ public:
 
     void destroy_auxiliary_window() override;
 
-    void set_target_info(array_view_const_char ti);
+    void set_target_info(chars_view ti);
 
     [[nodiscard]] bool is_rail_enabled() const;
 

@@ -579,7 +579,7 @@ static const char * get_DeviceType_name(RDPDR_DTYP DeviceType) noexcept
 //  set to zero. See [MS-RDPESC] for details about the smart card device
 //  type.
 
-inline static array_view_const_char DeviceAnnounceHeader_get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
+inline static chars_view DeviceAnnounceHeader_get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
     switch (DeviceType) {
         case RDPDR_DTYP_SERIAL:     return "Serial port"_av;
         case RDPDR_DTYP_PARALLEL:   return "Parallel port"_av;
@@ -1367,7 +1367,7 @@ public:
 
     [[nodiscard]] uint32_t CreateOptions() const { return this->CreateOptions_; }
 
-    [[nodiscard]] array_view_const_char Path() const { return {char_ptr_cast(this->Path_), this->PathLength_UTF8}; }
+    [[nodiscard]] chars_view Path() const { return {char_ptr_cast(this->Path_), this->PathLength_UTF8}; }
 
     [[nodiscard]] size_t PathLength() const { return this->PathLength_UTF16; }
 

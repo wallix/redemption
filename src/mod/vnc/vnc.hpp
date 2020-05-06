@@ -464,7 +464,7 @@ public:
                 return State::Data;
             }
 
-            f(array_view_u8{buf.av().data(), sz});
+            f(u8_array_view{buf.av().data(), sz});
             buf.advance(sz);
 
             if (sz == this->len) {
@@ -542,7 +542,7 @@ public:
             this->state = State::Header;
         }
 
-        template<class F> // f(bool status, array_view_u8 raison_fail)
+        template<class F> // f(bool status, u8_array_view raison_fail)
         bool run(Buf64k & buf, F && f)
         {
             switch (this->state)
@@ -550,7 +550,7 @@ public:
                 case State::Header:
                     if (auto r = this->read_header(buf)) {
                         if (r == State::Finish) {
-                            f(true, array_view_u8{});
+                            f(true, nullptr);
                             return true;
                         }
                         this->reason.restart();
@@ -561,7 +561,7 @@ public:
                     }
                     REDEMPTION_CXX_FALLTHROUGH;
                 case State::ReasonFail:
-                    return this->reason.run(buf, [&f](array_view_u8 av){ f(false, av); });
+                    return this->reason.run(buf, [&f](u8_array_view av){ f(false, av); });
                 case State::Finish:
                     return true;
             }
@@ -988,7 +988,7 @@ protected:
         };
 
     public:
-        array_view_u8 server_random;
+        writable_u8_array_view server_random;
 
         void restart() noexcept
         {

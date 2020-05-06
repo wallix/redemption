@@ -24,4 +24,4 @@
 
 class Theme;
 
-void load_theme(Theme& theme, array_view_const_char theme_name);
+void load_theme(Theme& theme, chars_view theme_name);

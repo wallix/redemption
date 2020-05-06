@@ -27,7 +27,7 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-    void push(std::string& s, array_view_const_char av)
+    void push(std::string& s, chars_view av)
     {
         s.insert(s.end(), av.begin(), av.end());
         s += '\n';

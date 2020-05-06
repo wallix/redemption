@@ -44,7 +44,7 @@ class rdpCredsspServerKerberos final
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
-    array_view_u8 public_key;
+    writable_u8_array_view public_key;
     std::string& extra_message;
     Translation::language_t lang;
     const bool credssp_verbose;
@@ -231,7 +231,7 @@ class rdpCredsspServerKerberos final
             return SEC_E_NO_CREDENTIALS;
         }
 
-        bool get_service_name(array_view_const_char server, gss_name_t * name) {
+        bool get_service_name(chars_view server, gss_name_t * name) {
             gss_buffer_desc output;
             const char service_name[] = "TERMSRV";
             gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
@@ -255,7 +255,7 @@ class rdpCredsspServerKerberos final
         // GSS_Init_sec_context
         // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
         SEC_STATUS InitializeSecurityContext(
-            array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
+            chars_view pszTargetName, u8_array_view input_buffer, std::vector<uint8_t>& output_buffer
         )
         {
             gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
@@ -343,7 +343,7 @@ class rdpCredsspServerKerberos final
         // GSS_Accept_sec_context
         // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
         SEC_STATUS AcceptSecurityContext(
-            array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
+            u8_array_view input_buffer, std::vector<uint8_t>& output_buffer
         )
         {
             gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
@@ -424,7 +424,7 @@ class rdpCredsspServerKerberos final
 
         // GSS_Wrap
         // ENCRYPT_MESSAGE EncryptMessage;
-        SEC_STATUS EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo)
+        SEC_STATUS EncryptMessage(u8_array_view data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo)
         {
             (void)MessageSeqNo;
             // OM_uint32 KRB5_CALLCONV
@@ -465,7 +465,7 @@ class rdpCredsspServerKerberos final
 
         // GSS_Unwrap
         // DECRYPT_MESSAGE DecryptMessage;
-        SEC_STATUS DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo)
+        SEC_STATUS DecryptMessage(u8_array_view data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo)
         {
             (void)MessageSeqNo;
 
@@ -648,7 +648,7 @@ public:
     }
 
 public:
-    rdpCredsspServerKerberos(array_view_u8 key,
+    rdpCredsspServerKerberos(writable_u8_array_view key,
                std::string& extra_message,
                Translation::language_t lang,
                const bool credssp_verbose,
@@ -732,7 +732,7 @@ private:
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_server_to_client();
-            this->public_key = this->ServerClientHash;
+            this->public_key = make_writable_array_view(this->ServerClientHash);
         }
         else {
             // if we are server and protocol is 2,3,4
@@ -770,10 +770,10 @@ private:
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_client_to_server();
-            this->public_key = this->ClientServerHash;
+            this->public_key = make_writable_array_view(this->ClientServerHash);
         }
 
-        array_view_u8 public_key2 = Buffer;
+        writable_u8_array_view public_key2 {Buffer};
 
         if (public_key2.size() != public_key.size()) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());

@@ -25,7 +25,7 @@
 #include <cstdint>
 
 
-inline array_view_const_char get_printable_password(array_view_const_char password, uint32_t printing_mode)
+inline chars_view get_printable_password(chars_view password, uint32_t printing_mode)
 {
     switch (printing_mode) {
         case 1:

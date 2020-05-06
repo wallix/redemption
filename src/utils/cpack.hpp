@@ -36,12 +36,12 @@ namespace cpack
             this->array[3] = static_cast<uint8_t>(v << 24);
         }
 
-        [[nodiscard]] array_view_const_u8 av() const noexcept
+        [[nodiscard]] u8_array_view av() const noexcept
         {
             return make_array_view(this->array);
         }
 
-        operator array_view_const_u8() const noexcept
+        operator u8_array_view() const noexcept
         {
             return this->av();
         }
@@ -57,12 +57,12 @@ namespace cpack
             this->array[1] = static_cast<uint8_t>(v >> 8);
         }
 
-        [[nodiscard]] array_view_const_u8 av() const noexcept
+        [[nodiscard]] u8_array_view av() const noexcept
         {
             return make_array_view(this->array);
         }
 
-        operator array_view_const_u8() const noexcept
+        operator u8_array_view() const noexcept
         {
             return this->av();
         }

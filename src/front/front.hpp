@@ -2933,7 +2933,7 @@ public:
                     0x00, 0x00              // wBlobLen  : 0
                 };
                 SEC::Sec_Send sec(
-                    sec_header, make_array_view(lic2),
+                    sec_header, make_writable_array_view(lic2),
                     SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0
                 );
                 (void)sec;
@@ -4113,7 +4113,7 @@ private:
                                                    "Front::process_data::Refresh rect PDU data", ERR_RDP_DATA_TRUNCATED);
 
                 auto rects_raw = std::make_unique<Rect[]>(numberOfAreas);
-                array_view<Rect> rects(rects_raw.get(), numberOfAreas);
+                writable_array_view<Rect> rects(rects_raw.get(), numberOfAreas);
                 for (Rect & rect : rects) {
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();

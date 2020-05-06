@@ -79,6 +79,14 @@ cipher_string = string(default='ALL')
 # Show common cipher list supported by client and server
 show_common_cipher_list = boolean(default=False)
 
+# List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
+#_advanced
+allowed_dynamic_channels = string(default='*')
+
+# List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.
+#_advanced
+denied_dynamic_channels = string(default='')
+
 # Enables Server Redirection Support.
 server_redirection = boolean(default=False)
 
@@ -109,6 +117,9 @@ enable_restricted_admin_mode = boolean(default=False)
 # Smartcard device must be available on client desktop.
 # Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 force_smartcard_authentication = boolean(default=False)
+
+# Enable target connection on ipv6
+enable_ipv6 = boolean(default=False)
 
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)

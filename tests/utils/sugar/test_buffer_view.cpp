@@ -39,10 +39,10 @@ int main()
     byte_ptr cbs{cs};
     writable_buffer_view ba;
     buffer_view cba;
-    array_view_char av{s, 1};
-    array_view_u8 uav{us, 1};
-    array_view_const_char cav{cs, 1};
-    array_view_const_u8 cuav{cus, 1};
+    writable_chars_view av{s, 1};
+    writable_u8_array_view uav{us, 1};
+    chars_view cav{cs, 1};
+    u8_array_view cuav{cus, 1};
 
     writable_buffer_view{bs, 1};
     writable_buffer_view{a};
@@ -83,9 +83,9 @@ int main()
     buffer_view{} = cuav;
     buffer_view{} = cba;
 
-    array_view_u8{} = ba;
-    array_view_const_u8{} = ba;
-    array_view_const_u8{} = cba;
+    u8_array_view{} = ba;
+    u8_array_view{} = ba;
+    u8_array_view{} = cba;
 
     [](writable_buffer_view /*dummy*/){}(a);
     [](writable_buffer_view /*dummy*/){}(ua);

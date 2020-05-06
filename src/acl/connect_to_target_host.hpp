@@ -42,10 +42,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 
-static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & time_base, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
+static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & time_base, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail, bool enable_ipv6 = false)
 {
     auto throw_error = [&ini, time_base, &report_message](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
@@ -71,26 +72,58 @@ static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & t
         ini.get<cfg::context::target_host>(),
         ini.get<cfg::context::target_port>());
 
-    const char * ip = ini.get<cfg::context::target_host>().c_str();
-    char ip_addr[256] {};
-    in_addr s4_sin_addr;
-    if (auto error_message = resolve_ipv4_address(ip, s4_sin_addr)) {
-        // TODO: actually this is DNS Failure or invalid address
-        throw_error(error_message, 1);
+    const char *ip = ini.get<cfg::context::target_host>().c_str();
+    int port = ini.get<cfg::context::target_port>();
+    const char *error_message = nullptr;
+    char resolved_ip_addr[NI_MAXHOST] { };
+    unique_fd client_sck { -1 };
+    
+    // Handle ipv4 or both ipv4 and ipv6
+    if (!enable_ipv6)
+    {
+        in_addr s4_sin_addr;
+        
+        if ((error_message = resolve_ipv4_address(ip, s4_sin_addr)))
+        {
+            // TODO: actually this is DNS Failure or invalid address
+            throw_error(error_message, 1);
+        }
+        snprintf(resolved_ip_addr,
+                 sizeof(resolved_ip_addr),
+                 "%s",
+                 inet_ntoa(s4_sin_addr));
+        client_sck = ip_connect(ip, port, &error_message);
     }
+    else
+    {
+        AddrInfoPtrWithDel_t addr_info_ptr =
+            resolve_both_ipv4_and_ipv6_address(ip, port, &error_message);
 
-    snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
-
-    char const* error_message = nullptr;
-    unique_fd client_sck = ip_connect(ip, ini.get<cfg::context::target_port>(), &error_message);
-
-    if (!client_sck.is_open()) {
+        if (error_message)
+        {
+            throw_error(error_message, 1);
+        }
+        if (int res = ::getnameinfo(addr_info_ptr->ai_addr,
+                                    addr_info_ptr->ai_addrlen,
+                                    resolved_ip_addr,
+                                    sizeof(resolved_ip_addr),
+                                    nullptr,
+                                    0,
+                                    NI_NUMERICHOST))
+        {
+            error_message = (res == EAI_SYSTEM) ?
+                ::strerror(errno) : ::gai_strerror(res);
+            throw_error(error_message, 1);
+        }
+        client_sck = ip_connect_both_ipv4_and_ipv6(ip, port, &error_message);
+    }
+    if (!client_sck.is_open())
+    {
         throw_error(error_message, 2);
     }
-
-    ini.set<cfg::context::auth_error_message>(TR(authentification_fail, language(ini)));
-    ini.set<cfg::context::ip_target>(ip_addr);
-
+    ini.set<cfg::context::auth_error_message>(TR(authentification_fail,
+                                                 language(ini)));
+    ini.set<cfg::context::ip_target>(resolved_ip_addr);
     return client_sck;
 }
 

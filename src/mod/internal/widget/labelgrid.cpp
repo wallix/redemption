@@ -59,7 +59,7 @@ void WidgetLabelGrid::clean_labels()
     }
 }
 
-void WidgetLabelGrid::add_line(array_view<const array_view_const_char> entries)
+void WidgetLabelGrid::add_line(array_view<chars_view> entries)
 {
     auto line = this->WidgetGrid::add_line();
 

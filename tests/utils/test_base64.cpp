@@ -26,8 +26,8 @@
 RED_AUTO_TEST_CASE(TestEncode64)
 {
     char buffer[250];
-    auto base64_encode = [&](array_view_const_char av){
-        return ::base64_encode(av, make_array_view(buffer));
+    auto base64_encode = [&](chars_view av){
+        return ::base64_encode(av, make_writable_array_view(buffer));
     };
     RED_CHECK(base64_encode("any carnal pleasure."_av) == "YW55IGNhcm5hbCBwbGVhc3VyZS4="_av);
     RED_CHECK(base64_encode("any carnal pleasure"_av) ==  "YW55IGNhcm5hbCBwbGVhc3VyZQ=="_av);
