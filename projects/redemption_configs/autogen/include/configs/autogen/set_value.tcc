@@ -2154,6 +2154,205 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
+    else if (0 == strcmp(context, "theme")) {
+        if (0) {}
+        else if (0 == strcmp(key, "enable_theme")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::enable_theme&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "separator_color")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::separator_color&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "focus_color")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::focus_color&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "error_color")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::error_color&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "logo")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::logo&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "logo_path")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::logo_path&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "edit_bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::edit_bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "edit_fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::edit_fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "edit_focus_color")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::edit_focus_color&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tooltip_bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::tooltip_bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tooltip_fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::tooltip_fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tooltip_border_color")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::tooltip_border_color&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_line1_bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_line1_bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_line1_fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_line1_fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_line2_bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_line2_bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_line2_fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_line2_fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_selected_bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_selected_bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_selected_fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_selected_fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_focus_bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_focus_bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_focus_fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_focus_fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_label_bgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_label_bgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "selector_label_fgcolor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::theme::selector_label_fgcolor&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
     else if (static_cast<cfg::debug::config>(this->variables).value) {
         LOG(LOG_ERR, "unknown section [%s]", context);
     }

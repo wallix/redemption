@@ -1136,4 +1136,79 @@ enable_target_field = boolean(default=True)
 #_advanced
 load_theme = string(default='')
 
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+#_advanced
+enable_theme = boolean(default=False)
+
+#_advanced
+bgcolor = string(default='dark_blue_bis')
+
+#_advanced
+fgcolor = string(default='white')
+
+#_advanced
+separator_color = string(default='light_blue')
+
+#_advanced
+focus_color = string(default='winblue')
+
+#_advanced
+error_color = string(default='yellow')
+
+#_hidden
+logo = boolean(default=False)
+
+#_hidden
+logo_path = string(default='')
+
+#_advanced
+edit_bgcolor = string(default='white')
+
+#_advanced
+edit_fgcolor = string(default='black')
+
+#_advanced
+edit_focus_color = string(default='winblue')
+
+#_advanced
+tooltip_bgcolor = string(default='black')
+
+#_advanced
+tooltip_fgcolor = string(default='light_yellow')
+
+#_advanced
+tooltip_border_color = string(default='black')
+
+#_advanced
+selector_line1_bgcolor = string(default='pale_blue')
+
+#_advanced
+selector_line1_fgcolor = string(default='black')
+
+#_advanced
+selector_line2_bgcolor = string(default='light_blue')
+
+#_advanced
+selector_line2_fgcolor = string(default='black')
+
+#_advanced
+selector_selected_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_selected_fgcolor = string(default='white')
+
+#_advanced
+selector_focus_bgcolor = string(default='winblue')
+
+#_advanced
+selector_focus_fgcolor = string(default='white')
+
+#_advanced
+selector_label_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_label_fgcolor = string(default='white')
+
 )gen_config_ini"

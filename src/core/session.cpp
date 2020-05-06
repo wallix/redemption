@@ -636,7 +636,7 @@ public:
             LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
 
             Theme theme;
-            ::load_theme(theme, theme_name);
+            ::load_theme(theme, ini);
 
             ClientExecute rail_client_execute(session_reactor, front, front,
                                             front.client_info.window_list_caps,

@@ -394,3 +394,4 @@ cfg::context::rd_shadow_invitation_addr ⇒ rd_shadow_invitation_addr   [std::st
 cfg::context::rd_shadow_invitation_port ⇒ rd_shadow_invitation_port   [unsigned int]
 cfg::context::smartcard_login ⇒ smartcard_login   [std::string]
 
+

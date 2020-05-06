@@ -5530,6 +5530,296 @@ namespace cfg {
         type value{};
     };
 
+    /// Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc) <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct theme::enable_theme {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "enable_theme";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: std::string <br/>
+    /// value = "dark_blue_bis" <br/>
+    struct theme::bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "dark_blue_bis";
+    };
+    /// type: std::string <br/>
+    /// value = "white" <br/>
+    struct theme::fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "white";
+    };
+    /// type: std::string <br/>
+    /// value = "light_blue" <br/>
+    struct theme::separator_color {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "separator_color";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "light_blue";
+    };
+    /// type: std::string <br/>
+    /// value = "winblue" <br/>
+    struct theme::focus_color {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "focus_color";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "winblue";
+    };
+    /// type: std::string <br/>
+    /// value = "yellow" <br/>
+    struct theme::error_color {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "error_color";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "yellow";
+    };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct theme::logo {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "logo";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: std::string <br/>
+    /// value = "" <br/>
+    struct theme::logo_path {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "logo_path";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "";
+    };
+    /// type: std::string <br/>
+    /// value = "white" <br/>
+    struct theme::edit_bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "edit_bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "white";
+    };
+    /// type: std::string <br/>
+    /// value = "black" <br/>
+    struct theme::edit_fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "edit_fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "black";
+    };
+    /// type: std::string <br/>
+    /// value = "winblue" <br/>
+    struct theme::edit_focus_color {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "edit_focus_color";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "winblue";
+    };
+    /// type: std::string <br/>
+    /// value = "black" <br/>
+    struct theme::tooltip_bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "tooltip_bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "black";
+    };
+    /// type: std::string <br/>
+    /// value = "light_yellow" <br/>
+    struct theme::tooltip_fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "tooltip_fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "light_yellow";
+    };
+    /// type: std::string <br/>
+    /// value = "black" <br/>
+    struct theme::tooltip_border_color {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "tooltip_border_color";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "black";
+    };
+    /// type: std::string <br/>
+    /// value = "pale_blue" <br/>
+    struct theme::selector_line1_bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_line1_bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "pale_blue";
+    };
+    /// type: std::string <br/>
+    /// value = "black" <br/>
+    struct theme::selector_line1_fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_line1_fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "black";
+    };
+    /// type: std::string <br/>
+    /// value = "light_blue" <br/>
+    struct theme::selector_line2_bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_line2_bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "light_blue";
+    };
+    /// type: std::string <br/>
+    /// value = "black" <br/>
+    struct theme::selector_line2_fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_line2_fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "black";
+    };
+    /// type: std::string <br/>
+    /// value = "medium_blue" <br/>
+    struct theme::selector_selected_bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_selected_bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "medium_blue";
+    };
+    /// type: std::string <br/>
+    /// value = "white" <br/>
+    struct theme::selector_selected_fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_selected_fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "white";
+    };
+    /// type: std::string <br/>
+    /// value = "winblue" <br/>
+    struct theme::selector_focus_bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_focus_bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "winblue";
+    };
+    /// type: std::string <br/>
+    /// value = "white" <br/>
+    struct theme::selector_focus_fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_focus_fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "white";
+    };
+    /// type: std::string <br/>
+    /// value = "medium_blue" <br/>
+    struct theme::selector_label_bgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_label_bgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "medium_blue";
+    };
+    /// type: std::string <br/>
+    /// value = "white" <br/>
+    struct theme::selector_label_fgcolor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "theme";
+        static constexpr char const * name = "selector_label_fgcolor";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "white";
+    };
+
 } // namespace cfg
 
 namespace cfg_section {
@@ -5964,6 +6254,33 @@ struct context
 , cfg::context::rail_module_host_mod_is_active
 { static constexpr bool is_section = true; };
 
+struct theme
+: cfg::theme::bgcolor
+, cfg::theme::fgcolor
+, cfg::theme::separator_color
+, cfg::theme::focus_color
+, cfg::theme::error_color
+, cfg::theme::logo_path
+, cfg::theme::edit_bgcolor
+, cfg::theme::edit_fgcolor
+, cfg::theme::edit_focus_color
+, cfg::theme::tooltip_bgcolor
+, cfg::theme::tooltip_fgcolor
+, cfg::theme::tooltip_border_color
+, cfg::theme::selector_line1_bgcolor
+, cfg::theme::selector_line1_fgcolor
+, cfg::theme::selector_line2_bgcolor
+, cfg::theme::selector_line2_fgcolor
+, cfg::theme::selector_selected_bgcolor
+, cfg::theme::selector_selected_fgcolor
+, cfg::theme::selector_focus_bgcolor
+, cfg::theme::selector_focus_fgcolor
+, cfg::theme::selector_label_bgcolor
+, cfg::theme::selector_label_fgcolor
+, cfg::theme::enable_theme
+, cfg::theme::logo
+{ static constexpr bool is_section = true; };
+
 } // namespace cfg_section
 
 namespace configs {
@@ -5989,6 +6306,7 @@ struct VariablesConfiguration
 , cfg_section::translation
 , cfg_section::internal_mod
 , cfg_section::context
+, cfg_section::theme
 {};
 
 using VariablesAclPack = Pack<

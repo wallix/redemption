@@ -438,4 +438,31 @@ namespace cfg {
         struct smartcard_login;
     };
 
+    struct theme {
+        struct enable_theme;
+        struct bgcolor;
+        struct fgcolor;
+        struct separator_color;
+        struct focus_color;
+        struct error_color;
+        struct logo;
+        struct logo_path;
+        struct edit_bgcolor;
+        struct edit_fgcolor;
+        struct edit_focus_color;
+        struct tooltip_bgcolor;
+        struct tooltip_fgcolor;
+        struct tooltip_border_color;
+        struct selector_line1_bgcolor;
+        struct selector_line1_fgcolor;
+        struct selector_line2_bgcolor;
+        struct selector_line2_fgcolor;
+        struct selector_selected_bgcolor;
+        struct selector_selected_fgcolor;
+        struct selector_focus_bgcolor;
+        struct selector_focus_fgcolor;
+        struct selector_label_bgcolor;
+        struct selector_label_fgcolor;
+    };
+
 } // namespace cfg
