@@ -28,6 +28,9 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+// uncomment to use dump_png24()
+// #include "utils/png.hpp"
+
 RED_AUTO_TEST_CASE(TraceWidgetImage)
 {
     TestGraphic drawable(800, 600);
@@ -234,4 +237,85 @@ RED_AUTO_TEST_CASE(TraceWidgetImageClip2)
     //drawable.save_to_png(OUTPUT_FILE_PATH "image8.png");
 
     RED_CHECK_SIG(drawable, "\x30\xd6\xba\x4a\xd4\x54\x54\xc8\xa6\x55\xe1\xe7\xd1\x95\x83\xca\x36\xd0\x96\x47");
+}
+
+RED_AUTO_TEST_CASE(TraceWidgetImage_no_transparent_png_with_theme_color)
+{
+    TestGraphic drawable(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, { });
+    NotifyApi *notifier = nullptr;
+    BGRColor bgcolor = DARK_BLUE_BIS;
+    WidgetImage wimage(drawable,
+                       FIXTURES_PATH"/logo-redemption.png",
+                       parent,
+                       notifier,
+                       0,
+                       &bgcolor);
+    Dimension dim = wimage.get_optimal_dim();
+
+    wimage.set_wh(dim);
+    wimage.set_xy(0, 0);
+
+    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
+                                     0 + wimage.y(),
+                                     wimage.cx(),
+                                     wimage.cy()));
+
+    // uncomment to see result in png file
+    // dump_png24("image9.png", drawable, true);
+    
+    RED_CHECK_SIG(drawable, "\xe2\x5c\x4a\x10\xe0\xbc\x8f\x3c\xb5\x0b\x10\x98\xd1\xdc\x3b\xb8\x33\x28\x76\xbb");
+}
+
+RED_AUTO_TEST_CASE(TraceWidgetImage_transparent_png_without_theme_color)
+{
+    TestGraphic drawable(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, { });
+    NotifyApi *notifier = nullptr;
+    WidgetImage wimage(drawable,
+                       FIXTURES_PATH"/logo-redemption-transparent.png",
+                       parent,
+                       notifier);
+    Dimension dim = wimage.get_optimal_dim();
+
+    wimage.set_wh(dim);
+    wimage.set_xy(0, 0);
+
+    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
+                                     0 + wimage.y(),
+                                     wimage.cx(),
+                                     wimage.cy()));
+    
+    // uncomment to see result in png file
+    // dump_png24("image10.png", drawable, true);
+    
+    RED_CHECK_SIG(drawable, "\xdb\xe0\x50\x0a\xa1\x8a\x29\x53\x9f\x20\xc5\x34\x44\x36\xd1\x8c\x8d\x28\x53\x88");
+}
+
+RED_AUTO_TEST_CASE(TraceWidgetImage_transparent_png_with_theme_color)
+{
+    TestGraphic drawable(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, { });
+    NotifyApi *notifier = nullptr;
+    BGRColor bgcolor = DARK_BLUE_BIS;
+    WidgetImage wimage(drawable,
+                       FIXTURES_PATH"/logo-redemption-transparent.png",
+                       parent,
+                       notifier,
+                       0,
+                       &bgcolor);
+    Dimension dim = wimage.get_optimal_dim();
+
+    wimage.set_wh(dim);
+    wimage.set_xy(0, 0);
+
+    wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
+                                     0 + wimage.y(),
+                                     wimage.cx(),
+                                     wimage.cy()));
+    
+    // uncomment to see result in png file
+    // dump_png24("image11.png", drawable, true);
+    
+    RED_CHECK_SIG(drawable, "\x94\x2e\x70\xdd\x60\xd2\x7e\x50\xd6\xa7\xcd\x6e\x63\xbb\xdd\x9f\xf8\xa1\x62\x70");
 }
