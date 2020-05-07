@@ -195,7 +195,8 @@ private:
             bool is_unicode;
         };
 
-        enum class TransferState :  uint8_t {
+        enum class TransferState : uint8_t
+        {
             Empty,
             Size,
             Range,
@@ -210,7 +211,7 @@ private:
 
         struct NoLockData
         {
-            TransferState transfer_state = TransferState::Empty;
+            TransferState transfer_state = TransferState();
 
             operator TransferState() const
             {

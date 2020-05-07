@@ -67,7 +67,7 @@ struct FilecontentsRequestSendBack
 
         sender->operator()(
             out_stream.get_offset(),
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             out_stream.get_produced_bytes());
     }
 };
