@@ -965,6 +965,12 @@ public:
         if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
             const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
             const bool disable_graphics_update = false;
+            if (disable_input_event){
+                this->callbacks.disable_input_event();
+            }
+            else {
+                this->callbacks.enable_input_event();
+            }
             this->callbacks.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
@@ -1848,6 +1854,8 @@ class mod_rdp : public mod_api, public rdp_api
         mod_rdp & mod;
         SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {};
         virtual void freeze_screen() {};
+        virtual void disable_input_event() { mod.disable_input_event(); };
+        virtual void enable_input_event() { mod.enable_input_event(); };
         virtual bool disable_input_event_and_graphics_update(bool input, bool graphics) 
         {
             mod.disable_input_event_and_graphics_update(input,graphics);
@@ -2190,6 +2198,7 @@ public:
         if (this->channels.session_probe.enable_session_probe) {
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
+            this->enable_input_event();
             this->disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
         }
 #endif
@@ -3365,6 +3374,7 @@ public:
                 if (this->channels.session_probe.enable_session_probe) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
+                    this->enable_input_event();
                     this->disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
                 }
@@ -4903,6 +4913,7 @@ public:
         if (this->channels.session_probe.enable_session_probe) {
             const bool disable_input_event     = true;
             const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
+            this->disable_input_event();
             this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
@@ -4952,6 +4963,7 @@ public:
             if (this->channels.session_probe.enable_session_probe) {
                 const bool disable_input_event     = true;
                 const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
+                this->disable_input_event();
                 this->disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
             }
@@ -5858,6 +5870,19 @@ private:
     }
 
 public:
+    void disable_input_event()
+    {
+        LOG(LOG_INFO, "Mod_rdp: disable input event.");
+        this->input_event_disabled = true;
+    }
+
+    void enable_input_event()
+    {
+        LOG(LOG_INFO, "Mod_rdp: enable input event.");
+        this->input_event_disabled = false;
+    }
+
+
     bool disable_input_event_and_graphics_update(
         bool disable_input_event, bool disable_graphics_update)
     {
