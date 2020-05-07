@@ -62,9 +62,14 @@ enum {
     OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
 };
 
-
 class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {
+public:
+    struct Callbacks {
+        virtual void freeze_screen() = 0;
+        virtual bool disable_input_event_and_graphics_update(bool, bool) = 0;
+    };
+
 private:
     bool session_probe_ending_in_progress  = false;
     bool session_probe_keep_alive_received = true;
@@ -117,8 +122,7 @@ private:
     GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
     GraphicEventPtr freeze_mod_screen;
-    std::function<void()> freeze_screen;
-    std::function<bool(bool,bool)> disable_input_event_and_graphic_update;
+    Callbacks & callbacks;
 
     bool launch_aborted = false;
 
@@ -179,8 +183,7 @@ public:
         Random & gen,
         const BaseVirtualChannel::Params & base_params,
         const Params& params,
-        std::function<void()> freeze_screen,
-        std::function<bool(bool,bool)> disable_input_event_and_graphic_update)
+        Callbacks & callbacks)
     : BaseVirtualChannel(nullptr, to_server_sender_, base_params)
     , sespro_params(params.sespro_params)
     , param_target_informations(params.target_informations)
@@ -201,8 +204,7 @@ public:
     , gd_provider(gd_provider)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
-    , freeze_screen(freeze_screen)
-    , disable_input_event_and_graphic_update(disable_input_event_and_graphic_update)
+    , callbacks(callbacks)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
@@ -318,7 +320,7 @@ private:
         const bool disable_input_event     = false;
         const bool disable_graphics_update = false;
         const bool need_full_screen_update =
-            this->mod.disable_input_event_and_graphics_update(
+            this->callbacks.disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
 
         if (this->sespro_params.on_launch_failure
@@ -348,7 +350,7 @@ private:
             if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
-                this->mod.disable_input_event_and_graphics_update(
+                this->callbacks.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
             }
 
@@ -366,7 +368,7 @@ private:
                         if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                             const bool disable_input_event     = true;
                             const bool disable_graphics_update = true;
-                                this->mod.disable_input_event_and_graphics_update(
+                                this->callbacks.disable_input_event_and_graphics_update(
                                     disable_input_event, disable_graphics_update);
 
                             this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
@@ -395,7 +397,7 @@ private:
                     if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                         const bool disable_input_event     = true;
                         const bool disable_graphics_update = true;
-                        this->mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+                        this->callbacks.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
@@ -403,7 +405,7 @@ private:
                         .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
                             gdi_freeze_screen(drawable, dim);
                         }));
-                        this->freeze_screen();
+                        this->callbacks.freeze_screen();
                     }
                     this->request_keep_alive();
                     this->mod.display_osd_message("No keep alive received from Session Probe!");
@@ -548,7 +550,7 @@ public:
                 if (!delay_disabled_launch_mask) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
-                    if (this->mod.disable_input_event_and_graphics_update(
+                    if (this->callbacks.disable_input_event_and_graphics_update(
                             disable_input_event, disable_graphics_update)) {
                         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                             "SessionProbeVirtualChannel::process_server_message: "
@@ -776,7 +778,7 @@ public:
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
-                if (this->mod.disable_input_event_and_graphics_update(
+                if (this->callbacks.disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update)) {
                     LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
@@ -1043,7 +1045,7 @@ public:
             if (this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
-                 this->mod.disable_input_event_and_graphics_update(
+                 this->callbacks.disable_input_event_and_graphics_update(
                      disable_input_event, disable_graphics_update);
 
                 std::string string_message;

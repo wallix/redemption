@@ -308,12 +308,6 @@ public:
     }
 
     // from mod_api
-    bool disable_input_event_and_graphics_update(bool disable_input_event, bool disable_graphics_update) override
-    {
-        return this->mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
-    }
-
-    // from mod_api
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override
     {
         return this->mod.send_input(time, message_type, device_flags, param1, param2);

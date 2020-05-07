@@ -60,13 +60,6 @@ public:
 
     virtual void move_size_widget(int16_t/* left*/, int16_t/* top*/, uint16_t/* width*/, uint16_t/* height*/) {}
 
-    virtual bool disable_input_event_and_graphics_update(
-            bool disable_input_event, bool disable_graphics_update) {
-        (void)disable_input_event;
-        (void)disable_graphics_update;
-        return false;
-    }
-
     virtual void send_input(int/* time*/, int/* message_type*/, int/* device_flags*/, int/* param1*/, int/* param2*/) {}
 
     [[nodiscard]] virtual Dimension get_dim() const { return Dimension(); }

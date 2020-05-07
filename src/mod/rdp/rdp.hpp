@@ -77,14 +77,13 @@
 #include "core/RDPEA/audio_output.hpp"
 
 #include "core/session_reactor.hpp"
-
+#include "mod/rdp/channels/sespro_channel.hpp"
 #include "core/log_id.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
-#include "mod/rdp/rdp.hpp"
 #include "gdi/screen_functions.hpp"
 
 #ifdef __EMSCRIPTEN__
@@ -413,6 +412,7 @@ private:
     GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
+    SessionProbeVirtualChannel::Callbacks & callbacks;
 
 public:
     mod_rdp_channels(
@@ -421,7 +421,9 @@ public:
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
-        ModRdpFactory& mod_rdp_factory)
+        ModRdpFactory& mod_rdp_factory,
+        SessionProbeVirtualChannel::Callbacks & callbacks
+        )
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -452,6 +454,7 @@ public:
     , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
+    , callbacks(callbacks)
     {}
 
     void DLP_antivirus_check_channels_files() {
@@ -839,11 +842,8 @@ public:
             this->gen,
             base_params,
             sp_vc_params,
-            []{},
-            [&mod](bool disable_input_event,bool disable_graphics_update) -> bool
-            {
-                return mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
-            });
+            this->callbacks
+            );
 #endif
 
     }
@@ -965,7 +965,7 @@ public:
         if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
             const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
             const bool disable_graphics_update = false;
-            mod_rdp.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+            this->callbacks.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
@@ -1034,21 +1034,6 @@ public:
         const Translation::language_t & lang,
         SesmanInterface & sesman
     ) {
-        (void)session_probe_channel;
-#ifndef __EMSCRIPTEN__
-        if (!this->session_probe_virtual_channel) {
-            this->create_session_probe_virtual_channel(
-                    front, stc,
-                    asynchronous_tasks,
-                    mod_rdp, rdp, authentifier,
-                    lang,
-                    bogus_refresh_rect,
-                    monitor_count,
-                    client_general_caps,
-                    client_name);
-#endif
-        }
-
 #ifndef __EMSCRIPTEN__
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
 #endif
@@ -1859,6 +1844,16 @@ public:
 
 class mod_rdp : public mod_api, public rdp_api
 {
+    struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks {
+        mod_rdp & mod;
+        SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {};
+        virtual void freeze_screen() {};
+        virtual bool disable_input_event_and_graphics_update(bool input, bool graphics) 
+        {
+            mod.disable_input_event_and_graphics_update(input,graphics);
+        };
+    } spvc_callbacks;
+
     mod_rdp_channels channels;
 
     CryptContext decrypt {};
@@ -2068,10 +2063,13 @@ public:
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpFactory& mod_rdp_factory
     )
-        : channels(
+        : spvc_callbacks(*this)
+        , channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
             report_message, gen, metrics, time_base, gd_provider, timer_events_, graphic_events_, file_validator_service,
-            mod_rdp_factory)
+            mod_rdp_factory,
+            spvc_callbacks
+        )
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
@@ -2814,6 +2812,20 @@ public:
             else if (mod_channel.name == channel_names::sespro) {
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
+
+#ifndef __EMSCRIPTEN__
+                if (!this->channels.session_probe_virtual_channel) {
+                    this->channels.create_session_probe_virtual_channel(
+                            this->front, stc,
+                            this->asynchronous_tasks,
+                            *this, *this, this->authentifier,
+                            this->lang,
+                            this->bogus_refresh_rect,
+                            this->monitor_count,
+                            this->client_general_caps,
+                            this->client_name);
+                }
+#endif
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
                     this->front, *this, *this, this->authentifier, stc,
                     this->asynchronous_tasks,
@@ -5847,7 +5859,7 @@ private:
 
 public:
     bool disable_input_event_and_graphics_update(
-        bool disable_input_event, bool disable_graphics_update) override
+        bool disable_input_event, bool disable_graphics_update)
     {
         bool need_full_screen_update =
             (this->graphics_update_disabled && !disable_graphics_update);
