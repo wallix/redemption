@@ -87,6 +87,19 @@ namespace
             return clipboard_virtual_channel_params;
         }();
     } // namespace data_full_denied
+
+    constexpr uint32_t first_last_flags
+        = CHANNELS::CHANNEL_FLAG_FIRST
+        | CHANNELS::CHANNEL_FLAG_LAST
+        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+
+    constexpr uint32_t first_flags
+        = CHANNELS::CHANNEL_FLAG_FIRST
+        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+
+    constexpr uint32_t last_flags
+        = CHANNELS::CHANNEL_FLAG_LAST
+        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 } // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
@@ -175,11 +188,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     const size_t totalLength = out_s.get_offset();
 
     clipboard_virtual_channel.process_client_message(
-            totalLength,
-              CHANNELS::CHANNEL_FLAG_FIRST
-            | CHANNELS::CHANNEL_FLAG_LAST
-            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            out_s.get_produced_bytes());
+            totalLength, first_last_flags, out_s.get_produced_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
@@ -220,11 +229,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-    clipboard_virtual_channel.process_server_message(
-            28,
-              CHANNELS::CHANNEL_FLAG_FIRST
-            | CHANNELS::CHANNEL_FLAG_LAST
-            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+    clipboard_virtual_channel.process_server_message(28, first_last_flags,
         /* 0000 */ "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" // ................
         /* 0010 */ "\x02\x00\x00\x00\x1e\x00\x00\x00\x00\x00\x00\x00"                 // ............
                 ""_av,
@@ -244,10 +249,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 // RDPECLIP::GeneralCapabilitySet: capabilitySetType=CB_CAPSTYPE_GENERAL(1) lengthCapability=12 version=CB_CAPS_VERSION_2(0x00000002) generalFlags=0x0000001E
 
     clipboard_virtual_channel.process_client_message(
-            24,
-              CHANNELS::CHANNEL_FLAG_FIRST
-            | CHANNELS::CHANNEL_FLAG_LAST
-            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            24, first_last_flags,
     /* 0000 */ "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" // ................
     /* 0010 */ "\x02\x00\x00\x00\x1e\x00\x00\x00"                                 // ........
                 ""_av);
@@ -275,10 +277,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 // ClipboardVirtualChannel::process_client_format_list_pdu: formatId=<unknown>(49424) wszFormatName="Preferred DropEffect"
 
     clipboard_virtual_channel.process_client_message(
-            130,
-              CHANNELS::CHANNEL_FLAG_FIRST
-            | CHANNELS::CHANNEL_FLAG_LAST
-            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            130, first_last_flags,
         /* 0000 */ "\x02\x00\x00\x00\x7a\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" // ....z...n...F.i.
         /* 0010 */ "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" // l.e.G.r.o.u.p.D.
         /* 0020 */ "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" // e.s.c.r.i.p.t.o.
@@ -301,10 +300,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 // CLIPRDR CB_FORMAT_DATA_RESPONSE format data id = 49262 <unknown>
 
     clipboard_virtual_channel.process_server_message(
-            16,
-              CHANNELS::CHANNEL_FLAG_FIRST
-            | CHANNELS::CHANNEL_FLAG_LAST
-            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            16, first_last_flags,
         /* 0000 */ "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00\x00\x00\x00\x00"_av,
             out_asynchronous_task, sesman);
 
@@ -319,10 +315,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 // ClipboardVirtualChannel::process_client_message: Format Data Response PDU
 
     clipboard_virtual_channel.process_client_message(
-            8,
-              CHANNELS::CHANNEL_FLAG_FIRST
-            | CHANNELS::CHANNEL_FLAG_LAST
-            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            8, first_last_flags,
         /* 0000 */ "\x05\x00\x02\x00\x00\x00\x00\x00"_av);
 }
 
@@ -469,7 +462,14 @@ namespace
             };
 
             auto put_chann = [&](auto data){
-                out << data.total_length << ", " << data.flags << ", ";
+                out << data.total_length;
+                switch (data.flags)
+                {
+                    case first_last_flags: out << ", first_last_flags, "; break;
+                    case first_flags: out << ", first_flags, "; break;
+                    case last_flags: out << ", last_flags, "; break;
+                    default: out << ", " << data.flags << ", "; break;
+                }
                 put_av(data.av);
             };
 
@@ -505,6 +505,18 @@ namespace
     {
         using func_t = bool(*)(void*, Msg const&);
 
+        struct ExceptionLock
+        {
+            MsgComparator& self;
+
+            ~ExceptionLock()
+            {
+                if (std::uncaught_exceptions()) {
+                    self.has_exception = true;
+                }
+            }
+        };
+
         template<class Fn, class Process, class... Fns>
         void run(Fn fn, Process&& process, Fns... fns)
         {
@@ -522,43 +534,28 @@ namespace
             this->index_table = 1;
             this->data = &t;
 
-            int last_index = 1;
-            this->last_index_ref = &last_index;
-
+            ExceptionLock lock{*this};
             process();
 
-            // negative = this is deleted
-            if (last_index < 0) {
-                av_table = av_table.from_offset(-(last_index + 1));
-            }
-            else {
-                av_table = av_table.from_offset(this->index_table);
-            }
-
-            for (auto f : av_table) {
+            for (auto f : av_table.from_offset(this->index_table)) {
                 f(&t, Msg::Nothing{});
             }
 
-            if (last_index >= 0) {
-                this->fn_table = {&ininit_msg_comparator_compare, 1};
-                this->index_table = 1;
-            }
+            this->fn_table = {&ininit_msg_comparator_compare, 1};
+            this->index_table = 1;
         }
 
         array_view<func_t> fn_table {&ininit_msg_comparator_compare, 1};
         std::size_t index_table = 0;
         void* data;
-        int* last_index_ref = nullptr;
-
-        ~MsgComparator()
-        {
-            if (this->last_index_ref) {
-                *this->last_index_ref = -int(this->index_table) - 1;
-            }
-        }
+        bool has_exception = false;
 
         void push(Msg const& msg)
         {
+            if (this->has_exception) {
+                return ;
+            }
+
             while (1) {
                 if (this->index_table < this->fn_table.size()) {
                     bool r = this->fn_table[this->index_table](this->data, msg);
@@ -578,7 +575,9 @@ namespace
 #define TEST_PROCESS TEST_BUF(Msg::Missing{}), [&]
 
 #define TEST_BUF(...) [&](Msg const& msg_) { \
-    RED_CHECK(Msg(__VA_ARGS__) == msg_);     \
+    [&](Msg const& expected) {               \
+        RED_CHECK(expected == msg_);         \
+    }(Msg(__VA_ARGS__));                     \
     return true;                             \
 }
 
@@ -669,21 +668,32 @@ namespace
     {
         StaticOutStream<1600> out;
 
+        Buffer() {}
+
         template<class F>
-        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f)
+        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len = -1u)
         {
             using namespace RDPECLIP;
             array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
             f(this->out);
+            if (data_len == -1u) {
+                data_len = uint32_t(out.get_offset() - av.size());
+            }
             OutStream stream_header(av);
-            CliprdrHeader(msgType, msgFlags, out.get_offset() - av.size()).emit(stream_header);
+            CliprdrHeader(msgType, msgFlags, data_len).emit(stream_header);
             return out.get_produced_bytes();
         }
 
         template<class F>
-        bytes_view build_ok(uint16_t msgType, F f)
+        bytes_view build_ok(uint16_t msgType, F f, uint32_t data_len = -1u)
         {
-            return this->build(msgType, RDPECLIP::CB_RESPONSE_OK, f);
+            return this->build(msgType, RDPECLIP::CB_RESPONSE_OK, f, data_len);
+        }
+
+        template<class F>
+        bytes_view build_fail(uint16_t msgType, F f)
+        {
+            return this->build(msgType, RDPECLIP::CB_RESPONSE_FAIL, f);
         }
     };
 
@@ -722,19 +732,33 @@ namespace
         return path;
     }
 
+    using ValidationResult = LocalFileValidatorProtocol::ValidationResult;
+
     struct ClipDataTest
     {
         bool with_validator;
         bool with_fdx_capture;
         bool always_file_storage;
+        bool verify_before_download = false;
+        ValidationResult validation_result = ValidationResult::Wait;
 
         friend std::ostream& operator<<(std::ostream& out, ClipDataTest const& d)
         {
-            return out <<
+            out <<
                 "with validator: " << d.with_validator <<
                 "  with fdx: " << d.with_fdx_capture <<
-                "  always_file_storage: " << d.always_file_storage
+                "  always_file_storage: " << d.always_file_storage <<
+                "  verify_before_download: " << d.verify_before_download
             ;
+
+            if (d.validation_result == ValidationResult::IsAccepted) {
+                out << "  validation_result: IsAccepted";
+            }
+            if (d.validation_result == ValidationResult::IsRejected) {
+                out << "  validation_result: IsRejected";
+            }
+
+            return out;
         }
 
         ClipboardVirtualChannelParams default_channel_params() const
@@ -748,10 +772,12 @@ namespace
             clipboard_virtual_channel_params.validator_params.log_if_accepted = true;
             clipboard_virtual_channel_params.validator_params.enable_clipboard_text_up = true;
             clipboard_virtual_channel_params.validator_params.enable_clipboard_text_down = true;
+            clipboard_virtual_channel_params.validator_params.verify_before_download
+                = this->verify_before_download;
             return clipboard_virtual_channel_params;
         }
 
-        std::unique_ptr<FdxTestCtx> make_fdx_ctx() const
+        std::unique_ptr<FdxTestCtx> make_optional_fdx_ctx() const
         {
             if (this->with_fdx_capture) {
                 return std::make_unique<FdxTestCtx>(
@@ -761,26 +787,31 @@ namespace
             return std::unique_ptr<FdxTestCtx>();
         }
 
-        struct ChannelCtx
+        class ChannelCtx
         {
-            MsgComparator msg_comparator;
             SessionReactor session_reactor;
 
-            ReportMessageTest report_message{msg_comparator};
-            ValidatorTransportTest validator_transport{msg_comparator};
+            ReportMessageTest report_message;
+            ValidatorTransportTest validator_transport;
             FileValidatorService file_validator_service{validator_transport};
 
-            FrontSenderTest to_client_sender{msg_comparator};
-            ModSenderTest to_server_sender{msg_comparator};
+            FrontSenderTest to_client_sender;
+            ModSenderTest to_server_sender;
 
             ClipboardVirtualChannel clipboard_virtual_channel;
 
         public:
-            ChannelCtx(timeval time_test,
+            ChannelCtx(
+                MsgComparator& msg_comparator,
                 FdxTestCtx* fdx_ctx,
                 ClipboardVirtualChannelParams clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
-            : clipboard_virtual_channel(
+            : report_message(msg_comparator)
+            , validator_transport(msg_comparator)
+            , file_validator_service(validator_transport)
+            , to_client_sender(msg_comparator)
+            , to_server_sender(msg_comparator)
+            , clipboard_virtual_channel(
                 &to_client_sender, &to_server_sender, session_reactor,
                 BaseVirtualChannel::Params(report_message, verbose),
                 clipboard_virtual_channel_params,
@@ -790,8 +821,28 @@ namespace
                     d.always_file_storage
                 }
             )
+            {}
+
+            bool dlp_message_accept(FileValidatorId id)
             {
-                session_reactor.set_current_time(time_test);
+                return this->dlp_message(ValidationResult::IsAccepted, id);
+            }
+
+            bool dlp_message(ValidationResult result, FileValidatorId id)
+            {
+                StaticOutStream<256> out;
+                auto status = (result == ValidationResult::IsAccepted)
+                    ? "ok"_av
+                    : "fail"_av;
+
+                using namespace LocalFileValidatorProtocol;
+                FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
+                FileValidatorResultHeader{result, id, checked_int(status.size())}.emit(out);
+                out.out_copy_bytes(status);
+
+                this->validator_transport.buf_reader = out.get_produced_bytes();
+                this->clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+                return this->validator_transport.buf_reader.size() == 0;
             }
 
         private:
@@ -800,44 +851,40 @@ namespace
             SesmanInterface sesman{ini};
 
         public:
-            void process_server_message(bytes_view av)
+            void process_server_message(
+                bytes_view av,
+                uint32_t total_len = -1u,
+                uint32_t flags = first_last_flags)
             {
-                auto flags
-                    = CHANNELS::CHANNEL_FLAG_FIRST
-                    | CHANNELS::CHANNEL_FLAG_LAST
-                    | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-                clipboard_virtual_channel.process_server_message(
-                    av.size(), flags, av, out_asynchronous_task, sesman);
+                if (total_len == -1u) {
+                    total_len = uint32_t(av.size());
+                }
+                flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+                this->clipboard_virtual_channel.process_server_message(
+                    total_len, flags, av, this->out_asynchronous_task, sesman);
+                // RED_TEST(!this->out_asynchronous_task);
             }
 
-            void process_client_message(bytes_view av, int flags
-                = CHANNELS::CHANNEL_FLAG_FIRST
-                | CHANNELS::CHANNEL_FLAG_LAST)
+            void process_client_message(
+                bytes_view av,
+                uint32_t total_len = -1u,
+                uint32_t flags = first_last_flags)
             {
+                if (total_len == -1u) {
+                    total_len = uint32_t(av.size());
+                }
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-                clipboard_virtual_channel.process_client_message(av.size(), flags, av);
+                this->clipboard_virtual_channel.process_client_message(total_len, flags, av);
             }
         };
     };
 
-    constexpr uint32_t first_last_flags
-        = CHANNELS::CHANNEL_FLAG_FIRST
-        | CHANNELS::CHANNEL_FLAG_LAST
-        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-
-    constexpr uint32_t first_flags
-        = CHANNELS::CHANNEL_FLAG_FIRST
-        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-
-    constexpr uint32_t last_flags
-        = CHANNELS::CHANNEL_FLAG_LAST
-        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-
-    const auto use_long_format = Cliprdr::IsLongFormat(true);
-    const auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
-    const auto file_group_id = 49262;
+    constexpr auto use_long_format = Cliprdr::IsLongFormat(true);
+    constexpr auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
+    constexpr uint32_t file_group_id = 49262;
 }
 
+// TODO move err count condition to RED_AUTO_TEST_CONTEXT_DATA
 #define RED_AUTO_TEST_CLIPRDR(test_name, type_value, iocontext, ...) \
     void test_name##__case(type_value);                              \
     RED_AUTO_TEST_CASE(test_name) {                                  \
@@ -855,51 +902,43 @@ namespace
     }                                                                \
     void test_name##__case(type_value)
 
-using D = ClipDataTest;
+RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest const& d, d, {
+    //icap  fdx  storage verify
+    ClipDataTest{true, false, true, false},
+    ClipDataTest{true, true, false, false},
+    ClipDataTest{true, true, true, false},
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d, {
-    D{true, false, true},
-    D{true, true, false},
-    D{true, true, true},
-
-    D{false, false, true},
-    D{false, true, false},
-    D{false, true, true},
-}) {
-    auto fdx_ctx = d.make_fdx_ctx();
-    auto channel_ctx = std::make_unique<D::ChannelCtx>(
-        timeval{12345, 54321},
+    ClipDataTest{false, false, true, false},
+    ClipDataTest{false, true, false, false},
+    ClipDataTest{false, true, true, false}
+})
+{
+    bytes_view temp_av;
+    MsgComparator msg_comparator;
+    auto fdx_ctx = d.make_optional_fdx_ctx();
+    auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
+        msg_comparator,
         fdx_ctx.get(),
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
-    MsgComparator& msg_comparator = channel_ctx->msg_comparator;
-    ValidatorTransportTest& validator_transport = channel_ctx->validator_transport;
-    ClipboardVirtualChannel& clipboard_virtual_channel
-        = channel_ctx->clipboard_virtual_channel;
-
     {
         using namespace RDPECLIP;
         Buffer buf;
-        auto av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
+        temp_av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
             out.out_uint16_le(CB_CAPSTYPE_GENERAL);
             out.out_clear_bytes(2);
             GeneralCapabilitySet{CB_CAPS_VERSION_1, CB_USE_LONG_FORMAT_NAMES}.emit(out);
         });
 
-        auto capabilities_msg =
-            "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00"
-            "\x01\x00\x00\x00\x02\x00\x00\x00"
-            ""_av;
-
         msg_comparator.run(
-            TEST_PROCESS { channel_ctx->process_server_message(av); },
-            TEST_BUF(Msg::ToFront{24, first_last_flags, capabilities_msg})
+            TEST_PROCESS { channel_ctx->process_server_message(temp_av); },
+            TEST_BUF(Msg::ToFront{24, first_last_flags, temp_av})
         );
 
         msg_comparator.run(
-            TEST_PROCESS { channel_ctx->process_client_message(av); },
-            TEST_BUF(Msg::ToMod{24, first_last_flags, capabilities_msg})
+            TEST_PROCESS { channel_ctx->process_client_message(temp_av); },
+            TEST_BUF(Msg::ToMod{24, first_last_flags, temp_av})
         );
     }
 
@@ -910,75 +949,30 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
                 out,
                 use_long_format,
                 std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-            channel_ctx->process_client_message(out.get_produced_bytes());
+            temp_av = out.get_produced_bytes();
+            channel_ctx->process_client_message(temp_av);
         },
-        TEST_BUF(Msg::ToMod{54, first_last_flags,
-            "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
-            "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
-            "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
-            "\x72\x00\x57\x00\x00\x00" //r.W... !
-            ""_av})
+        TEST_BUF(Msg::ToMod{54, first_last_flags, temp_av})
     );
 
     // skip format list response
+
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
                 out.out_uint32_le(file_group_id);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
-
-    auto msg_files =
-        "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x40\x00\x00\x00" //....T........... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x0c\x00\x00\x00\x61\x00\x62\x00\x63\x00\x00\x00\x00\x00\x00\x00" //....a.b.c....... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
-        ""_av;
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(1);    // count item
                 out.out_uint32_le(RDPECLIP::FD_FILESIZE);    // flags
                 out.out_clear_bytes(32); // reserved1
@@ -991,27 +985,24 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
                 out.out_copy_bytes(filename);
                 out.out_clear_bytes(520u - filename.size());
             });
-            channel_ctx->process_client_message(av);
+            channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=FileGroupDescriptorW(49262) size=596"_av}),
-        TEST_BUF(Msg::ToMod{604, first_last_flags, msg_files})
+        TEST_BUF(Msg::ToMod{604, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace RDPECLIP;
             Buffer buf;
-            auto av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
+            temp_av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
                 FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 0, 0, 12, 0, true).emit(out);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{36, first_last_flags,
-            "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-            "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00" //................ !
-            "\x00\x00\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{36, first_last_flags, temp_av})
     );
 
     // file content
@@ -1020,11 +1011,11 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(0);
                 out.out_copy_bytes("data_abcdefg"_av);
             });
-            channel_ctx->process_client_message(av);
+            channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up"
@@ -1038,28 +1029,17 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
             "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av}),
-        TEST_BUF(Msg::ToMod{24, first_last_flags,
-            "\t\x00\x01\x00\x10\x00\x00\x00\x00\x00\x00\x00""data_abcdefg"_av})
+        TEST_BUF_IF(!d.verify_before_download, Msg::ToMod{24, first_last_flags, temp_av}),
+        // without "data_abcdefg"
+        TEST_BUF_IF(d.verify_before_download, Msg::ToMod{24, first_flags, temp_av.first(12)})
     );
 
     if (d.with_validator) {
-        StaticOutStream<256> out;
-        auto status = "ok"_av;
-
-        using namespace LocalFileValidatorProtocol;
-        FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
-        FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
-            checked_int(status.size())}.emit(out);
-        out.out_copy_bytes(status);
-
         msg_comparator.run(
-            TEST_PROCESS {
-                validator_transport.buf_reader = out.get_produced_bytes();
-                clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-                RED_TEST(validator_transport.buf_reader.size() == 0);
-            },
+            TEST_PROCESS { RED_TEST(channel_ctx->dlp_message_accept(FileValidatorId(1))); },
             TEST_BUF(Msg::Log6{
-                "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av})
+                "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av}),
+            TEST_BUF_IF(d.verify_before_download, Msg::ToMod{24, last_flags, "data_abcdefg"_av})
         );
     }
 
@@ -1076,11 +1056,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
                 out,
                 Cliprdr::IsLongFormat(use_long_format),
                 std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr}});
-            channel_ctx->process_client_message(out.get_produced_bytes());
+            temp_av = out.get_produced_bytes();
+            channel_ctx->process_client_message(temp_av);
         },
-        TEST_BUF(Msg::ToMod{14, first_last_flags,
-            "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"
-            ""_av})
+        TEST_BUF(Msg::ToMod{14, first_last_flags, temp_av})
     );
 
     // skip format list response
@@ -1088,24 +1067,22 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
                 out.out_uint32_le(RDPECLIP::CF_UNICODETEXT);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x04\x00\x00\x00\x04\x00\x00\x00\r\x00\x00\x00"
-            ""_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
                 out.out_copy_bytes("a\0b\0c\0"_av);
             });
-            channel_ctx->process_client_message(av);
+            channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up"
@@ -1122,27 +1099,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av
         }),
-        TEST_BUF(Msg::ToMod{14, first_last_flags,
-            "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av
-            ""_av})
+        TEST_BUF(Msg::ToMod{14, first_last_flags, temp_av})
     );
 
     if (d.with_validator) {
-        StaticOutStream<256> out;
-        auto status = "ok"_av;
-
-        using namespace LocalFileValidatorProtocol;
-        FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
-        FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(2),
-            checked_int(status.size())}.emit(out);
-        out.out_copy_bytes(status);
-
         msg_comparator.run(
-            TEST_PROCESS {
-                validator_transport.buf_reader = out.get_produced_bytes();
-                clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-                RED_TEST(validator_transport.buf_reader.size() == 0);
-            },
+            TEST_PROCESS { RED_TEST(channel_ctx->dlp_message_accept(FileValidatorId(2))); },
             TEST_BUF(Msg::Log6{
                 "TEXT_VERIFICATION direction=UP copy_id=2 status=ok"_av})
         );
@@ -1175,31 +1137,28 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, D const& d, d
     }
 }
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d, d, {
-    D{true, false, true},
-    D{true, true, false},
-    D{true, true, true},
-    D{false, false, true},
-    D{false, true, false},
-    D{false, true, true},
+RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTest const& d, d, {
+    ClipDataTest{true, false, true},
+    ClipDataTest{true, true, false},
+    ClipDataTest{true, true, true},
+    ClipDataTest{false, false, true},
+    ClipDataTest{false, true, false},
+    ClipDataTest{false, true, true},
 })
 {
-    auto fdx_ctx = d.make_fdx_ctx();
-    auto channel_ctx = std::make_unique<D::ChannelCtx>(
-        timeval{12345, 54321},
+    bytes_view temp_av;
+    MsgComparator msg_comparator;
+    auto fdx_ctx = d.make_optional_fdx_ctx();
+    auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
+        msg_comparator,
         fdx_ctx.get(),
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
-    MsgComparator& msg_comparator = channel_ctx->msg_comparator;
-    ValidatorTransportTest& validator_transport = channel_ctx->validator_transport;
-    ClipboardVirtualChannel& clipboard_virtual_channel
-        = channel_ctx->clipboard_virtual_channel;
-
     {
         using namespace RDPECLIP;
         Buffer buf;
-        auto av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
+        temp_av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
             out.out_uint16_le(CB_CAPSTYPE_GENERAL);
             out.out_clear_bytes(2);
             GeneralCapabilitySet{CB_CAPS_VERSION_1,
@@ -1207,19 +1166,14 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             }.emit(out);
         });
 
-        auto capabilities_msg =
-            "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00"
-            "\x01\x00\x00\x00\x12\x00\x00\x00"
-            ""_av;
-
         msg_comparator.run(
-            TEST_PROCESS { channel_ctx->process_server_message(av); },
-            TEST_BUF(Msg::ToFront{24, first_last_flags, capabilities_msg})
+            TEST_PROCESS { channel_ctx->process_server_message(temp_av); },
+            TEST_BUF(Msg::ToFront{24, first_last_flags, temp_av})
         );
 
         msg_comparator.run(
-            TEST_PROCESS { channel_ctx->process_client_message(av); },
-            TEST_BUF(Msg::ToMod{24, first_last_flags, capabilities_msg})
+            TEST_PROCESS { channel_ctx->process_client_message(temp_av); },
+            TEST_BUF(Msg::ToMod{24, first_last_flags, temp_av})
         );
     }
 
@@ -1230,111 +1184,61 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
                 out,
                 use_long_format,
                 std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-
-            channel_ctx->process_client_message(out.get_produced_bytes());
+            temp_av = out.get_produced_bytes();
+            channel_ctx->process_client_message(temp_av);
         },
-        TEST_BUF(Msg::ToMod{54, first_last_flags,
-            "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
-            "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
-            "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
-            "\x72\x00\x57\x00\x00\x00" //r.W... !
-            ""_av})
+        TEST_BUF(Msg::ToMod{54, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_LOCK_CLIPDATA, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_LOCK_CLIPDATA, 0, [&](OutStream& out){
                 out.out_uint32_le(0);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x0A\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
                 out.out_uint32_le(file_group_id);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FORMAT_LIST_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_LIST_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(file_group_id);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
                 out.out_uint32_le(file_group_id);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
-
-    auto msg_files1 =
-        "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x40\x00\x00\x00" //....T........... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x0c\x00\x00\x00\x61\x00\x62\x00\x63\x00\x00\x00\x00\x00\x00\x00" //....a.b.c....... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
-        ""_av;
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(1);    // count item
                 out.out_uint32_le(RDPECLIP::FD_FILESIZE);    // flags
                 out.out_clear_bytes(32); // reserved1
@@ -1347,27 +1251,24 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
                 out.out_copy_bytes(filename);
                 out.out_clear_bytes(520u - filename.size());
             });
-            channel_ctx->process_client_message(av);
+            channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=FileGroupDescriptorW(49262) size=596"_av}),
-        TEST_BUF(Msg::ToMod{604, first_last_flags, msg_files1})
+        TEST_BUF(Msg::ToMod{604, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace RDPECLIP;
             Buffer buf;
-            auto av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
+            temp_av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
                 FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 0, 0, 5, 0, true).emit(out);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{36, first_last_flags,
-            "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-            "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00" //................ !
-            "\x00\x00\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{36, first_last_flags, temp_av})
     );
 
     // (partial) file content (2 packets)
@@ -1376,11 +1277,11 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(0);
                 out.out_copy_bytes("da"_av);
             });
-            channel_ctx->process_client_message(av, CHANNELS::CHANNEL_FLAG_FIRST);
+            channel_ctx->process_client_message(temp_av, -1u, CHANNELS::CHANNEL_FLAG_FIRST);
         },
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up\x00\x01\x00\b"
@@ -1388,13 +1289,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x06\x00\x00\x00\x01"_av}),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{"da"_av}),
-        TEST_BUF(Msg::ToMod{14, first_flags,
-            "\x09\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00""da"_av})
+        TEST_BUF(Msg::ToMod{14, first_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
-            channel_ctx->process_client_message("ta_"_av, CHANNELS::CHANNEL_FLAG_LAST);
+            channel_ctx->process_client_message("ta_"_av, -1u, CHANNELS::CHANNEL_FLAG_LAST);
         },
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x07\x00\x00\x00\x01"_av}),
@@ -1409,116 +1309,62 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
                 out,
                 use_long_format,
                 std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-            channel_ctx->process_client_message(out.get_produced_bytes());
+            temp_av = out.get_produced_bytes();
+            channel_ctx->process_client_message(temp_av);
         },
-        TEST_BUF(Msg::ToMod{54, first_last_flags,
-            "\x02\x00\x00\x00\x2e\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" //........n...F.i. !
-            "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" //l.e.G.r.o.u.p.D. !
-            "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" //e.s.c.r.i.p.t.o. !
-            "\x72\x00\x57\x00\x00\x00" //r.W... !
-            ""_av})
+        TEST_BUF(Msg::ToMod{54, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_LOCK_CLIPDATA, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_LOCK_CLIPDATA, 0, [&](OutStream& out){
                 out.out_uint32_le(1);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x0A\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
-            ""_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
                 out.out_uint32_le(file_group_id);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
-            ""_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(
-                RDPECLIP::CB_FORMAT_LIST_RESPONSE,
-                RDPECLIP::CB_RESPONSE_OK, [&](OutStream& out){
+            temp_av = buf.build_ok(
+                RDPECLIP::CB_FORMAT_LIST_RESPONSE, [&](OutStream& out){
                     out.out_uint32_le(file_group_id);
                 });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x03\x00\x01\x00\x04\x00\x00\x00n\xc0\x00\x00"
-            ""_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
                 out.out_uint32_le(file_group_id);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00"
-            ""_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
-
-    auto msg_files2 =
-        "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x40\x00\x00\x00" //....T........... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x0a\x00\x00\x00\x64\x00\x65\x00\x66\x00\x00\x00\x00\x00\x00\x00" //....d.e.f....... !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
-        ""_av;
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(1);    // count item
                 out.out_uint32_le(RDPECLIP::FD_FILESIZE);    // flags
                 out.out_clear_bytes(32); // reserved1
@@ -1531,27 +1377,24 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
                 out.out_copy_bytes(filename);
                 out.out_clear_bytes(520u - filename.size());
             });
-            channel_ctx->process_client_message(av);
+            channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"
             " format=FileGroupDescriptorW(49262) size=596"_av}),
-        TEST_BUF(Msg::ToMod{604, first_last_flags, msg_files2})
+        TEST_BUF(Msg::ToMod{604, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace RDPECLIP;
             Buffer buf;
-            auto av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
+            temp_av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
                 FileContentsRequestPDU(1, 0, FILECONTENTS_RANGE, 0, 0, 99, 1, true).emit(out);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{36, first_last_flags,
-            "\x08\x00\x01\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................ !
-            "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00" //................ !
-            "\x01\x00\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{36, first_last_flags, temp_av})
     );
 
     // file content
@@ -1560,11 +1403,11 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(1);
                 out.out_copy_bytes("plopploppl"_av);
             });
-            channel_ctx->process_client_message(av);
+            channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up\x00\x01\x00\b"
@@ -1577,37 +1420,30 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             " sha256=dda098fc2804923ceeef1b65f26b78be8789535b7b9dddb6fda8de6a2dacf190"_av}),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av}),
-        TEST_BUF(Msg::ToMod{22, first_last_flags,
-            "\t\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00""plopploppl"
-            ""_av})
+        TEST_BUF(Msg::ToMod{22, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             Buffer buf;
-            auto av = buf.build(RDPECLIP::CB_UNLOCK_CLIPDATA, 0, [&](OutStream& out){
+            temp_av = buf.build(RDPECLIP::CB_UNLOCK_CLIPDATA, 0, [&](OutStream& out){
                 out.out_uint32_le(1);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{12, first_last_flags,
-            "\x0B\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"
-            ""_av})
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
     );
 
     msg_comparator.run(
         TEST_PROCESS {
             using namespace RDPECLIP;
             Buffer buf;
-            auto av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
+            temp_av = buf.build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
                 FileContentsRequestPDU(0, 0, FILECONTENTS_RANGE, 5, 0, 99, 0, true).emit(out);
             });
-            channel_ctx->process_server_message(av);
+            channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToFront{36, first_last_flags,
-            "\x08\x00\x01\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x02\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x63\x00\x00\x00"
-            "\x00\x00\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{36, first_last_flags, temp_av})
     );
 
     // (last partial) file content
@@ -1616,11 +1452,11 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            auto av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
                 out.out_uint32_le(0);
                 out.out_copy_bytes("abcdefg"_av);
             });
-            channel_ctx->process_client_message(av);
+            channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x01\x00\x00\x00\x0b\x00\x00\x00\x01"_av}),
@@ -1630,26 +1466,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
             " sha256=d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av}),
-        TEST_BUF(Msg::ToMod{19, first_last_flags,
-            "\t\x00\x01\x00\x0b\x00\x00\x00\x00\x00\x00\x00""abcdefg"_av})
+        TEST_BUF(Msg::ToMod{19, first_last_flags, temp_av})
     );
 
     if (d.with_validator) {
-        StaticOutStream<256> out;
-        auto status = "ok"_av;
-
-        using namespace LocalFileValidatorProtocol;
-        FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
-        FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
-            checked_int(status.size())}.emit(out);
-        out.out_copy_bytes(status);
-
         msg_comparator.run(
-            TEST_PROCESS {
-                validator_transport.buf_reader = out.get_produced_bytes().as_chars();
-                clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-                RED_TEST(validator_transport.buf_reader.size() == 0);
-            },
+            TEST_PROCESS { channel_ctx->dlp_message_accept(FileValidatorId(1)); },
             TEST_BUF(Msg::Log6{"FILE_VERIFICATION direction=UP file_name=abc status=ok"_av})
         );
     }
@@ -1711,5 +1533,729 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, D const& d,
         }
 
         RED_CHECK_WORKSPACE(fdx_ctx->wd);
+    }
+}
+
+RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLockWithAccept, ClipDataTest const& d, d, {
+    //           always
+    //icap  fdx  storage verify
+    ClipDataTest{true, false, true, true, ValidationResult::IsAccepted},
+    ClipDataTest{true, true, false, true, ValidationResult::IsAccepted},
+    ClipDataTest{true, true, true, true, ValidationResult::IsAccepted},
+
+    ClipDataTest{true, false, true, true, ValidationResult::IsRejected},
+    ClipDataTest{true, true, false, true, ValidationResult::IsRejected},
+    ClipDataTest{true, true, true, true, ValidationResult::IsRejected},
+})
+{
+    RED_TEST(d.with_validator);
+    RED_TEST(d.verify_before_download);
+
+    bytes_view temp_av;
+    MsgComparator msg_comparator;
+    auto fdx_ctx = d.make_optional_fdx_ctx();
+    auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
+        msg_comparator,
+        fdx_ctx.get(),
+        d.default_channel_params(),
+        d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+
+    {
+        using namespace RDPECLIP;
+        Buffer buf;
+        temp_av = buf.build(CB_CLIP_CAPS, 0, [&](OutStream& out){
+            out.out_uint16_le(CB_CAPSTYPE_GENERAL);
+            out.out_clear_bytes(2);
+            GeneralCapabilitySet{CB_CAPS_VERSION_1, CB_USE_LONG_FORMAT_NAMES}.emit(out);
+        });
+
+        msg_comparator.run(
+            TEST_PROCESS { channel_ctx->process_server_message(temp_av); },
+            TEST_BUF(Msg::ToFront{24, first_last_flags, temp_av})
+        );
+
+        msg_comparator.run(
+            TEST_PROCESS { channel_ctx->process_client_message(temp_av); },
+            TEST_BUF(Msg::ToMod{24, first_last_flags, temp_av})
+        );
+    }
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            StaticOutStream<1600> out;
+            Cliprdr::format_list_serialize_with_header(
+                out,
+                use_long_format,
+                std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
+            temp_av = out.get_produced_bytes();
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToFront{54, first_last_flags, temp_av})
+    );
+
+    // skip format list response
+
+    struct RequestedRange
+    {
+        enum class StreamId : uint32_t;
+
+        MsgComparator& msg_comparator;
+        ClipDataTest::ChannelCtx& channel_ctx;
+        bytes_view file_contents {};
+
+        Buffer filecontens_request_buf {};
+        bytes_view filecontens_request_av {};
+
+        // data_request + data_response of 1 file
+        void prepare_file(bytes_view file_contents)
+        {
+            this->file_contents = file_contents;
+
+            bytes_view av;
+            msg_comparator.run(
+                TEST_PROCESS {
+                    Buffer buf;
+                    av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+                        out.out_uint32_le(file_group_id);
+                    });
+                    channel_ctx.process_client_message(av);
+                },
+                TEST_BUF(Msg::ToMod{12, first_last_flags, av})
+            );
+
+            msg_comparator.run(
+                TEST_PROCESS {
+                    using namespace Cliprdr;
+                    Buffer buf;
+                    av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
+                        out.out_uint32_le(1);    // count item
+                        out.out_uint32_le(RDPECLIP::FD_FILESIZE);    // flags
+                        out.out_clear_bytes(32); // reserved1
+                        out.out_uint32_le(0);    // attributes
+                        out.out_clear_bytes(16); // reserved2
+                        out.out_uint64_le(0);    // lastWriteTime
+                        out.out_uint32_le(0);    // file size high
+                        out.out_uint32_le(checked_int(file_contents.size())); // file size low
+                        auto filename = "abc"_utf16_le;
+                        out.out_copy_bytes(filename);
+                        out.out_clear_bytes(520u - filename.size());
+                    });
+                    channel_ctx.process_server_message(av);
+                },
+                TEST_BUF(Msg::Log6{
+                    "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION"
+                    " format=FileGroupDescriptorW(49262) size=596"_av}),
+                TEST_BUF(Msg::ToFront{604, first_last_flags, av})
+            );
+        }
+
+        void client_full_file_request(StreamId stream_id = StreamId(0))
+        {
+            this->client_file_request(0, this->file_contents.size(), stream_id);
+        }
+
+        void client_file_request(
+            size_t offset, size_t len, StreamId stream_id = StreamId(0))
+        {
+            using namespace RDPECLIP;
+
+            this->filecontens_request_buf.out.rewind();
+            this->filecontens_request_av = this->filecontens_request_buf
+            .build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
+                FileContentsRequestPDU(
+                     safe_int(stream_id), 0, FILECONTENTS_RANGE,
+                     checked_int(offset), 0, checked_int(len), 0, true)
+                .emit(out);
+            });
+
+            this->channel_ctx.process_client_message(this->filecontens_request_av);
+        }
+    };
+
+    const bool is_accepted = d.validation_result == ValidationResult::IsAccepted;
+    const bool is_rejected = d.validation_result == ValidationResult::IsRejected;
+    const auto file_verification_msg = Msg::Log6{
+        is_accepted
+          ? "FILE_VERIFICATION direction=DOWN file_name=abc status=ok"_av
+          : "FILE_VERIFICATION direction=DOWN file_name=abc status=fail"_av
+    };
+    bytes_view zeros
+        = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"_av;
+
+    using StreamId = RequestedRange::StreamId;
+    RequestedRange requested{msg_comparator, *channel_ctx};
+
+    requested.prepare_file("data_abcdefg"_av);
+
+    /// full file with a packet.size() < 1600
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS { requested.client_full_file_request(); },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(0);
+                out.out_copy_bytes(requested.file_contents);
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x01\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x10\x00\x00\x00\x01"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents}),
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
+        TEST_BUF(Msg::ToValidator{"\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{24, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(1)));
+        },
+        TEST_BUF(file_verification_msg),
+        TEST_BUF(Msg::ToFront{24, last_flags, is_accepted
+            ? requested.file_contents
+            : zeros.first(requested.file_contents.size())})
+    );
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000001.tfl"), requested.file_contents);
+    }
+    //@}
+
+    // data already available
+    //@{
+    if (is_accepted) {
+        msg_comparator.run(
+            TEST_PROCESS {
+                requested.client_file_request(0, 6, StreamId(1));
+            },
+            TEST_BUF(Msg::ToFront{18, first_last_flags,
+                "\x09\x00\x01\x00\x0a\x00\x00\x00\x01\x00\x00\x00""data_a"_av})
+        );
+    }
+
+    // big request
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(5, 10000, StreamId(1));
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToFront{19, first_last_flags,
+            "\x09\x00\x01\x00\x0b\x00\x00\x00\x01\x00\x00\x00""abcdefg"_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
+            "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
+    );
+    //@}
+
+    requested.prepare_file("data_abcdefgf"_av);
+
+    // full file with 2 requested ranges
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 7, StreamId(2));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(2);
+                out.out_copy_bytes(requested.file_contents.first(7));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x02\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0b\x00\x00\x00\x02"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.first(7)}),
+        TEST_BUF(Msg::ToMod{32, first_last_flags,
+            "\x08\x00\x01\x00\x18\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00"
+            "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{19, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(2);
+                out.out_copy_bytes(requested.file_contents.from_offset(7));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x02"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.from_offset(7)}),
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=13 sha256="
+            "67f40662fd7aae2942e02a35a519fa2cf628498df498ab3b9c3a74e69f572e4e"_av}),
+        TEST_BUF(Msg::ToValidator{"\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(2)));
+        },
+        TEST_BUF(file_verification_msg),
+        TEST_BUF(Msg::ToFront{19, last_flags, (is_accepted
+            ? requested.file_contents
+            : zeros
+        ).first(7)})
+    );
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000002.tfl"), requested.file_contents);
+    }
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(7, 6, StreamId(2));
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToFront{18, first_last_flags,
+             "\x09\x00\x01\x00\x0a\x00\x00\x00\x02\x00\x00\x00""cdefgf"_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
+             "\x09\x00\x02\x00\x04\x00\x00\x00\x02\x00\x00\x00"_av})
+    );
+    //@}
+
+
+    requested.prepare_file("data_abcdefg"_av);
+
+    // full file with 3 requested ranges
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 4, StreamId(1));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                out.out_copy_bytes(requested.file_contents.first(4));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x03\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x08\x00\x00\x00\x03"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.first(4)}),
+        TEST_BUF(Msg::ToMod{32, first_last_flags,
+            "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+            "\x02\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{16, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                out.out_copy_bytes(requested.file_contents.subarray(4, 4));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x08\x00\x00\x00\x03"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.subarray(4, 4)}),
+        TEST_BUF(Msg::ToMod{32, first_last_flags,
+            "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+            "\x02\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                out.out_copy_bytes(requested.file_contents.last(4));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x08\x00\x00\x00\x03"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.last(4)}),
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
+        TEST_BUF(Msg::ToValidator{"\x03\x00\x00\x00\x04\x00\x00\x00\x03"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(3)));
+        },
+        TEST_BUF(file_verification_msg),
+        TEST_BUF(Msg::ToFront{16, last_flags, (is_accepted
+            ? requested.file_contents
+            : zeros
+        ).first(4)})
+    );
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000003.tfl"), requested.file_contents);
+    }
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(4, 4, StreamId(1));
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToFront{16, first_last_flags,
+             "\x09\x00\x01\x00\x08\x00\x00\x00\x01\x00\x00\x00""_abc"_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
+             "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(8, 4, StreamId(1));
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToFront{16, first_last_flags,
+             "\x09\x00\x01\x00\x08\x00\x00\x00\x01\x00\x00\x00""defg"_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
+             "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
+    );
+    //@}
+
+    requested.prepare_file("data_abcdefgf"_av);
+
+    // requested range with ko
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 7, StreamId(2));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_fail(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(0);
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
+    );
+    //@}
+
+    requested.prepare_file("data_abcdefgf"_av);
+
+    // 2 requested ranges with ko for the second
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 7, StreamId(2));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(2);
+                out.out_copy_bytes(requested.file_contents.first(7));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x04\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0b\x00\x00\x00\x04"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.first(7)}),
+        TEST_BUF(Msg::ToMod{32, first_last_flags,
+            "\x08\x00\x01\x00\x18\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00"
+            "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{19, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_fail(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(0);
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=13 sha256="
+            "0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
+        TEST_BUF(Msg::ToValidator{"\x04\x00\x00\x00\x04\x00\x00\x00\x04"_av}),
+        TEST_BUF(Msg::ToFront{19, last_flags, "\x00\x00\x00\x00\x00\x00\x00"_av})
+    );
+
+    if (fdx_ctx && d.always_file_storage) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000004.tfl"),
+            requested.file_contents.first(7));
+    }
+    //@}
+
+
+    requested.prepare_file("data_abcdefgf"_av);
+
+    // full file with 2 requested ranges and validator=success before the second response
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 7, StreamId(2));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(2);
+                out.out_copy_bytes(requested.file_contents.first(7));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x05\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0b\x00\x00\x00\x05"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.first(7)}),
+        TEST_BUF(Msg::ToMod{32, first_last_flags,
+            "\x08\x00\x01\x00\x18\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00"
+            "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{19, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(5)));
+        },
+        TEST_BUF(file_verification_msg)
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(2);
+                out.out_copy_bytes(requested.file_contents.from_offset(7));
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=13 sha256="
+            "67f40662fd7aae2942e02a35a519fa2cf628498df498ab3b9c3a74e69f572e4e"_av}),
+        TEST_BUF(Msg::ToFront{19, last_flags, (is_accepted
+            ? requested.file_contents
+            : zeros
+        ).first(7)})
+    );
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000005.tfl"), requested.file_contents);
+    }
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(7, 6, StreamId(2));
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToFront{18, first_last_flags,
+             "\x09\x00\x01\x00\x0a\x00\x00\x00\x02\x00\x00\x00""cdefgf"_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
+             "\x09\x00\x02\x00\x04\x00\x00\x00\x02\x00\x00\x00"_av})
+    );
+    //@}
+
+
+    requested.prepare_file("data_abcdefg"_av);
+
+    // validator=success while response
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_full_file_request(StreamId(1));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                // no data
+            }, 16);
+            channel_ctx->process_server_message(temp_av, 24, first_flags);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x06\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{24, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_server_message(
+                requested.file_contents.first(6), 20, /*flag=*/0);
+        },
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x06"_av}),
+        TEST_BUF(Msg::ToValidator{requested.file_contents.first(6)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(6)));
+        },
+        TEST_BUF(file_verification_msg)
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_server_message(
+                requested.file_contents.from_offset(6), 20, last_flags);
+        },
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
+        TEST_BUF(Msg::ToFront{24, last_flags, is_accepted
+            ? requested.file_contents
+            : zeros.first(requested.file_contents.size())})
+    );
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000006.tfl"), requested.file_contents);
+    }
+    //@}
+
+
+    msg_comparator.run(TEST_PROCESS {
+        channel_ctx.reset();
+    });
+
+    if (fdx_ctx) {
+        (void)fdx_ctx->hash_path.add_file(fdx_basename);
+        auto fdx_path = fdx_ctx->record_path.add_file(fdx_basename);
+
+        OutCryptoTransport::HashArray qhash;
+        OutCryptoTransport::HashArray fhash;
+        fdx_ctx->fdx.close(qhash, fhash);
+
+        RED_CHECK_WORKSPACE(fdx_ctx->wd);
+
+        if (d.always_file_storage) {
+            RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(
+                "v3\n"
+
+                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000002.tflg\xf4\x06\x62"
+                "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
+                "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
+
+                "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000003.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                "\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000004.tfl\x04\x43\xb6\xdc"
+                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
+                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
+
+                "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000005.tflg\xf4\x06\x62"
+                "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
+                "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
+
+                "\x04\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000006.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                ""_av, 5));
+        }
+        else if (is_rejected) {
+            RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(
+                "v3\n"
+
+                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000002.tflg\xf4\x06\x62"
+                "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
+                "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
+
+                "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000003.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000005.tflg\xf4\x06\x62"
+                "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
+                "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
+
+                "\x04\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000006.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                ""_av, 5));
+        }
+        else {
+            RED_CHECK_FILE_CONTENTS(fdx_path, "v3\n"_av);
+        }
     }
 }
