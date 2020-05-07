@@ -68,6 +68,7 @@ public:
     struct Callbacks {
         virtual void freeze_screen() = 0;
         virtual bool disable_input_event_and_graphics_update(bool, bool) = 0;
+        virtual bool disable_graphics_update(bool) = 0;
         virtual void disable_input_event() = 0;
         virtual void enable_input_event() = 0;
     };
@@ -322,8 +323,7 @@ private:
         const bool disable_input_event     = false;
         const bool disable_graphics_update = false;
         const bool need_full_screen_update =
-            this->callbacks.disable_input_event_and_graphics_update(
-                disable_input_event, disable_graphics_update);
+            this->callbacks.disable_graphics_update(disable_graphics_update);
         this->callbacks.enable_input_event();
 
         if (this->sespro_params.on_launch_failure
@@ -353,8 +353,7 @@ private:
             if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
-                this->callbacks.disable_input_event_and_graphics_update(
-                    disable_input_event, disable_graphics_update);
+                this->callbacks.disable_graphics_update(disable_graphics_update);
                 this->callbacks.enable_input_event();
             }
 
@@ -372,8 +371,7 @@ private:
                         if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                             const bool disable_input_event     = true;
                             const bool disable_graphics_update = true;
-                                this->callbacks.disable_input_event_and_graphics_update(
-                                    disable_input_event, disable_graphics_update);
+                                this->callbacks.disable_graphics_update(disable_graphics_update);
                             this->callbacks.disable_input_event();
                             this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
                         }
@@ -401,7 +399,7 @@ private:
                     if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                         const bool disable_input_event     = true;
                         const bool disable_graphics_update = true;
-                        this->callbacks.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+                        this->callbacks.disable_graphics_update(disable_graphics_update);
                         this->callbacks.disable_input_event();
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
@@ -557,8 +555,7 @@ public:
                     const bool disable_graphics_update = false;
                     this->callbacks.enable_input_event();
 
-                    if (this->callbacks.disable_input_event_and_graphics_update(
-                            disable_input_event, disable_graphics_update)) {
+                    if (this->callbacks.disable_graphics_update(disable_graphics_update)) {
                         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                             "SessionProbeVirtualChannel::process_server_message: "
                                 "Force full screen update. Rect=(0, 0, %u, %u)",
@@ -787,8 +784,7 @@ public:
                 const bool disable_graphics_update = false;
                 this->callbacks.enable_input_event();
 
-                if (this->callbacks.disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update)) {
+                if (this->callbacks.disable_graphics_update(disable_graphics_update)) {
                     LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
                             "Force full screen update. Rect=(0, 0, %u, %u)",
@@ -1055,8 +1051,7 @@ public:
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
                 this->callbacks.enable_input_event();
-                this->callbacks.disable_input_event_and_graphics_update(
-                     disable_input_event, disable_graphics_update);
+                this->callbacks.disable_graphics_update(disable_graphics_update);
 
                 std::string string_message;
                 this->mod.display_osd_message(string_message);

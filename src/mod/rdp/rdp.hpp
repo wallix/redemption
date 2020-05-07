@@ -971,7 +971,7 @@ public:
             else {
                 this->callbacks.enable_input_event();
             }
-            this->callbacks.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+            this->callbacks.disable_graphics_update(disable_graphics_update);
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
@@ -1856,6 +1856,7 @@ class mod_rdp : public mod_api, public rdp_api
         virtual void freeze_screen() {};
         virtual void disable_input_event() { mod.disable_input_event(); };
         virtual void enable_input_event() { mod.enable_input_event(); };
+        virtual bool disable_graphics_update(bool graphics) { mod.disable_graphics_update(graphics); };
         virtual bool disable_input_event_and_graphics_update(bool input, bool graphics) 
         {
             mod.disable_input_event_and_graphics_update(input,graphics);
@@ -2196,10 +2197,9 @@ public:
     ~mod_rdp() override {
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
-            const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
             this->enable_input_event();
-            this->disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+            this->disable_graphics_update(disable_graphics_update);
         }
 #endif
 
@@ -3372,11 +3372,9 @@ public:
 
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
-                    const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
                     this->enable_input_event();
-                    this->disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update);
+                    this->disable_graphics_update(disable_graphics_update);
                 }
 #endif
 
@@ -4914,8 +4912,7 @@ public:
             const bool disable_input_event     = true;
             const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
             this->disable_input_event();
-            this->disable_input_event_and_graphics_update(
-                disable_input_event, disable_graphics_update);
+            this->disable_graphics_update(disable_graphics_update);
         }
 #endif
     }   // process_logon_info
@@ -4964,8 +4961,7 @@ public:
                 const bool disable_input_event     = true;
                 const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
                 this->disable_input_event();
-                this->disable_input_event_and_graphics_update(
-                    disable_input_event, disable_graphics_update);
+                this->disable_graphics_update(disable_graphics_update);
             }
 
             if (this->channels.session_probe_virtual_channel &&
@@ -5882,6 +5878,26 @@ public:
         this->input_event_disabled = false;
     }
 
+    bool disable_graphics_update(bool disable_graphics_update)
+    {
+        bool need_full_screen_update =
+            (this->graphics_update_disabled && !disable_graphics_update);
+
+        if (this->graphics_update_disabled != disable_graphics_update) {
+            LOG(LOG_INFO, "Mod_rdp: %s graphics update.",
+                (disable_graphics_update ? "Disable" : "Enable"));
+        }
+
+        this->graphics_update_disabled = disable_graphics_update;
+
+#ifndef __EMSCRIPTEN__
+        if (this->channels.remote_programs_session_manager) {
+            this->channels.remote_programs_session_manager->disable_graphics_update(disable_graphics_update);
+        }
+#endif
+
+        return need_full_screen_update;
+    }
 
     bool disable_input_event_and_graphics_update(
         bool disable_input_event, bool disable_graphics_update)
