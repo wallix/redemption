@@ -1,3 +1,9 @@
+redemption (8.0.33%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix VNC black screen
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 08 May 2020 18:32:22 +0200
+
 redemption (8.0.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Update Session Probe.
