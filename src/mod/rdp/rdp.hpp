@@ -963,15 +963,13 @@ public:
         ::parse_server_message(auth_channel_message.c_str(), order, parameters);
 
         if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
-            const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
-            const bool disable_graphics_update = false;
-            if (disable_input_event){
+            if (::strcasecmp(parameters[0].c_str(), "Enable") != 0){
                 this->callbacks.disable_input_event();
             }
             else {
                 this->callbacks.enable_input_event();
             }
-            this->callbacks.disable_graphics_update(disable_graphics_update);
+            this->callbacks.enable_graphics_update();
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
@@ -1856,11 +1854,9 @@ class mod_rdp : public mod_api, public rdp_api
         virtual void freeze_screen() {};
         virtual void disable_input_event() { mod.disable_input_event(); };
         virtual void enable_input_event() { mod.enable_input_event(); };
-        virtual bool disable_graphics_update(bool graphics) { mod.disable_graphics_update(graphics); };
-        virtual bool disable_input_event_and_graphics_update(bool input, bool graphics) 
-        {
-            mod.disable_input_event_and_graphics_update(input,graphics);
-        };
+        virtual void enable_graphics_update() { mod.enable_graphics_update(); };
+        virtual void disable_graphics_update() { mod.disable_graphics_update(); };
+        virtual void display_osd_message(std::string const & message) { mod.display_osd_message(message); }
     } spvc_callbacks;
 
     mod_rdp_channels channels;
@@ -2197,9 +2193,8 @@ public:
     ~mod_rdp() override {
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
-            const bool disable_graphics_update = false;
             this->enable_input_event();
-            this->disable_graphics_update(disable_graphics_update);
+            this->enable_graphics_update();
         }
 #endif
 
@@ -3372,9 +3367,8 @@ public:
 
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
-                    const bool disable_graphics_update = false;
                     this->enable_input_event();
-                    this->disable_graphics_update(disable_graphics_update);
+                    this->enable_graphics_update();
                 }
 #endif
 
@@ -4909,10 +4903,13 @@ public:
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
-            const bool disable_input_event     = true;
-            const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
             this->disable_input_event();
-            this->disable_graphics_update(disable_graphics_update);
+            if (this->channels.session_probe.enable_launch_mask){
+                this->disable_graphics_update();
+            }
+            else {
+                this->enable_graphics_update();
+            }
         }
 #endif
     }   // process_logon_info
@@ -4958,10 +4955,13 @@ public:
 
 #ifndef __EMSCRIPTEN__
             if (this->channels.session_probe.enable_session_probe) {
-                const bool disable_input_event     = true;
-                const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
                 this->disable_input_event();
-                this->disable_graphics_update(disable_graphics_update);
+                if (this->channels.session_probe.enable_launch_mask){
+                    this->disable_graphics_update();
+                }
+                else {
+                    this->enable_graphics_update();
+                }
             }
 
             if (this->channels.session_probe_virtual_channel &&
@@ -5878,53 +5878,47 @@ public:
         this->input_event_disabled = false;
     }
 
-    bool disable_graphics_update(bool disable_graphics_update)
+    void disable_graphics_update()
     {
-        bool need_full_screen_update =
-            (this->graphics_update_disabled && !disable_graphics_update);
-
-        if (this->graphics_update_disabled != disable_graphics_update) {
-            LOG(LOG_INFO, "Mod_rdp: %s graphics update.",
-                (disable_graphics_update ? "Disable" : "Enable"));
-        }
-
-        this->graphics_update_disabled = disable_graphics_update;
+        LOG(LOG_INFO, "Mod_rdp: Disable graphics update.");
+        this->graphics_update_disabled = true;
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager) {
-            this->channels.remote_programs_session_manager->disable_graphics_update(disable_graphics_update);
+            this->channels.remote_programs_session_manager->disable_graphics_update(true);
         }
 #endif
-
-        return need_full_screen_update;
     }
 
-    bool disable_input_event_and_graphics_update(
-        bool disable_input_event, bool disable_graphics_update)
+    void enable_graphics_update()
     {
-        bool need_full_screen_update =
-            (this->graphics_update_disabled && !disable_graphics_update);
-
-        if (this->input_event_disabled != disable_input_event) {
-            LOG(LOG_INFO, "Mod_rdp: %s input event.",
-                (disable_input_event ? "Disable" : "Enable"));
-        }
-        if (this->graphics_update_disabled != disable_graphics_update) {
-            LOG(LOG_INFO, "Mod_rdp: %s graphics update.",
-                (disable_graphics_update ? "Disable" : "Enable"));
-        }
-
-        this->input_event_disabled     = disable_input_event;
-        this->graphics_update_disabled = disable_graphics_update;
+        LOG(LOG_INFO, "Mod_rdp: Enable graphics update.");
+        bool need_full_screen_update = this->graphics_update_disabled;
+        this->graphics_update_disabled = false;
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager) {
-            this->channels.remote_programs_session_manager->disable_graphics_update(
-                disable_graphics_update);
+            this->channels.remote_programs_session_manager->disable_graphics_update(false);
         }
 #endif
+        if (need_full_screen_update) {
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                "SessionProbeVirtualChannel::process_event: "
+                    "Force full screen update. Rect=(0, 0, %u, %u)",
+                this->negociation_result.front_width, this->negociation_result.front_height);
+                if (this->bogus_refresh_rect && this->monitor_count) {
+                    this->rdp_suppress_display_updates();
+                    this->rdp_allow_display_updates(0, 0,
+                        this->negociation_result.front_width, this->negociation_result.front_height);
+                }
+            this->rdp_input_invalidate(Rect(0, 0,
+                this->negociation_result.front_width, this->negociation_result.front_height));
+        }
+    }
 
-        return need_full_screen_update;
+
+    void display_osd_message(std::string const & message)
+    {
     }
 
 public:

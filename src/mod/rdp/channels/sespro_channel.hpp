@@ -67,10 +67,11 @@ class SessionProbeVirtualChannel final : public BaseVirtualChannel
 public:
     struct Callbacks {
         virtual void freeze_screen() = 0;
-        virtual bool disable_input_event_and_graphics_update(bool, bool) = 0;
-        virtual bool disable_graphics_update(bool) = 0;
+        virtual void disable_graphics_update() = 0;
+        virtual void enable_graphics_update() = 0;
         virtual void disable_input_event() = 0;
         virtual void enable_input_event() = 0;
+        virtual void display_osd_message(std::string const & message) = 0;
     };
 
 private:
@@ -320,24 +321,11 @@ private:
 
         this->session_probe_timer.reset();
 
-        const bool disable_input_event     = false;
-        const bool disable_graphics_update = false;
-        const bool need_full_screen_update =
-            this->callbacks.disable_graphics_update(disable_graphics_update);
+        this->callbacks.enable_graphics_update();
         this->callbacks.enable_input_event();
 
-        if (this->sespro_params.on_launch_failure
-         != SessionProbeOnLaunchFailure::ignore_and_continue) {
+        if (this->sespro_params.on_launch_failure != SessionProbeOnLaunchFailure::ignore_and_continue) {
             throw Error(err_id);
-        }
-
-        if (need_full_screen_update) {
-            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
-                "SessionProbeVirtualChannel::process_event: "
-                    "Force full screen update. Rect=(0, 0, %u, %u)",
-                this->param_front_width, this->param_front_height);
-            this->mod.rdp_input_invalidate(Rect(0, 0,
-                this->param_front_width, this->param_front_height));
         }
 
         this->rdp.sespro_launch_process_ended(sesman);
@@ -351,9 +339,7 @@ private:
                     "No keep alive received from Session Probe!");
 
             if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                const bool disable_input_event     = false;
-                const bool disable_graphics_update = false;
-                this->callbacks.disable_graphics_update(disable_graphics_update);
+                this->callbacks.enable_graphics_update();
                 this->callbacks.enable_input_event();
             }
 
@@ -369,14 +355,12 @@ private:
                                 "Freezes connection and wait end of session.");
 
                         if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                            const bool disable_input_event     = true;
-                            const bool disable_graphics_update = true;
-                                this->callbacks.disable_graphics_update(disable_graphics_update);
+                            this->callbacks.disable_graphics_update();
                             this->callbacks.disable_input_event();
                             this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
                         }
                         this->request_keep_alive();
-                        this->mod.display_osd_message("No keep alive received from Session Probe! (End of session in progress.)");
+                        this->callbacks.display_osd_message("No keep alive received from Session Probe! (End of session in progress.)");
                     }
                     else {
                         LOG(LOG_INFO,
@@ -397,21 +381,19 @@ private:
                             this->sespro_params.on_keepalive_timeout) {
 
                     if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                        const bool disable_input_event     = true;
-                        const bool disable_graphics_update = true;
-                        this->callbacks.disable_graphics_update(disable_graphics_update);
+                        this->callbacks.disable_graphics_update();
                         this->callbacks.disable_input_event();
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
-                        this->freeze_mod_screen = this->graphic_events_.create_action_executor(this->time_base, mod.get_dim())
+                        this->freeze_mod_screen = this->graphic_events_.create_action_executor(this->time_base, this->mod.get_dim())
                         .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
                             gdi_freeze_screen(drawable, dim);
                         }));
                         this->callbacks.freeze_screen();
                     }
                     this->request_keep_alive();
-                    this->mod.display_osd_message("No keep alive received from Session Probe!");
+                    this->callbacks.display_osd_message("No keep alive received from Session Probe!");
                 }
                 else {
                     this->front.session_probe_started(false);
@@ -551,23 +533,8 @@ public:
                 this->front.session_probe_started(true);
 
                 if (!delay_disabled_launch_mask) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
                     this->callbacks.enable_input_event();
-
-                    if (this->callbacks.disable_graphics_update(disable_graphics_update)) {
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
-                            "SessionProbeVirtualChannel::process_server_message: "
-                                "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->param_front_width, this->param_front_height);
-                        if (this->param_bogus_refresh_rect_ex) {
-                            this->mod.rdp_suppress_display_updates();
-                            this->mod.rdp_allow_display_updates(0, 0,
-                                this->param_front_width, this->param_front_height);
-                        }
-                        this->mod.rdp_input_invalidate(Rect(0, 0,
-                            this->param_front_width, this->param_front_height));
-                    }
+                    this->callbacks.enable_graphics_update();
                 }
 
                 this->file_system_virtual_channel.disable_session_probe_drive();
@@ -780,23 +747,8 @@ public:
                 });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {
-                const bool disable_input_event     = false;
-                const bool disable_graphics_update = false;
                 this->callbacks.enable_input_event();
-
-                if (this->callbacks.disable_graphics_update(disable_graphics_update)) {
-                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
-                        "SessionProbeVirtualChannel::process_server_message: "
-                            "Force full screen update. Rect=(0, 0, %u, %u)",
-                        this->param_front_width, this->param_front_height);
-                    if (this->param_bogus_refresh_rect_ex) {
-                        this->mod.rdp_suppress_display_updates();
-                        this->mod.rdp_allow_display_updates(0, 0,
-                            this->param_front_width, this->param_front_height);
-                    }
-                    this->mod.rdp_input_invalidate(Rect(0, 0,
-                        this->param_front_width, this->param_front_height));
-                }
+                this->callbacks.enable_graphics_update();
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get target informations")) {
                 send_client_message([this](OutStream & out_s) {
@@ -1044,17 +996,15 @@ public:
                  !::strcasecmp(parameters_[0].c_str(), "OK")) {
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: "
-                    "Recevied Keep-Alive from Session Probe.");
+                    "Received Keep-Alive from Session Probe.");
             this->session_probe_keep_alive_received = true;
 
             if (this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                const bool disable_input_event     = false;
-                const bool disable_graphics_update = false;
                 this->callbacks.enable_input_event();
-                this->callbacks.disable_graphics_update(disable_graphics_update);
+                this->callbacks.enable_graphics_update();
 
                 std::string string_message;
-                this->mod.display_osd_message(string_message);
+                this->callbacks.display_osd_message(string_message);
 
                 this->mod.rdp_input_invalidate(Rect(0, 0,
                     this->param_front_width, this->param_front_height));
@@ -1236,7 +1186,7 @@ public:
                             trkeys::process_interrupted_security_policies,
                             parameters_[1].c_str());
 
-                        this->mod.display_osd_message(message);
+                        this->callbacks.display_osd_message(message);
                     }
                     else {
                         message_format_invalid = true;
@@ -1299,7 +1249,7 @@ public:
                                         parameters_[1].c_str());
 
                                     std::string string_message = message;
-                                    this->mod.display_osd_message(string_message);
+                                    this->callbacks.display_osd_message(string_message);
                                 }
                             }
                         }
@@ -1356,7 +1306,7 @@ public:
                                         trkeys::process_interrupted_security_policies,
                                         parameters_[1].c_str());
 
-                                    this->mod.display_osd_message(message);
+                                    this->callbacks.display_osd_message(message);
                                 }
                             }
                         }
@@ -1400,7 +1350,7 @@ public:
                                 trkeys::account_manipulation_blocked_security_policies,
                                 parameters_[3].c_str());
 
-                            this->mod.display_osd_message(message);
+                            this->callbacks.display_osd_message(message);
                         }
                     }
                     else {

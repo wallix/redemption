@@ -203,10 +203,8 @@ void mod_rdp::init_negociate_event_(
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
-            const bool disable_input_event     = false;
-            const bool disable_graphics_update = false;
-            this->disable_input_event_and_graphics_update(
-                disable_input_event, disable_graphics_update);
+            this->enable_input_event();
+            this->enable_graphics_update();
         }
 #endif
         LOG(LOG_ERR,
