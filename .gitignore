@@ -29,7 +29,7 @@ projects/ClientQtGraphicAPI/rdp_metrics-2018-Jul-27.log
 projects/ClientQtGraphicAPI/src/try_writev.cpp
 projects/ClientQtGraphicAPI/test_writev.txt
 projects/ClientQtGraphicAPI/writev
-
+projects/ClientQtGraphicAPI/DATA/config
 # bin
 /tools/valgrind-filter/valgrind-filter
 /tools/redcryptofile/redcryptofile.so
