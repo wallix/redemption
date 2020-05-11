@@ -1228,6 +1228,10 @@ struct ClipboardVirtualChannel::D
         RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
         file_contents_request_pdu.receive(in_stream);
 
+        LOG(LOG_DEBUG, "cb requested: %lu + %u",
+            file_contents_request_pdu.position(),
+            file_contents_request_pdu.cbRequested());
+
         if (bool(self.verbose & RDPVerbose::cliprdr)) {
             file_contents_request_pdu.log(LOG_INFO);
         }
@@ -1294,6 +1298,8 @@ struct ClipboardVirtualChannel::D
                             clip.files[lindex].file_name);
                         return true;
                     }
+
+                    LOG(LOG_DEBUG, "position = %lu / %lu", file_contents_request_pdu.position(), clip.files[lindex].file_size);
 
                     LOG(LOG_ERR,
                         "ClipboardVirtualChannel::process_filecontents_request_pdu:"
@@ -1626,6 +1632,10 @@ struct ClipboardVirtualChannel::D
 
             header.emit(out_stream);
             file_contents_request_pdu.emit(out_stream);
+
+            LOG(LOG_DEBUG, "auto req requested: %lu + %u",
+                file_contents_request_pdu.position(),
+                file_contents_request_pdu.cbRequested());
 
             receiver(
                 out_stream.get_produced_bytes().size(),
@@ -2257,6 +2267,13 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     if (!file_validator_service) {
         p.validator_params.up_target_name.clear();
         p.validator_params.down_target_name.clear();
+    }
+    else {
+        LOG(LOG_INFO, "ClipboardVirtualChannel: enable file validator service:"
+            " up=%s  down=%s  verify_before_transfer=%d",
+            p.validator_params.up_target_name,
+            p.validator_params.down_target_name,
+            params.validator_params.verify_before_transfer);
     }
     return p;
 }())
