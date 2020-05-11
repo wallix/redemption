@@ -739,7 +739,7 @@ namespace
         bool with_validator;
         bool with_fdx_capture;
         bool always_file_storage;
-        bool verify_before_download = false;
+        bool verify_before_transfer = false;
         ValidationResult validation_result = ValidationResult::Wait;
 
         friend std::ostream& operator<<(std::ostream& out, ClipDataTest const& d)
@@ -748,7 +748,7 @@ namespace
                 "with validator: " << d.with_validator <<
                 "  with fdx: " << d.with_fdx_capture <<
                 "  always_file_storage: " << d.always_file_storage <<
-                "  verify_before_download: " << d.verify_before_download
+                "  verify_before_transfer: " << d.verify_before_transfer
             ;
 
             if (d.validation_result == ValidationResult::IsAccepted) {
@@ -772,8 +772,8 @@ namespace
             clipboard_virtual_channel_params.validator_params.log_if_accepted = true;
             clipboard_virtual_channel_params.validator_params.enable_clipboard_text_up = true;
             clipboard_virtual_channel_params.validator_params.enable_clipboard_text_down = true;
-            clipboard_virtual_channel_params.validator_params.verify_before_download
-                = this->verify_before_download;
+            clipboard_virtual_channel_params.validator_params.verify_before_transfer
+                = this->verify_before_transfer;
             return clipboard_virtual_channel_params;
         }
 
@@ -1029,9 +1029,9 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
             "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av}),
-        TEST_BUF_IF(!d.verify_before_download, Msg::ToMod{24, first_last_flags, temp_av}),
+        TEST_BUF_IF(!d.verify_before_transfer, Msg::ToMod{24, first_last_flags, temp_av}),
         // without "data_abcdefg"
-        TEST_BUF_IF(d.verify_before_download, Msg::ToMod{24, first_flags, temp_av.first(12)})
+        TEST_BUF_IF(d.verify_before_transfer, Msg::ToMod{24, first_flags, temp_av.first(12)})
     );
 
     if (d.with_validator) {
@@ -1039,7 +1039,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
             TEST_PROCESS { RED_TEST(channel_ctx->dlp_message_accept(FileValidatorId(1))); },
             TEST_BUF(Msg::Log6{
                 "FILE_VERIFICATION direction=UP file_name=abc status=ok"_av}),
-            TEST_BUF_IF(d.verify_before_download, Msg::ToMod{24, last_flags, "data_abcdefg"_av})
+            TEST_BUF_IF(d.verify_before_transfer, Msg::ToMod{24, last_flags, "data_abcdefg"_av})
         );
     }
 
@@ -1549,7 +1549,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLockWithAccept, ClipDataTest const&
 })
 {
     RED_TEST(d.with_validator);
-    RED_TEST(d.verify_before_download);
+    RED_TEST(d.verify_before_transfer);
 
     bytes_view temp_av;
     MsgComparator msg_comparator;

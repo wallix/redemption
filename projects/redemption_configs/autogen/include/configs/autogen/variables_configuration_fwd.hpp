@@ -223,6 +223,7 @@ namespace cfg {
         struct clipboard_text_up;
         struct clipboard_text_down;
         struct log_if_accepted;
+        struct verify_before_transfer;
     };
 
     struct file_storage {

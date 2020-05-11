@@ -344,13 +344,13 @@ private:
             LockId _lock_id;
         };
 
-        ClipCtx(std::string const& target_name, bool verify_before_download);
+        ClipCtx(std::string const& target_name, bool verify_before_transfer);
 
         uint16_t message_type = 0;
 
         bool use_long_format_names = false;
         bool has_current_file_contents_stream_id = false;
-        const bool verify_before_download;
+        const bool verify_before_transfer;
         StreamId current_file_contents_stream_id;
         uint32_t current_file_list_format_id;
         uint32_t requested_format_id;

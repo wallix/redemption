@@ -382,8 +382,8 @@ ClipboardVirtualChannel::ClipCtx::OptionalLockId::lock_id() const
 
 
 ClipboardVirtualChannel::ClipCtx::ClipCtx(
-    std::string const& target_name, bool verify_before_download)
-: verify_before_download(verify_before_download && not target_name.empty())
+    std::string const& target_name, bool verify_before_transfer)
+: verify_before_transfer(verify_before_transfer && not target_name.empty())
 , validator_target_name(target_name)
 {}
 
@@ -1678,7 +1678,7 @@ struct ClipboardVirtualChannel::D
 
                     auto validator_id = new_file_validator_id(file_rng.file_name);
 
-                    if (clip.verify_before_download) {
+                    if (clip.verify_before_transfer) {
                         LOG_IF(bool(self.verbose & RDPVerbose::cliprdr), LOG_INFO,
                             "ClipboardVirtualChannel::process_filecontents_response_pdu:"
                             " Wait before transfer");
@@ -1991,7 +1991,7 @@ struct ClipboardVirtualChannel::D
                             0,
                             std::move(req.file_name),
                             new_tfl(),
-                            clip.verify_before_download
+                            clip.verify_before_transfer
                                 ? [&]{
                                     std::vector<uint8_t> v;
                                     v.reserve(req.file_size);
@@ -2267,10 +2267,10 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 , proxy_managed(to_client_sender_ == nullptr)
 , client_ctx(
     this->params.validator_params.up_target_name,
-    this->params.validator_params.verify_before_download)
+    this->params.validator_params.verify_before_transfer)
 , server_ctx(
     this->params.validator_params.down_target_name,
-    this->params.validator_params.verify_before_download)
+    this->params.validator_params.verify_before_transfer)
 {}
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()

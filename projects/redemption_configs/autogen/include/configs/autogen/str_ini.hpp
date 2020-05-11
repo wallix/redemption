@@ -922,6 +922,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #log_if_accepted = 1
 
+# value: 0 or 1
+#_hidden
+#verify_before_transfer = 0
+
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).

@@ -344,6 +344,9 @@ clipboard_text_down = boolean(default=False)
 #_advanced
 log_if_accepted = boolean(default=True)
 
+#_advanced
+verify_before_transfer = boolean(default=False)
+
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).

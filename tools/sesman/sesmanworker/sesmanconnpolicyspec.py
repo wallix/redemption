@@ -216,6 +216,9 @@ cp_spec = {
         u'file_verification:log_if_accepted': (
             'log_if_accepted', True
         ),
+        u'file_verification:verify_before_transfer': (
+            'verify_before_transfer', False
+        ),
     },
     'file_storage': {
         u'file_storage:store_file': (

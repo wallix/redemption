@@ -759,6 +759,13 @@
           "default": true,
           "advanced": true,
           "description": ""
+        },
+        {
+          "name": "verify_before_transfer",
+          "type": "bool",
+          "default": false,
+          "advanced": true,
+          "description": ""
         }
       ]
     },
