@@ -866,15 +866,28 @@ struct ClipboardVirtualChannel::D
         clip.clear();
     }
 
-    void clip_caps(
-        ClipboardVirtualChannel& self, ClipCtx& clip, bytes_view chunk_data)
+    bool clip_caps(
+        ClipboardVirtualChannel& self, ClipCtx& clip,
+        bytes_view chunk_data, char const* name,
+        VirtualChannelDataSender* sender)
     {
         this->reset_clip(self, clip);
 
         auto general_flags = RDPECLIP::extract_clipboard_general_flags_capability(
             chunk_data, bool(self.verbose & RDPVerbose::cliprdr));
+
+        bool verify_before_transfer
+            = self.client_ctx.verify_before_transfer || self.server_ctx.verify_before_transfer;
+        if (verify_before_transfer) {
+            general_flags &= ~RDPECLIP::CB_CAN_LOCK_CLIPDATA;
+            ServerMonitorReadySendBack::send_capabilities(
+                name, self.verbose, general_flags, sender);
+        }
+
         clip.optional_lock_id.enable(bool(general_flags & RDPECLIP::CB_CAN_LOCK_CLIPDATA));
         clip.use_long_format_names = bool(general_flags & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+
+        return not verify_before_transfer;
     }
 
     void monitor_ready(ClipboardVirtualChannel& self, ClipCtx& clip)
@@ -2408,8 +2421,10 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
     switch (this->server_ctx.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
-            D().clip_caps(*this, this->server_ctx, chunk.remaining_bytes());
-            send_message_to_client = !this->proxy_managed;
+            send_message_to_client = D().clip_caps(
+                *this, this->server_ctx, chunk.remaining_bytes(),
+                "server", this->proxy_managed ? nullptr : this->to_client_sender_ptr());
+            send_message_to_client = send_message_to_client && !this->proxy_managed;
         }
         break;
 
@@ -2537,7 +2552,9 @@ void ClipboardVirtualChannel::process_client_message(
     switch (this->client_ctx.message_type)
     {
         case RDPECLIP::CB_CLIP_CAPS: {
-            D().clip_caps(*this, this->client_ctx, chunk.remaining_bytes());
+            send_message_to_server = D().clip_caps(
+                *this, this->client_ctx, chunk.remaining_bytes(),
+                "client", this->to_server_sender_ptr());
             this->can_lock = this->client_ctx.optional_lock_id.is_enabled()
                           && this->server_ctx.optional_lock_id.is_enabled();
         }
