@@ -4234,6 +4234,10 @@ private:
                 this->handshake_timeout.reset();
                 cb.rdp_input_up_and_running();
                 // TODO we should use accessors to set that, also not sure it's the right place to set it
+                if (this->ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
+                    this->ini.get<cfg::context::is_wabam>()) {
+                    this->force_using_cache_bitmap_r2();
+                }
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
                 this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
                 this->ini.set_acl<cfg::context::opt_bpp>(safe_int(this->client_info.screen_info.bpp));
