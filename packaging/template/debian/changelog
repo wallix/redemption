@@ -1,3 +1,9 @@
+redemption (8.0.43%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix force cache v2 with am on resize
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 12 May 2020 18:11:49 +0200
+
 redemption (8.0.33%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix VNC black screen
