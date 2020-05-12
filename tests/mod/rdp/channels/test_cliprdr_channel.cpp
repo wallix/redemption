@@ -1690,6 +1690,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     requested.prepare_file("data_abcdefg"_av);
 
     /// full file with a packet.size() < 1600
+    // req, response, validation_result
     //@{
     msg_comparator.run(
         TEST_PROCESS { requested.client_full_file_request(); },
@@ -1736,6 +1737,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     //@}
 
     // data already available
+    // req, response, req, response
     //@{
     if (is_accepted) {
         msg_comparator.run(
@@ -1762,6 +1764,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     requested.prepare_file("data_abcdefgf"_av);
 
     // full file with 2 requested ranges
+    // (req, response) * 2, validation_result, random req, resp
     //@{
     msg_comparator.run(
         TEST_PROCESS {
@@ -1841,6 +1844,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     requested.prepare_file("data_abcdefg"_av);
 
     // full file with 3 requested ranges
+    // (req, response) * 3, validation_result, (random req, resp) * 2
     //@{
     msg_comparator.run(
         TEST_PROCESS {
@@ -1946,6 +1950,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     requested.prepare_file("data_abcdefgf"_av);
 
     // requested range with ko
+    // req, response fail
     //@{
     msg_comparator.run(
         TEST_PROCESS {
@@ -1970,6 +1975,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     requested.prepare_file("data_abcdefgf"_av);
 
     // 2 requested ranges with ko for the second
+    // req, response, validator, req, response fail
     //@{
     msg_comparator.run(
         TEST_PROCESS {
@@ -2026,7 +2032,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
 
     requested.prepare_file("data_abcdefgf"_av);
 
-    // full file with 2 requested ranges and validator=success before the second response
+    // full file with 2 requested ranges and validation_result before the second response
+    // req, response, validator, req, response
     //@{
     msg_comparator.run(
         TEST_PROCESS {
@@ -2102,7 +2109,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
 
     requested.prepare_file("data_abcdefg"_av);
 
-    // validator=success while response
+    // validation_result while response
+    // req, response header, response data, validator, response data
     //@{
     msg_comparator.run(
         TEST_PROCESS {
@@ -2166,7 +2174,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
 
     requested.prepare_file("data_abcdefg"_av);
 
-    // validator=success while response
+    // 2 requested ranges + validation_result while response
+    // req, response header, validator, response data, req, [response]
     //@{
     msg_comparator.run(
         TEST_PROCESS {
@@ -2264,7 +2273,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
 
         RED_CHECK_WORKSPACE(fdx_ctx->wd);
 
-        if (d.always_file_storage) {
+        if (d.always_file_storage || is_rejected) {
             RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(str_concat(
                 "v3\n"
 
@@ -2284,13 +2293,15 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000003.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
-                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"_av,
 
-                "\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
-                "abcmy_session_id/my_session_id,000004.tfl\x04\x43\xb6\xdc"
-                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
-                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
+                d.always_file_storage ?
+                    "\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
+                    "abcmy_session_id/my_session_id,000004.tfl\x04\x43\xb6\xdc"
+                    "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
+                    "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"_av
+                : ""_av,
 
                 "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
@@ -2306,7 +2317,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
 
                 "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 "\x00\x00\x00\x00"_av,
-
                 is_rejected ?   "\x54\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000007.tfl\x04\x43\xb6\xdc"
                 "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
@@ -2315,49 +2325,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
                 "abcmy_session_id/my_session_id,000007.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
                 "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"_av
+
             ), 5));
-        }
-        else if (is_rejected) {
-            RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(
-                "v3\n"
-
-                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
-                "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9\xdb"
-                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
-                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
-
-                "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
-                "abcmy_session_id/my_session_id,000002.tflg\xf4\x06\x62"
-                "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
-                "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
-
-                "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
-                "abcmy_session_id/my_session_id,000003.tfl\xd1\xb9\xc9\xdb"
-                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
-                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
-
-                "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
-                "abcmy_session_id/my_session_id,000005.tflg\xf4\x06\x62"
-                "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
-                "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
-
-                "\x04\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
-                "abcmy_session_id/my_session_id,000006.tfl\xd1\xb9\xc9\xdb"
-                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
-                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
-
-                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
-                "abcmy_session_id/my_session_id,000007.tfl\x04\x43\xb6\xdc"
-                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
-                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
-
-                ""_av, 5));
         }
         else {
             RED_CHECK_FILE_CONTENTS(fdx_path, "v3\n"_av);
