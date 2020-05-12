@@ -72,6 +72,7 @@ public:
         virtual void disable_input_event() = 0;
         virtual void enable_input_event() = 0;
         virtual void display_osd_message(std::string const & message) = 0;
+        virtual ~Callbacks() {};
     };
 
 private:
@@ -125,7 +126,6 @@ private:
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
-    GraphicEventPtr freeze_mod_screen;
     Callbacks & callbacks;
 
     bool launch_aborted = false;
@@ -385,11 +385,6 @@ private:
                         this->callbacks.disable_input_event();
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
-
-                        this->freeze_mod_screen = this->graphic_events_.create_action_executor(this->time_base, this->mod.get_dim())
-                        .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
-                            gdi_freeze_screen(drawable, dim);
-                        }));
                         this->callbacks.freeze_screen();
                     }
                     this->request_keep_alive();
@@ -1005,12 +1000,7 @@ public:
 
                 std::string string_message;
                 this->callbacks.display_osd_message(string_message);
-
-                this->mod.rdp_input_invalidate(Rect(0, 0,
-                    this->param_front_width, this->param_front_height));
-
                 this->request_keep_alive();
-
                 this->client_input_disabled_because_session_probe_keepalive_is_missing = false;
             }
         }

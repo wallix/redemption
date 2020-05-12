@@ -1851,7 +1851,7 @@ class mod_rdp : public mod_api, public rdp_api
     struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks {
         mod_rdp & mod;
         SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {};
-        virtual void freeze_screen() {};
+        virtual void freeze_screen() { mod.freeze_screen(); };
         virtual void disable_input_event() { mod.disable_input_event(); };
         virtual void enable_input_event() { mod.enable_input_event(); };
         virtual void enable_graphics_update() { mod.enable_graphics_update(); };
@@ -5916,6 +5916,17 @@ public:
         }
     }
 
+    void freeze_screen()
+    {
+        Rect const r(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
+        RDPPatBlt cmd(r, 0xA0, color_encode(BLACK, BitsPerPixel{24}), color_encode(WHITE, BitsPerPixel{24}),
+            RDPBrush(0, 0, 3, 0xaa, byte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
+        );
+        auto & drawable = this->gd_provider.get_graphics();
+        drawable.begin_update();
+        drawable.draw(cmd, r, gdi::ColorCtx::depth24());
+        drawable.end_update();
+    }
 
     void display_osd_message(std::string const & message)
     {
