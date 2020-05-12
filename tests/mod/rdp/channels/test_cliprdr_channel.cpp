@@ -1138,6 +1138,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
 }
 
 RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTest const& d, d, {
+    //                       always
+    //           icap  fdx  storage verify=false
     ClipDataTest{true, false, true},
     ClipDataTest{true, true, false},
     ClipDataTest{true, true, true},
@@ -1477,7 +1479,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
     }
 
     msg_comparator.run(
-        TEST_PROCESS {channel_ctx.reset();},
+        TEST_PROCESS { channel_ctx.reset(); },
         TEST_BUF_IF(d.with_validator, Msg::Log6{
             "FILE_VERIFICATION direction=UP file_name=def status=Connexion closed"_av})
     );
@@ -1536,9 +1538,9 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
     }
 }
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLockWithAccept, ClipDataTest const& d, d, {
-    //           always
-    //icap  fdx  storage verify
+RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
+    //                       always
+    //           icap  fdx  storage verify
     ClipDataTest{true, false, true, true, ValidationResult::IsAccepted},
     ClipDataTest{true, true, false, true, ValidationResult::IsAccepted},
     ClipDataTest{true, true, true, true, ValidationResult::IsAccepted},
@@ -2162,6 +2164,92 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLockWithAccept, ClipDataTest const&
     //@}
 
 
+    requested.prepare_file("data_abcdefg"_av);
+
+    // validator=success while response
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 7, StreamId(1));
+        },
+        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                // no data
+            }, 11);
+            channel_ctx->process_server_message(temp_av, 19, first_flags);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x07\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{19, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(7)));
+        },
+        TEST_BUF(file_verification_msg)
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_server_message(
+                requested.file_contents.first(7), 19, last_flags);
+        },
+        TEST_BUF_IF(is_rejected, Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
+        TEST_BUF(Msg::ToFront{19, last_flags, (is_accepted
+            ? requested.file_contents
+            : zeros
+        ).first(7)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(7, 15, StreamId(1));
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToMod{36, first_last_flags,
+            requested.filecontens_request_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
+            "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
+    );
+
+    if (is_accepted) {
+        msg_comparator.run(
+            TEST_PROCESS {
+                using namespace Cliprdr;
+                Buffer buf;
+                temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                    out.out_uint32_le(1);
+                    out.out_copy_bytes(requested.file_contents.from_offset(7));
+                });
+                channel_ctx->process_server_message(temp_av);
+            },
+            TEST_BUF(Msg::Log6{
+                "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+                " file_name=abc size=12 sha256="
+                "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av}),
+            TEST_BUF(Msg::ToFront{17, first_last_flags, temp_av})
+        );
+    }
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000007.tfl"),
+            is_accepted ? requested.file_contents : requested.file_contents.first(7));
+    }
+    //@}
+
+
     msg_comparator.run(TEST_PROCESS {
         channel_ctx.reset();
     });
@@ -2177,7 +2265,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLockWithAccept, ClipDataTest const&
         RED_CHECK_WORKSPACE(fdx_ctx->wd);
 
         if (d.always_file_storage) {
-            RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(
+            RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(str_concat(
                 "v3\n"
 
                 "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -2216,7 +2304,18 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLockWithAccept, ClipDataTest const&
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
                 "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
 
-                ""_av, 5));
+                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00"_av,
+
+                is_rejected ?   "\x54\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000007.tfl\x04\x43\xb6\xdc"
+                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
+                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"_av
+                :               "\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000007.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"_av
+            ), 5));
         }
         else if (is_rejected) {
             RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(
@@ -2251,6 +2350,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLockWithAccept, ClipDataTest const&
                 "abcmy_session_id/my_session_id,000006.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
                 "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000007.tfl\x04\x43\xb6\xdc"
+                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
+                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
 
                 ""_av, 5));
         }

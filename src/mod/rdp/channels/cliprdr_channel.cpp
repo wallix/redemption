@@ -226,7 +226,9 @@ void ClipboardVirtualChannel::ClipCtx::NoLockData::set_requested_sync_range()
 
 void ClipboardVirtualChannel::ClipCtx::NoLockData::set_range()
 {
-    assert(this->transfer_state == TransferState::WaitingContinuationRange);
+    assert(
+        this->transfer_state == TransferState::WaitingContinuationRange
+     || this->transfer_state == TransferState::SyncRange);
     this->transfer_state = TransferState::Range;
 }
 
@@ -1235,7 +1237,8 @@ struct ClipboardVirtualChannel::D
     bool filecontents_request(
         ClipboardVirtualChannel& self,
         ClipCtx& clip, uint32_t flags, bytes_view chunk_data,
-        VirtualChannelDataSender* sender)
+        VirtualChannelDataSender& sender,
+        VirtualChannelDataSender& receiver)
     {
         InStream in_stream(chunk_data);
         RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
@@ -1260,7 +1263,7 @@ struct ClipboardVirtualChannel::D
             FilecontentsRequestSendBack(
                 file_contents_request_pdu.dwFlags(),
                 file_contents_request_pdu.streamId(),
-                sender);
+                &sender);
             return false;
         };
 
@@ -1344,6 +1347,7 @@ struct ClipboardVirtualChannel::D
                           + file_contents_request_pdu.cbRequested()
                           <= file_contents.size()
                         ) {
+                            LOG(LOG_DEBUG, "SyncRange with data");
                             auto offset = std::min<uint64_t>(
                                 file_contents_request_pdu.position(),
                                 file_contents.size());
@@ -1352,27 +1356,63 @@ struct ClipboardVirtualChannel::D
                                 file_contents_request_pdu.cbRequested());
 
                             send_response_data(
-                                sender, safe_int(stream_id),
+                                &sender, safe_int(stream_id),
                                 file_contents.subarray(offset, len));
 
                               return false;
                         }
 
+                        if (file_contents_request_pdu.position() == file_contents.size()) {
+                            LOG(LOG_DEBUG, "SyncRange with -> set_range");
+                            update_continuation_range(file_rng);
+                            clip.nolock_data.set_range();
+                            return true;
+                        }
+
                         if (file_contents_request_pdu.position() <= file_contents.size()) {
+                            LOG(LOG_DEBUG, "SyncRange unknown data");
+                            // TODO
+                            assert(false);
                             auto already_known
                                 = file_contents.size() - file_contents_request_pdu.position();
                             uint64_t offset
                                 = file_contents_request_pdu.position() + already_known;
-                            uint64_t len
-                                = file_contents_request_pdu.cbRequested() - already_known;
+                            uint32_t requested_len = checked_int(
+                                file_contents_request_pdu.cbRequested() - already_known);
 
-                            clip.nolock_data.data.file_offset
-                                = file_contents_request_pdu.position();
+                            StaticOutStream<128> out_stream;
+
+                            file_contents_request_pdu = RDPECLIP::FileContentsRequestPDU(
+                                safe_int(file_rng.stream_id),
+                                safe_int(file_rng.lindex),
+                                RDPECLIP::FILECONTENTS_RANGE,
+                                uint32_t(offset),
+                                uint32_t(offset >> 32),
+                                requested_len,
+                                0, false);
+
+                            RDPECLIP::CliprdrHeader header(
+                                RDPECLIP::CB_FILECONTENTS_REQUEST,
+                                RDPECLIP::CB_RESPONSE_OK,
+                                file_contents_request_pdu.size());
+
+                            header.emit(out_stream);
+                            file_contents_request_pdu.emit(out_stream);
+
+                            LOG(LOG_DEBUG, "auto req requested: %lu + %u",
+                                file_contents_request_pdu.position(),
+                                file_contents_request_pdu.cbRequested());
+
+                            receiver(
+                                out_stream.get_produced_bytes().size(),
+                                send_first_last_flags,
+                                out_stream.get_produced_bytes());
+
+                            file_rng.file_size_requested = requested_len;
+                            file_rng.first_file_size_requested
+                                = file_contents_request_pdu.cbRequested();
+
                             clip.nolock_data.set_requested_sync_range();
-
-                            send_response_data(
-                                sender, safe_int(stream_id),
-                                file_contents.subarray(offset, len));
 
                             return false;
                         }
@@ -1497,7 +1537,6 @@ struct ClipboardVirtualChannel::D
         ClipboardVirtualChannel& self,
         RDPECLIP::CliprdrHeader const& in_header,
         ClipCtx& clip, uint32_t flags, bytes_view chunk_data,
-        // TODO sender <-> receiver
         VirtualChannelDataSender& sender, VirtualChannelDataSender& receiver)
     {
         bool send_message_is_ok = true;
@@ -1938,6 +1977,9 @@ struct ClipboardVirtualChannel::D
                         {
                             case ValidatorState::Failure:
                                 LOG(LOG_DEBUG, "validator = Failure");
+                                file_rng.sig.final();
+                                this->log_file_info(self, file_rng,
+                                    (&clip == &self.server_ctx));
                                 this->_close_file_rng_tfl(self, file_rng,
                                     Mwrm3::TransferedStatus::Broken);
                                 send_fake_data();
@@ -2507,18 +2549,23 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            send_message_to_client = D().filecontents_request(
-                *this, this->client_ctx, flags, chunk.remaining_bytes(),
-                this->to_server_sender_ptr());
+            auto* sender = this->to_server_sender_ptr();
+            auto* receiver = this->to_client_sender_ptr();
+            if (sender && receiver) {
+                send_message_to_client = D().filecontents_request(
+                    *this, this->client_ctx, flags, chunk.remaining_bytes(),
+                    *sender, *receiver);
+            }
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
             auto* sender = this->to_client_sender_ptr();
-            if (sender) {
+            auto* receiver = this->to_server_sender_ptr();
+            if (sender && receiver) {
                 send_message_to_client = D().filecontents_response(
                     *this, header, this->server_ctx, flags, chunk.remaining_bytes(),
-                    *sender, *this->to_server_sender_ptr());
+                    *sender, *receiver);
             }
         }
         break;
@@ -2596,18 +2643,23 @@ void ClipboardVirtualChannel::process_client_message(
         break;
 
         case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-            send_message_to_server = D().filecontents_request(
-                *this, this->server_ctx, flags, chunk.remaining_bytes(),
-                this->to_client_sender_ptr());
+            auto* sender = this->to_client_sender_ptr();
+            auto* receiver = this->to_server_sender_ptr();
+            if (sender && receiver) {
+                send_message_to_server = D().filecontents_request(
+                    *this, this->server_ctx, flags, chunk.remaining_bytes(),
+                    *sender, *receiver);
+            }
         }
         break;
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
             auto* sender = this->to_server_sender_ptr();
-            if (sender) {
+            auto* receiver = this->to_client_sender_ptr();
+            if (sender && receiver) {
                 send_message_to_server = D().filecontents_response(
                     *this, header, this->client_ctx, flags, chunk.remaining_bytes(),
-                    *sender, *this->to_client_sender_ptr());
+                    *sender, *receiver);
             }
         }
         break;
