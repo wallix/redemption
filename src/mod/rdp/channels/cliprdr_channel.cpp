@@ -578,31 +578,6 @@ namespace
     };
 
     template<class GetView>
-    PreSender pre_send(
-        VirtualChannelDataSender& sender,
-        uint32_t already_used,
-        uint32_t total_pkt_size,
-        GetView get_view)
-    {
-        PreSender pre_sender;
-        pre_sender.offset = 0;
-        pre_sender.max_pkt_len = max_len_channel_message - already_used;
-        pre_sender.remaining = total_pkt_size - already_used;
-
-        while (pre_sender.max_pkt_len < pre_sender.remaining) {
-            sender(
-                total_pkt_size,
-                0,
-                get_view(pre_sender.offset, pre_sender.max_pkt_len));
-            pre_sender.remaining -= pre_sender.max_pkt_len;
-            pre_sender.offset += pre_sender.max_pkt_len;
-            pre_sender.max_pkt_len = max_len_channel_message;
-        }
-
-        return pre_sender;
-    };
-
-    template<class GetView>
     void send_until_last2(
         VirtualChannelDataSender& sender,
         uint32_t already_used,
@@ -643,67 +618,80 @@ namespace
                 return file_contents.subarray(offset, len);
             });
     }
-
-    void send_until_last(
-        VirtualChannelDataSender& sender,
-        uint32_t already_used,
-        bytes_view av,
-        uint32_t total_pkt_size)
-    {
-        auto get_view = [&](uint32_t offset, uint32_t len){ return av.subarray(offset, len); };
-        auto pre_sender = pre_send(sender, already_used, total_pkt_size, get_view);
-        sender(
-            total_pkt_size,
-            CHANNELS::CHANNEL_FLAG_LAST,
-            av.subarray(pre_sender.offset, pre_sender.remaining));
-    }
-
-    void send_response_data(
-        VirtualChannelDataSender* sender_ptr,
-        uint32_t stream_id,
-        bytes_view data)
-    {
-        if (!sender_ptr) {
-            return ;
-        }
-
-        VirtualChannelDataSender& sender = *sender_ptr;
-
-        StaticOutStream<max_len_channel_message> out_stream;
-        RDPECLIP::CliprdrHeader header(
-            RDPECLIP::CB_FILECONTENTS_RESPONSE,
-            RDPECLIP::CB_RESPONSE_OK,
-            data.size() + 4 /* streamId */);
-        header.emit(out_stream);
-        out_stream.out_uint32_le(stream_id);
-
-        if (data.size() <= out_stream.tailroom()) {
-            out_stream.out_copy_bytes(data);
-            sender(
-                out_stream.get_offset(),
-                send_first_last_flags,
-                out_stream.get_produced_bytes());
-            return ;
-        }
-
-        uint32_t total_pkt_size = out_stream.get_offset() + data.size();
-
-        out_stream.out_copy_bytes(data.first(out_stream.tailroom()));
-        sender(
-            total_pkt_size,
-            send_first_flags,
-            out_stream.get_produced_bytes());
-
-        send_until_last(
-            sender,
-            0,
-            data.from_offset(out_stream.get_offset()),
-            total_pkt_size);
-    }
 }
 
 struct ClipboardVirtualChannel::D
 {
+    template<std::size_t N>
+    static uint32_t send_response_datas_with_lengths_and_last_flag(
+        VirtualChannelDataSender& sender,
+        StreamId stream_id,
+        bytes_view const (&datas)[N],
+        uint32_t total_packet_size,
+        uint32_t data_len,
+        uint32_t last_flag)
+    {
+        assert(total_packet_size >= data_len);
+
+        LOG(LOG_DEBUG, "send_response_datas");
+        StaticOutStream<max_len_channel_message> out_stream;
+        RDPECLIP::CliprdrHeader header(
+            RDPECLIP::CB_FILECONTENTS_RESPONSE,
+            RDPECLIP::CB_RESPONSE_OK,
+            data_len);
+        header.emit(out_stream);
+
+        out_stream.out_uint32_le(safe_int(stream_id));
+
+        auto flags = send_first_flags;
+
+        for (bytes_view data : datas) {
+            while (data.size() > out_stream.tailroom()) {
+                auto chunk_size = out_stream.tailroom();
+
+                out_stream.out_copy_bytes(data.first(chunk_size));
+                LOG(LOG_DEBUG, "%zu / %u  [%x]",
+                    out_stream.get_produced_bytes().size(), total_packet_size, flags);
+                sender(total_packet_size, flags, out_stream.get_produced_bytes());
+                flags = 0;
+
+                out_stream.rewind();
+                data = data.drop_front(chunk_size);
+            }
+
+            out_stream.out_copy_bytes(data);
+        }
+
+        LOG(LOG_DEBUG, "last:: %zu / %u  [%x]",
+            out_stream.get_produced_bytes().size(), total_packet_size, flags | last_flag);
+        sender(
+            total_packet_size,
+            flags | last_flag,
+            out_stream.get_produced_bytes());
+
+        return total_packet_size;
+    }
+
+    template<std::size_t N>
+    static uint32_t send_response_datas(
+        VirtualChannelDataSender& sender,
+        StreamId stream_id,
+        bytes_view const (&datas)[N])
+    {
+        uint32_t packet_len = /*streamId=*/4;
+        for (bytes_view const& data : datas) {
+            packet_len = checked_int(packet_len + data.size());
+        }
+
+        uint32_t total_packet_size
+            = checked_int(packet_len + RDPECLIP::CliprdrHeader::size());
+
+        return send_response_datas_with_lengths_and_last_flag(
+            sender, stream_id, datas,
+            total_packet_size, packet_len,
+            CHANNELS::CHANNEL_FLAG_LAST);
+    }
+
     Direction to_direction(ClipboardVirtualChannel& self, ClipCtx const& clip) const
     {
         return (&clip == &self.server_ctx)
@@ -1356,11 +1344,11 @@ struct ClipboardVirtualChannel::D
                                 file_contents.size() - offset,
                                 file_contents_request_pdu.cbRequested());
 
-                            send_response_data(
-                                &sender, safe_int(stream_id),
-                                file_contents.subarray(offset, len));
+                            D::send_response_datas(
+                                sender, stream_id,
+                                { file_contents.subarray(offset, len) });
 
-                              return false;
+                            return false;
                         }
 
                         if (file_contents_request_pdu.position() == file_contents.size()) {
@@ -1544,7 +1532,7 @@ struct ClipboardVirtualChannel::D
     bool filecontents_response(
         ClipboardVirtualChannel& self,
         RDPECLIP::CliprdrHeader const& in_header,
-        ClipCtx& clip, uint32_t flags, bytes_view chunk_data,
+        ClipCtx& clip, uint32_t flags, bytes_view chunk_data, uint32_t total_length,
         VirtualChannelDataSender& sender, VirtualChannelDataSender& receiver)
     {
         bool send_message_is_ok = true;
@@ -1841,65 +1829,27 @@ struct ClipboardVirtualChannel::D
                     uint32_t known_data_len
                         = file_rng.first_file_size_requested - file_rng.file_size_requested;
 
-                    auto contents = update_file_range_data(
-                        file_rng, in_stream.remaining_bytes());
+                    update_file_range_data(file_rng, in_stream.remaining_bytes());
+
+                    LOG(LOG_DEBUG, "response_size = %u", file_rng.response_size);
 
                     if (file_rng.first_file_size_requested) {
-                        uint32_t packet_size
-                            = in_header.dataLen() + known_data_len
-                            + RDPECLIP::CliprdrHeader::size();
-
-                        StaticOutStream<max_len_channel_message> out_stream;
-                        RDPECLIP::CliprdrHeader header(
-                            RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                            RDPECLIP::CB_RESPONSE_OK,
-                            packet_size);
-                        header.emit(out_stream);
-                        out_stream.out_uint32_le(safe_int(file_rng.stream_id));
-
                         auto file_contents = bytes_view(file_rng.file_contents)
                             .last(known_data_len);
 
-                        LOG(LOG_DEBUG, "contents:: [%.*s]",
-                            int(contents.size()), contents.data());
-                        LOG(LOG_DEBUG, "file_contents:: [%.*s]",
-                            int(file_contents.size()), file_contents.data());
+                        file_rng.response_size = send_response_datas_with_lengths_and_last_flag(
+                            sender, file_rng.stream_id,
+                            { file_contents, in_stream.remaining_bytes() },
+                            checked_int(total_length + file_contents.size()),
+                            checked_int(in_header.dataLen() + file_contents.size()),
+                            flags & CHANNELS::CHANNEL_FLAG_LAST);
 
-                        auto flags = send_first_flags;
-
-                        while (file_contents.size() > out_stream.tailroom()) {
-                            auto chunk_size = out_stream.tailroom();
-
-                            out_stream.out_copy_bytes(file_contents.first(chunk_size));
-                            sender(packet_size, flags, out_stream.get_produced_bytes());
-                            flags = 0;
-
-                            out_stream.rewind();
-                            file_contents = file_contents.drop_front(chunk_size);
-                        }
-
-                        out_stream.out_copy_bytes(file_contents);
-
-                        if (contents.size() <= out_stream.tailroom()) {
-                            out_stream.out_copy_bytes(contents);
-                            sender(
-                                packet_size,
-                                flags | CHANNELS::CHANNEL_FLAG_LAST,
-                                out_stream.get_produced_bytes());
-                        }
-                        else {
-                            auto chunk_size = out_stream.tailroom();
-                            out_stream.out_copy_bytes(contents.first(chunk_size));
-                            sender(packet_size, flags, out_stream.get_produced_bytes());
-                            contents = contents.drop_front(chunk_size);
-                            send_until_last(sender, 0, contents, packet_size);
-                        }
+                        LOG(LOG_DEBUG, "response_size = %u", file_rng.response_size);
 
                         file_rng.first_file_size_requested = 0;
-                        file_rng.response_size = packet_size;
                     }
                     else {
-                        sender(file_rng.response_size, flags, chunk_data);
+                        sender(file_rng.response_size, flags, in_stream.remaining_bytes());
                     }
 
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
@@ -1998,7 +1948,7 @@ struct ClipboardVirtualChannel::D
                         {
                             case ValidatorState::Failure:
                                 LOG(LOG_DEBUG, "validator = Failure");
-                                file_rng.sig.final();
+                                file_rng.sig.broken();
                                 this->log_file_info(self, file_rng,
                                     (&clip == &self.server_ctx));
                                 this->_close_file_rng_tfl(self, file_rng,
@@ -2586,7 +2536,7 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
             if (sender && receiver) {
                 send_message_to_client = D().filecontents_response(
                     *this, header, this->server_ctx, flags, chunk.remaining_bytes(),
-                    *sender, *receiver);
+                    total_length, *sender, *receiver);
             }
         }
         break;
@@ -2680,7 +2630,7 @@ void ClipboardVirtualChannel::process_client_message(
             if (sender && receiver) {
                 send_message_to_server = D().filecontents_response(
                     *this, header, this->client_ctx, flags, chunk.remaining_bytes(),
-                    *sender, *receiver);
+                    total_length, *sender, *receiver);
             }
         }
         break;

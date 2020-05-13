@@ -2333,7 +2333,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
                 channel_ctx->process_server_message(temp_av);
             },
             TEST_BUF(Msg::ToFront{18, first_last_flags,
-                "\x09\x00\x01\x00\x12\x00\x00\x00\x01\x00\x00\x00""bcdefg"_av}),
+                "\x09\x00\x01\x00\x0a\x00\x00\x00\x01\x00\x00\x00""bcdefg"_av}),
             TEST_BUF(Msg::Log6{
                 "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
                 " file_name=abc size=12 sha256="
