@@ -486,8 +486,8 @@ namespace
             if (msg.output_data.other_av_len != av_len
                 && msg.output_data.show_mismatch_position
             ) {
-                out << "]\nCollections size mismatch: "
-                    << av_len << " != " << msg.output_data.other_av_len;
+                out << "]\nDatas size mismatch: "
+                    << msg.output_data.other_av_len << " != " << av_len;
             }
 
             return out;
@@ -1606,7 +1606,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         bytes_view file_contents {};
 
         Buffer filecontens_request_buf {};
-        bytes_view filecontens_request_av {};
+        bytes_view filecontents_request_av {};
 
         // data_request + data_response of 1 file
         void prepare_file(bytes_view file_contents)
@@ -1662,15 +1662,15 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
             using namespace RDPECLIP;
 
             this->filecontens_request_buf.out.rewind();
-            this->filecontens_request_av = this->filecontens_request_buf
+            this->filecontents_request_av = this->filecontens_request_buf
             .build_ok(CB_FILECONTENTS_REQUEST, [&](OutStream& out){
                 FileContentsRequestPDU(
                      safe_int(stream_id), 0, FILECONTENTS_RANGE,
-                     checked_int(offset), 0, checked_int(len), 0, true)
+                     checked_int(offset), 0, checked_int(len), 0, false)
                 .emit(out);
             });
 
-            this->channel_ctx.process_client_message(this->filecontens_request_av);
+            this->channel_ctx.process_client_message(this->filecontents_request_av);
         }
     };
 
@@ -1694,7 +1694,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     //@{
     msg_comparator.run(
         TEST_PROCESS { requested.client_full_file_request(); },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -1770,7 +1770,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(0, 7, StreamId(2));
         },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -1850,7 +1850,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(0, 4, StreamId(1));
         },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -1956,7 +1956,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(0, 7, StreamId(2));
         },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -1981,7 +1981,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(0, 7, StreamId(2));
         },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -2039,7 +2039,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(0, 7, StreamId(2));
         },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -2116,7 +2116,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_full_file_request(StreamId(1));
         },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -2181,7 +2181,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(0, 7, StreamId(1));
         },
-        TEST_BUF(Msg::ToMod{36, first_last_flags, requested.filecontens_request_av})
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
     );
 
     msg_comparator.run(
@@ -2227,8 +2227,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(7, 15, StreamId(1));
         },
-        TEST_BUF_IF(is_accepted, Msg::ToMod{36, first_last_flags,
-            requested.filecontens_request_av}),
+        TEST_BUF_IF(is_accepted, Msg::ToMod{32, first_last_flags,
+            requested.filecontents_request_av}),
         TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
             "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
     );
@@ -2255,6 +2255,160 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
     if (fdx_ctx && (is_rejected || d.always_file_storage)) {
         RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000007.tfl"),
             is_accepted ? requested.file_contents : requested.file_contents.first(7));
+    }
+    //@}
+
+
+    requested.prepare_file("data_abcdefg"_av);
+
+    // 2 requested ranges + validation_result while response
+    // req, response header, validator, response data, req(offet-1), [response]
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 7, StreamId(1));
+        },
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                // no data
+            }, 11);
+            channel_ctx->process_server_message(temp_av, 19, first_flags);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x08\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{19, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(8)));
+        },
+        TEST_BUF(file_verification_msg)
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_server_message(
+                requested.file_contents.first(7), 19, last_flags);
+        },
+        TEST_BUF_IF(is_rejected, Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
+        TEST_BUF(Msg::ToFront{19, last_flags, (is_accepted
+            ? requested.file_contents
+            : zeros
+        ).first(7)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(6, 15, StreamId(1));
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToMod{32, first_last_flags,
+            "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+            "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x0e\x00\x00\x00"_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{12, first_last_flags,
+            "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
+    );
+
+    if (is_accepted) {
+        msg_comparator.run(
+            TEST_PROCESS {
+                using namespace Cliprdr;
+                Buffer buf;
+                temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                    out.out_uint32_le(1);
+                    out.out_copy_bytes(requested.file_contents.from_offset(7));
+                });
+                channel_ctx->process_server_message(temp_av);
+            },
+            TEST_BUF(Msg::ToFront{18, first_last_flags,
+                "\x09\x00\x01\x00\x12\x00\x00\x00\x01\x00\x00\x00""bcdefg"_av}),
+            TEST_BUF(Msg::Log6{
+                "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+                " file_name=abc size=12 sha256="
+                "d1b9c9db455c70b7c6a70225a00f859931e498f7f5e07f2c962e1078c0359f5e"_av})
+        );
+    }
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000008.tfl"),
+            is_accepted ? requested.file_contents : requested.file_contents.first(7));
+    }
+    //@}
+
+
+    requested.prepare_file("data_abcdefg"_av);
+
+    // 2 requested ranges + validation_result while response
+    // req, response header, validator, response data, req(offet+1), [response]
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(0, 7, StreamId(1));
+        },
+        TEST_BUF(Msg::ToMod{32, first_last_flags, requested.filecontents_request_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+                out.out_uint32_le(1);
+                // no data
+            }, 11);
+            channel_ctx->process_server_message(temp_av, 19, first_flags);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x1b\x00\x00\x00\x09\x00\x04""down"
+            "\x00\x01\x00\bfilename\x00\x03""abc"_av}),
+        // without file_contents
+        TEST_BUF(Msg::ToFront{19, first_flags, temp_av.first(12)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(9)));
+        },
+        TEST_BUF(file_verification_msg)
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_server_message(
+                requested.file_contents.first(7), 19, last_flags);
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToFront{19, last_flags,
+            requested.file_contents.first(7)}),
+        TEST_BUF_IF(is_rejected, Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
+        TEST_BUF_IF(is_rejected, Msg::ToFront{19, last_flags, zeros.first(7)})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            requested.client_file_request(8, 15, StreamId(1));
+        },
+        TEST_BUF(Msg::ToFront{12, first_last_flags,
+            "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
+    );
+
+    if (fdx_ctx && (is_rejected || d.always_file_storage)) {
+        RED_CHECK_FILE_CONTENTS(add_file(*fdx_ctx, ",000009.tfl"),
+            requested.file_contents.first(7));
     }
     //@}
 
@@ -2315,16 +2469,44 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
                 "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
 
+                ""_av,
+
+                is_rejected ?
                 "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00"_av,
-                is_rejected ?   "\x54\x03\x00\x26\x00"
+                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000007.tfl\x04\x43\xb6\xdc"
                 "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
+                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
+
+                "\x04\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000008.tfl\x04\x43\xb6\xdc"
+                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
+                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
+
+                "\x04\x00\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000009.tfl\x04\x43\xb6\xdc"
+                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
                 "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"_av
-                :               "\x34\x03\x00\x26\x00"
+                    :
+                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000007.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
-                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"_av
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                "\x04\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000008.tfl\xd1\xb9\xc9\xdb"
+                "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
+                "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
+
+                "\x04\x00\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
+                "abcmy_session_id/my_session_id,000009.tfl\x04\x43\xb6\xdc"
+                "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
+                "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"_av
 
             ), 5));
         }

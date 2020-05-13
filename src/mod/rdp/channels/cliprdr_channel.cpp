@@ -199,7 +199,8 @@ void ClipboardVirtualChannel::ClipCtx::NoLockData::set_waiting_continuation_rang
 {
     assert(
         this->transfer_state == TransferState::Range
-     || this->transfer_state == TransferState::GetRange);
+     || this->transfer_state == TransferState::GetRange
+     || this->transfer_state == TransferState::RequestedSyncRange);
     this->transfer_state = TransferState::WaitingContinuationRange;
 }
 
@@ -1366,13 +1367,13 @@ struct ClipboardVirtualChannel::D
                             LOG(LOG_DEBUG, "SyncRange with -> set_range");
                             update_continuation_range(file_rng);
                             clip.nolock_data.set_range();
+
                             return true;
                         }
 
                         if (file_contents_request_pdu.position() <= file_contents.size()) {
                             LOG(LOG_DEBUG, "SyncRange unknown data");
-                            // TODO
-                            assert(false);
+
                             auto already_known
                                 = file_contents.size() - file_contents_request_pdu.position();
                             uint64_t offset
@@ -1380,9 +1381,13 @@ struct ClipboardVirtualChannel::D
                             uint32_t requested_len = checked_int(
                                 file_contents_request_pdu.cbRequested() - already_known);
 
+                            LOG(LOG_DEBUG, "position = %zu", file_contents_request_pdu.size());
+                            LOG(LOG_DEBUG, "file size = %zu", file_contents.size());
+                            LOG(LOG_DEBUG, "already_known = %zu", already_known);
+
                             StaticOutStream<128> out_stream;
 
-                            file_contents_request_pdu = RDPECLIP::FileContentsRequestPDU(
+                            RDPECLIP::FileContentsRequestPDU new_request_pdu(
                                 safe_int(file_rng.stream_id),
                                 safe_int(file_rng.lindex),
                                 RDPECLIP::FILECONTENTS_RANGE,
@@ -1394,20 +1399,21 @@ struct ClipboardVirtualChannel::D
                             RDPECLIP::CliprdrHeader header(
                                 RDPECLIP::CB_FILECONTENTS_REQUEST,
                                 RDPECLIP::CB_RESPONSE_OK,
-                                file_contents_request_pdu.size());
+                                new_request_pdu.size());
 
                             header.emit(out_stream);
-                            file_contents_request_pdu.emit(out_stream);
+                            new_request_pdu.emit(out_stream);
 
                             LOG(LOG_DEBUG, "auto req requested: %lu + %u",
-                                file_contents_request_pdu.position(),
-                                file_contents_request_pdu.cbRequested());
+                                new_request_pdu.position(),
+                                new_request_pdu.cbRequested());
 
                             receiver(
                                 out_stream.get_produced_bytes().size(),
                                 send_first_last_flags,
                                 out_stream.get_produced_bytes());
 
+                            file_rng.stream_id = stream_id;
                             file_rng.file_size_requested = requested_len;
                             file_rng.first_file_size_requested
                                 = file_contents_request_pdu.cbRequested();
@@ -1416,6 +1422,8 @@ struct ClipboardVirtualChannel::D
 
                             return false;
                         }
+
+                        LOG(LOG_DEBUG, "SyncRange stop");
 
                         this->stop_valid_transfer(self, file_rng);
                         clip.nolock_data.init_empty();
@@ -1827,67 +1835,80 @@ struct ClipboardVirtualChannel::D
                 ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
 
                 if (is_ok) {
-                    check_stream_id(clip.nolock_data.data.stream_id);
+                    check_stream_id(file_rng.stream_id);
                     send_message_is_ok = false;
+
+                    uint32_t known_data_len
+                        = file_rng.first_file_size_requested - file_rng.file_size_requested;
 
                     auto contents = update_file_range_data(
                         file_rng, in_stream.remaining_bytes());
-                    file_rng.file_offset -= contents.size();
-                    append(file_rng.file_contents, contents);
+
+                    if (file_rng.first_file_size_requested) {
+                        uint32_t packet_size
+                            = in_header.dataLen() + known_data_len
+                            + RDPECLIP::CliprdrHeader::size();
+
+                        StaticOutStream<max_len_channel_message> out_stream;
+                        RDPECLIP::CliprdrHeader header(
+                            RDPECLIP::CB_FILECONTENTS_RESPONSE,
+                            RDPECLIP::CB_RESPONSE_OK,
+                            packet_size);
+                        header.emit(out_stream);
+                        out_stream.out_uint32_le(safe_int(file_rng.stream_id));
+
+                        auto file_contents = bytes_view(file_rng.file_contents)
+                            .last(known_data_len);
+
+                        LOG(LOG_DEBUG, "contents:: [%.*s]",
+                            int(contents.size()), contents.data());
+                        LOG(LOG_DEBUG, "file_contents:: [%.*s]",
+                            int(file_contents.size()), file_contents.data());
+
+                        auto flags = send_first_flags;
+
+                        while (file_contents.size() > out_stream.tailroom()) {
+                            auto chunk_size = out_stream.tailroom();
+
+                            out_stream.out_copy_bytes(file_contents.first(chunk_size));
+                            sender(packet_size, flags, out_stream.get_produced_bytes());
+                            flags = 0;
+
+                            out_stream.rewind();
+                            file_contents = file_contents.drop_front(chunk_size);
+                        }
+
+                        out_stream.out_copy_bytes(file_contents);
+
+                        if (contents.size() <= out_stream.tailroom()) {
+                            out_stream.out_copy_bytes(contents);
+                            sender(
+                                packet_size,
+                                flags | CHANNELS::CHANNEL_FLAG_LAST,
+                                out_stream.get_produced_bytes());
+                        }
+                        else {
+                            auto chunk_size = out_stream.tailroom();
+                            out_stream.out_copy_bytes(contents.first(chunk_size));
+                            sender(packet_size, flags, out_stream.get_produced_bytes());
+                            contents = contents.drop_front(chunk_size);
+                            send_until_last(sender, 0, contents, packet_size);
+                        }
+
+                        file_rng.first_file_size_requested = 0;
+                        file_rng.response_size = packet_size;
+                    }
+                    else {
+                        sender(file_rng.response_size, flags, chunk_data);
+                    }
 
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                         clip.has_current_file_contents_stream_id = false;
-
-                        auto send_data = [&]{
-                            auto data = bytes_view(file_rng.file_contents)
-                                .subarray(
-                                    file_rng.file_offset,
-                                    file_rng.file_contents.size() - file_rng.file_offset);
-
-                            file_rng.file_offset = file_rng.file_contents.size();
-
-                            StaticOutStream<max_len_channel_message> out_stream;
-                            RDPECLIP::CliprdrHeader header(
-                                RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                                RDPECLIP::CB_RESPONSE_OK,
-                                data.size() + 4u /* streamId */);
-                            header.emit(out_stream);
-                            out_stream.out_uint32_le(
-                                safe_int(clip.nolock_data.data.stream_id));
-
-                            if (out_stream.tailroom() <= data.size()) {
-                                out_stream.out_copy_bytes(data);
-                                sender(
-                                    out_stream.get_offset(),
-                                    send_first_last_flags,
-                                    out_stream.get_produced_bytes());
-                            }
-                            else {
-                                auto total = out_stream.get_offset() + data.size();
-                                out_stream.out_copy_bytes(data.first(out_stream.tailroom()));
-                                sender(
-                                    total,
-                                    send_first_flags,
-                                    out_stream.get_produced_bytes());
-                                send_until_last2(
-                                    sender,
-                                    out_stream.get_offset(),
-                                    total,
-                                    [&](uint32_t offset, uint32_t len){
-                                        return data.subarray(offset, len);
-                                    });
-                            }
-                        };
-
-                        if (set_finalize_file_transfer(file_rng)) {
-                            file_rng.sig.final();
-                            this->log_file_info(self, file_rng, (&clip == &self.server_ctx));
-                            send_data();
+                        if (finalize_file_transfer(file_rng)) {
                             clip.nolock_data.init_empty();
                         }
                         else {
-                            send_data();
-                            clip.nolock_data.set_sync_range();
+                            clip.nolock_data.set_waiting_continuation_range();
                         }
                     }
                 }
