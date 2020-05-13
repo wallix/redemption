@@ -764,4 +764,34 @@ public:
 
 };
 
+namespace
+{
+#ifndef __EMSCRIPTEN__
+    bool cert_to_escaped_string(X509& cert, std::string& output)
+    {
+        // TODO unique_ptr<BIO, BIO_delete>
+        BIO* bio = BIO_new(BIO_s_mem());
+        if (!bio) {
+            return false;
+        }
+
+        if (!PEM_write_bio_X509(bio, &cert)) {
+            BIO_free(bio);
+            return false;
+        }
+
+        std::size_t pem_len = BIO_number_written(bio);
+        output.resize(pem_len);
+        std::fill(output.data(), output.data() + pem_len, 0);
+
+        BIO_read(bio, output.data(), pem_len);
+        BIO_free(bio);
+
+        std::replace(output.begin(), output.end(), '\n', '\x01');
+
+        return true;
+    }
+#endif
+} // anonymous namespace
+
 REDEMPTION_DIAGNOSTIC_POP

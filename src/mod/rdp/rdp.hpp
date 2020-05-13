@@ -85,6 +85,8 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "gdi/screen_functions.hpp"
+#include "system/tls_context.hpp"
+
 
 #ifdef __EMSCRIPTEN__
 class RDPMetrics;
@@ -2181,9 +2183,161 @@ public:
         gd.draw(cmd, r, gdi::ColorCtx::depth24());
         gd.end_update();
 
-        this->init_negociate_event_(
-            info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,
-            (mod_rdp_params.open_session_timeout!=0s)?mod_rdp_params.open_session_timeout:15s);
+        const std::chrono::seconds open_session_timeout = (mod_rdp_params.open_session_timeout!=0s)
+                                                        ?  mod_rdp_params.open_session_timeout
+                                                        :  15s;
+
+        auto check_error = [this](auto /*ctx*/, jln::ExitR er, gdi::GraphicApi&){
+            if (er.status != jln::ExitR::Exception) {
+                return er.to_result();
+            }
+
+            switch (er.error.id) {
+            case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
+            case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+            case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+            case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+            case ERR_NLA_AUTHENTICATION_FAILED:
+                return er.to_result();
+            default: break;
+            }
+
+            const char * statestr = "UNKNOWN_STATE";
+            const char * statedescr = "Unknown state.";
+            switch (this->private_rdp_negociation->rdp_negociation.get_state()) {
+                #define CASE(e, trkey)                      \
+                    case RdpNegociation::State::e:          \
+                        statestr = "RDP_" #e;               \
+                        statedescr = TR(trkey, this->lang); \
+                    break
+                CASE(NEGO_INITIATE, trkeys::err_mod_rdp_nego);
+                CASE(NEGO, trkeys::err_mod_rdp_nego);
+                CASE(BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
+                CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
+                CASE(CHANNEL_JOIN_CONFIRM, trkeys::mod_rdp_channel_join_confirme);
+                CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
+                CASE(TERMINATED, trkeys::err_mod_rdp_nego);
+                #undef CASE
+            }
+
+            str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
+
+            LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
+                statestr, statedescr);
+            er.error = Error(ERR_SESSION_UNKNOWN_BACKEND);
+            return er.to_result();
+        };
+
+        this->private_rdp_negociation = std::make_unique<PrivateRdpNegociation>(
+            open_session_timeout, program, directory,
+            this->channels.channels_authorizations, this->channels.mod_channel_list,
+            this->channels.auth_channel, this->channels.checkout_channel,
+            this->decrypt, this->encrypt, this->logon_info,
+            this->channels.enable_auth_channel,
+            this->trans, this->front, info, this->redir_info,
+            gen, timeobj, mod_rdp_params, this->report_message, this->license_store,
+    #ifndef __EMSCRIPTEN__
+            this->channels.drive.file_system_drive_manager.has_managed_drive()
+         || this->channels.session_probe.enable_session_probe,
+            this->channels.remote_app.convert_remoteapp_to_desktop,
+    #else
+            false,
+            false,
+    #endif
+            tls_client_params
+        );
+
+        RdpNegociation& rdp_negociation = this->private_rdp_negociation->rdp_negociation;
+
+    #ifndef __EMSCRIPTEN__
+        if (this->enable_server_cert_external_validation) {
+            LOG(LOG_INFO, "Enable server cert external validation");
+            rdp_negociation.set_cert_callback([this](X509& certificate){
+                auto& result = this->private_rdp_negociation->result;
+
+                if (result != CertificateResult::wait) {
+                    return result;
+                }
+
+                std::string blob_str;
+                if (!cert_to_escaped_string(certificate, blob_str)) {
+                    LOG(LOG_ERR, "cert_to_string failed");
+                    return result;
+                }
+
+                // LOG(LOG_INFO, "cert pem: %s", blob_str);
+
+                this->sesman.set_server_cert(blob_str);
+                this->sesman.set_acl_server_cert();
+
+                return result;
+            });
+        }
+    #endif
+
+        LOG(LOG_INFO, "Start Negociation");
+        rdp_negociation.start_negociation();
+
+        LOG(LOG_INFO, "rdp::graphic_fd_events_.create_top_executor");
+        this->fd_event = this->graphic_fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
+        .on_exit(check_error)
+        .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi&){
+            bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+
+            // RdpNego::recv_next_data set a new fd if tls
+            int const fd = this->trans.get_fd();
+            if (fd >= 0) {
+                ctx.set_fd(fd);
+            }
+
+            if (!is_finish) {
+                return ctx.need_more_data();
+            }
+            else {
+                this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+                if (this->buf.remaining()){
+                    LOG(LOG_INFO, "rdp::graphic_events_.create_action_executor");
+                    this->private_rdp_negociation->graphic_event
+                    = this->graphic_events_.create_action_executor(ctx.get_reactor())
+                    .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+                        this->draw_event_impl(gd, this->sesman);
+                    }));
+                }
+
+                // TODO replace_event()
+                return ctx.disable_timeout()
+                .replace_exit(jln::propagate_exit())
+                .replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+                    LOG(LOG_INFO, "RDP Negociation reset (finished nego)");
+                    this->private_rdp_negociation.reset();
+                    this->draw_event(gd, this->sesman);
+                    return ctx.replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+                        this->draw_event(gd, this->sesman);
+                        return ctx.need_more_data();
+                    });
+                });
+            }
+        })
+        .set_timeout(this->private_rdp_negociation->open_session_timeout)
+        .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){
+            if (this->error_message) {
+                *this->error_message = "Logon timer expired!";
+            }
+
+            this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+
+    #ifndef __EMSCRIPTEN__
+            if (this->channels.session_probe.enable_session_probe) {
+                this->enable_input_event();
+                this->enable_graphics_update();
+            }
+    #endif
+            LOG(LOG_ERR,
+                "Logon timer expired on %s. The session will be disconnected.",
+                this->logon_info.hostname());
+            return ctx.exception(Error(ERR_RDP_OPEN_SESSION_TIMEOUT));
+        });
+
     }   // mod_rdp
 
 
@@ -6165,10 +6319,10 @@ private:
         return channel_data_size;
     }
 
-    void init_negociate_event_(
-        const ClientInfo & info, Random & gen, TimeObj & timeobj,
-        const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
-        const std::chrono::seconds open_session_timeout);
+//    void init_negociate_event_(
+//        const ClientInfo & info, Random & gen, TimeObj & timeobj,
+//        const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
+//        const std::chrono::seconds open_session_timeout);
 };
 
 #undef IF_ENABLE_METRICS
