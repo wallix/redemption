@@ -28,7 +28,6 @@
 #include "core/front_api.hpp"
 #include "core/session_reactor.hpp"
 #include "core/window_constants.hpp"
-#include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel_params.hpp"
 #include "mod/rdp/rdp_api.hpp"
@@ -36,7 +35,6 @@
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "acl/gd_provider.hpp"
 #include <functional>
 
 
@@ -100,7 +98,6 @@ private:
 
     FrontAPI& front;
 
-    mod_api& mod;
     rdp_api& rdp;
     AuthApi& authentifier;
 
@@ -122,9 +119,7 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     TimeBase& time_base;
-    GdProvider & gd_provider;
     TimerContainer& timer_events_;
-    GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
     Callbacks & callbacks;
 
@@ -175,12 +170,9 @@ public:
 
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
-        GdProvider & gd_provider,
         TimerContainer& timer_events_,
-        GraphicEventContainer & graphic_events_,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
-        mod_api& mod,
         rdp_api& rdp,
         AuthApi& authentifier,
         FileSystemVirtualChannel& file_system_virtual_channel,
@@ -199,15 +191,12 @@ public:
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
     , front(front)
-    , mod(mod)
     , rdp(rdp)
     , authentifier(authentifier)
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , time_base(time_base)
-    , gd_provider(gd_provider)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , callbacks(callbacks)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,

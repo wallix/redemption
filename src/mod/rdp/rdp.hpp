@@ -830,12 +830,9 @@ public:
 #ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
-            this->gd_provider,
             this->timer_events_,
-            this->graphic_events_,
             this->session_probe_to_server_sender.get(),
             front,
-            mod,
             rdp,
             authentifier,
             file_system_virtual_channel,
