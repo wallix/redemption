@@ -136,7 +136,7 @@ Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_
                 case Transport::TlsResult::Ok: {
                     try {
                         ret = this->tls->check_certificate(
-                            server_notifier, this->error_message, this->ip_address, this->port);
+                            server_notifier, this->error_message, this->ip_address, this->port, tls_client_params.anonymous_tls);
 
                         if (ret == Transport::TlsResult::WaitExternalEvent) {
                             this->tls_state = TLSState::WaitCertCb;

@@ -64,7 +64,9 @@ inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std
     return false;
 }
 
-
+/**
+ * @brief all the context needed to manipulate TLS context for a TLS object
+ */
 class TLSContext
 {
     SSL_CTX * allocated_ctx = nullptr;
@@ -122,7 +124,6 @@ public:
 
         // reference doc: https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_config.html
 
-
         this->allocated_ctx = ctx;
         SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER/* | SSL_MODE_ENABLE_PARTIAL_WRITE*/);
 
@@ -138,7 +139,7 @@ public:
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
         SSL_CTX_set_min_proto_version(ctx, tls_client_params.tls_min_level);
-        if (tls_client_params.tls_max_level){
+        if (tls_client_params.tls_max_level) {
             SSL_CTX_set_max_proto_version(ctx, tls_client_params.tls_max_level);
         }
 
@@ -147,7 +148,10 @@ public:
         if (not tls_client_params.cipher_string.empty()) { // if parameter is not defined, use system default
             LOG(LOG_INFO, "TLS Client cipher list: %s", tls_client_params.cipher_string.c_str());
             SSL_CTX_set_cipher_list(ctx, tls_client_params.cipher_string.c_str());
-            SSL_CTX_set_security_level(ctx, 1);
+        }
+
+        if (tls_client_params.security_level >= 0) {
+            SSL_CTX_set_security_level(ctx, tls_client_params.security_level);
         }
 
         SSL* ssl = SSL_new(ctx);
@@ -278,8 +282,15 @@ public:
         ServerNotifier& server_notifier,
         std::string* error_message,
         const char* ip_address,
-        int port)
+        int port,
+        bool anon_tls)
     {
+        if (anon_tls) {
+            /* anonymous TLS doesn't have any certificate, so let's just return OK */
+            this->io = this->allocated_ssl;
+            return Transport::TlsResult::Ok;
+        }
+
         LOG(LOG_INFO, "SSL_get_peer_certificate()");
 
         // SSL_get_peer_certificate - get the X509 certificate of the peer
@@ -522,8 +533,7 @@ public:
         // --------Start of session specific init code ---------------------------------
 
         /* Load our keys and certificates*/
-        if(!SSL_CTX_use_certificate_chain_file(ctx, app_path(AppPath::CfgCrt)))
-        {
+        if(!SSL_CTX_use_certificate_chain_file(ctx, app_path(AppPath::CfgCrt))) {
             return tls_ctx_print_error("enable_server_tls", "Can't read certificate file", nullptr);
         }
 

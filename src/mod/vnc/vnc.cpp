@@ -22,6 +22,8 @@
 */
 
 #include "mod/vnc/vnc.hpp"
+#include <openssl/tls1.h>
+
 
 #ifndef __EMSCRIPTEN__
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
@@ -436,7 +438,21 @@ void mod_vnc::rdp_input_invalidate(Rect r) {
 
 bool mod_vnc::doTlsSwitch()
 {
-    TLSClientParams tlsParams = {0, 3, true, "DH:DHE"};
+    TLSClientParams tlsParams;
+
+    switch(this->choosenAuth) {
+    case VeNCRYPT_TLSNone:
+    case VeNCRYPT_TLSPlain:
+    case VeNCRYPT_TLSVnc:
+        /* needed params for anonymous TLS */
+        tlsParams.security_level = 0;
+        tlsParams.tls_max_level = TLS1_2_VERSION;
+        tlsParams.cipher_string = "ADH";
+        tlsParams.anonymous_tls = true;
+        break;
+    default:
+        break;
+    }
     NullServerNotifier notifier;
 
     switch (this->t.enable_client_tls(notifier, tlsParams)) {
@@ -457,11 +473,14 @@ bool mod_vnc::doTlsSwitch()
 
 void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
 {
-    LOG_IF(true||bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
+    bool can_read = true;
+
+    LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
     if (this->tlsSwitch) {
         if (this->doTlsSwitch()) {
             this->tlsSwitch = false;
+            can_read = true;
 
             switch(this->choosenAuth) {
             case VeNCRYPT_TLSNone:
@@ -489,10 +508,15 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
                 LOG(LOG_ERR, "auth %d not handled yet", this->choosenAuth);
                 break;
             }
+        } else {
+            can_read = false;
         }
 
     }
-    size_t readBytes = this->server_data_buf.read_from(this->t);
+
+    if (can_read) {
+        this->server_data_buf.read_from(this->t);
+    }
 
     [[maybe_unused]]
     uint64_t const data_server_before = this->server_data_buf.remaining();
@@ -538,7 +562,7 @@ const char *mod_vnc::securityTypeString(uint32_t t) {
 void mod_vnc::updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
     static VncAuthType preferedAuthTypes[] = {
         VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
-        //VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,     TLS not handled for now
+        VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,
         VNC_AUTH_ULTRA_SecureVNCPluginAuth_new, VNC_AUTH_ULTRA_SecureVNCPluginAuth,
         VNC_AUTH_VENCRYPT, VNC_AUTH_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
     };

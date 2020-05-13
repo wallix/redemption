@@ -24,7 +24,7 @@
 
 struct GdProvider {
     virtual gdi::GraphicApi & get_graphics() = 0;
-    virtual ~GdProvider() {};
+    virtual ~GdProvider() {}
 };
 
 template<class GD> 
