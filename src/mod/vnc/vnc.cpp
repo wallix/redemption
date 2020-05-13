@@ -22,6 +22,9 @@
 */
 
 #include "mod/vnc/vnc.hpp"
+#include <openssl/tls1.h>
+#include <openssl/tls1.h>
+
 
 #ifndef __EMSCRIPTEN__
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
