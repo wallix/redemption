@@ -24,6 +24,8 @@
 #include "mod/vnc/vnc.hpp"
 #include <openssl/tls1.h>
 #include "acl/gd_provider.hpp"
+#include <openssl/tls1.h>
+
 
 
 #ifndef __EMSCRIPTEN__
