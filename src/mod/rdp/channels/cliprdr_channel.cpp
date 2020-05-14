@@ -813,27 +813,38 @@ struct ClipboardVirtualChannel::D
         }
     }
 
-    void stop_nolock_data(ClipboardVirtualChannel& self, ClipCtx& clip)
+    void stop_nolock_data(
+        ClipboardVirtualChannel& self, ClipCtx& clip,
+        VirtualChannelDataSender* sender)
     {
+        auto& file_rng = clip.nolock_data.data;
+
         switch (clip.nolock_data)
         {
             case ClipCtx::TransferState::WaitingContinuationRange:
             case ClipCtx::TransferState::Range:
-                this->broken_file_transfer(self, clip, clip.nolock_data.data);
+                this->broken_file_transfer(self, clip, file_rng);
                 clip.nolock_data.init_empty();
                 break;
 
             case ClipCtx::TransferState::GetRange:
             case ClipCtx::TransferState::WaitingValidator:
+                if (sender) {
+                    filecontents_response_zerodata(*sender, file_rng.response_size);
+                }
+                this->stop_wait_validation(self, file_rng);
+                clip.nolock_data.init_empty();
+                break;
+
             case ClipCtx::TransferState::RequestedSyncRange:
             case ClipCtx::TransferState::SyncRange:
-                this->stop_wait_validation(self, clip.nolock_data.data);
+                this->stop_valid_transfer(self, file_rng);
                 clip.nolock_data.init_empty();
                 break;
 
             case ClipCtx::TransferState::Text:
                 this->finalize_text_transfer(
-                    self, clip, clip.nolock_data.data.file_validator_id);
+                    self, clip, file_rng.file_validator_id);
                 clip.nolock_data.init_empty();
                 break;
 
@@ -847,10 +858,12 @@ struct ClipboardVirtualChannel::D
         }
     }
 
-    void reset_clip(ClipboardVirtualChannel& self, ClipCtx& clip)
+    void reset_clip(
+        ClipboardVirtualChannel& self, ClipCtx& clip,
+        VirtualChannelDataSender* sender)
     {
         self.can_lock = false;
-        this->stop_nolock_data(self, clip);
+        this->stop_nolock_data(self, clip, sender);
         for (ClipCtx::LockedData::LockedRange& locked_rng : clip.locked_data.ranges) {
             this->broken_file_transfer(self, clip, locked_rng.file_contents_range);
         }
@@ -862,7 +875,7 @@ struct ClipboardVirtualChannel::D
         bytes_view chunk_data, char const* name,
         VirtualChannelDataSender* sender)
     {
-        this->reset_clip(self, clip);
+        this->reset_clip(self, clip, sender);
 
         auto general_flags = RDPECLIP::extract_clipboard_general_flags_capability(
             chunk_data, bool(self.verbose & RDPVerbose::cliprdr));
@@ -881,18 +894,20 @@ struct ClipboardVirtualChannel::D
         return not verify_before_transfer;
     }
 
-    void monitor_ready(ClipboardVirtualChannel& self, ClipCtx& clip)
+    void monitor_ready(
+        ClipboardVirtualChannel& self, ClipCtx& clip,
+        VirtualChannelDataSender* sender)
     {
         bool has_lock_support = self.can_lock;
-        this->reset_clip(self, clip);
+        this->reset_clip(self, clip, sender);
         clip.optional_lock_id.enable(has_lock_support);
     }
 
     bool format_list(
         ClipboardVirtualChannel& self,
         uint32_t flags, RDPECLIP::CliprdrHeader const& in_header,
-        VirtualChannelDataSender* sender, bool clip_enabled,
-        ClipCtx& clip, bytes_view chunk_data)
+        VirtualChannelDataSender* sender, VirtualChannelDataSender* receiver,
+        bool clip_enabled, ClipCtx& clip, bytes_view chunk_data)
     {
         // TODO fix that
         if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
@@ -912,17 +927,17 @@ struct ClipboardVirtualChannel::D
             return false;
         }
 
-        this->stop_nolock_data(self, clip);
+        this->stop_nolock_data(self, clip, receiver);
 
         InStream in_stream(chunk_data);
-        FormatListReceive receiver(
+        FormatListReceive format_list_receive(
             clip.use_long_format_names,
             in_header,
             in_stream,
             clip.current_format_list,
             self.verbose);
 
-        clip.current_file_list_format_id = receiver.file_list_format_id;
+        clip.current_file_list_format_id = format_list_receive.file_list_format_id;
 
         return true;
     }
@@ -2447,7 +2462,7 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
                 ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
             }
 
-            D().monitor_ready(*this, this->server_ctx);
+            D().monitor_ready(*this, this->server_ctx, this->to_client_sender_ptr());
 
             if (this->clipboard_monitor_ready_notifier) {
                 if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
@@ -2461,7 +2476,9 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
 
         case RDPECLIP::CB_FORMAT_LIST: {
             send_message_to_client = D().format_list(
-                *this, flags, header, this->to_server_sender_ptr(),
+                *this, flags, header,
+                this->to_server_sender_ptr(),
+                this->to_client_sender_ptr(),
                 this->params.clipboard_down_authorized || this->params.clipboard_up_authorized,
                 this->server_ctx,
                 chunk.remaining_bytes());
@@ -2580,7 +2597,9 @@ void ClipboardVirtualChannel::process_client_message(
 
         case RDPECLIP::CB_FORMAT_LIST: {
             send_message_to_server = D().format_list(
-                *this, flags, header, this->to_client_sender_ptr(),
+                *this, flags, header,
+                this->to_client_sender_ptr(),
+                this->to_server_sender_ptr(),
                 this->params.clipboard_down_authorized
                 || this->params.clipboard_up_authorized
                 || this->format_list_response_notifier,
