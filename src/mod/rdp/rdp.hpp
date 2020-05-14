@@ -1922,6 +1922,7 @@ class mod_rdp : public mod_api, public rdp_api
     bool graphics_update_disabled = false;
 
     bool mcs_disconnect_provider_ultimatum_pdu_received = false;
+    bool errinfo_graphics_subsystem_failed_encountered  = false;
 
     static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
     BmpCacheRev2_Cache_NumEntries()
@@ -3047,6 +3048,12 @@ public:
                                             LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
                                         uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
                                         this->process_error_info(error_info);
+
+                                        if (ERRINFO_GRAPHICSSUBSYSTEMFAILED == error_info)
+                                        {
+                                            this->errinfo_graphics_subsystem_failed_encountered = true;
+                                            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                                        }
                                     }
                                     break;
                                 case PDUTYPE2_SHUTDOWN_DENIED:
@@ -3197,7 +3204,12 @@ public:
                 }
             }
             catch(Error const & e){
-                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
+
+                if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)
+                {
+                    throw;
+                }
 
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     if (!this->support_connection_redirection_during_recording) {
@@ -5741,7 +5753,8 @@ private:
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
             LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
 
-        if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
+        if (!this->mcs_disconnect_provider_ultimatum_pdu_received &&
+            !this->errinfo_graphics_subsystem_failed_encountered) {
             this->connection_finalization_state = DISCONNECTED;
             write_packets(
                 this->trans,
