@@ -664,6 +664,10 @@ namespace
         }
     };
 
+    constexpr auto use_long_format = Cliprdr::IsLongFormat(true);
+    constexpr auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
+    constexpr uint32_t file_group_id = 49262;
+
     struct Buffer
     {
         StaticOutStream<1600> out;
@@ -671,7 +675,7 @@ namespace
         Buffer() {}
 
         template<class F>
-        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len = -1u)
+        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len = -1u) &
         {
             using namespace RDPECLIP;
             array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
@@ -685,15 +689,34 @@ namespace
         }
 
         template<class F>
-        bytes_view build_ok(uint16_t msgType, F f, uint32_t data_len = -1u)
+        bytes_view build_ok(uint16_t msgType, F f, uint32_t data_len = -1u) &
         {
             return this->build(msgType, RDPECLIP::CB_RESPONSE_OK, f, data_len);
         }
 
         template<class F>
-        bytes_view build_fail(uint16_t msgType, F f)
+        bytes_view build_fail(uint16_t msgType, F f) &
         {
             return this->build(msgType, RDPECLIP::CB_RESPONSE_FAIL, f);
+        }
+
+        bytes_view build_format_list(Cliprdr::FormatNameRef format_name) &
+        {
+            Cliprdr::format_list_serialize_with_header(
+                out,
+                use_long_format,
+                std::array{format_name});
+            return out.get_produced_bytes();
+        }
+
+        bytes_view build_format_list_with_file() &
+        {
+            return this->build_format_list(Cliprdr::FormatNameRef{file_group_id, file_group});
+        }
+
+        bytes_view build_format_list_with_text() &
+        {
+            return this->build_format_list(Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr});
         }
     };
 
@@ -878,10 +901,6 @@ namespace
             }
         };
     };
-
-    constexpr auto use_long_format = Cliprdr::IsLongFormat(true);
-    constexpr auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
-    constexpr uint32_t file_group_id = 49262;
 }
 
 // TODO move err count condition to RED_AUTO_TEST_CONTEXT_DATA
@@ -944,12 +963,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
 
     msg_comparator.run(
         TEST_PROCESS {
-            StaticOutStream<1600> out;
-            Cliprdr::format_list_serialize_with_header(
-                out,
-                use_long_format,
-                std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-            temp_av = out.get_produced_bytes();
+            Buffer buf;
+            temp_av = buf.build_format_list_with_file();
             channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::ToMod{54, first_last_flags, temp_av})
@@ -1051,12 +1066,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
 
     msg_comparator.run(
         TEST_PROCESS {
-            StaticOutStream<1600> out;
-            Cliprdr::format_list_serialize_with_header(
-                out,
-                Cliprdr::IsLongFormat(use_long_format),
-                std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, nullptr}});
-            temp_av = out.get_produced_bytes();
+            Buffer buf;
+            temp_av = buf.build_format_list_with_text();
             channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::ToMod{14, first_last_flags, temp_av})
@@ -1181,12 +1192,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
 
     msg_comparator.run(
         TEST_PROCESS {
-            StaticOutStream<1600> out;
-            Cliprdr::format_list_serialize_with_header(
-                out,
-                use_long_format,
-                std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-            temp_av = out.get_produced_bytes();
+            Buffer buf;
+            temp_av = buf.build_format_list_with_file();
             channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::ToMod{54, first_last_flags, temp_av})
@@ -1306,12 +1313,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
 
     msg_comparator.run(
         TEST_PROCESS {
-            StaticOutStream<1600> out;
-            Cliprdr::format_list_serialize_with_header(
-                out,
-                use_long_format,
-                std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-            temp_av = out.get_produced_bytes();
+            Buffer buf;
+            temp_av = buf.build_format_list_with_file();
             channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF(Msg::ToMod{54, first_last_flags, temp_av})
@@ -1584,12 +1587,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
 
     msg_comparator.run(
         TEST_PROCESS {
-            StaticOutStream<1600> out;
-            Cliprdr::format_list_serialize_with_header(
-                out,
-                use_long_format,
-                std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
-            temp_av = out.get_produced_bytes();
+            Buffer buf;
+            temp_av = buf.build_format_list_with_file();
             channel_ctx->process_server_message(temp_av);
         },
         TEST_BUF(Msg::ToFront{54, first_last_flags, temp_av})
