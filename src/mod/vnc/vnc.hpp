@@ -327,7 +327,7 @@ private:
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    GraphicFdPtr fd_event;
+    TopFdPtr fd_event;
     GraphicEventPtr wait_client_up_and_running_event;
 
 #ifndef __EMSCRIPTEN__
@@ -362,7 +362,7 @@ public:
     mod_vnc( Transport & t
            , TimeBase& time_base
            , GdProvider & gd_provider
-           , GraphicFdContainer & graphic_fd_events_
+           , TopFdContainer & fd_events_
            , TimerContainer & timer_events_
            , const char * username
            , const char * password
@@ -1753,5 +1753,4 @@ public:
     [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
 };
-
 

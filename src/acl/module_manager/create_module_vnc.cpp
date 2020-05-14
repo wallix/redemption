@@ -61,9 +61,9 @@ public:
 
     ModWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini, AuthApi & /*authentifier*/,
         const char * name, unique_fd sck, uint32_t verbose,
-        std::string * error_message, 
+        std::string * error_message,
         TimeBase& time_base,
-        GraphicFdContainer & graphic_fd_events_,
+        TopFdContainer & fd_events_,
         TimerContainer& timer_events_,
         SesmanInterface & sesman,
         const char* username,
@@ -91,10 +91,10 @@ public:
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
-    , mod(this->socket_transport, time_base, mod_wrapper, graphic_fd_events_, timer_events_, username, password, front, front_width, front_height,
-          keylayout, key_flags, clipboard_up, clipboard_down, encodings, 
+    , mod(this->socket_transport, time_base, mod_wrapper, fd_events_, timer_events_, username, password, front, front_width, front_height,
+          keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
-          report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported, 
+          report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
           rail_client_execute, vnc_verbose, metrics, sesman)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
@@ -111,16 +111,16 @@ public:
     }
 
     // from RdpInput
-    void rdp_gdi_up_and_running(ScreenInfo & si) override 
+    void rdp_gdi_up_and_running(ScreenInfo & si) override
     {
         this->mod.rdp_gdi_up_and_running(si);
     }
 
-    void rdp_gdi_down() override 
+    void rdp_gdi_down() override
     {
         this->mod.rdp_gdi_down();
     }
-    
+
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
         this->mod.rdp_input_scancode(param1, param2, param3, param4, keymap);
@@ -164,7 +164,7 @@ public:
     }
 
     // from mod_api
-    void disconnect() override 
+    void disconnect() override
     {
         return this->mod.disconnect();
     }
@@ -176,19 +176,19 @@ public:
     }
 
     // from mod_api
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) override 
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) override
     {
         return this->mod.send_input(time, message_type, device_flags, param1, param2);
     }
 
     // from mod_api
-    [[nodiscard]] Dimension get_dim() const override 
+    [[nodiscard]] Dimension get_dim() const override
     {
         return this->mod.get_dim();
     }
 
     // from mod_api
-    void log_metrics() override 
+    void log_metrics() override
     {
         return this->mod.log_metrics();
     }
@@ -196,7 +196,7 @@ public:
     // from mod_api
     void DLP_antivirus_check_channels_files() override
     {
-        return this->mod.DLP_antivirus_check_channels_files(); 
+        return this->mod.DLP_antivirus_check_channels_files();
     }
 
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
@@ -209,8 +209,8 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
-    TimeBase & time_base, 
-    GraphicFdContainer & graphic_fd_events_,
+    TimeBase & time_base,
+    TopFdContainer & fd_events_,
     TimerContainer& timer_events_,
     SesmanInterface & sesman,
     TimeObj & timeobj
@@ -264,7 +264,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         ini.get<cfg::debug::mod_vnc>(),
         nullptr,
         time_base,
-        graphic_fd_events_,
+        fd_events_,
         timer_events_,
         sesman,
         ini.get<cfg::globals::target_user>().c_str(),

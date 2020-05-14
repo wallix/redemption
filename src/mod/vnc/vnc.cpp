@@ -32,7 +32,7 @@
 mod_vnc::mod_vnc( Transport & t
            , TimeBase& time_base
            , GdProvider & gd_provider
-           , GraphicFdContainer & graphic_fd_events_
+           , TopFdContainer & fd_events_
            , TimerContainer & timer_events_
            , const char * username
            , const char * password
@@ -93,18 +93,18 @@ mod_vnc::mod_vnc( Transport & t
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-    this->fd_event = graphic_fd_events_.create_top_executor(time_base, this->t.get_fd())
+    this->fd_event = fd_events_.create_top_executor(time_base, this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
-        .on_action([this, &sesman](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-            this->draw_event(gd, sesman);
+        .on_action([this, &sesman](JLN_TOP_CTX ctx){
+            this->draw_event(this->gd_provider.get_graphics(), sesman);
             return ctx.need_more_data();
         })
-        .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
-            gdi_clear_screen(gd, this->get_dim());
+        .on_timeout([this](JLN_TOP_TIMER_CTX ctx){
+            gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
             // rearmed by clipboard
             return ctx.disable_timeout()
-            .replace_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){
+            .replace_timeout([this](JLN_TOP_TIMER_CTX ctx){
                 this->check_timeout();
                 return ctx.disable_timeout().ready();
             });
@@ -2025,7 +2025,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 
 void mod_vnc::init()
 {
-    if (this->gd_provider.is_ready_to_draw() 
+    if (this->gd_provider.is_ready_to_draw()
     && this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
         this->initial_clear_screen(this->gd_provider.get_graphics(), this->sesman);
@@ -2035,7 +2035,7 @@ void mod_vnc::init()
 
 void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
 {
-    if (this->gd_provider.is_ready_to_draw() 
+    if (this->gd_provider.is_ready_to_draw()
     && this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
         this->initial_clear_screen(this->gd_provider.get_graphics(), this->sesman);

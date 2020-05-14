@@ -27,7 +27,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     TimeBase& time_base,
     GdProvider & gd_provider,
     TopFdContainer & fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,
     SesmanInterface & sesman,
     const char* username,
@@ -50,7 +49,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
 )
 {
     return std::make_unique<mod_vnc>(
-        t, time_base, gd_provider, graphic_fd_events_, timer_events_, username, password, front,
+        t, time_base, gd_provider, fd_events_, timer_events_, username, password, front,
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_macos, send_alt_ksym,

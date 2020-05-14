@@ -41,7 +41,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     TimeBase& time_base,
     GdProvider & gd_provider,
     TopFdContainer & fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,
     SesmanInterface & sesman,
     const char* username,

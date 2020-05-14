@@ -22,13 +22,6 @@ Author(s): Jonathan Poelen
 #include "gdi/screen_functions.hpp"
 #include "mod/rdp/rdp.hpp"
 
-#ifndef __EMSCRIPTEN__
-# include <openssl/ssl.h>
-#endif
-
-
-
-
 void mod_rdp::acl_update()
 {
     if (this->enable_server_cert_external_validation) {

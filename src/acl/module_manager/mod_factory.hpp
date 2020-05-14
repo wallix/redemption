@@ -165,7 +165,7 @@ public:
             return this->create_wait_info_mod();
         case MODULE_INTERNAL_TRANSITION:
             return this->create_transition_mod();
-        case MODULE_INTERNAL_WIDGET_LOGIN: 
+        case MODULE_INTERNAL_WIDGET_LOGIN:
             return this->create_login_mod();
         case MODULE_XUP:
         {
@@ -597,7 +597,7 @@ public:
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
             this->time_base,
-            this->graphic_fd_events_,
+            this->fd_events_,
             this->timer_events_,
             this->sesman,
             this->timeobj

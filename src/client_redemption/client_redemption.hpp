@@ -239,7 +239,7 @@ public:
     ClientRedemption(TimeBase & time_base,
                      GraphicEventContainer & graphic_events_,
                      GraphicFdContainer& graphic_fd_events_,
-                     GraphicTimerContainer & graphic_timer_events_,
+                     GraphicTimerContainer & graphic_timer_events,
                      TopFdContainer& fd_events_,
                      TimerContainer & timer_events_,
                      ClientRedemptionConfig & config)
@@ -472,7 +472,6 @@ public:
                   , this->time_base
                   , this->gd_forwarder
                   , this->fd_events_
-                  , this->graphic_fd_events_
                   , this->timer_events_
                   , this->sesman
                   , this->config.user_name.c_str()
