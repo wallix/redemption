@@ -10,6 +10,7 @@ add_obj src/client_redemption/client_config/client_redemption_config.o : $(REDEM
 add_obj src/client_redemption/client_input_output_api/rdp_clipboard_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_clipboard_config.cpp ;
 add_obj src/client_redemption/client_input_output_api/rdp_disk_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_disk_config.cpp ;
 add_obj src/core/channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
+add_obj src/core/dynamic_channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/dynamic_channels_authorizations.cpp ;
 add_obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 add_obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 add_obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
@@ -94,6 +95,7 @@ requirement_list += <library>src/client_redemption/client_config/client_redempti
 requirement_list += <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o ;
 requirement_list += <library>src/client_redemption/client_input_output_api/rdp_disk_config.o ;
 requirement_list += <library>src/core/channels_authorizations.o ;
+requirement_list += <library>src/core/dynamic_channels_authorizations.o ;
 requirement_list += <library>src/core/error.o ;
 requirement_list += <library>src/core/font.o ;
 requirement_list += <library>src/core/RDP/dwt.o ;

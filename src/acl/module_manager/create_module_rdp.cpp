@@ -335,6 +335,13 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.remote_app_params.bypass_legal_notice_timeout
                                                        = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout>();
 
+    // ======================= Dynamic Channel Params ===================
+
+    mod_rdp_params.dynamic_channels_params.allowed_channels = ini.get<cfg::mod_rdp::allowed_dynamic_channels>().c_str();
+    mod_rdp_params.dynamic_channels_params.denied_channels  = ini.get<cfg::mod_rdp::denied_dynamic_channels>().c_str();
+
+    // ======================= End Dynamic Channel Params ===================
+
     mod_rdp_params.experimental_fix_input_event_sync   = ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
     mod_rdp_params.session_probe_params.fix_too_long_cookie    = ini.get<cfg::mod_rdp::experimental_fix_too_long_cookie>();
 

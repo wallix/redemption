@@ -21,25 +21,37 @@
 #pragma once
 
 #include "core/channel_list.hpp"
+#include "core/dynamic_channels_authorizations.hpp"
+#include "core/session_reactor.hpp"
 #include "core/RDP/channels/drdynvc.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "utils/log.hpp"
 #include "core/stream_throw_helpers.hpp"
 
+struct DynamicChannelVirtualChannelParam
+{
+    const char * allowed_channels = "*";
+    const char * denied_channels  = "";
+};
+
 class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {
-public:
-    struct Params : public BaseVirtualChannel::Params {
-        using BaseVirtualChannel::Params::Params;
-    };
+    DynamicChannelsAuthorizations dynamic_channels_authorizations;
 
+    SessionReactor& session_reactor;
+
+public:
     explicit DynamicChannelVirtualChannel(
+        SessionReactor& session_reactor,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        const Params & params)
+        const BaseVirtualChannel::Params & base_params,
+        const DynamicChannelVirtualChannelParam & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
-                         params)
+                         base_params)
+    , dynamic_channels_authorizations(params.allowed_channels, params.denied_channels)
+    , session_reactor(session_reactor)
     {}
 
     void process_client_message(uint32_t total_length,
@@ -83,6 +95,9 @@ public:
                     drdynvc::DVCCreateResponsePDU create_response;
 
                     create_response.receive(chunk);
+
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_message:");
                     create_response.log(LOG_INFO);
                 }
             break;
@@ -136,13 +151,52 @@ public:
         switch (Cmd)
         {
             case drdynvc::CMD_CREATE:
-                if (bool(this->verbose & RDPVerbose::drdynvc) &&
-                    (flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)))
+                if (flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
                 {
                     drdynvc::DVCCreateRequestPDU create_request;
 
                     create_request.receive(chunk);
-                    create_request.log(LOG_INFO);
+
+                    if (bool(this->verbose & RDPVerbose::drdynvc))
+                    {
+                        LOG(LOG_INFO,
+                            "FileSystemVirtualChannel::process_server_message:");
+                        create_request.log(LOG_INFO);
+                    }
+
+                    const char * channel_name = create_request.ChannelName();
+
+                    bool const is_authorized = this->dynamic_channels_authorizations.is_authorized(channel_name);
+                    if (!is_authorized)
+                    {
+                        uint8_t message_buffer[1024];
+
+                        OutStream out_stream(message_buffer);
+
+                        drdynvc::DVCCreateResponsePDU create_response(create_request.ChannelId(), 0xC0000001);
+
+                        create_response.emit(out_stream);
+
+                        if (bool(this->verbose & RDPVerbose::drdynvc)) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::process_server_message:");
+                            create_response.log(LOG_INFO);
+                        }
+
+                        this->send_message_to_server(
+                            out_stream.get_offset(),
+                              CHANNELS::CHANNEL_FLAG_FIRST
+                            | CHANNELS::CHANNEL_FLAG_LAST,
+                            out_stream.get_bytes());
+                    }
+
+                    this->report_message.log6(
+                        (is_authorized ? LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED : LogId::DYNAMIC_CHANNEL_CREATION_REJECTED),
+                        this->session_reactor.get_current_time(), {
+                        KVLog("channel_name"_av, { channel_name, strlen(channel_name)})
+                    });
+
+                    send_message_to_client = is_authorized;
                 }
             break;
 

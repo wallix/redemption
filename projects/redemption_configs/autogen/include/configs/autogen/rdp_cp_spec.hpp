@@ -79,6 +79,14 @@ cipher_string = string(default='ALL')
 # Show common cipher list supported by client and server
 show_common_cipher_list = boolean(default=False)
 
+# List of enabled dynamic virtual channels (example: channel1,channel2,etc). Character * only, activate all.
+#_advanced
+allowed_dynamic_channels = string(default='*')
+
+# List of disabled dynamic virtual channels (example: channel1,channel2,etc). Character * only, deactivate all.
+#_advanced
+denied_dynamic_channels = string(default='')
+
 # Enables Server Redirection Support.
 server_redirection = boolean(default=False)
 

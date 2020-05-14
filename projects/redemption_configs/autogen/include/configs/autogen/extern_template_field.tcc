@@ -28,6 +28,8 @@ template class Inifile::Field<cfg::mod_rdp::cipher_string>;
 template class Inifile::Field<cfg::mod_rdp::show_common_cipher_list>;
 template class Inifile::Field<cfg::mod_rdp::allow_channels>;
 template class Inifile::Field<cfg::mod_rdp::deny_channels>;
+template class Inifile::Field<cfg::mod_rdp::allowed_dynamic_channels>;
+template class Inifile::Field<cfg::mod_rdp::denied_dynamic_channels>;
 template class Inifile::Field<cfg::mod_rdp::server_redirection_support>;
 template class Inifile::Field<cfg::mod_rdp::load_balance_info>;
 template class Inifile::Field<cfg::mod_rdp::bogus_sc_net_size>;

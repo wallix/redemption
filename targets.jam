@@ -34,6 +34,7 @@ exe headlessclient :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -132,6 +133,7 @@ exe rdpproxy :
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/check_files.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
@@ -328,6 +330,7 @@ exe rdpclient :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -556,6 +559,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -697,6 +701,7 @@ test-run tests/acl/test_authentifier :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -841,6 +846,7 @@ test-run tests/acl/test_license_api :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -919,6 +925,7 @@ test-run tests/acl/test_module_manager :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -1239,6 +1246,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -1325,6 +1333,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -1387,6 +1396,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -2619,6 +2629,13 @@ test-run tests/core/test_client_info :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/client_info.hpp
 ;
+test-run tests/core/test_dynamic_channels_authorizations :
+  $(REDEMPTION_TEST_PATH)/core/test_dynamic_channels_authorizations.cpp
+:
+  <library>src/core/dynamic_channels_authorizations.o
+  <covfile>src/core/dynamic_channels_authorizations.cpp
+  <covfile>src/core/dynamic_channels_authorizations.hpp
+;
 test-run tests/core/test_error :
   $(REDEMPTION_TEST_PATH)/core/test_error.cpp
 :
@@ -2694,6 +2711,7 @@ test-run tests/core/test_mainloop :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
@@ -2838,6 +2856,7 @@ test-run tests/core/test_session :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -2984,6 +3003,7 @@ test-run tests/front/test_front :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -4496,6 +4516,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
+  <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
@@ -5836,6 +5857,7 @@ obj src/core/RDP/orders/remoteFx.o : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remo
 obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
 obj src/core/channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
 obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;
+obj src/core/dynamic_channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/dynamic_channels_authorizations.cpp ;
 obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
@@ -6105,6 +6127,7 @@ alias test_channel_list : tests/core/test_channel_list ;
 alias test_channel_names : tests/core/test_channel_names ;
 alias test_check_files : tests/core/test_check_files ;
 alias test_client_info : tests/core/test_client_info ;
+alias test_dynamic_channels_authorizations : tests/core/test_dynamic_channels_authorizations ;
 alias test_error : tests/core/test_error ;
 alias test_font : tests/core/test_font ;
 alias test_front_api : tests/core/test_front_api ;
@@ -6438,6 +6461,7 @@ alias test_channel_list.coverage : tests/core/test_channel_list.coverage ;
 alias test_channel_names.coverage : tests/core/test_channel_names.coverage ;
 alias test_check_files.coverage : tests/core/test_check_files.coverage ;
 alias test_client_info.coverage : tests/core/test_client_info.coverage ;
+alias test_dynamic_channels_authorizations.coverage : tests/core/test_dynamic_channels_authorizations.coverage ;
 alias test_error.coverage : tests/core/test_error.coverage ;
 alias test_font.coverage : tests/core/test_font.coverage ;
 alias test_front_api.coverage : tests/core/test_front_api.coverage ;
@@ -6815,6 +6839,7 @@ alias tests/core.norec :
   tests/core/test_channel_names
   tests/core/test_check_files
   tests/core/test_client_info
+  tests/core/test_dynamic_channels_authorizations
   tests/core/test_error
   tests/core/test_font
   tests/core/test_front_api

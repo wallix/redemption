@@ -353,12 +353,12 @@ cache_waiting_list = boolean(default=True)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channels (example: channel1,channel2,etc). Character * only, activate all with low priority.
 # (values are comma-separated)
 #_hidden
 allow_channels = string(default='*')
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channels (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 # (values are comma-separated)
 #_hidden
 deny_channels = string(default='')

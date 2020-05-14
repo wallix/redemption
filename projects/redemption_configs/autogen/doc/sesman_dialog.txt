@@ -69,9 +69,13 @@ cfg::mod_rdp::cipher_string ⇐ mod_rdp:cipher_string   [std::string]
 cfg::mod_rdp::show_common_cipher_list ⇐ mod_rdp:show_common_cipher_list   [bool]
     Show common cipher list supported by client and server
 cfg::mod_rdp::allow_channels ⇐ allow_channels   [std::string]
-    Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+    List of enabled (static) virtual channels (example: channel1,channel2,etc). Character * only, activate all with low priority.
 cfg::mod_rdp::deny_channels ⇐ deny_channels   [std::string]
-    Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+    List of disabled (static) virtual channels (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+cfg::mod_rdp::allowed_dynamic_channels ⇐ mod_rdp:allowed_dynamic_channels   [std::string]
+    List of enabled dynamic virtual channels (example: channel1,channel2,etc). Character * only, activate all.
+cfg::mod_rdp::denied_dynamic_channels ⇐ mod_rdp:denied_dynamic_channels   [std::string]
+    List of disabled dynamic virtual channels (example: channel1,channel2,etc). Character * only, deactivate all.
 cfg::mod_rdp::server_redirection_support ⇐ mod_rdp:server_redirection_support   [bool]
     Enables Server Redirection Support.
 cfg::mod_rdp::load_balance_info ⇐ mod_rdp:load_balance_info   [std::string]

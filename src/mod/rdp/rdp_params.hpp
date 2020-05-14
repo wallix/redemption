@@ -204,6 +204,14 @@ struct ModRDPParams
 
     bool accept_monitor_layout_change_if_capture_is_not_started = true;
 
+    struct DynamicChannelsParams
+    {
+        const char * allowed_channels = "*";
+        const char * denied_channels  = "";
+    };
+
+    DynamicChannelsParams dynamic_channels_params;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -426,6 +434,9 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_license_store);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             accept_monitor_layout_change_if_capture_is_not_started);
+
+        RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
+        RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);
