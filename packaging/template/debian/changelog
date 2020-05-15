@@ -1,3 +1,9 @@
+redemption (8.1.0%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Session Loop Refactoring
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 May 2020 17:02:07 +0200
+
 redemption (8.0.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Review Python3 for Sesman
