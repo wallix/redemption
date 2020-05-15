@@ -32,8 +32,6 @@
 #include <string>
 
 
-class FileValidatorService;
-class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
 

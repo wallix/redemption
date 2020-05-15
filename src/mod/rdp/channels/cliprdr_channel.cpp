@@ -71,8 +71,8 @@ namespace
 enum class ClipboardVirtualChannel::ClipCtx::Sig::Status : uint8_t
 {
     Update,
-    Broken,
     Final,
+    Broken,
 };
 
 void ClipboardVirtualChannel::ClipCtx::Sig::reset()
@@ -510,7 +510,9 @@ namespace
             if (bool(verbose & RDPVerbose::cliprdr_dump)) {
                 const bool send              = false;
                 const bool from_or_to_client = (direction == Direction::FileFromClient);
-                ::msgdump_c(send, from_or_to_client, total_length, flags, chunk.remaining_bytes());
+                ::msgdump_c(
+                    send, from_or_to_client, total_length,
+                    flags, chunk.remaining_bytes());
             }
         };
 
@@ -522,7 +524,8 @@ namespace
 
                 dump();
 
-                LOG(LOG_ERR, "Truncated %s: expected=8 remains=%zu", funcname, chunk.in_remain());
+                LOG(LOG_ERR, "Truncated %s: expected=8 remains=%zu",
+                    funcname, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
@@ -564,21 +567,21 @@ namespace
         return true;
     }
 
-    constexpr uint32_t max_len_channel_message = CHANNELS::CHANNEL_CHUNK_LENGTH;
-    const char zeros_buf[max_len_channel_message] {};
+    constexpr uint32_t channel_chunk_length = CHANNELS::CHANNEL_CHUNK_LENGTH;
+    const char zeros_buf[channel_chunk_length] {};
 
     constexpr uint32_t size_of_cliprdr_header_with_stream_id
         = RDPECLIP::CliprdrHeader::size() + 4 /* streamId */;
 
     template<class GetView>
-    void send_until_last2(
+    void send_until_last(
         VirtualChannelDataSender& sender,
         uint32_t total_pkt_size,
         GetView get_view)
     {
         uint32_t offset = 0;
         uint32_t remaining = total_pkt_size - size_of_cliprdr_header_with_stream_id;
-        constexpr auto max_len = max_len_channel_message;
+        constexpr auto max_len = channel_chunk_length;
         for (; remaining > max_len; remaining -= max_len, offset += max_len) {
             sender(total_pkt_size, 0, get_view(offset, max_len));
         }
@@ -588,7 +591,7 @@ namespace
     void filecontents_response_zerodata(
         VirtualChannelDataSender& sender, uint32_t response_size)
     {
-        send_until_last2(
+        send_until_last(
             sender,
             response_size,
             [&](uint32_t /*offset*/, uint32_t len){
@@ -601,7 +604,7 @@ namespace
     {
         assert(response_size - size_of_cliprdr_header_with_stream_id
             <= file_contents.size());
-        send_until_last2(
+        send_until_last(
             sender,
             response_size,
             [&](uint32_t offset, uint32_t len){
@@ -623,7 +626,7 @@ struct ClipboardVirtualChannel::D
     {
         assert(total_packet_size >= data_len);
 
-        StaticOutStream<max_len_channel_message> out_stream;
+        StaticOutStream<channel_chunk_length> out_stream;
         RDPECLIP::CliprdrHeader header(
             RDPECLIP::CB_FILECONTENTS_RESPONSE,
             RDPECLIP::CB_RESPONSE_OK,
@@ -644,9 +647,9 @@ struct ClipboardVirtualChannel::D
                 out_stream.rewind();
                 data = data.drop_front(chunk_size);
 
-                while (data.size() > max_len_channel_message) {
-                    sender(total_packet_size, flags, data.first(max_len_channel_message));
-                    data = data.drop_front(max_len_channel_message);
+                while (data.size() > channel_chunk_length) {
+                    sender(total_packet_size, flags, data.first(channel_chunk_length));
+                    data = data.drop_front(channel_chunk_length);
                 }
             }
 
@@ -769,30 +772,30 @@ struct ClipboardVirtualChannel::D
         }
     }
 
-    void _move_tfl_in_validator_list(
-        ClipboardVirtualChannel& self,
-        // TODO clip only for direction...
-        ClipCtx& clip,
-        ClipCtx::FileContentsRange& file_rng)
-    {
-          self.file_validator->send_eof(file_rng.file_validator_id);
-          self.file_validator_list.push_back({
-              file_rng.file_validator_id,
-              this->to_direction(self, clip),
-              std::move(file_rng.tfl_file),
-              file_rng.file_name,
-              file_rng.sig
-          });
-    }
-
     void _close_file_rng(
         ClipboardVirtualChannel& self,
+        // TODO clip only for direction...
         ClipCtx& clip,
         ClipCtx::FileContentsRange& file_rng,
         Mwrm3::TransferedStatus transfered_status)
     {
         if (bool(file_rng.file_validator_id)) {
-            this->_move_tfl_in_validator_list(self, clip, file_rng);
+            switch (transfered_status) {
+                case Mwrm3::TransferedStatus::Broken:
+                    self.file_validator->send_abort(file_rng.file_validator_id);
+                    break;
+                case Mwrm3::TransferedStatus::Completed:
+                case Mwrm3::TransferedStatus::Unknown:
+                    self.file_validator->send_eof(file_rng.file_validator_id);
+                    break;
+            }
+            self.file_validator_list.push_back({
+                file_rng.file_validator_id,
+                this->to_direction(self, clip),
+                std::move(file_rng.tfl_file),
+                file_rng.file_name,
+                file_rng.sig
+            });
             file_rng.file_validator_id = FileValidatorId();
         }
         else {
@@ -804,9 +807,6 @@ struct ClipboardVirtualChannel::D
         ClipboardVirtualChannel& self, ClipCtx& clip, ClipCtx::FileContentsRange& file_rng)
     {
         file_rng.sig.broken();
-        if (bool(file_rng.file_validator_id)) {
-            self.file_validator->send_eof(file_rng.file_validator_id);
-        }
         this->_close_file_rng(self, clip, file_rng, Mwrm3::TransferedStatus::Broken);
     }
 
@@ -826,8 +826,7 @@ struct ClipboardVirtualChannel::D
         switch (file_rng.sig) {
             case ClipCtx::Sig::Status::Update:
                 file_rng.sig.broken();
-                this->_close_file_rng_tfl(self, file_rng, Mwrm3::TransferedStatus::Broken);
-                break;
+                [[fallthrough]];
 
             case ClipCtx::Sig::Status::Broken:
                 this->_close_file_rng_tfl(self, file_rng, Mwrm3::TransferedStatus::Broken);
