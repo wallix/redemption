@@ -692,6 +692,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "client_address_sent")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::client_address_sent&>(this->variables).value,
+                ::configs::spec_type<ClientAddressSent>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "bogus_sc_net_size")) {
             ::configs::parse_and_log(
                 context, key,

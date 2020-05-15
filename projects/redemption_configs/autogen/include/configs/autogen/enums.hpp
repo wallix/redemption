@@ -588,6 +588,26 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnAccountManipulation 
 { return os << static_cast<unsigned long>(e); }
 
 
+// Client Address to send to target(in InfoPacket)
+enum class ClientAddressSent : unsigned char
+{
+    // Send 0.0.0.0
+    no_address = 0,
+    // Send proxy client address or target connexion
+    proxy = 1,
+    // Send user client address of front connexion
+    front = 2,
+};
+
+inline bool is_valid_enum_value(ClientAddressSent e)
+{ return static_cast<unsigned long>(e) <= 2; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, ClientAddressSent e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
 {

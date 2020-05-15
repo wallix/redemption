@@ -216,7 +216,7 @@ namespace
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
 
-            char source_ip[256];
+            char source_ip[256] { };
             utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
             const bool source_is_localhost = (0 == strcmp(source_ip, "127.0.0.1"));
             REDEMPTION_DIAGNOSTIC_PUSH

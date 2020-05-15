@@ -31,6 +31,14 @@
 
 class in_addr;
 
+struct IpAddress
+{
+    char ip_addr[46];
+    
+    IpAddress();
+    IpAddress(const char *ip_addr);
+};
+
 bool try_again(int errnum);
 
 /// std::expected
@@ -47,3 +55,6 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
                        writable_bytes_view transparent_dest, uint32_t verbose);
 
 FILE* popen_conntrack(const char* source_ip, int source_port, int target_port);
+
+[[no_discard]]
+bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_result = nullptr);

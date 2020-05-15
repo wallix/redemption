@@ -114,12 +114,30 @@ void ModuleManager::create_mod_rdp(
 
     const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
 
+    IpAddress local_ip_address;
+    const char* client_address = "0.0.0.0";
+    switch (ini.get<cfg::mod_rdp::client_address_sent>())
+    {
+        case ClientAddressSent::no_address:
+            break;
+        case ClientAddressSent::front :
+            client_address = ini.get<cfg::globals::host>().c_str();
+            break;
+        case ClientAddressSent::proxy :
+            if (!get_local_ip_address(local_ip_address, client_sck.fd())) {
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+            client_address = local_ip_address.ip_addr;
+            break;
+    }
+
+
     ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
     ModRDPParams mod_rdp_params(
         (smartcard_passthrough ? "" : ini.get<cfg::globals::target_user>().c_str())
       , (smartcard_passthrough ? "" : ini.get<cfg::context::target_password>().c_str())
       , ini.get<cfg::context::target_host>().c_str()
-      , "0.0.0.0"   // client ip is silenced
+      , client_address
       , key_flags
       , this->glyphs
       , this->theme
@@ -613,6 +631,7 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::metrics::log_file_turnover_interval>(),
                 ini.get<cfg::metrics::log_interval>());
         }
+
 
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
