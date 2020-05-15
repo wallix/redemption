@@ -510,7 +510,7 @@
           "description": ""
         },
         {
-          "name": "bestsafe_integration",
+          "name": "enable_bestsafe_interaction",
           "type": "bool",
           "default": false,
           "description": ""

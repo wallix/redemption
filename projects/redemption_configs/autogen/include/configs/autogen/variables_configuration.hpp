@@ -2221,7 +2221,7 @@ namespace cfg {
         type value = static_cast<type>(352);
     };
     /// type: bool <br/>
-    /// connpolicy -> proxy    [name: session_probe::bestsafe_integration] <br/>
+    /// connpolicy -> proxy    [name: session_probe::enable_bestsafe_interaction] <br/>
     /// sesman::name: mod_rdp:session_probe_bestsafe_integration <br/>
     /// value{false} <br/>
     struct mod_rdp::session_probe_bestsafe_integration {
