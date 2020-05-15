@@ -570,22 +570,14 @@ namespace
     constexpr uint32_t size_of_cliprdr_header_with_stream_id
         = RDPECLIP::CliprdrHeader::size() + 4 /* streamId */;
 
-    struct PreSender
-    {
-        uint32_t offset;
-        uint32_t max_pkt_len;
-        uint32_t remaining;
-    };
-
     template<class GetView>
     void send_until_last2(
         VirtualChannelDataSender& sender,
-        uint32_t already_used,
         uint32_t total_pkt_size,
         GetView get_view)
     {
         uint32_t offset = 0;
-        uint32_t remaining = total_pkt_size - already_used;
+        uint32_t remaining = total_pkt_size - size_of_cliprdr_header_with_stream_id;
         constexpr auto max_len = max_len_channel_message;
         for (; remaining > max_len; remaining -= max_len, offset += max_len) {
             sender(total_pkt_size, 0, get_view(offset, max_len));
@@ -598,7 +590,6 @@ namespace
     {
         send_until_last2(
             sender,
-            size_of_cliprdr_header_with_stream_id,
             response_size,
             [&](uint32_t /*offset*/, uint32_t len){
                 return bytes_view(zeros_buf, len);
@@ -612,7 +603,6 @@ namespace
             <= file_contents.size());
         send_until_last2(
             sender,
-            size_of_cliprdr_header_with_stream_id,
             response_size,
             [&](uint32_t offset, uint32_t len){
                 return file_contents.subarray(offset, len);
@@ -633,7 +623,6 @@ struct ClipboardVirtualChannel::D
     {
         assert(total_packet_size >= data_len);
 
-        LOG(LOG_DEBUG, "send_response_datas");
         StaticOutStream<max_len_channel_message> out_stream;
         RDPECLIP::CliprdrHeader header(
             RDPECLIP::CB_FILECONTENTS_RESPONSE,
@@ -646,28 +635,25 @@ struct ClipboardVirtualChannel::D
         auto flags = send_first_flags;
 
         for (bytes_view data : datas) {
-            while (data.size() > out_stream.tailroom()) {
+            if (data.size() > out_stream.tailroom()) {
                 auto chunk_size = out_stream.tailroom();
-
                 out_stream.out_copy_bytes(data.first(chunk_size));
-                LOG(LOG_DEBUG, "%zu / %u  [%x]",
-                    out_stream.get_produced_bytes().size(), total_packet_size, flags);
                 sender(total_packet_size, flags, out_stream.get_produced_bytes());
-                flags = 0;
 
+                flags = 0;
                 out_stream.rewind();
                 data = data.drop_front(chunk_size);
+
+                while (data.size() > max_len_channel_message) {
+                    sender(total_packet_size, flags, data.first(max_len_channel_message));
+                    data = data.drop_front(max_len_channel_message);
+                }
             }
 
             out_stream.out_copy_bytes(data);
         }
 
-        LOG(LOG_DEBUG, "last:: %zu / %u  [%x]",
-            out_stream.get_produced_bytes().size(), total_packet_size, flags | last_flag);
-        sender(
-            total_packet_size,
-            flags | last_flag,
-            out_stream.get_produced_bytes());
+        sender(total_packet_size, flags | last_flag, out_stream.get_produced_bytes());
 
         return total_packet_size;
     }
@@ -690,6 +676,58 @@ struct ClipboardVirtualChannel::D
             sender, stream_id, datas,
             total_packet_size, packet_len,
             CHANNELS::CHANNEL_FLAG_LAST);
+    }
+
+    static void send_filecontents_range(
+        VirtualChannelDataSender& sender,
+        StreamId stream_id,
+        FileGroupId lindex,
+        uint64_t offset,
+        uint32_t requested_len)
+    {
+        StaticOutStream<128> out_stream;
+
+        RDPECLIP::FileContentsRequestPDU new_request_pdu(
+            safe_int(stream_id),
+            safe_int(lindex),
+            RDPECLIP::FILECONTENTS_RANGE,
+            uint32_t(offset),
+            uint32_t(offset >> 32),
+            requested_len,
+            0, false);
+
+        RDPECLIP::CliprdrHeader header(
+            RDPECLIP::CB_FILECONTENTS_REQUEST,
+            RDPECLIP::CB_RESPONSE_OK,
+            new_request_pdu.size());
+
+        header.emit(out_stream);
+        new_request_pdu.emit(out_stream);
+
+        sender(
+            out_stream.get_offset(),
+            send_first_last_flags,
+            out_stream.get_produced_bytes());
+    }
+
+    [[nodiscard]]
+    static uint32_t send_filecontents_response_header(
+        VirtualChannelDataSender& sender,
+        StreamId stream_id,
+        uint32_t data_len)
+    {
+        StaticOutStream<128> out_stream;
+        RDPECLIP::CliprdrHeader header(
+            RDPECLIP::CB_FILECONTENTS_RESPONSE,
+            RDPECLIP::CB_RESPONSE_OK,
+            data_len + 4u /* streamId */);
+        header.emit(out_stream);
+        out_stream.out_uint32_le(safe_int(stream_id));
+
+        uint32_t response_size = checked_int(data_len + out_stream.get_offset());
+        sender(response_size, send_first_flags, out_stream.get_produced_bytes());
+
+        return response_size;
     }
 
     Direction to_direction(ClipboardVirtualChannel& self, ClipCtx const& clip) const
@@ -1319,8 +1357,6 @@ struct ClipboardVirtualChannel::D
                         return true;
                     }
 
-                    LOG(LOG_DEBUG, "position = %lu / %lu", file_contents_request_pdu.position(), clip.files[lindex].file_size);
-
                     LOG(LOG_ERR,
                         "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                             " Unsupported random access for a FILECONTENTS_RANGE");
@@ -1351,7 +1387,6 @@ struct ClipboardVirtualChannel::D
                           + file_contents_request_pdu.cbRequested()
                           <= file_contents.size()
                         ) {
-                            LOG(LOG_DEBUG, "SyncRange with data");
                             auto offset = std::min<uint64_t>(
                                 file_contents_request_pdu.position(),
                                 file_contents.size());
@@ -1359,7 +1394,7 @@ struct ClipboardVirtualChannel::D
                                 file_contents.size() - offset,
                                 file_contents_request_pdu.cbRequested());
 
-                            D::send_response_datas(
+                            send_response_datas(
                                 sender, stream_id,
                                 { file_contents.subarray(offset, len) });
 
@@ -1367,7 +1402,6 @@ struct ClipboardVirtualChannel::D
                         }
 
                         if (file_contents_request_pdu.position() == file_contents.size()) {
-                            LOG(LOG_DEBUG, "SyncRange with -> set_range");
                             update_continuation_range(file_rng);
                             clip.nolock_data.set_range();
 
@@ -1375,8 +1409,6 @@ struct ClipboardVirtualChannel::D
                         }
 
                         if (file_contents_request_pdu.position() <= file_contents.size()) {
-                            LOG(LOG_DEBUG, "SyncRange unknown data");
-
                             auto already_known
                                 = file_contents.size() - file_contents_request_pdu.position();
                             uint64_t offset
@@ -1384,37 +1416,12 @@ struct ClipboardVirtualChannel::D
                             uint32_t requested_len = checked_int(
                                 file_contents_request_pdu.cbRequested() - already_known);
 
-                            LOG(LOG_DEBUG, "position = %zu", file_contents_request_pdu.size());
-                            LOG(LOG_DEBUG, "file size = %zu", file_contents.size());
-                            LOG(LOG_DEBUG, "already_known = %zu", already_known);
-
-                            StaticOutStream<128> out_stream;
-
-                            RDPECLIP::FileContentsRequestPDU new_request_pdu(
-                                safe_int(file_rng.stream_id),
-                                safe_int(file_rng.lindex),
-                                RDPECLIP::FILECONTENTS_RANGE,
-                                uint32_t(offset),
-                                uint32_t(offset >> 32),
-                                requested_len,
-                                0, false);
-
-                            RDPECLIP::CliprdrHeader header(
-                                RDPECLIP::CB_FILECONTENTS_REQUEST,
-                                RDPECLIP::CB_RESPONSE_OK,
-                                new_request_pdu.size());
-
-                            header.emit(out_stream);
-                            new_request_pdu.emit(out_stream);
-
-                            LOG(LOG_DEBUG, "auto req requested: %lu + %u",
-                                new_request_pdu.position(),
-                                new_request_pdu.cbRequested());
-
-                            receiver(
-                                out_stream.get_produced_bytes().size(),
-                                send_first_last_flags,
-                                out_stream.get_produced_bytes());
+                            send_filecontents_range(
+                                receiver,
+                                file_rng.stream_id,
+                                file_rng.lindex,
+                                offset,
+                                requested_len);
 
                             file_rng.stream_id = stream_id;
                             file_rng.file_size_requested = requested_len;
@@ -1425,8 +1432,6 @@ struct ClipboardVirtualChannel::D
 
                             return false;
                         }
-
-                        LOG(LOG_DEBUG, "SyncRange stop");
 
                         this->stop_valid_transfer(self, file_rng);
                         clip.nolock_data.init_empty();
@@ -1451,9 +1456,6 @@ struct ClipboardVirtualChannel::D
                             break;
                         }
                         else {
-                            LOG(LOG_ERR,
-                                "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                                    " Unsupported random access for a FILECONTENTS_RANGE");
                             this->broken_file_transfer(self, clip, file_rng);
                             clip.nolock_data.init_empty();
                             return init_contents_range();
@@ -1677,33 +1679,12 @@ struct ClipboardVirtualChannel::D
         auto send_file_contents_request = [&receiver](
             ClipCtx::FileContentsRange& file_rng
         ){
-            StaticOutStream<128> out_stream;
-
-            RDPECLIP::FileContentsRequestPDU file_contents_request_pdu(
-                safe_int(file_rng.stream_id),
-                safe_int(file_rng.lindex),
-                RDPECLIP::FILECONTENTS_RANGE,
-                uint32_t(file_rng.file_offset),
-                uint32_t(file_rng.file_offset >> 32),
-                file_rng.first_file_size_requested,
-                0, false);
-
-            RDPECLIP::CliprdrHeader header(
-                RDPECLIP::CB_FILECONTENTS_REQUEST,
-                RDPECLIP::CB_RESPONSE_OK,
-                file_contents_request_pdu.size());
-
-            header.emit(out_stream);
-            file_contents_request_pdu.emit(out_stream);
-
-            LOG(LOG_DEBUG, "auto req requested: %lu + %u",
-                file_contents_request_pdu.position(),
-                file_contents_request_pdu.cbRequested());
-
-            receiver(
-                out_stream.get_produced_bytes().size(),
-                send_first_last_flags,
-                out_stream.get_produced_bytes());
+            D::send_filecontents_range(
+                receiver,
+                file_rng.stream_id,
+                file_rng.lindex,
+                file_rng.file_offset,
+                file_rng.first_file_size_requested);
 
             file_rng.file_size_requested = file_rng.first_file_size_requested;
         };
@@ -1782,20 +1763,8 @@ struct ClipboardVirtualChannel::D
                                 in_header.dataLen(), file_rng.file_size_requested);
                         }
 
-                        StaticOutStream<128> out_stream;
-                        RDPECLIP::CliprdrHeader header(
-                            RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                            RDPECLIP::CB_RESPONSE_OK,
-                            data_len + 4u /* streamId */);
-                        header.emit(out_stream);
-                        out_stream.out_uint32_le(safe_int(file_rng.stream_id));
-
-                        file_rng.response_size = data_len + out_stream.get_offset();
-                        sender(
-                            file_rng.response_size,
-                            send_first_flags,
-                            out_stream.get_produced_bytes());
-
+                        file_rng.response_size = send_filecontents_response_header(
+                            sender, file_rng.stream_id, data_len);
                         break;
                     }
                     else {
@@ -2859,10 +2828,8 @@ void ClipboardVirtualChannel::empty_client_clipboard()
 
     clipboard_header.emit(out_s);
 
-    const size_t totalLength = out_s.get_offset();
-
     this->send_message_to_server(
-        totalLength,
-        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+        out_s.get_offset(),
+        send_first_last_flags,
         out_s.get_produced_bytes());
 }
