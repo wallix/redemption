@@ -247,7 +247,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #_hex
 disabled_features = integer(min=0, max=511, default=352)
 
-bestsafe_integration = boolean(default=False)
+enable_bestsafe_interaction = boolean(default=False)
 
 # The name of an environment variable which points to the alternative directory for starting Session Probe.
 # The maximum length of this name is 3 bytes.

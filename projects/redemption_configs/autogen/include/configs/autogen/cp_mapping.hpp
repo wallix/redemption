@@ -169,7 +169,7 @@ cp_spec = {
             'disabled_features', 352
         ),
         u'mod_rdp:session_probe_bestsafe_integration': (
-            'bestsafe_integration', False
+            'enable_bestsafe_interaction', False
         ),
         u'mod_rdp:session_probe_alternate_directory_environment_variable': (
             'alternate_directory_environment_variable', u''

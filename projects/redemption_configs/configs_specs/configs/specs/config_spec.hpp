@@ -415,7 +415,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_bestsafe_integration", connpolicy::name{"bestsafe_integration"}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_bestsafe_integration", connpolicy::name{"enable_bestsafe_interaction"}, set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::string>(), "session_probe_alternate_directory_environment_variable", connpolicy::name{"alternate_directory_environment_variable"}, desc{
             "The name of an environment variable which points to the alternative directory for starting Session Probe.\n"
@@ -502,7 +502,7 @@ void config_spec_definition(Writer && W)
                          "Smartcard device must be available on client desktop.\n"
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false)); 
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
     });
 
     W.section("metrics", [&]
@@ -539,8 +539,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_unix_alt", set(false));
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "support_cursor_pseudo_encoding", set(true));
-        
-        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false)); 
+
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
     });
 
     W.section("mod_replay", [&]
