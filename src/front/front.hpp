@@ -931,11 +931,13 @@ public:
             return false;
         }
 
-        if (!ini.get<cfg::globals::is_rec>() &&
-            bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
-            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
-            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-        ) {
+        bool need_capture = ini.get<cfg::video::allow_rt_without_recording>()
+            || ini.get<cfg::globals::is_rec>()
+            || !static_cast<bool>(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+            || ::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str());
+
+        if (!need_capture) {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
         }
@@ -943,7 +945,6 @@ public:
         LOG(LOG_INFO, "---<>  Front::can_be_start_capture  <>---");
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::can_be_start_capture: movie_path    = %s", ini.get<cfg::globals::movie_path>());
             LOG(LOG_INFO, "Front::can_be_start_capture: auth_user     = %s", ini.get<cfg::globals::auth_user>());
             LOG(LOG_INFO, "Front::can_be_start_capture: host          = %s", ini.get<cfg::globals::host>());
             LOG(LOG_INFO, "Front::can_be_start_capture: target_device = %s", ini.get<cfg::globals::target_device>());
@@ -956,7 +957,7 @@ public:
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+        const char *record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
 
         auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
         auto const& record_dir = ini.get<cfg::video::record_path>();
@@ -974,8 +975,10 @@ public:
           = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
           || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
-        const CaptureFlags capture_flags = (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::capture_flags>() :
-            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none));
+        const CaptureFlags capture_flags =
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
+            ini.get<cfg::video::capture_flags>() :
+            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none);
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
 
@@ -997,16 +1000,15 @@ public:
         char basename[1024];
         char extension[128];
 
-        // default value, actual one should come from movie_path
         auto const wrm_path_len = utils::strlcpy(path, app_path(AppPath::Wrm).to_sv());
         if (wrm_path_len + 2 < std::size(path)) {
             path[wrm_path_len] = '/';
             path[wrm_path_len+1] = 0;
         }
-        utils::strlcpy(basename, movie_path);
+        utils::strlcpy(basename, record_filebase);
         extension[0] = 0; // extension is currently ignored
 
-        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+        if (!canonical_path(record_filebase, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
         ) {
             LOG(LOG_ERR, "Front::can_be_start_capture: Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
@@ -1016,7 +1018,8 @@ public:
             0, 0,
             ini.get<cfg::video::png_interval>(),
             100u,
-            (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::png_limit>() : 0),
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
+            ini.get<cfg::video::png_limit>() : 0,
             true,
             this->client_info.remote_program,
             ini.get<cfg::video::rt_display>()

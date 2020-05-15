@@ -3634,6 +3634,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Allow Realtime display (4eyes) without recording of session <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct video::allow_rt_without_recording {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "video";
+        static constexpr char const * name = "allow_rt_without_recording";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// basename without extension <br/>
     /// type: std::string <br/>
@@ -5769,6 +5782,7 @@ struct video
 , cfg::video::notimestamp
 , cfg::video::smart_video_cropping
 , cfg::video::play_video_with_corrupted_bitmap
+, cfg::video::allow_rt_without_recording
 { static constexpr bool is_section = true; };
 
 struct capture

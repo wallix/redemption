@@ -288,6 +288,7 @@ namespace cfg {
         struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
+        struct allow_rt_without_recording;
     };
 
     struct capture {
