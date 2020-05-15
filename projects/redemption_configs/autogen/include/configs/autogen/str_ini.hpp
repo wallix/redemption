@@ -79,9 +79,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_password
 #certificate_password = inquisition
 
-#_advanced
-#movie_path = 
-
 # Support of Bitmap Update.
 # value: 0 or 1
 #_advanced

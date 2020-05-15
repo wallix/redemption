@@ -1261,7 +1261,6 @@ class Sesman():
         _status, _error = True, u''
         data_to_send = {
             u'is_rec': u'False',
-            u'rec_path': u"",
             u'trace_type': u"0",
             u'module': u'transitory',
         }
@@ -1276,9 +1275,6 @@ class Sesman():
 
         self.full_path = os.path.join(rec_path, self.record_filebase)
 
-        # TODO remove .flv extension and adapt ReDemPtion proxy code
-        #      (/!\ break the compatibility)
-        data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
 
         self.send_data(data_to_send)
 

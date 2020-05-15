@@ -13,7 +13,6 @@ template class Inifile::Field<cfg::globals::target_application_password>;
 template class Inifile::Field<cfg::globals::inactivity_timeout>;
 template class Inifile::Field<cfg::globals::trace_type>;
 template class Inifile::Field<cfg::globals::is_rec>;
-template class Inifile::Field<cfg::globals::movie_path>;
 template class Inifile::Field<cfg::globals::unicode_keyboard_event_support>;
 template class Inifile::Field<cfg::globals::mod_recv_timeout>;
 template class Inifile::Field<cfg::session_log::keyboard_input_masking_level>;
