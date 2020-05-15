@@ -2014,12 +2014,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
             });
             channel_ctx->process_server_message(temp_av);
         },
+        TEST_BUF(Msg::ToValidator{"\x04\x00\x00\x00\x04\x00\x00\x00\x04"_av}),
         TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
             " file_name=abc size=13 sha256="
             "0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
-        TEST_BUF(Msg::ToValidator{"\x04\x00\x00\x00\x04\x00\x00\x00\x04"_av}),
-        TEST_BUF(Msg::ToFront{19, last_flags, "\x00\x00\x00\x00\x00\x00\x00"_av})
+        TEST_BUF(Msg::ToFront{19, last_flags, zeros.first(7)})
     );
 
     if (fdx_ctx && d.always_file_storage) {
