@@ -573,30 +573,16 @@ namespace
     constexpr uint32_t size_of_cliprdr_header_with_stream_id
         = RDPECLIP::CliprdrHeader::size() + 4 /* streamId */;
 
-    template<class GetView>
-    void send_until_last(
-        VirtualChannelDataSender& sender,
-        uint32_t total_pkt_size,
-        GetView get_view)
-    {
-        uint32_t offset = 0;
-        uint32_t remaining = total_pkt_size - size_of_cliprdr_header_with_stream_id;
-        constexpr auto max_len = channel_chunk_length;
-        for (; remaining > max_len; remaining -= max_len, offset += max_len) {
-            sender(total_pkt_size, 0, get_view(offset, max_len));
-        }
-        sender(total_pkt_size, send_last_flags, get_view(offset, remaining));
-    }
-
     void filecontents_response_zerodata(
         VirtualChannelDataSender& sender, uint32_t response_size)
     {
-        send_until_last(
-            sender,
-            response_size,
-            [&](uint32_t /*offset*/, uint32_t len){
-                return bytes_view(zeros_buf, len);
-            });
+        uint32_t offset = 0;
+        uint32_t remaining = response_size - size_of_cliprdr_header_with_stream_id;
+        constexpr auto max_len = channel_chunk_length;
+        for (; remaining > max_len; remaining -= max_len, offset += max_len) {
+            sender(response_size, 0, bytes_view(zeros_buf, max_len));
+        }
+        sender(response_size, send_last_flags, bytes_view(zeros_buf, remaining));
     }
 
     void filecontents_response_data(
@@ -604,12 +590,14 @@ namespace
     {
         assert(response_size - size_of_cliprdr_header_with_stream_id
             <= file_contents.size());
-        send_until_last(
-            sender,
-            response_size,
-            [&](uint32_t offset, uint32_t len){
-                return file_contents.subarray(offset, len);
-            });
+
+        uint32_t offset = 0;
+        uint32_t remaining = response_size - size_of_cliprdr_header_with_stream_id;
+        constexpr auto max_len = channel_chunk_length;
+        for (; remaining > max_len; remaining -= max_len, offset += max_len) {
+            sender(response_size, 0, file_contents.subarray(offset, max_len));
+        }
+        sender(response_size, send_last_flags, file_contents.subarray(offset, remaining));
     }
 }
 
@@ -1402,6 +1390,7 @@ struct ClipboardVirtualChannel::D
 
                         assert(file_rng.file_offset == file_contents.size());
 
+                        // file_contents contains requested range or file is finalised
                         if (file_rng.is_finalized()
                          || file_contents_request_pdu.position()
                           + file_contents_request_pdu.cbRequested()
@@ -1421,6 +1410,7 @@ struct ClipboardVirtualChannel::D
                             return false;
                         }
 
+                        // no data and file is not finalised and position == last offset
                         if (file_contents_request_pdu.position() == file_contents.size()) {
                             update_continuation_range(file_rng);
                             clip.nolock_data.set_range();
@@ -1428,7 +1418,8 @@ struct ClipboardVirtualChannel::D
                             return true;
                         }
 
-                        if (file_contents_request_pdu.position() <= file_contents.size()) {
+                        // no data and file is not finalised and position < last offset
+                        if (file_contents_request_pdu.position() < file_contents.size()) {
                             auto already_known
                                 = file_contents.size() - file_contents_request_pdu.position();
                             uint64_t offset
@@ -1897,39 +1888,6 @@ struct ClipboardVirtualChannel::D
                         sender, file_rng.response_size, file_rng.file_contents);
                 };
 
-                auto post_process = [&, this](
-                    ClipCtx::FileContentsRange& file_rng,
-                    Mwrm3::TransferedStatus transfered_status
-                ){
-                    switch (file_rng.validator_state)
-                    {
-                        case ValidatorState::Success:
-                            this->_close_file_rng_tfl(self, file_rng, transfered_status);
-                            send_file_data();
-                            clip.nolock_data.set_sync_range();
-                            break;
-
-                        case ValidatorState::Wait:
-                            if (transfered_status == Mwrm3::TransferedStatus::Broken) {
-                                this->_close_file_rng_tfl(self, file_rng, transfered_status);
-                                self.file_validator->send_abort(file_rng.file_validator_id);
-                                send_fake_data();
-                                clip.nolock_data.init_empty();
-                            }
-                            else {
-                                self.file_validator->send_eof(file_rng.file_validator_id);
-                                clip.nolock_data.set_waiting_validator();
-                            }
-                            break;
-
-                        case ValidatorState::Failure:
-                            this->_close_file_rng_tfl(self, file_rng, transfered_status);
-                            send_fake_data();
-                            clip.nolock_data.init_empty();
-                            break;
-                    }
-                };
-
                 LOG(LOG_DEBUG, "state: GetRange");
 
                 if (is_ok) {
@@ -1948,31 +1906,54 @@ struct ClipboardVirtualChannel::D
 
                         if (set_finalize_file_transfer(file_rng)) {
                             LOG(LOG_DEBUG, "set finalize = ok");
-                            post_process(file_rng, Mwrm3::TransferedStatus::Completed);
+
+                            switch (file_rng.validator_state)
+                            {
+                                case ValidatorState::Failure:
+                                    this->_close_file_rng_tfl(
+                                        self, file_rng, Mwrm3::TransferedStatus::Completed);
+                                    send_fake_data();
+                                    clip.nolock_data.init_empty();
+                                    break;
+
+                                case ValidatorState::Success:
+                                    this->_close_file_rng_tfl(
+                                        self, file_rng, Mwrm3::TransferedStatus::Completed);
+                                    send_file_data();
+                                    clip.nolock_data.set_sync_range();
+                                    break;
+
+                                case ValidatorState::Wait:
+                                    self.file_validator->send_eof(file_rng.file_validator_id);
+                                    clip.nolock_data.set_waiting_validator();
+                                    break;
+                            }
                         }
-                        else switch (file_rng.validator_state)
-                        {
-                            case ValidatorState::Failure:
-                                LOG(LOG_DEBUG, "validator = Failure");
-                                file_rng.sig.broken();
-                                this->log_file_info(self, file_rng,
-                                    (&clip == &self.server_ctx));
-                                this->_close_file_rng_tfl(self, file_rng,
-                                    Mwrm3::TransferedStatus::Broken);
-                                send_fake_data();
-                                clip.nolock_data.init_empty();
-                                break;
+                        else {
+                            switch (file_rng.validator_state)
+                            {
+                                case ValidatorState::Failure:
+                                    LOG(LOG_DEBUG, "validator = Failure");
+                                    file_rng.sig.broken();
+                                    this->log_file_info(self, file_rng,
+                                        (&clip == &self.server_ctx));
+                                    this->_close_file_rng_tfl(
+                                        self, file_rng, Mwrm3::TransferedStatus::Broken);
+                                    send_fake_data();
+                                    clip.nolock_data.init_empty();
+                                    break;
 
-                            case ValidatorState::Success:
-                                LOG(LOG_DEBUG, "validator = Success");
-                                send_file_data();
-                                clip.nolock_data.set_sync_range();
-                                break;
+                                case ValidatorState::Success:
+                                    LOG(LOG_DEBUG, "validator = Success");
+                                    send_file_data();
+                                    clip.nolock_data.set_sync_range();
+                                    break;
 
-                            case ValidatorState::Wait:
-                                LOG(LOG_DEBUG, "validator = Wait");
-                                send_file_contents_request(file_rng);
-                                break;
+                                case ValidatorState::Wait:
+                                    LOG(LOG_DEBUG, "validator = Wait");
+                                    send_file_contents_request(file_rng);
+                                    break;
+                            }
                         }
                     }
                 }
