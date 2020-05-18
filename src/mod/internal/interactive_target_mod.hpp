@@ -78,7 +78,7 @@ public:
     {
         this->screen.rdp_input_unicode(unicode, flag);
     }
-    
+
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
     {
         (void)time;
@@ -165,7 +165,6 @@ public:
     CopyPaste copy_paste;
 
     InteractiveTargetModVariables vars;
-    GraphicEventPtr started_copy_past_event;
 
 public:
     InteractiveTargetMod(

@@ -56,13 +56,12 @@ class ReplayMod : public mod_api
     bool replay_on_loop;
     bool play_video_with_corrupted_bitmap;
     SesmanInterface & sesman;
-    GraphicTimerPtr timer;
+    TimerPtr timer;
 
 public:
     using Verbose = FileToGraphic::Verbose;
 
     ReplayMod( TimeBase& time_base
-             , GraphicTimerContainer & graphic_timer_events_
              , SesmanInterface & sesman
              , gdi::GraphicApi & drawable
              , FrontAPI & front
@@ -71,29 +70,9 @@ public:
              , uint16_t height
              , std::string & auth_error_message
              , bool wait_for_escape
-             , bool replay_on_loop
-             , bool play_video_with_corrupted_bitmap
-             , Verbose debug_capture)
-    : ReplayMod(
-        time_base, graphic_timer_events_, sesman, drawable, front, replay_path, width, height, auth_error_message,
-        wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop,
-        play_video_with_corrupted_bitmap, debug_capture)
-    {
-    }
-
-    ReplayMod( TimeBase& time_base
-             , GraphicTimerContainer & graphic_timer_events_
-             , SesmanInterface & sesman
-             , gdi::GraphicApi & drawable
-             , FrontAPI & front
-             , const char * replay_path
-             , uint16_t width
-             , uint16_t height
-             , std::string & auth_error_message
-             , bool wait_for_escape
-             , timeval const & begin_read
-             , timeval const & end_read
-             , time_t balise_time_frame
+             , timeval const & begin_read // timeval{0, 0}
+             , timeval const & end_read   // timeval{0, 0}
+             , time_t balise_time_frame   // 0
              , bool replay_on_loop
              , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture);

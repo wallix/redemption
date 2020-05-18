@@ -84,14 +84,17 @@ namespace
 
 
 xup_mod::xup_mod(
-    Transport & t, TimeBase& time_base,
-    GraphicFdContainer & graphic_fd_events_,
+    Transport & t,
+    TimeBase& time_base,
+    GdProvider & gd_provider,
     FrontAPI & front,
     uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp)
 : front(front)
 , bpp(context_bpp)
 , t(t)
 , rop(0xCC)
+, gd_provider(gd_provider)
+
 {
     StaticOutStream<256> stream;
     stream.out_skip_bytes(4);
@@ -105,20 +108,33 @@ xup_mod::xup_mod(
     stream.out_uint32_le(0);
     stream.stream_at(0).out_uint32_le(stream.get_offset());
     this->t.send(stream.get_produced_bytes());
-
-    this->fd_event = graphic_fd_events_.create_top_executor(time_base, this->t.get_fd())
-    .set_timeout(std::chrono::milliseconds(0))
-    .on_exit(jln::propagate_exit())
-    .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-        this->draw_event(gd);
-        return ctx.need_more_data();
-    })
-    .on_timeout([](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
-        gdi_clear_screen(gd, Dimension{0xffffu, 0xffffu});
-        // rearmed by clipboard
-        return ctx.disable_timeout().ready();
-    });
 }
+
+void xup_mod::init()
+{
+    auto & gd = this->gd_provider.get_graphics();
+    Dimension const dim{0xffffu, 0xffffu};
+    Rect const r(0, 0, dim.w, dim.h);
+    RDPOpaqueRect cmd(r, color_encode(BLACK, BitsPerPixel{24}));
+    gd.begin_update();
+    gd.draw(cmd, r, gdi::ColorCtx::depth24());
+    gd.end_update();
+    this->draw_event(gd);
+}
+
+
+void xup_mod::rdp_gdi_up_and_running(ScreenInfo & screen_info)
+{
+    auto & gd = this->gd_provider.get_graphics();
+    Dimension const dim{0xffffu, 0xffffu};
+    Rect const r(0, 0, dim.w, dim.h);
+    RDPOpaqueRect cmd(r, color_encode(BLACK, BitsPerPixel{24}));
+    gd.begin_update();
+    gd.draw(cmd, r, gdi::ColorCtx::depth24());
+    gd.end_update();
+    this->draw_event(gd);
+}
+
 
 void xup_mod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/)
 {

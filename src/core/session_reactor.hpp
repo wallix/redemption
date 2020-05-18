@@ -2103,7 +2103,7 @@ namespace jln
                 return detail::add_shared_ptr_from_data<TopSharedPtr<Ts...>>(
                     this->cont.node_executors, std::move(this->data_ptr));
             }
-            
+
         };
 
     public:
@@ -2291,7 +2291,7 @@ namespace jln
         }
 
         TimerContainer(const TimerContainer&) = delete;
-        
+
         TimerContainer() noexcept
         {
             this->node_executors.next = nullptr;
@@ -2862,38 +2862,11 @@ namespace jln
 class mod_api;
 class Callback;
 class Inifile;
-namespace gdi
-{
-    class GraphicApi;
-}
 
-using CallbackEventContainer = jln::ActionContainer<Callback&>;
-using CallbackEventPtr = CallbackEventContainer::Ptr;
-using GraphicTimerContainer = jln::TimerContainer<gdi::GraphicApi&>;
-using GraphicTimerPtr = GraphicTimerContainer::Ptr;
 using TimerContainer = jln::TimerContainer<>;
 using TimerPtr = TimerContainer::Ptr;
-using GraphicEventContainer = jln::ActionContainer<gdi::GraphicApi&>;
-using GraphicEventPtr = GraphicEventContainer::Ptr;
 using TopFdContainer = jln::TopContainer<>;
 using TopFdPtr = TopFdContainer::Ptr;
-using GraphicFdContainer = jln::TopContainer<gdi::GraphicApi&>;
-using GraphicFdPtr = GraphicFdContainer::Ptr;
-
-struct EnableGraphics
-{
-    explicit EnableGraphics(bool enable) noexcept
-      : enable(enable)
-    {}
-
-    explicit operator bool () const noexcept
-    {
-        return this->enable;
-    }
-
-    const bool enable;
-};
-
 
 // TODO: could be renamed GlobalClock (and 'time_base' renamed 'clock')
 struct TimeBase

@@ -46,7 +46,7 @@ using DialogModVariables = vcfg::variables<
 class DialogMod : public mod_api, public NotifyApi
 {
     public:
-    
+
     [[nodiscard]] Font const & font() const
     {
         return this->screen.font;
@@ -152,7 +152,6 @@ private:
 
     DialogModVariables vars;
     TimerPtr timeout_timer;
-    GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 

@@ -37,15 +37,15 @@
 // Pimpl
 struct WidgetTestMod::WidgetTestModPrivate
 {
-    WidgetTestModPrivate(TimeBase& time_base, GraphicTimerContainer & graphic_timer_events_, WidgetTestMod& /*mod*/)
+    WidgetTestModPrivate(TimeBase& time_base, GdProvider & gd_provider, TimerContainer & timer_events_, WidgetTestMod& /*mod*/)
       : time_base(time_base)
+      , gd_provider(gd_provider)
     {
         LOG(LOG_DEBUG, "WidgetTestModPrivate");
-        this->timer = graphic_timer_events_
-            .create_timer_executor(time_base)
+        this->timer = timer_events_.create_timer_executor(time_base)
             .set_delay(std::chrono::seconds(0))
-            .on_action([](auto ctx, gdi::GraphicApi& gd){
-            update_lock update_lock{gd};
+            .on_action([this](auto ctx){
+            update_lock update_lock{this->gd_provider.get_graphics()};
             int y = 10;
             for (auto s : {
                 // "/home/jpoelen/rawdisk2/Laksaman_14.rbf",
@@ -76,7 +76,7 @@ struct WidgetTestMod::WidgetTestModPrivate
                 Font font(s);
                 auto * text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`!@#$%^&*()_=[]'\",./<>?|:{}¹²³ cl◀◂▸▶▲▼▤▥➜¤€’¥×\\æœúíàéèçùµÉÀð.";
                 gdi::server_draw_text(
-                    gd, font, 10, y, text,
+                    this->gd_provider.get_graphics(), font, 10, y, text,
                     encode_color24()(BGRColor(0xeeb6c1)), encode_color24()(BGRColor(0x747132)),
                     gdi::ColorCtx::depth24(), Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
                 y += font.max_height() + 10;
@@ -87,15 +87,17 @@ struct WidgetTestMod::WidgetTestModPrivate
     }
 
     TimeBase& time_base;
-    GraphicTimerPtr timer;
+    GdProvider & gd_provider;
+    TimerPtr timer;
 };
 
 WidgetTestMod::WidgetTestMod(
     TimeBase& time_base,
-    GraphicTimerContainer & graphic_timer_events_,
+    GdProvider & gd_provider,
+    TimerContainer & timer_events_,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & /*font*/)
-: d(std::make_unique<WidgetTestModPrivate>(time_base, graphic_timer_events_, *this))
+: d(std::make_unique<WidgetTestModPrivate>(time_base, gd_provider, timer_events_, *this))
 {
     front.server_resize({width, height, BitsPerPixel{8}});
 }

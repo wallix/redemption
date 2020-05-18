@@ -34,7 +34,6 @@ int main()
     WindowListCaps window_list_caps;
     TimeBase time_base;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;

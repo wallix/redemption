@@ -328,7 +328,6 @@ private:
     TimeBase& time_base;
     GdProvider & gd_provider;
     TopFdPtr fd_event;
-    GraphicEventPtr wait_client_up_and_running_event;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;

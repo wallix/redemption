@@ -167,9 +167,8 @@ private:
     int current_page;
     int number_page;
 
-    Inifile & ini; 
+    Inifile & ini;
     SelectorModVariables vars;
-    GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 

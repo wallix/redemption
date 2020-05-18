@@ -192,9 +192,7 @@ public:
       , std::string * error_message
       , TimeBase& time_base
       , TopFdContainer & fd_events_
-      , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
-      , GraphicEventContainer & graphic_events_
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -220,7 +218,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
 
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, ini, time_base, mod_wrapper, graphic_events_, graphic_fd_events_, fd_events_, timer_events_, sesman, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, ini, time_base, mod_wrapper, fd_events_, timer_events_, sesman, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -435,9 +433,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     TopFdContainer& fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     LicenseApi & file_system_license_store,
     Random & gen,
@@ -802,9 +798,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
         time_base,
         fd_events_,
-        graphic_fd_events_,
         timer_events_,
-        graphic_events_,
         sesman,
         drawable,
         front,

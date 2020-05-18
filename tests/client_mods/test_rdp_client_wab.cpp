@@ -132,10 +132,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     TimeBase time_base;
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
     SesmanInterface sesman(ini);
 
 
@@ -144,7 +141,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, ini, time_base, gd_provider, graphic_events_, graphic_fd_events_, fd_events_, timer_events_, sesman,
+    auto mod = new_mod_rdp(t, ini, time_base, gd_provider, fd_events_, timer_events_, sesman,
         front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
@@ -153,7 +150,17 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 8);
+    auto end_tv = time_base.get_current_time();
+    timer_events_.exec_timer(end_tv);
+    fd_events_.exec_timeout(end_tv);
+
+    int n = 10;
+    int count = 0;
+    for (; count < n && !fd_events_.is_empty(); ++count) {
+        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+        fd_events_.exec_action(is_set);
+    }
+    RED_CHECK_EQ(count, n);
 
     RED_CHECK_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");

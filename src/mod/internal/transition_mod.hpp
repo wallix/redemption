@@ -137,7 +137,6 @@ protected:
 
 private:
     TimerPtr timeout_timer;
-    GraphicEventPtr started_copy_past_event;
 
     WidgetTooltip ttmessage;
 

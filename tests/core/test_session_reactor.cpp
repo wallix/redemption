@@ -28,30 +28,7 @@
 #include <unistd.h>
 
 #include "core/session_reactor.hpp"
-#include "gdi/graphic_api.hpp"
 #include "mod/mod_api.hpp"
-
-//RED_AUTO_TEST_CASE(TestREvent)
-//{
-//    struct ResizableGraphic 
-//    {
-//        bool up_and_running = true;
-//        void action(REventDispatcher & dispatcher) {
-//            if (!this->up_and_running){
-//                this->up_and_running = true;
-//                REventGdiUpAndRunning event;
-//                dispatcher.postEvent(event);
-//            }
-//        }
-//        void resize(REventDispatcher & dispatcher) {
-//            this->up_and_running = false;
-//            REventGdiDown event;
-//            dispatcher.postEvent(event);
-//        }
-//    };
-//}
-
-
 
 RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
@@ -83,11 +60,7 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     using Dt = jln::NotifyDeleteType;
     TimeBase time_base;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
-
 
     time_base.set_current_time(timeval{10, 222});
     RED_CHECK_EQ(time_base.get_current_time().tv_sec, 10);
@@ -126,19 +99,17 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
         return c++ == 'd' ? ctx.terminate() : ctx.ready();
     });
 
-    Ptr timer4 = graphic_timer_events_
+    Ptr timer4 = timer_events_
         .create_timer_executor(time_base,
     std::ref(s))
         .set_time({16, 0})
-        .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+        .on_action(jln::one_shot([](std::string& s){
             s += "timer4\n";
         }));
 
-    EnableGraphics enable_gd{true};
-    EnableGraphics disable_gd{false};
-
     auto end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
+
     fd_events_.exec_timeout(end_tv);
     RED_CHECK_EQ(s, "");
 
@@ -154,7 +125,8 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     time_base.set_current_time({13, 0});
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
+    fd_events_.exec_timeout(end_tv);
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
 
@@ -179,57 +151,14 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     time_base.set_current_time({16, 0});
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
+    fd_events_.exec_timeout(end_tv);
 
     time_base.set_current_time({16, 0});
 
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
     fd_events_.exec_timeout(end_tv);
-    // also gd enabled
-    graphic_timer_events_.exec_timer(end_tv, gdi::null_gd());
-    graphic_fd_events_.exec_timeout(end_tv, gdi::null_gd());
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\ntimer4\n");
-}
-
-RED_AUTO_TEST_CASE(TestTimeBaseSimpleEvent)
-{
-    TimeBase time_base;
-    TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
-    GraphicEventContainer graphic_events_;
-    using Dt = jln::NotifyDeleteType;
-
-    std::string s;
-
-    auto gd = graphic_events_.create_action_executor(time_base, std::ref(s))
-    .set_notify_delete([](Dt, std::string& s){
-        s += "~gd\n";
-    })
-    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
-        s += "gd\n";
-    }));
-
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK_EQ(s, "gd\n~gd\n");
-
-    struct DummyCb : public mod_api
-    {
-        std::string module_name() override {return "AclWaitMod";}
-        void rdp_input_mouse(int, int, int, Keymap2 *) override {}
-        void rdp_input_scancode(long, long, long, long, Keymap2 *) override {}
-        void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
-        void rdp_input_invalidate(const Rect) override {}
-        void refresh(const Rect) override {}
-        bool is_up_and_running() const override { return true; }
-        void rdp_gdi_up_and_running(ScreenInfo & /*screen_info*/) override {}
-        void rdp_gdi_down() override {}
-        void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
-    } dummy_cb;
-
-
-    RED_CHECK(!gd);
 }
 
 
@@ -237,8 +166,6 @@ RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
 {
     TimeBase time_base;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
-    GraphicEventContainer graphic_events_;
 
     std::string s;
 
@@ -248,49 +175,45 @@ RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
 
     TopFdPtr fd_event = fd_events_.create_top_executor(time_base, fd1, std::ref(s))
     .on_action([](JLN_TOP_CTX ctx, std::string& s){
-        s += "fd1\n";
+        s += "fd1:";
         return ctx.next();
     })
     .on_exit(jln::propagate_exit([](std::string& s){
-        s += "~fd1\n";
+        s += "~fd1:";
     }))
     .set_timeout({})
     .on_timeout([](JLN_TOP_TIMER_CTX ctx, std::string&){ return ctx.ready(); });
 
-    GraphicFdPtr fd_gd_event = graphic_fd_events_
-    .create_top_executor(time_base, fd1)
-    .on_action([&s](JLN_TOP_CTX ctx, gdi::GraphicApi&){
-        s += "fd2\n";
+    TopFdPtr fd_event_2 = fd_events_.create_top_executor(time_base, fd1)
+    .on_action([&s](JLN_TOP_CTX ctx){
+        s += "fd2:";
         return ctx.next();
     })
-    .on_exit(jln::propagate_exit([&s](gdi::GraphicApi&){
-        s += "~fd2\n";
+    .on_exit(jln::propagate_exit([&s](){
+        s += "~fd2:";
     }))
     .set_timeout({})
-    .on_timeout([](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){ return ctx.ready(); });
-
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK_EQ(s, "fd2\n~fd2\n");
+    .on_timeout([](JLN_TOP_TIMER_CTX ctx){ return ctx.ready(); });
 
     fd_events_.exec_action(fd_is_set);
-    RED_CHECK_EQ(s, "fd2\n~fd2\nfd1\n~fd1\n");
+    RED_CHECK_EQ(s, "fd2:~fd2:fd1:~fd1:");
 }
 
 RED_AUTO_TEST_CASE(TestTimeBaseSequence)
 {
     TimeBase time_base;
-    TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
-    GraphicEventContainer graphic_events_;
+    TimerContainer events_;
+    time_base.set_current_time(timeval{0, 0});
 
     std::string s;
+
+    auto end_tv = time_base.get_current_time();
 
     using namespace jln::literals;
     using jln::value;
 
     auto trace = [](auto name){
-        return [](JLN_FUNCSEQUENCER_CTX ctx, gdi::GraphicApi&, std::string& s){
+        return [](JLN_FUNCSEQUENCER_CTX ctx, std::string& s){
             s += decltype(name){}.c_str();
             // or
             // if constexpr (ctx.is_final_sequence()) return ctx.ready();
@@ -299,7 +222,8 @@ RED_AUTO_TEST_CASE(TestTimeBaseSequence)
         };
     };
 
-    GraphicEventPtr event = graphic_events_.create_action_executor(time_base, std::ref(s))
+    TimerContainer::Ptr event = events_.create_timer_executor(time_base, std::ref(s))
+    .set_delay(1ms)
     .on_action(jln::sequencer(
         trace("a"_s),
         trace("b"_s),
@@ -307,102 +231,89 @@ RED_AUTO_TEST_CASE(TestTimeBaseSequence)
         trace("d"_s)
     ));
 
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(bool(event));
+
+    time_base.set_current_time(timeval{1, 2000});
+    end_tv = time_base.get_current_time();
+    events_.exec_timer(end_tv);
     RED_CHECK_EQ(s, "a");
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(bool(event));
+    time_base.set_current_time(timeval{1, 3000});
+    end_tv = time_base.get_current_time();
+    events_.exec_timer(end_tv);
     RED_CHECK_EQ(s, "ab");
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(bool(event));
+    time_base.set_current_time(timeval{1, 4000});
+    end_tv = time_base.get_current_time();
+    events_.exec_timer(end_tv);
     RED_CHECK_EQ(s, "abc");
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(!event);
+    time_base.set_current_time(timeval{1, 5000});
+    end_tv = time_base.get_current_time();
+    events_.exec_timer(end_tv);
     RED_CHECK_EQ(s, "abcd");
     s.clear();
 
-    auto trace2 = [](auto f){
-        return [](JLN_FUNCSEQUENCER_CTX ctx, gdi::GraphicApi&, std::string& s){
-            s += ctx.sequence_name();
-            return jln::make_lambda<decltype(f)>()(ctx);
-        };
-    };
+//    auto trace2 = [](auto f){
+//        return [](JLN_FUNCSEQUENCER_CTX ctx, std::string& s){
+//            s += ctx.sequence_name();
+//            return jln::make_lambda<decltype(f)>()(ctx);
+//        };
+//    };
 
-    event = graphic_events_.create_action_executor(time_base, std::ref(s))
-    .on_action(jln::sequencer(
-        "a"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.next(); }),
-        "b"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.at("d"_s).ready(); }),
-        "c"_f = [](JLN_FUNCSEQUENCER_CTX ctx, gdi::GraphicApi& /*gd*/, std::string& s){
-            s += ctx.sequence_name();
-            return ctx.exec_at("e"_s);
-        },
-        "d"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.previous().ready(); }),
-        "e"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.terminate(); })
-    ));
-
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(bool(event));
-    RED_CHECK_EQ(s, "a");
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(bool(event));
-    RED_CHECK_EQ(s, "ab");
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(bool(event));
-    RED_CHECK_EQ(s, "abd");
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action(fd_is_set, gdi::null_gd());
-    RED_CHECK(!event);
-    RED_CHECK_EQ(s, "abdce");
+//    time_base.set_current_time(timeval{1, 6000});
+//    end_tv = time_base.get_current_time();
+//    events_.exec_timer(end_tv);
+//    RED_CHECK_EQ(s, "a");
+//    time_base.set_current_time(timeval{1, 7000});
+//    end_tv = time_base.get_current_time();
+//    events_.exec_timer(end_tv);
+//    RED_CHECK_EQ(s, "ab");
+//    time_base.set_current_time(timeval{1, 8000});
+//    end_tv = time_base.get_current_time();
+//    events_.exec_timer(end_tv);
+//    RED_CHECK_EQ(s, "abd");
+//    time_base.set_current_time(timeval{1, 9000});
+//    end_tv = time_base.get_current_time();
+//    events_.exec_timer(end_tv);
+//    RED_CHECK_EQ(s, "abdce");
 }
 
-RED_AUTO_TEST_CASE(TestTimeBaseDeleter)
-{
-    class S;
+//RED_AUTO_TEST_CASE(TestTimeBaseDeleter)
+//{
+//    class S;
 
-    std::vector<std::unique_ptr<S>> v;
-    auto f = [&v](S&, jln::NotifyDeleteType t){
-        RED_CHECK_EQ(v.size(), 1);
-        if (t == jln::NotifyDeleteType::DeleteByAction) {
-            v.clear();
-        }
-    };
+//    std::vector<std::unique_ptr<S>> v;
+//    auto f = [&v](S&, jln::NotifyDeleteType t){
+//        RED_CHECK_EQ(v.size(), 1);
+//        if (t == jln::NotifyDeleteType::DeleteByAction) {
+//            v.clear();
+//        }
+//    };
 
-    using F = decltype(f);
+//    using F = decltype(f);
 
-    struct S
-    {
-        GraphicEventPtr gd_ptr;
+//    struct S
+//    {
+//        EventPtr ptr;
 
-        void foo(TimeBase& time_base, GraphicEventContainer & graphic_events_, F f)
-        {
-            this->gd_ptr = graphic_events_.create_action_executor(time_base, std::ref(*this), f)
-            .set_notify_delete([](jln::NotifyDeleteType d, S& self, F f){ f(self, d); })
-            .on_action([](JLN_ACTION_CTX ctx, gdi::GraphicApi&, S&, F){
-                return ctx.terminate();
-            });
-        }
-    };
+//        void foo(TimeBase& time_base, TopEventContainer & events_, F f)
+//        {
+//            this->ptr = events_.create_action_executor(time_base, std::ref(*this), f)
+//            .set_notify_delete([](jln::NotifyDeleteType d, S& self, F f){ f(self, d); })
+//            .on_action([](JLN_ACTION_CTX ctx, S&, F){
+//                return ctx.terminate();
+//            });
+//        }
+//    };
 
-    TimeBase time_base;
-    TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
-    GraphicEventContainer graphic_events_;
+//    TimeBase time_base;
+//    TopFdContainer fd_events_;
 
-    v.emplace_back(std::make_unique<S>());
-    v.back()->foo(time_base, graphic_events_, f);
-    RED_CHECK_EQ(v.size(), 1);
-    v.clear();
+//    v.emplace_back(std::make_unique<S>());
+//    v.back()->foo(time_base, events_, f);
+//    RED_CHECK_EQ(v.size(), 1);
+//    v.clear();
 
-    v.emplace_back(std::make_unique<S>());
-    v.back()->foo(time_base, graphic_events_, f);
-    graphic_events_.exec_action(gdi::null_gd());
-    graphic_fd_events_.exec_action([]([[maybe_unused]] auto&&... xs){return false;}, gdi::null_gd());
-    RED_CHECK_EQ(v.size(), 0);
-}
+//    v.emplace_back(std::make_unique<S>());
+//    v.back()->foo(time_base, events_, f);
+//    events_.exec_action();
+//    fd_events_.exec_action([]([[maybe_unused]] auto&&... xs){return false;});
+//    RED_CHECK_EQ(v.size(), 0);
+//}

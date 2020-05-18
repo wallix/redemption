@@ -63,10 +63,7 @@ class ModFactory
     TimeBase & time_base;
     SesmanInterface & sesman;
     TopFdContainer& fd_events_;
-    GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
-    GraphicEventContainer & graphic_events_;
-    GraphicTimerContainer & graphic_timer_events_;
     ClientInfo & client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
@@ -88,10 +85,7 @@ public:
                TimeBase & time_base,
                SesmanInterface & sesman,
                TopFdContainer& fd_events_,
-               GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
-               GraphicEventContainer & graphic_events_,
-               GraphicTimerContainer & graphic_timer_events_,
                ClientInfo & client_info,
                FrontAPI & front,
                gdi::GraphicApi & graphics,
@@ -110,10 +104,7 @@ public:
         , time_base(time_base)
         , sesman(sesman)
         , fd_events_(fd_events_)
-        , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
-        , graphic_events_(graphic_events_)
-        , graphic_timer_events_(graphic_timer_events_)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
@@ -198,7 +189,8 @@ public:
     {
         auto new_mod = new Bouncer2Mod(
                             this->time_base,
-                            this->graphic_timer_events_,
+                            this->mod_wrapper,
+                            this->timer_events_,
                             this->sesman,
                             this->front,
                             this->client_info.screen_info.width,
@@ -210,7 +202,6 @@ public:
     {
             auto new_mod = new ReplayMod(
                 this->time_base,
-                this->graphic_timer_events_,
                 this->sesman,
                 this->graphics, this->front,
                 [this]{
@@ -226,6 +217,7 @@ public:
                 this->client_info.screen_info.height,
                 this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
+                timeval{0, 0}, timeval{0, 0}, 0,
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
@@ -237,7 +229,8 @@ public:
     {
         auto new_mod = new WidgetTestMod(
             this->time_base,
-            this->graphic_timer_events_,
+            this->mod_wrapper,
+            this->timer_events_,
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -554,7 +547,6 @@ public:
             this->ini.get<cfg::debug::mod_xup>(),
             nullptr,
             this->time_base,
-            this->graphic_fd_events_,
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -577,9 +569,7 @@ public:
             this->glyphs, this->theme,
             this->time_base,
             this->fd_events_,
-            this->graphic_fd_events_,
             this->timer_events_,
-            this->graphic_events_,
             this->sesman,
             this->file_system_license_store,
             this->gen,

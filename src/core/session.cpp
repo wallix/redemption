@@ -602,8 +602,6 @@ private:
                 const Front & front,
                 TimerContainer & timer_events_,
                 TopFdContainer & fd_events_,
-                GraphicTimerContainer & graphic_timer_events_,
-                GraphicFdContainer & graphic_fd_events_,
                 bool front_pending,
                 bool mod_pending)
     {
@@ -629,13 +627,6 @@ private:
 
         fd_events_.for_each(top_update_tv);
         this->show_ultimatum("ultimatm (fd) =", ultimatum, now);
-
-        if (front.state == Front::FRONT_UP_AND_RUNNING) {
-            graphic_timer_events_.for_each(timer_update_tv);
-            this->show_ultimatum("ultimatum (graphic timer) =", ultimatum, now);
-            graphic_fd_events_.for_each(top_update_tv);
-            this->show_ultimatum("ultimatum (graphic fd) =", ultimatum, now);
-        }
 
         if (front.front_must_notify_resize) {
             ultimatum = now;
@@ -692,10 +683,7 @@ public:
 
         TimeBase time_base;
         TopFdContainer fd_events_;
-        GraphicFdContainer graphic_fd_events_;
         TimerContainer timer_events_;
-        GraphicEventContainer graphic_events_;
-        GraphicTimerContainer graphic_timer_events_;
 
         TimeSystem timeobj;
 
@@ -719,7 +707,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             if (ini.get<cfg::debug::session>()) {
@@ -826,8 +814,6 @@ public:
                             front,
                             timer_events_,
                             fd_events_,
-                            graphic_timer_events_,
-                            graphic_fd_events_,
                             front_trans.has_tls_pending_data(),
                             false
                             );
@@ -997,16 +983,6 @@ public:
                             }
                     });
 
-                    if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){
-    //                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
-                            if (fd != INVALID_SOCKET){
-                                ioswitch.set_read_sck(fd);
-                            }
-                    });
-                    }
-
                     ioswitch.set_read_sck(acl->auth_trans.sck);
 
                     bool mod_data_pending = (mod_wrapper.has_mod()
@@ -1017,8 +993,6 @@ public:
                             front,
                             timer_events_,
                             fd_events_,
-                            graphic_timer_events_,
-                            graphic_fd_events_,
                             front_trans.has_tls_pending_data(),
                             mod_data_pending
                             );
@@ -1124,8 +1098,6 @@ public:
                             auto const end_tv = time_base.get_current_time();
                             timer_events_.exec_timer(end_tv);
                             fd_events_.exec_timeout(end_tv);
-                            graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
-                            graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
                             fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                                 return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
 
@@ -1150,15 +1122,6 @@ public:
                                         mod_wrapper.draw_osd_message();
                                     }
                                 }
-                            }
-
-                           if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
-                                auto& gd = mod_wrapper.get_graphic_wrapper();
-                                graphic_events_.exec_action(gd);
-                                graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                                    return fd != INVALID_SOCKET
-                                        &&  ioswitch.is_set_for_reading(fd);
-                                }, gd);
                             }
 
                             run_session = this->front_up_and_running(acl, now, start_time, ini, mod_factory, mod_wrapper, end_session_warning, front, authentifier, rail_client_execute);
@@ -1281,17 +1244,10 @@ public:
                     fd_events_.for_each([&](int fd, auto& /*top*/){
                             if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
 
-                    if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_fd_events_.for_each([&](int fd, auto& /*top*/){
-                            if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
-                    }
-
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
                             front,
                             timer_events_,
                             fd_events_,
-                            graphic_timer_events_,
-                            graphic_fd_events_,
                             front_trans.has_tls_pending_data(),
                             false
                             );
@@ -1329,10 +1285,6 @@ public:
                         auto const end_tv = time_base.get_current_time();
                         timer_events_.exec_timer(end_tv);
                         fd_events_.exec_timeout(end_tv);
-                        if (EnableGraphics{true}) {
-                            graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
-                            graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
-                        }
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
                                                 { return fd != INVALID_SOCKET
                                                         &&  ioswitch.is_set_for_reading(fd);

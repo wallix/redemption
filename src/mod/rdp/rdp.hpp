@@ -155,8 +155,8 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, GraphicFdContainer& graphic_fd_events_, TopFdContainer& fd_events_, TimerContainer& timer_events_)
-        : time_base(time_base), gd_provider(gd_provider), graphic_fd_events_(graphic_fd_events_), fd_events_(fd_events_), timer_events_(timer_events_)
+    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer& timer_events_)
+        : time_base(time_base), gd_provider(gd_provider), fd_events_(fd_events_), timer_events_(timer_events_)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
@@ -179,14 +179,13 @@ private:
 public:
     TimeBase& time_base;
     GdProvider & gd_provider;
-    GraphicFdContainer& graphic_fd_events_;
     TopFdContainer& fd_events_;
     TimerContainer& timer_events_;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, GraphicFdContainer& graphic_fd_events_, TopFdContainer& fd_events_, TimerContainer&)
+    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer&)
     {}
 };
 #endif
@@ -411,7 +410,6 @@ private:
     TimeBase & time_base;
     GdProvider & gd_provider;
     TimerContainer& timer_events_;
-    GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
@@ -421,7 +419,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -453,7 +451,6 @@ public:
     , time_base(time_base)
     , gd_provider(gd_provider)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
@@ -1850,12 +1847,12 @@ class mod_rdp : public mod_api, public rdp_api
     struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks {
         mod_rdp & mod;
         SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {};
-        virtual void freeze_screen() { mod.freeze_screen(); };
-        virtual void disable_input_event() { mod.disable_input_event(); };
-        virtual void enable_input_event() { mod.enable_input_event(); };
-        virtual void enable_graphics_update() { mod.enable_graphics_update(); };
-        virtual void disable_graphics_update() { mod.disable_graphics_update(); };
-        virtual void display_osd_message(std::string const & message) { mod.display_osd_message(message); }
+        virtual void freeze_screen() override { mod.freeze_screen(); };
+        virtual void disable_input_event() override { mod.disable_input_event(); };
+        virtual void enable_input_event() override { mod.enable_input_event(); };
+        virtual void enable_graphics_update() override { mod.enable_graphics_update(); };
+        virtual void disable_graphics_update() override { mod.disable_graphics_update(); };
+        virtual void display_osd_message(std::string const & message) override  { mod.display_osd_message(message); }
     } spvc_callbacks;
 
     mod_rdp_channels channels;
@@ -1947,9 +1944,8 @@ class mod_rdp : public mod_api, public rdp_api
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    GraphicEventContainer & graphic_events_;
-    GraphicFdContainer & graphic_fd_events_;
-    GraphicFdPtr fd_event;
+    TopFdPtr fd_event;
+    TopFdContainer & fd_events_;
     TimerContainer& timer_events_;
     SesmanInterface & sesman;
 
@@ -2017,7 +2013,6 @@ class mod_rdp : public mod_api, public rdp_api
     struct PrivateRdpNegociation
     {
         RdpNegociation rdp_negociation;
-        GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
 #ifndef __EMSCRIPTEN__
         CertificateResult result = CertificateResult::wait;
@@ -2045,8 +2040,6 @@ public:
       , Inifile & ini
       , TimeBase& time_base
       , GdProvider & gd_provider
-      , GraphicEventContainer & graphic_events_
-      , GraphicFdContainer & graphic_fd_events_
       , TopFdContainer & fd_events_
       , TimerContainer& timer_events_
       , SesmanInterface & sesman
@@ -2070,7 +2063,7 @@ public:
         : spvc_callbacks(*this)
         , channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, gd_provider, timer_events_, graphic_events_, file_validator_service,
+            report_message, gen, metrics, time_base, gd_provider, timer_events_, file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
         )
@@ -2120,12 +2113,11 @@ public:
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
         , gd_provider(gd_provider)
-        , graphic_fd_events_(graphic_fd_events_)
+        , fd_events_(fd_events_)
         , timer_events_(timer_events_)
-        , graphic_events_(graphic_events_)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(time_base, gd_provider, graphic_fd_events_, fd_events_, timer_events_)
+        , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
@@ -2187,7 +2179,9 @@ public:
                                                         ?  mod_rdp_params.open_session_timeout
                                                         :  15s;
 
-        auto check_error = [this](auto /*ctx*/, jln::ExitR er, gdi::GraphicApi&){
+        auto check_error = [this](auto /*ctx*/, jln::ExitR er){
+            LOG(LOG_INFO, "**** rdp::fd_events_.on_error()");
+
             if (er.status != jln::ExitR::Exception) {
                 return er.to_result();
             }
@@ -2251,7 +2245,7 @@ public:
 
     #ifndef __EMSCRIPTEN__
         if (this->enable_server_cert_external_validation) {
-            LOG(LOG_INFO, "Enable server cert external validation");
+            LOG(LOG_INFO, "**** Enable server cert external validation");
             rdp_negociation.set_cert_callback([this](X509& certificate){
                 auto& result = this->private_rdp_negociation->result;
 
@@ -2275,13 +2269,13 @@ public:
         }
     #endif
 
-        LOG(LOG_INFO, "Start Negociation");
+        LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
 
-        LOG(LOG_INFO, "rdp::graphic_fd_events_.create_top_executor");
-        this->fd_event = this->graphic_fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
+        LOG(LOG_INFO, "**** rdp::fd_events_.create_top_executor");
+        this->fd_event = this->fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
         .on_exit(check_error)
-        .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi&){
+        .on_action([this](JLN_TOP_CTX ctx){
             bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
             // RdpNego::recv_next_data set a new fd if tls
@@ -2295,23 +2289,29 @@ public:
             }
             else {
                 this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-                if (this->buf.remaining()){
-                    LOG(LOG_INFO, "rdp::graphic_events_.create_action_executor");
-                    this->private_rdp_negociation->graphic_event
-                    = this->graphic_events_.create_action_executor(ctx.get_reactor())
-                    .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
-                        this->draw_event_impl(gd, this->sesman);
-                    }));
-                }
-
-                // TODO replace_event()
                 return ctx.disable_timeout()
                 .replace_exit(jln::propagate_exit())
-                .replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-                    LOG(LOG_INFO, "RDP Negociation reset (finished nego)");
+                .replace_action([this](JLN_TOP_CTX ctx){
+                    auto & gd = this->gd_provider.get_graphics();
+                    if (this->buf.remaining()){
+                        this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+                    }
                     this->private_rdp_negociation.reset();
+                    #ifndef __EMSCRIPTEN__
+                    if (this->channels.remote_programs_session_manager) {
+                        this->channels.remote_programs_session_manager->set_drawable(&gd);
+                    }
+                    #endif
+                    this->buf.load_data(this->trans);
                     this->draw_event(gd, this->sesman);
-                    return ctx.replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+                    return ctx.replace_action([this](JLN_TOP_CTX ctx){
+                        auto & gd = this->gd_provider.get_graphics();
+                        #ifndef __EMSCRIPTEN__
+                        if (this->channels.remote_programs_session_manager) {
+                            this->channels.remote_programs_session_manager->set_drawable(&gd);
+                        }
+                        #endif
+                        this->buf.load_data(this->trans);
                         this->draw_event(gd, this->sesman);
                         return ctx.need_more_data();
                     });
@@ -2319,7 +2319,7 @@ public:
             }
         })
         .set_timeout(this->private_rdp_negociation->open_session_timeout)
-        .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){
+        .on_timeout([this](JLN_TOP_TIMER_CTX ctx){
             if (this->error_message) {
                 *this->error_message = "Logon timer expired!";
             }
@@ -2371,7 +2371,34 @@ public:
         }
     }
 
-    void acl_update() override;
+    void acl_update() override
+    {
+        if (this->enable_server_cert_external_validation) {
+            auto const& message = this->ini.get<cfg::mod_rdp::server_cert_response>();
+            if (message.empty()) {
+                return;
+            }
+
+            if (message == "Ok" || message == "ok") {
+                LOG(LOG_INFO, "Certificate was valid according to authentifier");
+            }
+            else {
+                LOG(LOG_INFO, "Certificate was invalid according to authentifier: %s", message);
+                throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
+            }
+
+            bool const is_finish =
+                this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+            if (is_finish) {
+                this->negociation_result =
+                    this->private_rdp_negociation->rdp_negociation.get_result();
+                if (this->buf.remaining()) {
+                    this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+                }
+            }
+        }
+        return;
+    }
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state)
@@ -3432,19 +3459,6 @@ public:
 
     void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
     {
-#ifndef __EMSCRIPTEN__
-        if (this->channels.remote_programs_session_manager) {
-            this->channels.remote_programs_session_manager->set_drawable(&gd);
-        }
-#endif
-
-        this->buf.load_data(this->trans);
-        this->draw_event_impl(gd, sesman);
-    }
-
-
-    void draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
-    {
         while (this->buf.next(TpduBuffer::PDU)) {
             InStream x224_data(this->buf.current_pdu_buffer());
 
@@ -3530,9 +3544,9 @@ public:
                     throw;
                 }
 
-                if (UP_AND_RUNNING != this->connection_finalization_state &&
-                    DISCONNECTED != this->connection_finalization_state &&
-                    !this->already_upped_and_running) {
+                if (UP_AND_RUNNING != this->connection_finalization_state
+                && DISCONNECTED != this->connection_finalization_state
+                && !this->already_upped_and_running) {
                     const char * statedescr = TR(trkeys::err_mod_rdp_connected, this->lang);
                     str_append(
                         this->close_box_extra_message_ref,
@@ -6079,8 +6093,9 @@ public:
         drawable.end_update();
     }
 
-    void display_osd_message(std::string const & message)
+    void display_osd_message(std::string const & message) override
     {
+        this->gd_provider.display_osd_message(message);
     }
 
 public:

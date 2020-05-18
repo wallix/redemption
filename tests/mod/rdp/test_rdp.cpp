@@ -51,96 +51,6 @@
 // Uncomment the code block below to generate testing data.
 //#include <openssl/ssl.h>
 
-/*
-RED_AUTO_TEST_CASE(TestModRDPXPServer)
-{
-    ClientInfo info;
-    info.keylayout = 0x04C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname,sizeof(info.hostname),"test");
-    int verbose = 511;
-
-    FakeFront front(info, verbose);
-
-    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000);
-    // std::string error_message;
-    // SocketTransport t( name
-    //                  , client_sck
-    //                  , "10.10.47.175"
-    //                  , 3389
-    //                  , verbose
-    //                  , &error_message
-    //                  );
-
-
-    #include "fixtures/dump_xp_mem3blt.hpp"
-    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
-
-    if (verbose > 2){
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
-    Inifile ini;
-
-    std::array<uint8_t, 28> server_auto_reconnect_packet {};
-    ModRDPParams mod_rdp_params( "xavier"
-                                , "SecureLinux"
-                                , "10.10.47.175"
-                                , "10.10.9.161"
-                                , 7
-                                , global_font()
-                                , theme
-                                , server_auto_reconnect_packet
-                                , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                                , RDPVerbose{}
-                                );
-    mod_rdp_params.enable_tls                      = false;
-    mod_rdp_params.enable_nla                      = false;
-    //mod_rdp_params.enable_krb                      = false;
-    //mod_rdp_params.enable_clipboard                = true;
-    mod_rdp_params.enable_fastpath                 = false;
-    //mod_rdp_params.enable_mem3blt                  = true;
-    mod_rdp_params.enable_new_pointer              = false;
-    //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = nullptr;
-    //mod_rdp_params.disconnect_on_logon_user_change = false;
-    mod_rdp_params.open_session_timeout              = 5s;
-    //mod_rdp_params.certificate_change_action       = 0;
-    //mod_rdp_params.extra_orders                    = "";
-
-    // To always get the same client random, in tests
-    LCGRandom gen;
-    LCGTime timeobj;
-    NullAuthentifier authentifier;
-    NullReportMessage report_message;
-    TimeBase time_base;
-    auto mod = new_mod_rdp(t, time_base, front, info,
-        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini, nullptr);
-
-    if (verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-    RED_CHECK_EQUAL(front.info.width, 800);
-    RED_CHECK_EQUAL(front.info.height, 600);
-
-    execute_negociate_mod(time_base, *mod, front);
-    for (int count = 0; count < 25; ++count) {
-        LOG(LOG_INFO, "===================> count = %d", count);
-        auto fd_is_set = [](int fd, auto& e){ return true; };
-        graphic_events_.exec_action(front);
-        graphic_fd_events_.exec_action(fd_is_set, front);
-    }
-
-    // front.dump_png("trace_xp_");
-}
-*/
-
 RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
     // Uncomment the code block below to generate testing data.
@@ -238,16 +148,13 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullLicenseStore license_store;
     TimeBase time_base;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
     SesmanInterface sesman(ini);
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
 
-    auto mod = new_mod_rdp(t, ini, time_base, gd_provider, graphic_events_, graphic_fd_events_, fd_events_, timer_events_, sesman, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, ini, time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
         nullptr, nullptr, mod_rdp_factory);
@@ -255,26 +162,26 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
-    // Comment the code block below to generate testing data.
-    execute_negociate_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd());
-    for (int count = 0; count < 38; ++count) {
+    auto end_tv = time_base.get_current_time();
+    timer_events_.exec_timer(end_tv);
+    fd_events_.exec_timeout(end_tv);
+
+    for (int count = 0; count < 40; ++count) {
         auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-        graphic_events_.exec_action(front.gd());
-        graphic_fd_events_.exec_action(fd_is_set, front.gd());
+        fd_events_.exec_action(fd_is_set);
     }
 
-   
+
 //    auto const end_tv = time_base.get_current_time();
 //    timer_events_.exec_timer(end_tv);
 //    fd_events_.exec_timeout(end_tv);
-//    graphic_timer_events_.exec_timer(end_tv, front.gd());
-//    graphic_fd_events_.exec_timeout(end_tv, front.gd());
+//    timer_events_.exec_timer(end_tv);
+//    fd_events_.exec_timeout(end_tv);
 
     //unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
     //    (void)sck;
     //    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-    //    graphic_events_.exec_action(front.gd());
-    //    graphic_fd_events_.exec_action(fd_is_set, front.gd());
+    //    fd_events_.exec_action(fd_is_set);
     //    LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
     //    return !mod->is_up_and_running();
     //});
@@ -282,181 +189,3 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //front.dump_png("trace_w2008_");
 }
 
-/*
-RED_AUTO_TEST_CASE(TestModRDPW2003Server)
-{
-    ClientInfo info;
-    info.keylayout = 0x04C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname,sizeof(info.hostname),"test");
-    int verbose = 511;
-
-    FakeFront front(info, verbose);
-
-    // int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000);
-    // std::string error_message;
-    // SocketTransport t( name
-    //                  , client_sck
-    //                  , "10.10.47.205"
-    //                  , 3389
-    //                  , verbose
-    //                  , &error_message
-    //                  );
-
-
-    #include "fixtures/dump_w2003_mem3blt.hpp"
-    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
-
-    if (verbose > 2){
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
-    Inifile ini;
-
-    std::array<uint8_t, 28> server_auto_reconnect_packet {};
-    ModRDPParams mod_rdp_params( "administrateur"
-                               , "SecureLinux"
-                               , "10.10.47.205"
-                               , "0.0.0.0"
-                               , 2
-                               , global_font()
-                               , theme
-                               , server_auto_reconnect_packet
-                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                               , RDPVerbose{}
-                               );
-    mod_rdp_params.enable_tls                      = false;
-    mod_rdp_params.enable_nla                      = false;
-    //mod_rdp_params.enable_krb                      = false;
-    //mod_rdp_params.enable_clipboard                = true;
-    mod_rdp_params.enable_fastpath                 = false;
-    //mod_rdp_params.enable_mem3blt                  = true;
-    mod_rdp_params.enable_new_pointer              = false;
-    //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = nullptr;
-    //mod_rdp_params.disconnect_on_logon_user_change = false;
-    mod_rdp_params.open_session_timeout            = 5s;
-    //mod_rdp_params.certificate_change_action       = 0;
-    //mod_rdp_params.extra_orders                    = "";
-
-    // To always get the same client random, in tests
-    LCGRandom gen;
-    LCGTime timeobj;
-    NullAuthentifier authentifier;
-    NullReportMessage report_message;
-    TimeBase time_base;
-    auto mod = new_mod_rdp(t, time_base, front, info,
-        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini, nullptr);
-
-    if (verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-    RED_CHECK_EQUAL(front.info.width, 800);
-    RED_CHECK_EQUAL(front.info.height, 600);
-
-    execute_negociate_mod(time_base, *mod, front);
-    for (int count = 0; count < 25; ++count) {
-        LOG(LOG_INFO, "===================> count = %d", count);
-        auto fd_is_set = [](int fd, auto& e){ return true; };
-        graphic_events_.exec_action(front);
-        graphic_fd_events_.exec_action(fd_is_set, front);
-    }
-
-    // front.dump_png("trace_w2003_");
-}
-*/
-
-/*
-RED_AUTO_TEST_CASE(TestModRDPW2000Server)
-{
-    ClientInfo info;
-    info.keylayout = 0x04C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname,sizeof(info.hostname),"test");
-    int verbose = 256;
-
-    FakeFront front(info, verbose);
-
-    // int client_sck = ip_connect("10.10.47.39", 3389, 3, 1000);
-    // std::string error_message;
-    // SocketTransport t( name
-    //                  , client_sck
-    //                  , "10.10.47.39"
-    //                  , 3389
-    //                  , verbose
-    //                  , &error_message
-    //                  );
-
-    #include "fixtures/dump_w2000_mem3blt.hpp"
-    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
-
-    if (verbose > 2){
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
-    Inifile ini;
-
-    std::array<uint8_t, 28> server_auto_reconnect_packet {};
-    ModRDPParams mod_rdp_params( "administrateur"
-                               , "SecureLinux"
-                               , "10.10.47.39"
-                               , "0.0.0.0"
-                               , 2
-                               , global_font()
-                               , theme
-                               , server_auto_reconnect_packet
-                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                               , RDPVerbose{}
-                               );
-    mod_rdp_params.enable_tls                      = false;
-    mod_rdp_params.enable_nla                      = false;
-    //mod_rdp_params.enable_krb                      = false;
-    //mod_rdp_params.enable_clipboard                = true;
-    mod_rdp_params.enable_fastpath                 = false;
-    //mod_rdp_params.enable_mem3blt                  = true;
-    mod_rdp_params.enable_new_pointer              = false;
-    //mod_rdp_params.rdp_compression                 = 0;
-    //mod_rdp_params.error_message                   = nullptr;
-    //mod_rdp_params.disconnect_on_logon_user_change = false;
-    mod_rdp_params.open_session_timeout            = 5s;
-    //mod_rdp_params.certificate_change_action       = 0;
-    //mod_rdp_params.extra_orders                    = "";
-
-    // To always get the same client random, in tests
-    LCGRandom gen;
-    LCGTime timeobj;
-    NullAuthentifier authentifier;
-    NullReportMessage report_message;
-    TimeBase time_base;
-    auto mod = new_mod_rdp(t, time_base, front, info,
-        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini, nullptr);
-
-    if (verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-    RED_CHECK_EQUAL(front.info.width, 800);
-    RED_CHECK_EQUAL(front.info.height, 600);
-
-    execute_negociate_mod(time_base, *mod, front);
-    for (int count = 0; count < 25; ++count) {
-        LOG(LOG_INFO, "===================> count = %d", count);
-        auto fd_is_set = [](int fd, auto& e){ return true; };
-        graphic_events_.exec_action(front);
-        graphic_fd_events_.exec_action(fd_is_set, front);
-    }
-
-    // front.dump_png("trace_w2000_");
-}
-*/

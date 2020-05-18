@@ -234,7 +234,7 @@ public:
         // TODO create_yield_event
         LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendDriveIOResponseTask::configure_event)");
         this->timer_ptr = timer_events_
-        .create_timer_executor(time_base, 
+        .create_timer_executor(time_base,
             std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))

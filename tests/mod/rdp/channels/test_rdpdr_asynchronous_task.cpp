@@ -69,9 +69,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     bool run_task = true;
     TimeBase time_base;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicTimerContainer graphic_timer_events_;
     rdpdr_drive_read_task.configure_event(
         time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
@@ -111,9 +109,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     bool run_task = true;
     TimeBase time_base;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicTimerContainer graphic_timer_events_;
     rdpdr_send_drive_io_response_task.configure_event(
         time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;

@@ -22,39 +22,3 @@ Author(s): Jonathan Poelen
 #include "gdi/screen_functions.hpp"
 #include "mod/rdp/rdp.hpp"
 
-void mod_rdp::acl_update()
-{
-    if (this->enable_server_cert_external_validation) {
-        auto const& message = this->ini.get<cfg::mod_rdp::server_cert_response>();
-        if (message.empty()) {
-            return;
-        }
-
-        if (message == "Ok" || message == "ok") {
-            LOG(LOG_INFO, "Certificate was valid according to authentifier");
-//            result = CertificateResult::valid;
-        }
-        else {
-            LOG(LOG_INFO, "Certificate was invalid according to authentifier: %s", message);
-//            result = CertificateResult::invalid;
-            throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
-        }
-
-        LOG(LOG_INFO, "rdp::graphic_events_.create_action_executor");
-        this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->time_base)
-        .on_action(jln::one_shot([this](gdi::GraphicApi&) {
-            bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
-            if (is_finish) {
-                this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-                if (this->buf.remaining()) {
-                    LOG(LOG_INFO, "rdp::lambda::graphic_events_.create_action_executor");
-                    this->private_rdp_negociation->graphic_event = this->graphic_events_.create_action_executor(this->time_base)
-                    .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
-                        this->draw_event_impl(gd, sesman);
-                    }));
-                }
-            }
-        }));
-    }
-    return;
-}

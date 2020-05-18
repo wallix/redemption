@@ -29,7 +29,8 @@
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
-    GraphicTimerContainer & graphic_timer_events_,
+    GdProvider & gd_provider,
+    TimerContainer & timer_events_,
     SesmanInterface & sesman,
     FrontAPI & front,
     uint16_t width, uint16_t height)
@@ -39,11 +40,11 @@ Bouncer2Mod::Bouncer2Mod(
 , sesman(sesman)
 , dancing_rect(0,0,100,100)
 , time_base(time_base)
-, timer(graphic_timer_events_
-    .create_timer_executor(time_base)
+, gd_provider(gd_provider)
+, timer(timer_events_.create_timer_executor(time_base)
     .set_delay(std::chrono::milliseconds(33))
-    .on_action(jln::always_ready([this](gdi::GraphicApi& gd){
-        this->draw_event(gd);
+    .on_action(jln::always_ready([this](){
+        this->draw_event(this->gd_provider.get_graphics());
     })))
 {}
 

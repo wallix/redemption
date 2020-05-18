@@ -93,10 +93,7 @@ public:
     ClientChannelMod channel_mod;
     TimeBase& time_base;
     TopFdContainer& fd_events_;
-    GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
-    GraphicEventContainer & graphic_events_;
-    GraphicTimerContainer & graphic_timer_events_;
 
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
@@ -237,9 +234,6 @@ public:
 
 public:
     ClientRedemption(TimeBase & time_base,
-                     GraphicEventContainer & graphic_events_,
-                     GraphicFdContainer& graphic_fd_events_,
-                     GraphicTimerContainer & graphic_timer_events,
                      TopFdContainer& fd_events_,
                      TimerContainer & timer_events_,
                      ClientRedemptionConfig & config)
@@ -248,10 +242,7 @@ public:
         , _callback(this)
         , time_base(time_base)
         , fd_events_(fd_events_)
-        , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
-        , graphic_events_(graphic_events_)
-        , graphic_timer_events_(graphic_timer_events_)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(time_base, timer_events_, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
@@ -304,9 +295,7 @@ public:
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, this->graphic_events_, this->graphic_timer_events_, EnableGraphics{true},
-            *this->_callback.get_mod(), *this
-        )) {
+            timeout, this->time_base, this->fd_events_, this->timer_events_)) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
             return 9;
         }
@@ -432,8 +421,6 @@ public:
                   , this->ini
                   , this->time_base
                   , this->gd_forwarder
-                  , this->graphic_events_
-                  , this->graphic_fd_events_
                   , this->fd_events_
                   , this->timer_events_
                   , this->sesman
@@ -747,7 +734,6 @@ public:
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->time_base
-              , this->graphic_timer_events_
               , this->sesman
               , *this
               , *this
@@ -998,15 +984,11 @@ public:
                 auto const end_tv = time_base.get_current_time();
                 this->timer_events_.exec_timer(end_tv);
                 this->fd_events_.exec_timeout(end_tv);
-                this->graphic_timer_events_.exec_timer(end_tv, *this);
-                this->graphic_fd_events_.exec_timeout(end_tv, *this);
             } else {
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;
                 };
                 this->fd_events_.exec_action(is_mod_fd);
-                this->graphic_events_.exec_action(*this);
-                this->graphic_fd_events_.exec_action(is_mod_fd, *this);
             }
         } catch (const Error & e) {
 

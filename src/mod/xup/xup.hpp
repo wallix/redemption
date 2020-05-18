@@ -27,6 +27,10 @@
 #include "core/session_reactor.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "utils/colors.hpp"
+#include "acl/gd_provider.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "utils/rect.hpp"
 
 namespace gdi
 {
@@ -40,13 +44,17 @@ class Keymap2;
 class xup_mod : public mod_api
 {
 public:
-    xup_mod(
-        Transport& t, TimeBase& time_base, GraphicFdContainer & graphic_fd_events_, FrontAPI& front,
+    xup_mod(Transport& t,
+        TimeBase& time_base,
+        GdProvider & gd_provider,
+        FrontAPI& front,
         uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp);
+
+    void init() override;
 
     std::string module_name() override {return "Xup Mod";}
 
-    void rdp_gdi_up_and_running(ScreenInfo &) override {}
+    void rdp_gdi_up_and_running(ScreenInfo &) override;
 
     void rdp_gdi_down() override {}
 
@@ -72,6 +80,5 @@ private:
     BGRColor fgcolor;
 
     RDPPen pen;
-
-    GraphicFdPtr fd_event;
+    GdProvider & gd_provider;
 };

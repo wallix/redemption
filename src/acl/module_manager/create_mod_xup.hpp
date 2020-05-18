@@ -39,13 +39,13 @@ private:
 public:
     XupModWithSocket(ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, uint32_t verbose, std::string * error_message,
-        TimeBase& time_base, GraphicFdContainer & graphic_fd_events_, FrontAPI& front, uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp)
+        TimeBase& time_base, FrontAPI& front, uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp)
     : socket_transport( name, std::move(sck)
                      , ini.get<cfg::context::target_host>().c_str()
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
-    , mod(this->socket_transport, time_base, graphic_fd_events_, front, front_width, front_height, context_bpp)
+    , mod(this->socket_transport, time_base, mod_wrapper, front, front_width, front_height, context_bpp)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
@@ -108,7 +108,7 @@ public:
     }
 
     // from mod_api
-    void disconnect() override 
+    void disconnect() override
     {
         return this->mod.disconnect();
     }
@@ -120,19 +120,19 @@ public:
     }
 
     // from mod_api
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) override 
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) override
     {
         return this->mod.send_input(time, message_type, device_flags, param1, param2);
     }
 
     // from mod_api
-    [[nodiscard]] Dimension get_dim() const override 
+    [[nodiscard]] Dimension get_dim() const override
     {
         return this->mod.get_dim();
     }
 
     // from mod_api
-    void log_metrics() override 
+    void log_metrics() override
     {
         return this->mod.log_metrics();
     }
@@ -140,9 +140,9 @@ public:
     // from mod_api
     void DLP_antivirus_check_channels_files() override
     {
-        return this->mod.DLP_antivirus_check_channels_files(); 
+        return this->mod.DLP_antivirus_check_channels_files();
     }
-    
+
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
 
 };

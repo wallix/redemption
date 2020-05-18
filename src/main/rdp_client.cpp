@@ -151,11 +151,7 @@ int main(int argc, char** argv)
     TimeSystem system_timeobj;
     TimeBase time_base;
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
-
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
@@ -186,10 +182,7 @@ int main(int argc, char** argv)
         return run_test_client(
             is_vnc ? "VNC" : "RDP", time_base,
                                     fd_events_,
-                                    graphic_fd_events_,
                                     timer_events_,
-                                    graphic_events_,
-                                    graphic_timer_events_,
                                     *mod, gdi::null_gd(),
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
@@ -284,8 +277,6 @@ int main(int argc, char** argv)
                 trans, ini,
                 time_base,
                 gd_forwarder,
-                graphic_events_,
-                graphic_fd_events_,
                 fd_events_,
                 timer_events_,
                 sesman,
