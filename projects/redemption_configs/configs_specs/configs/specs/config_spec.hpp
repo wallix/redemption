@@ -410,6 +410,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), "session_probe_end_of_session_check_delay_time", connpolicy::name{"end_of_session_check_delay_time"}, set(0));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", connpolicy::name{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_update_disabled_features", connpolicy::name{"update_disabled_features"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
 
@@ -864,11 +865,11 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
     });
-    
+
     W.section("theme", [&]
     {
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_theme", desc{"Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)"}, set(false));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "bgcolor", set("dark_blue_bis"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "fgcolor", set("white"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "separator_color", set("light_blue"));
@@ -876,27 +877,27 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "error_color", set("yellow"));
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "logo", set(false));
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "logo_path", set(""));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_bgcolor", set("white"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_fgcolor", set("black"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_focus_color", set("winblue"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_bgcolor", set("black"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_fgcolor", set("light_yellow"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_border_color", set("black"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_bgcolor", set("pale_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_fgcolor", set("black"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_bgcolor", set("light_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_fgcolor", set("black"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_bgcolor", set("medium_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_fgcolor", set("white"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_bgcolor", set("winblue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_fgcolor", set("white"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_bgcolor", set("medium_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_fgcolor", set("white"));
     });
