@@ -259,7 +259,7 @@ public:
         return gd;
     }
 
-    void display_osd_message(const std::string& message)
+    void display_osd_message(const std::string& message) override
     {
         this->set_message(std::move(message), true);
         this->draw_osd_message();

@@ -312,9 +312,8 @@ private:
     }
 
     bool front_up_and_running(std::unique_ptr<Acl> & acl, timeval & now,
-                              const time_t start_time, Inifile& ini,
+                              Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
-                              EndSessionWarning & end_session_warning,
                               Front & front,
                               Authentifier & authentifier,
                               ClientExecute & rail_client_execute)
@@ -1128,7 +1127,7 @@ public:
                                 }
                             }
 
-                            run_session = this->front_up_and_running(acl, now, start_time, ini, mod_factory, mod_wrapper, end_session_warning, front, authentifier, rail_client_execute);
+                            run_session = this->front_up_and_running(acl, now, ini, mod_factory, mod_wrapper, front, authentifier, rail_client_execute);
 
                         } catch (Error const& e) {
                             LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());

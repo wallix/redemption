@@ -719,6 +719,7 @@ public:
 
         this->orders.graphics_update_pdu().send_set_surface_command(cmd);
     }
+
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
         if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec
         && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {

@@ -85,7 +85,11 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "gdi/screen_functions.hpp"
-#include "system/tls_context.hpp"
+
+// TODO: annoying as it introduces a dependency on openssl in rdp mod
+// see how to extract something more abstract where it's used
+// check : enable_server_cert_external_validation workflow
+#include "system/tls_cert_to_escaped_string.hpp"
 
 
 #ifdef __EMSCRIPTEN__
@@ -792,7 +796,7 @@ public:
                     FrontAPI& front,
                     ServerTransportContext stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
-                    mod_api& mod, rdp_api& rdp, AuthApi& authentifier,
+                    rdp_api& rdp, AuthApi& authentifier,
                     const Translation::language_t & lang,
                     const bool bogus_refresh_rect,
                     const uint32_t monitor_count,
@@ -931,7 +935,6 @@ public:
         const CHANNELS::ChannelDef & auth_channel,
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
-        mod_api & mod_rdp,
         ServerTransportContext & stc,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
@@ -1018,20 +1021,7 @@ public:
         authentifier.set_pm_request(checkout_channel_message.c_str());
     }
 
-    void process_session_probe_event(
-        const CHANNELS::ChannelDef & session_probe_channel,
-        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
-        FrontAPI& front,
-        mod_api & mod_rdp,
-        rdp_api& rdp,
-        AuthApi& authentifier,
-        ServerTransportContext & stc,
-        AsynchronousTaskContainer & asynchronous_tasks,
-        GeneralCaps const & client_general_caps,
-        const char (& client_name)[128],
-        const uint32_t monitor_count,
-        const bool bogus_refresh_rect,
-        const Translation::language_t & lang,
+    void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         SesmanInterface & sesman
     ) {
 #ifndef __EMSCRIPTEN__
@@ -1680,7 +1670,6 @@ public:
     void do_enable_session_probe(
         FrontAPI& front,
         ServerTransportContext & stc,
-        mod_api & mod_rdp,
         rdp_api& rdp,
         AuthApi& authentifier,
         AsynchronousTaskContainer & asynchronous_tasks,
@@ -1716,7 +1705,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp, authentifier,
+                    rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -1748,7 +1737,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp, authentifier,
+                    rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -2414,7 +2403,7 @@ public:
                         this->channels.create_session_probe_virtual_channel(
                                 this->front, stc,
                                 this->asynchronous_tasks,
-                                *this, *this, this->authentifier,
+                                *this, this->authentifier,
                                 this->lang,
                                 this->bogus_refresh_rect,
                                 this->monitor_count,
@@ -2987,7 +2976,7 @@ public:
             if ((mod_channel.name == this->channels.auth_channel) && this->channels.enable_auth_channel) {
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, *this, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
+                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
             }
             else if (mod_channel.name == this->channels.checkout_channel) {
                 this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
@@ -3001,7 +2990,7 @@ public:
                     this->channels.create_session_probe_virtual_channel(
                             this->front, stc,
                             this->asynchronous_tasks,
-                            *this, *this, this->authentifier,
+                            *this, this->authentifier,
                             this->lang,
                             this->bogus_refresh_rect,
                             this->monitor_count,
@@ -3009,11 +2998,7 @@ public:
                             this->client_name);
                 }
 #endif
-                this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
-                    this->front, *this, *this, this->authentifier, stc,
-                    this->asynchronous_tasks,
-                    this->client_general_caps, this->client_name,
-                    this->monitor_count, this->bogus_refresh_rect, this->lang, sesman);
+                this->channels.process_session_probe_event(sec.payload, length, flags, chunk_size, sesman);
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
@@ -3219,7 +3204,6 @@ public:
                                     this->channels.do_enable_session_probe(
                                         this->front,
                                         stc,
-                                        *this,
                                         *this,
                                         this->authentifier,
                                         this->asynchronous_tasks,

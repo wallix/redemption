@@ -367,9 +367,7 @@ void RDPDrawable::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ct
     this->last_update_index++;
 }
 
-void RDPDrawable::draw(RDPSetSurfaceCommand const & /*cmd*/)
-{
-}
+void RDPDrawable::draw(RDPSetSurfaceCommand const & /*cmd*/) {}
 
 void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
 {
@@ -383,7 +381,7 @@ void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const
         bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;
         bitmap_data.dest_top = cmd.destRect.y + rect.itop();
         bitmap_data.dest_bottom = cmd.destRect.y + rect.ebottom()-1;
-        
+
         bitmap_data.width = bitmap.cx();
         bitmap_data.height = bitmap.cy();
         bitmap_data.bits_per_pixel = 32;
