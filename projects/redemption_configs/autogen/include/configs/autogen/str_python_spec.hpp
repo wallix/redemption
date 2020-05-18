@@ -121,6 +121,10 @@ support_connection_redirection_during_recording = boolean(default=True)
 # (is in millisecond)
 rdp_keepalive_connection_interval = integer(min=0, default=0)
 
+# Enable primary connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
 [session_log]
 
 enable_session_log = boolean(default=True)

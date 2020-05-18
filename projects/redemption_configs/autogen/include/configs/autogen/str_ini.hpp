@@ -142,6 +142,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (is in millisecond)
 #rdp_keepalive_connection_interval = 0
 
+# Enable primary connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
+
 [session_log]
 
 # value: 0 or 1
