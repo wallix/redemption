@@ -231,6 +231,9 @@ end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
 ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_advanced
+update_disabled_features = boolean(default=True)
+
+#_advanced
 childless_window_as_unidentified_input_field = boolean(default=True)
 
 #   0x000: none

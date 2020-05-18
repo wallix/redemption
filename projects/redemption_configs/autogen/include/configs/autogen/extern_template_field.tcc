@@ -65,6 +65,7 @@ template class Inifile::Field<cfg::mod_rdp::session_probe_handle_usage_limit>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_memory_usage_limit>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>;
+template class Inifile::Field<cfg::mod_rdp::session_probe_update_disabled_features>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_disabled_features>;
 template class Inifile::Field<cfg::mod_rdp::session_probe_bestsafe_integration>;

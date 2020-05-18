@@ -386,6 +386,7 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     spp.vc_params.end_of_session_check_delay_time = ini.get<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>();
     spp.vc_params.ignore_ui_less_processes_during_end_of_session_check =
         ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
+    spp.vc_params.update_disabled_features                             = ini.get<cfg::mod_rdp::session_probe_update_disabled_features>();
     spp.vc_params.childless_window_as_unidentified_input_field =
         ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
     spp.is_public_session = ini.get<cfg::mod_rdp::session_probe_public_session>();
