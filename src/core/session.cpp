@@ -705,7 +705,7 @@ public:
             auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
             LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
             Theme theme;
-            ::load_theme(theme, theme_name);
+            ::load_theme(theme, ini);
 
             ClientExecute rail_client_execute(time_base, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
