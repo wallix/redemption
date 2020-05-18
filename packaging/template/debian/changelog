@@ -1,3 +1,10 @@
+redemption (8.0.45%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Whitelist DVC
+  * Reconnects on Graphic subsystem failure
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 18 May 2020 12:04:15 +0200
+
 redemption (8.0.43%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * fix force cache v2 with am on resize
