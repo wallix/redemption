@@ -116,7 +116,7 @@ public:
     void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
-        LOG(LOG_INFO, "rdpdr_asynchronous_task::fd_events_.create_top_executor");
+        // LOG(LOG_INFO, "rdpdr_asynchronous_task::fd_events_.create_top_executor");
         this->fdobject = fd_events_.create_top_executor(time_base,
             this->file_descriptor, std::ref(*this), terminate_notifier)
         .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
@@ -232,7 +232,7 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendDriveIOResponseTask::configure_event)");
+        // LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendDriveIOResponseTask::configure_event)");
         this->timer_ptr = timer_events_
         .create_timer_executor(time_base,
             std::ref(*this), terminate_notifier)
@@ -312,7 +312,7 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendClientMessageTask::configure_events)");
+        // LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendClientMessageTask::configure_events)");
         this->timer_ptr = timer_events_
         .create_timer_executor(time_base,
             std::ref(*this), terminate_notifier)

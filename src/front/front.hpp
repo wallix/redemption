@@ -577,7 +577,7 @@ public:
         FRONT_UP_AND_RUNNING
     } state = CONNECTION_INITIATION;
 
-    
+
     std::string state_name(){
         switch (this->state){
         case CONNECTION_INITIATION:
@@ -1014,7 +1014,7 @@ public:
 
         bool const capture_pattern_checker = sesman.has_ocr_pattern_check();
 
-        const CaptureFlags capture_flags = 
+        const CaptureFlags capture_flags =
             (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
             ini.get<cfg::video::capture_flags>() :
             (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none);
@@ -4269,6 +4269,10 @@ private:
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API
                 LOG(LOG_INFO, "RDP INPUT UP AND RUNNING ==================");
+                if (this->ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
+                    this->ini.get<cfg::context::is_wabam>()) {
+                    this->force_using_cache_bitmap_r2();
+                }
                 cb.rdp_gdi_up_and_running(this->client_info.screen_info);
                 sesman.set_screen_info(this->client_info.screen_info);
                 sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
@@ -5043,11 +5047,11 @@ private:
             }
             else {
                 auto const timeval = this->time_base.get_current_time();
-                bool const send_to_mod = !this->capture 
+                bool const send_to_mod = !this->capture
                     || (0 == decoded_keys.count)
-                    || (1 == decoded_keys.count 
+                    || (1 == decoded_keys.count
                         && this->capture->kbd_input(timeval, decoded_keys.uchars[0]))
-                    || (2 == decoded_keys.count 
+                    || (2 == decoded_keys.count
                         && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
                         && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
                 if (send_to_mod) {

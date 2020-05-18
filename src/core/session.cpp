@@ -591,8 +591,12 @@ private:
 
     void show_ultimatum(std::string info, timeval ultimatum, timeval now)
     {
-        timeval timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                    - std::chrono::seconds(now.tv_sec) - std::chrono::microseconds(now.tv_usec));
+        return;
+        timeval timeoutastv = to_timeval(
+                              std::chrono::seconds(ultimatum.tv_sec)
+                            + std::chrono::microseconds(ultimatum.tv_usec)
+                            - std::chrono::seconds(now.tv_sec)
+                            - std::chrono::microseconds(now.tv_usec));
         if (timeoutastv.tv_sec == 0 && timeoutastv.tv_usec == 0){
             LOG(LOG_INFO, "%s %ld.%ld s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
         }
