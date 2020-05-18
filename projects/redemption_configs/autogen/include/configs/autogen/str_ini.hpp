@@ -1324,4 +1324,81 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #load_theme = 
 
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+# value: 0 or 1
+#_advanced
+#enable_theme = 0
+
+#_advanced
+#bgcolor = dark_blue_bis
+
+#_advanced
+#fgcolor = white
+
+#_advanced
+#separator_color = light_blue
+
+#_advanced
+#focus_color = winblue
+
+#_advanced
+#error_color = yellow
+
+# value: 0 or 1
+#_hidden
+#logo = 0
+
+#_hidden
+#logo_path = 
+
+#_advanced
+#edit_bgcolor = white
+
+#_advanced
+#edit_fgcolor = black
+
+#_advanced
+#edit_focus_color = winblue
+
+#_advanced
+#tooltip_bgcolor = black
+
+#_advanced
+#tooltip_fgcolor = light_yellow
+
+#_advanced
+#tooltip_border_color = black
+
+#_advanced
+#selector_line1_bgcolor = pale_blue
+
+#_advanced
+#selector_line1_fgcolor = black
+
+#_advanced
+#selector_line2_bgcolor = light_blue
+
+#_advanced
+#selector_line2_fgcolor = black
+
+#_advanced
+#selector_selected_bgcolor = medium_blue
+
+#_advanced
+#selector_selected_fgcolor = white
+
+#_advanced
+#selector_focus_bgcolor = winblue
+
+#_advanced
+#selector_focus_fgcolor = white
+
+#_advanced
+#selector_label_bgcolor = medium_blue
+
+#_advanced
+#selector_label_fgcolor = white
+
 )gen_config_ini"
