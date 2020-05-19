@@ -385,8 +385,11 @@ ClipboardVirtualChannel::ClipCtx::OptionalLockId::lock_id() const
 
 
 ClipboardVirtualChannel::ClipCtx::ClipCtx(
-    std::string const& target_name, bool verify_before_transfer)
+    std::string const& target_name,
+    bool verify_before_transfer,
+    uint64_t max_file_size_rejected)
 : verify_before_transfer(verify_before_transfer && not target_name.empty())
+, max_file_size_rejected(max_file_size_rejected)
 , validator_target_name(target_name)
 {}
 
@@ -1361,28 +1364,35 @@ struct ClipboardVirtualChannel::D
                     clip.nolock_data.init_size(stream_id, ifile);
                     return true;
                 }
-                return false;
+                return send_error();
             };
 
             auto init_contents_range = [&]{
                 if (check_valid_lindex(clip.files)) {
-                    if (file_contents_request_pdu.position() == 0) {
-                        clip.nolock_data.init_requested_range(
-                            stream_id,
-                            ifile,
-                            file_contents_request_pdu.cbRequested(),
-                            clip.files[lindex].file_size,
-                            clip.files[lindex].file_name);
-                        return true;
+                    if (file_contents_request_pdu.position() != 0) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                                " Unsupported random access for a FILECONTENTS_RANGE");
+                        return send_error();
                     }
 
-                    LOG(LOG_ERR,
-                        "ClipboardVirtualChannel::process_filecontents_request_pdu:"
-                            " Unsupported random access for a FILECONTENTS_RANGE");
-                    return send_error();
+                    if (file_contents_request_pdu.cbRequested() > clip.max_file_size_rejected) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                                " file too big are automatically rejected");
+                        return send_error();
+                    }
+
+                    clip.nolock_data.init_requested_range(
+                        stream_id,
+                        ifile,
+                        file_contents_request_pdu.cbRequested(),
+                        clip.files[lindex].file_size,
+                        clip.files[lindex].file_name);
+                    return true;
                 }
 
-                return false;
+                return send_error();
             };
 
             ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
@@ -1572,6 +1582,7 @@ struct ClipboardVirtualChannel::D
         ClipboardVirtualChannel& self,
         RDPECLIP::CliprdrHeader const& in_header,
         ClipCtx& clip, uint32_t flags, bytes_view chunk_data, uint32_t total_length,
+        // TODO sender <-> receiver
         VirtualChannelDataSender& sender, VirtualChannelDataSender& receiver)
     {
         bool send_message_is_ok = true;
@@ -1685,9 +1696,7 @@ struct ClipboardVirtualChannel::D
             return true;
         };
 
-        auto finalize_file_transfer = [&, this](
-            ClipCtx::FileContentsRange& file_rng
-        ){
+        auto finalize_file_transfer = [&, this](ClipCtx::FileContentsRange& file_rng){
             if (set_finalize_file_transfer(file_rng)) {
                 this->_close_file_rng(self, clip, file_rng,
                     Mwrm3::TransferedStatus::Completed);
@@ -1698,9 +1707,18 @@ struct ClipboardVirtualChannel::D
             return false;
         };
 
-        auto send_file_contents_request = [&receiver](
-            ClipCtx::FileContentsRange& file_rng
-        ){
+        auto send_file_contents_request = [&, this](ClipCtx::FileContentsRange& file_rng){
+            if (file_rng.file_size > clip.max_file_size_rejected) {
+                FilecontentsRequestSendBack(
+                    RDPECLIP::FILECONTENTS_RANGE,
+                    safe_int(stream_id),
+                    &sender);
+                this->stop_validation_before_transfer(self, clip, file_rng);
+                clip.has_current_file_contents_stream_id = false;
+                clip.nolock_data.init_empty();
+                return false;
+            }
+
             D::send_filecontents_range(
                 receiver,
                 file_rng.stream_id,
@@ -1709,6 +1727,7 @@ struct ClipboardVirtualChannel::D
                 file_rng.first_file_size_requested);
 
             file_rng.file_size_requested = file_rng.first_file_size_requested;
+            return true;
         };
 
 
@@ -1774,8 +1793,8 @@ struct ClipboardVirtualChannel::D
                                 self.file_validator->send_eof(file_rng.file_validator_id);
                                 clip.nolock_data.set_waiting_validator();
                             }
-                            else {
-                                send_file_contents_request(file_rng);
+                            else if (not send_file_contents_request(file_rng)) {
+                                return false;
                             }
 
                             data_len = file_rng.file_contents.size();
@@ -1963,7 +1982,7 @@ struct ClipboardVirtualChannel::D
                                 case ValidatorState::Wait:
                                     LOG(LOG_DEBUG, "validator = Wait");
                                     send_file_contents_request(file_rng);
-                                    break;
+                                    return false;
                             }
                         }
                     }
@@ -2303,10 +2322,12 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 , proxy_managed(to_client_sender_ == nullptr)
 , client_ctx(
     this->params.validator_params.up_target_name,
-    this->params.validator_params.verify_before_transfer)
+    this->params.validator_params.verify_before_transfer,
+    this->params.validator_params.max_file_size_rejected)
 , server_ctx(
     this->params.validator_params.down_target_name,
-    this->params.validator_params.verify_before_transfer)
+    this->params.validator_params.verify_before_transfer,
+    this->params.validator_params.max_file_size_rejected)
 {}
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()

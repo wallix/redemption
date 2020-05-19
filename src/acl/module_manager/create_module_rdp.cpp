@@ -691,6 +691,10 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     auto & vp = mod_rdp_params.validator_params;
     vp.log_if_accepted = ini.get<cfg::file_verification::log_if_accepted>();
     vp.verify_before_transfer = ini.get<cfg::file_verification::verify_before_transfer>();
+    vp.max_file_size_rejected = std::min<uint64_t>(
+        (1ull << (64 - 20 /* mebibyte */)) - 1u,
+        ini.get<cfg::file_verification::max_file_size_rejected>()
+    ) * 1024u * 1024u;
     vp.enable_clipboard_text_up = ini.get<cfg::file_verification::clipboard_text_up>();
     vp.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
     vp.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";

@@ -31,4 +31,5 @@ struct ValidatorParams
     bool enable_clipboard_text_up = false;
     bool enable_clipboard_text_down = false;
     bool verify_before_transfer = false;
+    uint64_t max_file_size_rejected = 1024*1024*1024;
 };
