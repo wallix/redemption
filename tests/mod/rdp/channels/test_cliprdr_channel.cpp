@@ -2014,11 +2014,11 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
             });
             channel_ctx->process_server_message(temp_av);
         },
-        TEST_BUF(Msg::ToValidator{"\x04\x00\x00\x00\x04\x00\x00\x00\x04"_av}),
         TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
             " file_name=abc size=13 sha256="
             "0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
+        TEST_BUF(Msg::ToValidator{"\x04\x00\x00\x00\x04\x00\x00\x00\x04"_av}),
         TEST_BUF(Msg::ToFront{19, last_flags, zeros.first(7)})
     );
 
@@ -2401,6 +2401,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
         TEST_PROCESS {
             requested.client_file_request(8, 15, StreamId(1));
         },
+        TEST_BUF_IF(is_accepted, Msg::Log6{
+            "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+            " file_name=abc size=12 sha256="
+            "0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
         TEST_BUF(Msg::ToFront{12, first_last_flags,
             "\x09\x00\x02\x00\x04\x00\x00\x00\x01\x00\x00\x00"_av})
     );
@@ -2452,6 +2456,9 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
             channel_ctx->process_server_message(temp_av);
         },
         TEST_BUF(Msg::ToFront{19, last_flags, zeros.first(7)}),
+        TEST_BUF(Msg::Log6{"CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+                " file_name=abc size=12"
+                " sha256=0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
         TEST_BUF(Msg::ToValidator{"\x04\x00\x00\x00\x04\x00\x00\x00\x0a"_av}),
         TEST_BUF(Msg::ToFront{54, first_last_flags, temp_av})
     );
@@ -2520,6 +2527,9 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
             channel_ctx->process_server_message(temp_av);
         },
         TEST_BUF(Msg::ToFront{16, last_flags, zeros.first(4)}),
+        TEST_BUF(Msg::Log6{"CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+                " file_name=abc size=12"
+                " sha256=9ec505a2f479aca44465c9d226be14fde2e832fecae3536f49b885d92137094d"_av}),
         TEST_BUF(Msg::ToValidator{"\x04\x00\x00\x00\x04\x00\x00\x00\x0b"_av}),
         TEST_BUF(Msg::ToFront{54, first_last_flags, temp_av})
     );
@@ -2578,6 +2588,9 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrBlockWithoutLock, ClipDataTest const& d, d, {
             channel_ctx->process_server_message(temp_av);
         },
         TEST_BUF(Msg::ToFront{19, last_flags, zeros.first(7)}),
+        TEST_BUF(Msg::Log6{"CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+                " file_name=abc size=12"
+                " sha256=0443b6dc17edffa55fb5705981b28c6b0786aa4a778e4f8088e5cc03d0802c4a"_av}),
         TEST_BUF(Msg::ToFront{54, first_last_flags, temp_av})
     );
 
