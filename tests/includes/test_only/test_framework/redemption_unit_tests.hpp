@@ -360,6 +360,8 @@ namespace std /*NOLINT*/
 namespace redemption_unit_test__
 {
 
+void put_mem(std::ostream& out, bytes_view v, int min_len);
+
 template<class T>
 auto cont_size(T const& cont, int) -> decltype(std::size_t(cont.size()))
 {
