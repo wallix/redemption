@@ -520,6 +520,11 @@ namespace redemption_unit_test__
         }
     }
 
+    void put_mem(std::ostream& out, bytes_view v, int min_len)
+    {
+        put_auto_bytes(0, out, v, min_len);
+    }
+
     std::ostream & operator<<(std::ostream & out, Put2Mem const & x)
     {
         char const* sep = (x.pattern == 'd') ? "" : "\"";
