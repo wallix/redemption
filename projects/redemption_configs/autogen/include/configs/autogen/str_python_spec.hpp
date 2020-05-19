@@ -790,6 +790,11 @@ log_if_accepted = boolean(default=True)
 #_hidden
 verify_before_transfer = boolean(default=False)
 
+# File greather are automatically rejected.
+# (is in mebibyte)
+#_hidden
+max_file_size_rejected = integer(min=0, default=1024)
+
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).

@@ -926,6 +926,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #verify_before_transfer = 0
 
+# File greather are automatically rejected.
+# (is in mebibyte)
+# min = 0
+#_hidden
+#max_file_size_rejected = 1024
+
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).

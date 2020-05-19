@@ -223,6 +223,9 @@ cp_spec = {
         u'file_verification:verify_before_transfer': (
             'verify_before_transfer', False
         ),
+        u'file_verification:max_file_size_rejected': (
+            'max_file_size_rejected', 1024
+        ),
     },
     'file_storage': {
         u'file_storage:store_file': (

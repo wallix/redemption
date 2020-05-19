@@ -1449,6 +1449,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "max_file_size_rejected")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_verification::max_file_size_rejected&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

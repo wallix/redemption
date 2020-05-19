@@ -680,6 +680,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "verify_before_transfer", set(false));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), "max_file_size_rejected", desc{"File greather are automatically rejected.\n(is in mebibyte)"}, set(1024));
     });
 
     W.section("file_storage", [&]

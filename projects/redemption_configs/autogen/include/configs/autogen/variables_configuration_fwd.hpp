@@ -224,6 +224,7 @@ namespace cfg {
         struct clipboard_text_down;
         struct log_if_accepted;
         struct verify_before_transfer;
+        struct max_file_size_rejected;
     };
 
     struct file_storage {
