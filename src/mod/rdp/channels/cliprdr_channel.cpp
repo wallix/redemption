@@ -676,7 +676,7 @@ struct ClipboardVirtualChannel::D
         StaticOutStream<128> out_stream;
 
         RDPECLIP::FileContentsRequestPDU new_request_pdu(
-            safe_int(stream_id),
+            (safe_int(stream_id)), // extra parent to fix gcc-9.1
             safe_int(lindex),
             RDPECLIP::FILECONTENTS_RANGE,
             uint32_t(offset),
@@ -1797,18 +1797,28 @@ struct ClipboardVirtualChannel::D
 
                         file_rng.response_size = send_filecontents_response_header(
                             sender, file_rng.stream_id, data_len);
-                        break;
                     }
                     else {
                         clip.nolock_data.requested_range_to_range(validator_id, new_tfl());
-                        [[fallthrough]];
+                        update_file_range_data(clip.nolock_data.data, in_stream.remaining_bytes());
+
+                        if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                            clip.has_current_file_contents_stream_id = false;
+                            if (finalize_file_transfer(clip.nolock_data.data)) {
+                                clip.nolock_data.init_empty();
+                            }
+                            else {
+                                clip.nolock_data.set_waiting_continuation_range();
+                            }
+                        }
                     }
                 }
                 else {
                     clip.has_current_file_contents_stream_id = false;
                     clip.nolock_data.init_empty();
-                    break;
                 }
+
+                break;
             }
 
             case ClipCtx::TransferState::Range: {
@@ -2180,8 +2190,11 @@ struct ClipboardVirtualChannel::D
         }
 
         char format_buf[255];
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wformat-overflow=")
         int format_len = std::sprintf(format_buf, "%.*s(%u)",
             int(utf8_format.size()), utf8_format.as_charp(), requestedFormatId);
+        REDEMPTION_DIAGNOSTIC_POP
         array_view format_av{format_buf, checked_cast<std::size_t>(format_len)};
 
         char size_buf[32];
