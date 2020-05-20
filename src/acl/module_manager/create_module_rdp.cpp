@@ -377,6 +377,11 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.validator_params.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
     mod_rdp_params.validator_params.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
     mod_rdp_params.validator_params.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
+    mod_rdp_params.validator_params.verify_before_transfer = ini.get<cfg::file_verification::verify_before_transfer>();
+    mod_rdp_params.validator_params.max_file_size_rejected = std::min<uint64_t>(
+        (1ull << (64 - 20 /* mebibyte */)) - 1u,
+        ini.get<cfg::file_verification::max_file_size_rejected>()
+    ) * 1024u * 1024u;
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::mod_rdp::enable_remotefx>();
 

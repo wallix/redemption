@@ -300,6 +300,8 @@ using array_view_const_s16 = array_view<int16_t const>;
 using array_view_const_s32 = array_view<int32_t const>;
 using array_view_const_s64 = array_view<int64_t const>;
 
+using chars_view = array_view<const char>;
+using writable_chars_view = array_view<char>;
 using array_view_char = array_view<char>;
 using array_view_const_char = array_view<char const>;
 

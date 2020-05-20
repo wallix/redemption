@@ -38,6 +38,8 @@ namespace ut
     inline flagged_bytes_view utf8(bytes_view v) { return {v, 's', 0}; }
     inline flagged_bytes_view hex(bytes_view v) { return {v, 'b', 0}; }
     inline flagged_bytes_view dump(bytes_view v) { return {v, 'd', 0}; }
+
+    void put_view(size_t pos, std::ostream& out, flagged_bytes_view x);
 } // namespace ut
 
 namespace redemption_unit_test__

@@ -658,3 +658,27 @@ std::ostream& std::operator<<(std::ostream& out, ::redemption_unit_test__::Bytes
     out << "\"";
     return out;
 }
+
+namespace ut
+{
+    void put_view(size_t pos, std::ostream& out, flagged_bytes_view x)
+    {
+        char const* sep = (x.flag == 'd') ? "" : "\"";
+        out << sep;
+        switch (x.flag) {
+            #define CASE(c, print) case c: \
+                redemption_unit_test__::print(pos, out, x, x.min_len);          \
+                break
+            CASE('c', put_ascii_bytes);
+            CASE('C', put_ascii_bytes2);
+            CASE('s', put_utf8_bytes);
+            CASE('S', put_utf8_bytes2);
+            CASE('b', put_hex_bytes);
+            CASE('d', put_dump_bytes);
+            default:
+            CASE('a', put_auto_bytes);
+            #undef CASE
+        }
+        out << sep;
+    }
+}

@@ -32,8 +32,6 @@
 #include <string>
 
 
-class FileValidatorService;
-class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
 
@@ -66,7 +64,6 @@ public:
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        // process_server_message
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override;
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
@@ -101,7 +98,7 @@ private:
 
     FdxCapture * fdx_capture;
 
-    bool always_file_storage;
+    const bool always_file_storage;
     bool can_lock = false;
     const bool proxy_managed;   // Has not client.
 
@@ -112,6 +109,8 @@ private:
     {
         struct Sig
         {
+            void reset();
+
             void update(bytes_view data);
 
             void final();
@@ -126,12 +125,13 @@ private:
 
             bytes_view digest_as_av() const noexcept;
 
-        private:
             enum class Status : uint8_t;
+            operator Status () const { return this->status; }
+        private:
 
-            SslSha256 sha256;
+            SslSha256_Delayed sha256;
             uint8_t array[digest_len];
-            Status status = Status();
+            Status status;
         };
 
         using StreamId = ClipboardVirtualChannel::StreamId;
@@ -147,36 +147,44 @@ private:
         {
             StreamId stream_id;
             FileGroupId lindex;
-            uint64_t file_size_requested;
+            uint32_t file_size_requested;
             uint64_t file_size;
             std::string file_name;
         };
 
         struct FileContentsRange
         {
+            // FileContentsSize, FileContentsRequestedRange, FileContentsRange
             StreamId stream_id;
             FileGroupId lindex;
+            // TextData and FileContentsRange
+            FileValidatorId file_validator_id;
+            // FileContentsRange
+            enum class ValidatorState : uint8_t {
+                Wait,
+                Failure,
+                Success,
+            };
+            ValidatorState validator_state;
             uint64_t file_offset;
-            uint64_t file_size_requested;
+            // FileContentsRequestedRange
+            uint32_t first_file_size_requested;
+            // FileContentsRequestedRange, FileContentsRange
+            uint32_t file_size_requested;
             uint64_t file_size;
+            // GetRange
+            uint32_t response_size;
+            // FileContentsRequestedRange, FileContentsRange
             std::string file_name;
 
-            FileValidatorId file_validator_id;
-
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
-
+            std::vector<uint8_t> file_contents;
             Sig sig = Sig();
 
-            bool dlp_failure = false;
-        };
-
-        enum class TransferState :  uint8_t {
-            Empty,
-            Size,
-            Range,
-            RequestedRange,
-            WaitingContinuationRange,
-            Text,
+            bool is_finalized() const
+            {
+                return this->sig.has_digest();
+            }
         };
 
         struct TextData
@@ -185,66 +193,56 @@ private:
             bool is_unicode;
         };
 
-        union FileContentsData
+        enum class TransferState : uint8_t
         {
-            FileContentsSize size;
-            FileContentsRequestedRange requested_range;
-            FileContentsRange range;
-            TextData text;
-
-            FileContentsData() {}
-            ~FileContentsData() {}
+            Empty,
+            Size,
+            Range,
+            GetRange,
+            SyncRange,
+            RequestedRange,
+            RequestedSyncRange,
+            WaitingContinuationRange,
+            WaitingValidator,
+            Text,
         };
 
-        class NoLockData
+        struct NoLockData
         {
-            TransferState transfer_state = TransferState::Empty;
-            FileContentsData data;
-
-        public:
-            #ifndef NDEBUG
-            ~NoLockData()
-            {
-                assert(this->transfer_state == TransferState::Empty);
-            }
-            #endif
-
-            FileContentsRequestedRange& requested_range();
-
-            FileContentsRange& range();
-
-            FileContentsSize& size();
-
-            TextData& text();
+            TransferState transfer_state = TransferState();
 
             operator TransferState() const
             {
                 return this->transfer_state;
             }
 
-            void set_waiting_continuation_range();
+            // TextData
+            bool is_unicode;
 
+            // TextData, FileContentsSize, FileContentsRequestedRange, FileContentsRange
+            FileContentsRange data;
+
+            using ValidatorState = FileContentsRange::ValidatorState;
+
+            void init_empty();
+            void init_text(FileValidatorId file_validator_id, bool is_unicode);
+            void init_size(StreamId stream_id, FileGroupId lindex);
+            void init_requested_range(
+                StreamId stream_id, FileGroupId lindex,
+                uint32_t file_size_requested, uint64_t file_size, std::string_view file_name);
+            void requested_range_to_range(
+                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl);
+            void requested_range_to_get_range(
+                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl);
+
+            void set_waiting_continuation_range();
+            void set_waiting_validator();
+            void set_sync_range();
+            void set_requested_sync_range();
             void set_range();
 
-            template<class F>
-            void new_range(F f);
-
-            template<class F>
-            void new_requested_range(F f);
-
-            template<class F>
-            void new_size(F f);
-
-            template<class F>
-            void new_text(F f);
-
-            void delete_range();
-
-            void delete_requested_range();
-
-            void delete_text();
-
-            void delete_size();
+            class D;
+            friend class D;
         };
 
         struct LockedData
@@ -344,11 +342,17 @@ private:
             LockId _lock_id;
         };
 
+        ClipCtx(
+          std::string const& target_name,
+          bool verify_before_transfer,
+          uint64_t max_file_size_rejected);
 
         uint16_t message_type = 0;
 
         bool use_long_format_names = false;
         bool has_current_file_contents_stream_id = false;
+        const bool verify_before_transfer;
+        uint64_t max_file_size_rejected;
         StreamId current_file_contents_stream_id;
         uint32_t current_file_list_format_id;
         uint32_t requested_format_id;
@@ -359,7 +363,7 @@ private:
 
         Cliprdr::FormatNameInventory current_format_list;
 
-        std::string validator_target_name;
+        const std::string validator_target_name;
 
         std::vector<CliprdFileInfo> files;
 
@@ -371,11 +375,11 @@ private:
         void clear();
     };
 
-    using ClientCtx = ClipCtx;
-    using ServerCtx = ClipCtx;
-
     struct FileValidatorDataList;
     struct TextValidatorDataList;
+
+    using ClientCtx = ClipCtx;
+    using ServerCtx = ClipCtx;
 
     ClientCtx client_ctx;
     ServerCtx server_ctx;
@@ -394,3 +398,4 @@ private:
     class D;
     friend class D;
 }; // class ClipboardVirtualChannel
+

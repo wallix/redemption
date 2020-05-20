@@ -356,6 +356,14 @@ clipboard_text_down = boolean(default=False)
 #_advanced
 log_if_accepted = boolean(default=True)
 
+#_advanced
+verify_before_transfer = boolean(default=False)
+
+# File greather are automatically rejected.
+# (is in mebibyte)
+#_advanced
+max_file_size_rejected = integer(min=0, default=1024)
+
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).

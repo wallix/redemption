@@ -245,6 +245,10 @@ cfg::file_verification::clipboard_text_down ⇐ file_verification:clipboard_text
     Verify text data via clipboard from server to client
     File verification on download must be enabled via option Enable down.
 cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   [bool]
+cfg::file_verification::verify_before_transfer ⇐ file_verification:verify_before_transfer   [bool]
+cfg::file_verification::max_file_size_rejected ⇐ file_verification:max_file_size_rejected   [uint32_t]
+    File greather are automatically rejected.
+    (is in mebibyte)
 
 cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile]
     Enable storage of transferred files (via RDP Clipboard).

@@ -351,7 +351,7 @@ public:
         this->dataLen_  = stream.in_uint32_le();
     }
 
-    static size_t size() {
+    static constexpr size_t size() {
         return 8;       // 2(msgType) + 2(msgFlags) + 4(dataLen)
     }
 
