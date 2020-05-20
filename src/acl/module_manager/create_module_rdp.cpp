@@ -295,8 +295,7 @@ public:
     // from mod_api
     void display_osd_message(std::string const & message) override
     {
-        this->mod_wrapper.osd_message_fn(message, true);
-        //return this->mod.display_osd_message(message);
+        this->mod_wrapper.display_osd_message(message);
     }
 
     // from mod_api

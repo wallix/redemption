@@ -278,15 +278,7 @@ private:
                     ?trkeys::enable_rt_display
                     :trkeys::disable_rt_display
                         ).to_string();
-
-                bool is_disable_by_input = true;
-                if (message != mod_wrapper.get_message()) {
-                    mod_wrapper.clear_osd_message();
-                }
-                if (!message.empty()) {
-                    mod_wrapper.set_message(std::move(message), is_disable_by_input);
-                    mod_wrapper.draw_osd_message();
-                }
+                mod_wrapper.display_osd_message(message);
             }
         }
 
@@ -1114,16 +1106,9 @@ public:
                                 const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
                                 if (enddate && mod_wrapper.is_up_and_running()) {
                                     LOG(LOG_INFO, "--------------------- End Session OSD Warning");
-                                    std::string mes = end_session_warning.update_osd_state(
+                                    std::string message = end_session_warning.update_osd_state(
                                         language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
-                                    if (!mes.empty()) {
-                                        bool is_disable_by_input = true;
-                                        if (mes != mod_wrapper.get_message()) {
-                                            mod_wrapper.clear_osd_message();
-                                        }
-                                        mod_wrapper.set_message(std::move(mes), is_disable_by_input);
-                                        mod_wrapper.draw_osd_message();
-                                    }
+                                    mod_wrapper.display_osd_message(message);
                                 }
                             }
 

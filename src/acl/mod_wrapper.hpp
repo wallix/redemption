@@ -261,8 +261,16 @@ public:
 
     void display_osd_message(const std::string& message) override
     {
-        this->set_message(std::move(message), true);
-        this->draw_osd_message();
+        if (message != this->get_message()) {
+            this->clear_osd_message();
+        }
+        if (!message.empty()) {
+            this->osd_message = std::move(message);
+            this->is_disable_by_input = true;
+            str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->ini)));
+            this->prepare_osd_message();
+            this->draw_osd_message();
+        }
     }
 
     [[nodiscard]] Rect get_protected_rect() const
@@ -320,17 +328,12 @@ public:
         return this->osd_message.c_str();
     }
 
-    void set_message(std::string message, bool is_disable_by_input)
+    void prepare_osd_message()
     {
-        this->osd_message = std::move(message);
-        this->is_disable_by_input = is_disable_by_input;
         this->bogus_refresh_rect_ex = (this->ini.get<cfg::globals::bogus_refresh_rect>()
          && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
          && (this->client_info.cs_monitor.monitorCount > 1));
 
-        if (is_disable_by_input) {
-            str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->ini)));
-        }
 
         gdi::TextMetrics tm(this->glyphs, this->osd_message.c_str());
         int w = tm.width + padw * 2;
@@ -517,17 +520,6 @@ public:
         }
     }
 
-    void osd_message_fn(std::string message, bool is_disable_by_input)
-    {
-        if (message != this->get_message()) {
-            this->clear_osd_message();
-        }
-        if (!message.empty()) {
-            this->set_message(std::move(message), is_disable_by_input);
-            this->draw_osd_message();
-        }
-    }
-
     bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
     {
         if (this->is_disable_by_input
@@ -591,7 +583,16 @@ public:
                             msg += ']';
                         }
                     }
-                    this->osd_message_fn(std::move(msg), false);
+                    if (msg != this->get_message()) {
+                        this->clear_osd_message();
+                    }
+                    if (!msg.empty()) {
+                        this->osd_message = std::move(msg);
+                        this->is_disable_by_input = false;
+                        this->prepare_osd_message();
+                        this->draw_osd_message();
+                    }
+
                     this->target_info_is_shown = true;
                 }
             }
