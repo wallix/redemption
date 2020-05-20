@@ -122,15 +122,9 @@ namespace redemption_unit_test__
     template <class T>
     wrap_data_test(T, char const*) -> wrap_data_test<T>;
 
-    /*
-    void wrap_data_test_print_elem(std::ostream& out, ::ut::flagged_bytes_view const& v, int)
-    {
-        put_view(v.size(), out, v);
-    }
-    */
-
+#if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
     template<class View>
-    auto wrap_data_test_print_elem(std::ostream& out, View v, int)
+    auto wrap_data_test_print_elem(std::ostream& out, View const& v, int /*dummy*/)
     -> decltype(void(ut::flagged_bytes_view{v}))
     {
         ut::flagged_bytes_view flagged_v{v};
@@ -138,7 +132,7 @@ namespace redemption_unit_test__
     }
 
     template<class T>
-    void wrap_data_test_print_elem(std::ostream& out, T const& x, char)
+    void wrap_data_test_print_elem(std::ostream& out, T const& x, char /*dummy*/)
     {
         out << x;
     }
@@ -163,16 +157,20 @@ namespace redemption_unit_test__
         }
     }
     */
+#endif
 
     template<class T>
     std::ostream& operator<<(std::ostream& out, wrap_data_test_elem<T> const& e)
     {
         out << e.prefix_message;
+        #if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
+        out << "(";
         std::apply([&](auto const& x, auto const&... xs){
             wrap_data_test_print_elem(out, x, 1);
             ((void(out << ", "), wrap_data_test_print_elem(out, xs, 1)), ...);
         }, e.t);
         out << ")";
+        #endif
         return out;
     }
 } // namespace redemption_unit_test__
