@@ -339,6 +339,7 @@ std::string WorkingDirectory::unmached_files()
 
         bool has_entry = false;
 
+        struct stat statbuf {};
         while (struct dirent* ent = readdir(dir)) {
             if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) {
                 continue;
@@ -349,7 +350,6 @@ std::string WorkingDirectory::unmached_files()
             path.name += ent->d_name;
             filename.name += ent->d_name;
 
-            struct stat statbuf;
             auto const type = (!stat(path.name.c_str(), &statbuf) && S_ISDIR(statbuf.st_mode))
               ? Type::Directory : Type::File;
 
