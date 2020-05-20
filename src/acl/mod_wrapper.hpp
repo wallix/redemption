@@ -68,8 +68,9 @@
 #include "core/callback_forwarder.hpp"
 #include "acl/time_before_closing.hpp"
 #include "acl/mod_pack.hpp"
+#include "acl/gd_provider.hpp"
 
-struct ModWrapper
+struct ModWrapper : public GdProvider
 {
     struct InputFilter {
     };
@@ -213,7 +214,7 @@ struct ModWrapper
 
 public:
     bool connected = false;
-    ModuleIndex old_target_module = MODULE_UNKNOWN;
+    ModuleIndex current_mod = MODULE_UNKNOWN;
 public:
 
     bool target_info_is_shown = false;
@@ -240,7 +241,7 @@ public:
         this->remove_mod();
     }
 
-    gdi::GraphicApi & get_graphics() 
+    gdi::GraphicApi & get_graphics() override
     {
         return this->g;
     }
@@ -451,8 +452,12 @@ public:
     }
 
 
-    void set_mod(ModPack mod_pack)
+    void set_mod(ModuleIndex next_state, ModPack mod_pack)
     {
+        LOG(LOG_INFO, "Setting new mod %s (was %s)",
+            get_module_name(next_state),
+            get_module_name(this->current_mod));
+
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
         }
@@ -460,24 +465,19 @@ public:
             this->keymap.get_kevent();
         }
 
+        this->current_mod = next_state;
         this->clear_osd_message();
 
-        this->set_mod(mod_pack.mod.get());
+        this->modi = mod_pack.mod.get();
 
         this->rail_module_host_mod_ptr = mod_pack.rail_module_host_ptr;
         this->rdpapi = mod_pack.rdpapi;
         this->winapi = mod_pack.winapi;
         this->connected = mod_pack.connected;
         this->show_osd_flag = mod_pack.enable_osd;
+        this->modi->init();
     }
 
-    // push_mod or replace_mod
-    void set_mod(mod_api* mod)
-    {
-        // TODO: check we are using no_mod, otherwise it is an error
-        this->modi = mod;
-    }
-    
     [[nodiscard]] SocketTransport* get_mod_transport() const noexcept
     {
         return this->psocket_transport;
@@ -638,6 +638,7 @@ public:
 
     void refresh(Rect r)
     {
+        LOG(LOG_INFO, "ModWrapper::refresh");
         this->get_mod()->refresh(r);
     }
 

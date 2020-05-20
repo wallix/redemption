@@ -31,15 +31,14 @@
 
 // TODO "Need more tests, with or without device/login/password asking, "
 
-RED_AUTO_TEST_CASE(TestDialogMod)
+RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    ClientExecute client_execute(session_reactor, timer_events_, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -50,7 +49,8 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, timer_events_, graphic_events_, front.gd(), front, 800, 600, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    InteractiveTargetMod d(ini, time_base, timer_events_, front.gd(), front, 800, 600, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    d.init();
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enter to validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -58,15 +58,14 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 }
 
 
-RED_AUTO_TEST_CASE(TestDialogModReject)
+RED_AUTO_TEST_CASE(TestInteractiveTargetModReject)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    ClientExecute client_execute(session_reactor, timer_events_, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -74,22 +73,22 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, timer_events_, graphic_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    InteractiveTargetMod d(ini, time_base, timer_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    d.init();
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     RED_CHECK(not ini.get<cfg::context::display_message>());
 }
 
-RED_AUTO_TEST_CASE(TestDialogModChallenge)
+RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    ClientExecute client_execute(session_reactor, timer_events_, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -100,7 +99,8 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, timer_events_, graphic_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    InteractiveTargetMod d(ini, time_base, timer_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    d.init();
 
     bool    ctrl_alt_del;
 
@@ -127,15 +127,14 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     RED_CHECK(ini.get<cfg::context::display_message>());
 }
 
-RED_AUTO_TEST_CASE(TestDialogModChallenge2)
+RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge2)
 {
     ScreenInfo screen_info{1600, 1200, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    ClientExecute client_execute(session_reactor, timer_events_, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -146,7 +145,8 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     Keymap2 keymap;
     keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, timer_events_, graphic_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(800, 600, 799, 599), client_execute, global_font(), theme);
+    InteractiveTargetMod d(ini, time_base, timer_events_, front.gd(), front, screen_info.width, screen_info.height, Rect(800, 600, 799, 599), client_execute, global_font(), theme);
+    d.init();
 
     bool    ctrl_alt_del;
 

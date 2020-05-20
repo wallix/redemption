@@ -61,7 +61,7 @@ namespace
             , f(f)
             {}
 
-            void refresh_rects(array_view<Rect const> /*unused*/) override
+            void refresh_rects(array_view<Rect> /*unused*/) override
             {
                 f();
             }

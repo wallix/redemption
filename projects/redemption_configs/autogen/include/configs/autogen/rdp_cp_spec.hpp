@@ -57,6 +57,7 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 #   27: GlyphIndex
 # 
 # (values are comma-separated)
+#_advanced
 disabled_orders = string(default='')
 
 # NLA authentication in secondary target.
@@ -77,6 +78,14 @@ cipher_string = string(default='ALL')
 
 # Show common cipher list supported by client and server
 show_common_cipher_list = boolean(default=False)
+
+# List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
+#_advanced
+allowed_dynamic_channels = string(default='*')
+
+# List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.
+#_advanced
+denied_dynamic_channels = string(default='')
 
 # Enables Server Redirection Support.
 server_redirection = boolean(default=False)
@@ -108,6 +117,9 @@ enable_restricted_admin_mode = boolean(default=False)
 # Smartcard device must be available on client desktop.
 # Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 force_smartcard_authentication = boolean(default=False)
+
+# Enable target connection on ipv6
+enable_ipv6 = boolean(default=False)
 
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
@@ -223,6 +235,9 @@ end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
 ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_advanced
+update_disabled_features = boolean(default=True)
+
+#_advanced
 childless_window_as_unidentified_input_field = boolean(default=True)
 
 #   0x000: none
@@ -239,7 +254,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #_hex
 disabled_features = integer(min=0, max=511, default=352)
 
-bestsafe_integration = boolean(default=False)
+enable_bestsafe_interaction = boolean(default=False)
 
 # The name of an environment variable which points to the alternative directory for starting Session Probe.
 # The maximum length of this name is 3 bytes.

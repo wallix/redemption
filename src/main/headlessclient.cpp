@@ -42,11 +42,11 @@ class ClientHeadlessSocket : public ClientInputSocketAPI
 
 public:
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     ClientRedemptionAPI * client;
 
-    ClientHeadlessSocket(SessionReactor& session_reactor, ClientRedemptionAPI * client)
-      : session_reactor(session_reactor)
+    ClientHeadlessSocket(TimeBase& time_base, ClientRedemptionAPI * client)
+      : time_base(time_base)
       , client(client)
     {}
 
@@ -74,15 +74,15 @@ private:
     ClientHeadlessSocket headless_socket;
 
 public:
-    ClientRedemptionHeadless(SessionReactor & session_reactor,
+    ClientRedemptionHeadless(TimeBase & time_base,
                              TopFdContainer& fd_events_,
                              GraphicFdContainer& graphic_fd_events_,
                              TimerContainer& timer_events_,
                              GraphicEventContainer & graphic_events_,
                              GraphicTimerContainer & graphic_timer_events_,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, config)
-        , headless_socket(session_reactor, this)
+        : ClientRedemption(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, config)
+        , headless_socket(time_base, this)
     {
         this->cmd_launch_conn();
     }
@@ -143,7 +143,7 @@ int main(int argc, char const** argv)
 
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
@@ -151,7 +151,7 @@ int main(int argc, char const** argv)
     GraphicTimerContainer graphic_timer_events_;
     ScopedSslInit scoped_ssl;
 
-    ClientRedemptionHeadless client(session_reactor,
+    ClientRedemptionHeadless client(time_base,
                                     fd_events_,
                                     graphic_fd_events_,
                                     timer_events_,

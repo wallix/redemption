@@ -72,9 +72,6 @@ enable_transparent_mode = boolean(default=False)
 #_password
 certificate_password = string(max=254, default='inquisition')
 
-#_advanced
-movie_path = string(default='')
-
 # Support of Bitmap Update.
 #_advanced
 enable_bitmap_update = boolean(default=True)
@@ -353,12 +350,12 @@ cache_waiting_list = boolean(default=True)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 # (values are comma-separated)
 #_hidden
 allow_channels = string(default='*')
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 # (values are comma-separated)
 #_hidden
 deny_channels = string(default='')
@@ -371,6 +368,13 @@ fast_path = boolean(default=True)
 # Enables Server Redirection Support.
 #_hidden
 server_redirection_support = boolean(default=False)
+
+# Client Address to send to target (in InfoPacket)
+#   0: Send 0.0.0.0
+#   1: Send proxy client address or target connexion
+#   2: Send user client address of front connexion
+#_advanced
+client_address_sent = option(0, 1, 2, default=0)
 
 # Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
 #_advanced
@@ -530,6 +534,9 @@ session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, defaul
 
 #_hidden
 session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
+
+#_hidden
+session_probe_update_disabled_features = boolean(default=True)
 
 #_hidden
 session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
@@ -701,6 +708,10 @@ enable_restricted_admin_mode = boolean(default=False)
 #_hidden
 force_smartcard_authentication = boolean(default=False)
 
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -737,6 +748,10 @@ server_unix_alt = boolean(default=False)
 
 #_hidden
 support_cursor_pseudo_encoding = boolean(default=True)
+
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
 
 [metrics]
 
@@ -1001,6 +1016,9 @@ smart_video_cropping = option(0, 1, 2, default=0)
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
 
+# Allow Realtime display (4eyes) without recording of session
+allow_rt_without_recording = boolean(default=False)
+
 [crypto]
 
 #_hidden
@@ -1121,5 +1139,80 @@ password_fr = string(default='')
 
 #_advanced
 load_theme = string(default='')
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+#_advanced
+enable_theme = boolean(default=False)
+
+#_advanced
+bgcolor = string(default='dark_blue_bis')
+
+#_advanced
+fgcolor = string(default='white')
+
+#_advanced
+separator_color = string(default='light_blue')
+
+#_advanced
+focus_color = string(default='winblue')
+
+#_advanced
+error_color = string(default='yellow')
+
+#_hidden
+logo = boolean(default=False)
+
+#_hidden
+logo_path = string(default='')
+
+#_advanced
+edit_bgcolor = string(default='white')
+
+#_advanced
+edit_fgcolor = string(default='black')
+
+#_advanced
+edit_focus_color = string(default='winblue')
+
+#_advanced
+tooltip_bgcolor = string(default='black')
+
+#_advanced
+tooltip_fgcolor = string(default='light_yellow')
+
+#_advanced
+tooltip_border_color = string(default='black')
+
+#_advanced
+selector_line1_bgcolor = string(default='pale_blue')
+
+#_advanced
+selector_line1_fgcolor = string(default='black')
+
+#_advanced
+selector_line2_bgcolor = string(default='light_blue')
+
+#_advanced
+selector_line2_fgcolor = string(default='black')
+
+#_advanced
+selector_selected_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_selected_fgcolor = string(default='white')
+
+#_advanced
+selector_focus_bgcolor = string(default='winblue')
+
+#_advanced
+selector_focus_fgcolor = string(default='white')
+
+#_advanced
+selector_label_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_label_fgcolor = string(default='white')
 
 )gen_config_ini"

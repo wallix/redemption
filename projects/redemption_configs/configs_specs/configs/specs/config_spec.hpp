@@ -165,7 +165,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | password_in_gui, no_sesman, L, type_<types::fixed_string<254>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "is_rec", set(false));
-        W.member(advanced_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "movie_path", sesman::name{"rec_path"});
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
@@ -302,7 +301,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "open_session_timeout", set(0));
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disabled_orders_desc}, set(""));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::list<unsigned>>(), "disabled_orders", desc{disabled_orders_desc}, set(""));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_kerberos", desc{
@@ -318,12 +317,17 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persist_bitmap_cache_on_disk", desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "allow_channels", desc{"List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "deny_channels", desc{"List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), "allowed_dynamic_channels", desc{"List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."}, set("*"));
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), "denied_dynamic_channels", desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, connpolicy::name{"server_redirection"}, set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<ClientAddressSent>(), "client_address_sent", desc { "Client Address to send to target (in InfoPacket)" }, set(ClientAddressSent::no_address));
 
         W.member(no_ini_no_gui, no_sesman, L, type_<RedirectionInfo>(), "redir_info");
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "load_balance_info", desc{"Load balancing information"});
@@ -406,12 +410,13 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), "session_probe_end_of_session_check_delay_time", connpolicy::name{"end_of_session_check_delay_time"}, set(0));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", connpolicy::name{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_update_disabled_features", connpolicy::name{"update_disabled_features"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_bestsafe_integration", connpolicy::name{"bestsafe_integration"}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_bestsafe_integration", connpolicy::name{"enable_bestsafe_interaction"}, set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::string>(), "session_probe_alternate_directory_environment_variable", connpolicy::name{"alternate_directory_environment_variable"}, desc{
             "The name of an environment variable which points to the alternative directory for starting Session Probe.\n"
@@ -498,6 +503,7 @@ void config_spec_definition(Writer && W)
                          "Smartcard device must be available on client desktop.\n"
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
     });
 
     W.section("metrics", [&]
@@ -534,6 +540,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_unix_alt", set(false));
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "support_cursor_pseudo_encoding", set(true));
+
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
     });
 
     W.section("mod_replay", [&]
@@ -597,6 +605,8 @@ void config_spec_definition(Writer && W)
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update.\nNote: Useless with mpv and mplayer."}, set(false));
+
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_rt_without_recording", desc { "Allow Realtime display (4eyes) without recording of session" }, set(false));
     });
 
     W.section("capture", [&]
@@ -856,6 +866,42 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
+    });
+
+    W.section("theme", [&]
+    {
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_theme", desc{"Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)"}, set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "bgcolor", set("dark_blue_bis"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "fgcolor", set("white"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "separator_color", set("light_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "focus_color", set("winblue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "error_color", set("yellow"));
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "logo", set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "logo_path", set(""));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_bgcolor", set("white"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_fgcolor", set("black"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_focus_color", set("winblue"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_bgcolor", set("black"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_fgcolor", set("light_yellow"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_border_color", set("black"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_bgcolor", set("pale_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_fgcolor", set("black"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_bgcolor", set("light_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_fgcolor", set("black"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_bgcolor", set("medium_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_fgcolor", set("white"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_bgcolor", set("winblue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_fgcolor", set("white"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_bgcolor", set("medium_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_fgcolor", set("white"));
     });
 }
 

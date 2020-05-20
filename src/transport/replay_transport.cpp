@@ -46,7 +46,7 @@ namespace
         return ufd;
     }
 
-    void dump_packet_differ(array_view_const_u8 data, array_view_const_u8 expected_data)
+    void dump_packet_differ(u8_array_view data, u8_array_view expected_data)
     {
         auto const p = std::mismatch(
             data.begin(), data.end(),
@@ -202,7 +202,7 @@ ReplayTransport::Data *ReplayTransport::read_single_chunk()
 }
 
 
-array_view_const_u8 ReplayTransport::get_public_key() const
+u8_array_view ReplayTransport::get_public_key() const
 {
     return {this->public_key.data.get(), this->public_key.size};
 }
@@ -262,7 +262,7 @@ bool ReplayTransport::disconnect()
     return true;
 }
 
-array_view_const_u8 ReplayTransport::Data::av() const noexcept
+u8_array_view ReplayTransport::Data::av() const noexcept
 {
     return {this->data.get(), this->size};
 }

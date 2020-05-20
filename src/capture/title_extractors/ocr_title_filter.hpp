@@ -39,7 +39,7 @@ class OcrTitleFilter
 public:
     OcrTitleFilter() = default;
 
-    [[nodiscard]] array_view_const_char get_title() const {
+    [[nodiscard]] chars_view get_title() const {
         return {this->last_title, this->last_title_len};
     }
 

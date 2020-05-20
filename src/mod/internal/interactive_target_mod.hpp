@@ -151,12 +151,9 @@ private:
     int old_mouse_y = 0;
 
 protected:
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
 
-private:
-    GraphicEventPtr graphic_event;
 public:
     bool ask_device;
     bool ask_login;
@@ -173,14 +170,15 @@ public:
 public:
     InteractiveTargetMod(
         InteractiveTargetModVariables vars,
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
-        GraphicEventContainer& graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect,
         ClientExecute & rail_client_execute, Font const& font, Theme const& theme);
 
     ~InteractiveTargetMod() override;
+
+    void init() override;
 
     std::string module_name() override {return "Interactive Target";}
 

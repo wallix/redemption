@@ -24,7 +24,6 @@ cfg::globals::trace_type ⇐ trace_type   [TraceType]
       2: Encryption enabled.
     When session records are encrypted, they can be read only by the WAB where they have been generated.
 cfg::globals::is_rec ⇐ is_rec   [bool]
-cfg::globals::movie_path ⇐ rec_path   [std::string]
 cfg::globals::unicode_keyboard_event_support ⇐ unicode_keyboard_event_support   [bool]
 cfg::globals::mod_recv_timeout ⇐ mod_recv_timeout   [std::chrono::milliseconds]
 
@@ -69,9 +68,13 @@ cfg::mod_rdp::cipher_string ⇐ mod_rdp:cipher_string   [std::string]
 cfg::mod_rdp::show_common_cipher_list ⇐ mod_rdp:show_common_cipher_list   [bool]
     Show common cipher list supported by client and server
 cfg::mod_rdp::allow_channels ⇐ allow_channels   [std::string]
-    Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+    List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 cfg::mod_rdp::deny_channels ⇐ deny_channels   [std::string]
-    Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+    List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+cfg::mod_rdp::allowed_dynamic_channels ⇐ mod_rdp:allowed_dynamic_channels   [std::string]
+    List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
+cfg::mod_rdp::denied_dynamic_channels ⇐ mod_rdp:denied_dynamic_channels   [std::string]
+    List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.
 cfg::mod_rdp::server_redirection_support ⇐ mod_rdp:server_redirection_support   [bool]
     Enables Server Redirection Support.
 cfg::mod_rdp::load_balance_info ⇐ mod_rdp:load_balance_info   [std::string]
@@ -136,6 +139,7 @@ cfg::mod_rdp::session_probe_handle_usage_limit ⇐ mod_rdp:session_probe_handle_
 cfg::mod_rdp::session_probe_memory_usage_limit ⇐ mod_rdp:session_probe_memory_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_end_of_session_check_delay_time ⇐ mod_rdp:session_probe_end_of_session_check_delay_time   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check ⇐ mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
+cfg::mod_rdp::session_probe_update_disabled_features ⇐ mod_rdp:session_probe_update_disabled_features   [bool]
 cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field ⇐ mod_rdp:session_probe_childless_window_as_unidentified_input_field   [bool]
 cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled_features   [SessionProbeDisabledFeature]
       0x000: none
@@ -214,6 +218,8 @@ cfg::mod_rdp::force_smartcard_authentication ⇐ mod_rdp:force_smartcard_authent
     Target must be set for interactive login, otherwise server connection may not be guaranteed.
     Smartcard device must be available on client desktop.
     Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
+cfg::mod_rdp::enable_ipv6 ⇐ mod_rdp:enable_ipv6   [bool]
+    Enable target connection on ipv6
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).
@@ -228,6 +234,8 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop ⇐ vnc_bogus_clipboard_infinite_loo
 cfg::mod_vnc::server_is_macos ⇐ mod_vnc:server_is_macos   [bool]
 cfg::mod_vnc::server_unix_alt ⇐ mod_vnc:server_unix_alt   [bool]
 cfg::mod_vnc::support_cursor_pseudo_encoding ⇐ mod_vnc:support_cursor_pseudo_encoding   [bool]
+cfg::mod_vnc::enable_ipv6 ⇐ mod_vnc:enable_ipv6   [bool]
+    Enable target connection on ipv6
 
 
 cfg::file_verification::enable_up ⇐ file_verification:enable_up   [bool]
@@ -389,4 +397,5 @@ cfg::context::rd_shadow_invitation_id ⇒ rd_shadow_invitation_id   [std::string
 cfg::context::rd_shadow_invitation_addr ⇒ rd_shadow_invitation_addr   [std::string]
 cfg::context::rd_shadow_invitation_port ⇒ rd_shadow_invitation_port   [unsigned int]
 cfg::context::smartcard_login ⇒ smartcard_login   [std::string]
+
 

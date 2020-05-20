@@ -224,7 +224,7 @@ private:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS sspi_EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) {
+    SEC_STATUS sspi_EncryptMessage(u8_array_view data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) {
         (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
@@ -264,7 +264,7 @@ private:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS sspi_DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) {
+    SEC_STATUS sspi_DecryptMessage(u8_array_view data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) {
         (void)MessageSeqNo;
 
         // OM_uint32 gss_unwrap
@@ -431,7 +431,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
-        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
+        u8_array_view public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
             this->credssp_generate_client_nonce();
             this->credssp_generate_public_key_hash_client_to_server();
@@ -462,14 +462,14 @@ private:
 
         const uint32_t version = this->ts_request.use_version;
 
-        array_view_const_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
+        u8_array_view public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash_server_to_client();
             public_key = {this->ServerClientHash.data(), this->ServerClientHash.size()};
         }
 
-        array_view_u8 public_key2 = Buffer;
+        writable_u8_array_view public_key2 {Buffer};
 
         if (public_key2.size() != public_key.size()) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
@@ -518,7 +518,7 @@ private:
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        array_view_const_u8 input_buffer = this->client_auth_data.input_buffer;
+        u8_array_view input_buffer = this->client_auth_data.input_buffer;
         /*output*/std::vector<uint8_t> & output_buffer = this->ts_request.negoTokens;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;

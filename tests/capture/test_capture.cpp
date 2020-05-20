@@ -73,7 +73,7 @@ namespace
             false, 0, std::chrono::seconds::zero(), 0};
 
         PngParams const png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true};
+                                      0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true };
 
         const char * record_tmp_path;
         const char * record_path;
@@ -1884,7 +1884,7 @@ RED_AUTO_TEST_CASE(TestReload)
     struct Test
     {
         char const* name;
-        array_view_const_char data;
+        chars_view data;
         unsigned file_len;
         time_t time;
     };

@@ -456,7 +456,7 @@ namespace
         vec.insert(vec.end(), av.begin(), av.end());
     }
 
-    array_view_const_char to_dlpav_str_direction(Direction direction)
+    chars_view to_dlpav_str_direction(Direction direction)
     {
         return (direction == Direction::FileFromClient)
             ? "UP"_av
@@ -1223,7 +1223,7 @@ struct ClipboardVirtualChannel::D
                     }
 
                     uint8_t utf8_buf[32*1024];
-                    auto utf8_av = UTF16toUTF8_buf(chunk_data, make_array_view(utf8_buf));
+                    auto utf8_av = UTF16toUTF8_buf(chunk_data, make_writable_array_view(utf8_buf));
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                         if (not utf8_av.empty() && utf8_av.back() == '\0') {
@@ -2138,7 +2138,7 @@ struct ClipboardVirtualChannel::D
             from_remote_session
                 ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
                 : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
-            self.session_reactor.get_current_time(), {
+            self.time_base.get_current_time(), {
             KVLog("file_name"_av, file_contents_range.file_name),
             KVLog("size"_av, {file_size, file_size_len}),
             KVLog("sha256"_av, {digest_s, digest_s_len}),
@@ -2231,7 +2231,7 @@ struct ClipboardVirtualChannel::D
 
                         auto av = ::UTF16toUTF8_buf(
                             data_to_dump.first(length_of_data_to_dump),
-                            make_array_view(data_to_dump_buf));
+                            make_writable_array_view(data_to_dump_buf));
                         utf8_string = {av.as_charp(), av.size()};
                         if (not utf8_string.empty() && not utf8_string.back()) {
                             utf8_string.remove_suffix(1);
@@ -2262,7 +2262,7 @@ struct ClipboardVirtualChannel::D
                 self.report_message.log6(is_client_to_server
                     ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION
                     : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION,
-                    self.session_reactor.get_current_time(), {
+                    self.time_base.get_current_time(), {
                     KVLog("format"_av, format_av),
                     KVLog("size"_av, size_av),
                 });
@@ -2271,7 +2271,7 @@ struct ClipboardVirtualChannel::D
                 self.report_message.log6(is_client_to_server
                     ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX
                     : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX,
-                    self.session_reactor.get_current_time(), {
+                    self.time_base.get_current_time(), {
                     KVLog("format"_av, format_av),
                     KVLog("size"_av, size_av),
                     KVLog("partial_data"_av, utf8_string),
@@ -2302,7 +2302,7 @@ struct ClipboardVirtualChannel::D
 ClipboardVirtualChannel::ClipboardVirtualChannel(
     VirtualChannelDataSender* to_client_sender_,
     VirtualChannelDataSender* to_server_sender_,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     const BaseVirtualChannel::Params & base_params,
     const ClipboardVirtualChannelParams & params,
     FileValidatorService * file_validator_service,
@@ -2324,7 +2324,7 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     }
     return p;
 }())
-, session_reactor(session_reactor)
+, time_base(time_base)
 , file_validator(file_validator_service)
 , fdx_capture(file_storage.fdx_capture)
 , always_file_storage(file_storage.always_file_storage)
@@ -2350,7 +2350,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
             dlpav_report_text(
                 text_validator.file_validator_id,
                 this->report_message,
-                this->session_reactor.get_current_time(),
+                this->time_base.get_current_time(),
                 text_validator.direction, status);
         }
 
@@ -2366,7 +2366,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
             dlpav_report_file(
                 file_validator.file_name,
                 this->report_message,
-                this->session_reactor.get_current_time(),
+                this->time_base.get_current_time(),
                 file_validator.direction, status);
         }
 
@@ -2389,7 +2389,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                     dlpav_report_file(
                         file_name,
                         this->report_message,
-                        this->session_reactor.get_current_time(),
+                        this->time_base.get_current_time(),
                         direction, status);
                 }
             };
@@ -2409,7 +2409,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                         dlpav_report_text(
                             clip.nolock_data.data.file_validator_id,
                             this->report_message,
-                            this->session_reactor.get_current_time(),
+                            this->time_base.get_current_time(),
                             direction, status);
                     }
                     clip.nolock_data.init_empty();
@@ -2718,7 +2718,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                 dlpav_report_text(
                     file_validator_id,
                     this->report_message,
-                    this->session_reactor.get_current_time(),
+                    this->time_base.get_current_time(),
                     direction, result_content);
             }
         };
@@ -2728,7 +2728,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                 dlpav_report_file(
                     file_name,
                     this->report_message,
-                    this->session_reactor.get_current_time(),
+                    this->time_base.get_current_time(),
                     direction, result_content);
             }
         };

@@ -237,7 +237,7 @@ public:
         return this->p.in_bytes_be(nb);
     }
 
-    void in_copy_bytes(writable_bytes_view v) noexcept {
+    void in_copy_bytes(writable_buffer_view v) noexcept {
         assert(this->in_check_rem(v.size()));
         return this->p.in_copy_bytes(v);
     }
@@ -260,7 +260,7 @@ public:
 
     bytes_view view_bytes(unsigned int n) const noexcept {
         assert(this->in_check_rem(n));
-        return array_view_const_u8{this->get_current(), n};
+        return u8_array_view{this->get_current(), n};
     }
 
     bytes_view in_skip_bytes(unsigned int n) noexcept {
@@ -498,10 +498,10 @@ public:
         this->p+=8;
     }
 
-    array_view_u8 out_skip_bytes(unsigned int n) noexcept {
+    writable_bytes_view out_skip_bytes(unsigned int n) noexcept {
         assert(this->has_room(n));
-        array_view_u8 ret(this->get_current(), n);
-        this->p+=n;
+        writable_bytes_view ret(this->get_current(), n);
+        this->p += n;
         return ret;
     }
 

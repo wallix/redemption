@@ -18,203 +18,166 @@
  *   Author(s): Christophe Grosjean, Meng Tan
  */
 
-#include "configs/io.hpp"
+#include <cstring>
+#include <string_view>
+
+#include "configs/config.hpp"
 #include "utils/load_theme.hpp"
 #include "utils/theme.hpp"
-#include "utils/cfgloader.hpp"
-#include "utils/fileutils.hpp"
-#include "core/app_path.hpp"
 
-#include <cstring> // strcasecmp
-
-
-// should be as sorted_log_id_string in agent_data_extractor
-static BGRColor color_from_cstr(const char * str)
+namespace
 {
-    BGRColor bgr;
+    inline std::pair<bool, long int>
+    to_long_int_base16_or_10(std::string_view str_view) noexcept
+    {
+        std::pair<bool, long int> res { false, 0 };
+        
+        if (str_view.empty())
+            return res;
+        
+        auto converter = [](const char *str, int base) -> decltype(res)
+        {
+            long int value = 0;
+            bool success = false;
+            char *endptr = nullptr;
 
-    if (false) {} /*NOLINT*/
-# define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
-    ELSE_COLOR(BLACK)
-    ELSE_COLOR(GREY)
-    ELSE_COLOR(MEDIUM_GREY)
-    ELSE_COLOR(DARK_GREY)
-    ELSE_COLOR(ANTHRACITE)
-    ELSE_COLOR(WHITE)
+            errno = 0;
+            value = strtol(str, &endptr, base);
+            success = !(endptr == str || *endptr != '\0' || errno);
+            return { success, value };
+        };
 
-    ELSE_COLOR(BLUE)
-    ELSE_COLOR(DARK_BLUE)
-    ELSE_COLOR(CYAN)
-    ELSE_COLOR(DARK_BLUE_WIN)
-    ELSE_COLOR(DARK_BLUE_BIS)
-    ELSE_COLOR(MEDIUM_BLUE)
-    ELSE_COLOR(PALE_BLUE)
-    ELSE_COLOR(LIGHT_BLUE)
-    ELSE_COLOR(WINBLUE)
-
-    ELSE_COLOR(RED)
-    ELSE_COLOR(DARK_RED)
-    ELSE_COLOR(MEDIUM_RED)
-    ELSE_COLOR(PINK)
-
-    ELSE_COLOR(GREEN)
-    ELSE_COLOR(WABGREEN)
-    ELSE_COLOR(WABGREEN_BIS)
-    ELSE_COLOR(DARK_WABGREEN)
-    ELSE_COLOR(INV_DARK_WABGREEN)
-    ELSE_COLOR(DARK_GREEN)
-    ELSE_COLOR(INV_DARK_GREEN)
-    ELSE_COLOR(LIGHT_GREEN)
-    ELSE_COLOR(INV_LIGHT_GREEN)
-    ELSE_COLOR(PALE_GREEN)
-    ELSE_COLOR(INV_PALE_GREEN)
-    ELSE_COLOR(MEDIUM_GREEN)
-    ELSE_COLOR(INV_MEDIUM_GREEN)
-
-    ELSE_COLOR(YELLOW)
-    ELSE_COLOR(LIGHT_YELLOW)
-
-    ELSE_COLOR(ORANGE)
-    ELSE_COLOR(LIGHT_ORANGE)
-    ELSE_COLOR(PALE_ORANGE)
-    ELSE_COLOR(BROWN)
+        std::size_t size = str_view.size();
+        
+        if (size > 2 && str_view[0] == '0' && str_view[1] == 'x')
+        {
+            res = converter(str_view.data(), 16);
+        }
+        else if (size > 1 && str_view[0] == '#')
+        {
+            res = converter(str_view.data() + 1, 16);
+        }
+        else
+        {
+            res = converter(str_view.data(), 10);
+        }
+        return res;
+    }
+    
+    BGRColor color_from_cstr(std::string_view str_view) noexcept
+    {
+        BGRColor bgr;
+        
+        if (false); /*NOLINT*/
+#define ELSE_COLOR(COLOR_NAME)                                            \
+        else if (::strncasecmp(#COLOR_NAME,                               \
+                               str_view.data(),                           \
+                               str_view.size()) == 0)                     \
+        {                                                                 \
+            bgr = COLOR_NAME;                                             \
+        }
+        ELSE_COLOR(BLACK)
+        ELSE_COLOR(GREY)
+        ELSE_COLOR(MEDIUM_GREY)
+        ELSE_COLOR(DARK_GREY)
+        ELSE_COLOR(ANTHRACITE)
+        ELSE_COLOR(WHITE)
+        ELSE_COLOR(BLUE)
+        ELSE_COLOR(DARK_BLUE)
+        ELSE_COLOR(CYAN)
+        ELSE_COLOR(DARK_BLUE_WIN)
+        ELSE_COLOR(DARK_BLUE_BIS)
+        ELSE_COLOR(MEDIUM_BLUE)
+        ELSE_COLOR(PALE_BLUE)
+        ELSE_COLOR(LIGHT_BLUE)
+        ELSE_COLOR(WINBLUE)
+        ELSE_COLOR(RED)
+        ELSE_COLOR(DARK_RED)
+        ELSE_COLOR(MEDIUM_RED)
+        ELSE_COLOR(PINK)
+        ELSE_COLOR(GREEN)
+        ELSE_COLOR(WABGREEN)
+        ELSE_COLOR(WABGREEN_BIS)
+        ELSE_COLOR(DARK_WABGREEN)
+        ELSE_COLOR(INV_DARK_WABGREEN)
+        ELSE_COLOR(DARK_GREEN)
+        ELSE_COLOR(INV_DARK_GREEN)
+        ELSE_COLOR(LIGHT_GREEN)
+        ELSE_COLOR(INV_LIGHT_GREEN)
+        ELSE_COLOR(PALE_GREEN)
+        ELSE_COLOR(INV_PALE_GREEN)
+        ELSE_COLOR(MEDIUM_GREEN)
+        ELSE_COLOR(INV_MEDIUM_GREEN)
+        ELSE_COLOR(YELLOW)
+        ELSE_COLOR(LIGHT_YELLOW)
+        ELSE_COLOR(ORANGE)
+        ELSE_COLOR(LIGHT_ORANGE)
+        ELSE_COLOR(PALE_ORANGE)
+        ELSE_COLOR(BROWN)
 #undef ELSE_COLOR
-    else if ((*str == '0') && (*(str + 1) == 'x')){
-        bgr = BGRasRGBColor(BGRColor(strtol(str + 2, nullptr, 16)));
+        else if (auto res = to_long_int_base16_or_10(str_view); res.first)
+        {
+            bgr = BGRasRGBColor(BGRColor(res.second));
+        }
+        return bgr;
     }
-    else {
-        bgr = BGRasRGBColor(BGRColor(strtol(str, nullptr, 10)));
-    }
-
-    return bgr;
 }
 
-
-// 1, yes, on, true
-static bool bool_from_cstr(const char * value)
+void load_theme(Theme& theme, Inifile& ini) noexcept
 {
-    bool val;
-    auto err = configs::parse(val, configs::spec_type<bool>(), array_view{value, strlen(value)});
-    return err ? false : val;
-}
+    if (!ini.get<cfg::theme::enable_theme>())
+        return;
+    theme.global.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::bgcolor>());
+    theme.global.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::fgcolor>());
+    theme.global.separator_color =
+        color_from_cstr(ini.get<cfg::theme::separator_color>());
+    theme.global.focus_color =
+        color_from_cstr(ini.get<cfg::theme::focus_color>());
+    theme.global.error_color =
+        color_from_cstr(ini.get<cfg::theme::error_color>());
+    theme.global.logo =
+        ini.get<cfg::theme::logo>();
+    theme.global.logo_path =
+        ini.get<cfg::theme::logo_path>();
 
+    theme.edit.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::edit_bgcolor>());
+    theme.edit.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::edit_fgcolor>());
+    theme.edit.focus_color =
+        color_from_cstr(ini.get<cfg::theme::edit_focus_color>());
 
-struct ThemeHolder final : public ConfigurationHolder
-{
-    explicit ThemeHolder(Theme & theme)
-    : theme(theme)
-    {}
+    theme.tooltip.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::tooltip_bgcolor>());
+    theme.tooltip.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::tooltip_fgcolor>());
+    theme.tooltip.border_color =
+        color_from_cstr(ini.get<cfg::theme::tooltip_border_color>());
 
-    void set_value(const char * context, const char * key, const char * value) override
-    {
-        if (0 == strcmp(context, "global")) {
-            if (0 == strcmp(key, "bgcolor")){
-                this->theme.global.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "fgcolor")){
-                this->theme.global.fgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "separator_color")){
-                this->theme.global.separator_color = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "focus_color")){
-                this->theme.global.focus_color = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "error_color")){
-                this->theme.global.error_color = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "logo")){
-                this->theme.global.logo = bool_from_cstr(value);
-            }
-        }
-        else if (0 == strcmp(context, "edit")) {
-            if (0 == strcmp(key, "bgcolor")) {
-                this->theme.edit.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "fgcolor")) {
-                this->theme.edit.fgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "focus_color")) {
-                this->theme.edit.focus_color = color_from_cstr(value);
-            }
-        }
-        else if (0 == strcmp(context, "tooltip")) {
-            if (0 == strcmp(key, "bgcolor")) {
-                this->theme.tooltip.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "fgcolor")) {
-                this->theme.tooltip.fgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "border_color")) {
-                this->theme.tooltip.border_color = color_from_cstr(value);
-            }
-        }
-        else if (0 == strcmp(context, "selector")) {
-            if (0 == strcmp(key, "line1_fgcolor")) {
-                this->theme.selector_line1.fgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "line1_bgcolor")) {
-                this->theme.selector_line1.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "line2_fgcolor")) {
-                this->theme.selector_line2.fgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "line2_bgcolor")) {
-                this->theme.selector_line2.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "selected_bgcolor")) {
-                this->theme.selector_selected.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "selected_fgcolor")) {
-                this->theme.selector_selected.fgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "focus_bgcolor")) {
-                this->theme.selector_focus.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "focus_fgcolor")) {
-                this->theme.selector_focus.fgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "label_bgcolor")) {
-                this->theme.selector_label.bgcolor = color_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "label_fgcolor")) {
-                this->theme.selector_label.fgcolor = color_from_cstr(value);
-            }
-        }
-    }
-
-private:
-    Theme & theme;
-};
-
-void load_theme(Theme& theme, array_view_const_char theme_name)
-{
-    // load theme
-    char const* cfg_path = app_path(AppPath::Cfg).c_str();
-
-    {
-        char theme_path[1024] = {};
-        snprintf(theme_path, 1024, "%s/themes/%.*s/" THEME_INI,
-            cfg_path, int(theme_name.size()), theme_name.data());
-        theme_path[sizeof(theme_path) - 1] = 0;
-
-        configuration_load(ThemeHolder(theme), theme_path);
-    }
-
-    if (theme.global.logo) {
-        char logo_path[1024] = {};
-        snprintf(logo_path, 1024, "%s/themes/%.*s/" LOGO_PNG,
-            cfg_path, int(theme_name.size()), theme_name.data());
-        logo_path[sizeof(logo_path) - 1] = 0;
-        if (!file_exist(logo_path)) {
-            snprintf(logo_path, 1024, "%s/themes/%.*s/" LOGO_BMP,
-                cfg_path, int(theme_name.size()), theme_name.data());
-            logo_path[sizeof(logo_path) - 1] = 0;
-            if (!file_exist(logo_path)) {
-                theme.global.logo = false;
-                return ;
-            }
-        }
-        theme.global.logo_path = logo_path;
-    }
+    theme.selector_line1.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_line1_bgcolor>());
+    theme.selector_line1.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_line1_fgcolor>());
+    
+    theme.selector_line2.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_line2_bgcolor>());
+    theme.selector_line2.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_line2_fgcolor>());
+    
+    theme.selector_selected.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_selected_bgcolor>());
+    theme.selector_selected.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_selected_fgcolor>());
+    
+    theme.selector_focus.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_focus_bgcolor>());
+    theme.selector_focus.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_focus_fgcolor>());
+    
+    theme.selector_label.bgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_label_bgcolor>());
+    theme.selector_label.fgcolor =
+        color_from_cstr(ini.get<cfg::theme::selector_label_fgcolor>());
 }

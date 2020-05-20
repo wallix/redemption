@@ -67,13 +67,13 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     rdpdr_drive_read_task.configure_event(
-        session_reactor, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
 
@@ -83,7 +83,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     for (int i = 0; i < 100 && !fd_events_.is_empty(); ++i) {
         fd_events_.exec_action(fd_is_set);
     }
-    auto const end_tv = session_reactor.get_current_time();
+    auto const end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
     fd_events_.exec_timeout(end_tv);
     RED_CHECK(fd_events_.is_empty());
@@ -109,25 +109,25 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         contents.size(), test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     rdpdr_send_drive_io_response_task.configure_event(
-        session_reactor, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
     RED_CHECK(fd_events_.is_empty());
 
     RED_CHECK(!timer_events_.is_empty());
 
-    timeval timeout = session_reactor.get_current_time();
+    timeval timeout = time_base.get_current_time();
     for (int i = 0; i < 100 && !timer_events_.is_empty(); ++i) {
-        auto const end_tv = session_reactor.get_current_time();
+        auto const end_tv = time_base.get_current_time();
         timer_events_.exec_timer(end_tv);
         fd_events_.exec_timeout(end_tv);
-        session_reactor.set_current_time(timeout);
+        time_base.set_current_time(timeout);
         ++timeout.tv_sec;
     }
     RED_CHECK(timer_events_.is_empty());

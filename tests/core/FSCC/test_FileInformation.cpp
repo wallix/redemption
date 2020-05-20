@@ -24,7 +24,7 @@
 
 
 #define FSCC_TEST(type, suffix, raw_data) RED_AUTO_TEST_CASE(Test##type##suffix) { \
-    array_view_const_char in_data = raw_data;                                      \
+    chars_view in_data = raw_data;                                      \
     InStream in_stream(in_data);                                                   \
     StaticOutStream<1200> out_stream;                                              \
     fscc::type type;                                                               \

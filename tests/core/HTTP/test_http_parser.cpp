@@ -34,7 +34,7 @@ public:
 		headersParsed = true;
 		return true;
 	}
-	bool onBodyContent(array_view_const_char content) override {
+	bool onBodyContent(chars_view content) override {
 		bodySizes.push_back(content.size());
 		return true;
 	}
@@ -135,7 +135,7 @@ public:
 		headersParsed = true;
 		return true;
 	}
-	bool onBodyContent(array_view_const_char content) override {
+	bool onBodyContent(chars_view content) override {
 		bodySizes.push_back(content.size());
 		return true;
 	}

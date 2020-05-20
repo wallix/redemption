@@ -854,7 +854,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         cont.pop_back();
     }
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
 
     TimerPtr initialization_timeout_event;
@@ -873,7 +873,7 @@ public:
     const std::string channel_files_directory;
 
     FileSystemVirtualChannel(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
@@ -911,7 +911,7 @@ public:
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           params.smartcard_passthrough,
           base_params.verbose)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
@@ -1483,7 +1483,7 @@ public:
 
                             this->report_message.log6(
                                 LogId::DRIVE_REDIRECTION_USE,
-                                this->session_reactor.get_current_time(), {
+                                this->time_base.get_current_time(), {
                                 KVLog("device_name"_av, device_name),
                                 KVLog("device_type"_av, device_type_name),
                             });
@@ -1567,7 +1567,7 @@ public:
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_READ_EX,
-                                        this->session_reactor.get_current_time(), {
+                                        this->time_base.get_current_time(), {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
                                         KVLog("sha256"_av, {digest_s, digest_s_len}),
@@ -1581,7 +1581,7 @@ public:
                                 else {
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_READ,
-                                        this->session_reactor.get_current_time(), {
+                                        this->time_base.get_current_time(), {
                                         KVLog("file_name"_av, file_path),
                                     });
 
@@ -1608,7 +1608,7 @@ public:
 
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE_EX,
-                                        this->session_reactor.get_current_time(), {
+                                        this->time_base.get_current_time(), {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
                                         KVLog("sha256"_av, {digest_s, digest_s_len}),
@@ -1622,7 +1622,7 @@ public:
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE,
-                                        this->session_reactor.get_current_time(), {
+                                        this->time_base.get_current_time(), {
                                         KVLog("file_name"_av, file_path),
                                     });
 
@@ -1735,7 +1735,7 @@ public:
                             if (this->device_io_target_info_inventory.end() != target_iter) {
                                 this->report_message.log6(
                                     LogId::DRIVE_REDIRECTION_DELETE,
-                                    this->session_reactor.get_current_time(), {
+                                    this->time_base.get_current_time(), {
                                     KVLog("file_name"_av, file_path),
                                 });
 
@@ -1756,7 +1756,7 @@ public:
                             if (this->device_io_target_info_inventory.end() != target_iter) {
                                 this->report_message.log6(
                                     LogId::DRIVE_REDIRECTION_RENAME,
-                                    this->session_reactor.get_current_time(), {
+                                    this->time_base.get_current_time(), {
                                     KVLog("old_file_name"_av, target_iter->file_path),
                                     KVLog("new_file_name"_av, file_path),
                                 });
@@ -1997,7 +1997,7 @@ public:
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
             this->initialization_timeout_event = this->timer_events_
-            .create_timer_executor(this->session_reactor, this)
+            .create_timer_executor(this->time_base, this)
             .set_delay(this->initialization_timeout)
             .on_action(jln::one_shot<&FileSystemVirtualChannel::process_event>());
             return true;

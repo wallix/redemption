@@ -875,7 +875,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 //
 // //        cursor.emit_pointer32x32(payload);
 // //
-// //        array_view_const_u8 av = {payload.get_data(), payload.get_offset()};
+// //        u8_array_view av = {payload.get_data(), payload.get_offset()};
 //
 // //    StaticOutStream<8192> result;
 // //

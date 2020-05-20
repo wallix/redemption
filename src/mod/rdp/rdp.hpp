@@ -153,15 +153,15 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(SessionReactor& session_reactor, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_)
-        : session_reactor(session_reactor), fd_events_(fd_events_), graphic_fd_events_(graphic_fd_events_), timer_events_(timer_events_)
+    explicit AsynchronousTaskContainer(TimeBase& time_base, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_)
+        : time_base(time_base), fd_events_(fd_events_), graphic_fd_events_(graphic_fd_events_), timer_events_(timer_events_)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
@@ -169,13 +169,13 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->session_reactor, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
         }
     }
 
     std::deque<std::unique_ptr<AsynchronousTask>> tasks;
 public:
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TopFdContainer& fd_events_;
     GraphicFdContainer& graphic_fd_events_;
     TimerContainer& timer_events_;
@@ -183,7 +183,7 @@ public:
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(SessionReactor&, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer&)
+    explicit AsynchronousTaskContainer(TimeBase&, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer&)
     {}
 };
 #endif
@@ -293,6 +293,17 @@ private:
         {}
     } clipboard;
 
+    struct DynamicChannels
+    {
+        const char * allowed_channels;
+        const char * denied_channels;
+
+        DynamicChannels(ModRDPParams::DynamicChannelsParams const& dynamic_channels_params)
+        : allowed_channels(dynamic_channels_params.allowed_channels)
+        , denied_channels(dynamic_channels_params.denied_channels)
+        {}
+    } dynamic_channels;
+
 public:
     struct FileSystem
     {
@@ -394,7 +405,7 @@ private:
 
     const RDPVerbose verbose;
 
-    SessionReactor & session_reactor;
+    TimeBase & time_base;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
@@ -405,7 +416,7 @@ public:
         const ChannelsAuthorizations channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        TimeBase & time_base, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory)
     : channels_authorizations(channels_authorizations)
@@ -426,12 +437,13 @@ public:
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params)
     , clipboard(mod_rdp_params.clipboard_params)
+    , dynamic_channels(mod_rdp_params.dynamic_channels_params)
     , file_system(mod_rdp_params.file_system_params)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
     , mod_rdp_factory(mod_rdp_factory)
     , report_message(report_message)
     , verbose(verbose)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
@@ -460,7 +472,7 @@ public:
 
         // Something like:
 
-        // if probe: init_session_probe(... session_reactor);
+        // if probe: init_session_probe(... time_base);
         // if remote_prog: init_remote_program(... lang, font, identifier, program, directory);
 
         // This could probably work like two consecutive filters
@@ -494,7 +506,7 @@ public:
             }
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-                this->session_reactor, this->timer_events_, gd, mod_rdp, mod_rdp_params.lang,
+                this->time_base, this->timer_events_, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, authentifier,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
@@ -586,7 +598,7 @@ private:
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
-            this->session_reactor,
+            this->time_base,
             base_params,
             std::move(cvc_params),
             file_validator_service,
@@ -705,13 +717,22 @@ private:
         this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
         this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
-        DynamicChannelVirtualChannel::Params dcvc_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+
+        DynamicChannelVirtualChannelParam dynamic_channel_virtual_channel_params;
+
+        dynamic_channel_virtual_channel_params.allowed_channels =
+            this->dynamic_channels.allowed_channels;
+        dynamic_channel_virtual_channel_params.denied_channels =
+            this->dynamic_channels.denied_channels;
 
         this->dynamic_channel_virtual_channel =
             std::make_unique<DynamicChannelVirtualChannel>(
                 this->dynamic_channel_to_client_sender.get(),
                 this->dynamic_channel_to_server_sender.get(),
-                dcvc_params);
+                this->time_base,
+                base_params,
+                dynamic_channel_virtual_channel_params);
     }
 
     inline void create_file_system_virtual_channel(
@@ -743,7 +764,7 @@ private:
         fsvc_params.smartcard_passthrough = this->file_system.smartcard_passthrough;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
-                asynchronous_tasks.session_reactor,
+                asynchronous_tasks.time_base,
                 asynchronous_tasks.timer_events_,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
@@ -803,7 +824,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
-            this->session_reactor,
+            this->time_base,
             this->timer_events_,
             this->graphic_events_,
             this->session_probe_to_server_sender.get(),
@@ -1425,7 +1446,7 @@ public:
         else if (used_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
-                    this->session_reactor,
+                    this->time_base,
                     this->timer_events_,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
@@ -1917,7 +1938,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::string * error_message;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     GraphicFdContainer & graphic_fd_events_;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
@@ -1942,6 +1963,7 @@ class mod_rdp : public mod_api, public rdp_api
     bool graphics_update_disabled = false;
 
     bool mcs_disconnect_provider_ultimatum_pdu_received = false;
+    bool errinfo_graphics_subsystem_failed_encountered  = false;
 
     static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
     BmpCacheRev2_Cache_NumEntries()
@@ -2014,7 +2036,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , Inifile & ini
-      , SessionReactor& session_reactor
+      , TimeBase& time_base
       , TopFdContainer & fd_events_
       , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
@@ -2039,7 +2061,7 @@ public:
     )
         : channels(
             std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, session_reactor, timer_events_, graphic_events_, file_validator_service,
+            report_message, gen, metrics, time_base, timer_events_, graphic_events_, file_validator_service,
             mod_rdp_factory)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -2085,13 +2107,13 @@ public:
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
-        , session_reactor(session_reactor)
+        , time_base(time_base)
         , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
         , graphic_events_(graphic_events_)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(session_reactor, fd_events_, graphic_fd_events_, timer_events_)
+        , asynchronous_tasks(time_base, fd_events_, graphic_fd_events_, timer_events_)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
@@ -2391,7 +2413,7 @@ public:
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
-    void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
+    void connected_fast_path(gdi::GraphicApi & drawable, writable_u8_array_view array)
     {
         InStream stream(array);
         IF_ENABLE_METRICS(server_main_channel_data(stream.in_remain()));
@@ -2967,7 +2989,7 @@ public:
                             if (!this->deactivation_reactivation_in_progress) {
                                 this->report_message.log6(
                                     LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-                                    this->session_reactor.get_current_time(), {});
+                                    this->time_base.get_current_time(), {});
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3117,6 +3139,12 @@ public:
                                             LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
                                         uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
                                         this->process_error_info(error_info);
+
+                                        if (ERRINFO_GRAPHICSSUBSYSTEMFAILED == error_info)
+                                        {
+                                            this->errinfo_graphics_subsystem_failed_encountered = true;
+                                            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                                        }
                                     }
                                     break;
                                 case PDUTYPE2_SHUTDOWN_DENIED:
@@ -3264,6 +3292,13 @@ public:
                 }
             }
             catch(Error const & e){
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
+
+                if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)
+                {
+                    throw;
+                }
+
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     if (!this->support_connection_redirection_during_recording) {
                         this->front.must_be_stop_capture();
@@ -4960,7 +4995,7 @@ public:
                     }
                     else {
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->timer_events_
-                        .create_timer_executor(this->session_reactor)
+                        .create_timer_executor(this->time_base)
                         .on_action(jln::sequencer(
                             [this](JLN_TIMER_CTX ctx) {
                                 LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
@@ -5330,7 +5365,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-        
+
         [[maybe_unused]] std::size_t channel_data_size = this->enable_fastpath_client_input_event
             ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
             : this->send_input_slowpath(time, message_type, device_flags, param1, param2);
@@ -5342,7 +5377,7 @@ public:
 
     void rdp_gdi_up_and_running(ScreenInfo & ) override {}
     void rdp_gdi_down() override {}
-    
+
     void rdp_input_invalidate(Rect r) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
@@ -5365,7 +5400,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate2(array_view<Rect const> vr) override {
+    void rdp_input_invalidate2(array_view<Rect> vr) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             LOG_IF(bool(this->verbose & RDPVerbose::input), LOG_INFO,
                 "mod_rdp::rdp_input_invalidate 2");
@@ -5774,7 +5809,7 @@ private:
     void log_disconnection(bool enable_verbose)
     {
         if (this->session_time_start.count()) {
-            uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->session_time_start.count();
+            uint64_t seconds = this->time_base.get_current_time().tv_sec - this->session_time_start.count();
             this->session_time_start = std::chrono::seconds::zero();
 
             char duration_str[128];
@@ -5785,7 +5820,7 @@ private:
 
             this->report_message.log6(
                 LogId::SESSION_DISCONNECTION,
-                this->session_reactor.get_current_time(), {
+                this->time_base.get_current_time(), {
                 KVLog("duration"_av, {duration_str, len}),
             });
 
@@ -5798,7 +5833,8 @@ private:
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
             LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
 
-        if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
+        if (!this->mcs_disconnect_provider_ultimatum_pdu_received &&
+            !this->errinfo_graphics_subsystem_failed_encountered) {
             this->connection_finalization_state = DISCONNECTED;
             write_packets(
                 this->trans,

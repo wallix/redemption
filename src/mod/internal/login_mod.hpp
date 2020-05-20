@@ -80,9 +80,8 @@ class LoginMod : public mod_api, public NotifyApi
 
     MouseOwner current_mouse_owner;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
 
     LanguageButton language_button;
     FlatLogin login;
@@ -99,10 +98,7 @@ class LoginMod : public mod_api, public NotifyApi
     int old_mouse_x = 0;
     int old_mouse_y = 0;
 
-    GraphicEventPtr graphic_event;
-
     TimerPtr timeout_timer;
-    GraphicEventPtr started_copy_past_event;
 
 private:
     void cancel_double_click_detection();
@@ -112,9 +108,8 @@ private:
 public:
     LoginMod(
         LoginModVariables vars,
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
-        GraphicEventContainer& graphic_events_,
         char const * username, char const * password,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
@@ -122,6 +117,8 @@ public:
     );
 
     ~LoginMod() override;
+
+    void init() override;
 
     std::string module_name() override {return "LoginMod";}
 

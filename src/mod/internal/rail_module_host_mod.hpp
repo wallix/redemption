@@ -32,7 +32,7 @@
 #include <memory>
 
 class ClientExecute;
-class SessionReactor;
+class TimeBase;
 
 using RailModuleHostModVariables = vcfg::variables<
     vcfg::var<cfg::translation::language,                        vcfg::accessmode::get>,
@@ -124,19 +124,14 @@ private:
     int old_mouse_y = 0;
 
 protected:
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
-    GraphicEventContainer& graphic_events_;
-
-private:
-    GraphicEventPtr graphic_event;
 
 public:
     RailModuleHostMod(
         RailModuleHostModVariables vars,
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
-        GraphicEventContainer& graphic_events_,
         gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
         ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
@@ -148,6 +143,8 @@ public:
         this->screen.clear();
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
     }
+
+    void init() override;
 
     std::string module_name() override {return "Rail Module Host Mod";}
 

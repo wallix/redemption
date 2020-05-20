@@ -40,6 +40,12 @@ cp_spec = {
         u'mod_rdp:show_common_cipher_list': (
             'show_common_cipher_list', False
         ),
+        u'mod_rdp:allowed_dynamic_channels': (
+            'allowed_dynamic_channels', u'*'
+        ),
+        u'mod_rdp:denied_dynamic_channels': (
+            'denied_dynamic_channels', u''
+        ),
         u'mod_rdp:server_redirection_support': (
             'server_redirection', False
         ),
@@ -66,6 +72,9 @@ cp_spec = {
         ),
         u'mod_rdp:force_smartcard_authentication': (
             'force_smartcard_authentication', False
+        ),
+        u'mod_rdp:enable_ipv6': (
+            'enable_ipv6', False
         ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
@@ -153,6 +162,9 @@ cp_spec = {
         u'mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check': (
             'ignore_ui_less_processes_during_end_of_session_check', True
         ),
+        u'mod_rdp:session_probe_update_disabled_features': (
+            'update_disabled_features', True
+        ),
         u'mod_rdp:session_probe_childless_window_as_unidentified_input_field': (
             'childless_window_as_unidentified_input_field', True
         ),
@@ -160,7 +172,7 @@ cp_spec = {
             'disabled_features', 352
         ),
         u'mod_rdp:session_probe_bestsafe_integration': (
-            'bestsafe_integration', False
+            'enable_bestsafe_interaction', False
         ),
         u'mod_rdp:session_probe_alternate_directory_environment_variable': (
             'alternate_directory_environment_variable', u''
@@ -246,6 +258,9 @@ cp_spec = {
         ),
         u'mod_vnc:support_cursor_pseudo_encoding': (
             'support_cursor_pseudo_encoding', True
+        ),
+        u'mod_vnc:enable_ipv6': (
+            'enable_ipv6', False
         ),
     },
 }

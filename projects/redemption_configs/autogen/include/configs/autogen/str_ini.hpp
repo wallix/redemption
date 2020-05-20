@@ -79,9 +79,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_password
 #certificate_password = inquisition
 
-#_advanced
-#movie_path = 
-
 # Support of Bitmap Update.
 # value: 0 or 1
 #_advanced
@@ -413,11 +410,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #persist_bitmap_cache_on_disk = 0
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 #_hidden
 #allow_channels = *
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 #_hidden
 #deny_channels = 
 
@@ -431,6 +428,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #server_redirection_support = 0
+
+# Client Address to send to target (in InfoPacket)
+# min = 0, max = 2
+#   0: Send 0.0.0.0
+#   1: Send proxy client address or target connexion
+#   2: Send user client address of front connexion
+#_advanced
+#client_address_sent = 0
 
 # Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
 # value: 0 or 1
@@ -623,6 +628,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #session_probe_ignore_ui_less_processes_during_end_of_session_check = 1
+
+# value: 0 or 1
+#_hidden
+#session_probe_update_disabled_features = 1
 
 # value: 0 or 1
 #_hidden
@@ -822,6 +831,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #force_smartcard_authentication = 0
 
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -864,6 +878,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #support_cursor_pseudo_encoding = 1
+
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
 
 [metrics]
 
@@ -1171,6 +1190,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #play_video_with_corrupted_bitmap = 0
 
+# Allow Realtime display (4eyes) without recording of session
+# value: 0 or 1
+#allow_rt_without_recording = 0
+
 [crypto]
 
 #_hidden
@@ -1314,5 +1337,82 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 #_advanced
 #load_theme = 
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+# value: 0 or 1
+#_advanced
+#enable_theme = 0
+
+#_advanced
+#bgcolor = dark_blue_bis
+
+#_advanced
+#fgcolor = white
+
+#_advanced
+#separator_color = light_blue
+
+#_advanced
+#focus_color = winblue
+
+#_advanced
+#error_color = yellow
+
+# value: 0 or 1
+#_hidden
+#logo = 0
+
+#_hidden
+#logo_path = 
+
+#_advanced
+#edit_bgcolor = white
+
+#_advanced
+#edit_fgcolor = black
+
+#_advanced
+#edit_focus_color = winblue
+
+#_advanced
+#tooltip_bgcolor = black
+
+#_advanced
+#tooltip_fgcolor = light_yellow
+
+#_advanced
+#tooltip_border_color = black
+
+#_advanced
+#selector_line1_bgcolor = pale_blue
+
+#_advanced
+#selector_line1_fgcolor = black
+
+#_advanced
+#selector_line2_bgcolor = light_blue
+
+#_advanced
+#selector_line2_fgcolor = black
+
+#_advanced
+#selector_selected_bgcolor = medium_blue
+
+#_advanced
+#selector_selected_fgcolor = white
+
+#_advanced
+#selector_focus_bgcolor = winblue
+
+#_advanced
+#selector_focus_fgcolor = white
+
+#_advanced
+#selector_label_bgcolor = medium_blue
+
+#_advanced
+#selector_label_fgcolor = white
 
 )gen_config_ini"

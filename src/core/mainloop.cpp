@@ -216,7 +216,7 @@ namespace
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
 
-            char source_ip[256];
+            char source_ip[256] { };
             utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
             const bool source_is_localhost = (0 == strcmp(source_ip, "127.0.0.1"));
             REDEMPTION_DIAGNOSTIC_PUSH
@@ -306,7 +306,7 @@ namespace
                 uint32_t verbose = ini.get<cfg::debug::auth>();
                 // source and dest are inverted because we get the information we want from reply path rule
                 LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%s:%d", source_ip, source_port, target_ip, target_port);
-                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, make_array_view(real_target_ip), verbose);
+                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, make_writable_array_view(real_target_ip), verbose);
                 if (res){
                     LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
                 }

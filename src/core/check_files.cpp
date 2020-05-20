@@ -72,7 +72,7 @@ namespace
     };
 
     bool check_files(
-        array_view<CheckFileData const> check_file_list,
+        array_view<CheckFileData> check_file_list,
         unsigned euid, unsigned egid)
     {
         bool result = true;

@@ -43,16 +43,16 @@ namespace
 {
     void file_verification_error(
         FrontAPI& front,
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         ReportMessageApi& report_message,
-        array_view_const_char up_target_name,
-        array_view_const_char down_target_name,
-        array_view_const_char msg)
+        chars_view up_target_name,
+        chars_view down_target_name,
+        chars_view msg)
     {
         for (auto&& service : {up_target_name, down_target_name}) {
             if (not service.empty()) {
                 report_message.log6(
-                    LogId::FILE_VERIFICATION_ERROR, session_reactor.get_current_time(), {
+                    LogId::FILE_VERIFICATION_ERROR, time_base.get_current_time(), {
                     KVLog("icap_service"_av, service),
                     KVLog("status"_av, msg),
                 });
@@ -97,7 +97,7 @@ struct RdpData
             ReportMessageApi & report_message;
             std::string up_target_name;
             std::string down_target_name;
-            SessionReactor& session_reactor;
+            TimeBase& time_base;
             TimerContainer& timer_events_;
             FrontAPI& front;
         };
@@ -113,7 +113,7 @@ struct RdpData
         , trans(std::move(fd), ReportError([this](Error err){
             file_verification_error(
                 this->ctx_error.front,
-                this->ctx_error.session_reactor,
+                this->ctx_error.time_base,
                 this->ctx_error.report_message,
                 this->ctx_error.up_target_name,
                 this->ctx_error.down_target_name,
@@ -190,7 +190,7 @@ public:
     ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, uint32_t verbose
       , std::string * error_message
-      , SessionReactor& session_reactor
+      , TimeBase& time_base
       , TopFdContainer & fd_events_
       , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
@@ -220,7 +220,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
 
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, ini, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -386,6 +386,7 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     spp.vc_params.end_of_session_check_delay_time = ini.get<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>();
     spp.vc_params.ignore_ui_less_processes_during_end_of_session_check =
         ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
+    spp.vc_params.update_disabled_features                             = ini.get<cfg::mod_rdp::session_probe_update_disabled_features>();
     spp.vc_params.childless_window_as_unidentified_input_field =
         ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
     spp.is_public_session = ini.get<cfg::mod_rdp::session_probe_public_session>();
@@ -439,7 +440,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
-    SessionReactor & session_reactor,
+    TimeBase & time_base,
     TopFdContainer& fd_events_,
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
@@ -628,6 +629,14 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     }
     // ======================= End File System Params ===================
 
+
+    // ======================= Dynamic Channel Params ===================
+
+    mod_rdp_params.dynamic_channels_params.allowed_channels = ini.get<cfg::mod_rdp::allowed_dynamic_channels>().c_str();
+    mod_rdp_params.dynamic_channels_params.denied_channels  = ini.get<cfg::mod_rdp::denied_dynamic_channels>().c_str();
+
+    // ======================= End Dynamic Channel Params ===================
+
     mod_rdp_params.experimental_fix_input_event_sync =
         ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
     mod_rdp_params.support_connection_redirection_during_recording =
@@ -719,7 +728,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
                     report_message,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
-                    session_reactor, timer_events_, front
+                    time_base, timer_events_, front
                 });
             file_validator->service.send_infos({
                 "server_ip"_av, ini.get<cfg::context::target_host>(),
@@ -730,7 +739,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         else {
             LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
             file_verification_error(
-                front, session_reactor, report_message,
+                front, time_base, report_message,
                 mod_rdp_params.validator_params.up_target_name,
                 mod_rdp_params.validator_params.down_target_name,
                 "Unable to connect to FileValidator service"_av
@@ -772,7 +781,29 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     // ================== End Metrics ======================
 
     unique_fd client_sck =
-        connect_to_target_host(ini, session_reactor, report_message, trkeys::authentification_rdp_fail);
+        connect_to_target_host(ini,
+                               time_base,
+                               report_message,
+                               trkeys::authentification_rdp_fail,
+                               ini.get<cfg::mod_rdp::enable_ipv6>());
+    IpAddress local_ip_address;
+
+    switch (ini.get<cfg::mod_rdp::client_address_sent>())
+    {
+        case ClientAddressSent::no_address :
+            break;
+        case ClientAddressSent::front :
+            mod_rdp_params.client_address =
+                ini.get<cfg::globals::host>().c_str();
+            break;
+        case ClientAddressSent::proxy :
+            if (!get_local_ip_address(local_ip_address, client_sck.fd()))
+            {
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+            mod_rdp_params.client_address = local_ip_address.ip_addr;
+            break;
+    }
 
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,
@@ -781,7 +812,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         std::move(client_sck),
         ini.get<cfg::debug::mod_rdp>(),
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
-        session_reactor,
+        time_base,
         fd_events_,
         graphic_fd_events_,
         timer_events_,
@@ -808,7 +839,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     if (enable_validator) {
         new_mod->rdp_data.file_validator = std::move(file_validator);
         LOG(LOG_INFO, "create_module_rdp::fd_events_.create_top_executor");
-        new_mod->rdp_data.file_validator->validator_event = fd_events_.create_top_executor(session_reactor, validator_fd)
+        new_mod->rdp_data.file_validator->validator_event = fd_events_.create_top_executor(time_base, validator_fd)
         .set_timeout(std::chrono::milliseconds::max())
         .on_timeout(jln::always_ready([]{}))
         .on_exit(jln::propagate_exit())
@@ -820,7 +851,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     if (enable_metrics) {
         new_mod->rdp_data.metrics = std::move(metrics);
         LOG(LOG_INFO, "create_module_rdp::timer_events_.create_timer_executor");
-        new_mod->rdp_data.metrics->metrics_timer = timer_events_.create_timer_executor(session_reactor)
+        new_mod->rdp_data.metrics->metrics_timer = timer_events_.create_timer_executor(time_base)
             .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
             .on_action([metrics = new_mod->rdp_data.metrics.get()](JLN_TIMER_CTX ctx){
                 metrics->log(ctx.get_current_time());
@@ -852,9 +883,9 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         return mod_pack;
     }
 
-    // TODO: this should move to mod_manager
+    // TODO: this should be external, not in mod_factory
     // Host Mod In Widget
-    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+    LOG(LOG_INFO, "Creation of internal module 'RailModuleHostMod'");
 
     std::string target_info = str_concat(
         ini.get<cfg::context::target_str>(),
@@ -865,9 +896,8 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
     auto* host_mod = new RailModuleHostMod(
         ini,
-        session_reactor,
+        time_base,
         timer_events_,
-        graphic_events_,
         drawable,
         front,
         client_info.screen_info.width,
@@ -880,6 +910,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         client_info.cs_monitor,
         !ini.get<cfg::globals::is_rec>()
     );
+    host_mod->init();
 
     ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod};
     return mod_pack;

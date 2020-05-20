@@ -75,7 +75,7 @@ public:
     bool    delay_format_list_received = false;
     bool    delay_wainting_clipboard_response = false;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
 
     const RDPVerbose verbose;
@@ -91,7 +91,7 @@ public:
 
 public:
     SessionProbeClipboardBasedLauncher(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
         mod_api& mod,
         const char* alternate_shell,
@@ -100,7 +100,7 @@ public:
     : params(params)
     , mod(mod)
     , alternate_shell(alternate_shell)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , verbose(verbose)
     {
@@ -142,7 +142,7 @@ public:
 
         if (this->state == State::START) {
             this->event = this->timer_events_
-            .create_timer_executor(this->session_reactor)
+            .create_timer_executor(this->time_base)
             .set_delay(this->params.clipboard_initialization_delay_ms)
             .on_action(jln::one_shot([&]{ this->on_event(); }));
         }
@@ -382,7 +382,7 @@ public:
         };
 
         this->event = this->timer_events_
-            .create_timer_executor(this->session_reactor, std::ref(*this))
+            .create_timer_executor(this->time_base, std::ref(*this))
             .set_delay(this->params.short_delay_ms)
             .on_action(jln::sequencer(
                 "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
@@ -476,7 +476,7 @@ public:
         };
 
         this->event = this->timer_events_
-        .create_timer_executor(this->session_reactor, std::ref(*this))
+        .create_timer_executor(this->time_base, std::ref(*this))
         .set_delay(this->params.short_delay_ms)
         .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),

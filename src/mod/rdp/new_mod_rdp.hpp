@@ -33,7 +33,7 @@ class ClientInfo;
 class FrontAPI;
 class LicenseApi;
 class ReportMessageApi;
-class SessionReactor;
+class TimeBase;
 class TimeObj;
 class Transport;
 class RedirectionInfo;
@@ -49,7 +49,7 @@ namespace gdi { class GraphicApi; }
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     Inifile & ini,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TopFdContainer & fd_events_,
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,

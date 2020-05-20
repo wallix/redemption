@@ -724,7 +724,7 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
     uint16_t width = roundTo(cmd.width, 64);
     uint16_t height = roundTo(cmd.height, 64);
     RDPSurfaceContent content(width, height, width * 4, cmd.destRect, region,
-            array_view_const_u8(tilesetStream, 12 + this->numQuant * 5 + this->tileDataSize));
+            u8_array_view(tilesetStream, 12 + this->numQuant * 5 + this->tileDataSize));
     for (int i = 0; i < numTiles; i++){
         this->tiles[i].draw(cmd, *this, content);
     }

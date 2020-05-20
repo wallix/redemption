@@ -79,9 +79,8 @@ void RailModuleHostMod::cancel_double_click_detection()
 
 RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
@@ -95,9 +94,8 @@ RailModuleHostMod::RailModuleHostMod(
     , dc_state(DCState::Wait)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , rail_module_host(drawable, widget_rect.x, widget_rect.y,
                        widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
@@ -105,33 +103,25 @@ RailModuleHostMod::RailModuleHostMod(
     , vars(vars)
     , can_resize_hosted_desktop(can_resize_hosted_desktop)
 {
-    {
-        this->screen.set_wh(width, height);
-        if (this->rail_enabled) {
-            this->graphic_event = graphic_events_.create_action_executor(session_reactor)
-            .on_action(jln::one_shot([this](gdi::GraphicApi&){
-                if (!this->rail_client_execute) {
-                    this->rail_client_execute.ready(
-                        *this, this->front_width, this->front_height, this->font(),
-                        this->is_resizing_hosted_desktop_allowed());
-
-                    this->dvc_manager.ready(this->front);
-                }
-            }));
-        }
-    }
-
+    this->screen.set_wh(width, height);
     this->screen.move_xy(widget_rect.x, widget_rect.y);
-
     this->screen.add_widget(&this->rail_module_host);
-
-    this->screen.set_widget_focus(&this->rail_module_host,
-        Widget::focus_reason_tabkey);
-
+    this->screen.set_widget_focus(&this->rail_module_host, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->vars.set<cfg::context::rail_module_host_mod_is_active>(true);
 }
+
+void RailModuleHostMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+                    *this, this->front_width, this->front_height,
+                    this->font(), this->is_resizing_hosted_desktop_allowed());
+        this->dvc_manager.ready(this->front);
+    }
+}
+
 
 RailModuleHost& RailModuleHostMod::get_module_host()
 {
@@ -182,7 +172,7 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
                             }
                             else {
                                 this->first_click_down_timer = timer_events_
-                                .create_timer_executor(this->session_reactor)
+                                .create_timer_executor(this->time_base)
                                 .set_delay(std::chrono::seconds(1))
                                 .on_action(jln::one_shot([this]{
                                     this->dc_state = DCState::Wait;
@@ -315,7 +305,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
         }
         else {
             this->disconnection_reconnection_timer = this->timer_events_
-                .create_timer_executor(session_reactor, std::ref(*this))
+                .create_timer_executor(time_base, std::ref(*this))
                 .set_delay(std::chrono::seconds(1))
                 .on_action([](auto ctx, RailModuleHostMod& self){
                 if (self.rail_module_host.get_managed_mod().is_auto_reconnectable()) {

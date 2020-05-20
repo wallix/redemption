@@ -29,25 +29,25 @@ enum class LogId : unsigned;
 
 struct KVLog
 {
-    array_view_const_char key;
-    array_view_const_char value;
+    chars_view key;
+    chars_view value;
 
     KVLog() = default;
 
-    KVLog(array_view_const_char key, array_view_const_char value) noexcept
+    KVLog(chars_view key, chars_view value) noexcept
     : key(key)
     , value(value)
     {}
 };
 
-struct KVList : array_view<KVLog const>
+struct KVList : array_view<KVLog>
 {
-    KVList(array_view<KVLog const> kv_list) noexcept
-    : array_view<KVLog const>(kv_list)
+    KVList(array_view<KVLog> kv_list) noexcept
+    : array_view<KVLog>(kv_list)
     {}
 
     KVList(std::initializer_list<KVLog> kv_list) noexcept
-    : array_view<KVLog const>(kv_list)
+    : array_view<KVLog>(kv_list)
     {}
 };
 

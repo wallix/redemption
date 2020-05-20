@@ -34,7 +34,7 @@ class AgentTitleExtractor : public TitleExtractorApi
 public:
     AgentTitleExtractor() = default;
 
-    array_view_const_char extract_title() override {
+    chars_view extract_title() override {
         if (this->has_title) {
             this->has_title = false;
             return this->title;
@@ -42,7 +42,7 @@ public:
         return {};
     }
 
-    void session_update(array_view_const_char message) {
+    void session_update(chars_view message) {
         constexpr auto prefix_window_changed = "FOREGROUND_WINDOW_CHANGED="_av;
         if (prefix_window_changed.size() < message.size()
          && std::equal(prefix_window_changed.begin(), prefix_window_changed.end(), message.begin())) {

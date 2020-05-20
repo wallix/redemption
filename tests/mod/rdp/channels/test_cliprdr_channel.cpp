@@ -135,12 +135,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToClientSender to_client_sender(t);
         TestToServerSender to_server_sender(t);
 
-        SessionReactor session_reactor;
+        TimeBase time_base;
         Inifile ini;
         SesmanInterface sesman(ini);
 
         ClipboardVirtualChannel clipboard_virtual_channel(
-            &to_client_sender, &to_server_sender, session_reactor,
+            &to_client_sender, &to_server_sender, time_base,
             base_params, d.cb_params, ipca_service, {nullptr, false});
 
         RED_CHECK_EXCEPTION_ERROR_ID(
@@ -171,10 +171,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, session_reactor,
+        &to_client_sender, &to_server_sender, time_base,
         base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -206,12 +206,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
     Inifile ini;
     SesmanInterface sesman(ini);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, session_reactor,
+        &to_client_sender, &to_server_sender, time_base,
         base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
@@ -678,7 +678,7 @@ namespace
         bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len = -1u) &
         {
             using namespace RDPECLIP;
-            array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
+            auto av = out.out_skip_bytes(CliprdrHeader::size());
             f(this->out);
             if (data_len == -1u) {
                 data_len = uint32_t(out.get_offset() - av.size());
@@ -812,7 +812,7 @@ namespace
 
         class ChannelCtx
         {
-            SessionReactor session_reactor;
+            TimeBase time_base;
 
             ReportMessageTest report_message;
             ValidatorTransportTest validator_transport;
@@ -835,7 +835,7 @@ namespace
             , to_client_sender(msg_comparator)
             , to_server_sender(msg_comparator)
             , clipboard_virtual_channel(
-                &to_client_sender, &to_server_sender, session_reactor,
+                &to_client_sender, &to_server_sender, time_base,
                 BaseVirtualChannel::Params(report_message, verbose),
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
@@ -1610,7 +1610,7 @@ namespace
         }
     };
 
-    constexpr array_view_const_char zeros
+    constexpr chars_view zeros
         = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"_av;
 }
 

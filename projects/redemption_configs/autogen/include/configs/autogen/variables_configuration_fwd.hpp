@@ -36,7 +36,6 @@ namespace cfg {
         struct enable_transparent_mode;
         struct certificate_password;
         struct is_rec;
-        struct movie_path;
         struct enable_bitmap_update;
         struct enable_close_box;
         struct enable_osd;
@@ -116,8 +115,11 @@ namespace cfg {
         struct persist_bitmap_cache_on_disk;
         struct allow_channels;
         struct deny_channels;
+        struct allowed_dynamic_channels;
+        struct denied_dynamic_channels;
         struct fast_path;
         struct server_redirection_support;
+        struct client_address_sent;
         struct redir_info;
         struct load_balance_info;
         struct bogus_sc_net_size;
@@ -160,6 +162,7 @@ namespace cfg {
         struct session_probe_memory_usage_limit;
         struct session_probe_end_of_session_check_delay_time;
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
+        struct session_probe_update_disabled_features;
         struct session_probe_childless_window_as_unidentified_input_field;
         struct session_probe_disabled_features;
         struct session_probe_bestsafe_integration;
@@ -194,6 +197,7 @@ namespace cfg {
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;
         struct force_smartcard_authentication;
+        struct enable_ipv6;
     };
 
     struct mod_vnc {
@@ -205,6 +209,7 @@ namespace cfg {
         struct server_is_macos;
         struct server_unix_alt;
         struct support_cursor_pseudo_encoding;
+        struct enable_ipv6;
     };
 
     struct metrics {
@@ -286,6 +291,7 @@ namespace cfg {
         struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
+        struct allow_rt_without_recording;
     };
 
     struct capture {
@@ -431,6 +437,33 @@ namespace cfg {
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
+    };
+
+    struct theme {
+        struct enable_theme;
+        struct bgcolor;
+        struct fgcolor;
+        struct separator_color;
+        struct focus_color;
+        struct error_color;
+        struct logo;
+        struct logo_path;
+        struct edit_bgcolor;
+        struct edit_fgcolor;
+        struct edit_focus_color;
+        struct tooltip_bgcolor;
+        struct tooltip_fgcolor;
+        struct tooltip_border_color;
+        struct selector_line1_bgcolor;
+        struct selector_line1_fgcolor;
+        struct selector_line2_bgcolor;
+        struct selector_line2_fgcolor;
+        struct selector_selected_bgcolor;
+        struct selector_selected_fgcolor;
+        struct selector_focus_bgcolor;
+        struct selector_focus_fgcolor;
+        struct selector_label_bgcolor;
+        struct selector_label_fgcolor;
     };
 
 } // namespace cfg

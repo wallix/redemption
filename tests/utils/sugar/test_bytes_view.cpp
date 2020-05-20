@@ -99,10 +99,10 @@ RED_AUTO_TEST_CASE(TestBytesT)
     byte_ptr cbs{cs};
     writable_bytes_view ba;
     bytes_view cba;
-    array_view_char av{s, 1};
-    array_view_u8 uav{us, 1};
-    array_view_const_char cav{cs, 1};
-    array_view_const_u8 cuav{cus, 1};
+    writable_chars_view av{s, 1};
+    writable_u8_array_view uav{us, 1};
+    chars_view cav{cs, 1};
+    u8_array_view cuav{cus, 1};
 
     std::false_type no;
 
@@ -145,9 +145,9 @@ RED_AUTO_TEST_CASE(TestBytesT)
     bytes_view{} = cuav;
     bytes_view{} = cba;
 
-    array_view_u8{} = ba;
-    array_view_const_u8{} = ba;
-    array_view_const_u8{} = cba;
+    writable_u8_array_view{} = ba;
+    u8_array_view{} = ba;
+    u8_array_view{} = cba;
 
     [](writable_bytes_view /*dummy*/){}(av);
     [](writable_bytes_view /*dummy*/){}(uav);

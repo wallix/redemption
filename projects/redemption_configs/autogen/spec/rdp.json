@@ -73,6 +73,7 @@
           "min": 0,
           "multivalue": true,
           "default": [],
+          "advanced": true,
           "description": "Disables supported drawing orders:\n   0: DstBlt\n   1: PatBlt\n   2: ScrBlt\n   3: MemBlt\n   4: Mem3Blt\n   8: LineTo\n  15: MultiDstBlt\n  16: MultiPatBlt\n  17: MultiScrBlt\n  18: MultiOpaqueRect\n  22: Polyline\n  25: EllipseSC\n  27: GlyphIndex\n"
         },
         {
@@ -112,6 +113,20 @@
           "type": "bool",
           "default": false,
           "description": "Show common cipher list supported by client and server"
+        },
+        {
+          "name": "allowed_dynamic_channels",
+          "type": "string",
+          "default": "*",
+          "advanced": true,
+          "description": "List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."
+        },
+        {
+          "name": "denied_dynamic_channels",
+          "type": "string",
+          "default": "",
+          "advanced": true,
+          "description": "List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."
         },
         {
           "name": "server_redirection",
@@ -166,6 +181,12 @@
           "type": "bool",
           "default": false,
           "description": "NLA will be disabled.\nTarget must be set for interactive login, otherwise server connection may not be guaranteed.\nSmartcard device must be available on client desktop.\nSmartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
+        },
+        {
+          "name": "enable_ipv6",
+          "type": "bool",
+          "default": false,
+          "description": "Enable target connection on ipv6"
         },
         {
           "name": "remote_programs_disconnect_message_delay",
@@ -423,6 +444,13 @@
           "description": ""
         },
         {
+          "name": "update_disabled_features",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "childless_window_as_unidentified_input_field",
           "type": "bool",
           "default": true,
@@ -488,7 +516,7 @@
           "description": ""
         },
         {
-          "name": "bestsafe_integration",
+          "name": "enable_bestsafe_interaction",
           "type": "bool",
           "default": false,
           "description": ""

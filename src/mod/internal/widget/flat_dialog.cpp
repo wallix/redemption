@@ -60,7 +60,11 @@ FlatDialog::FlatDialog(
         : std::unique_ptr<WidgetFlatButton>())
     , img(drawable,
           theme.global.logo ? theme.global.logo_path.c_str() :
-          app_path(AppPath::LoginWabBlue), *this, nullptr, -8)
+          app_path(AppPath::LoginWabBlue),
+          *this,
+          nullptr,
+          -8,
+          &theme.global.bgcolor)
     , extra_button(extra_button)
     , font(font)
     , dialog_string(text)

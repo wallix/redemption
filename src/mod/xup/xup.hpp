@@ -41,7 +41,7 @@ class xup_mod : public mod_api
 {
 public:
     xup_mod(
-        Transport& t, SessionReactor& session_reactor, GraphicFdContainer & graphic_fd_events_, FrontAPI& front,
+        Transport& t, TimeBase& time_base, GraphicFdContainer & graphic_fd_events_, FrontAPI& front,
         uint16_t front_width, uint16_t front_height, BitsPerPixel context_bpp);
 
     std::string module_name() override {return "Xup Mod";}

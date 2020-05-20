@@ -212,6 +212,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("notify", "(Same thing as 'allow') ")
       .value("deny",   "User action will be rejected")
     ;
+
+    e.enumeration_list("ClientAddressSent", "Client Address to send to target(in InfoPacket)")
+      .value("no_address", "Send 0.0.0.0")
+      .value("proxy", "Send proxy client address or target connexion")
+      .value("front", "Send user client address of front connexion")
+    ;
 }
 
 }

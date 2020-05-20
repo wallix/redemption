@@ -205,8 +205,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::listen_address>(cip);
     ini.set<cfg::globals::listen_address>(sip);
     ini.set<cfg::globals::is_rec>(true);
-    ini.set<cfg::globals::movie_path>(cpath);
-    ini.set<cfg::globals::movie_path>(spath);
     ini.set<cfg::globals::nomouse>(true);
     ini.set<cfg::video::notimestamp>(true);
     ini.set<cfg::globals::port>(1);

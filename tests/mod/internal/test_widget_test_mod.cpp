@@ -31,9 +31,9 @@ int main()
     FakeFront front(screen_info);
 
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
     GraphicTimerContainer graphic_timer_events_;
-    WidgetTestMod d(session_reactor, graphic_timer_events_, front, screen_info.width, screen_info.height, global_font());
+    WidgetTestMod d(time_base, graphic_timer_events_, front, screen_info.width, screen_info.height, global_font());
 
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

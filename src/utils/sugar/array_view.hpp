@@ -24,12 +24,8 @@
 
 #include <cstdint>
 #include <cassert>
-#include <string_view>
-#include <cstring>
-#include <vector>
 
 #include "utils/sugar/array.hpp"
-#include "utils/sugar/byte_ptr.hpp"
 
 #include "cxx/cxx.hpp"
 
@@ -41,6 +37,7 @@ namespace detail
         using type = R;
     };
 
+    // probably a buffer type
     template<std::size_t N, class R>
     struct filter_dangerous_implicit_array_view<char[N], R> {};
 
@@ -55,17 +52,24 @@ namespace detail
 
     template<class T, class R>
     struct filter_dangerous_implicit_array_view<T&, R> : filter_dangerous_implicit_array_view<T, R> {};
+
+    template<class T>
+    using value_type_array_view_from_t
+        = std::remove_cv_t<std::remove_pointer_t<decltype(utils::data(std::declval<T>()))>>;
 } // namespace detail
 
 template<class T>
 struct array_view
 {
-    using type = T;
-    using iterator = T *;
-    using const_iterator = T *;
-    using value_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
-    using reference = T&;
-    using const_reference = T const &;
+    using element_type = T const;
+    using value_type = std::remove_cv_t<T>;
+    using reference = T const&;
+    using iterator = T const*;
+    using pointer = T const*;
+    using const_reference = T const&;
+    using const_iterator = T const*;
+    using const_pointer = T const*;
+    using size_type = std::size_t;
 
     constexpr array_view() = default;
     constexpr array_view(array_view && other) = default;
@@ -74,31 +78,31 @@ struct array_view
     array_view & operator = (array_view const & other) = default;
 
     constexpr array_view(std::nullptr_t /*null*/) noexcept
-    : array_view(nullptr, nullptr)
+    : array_view()
     {}
 
-    constexpr array_view(type * p, std::size_t sz) noexcept
+    constexpr array_view(const_pointer p, size_type sz) noexcept
     : p(p)
     , sz(sz)
     {}
 
-    constexpr array_view(type * p, type * pright) noexcept
-    : p(p)
-    , sz(pright - p)
+    constexpr array_view(const_pointer first, const_pointer last) noexcept
+    : p(first)
+    , sz(last - first)
     {}
 
     template<class U, class = typename detail::filter_dangerous_implicit_array_view<U, decltype(
-        *static_cast<type**>(nullptr) = utils::data(std::declval<U&&>()),
-        *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&&>())
+        *static_cast<const_pointer*>(nullptr) = utils::data(std::declval<U&&>()),
+        *static_cast<size_type*>(nullptr) = utils::size(std::declval<U&&>())
     )>::type>
     constexpr array_view(U && x) /*NOLINT(bugprone-forwarding-reference-overload)*/
-    noexcept(noexcept((void(utils::data(std::forward<U>(x))), utils::size(std::forward<U>(x)))))
-    : p(utils::data(std::forward<U>(x)))
-    , sz(utils::size(std::forward<U>(x)))
+    noexcept(noexcept((void(utils::data(static_cast<U&&>(x))), utils::size(static_cast<U&&>(x)))))
+    : p(utils::data(static_cast<U&&>(x)))
+    , sz(utils::size(static_cast<U&&>(x)))
     {}
 
     template<class U, class = decltype(
-        *static_cast<type**>(nullptr) = static_cast<U*>(nullptr)
+        *static_cast<const_pointer*>(nullptr) = static_cast<U*>(nullptr)
     )>
     constexpr array_view(array_view<U> av) noexcept
     : p(av.data())
@@ -107,108 +111,58 @@ struct array_view
 
     [[nodiscard]] constexpr bool empty() const noexcept { return !this->sz; }
 
-    [[nodiscard]] constexpr std::size_t size() const noexcept { return this->sz; }
+    [[nodiscard]] constexpr size_type size() const noexcept { return this->sz; }
 
-    [[nodiscard]] constexpr type & front() const noexcept { /*assert(this->size());*/ return *this->p; }
-    [[nodiscard]] constexpr type & back() const noexcept { /*assert(this->size());*/ return this->p[this->sz-1u]; }
-    constexpr type & front() noexcept { assert(this->size()); return *this->p; }
-    constexpr type & back() noexcept { assert(this->size()); return this->p[this->sz-1u]; }
+    [[nodiscard]] constexpr const_reference front() const noexcept { assert(this->size()); return *this->p; }
+    [[nodiscard]] constexpr const_reference back() const noexcept { assert(this->size()); return this->p[this->sz-1u]; }
 
-    [[nodiscard]] constexpr type const * data() const noexcept { return this->p; }
-    constexpr type * data() noexcept { return this->p; }
+    [[nodiscard]] constexpr const_pointer data() const noexcept { return this->p; }
 
-    [[nodiscard]] constexpr type const * begin() const noexcept { return this->data(); }
-    [[nodiscard]] constexpr type const * end() const noexcept { return this->data() + this->size(); }
-    constexpr type * begin() noexcept { return this->data(); }
-    constexpr type * end() noexcept { return this->data() + this->size(); }
+    [[nodiscard]] constexpr const_iterator begin() const noexcept { return this->data(); }
+    [[nodiscard]] constexpr const_iterator end() const noexcept { return this->data() + this->size(); }
 
-    constexpr type & operator[](std::size_t i) noexcept
-    { assert(i < this->size()); return this->data()[i]; }
-    constexpr type const & operator[](std::size_t i) const noexcept
+    [[nodiscard]] constexpr const_reference operator[](size_type i) const noexcept
     { assert(i < this->size()); return this->data()[i]; }
 
     // TODO free functions
     //@{
     [[nodiscard]]
-    constexpr array_view first(std::size_t n) noexcept
+    constexpr array_view first(size_type n) const noexcept
     {
         assert(n <= this->size());
         return {this->data(), n};
     }
 
     [[nodiscard]]
-    constexpr array_view last(std::size_t n) noexcept
+    constexpr array_view last(size_type n) const noexcept
     {
         assert(n <= this->size());
         return {this->data() + this->size() - n, n};
     }
 
     [[nodiscard]]
-    constexpr array_view<const T> first(std::size_t n) const noexcept
-    {
-        assert(n <= this->size());
-        return {this->data(), n};
-    }
-
-    [[nodiscard]]
-    constexpr array_view<const T> last(std::size_t n) const noexcept
-    {
-        assert(n <= this->size());
-        return {this->data() + this->size() - n, n};
-    }
-
-    [[nodiscard]]
-    constexpr array_view from_offset(std::size_t offset) noexcept
+    constexpr array_view from_offset(size_type offset) const noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, this->size() - offset};
     }
 
     [[nodiscard]]
-    constexpr array_view subarray(std::size_t offset, std::size_t count) noexcept
-    {
-        assert(offset <= this->size() && count <= this->size() - offset);
-        return {this->data() + offset, count};
-    }
-
-    // TODO frop_front
-    [[nodiscard]]
-    constexpr array_view<T const> from_offset(std::size_t offset) const noexcept
-    {
-        assert(offset <= this->size());
-        return {this->data() + offset, this->size() - offset};
-    }
-
-    [[nodiscard]]
-    constexpr array_view<T const> subarray(std::size_t offset, std::size_t count) const noexcept
+    constexpr array_view subarray(size_type offset, size_type count) const noexcept
     {
         assert(offset <= this->size() && count <= this->size() - offset);
         return {this->data() + offset, count};
     }
 
     [[nodiscard]]
-    constexpr array_view<T> drop_front(std::size_t count) noexcept
+    constexpr array_view drop_front(size_type count) const noexcept
     {
         assert(count <= this->size());
         return {this->data() + count, this->size() - count};
     }
 
     [[nodiscard]]
-    constexpr array_view<T> drop_back(std::size_t count) noexcept
-    {
-        assert(count <= this->size());
-        return {this->data(), this->size() - count};
-    }
-
-    [[nodiscard]]
-    constexpr array_view<T const> drop_front(std::size_t count) const noexcept
-    {
-        assert(count <= this->size());
-        return {this->data() + count, this->size() - count};
-    }
-
-    [[nodiscard]]
-    constexpr array_view<T const> drop_back(std::size_t count) const noexcept
+    constexpr array_view drop_back(size_type count) const noexcept
     {
         assert(count <= this->size());
         return {this->data(), this->size() - count};
@@ -216,12 +170,181 @@ struct array_view
     //@}
 
 private:
-    type * p        = nullptr;
-    std::size_t sz  = 0;
+    pointer p    = nullptr;
+    size_type sz = 0;
 };
 
 template<class T>
-array_view(T&&) -> array_view<std::remove_pointer_t<decltype(utils::data(std::declval<T&&>()))>>;
+array_view(T&&) -> array_view<detail::value_type_array_view_from_t<T&&>>;
+
+
+template<class T>
+struct writable_array_view
+{
+    using element_type = T;
+    using value_type = std::remove_cv_t<T>;
+    using reference = T&;
+    using iterator = T*;
+    using pointer = T*;
+    using const_reference = T const&;
+    using const_iterator = T const*;
+    using const_pointer = T const*;
+    using size_type = std::size_t;
+
+    constexpr writable_array_view() = default;
+    constexpr writable_array_view(writable_array_view && other) = default;
+    constexpr writable_array_view(writable_array_view const & other) = default;
+    writable_array_view & operator = (writable_array_view && other) = default;
+    writable_array_view & operator = (writable_array_view const & other) = default;
+
+    constexpr writable_array_view(std::nullptr_t /*null*/) noexcept
+    : writable_array_view()
+    {}
+
+    explicit constexpr writable_array_view(pointer p, size_type sz) noexcept
+    : p(p)
+    , sz(sz)
+    {}
+
+    explicit constexpr writable_array_view(pointer first, pointer last) noexcept
+    : p(first)
+    , sz(last - first)
+    {}
+
+    template<class U, class = typename detail::filter_dangerous_implicit_array_view<U, decltype(
+        *static_cast<pointer*>(nullptr) = utils::data(std::declval<U&&>()),
+        *static_cast<size_type*>(nullptr) = utils::size(std::declval<U&&>())
+    )>::type>
+    explicit constexpr writable_array_view(U && x) /*NOLINT(bugprone-forwarding-reference-overload)*/
+    noexcept(noexcept((void(utils::data(static_cast<U&&>(x))), utils::size(static_cast<U&&>(x)))))
+    : p(utils::data(static_cast<U&&>(x)))
+    , sz(utils::size(static_cast<U&&>(x)))
+    {}
+
+    template<class U, class = decltype(
+        *static_cast<pointer*>(nullptr) = static_cast<U*>(nullptr)
+    )>
+    constexpr writable_array_view(writable_array_view<U> av) noexcept
+    : p(av.data())
+    , sz(av.size())
+    {}
+
+    [[nodiscard]] constexpr bool empty() const noexcept { return !this->sz; }
+
+    [[nodiscard]] constexpr size_type size() const noexcept { return this->sz; }
+
+    [[nodiscard]] constexpr const_reference front() const noexcept { assert(this->size()); return *this->p; }
+    [[nodiscard]] constexpr const_reference back() const noexcept { assert(this->size()); return this->p[this->sz-1u]; }
+    [[nodiscard]] constexpr reference front() noexcept { assert(this->size()); return *this->p; }
+    [[nodiscard]] constexpr reference back() noexcept { assert(this->size()); return this->p[this->sz-1u]; }
+
+    [[nodiscard]] constexpr const_pointer data() const noexcept { return this->p; }
+    [[nodiscard]] constexpr pointer data() noexcept { return this->p; }
+
+    [[nodiscard]] constexpr const_iterator begin() const noexcept { return this->data(); }
+    [[nodiscard]] constexpr const_iterator end() const noexcept { return this->data() + this->size(); }
+    [[nodiscard]] constexpr iterator begin() noexcept { return this->data(); }
+    [[nodiscard]] constexpr iterator end() noexcept { return this->data() + this->size(); }
+
+    [[nodiscard]]constexpr reference operator[](size_type i) noexcept
+    { assert(i < this->size()); return this->data()[i]; }
+    [[nodiscard]] constexpr const_reference operator[](size_type i) const noexcept
+    { assert(i < this->size()); return this->data()[i]; }
+
+    // TODO free functions
+    //@{
+    [[nodiscard]]
+    constexpr writable_array_view first(size_type n) noexcept
+    {
+        assert(n <= this->size());
+        return writable_array_view{this->data(), n};
+    }
+
+    [[nodiscard]]
+    constexpr writable_array_view last(size_type n) noexcept
+    {
+        assert(n <= this->size());
+        return writable_array_view{this->data() + this->size() - n, n};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<value_type> first(size_type n) const noexcept
+    {
+        assert(n <= this->size());
+        return {this->data(), n};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<value_type> last(size_type n) const noexcept
+    {
+        assert(n <= this->size());
+        return {this->data() + this->size() - n, n};
+    }
+
+    [[nodiscard]]
+    constexpr writable_array_view from_offset(size_type offset) noexcept
+    {
+        assert(offset <= this->size());
+        return writable_array_view{this->data() + offset, this->size() - offset};
+    }
+
+    [[nodiscard]]
+    constexpr writable_array_view subarray(size_type offset, size_type count) noexcept
+    {
+        assert(offset <= this->size() && count <= this->size() - offset);
+        return writable_array_view{this->data() + offset, count};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<value_type> from_offset(size_type offset) const noexcept
+    {
+        assert(offset <= this->size());
+        return {this->data() + offset, this->size() - offset};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<value_type> subarray(size_type offset, size_type count) const noexcept
+    {
+        assert(offset <= this->size() && count <= this->size() - offset);
+        return {this->data() + offset, count};
+    }
+
+    [[nodiscard]]
+    constexpr writable_array_view drop_front(size_type count) noexcept
+    {
+        assert(count <= this->size());
+        return writable_array_view{this->data() + count, this->size() - count};
+    }
+
+    [[nodiscard]]
+    constexpr writable_array_view drop_back(size_type count) noexcept
+    {
+        assert(count <= this->size());
+        return writable_array_view{this->data(), this->size() - count};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<value_type> drop_front(size_type count) const noexcept
+    {
+        assert(count <= this->size());
+        return {this->data() + count, this->size() - count};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<value_type> drop_back(size_type count) const noexcept
+    {
+        assert(count <= this->size());
+        return {this->data(), this->size() - count};
+    }
+    //@}
+
+private:
+    pointer p    = nullptr;
+    size_type sz = 0;
+};
+
+template<class T>
+writable_array_view(T&&) -> writable_array_view<detail::value_type_array_view_from_t<T&&>>;
 
 
 template<class T>
@@ -229,51 +352,31 @@ constexpr array_view<T> make_array_view(array_view<T> av) noexcept
 { return av; }
 
 template<class T>
-constexpr array_view<T> make_array_view(T * x, std::size_t n) noexcept
-{ return {x, n}; }
-
-template<class T>
-constexpr array_view<T> make_array_view(T * left, T * right) noexcept
-{ return {left, right}; }
-
-template<class T>
-constexpr array_view<const T> make_array_view(T const * left, T * right) noexcept
-{ return {left, right}; }
-
-template<class T>
-constexpr array_view<const T> make_array_view(T * left, T const * right) noexcept
-{ return {left, right}; }
-
-template<class T, std::size_t N>
-constexpr array_view<T> make_array_view(T (&arr)[N]) noexcept
-{ return {arr, N}; }
-
-template<class Cont>
-constexpr auto make_array_view(Cont & cont)
-noexcept(noexcept(array_view<typename std::remove_pointer<decltype(cont.data())>::type>{cont}))
--> array_view<typename std::remove_pointer<decltype(cont.data())>::type>
-{ return {cont}; }
-
-template<class T>
-constexpr array_view<T const> make_const_array_view(array_view<T> av) noexcept
+constexpr array_view<T> make_array_view(writable_array_view<T> av) noexcept
 { return av; }
 
 template<class T>
-constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n) noexcept
+constexpr array_view<T> make_array_view(T const* x, std::size_t n) noexcept
 { return {x, n}; }
 
 template<class T>
-constexpr array_view<const T> make_const_array_view(T const * left, T const * right) noexcept
-{ return {left, right}; }
+constexpr array_view<T> make_array_view(T const* first, T const* last) noexcept
+{ return {first, last}; }
+
+template<class Cont>
+constexpr auto make_array_view(Cont const& cont)
+noexcept(noexcept(array_view<detail::value_type_array_view_from_t<Cont const&>>{cont}))
+-> decltype(array_view<detail::value_type_array_view_from_t<Cont const&>>{cont})
+{ return {cont}; }
 
 template<class T, std::size_t N>
-constexpr array_view<T const> make_const_array_view(T const (&arr)[N]) noexcept
+constexpr array_view<T> make_array_view(T const (&arr)[N]) noexcept
 { return {arr, N}; }
 
 
 // TODO renamed to zstring_array
 template<std::size_t N>
-constexpr array_view<char const> cstr_array_view(char const (&str)[N]) noexcept
+constexpr array_view<char> cstr_array_view(char const (&str)[N]) noexcept
 { return {str, N-1}; }
 
 // TODO renamed to zstring_array
@@ -282,38 +385,65 @@ template<std::size_t N>
 array_view<char> cstr_array_view(char (&str)[N]) = delete;
 
 
-using array_view_u8 = array_view<uint8_t>;
-using array_view_u16 = array_view<uint16_t>;
-using array_view_u32 = array_view<uint32_t>;
-using array_view_u64 = array_view<uint64_t>;
-using array_view_const_u8 = array_view<uint8_t const>;
-using array_view_const_u16 = array_view<uint16_t const>;
-using array_view_const_u32 = array_view<uint32_t const>;
-using array_view_const_u64 = array_view<uint64_t const>;
+template<class T>
+constexpr writable_array_view<T> make_writable_array_view(writable_array_view<T> av) noexcept
+{ return av; }
 
-using array_view_s8 = array_view<int8_t>;
-using array_view_s16 = array_view<int16_t>;
-using array_view_s32 = array_view<int32_t>;
-using array_view_s64 = array_view<int64_t>;
-using array_view_const_s8 = array_view<int8_t const>;
-using array_view_const_s16 = array_view<int16_t const>;
-using array_view_const_s32 = array_view<int32_t const>;
-using array_view_const_s64 = array_view<int64_t const>;
+template<class T>
+constexpr writable_array_view<T> make_writable_array_view(T* x, std::size_t n) noexcept
+{ return writable_array_view{x, n}; }
 
-using array_view_char = array_view<char>;
-using array_view_const_char = array_view<char const>;
+template<class T>
+constexpr writable_array_view<T> make_writable_array_view(T* first, T* last) noexcept
+{ return writable_array_view{first, last}; }
 
-constexpr array_view_const_char operator "" _av(char const * s, size_t len) noexcept
+template<class Cont>
+constexpr auto make_writable_array_view(Cont& cont)
+noexcept(noexcept(writable_array_view<detail::value_type_array_view_from_t<Cont&>>{cont}))
+-> decltype(writable_array_view<detail::value_type_array_view_from_t<Cont&>>{cont})
+{ return writable_array_view<detail::value_type_array_view_from_t<Cont&>>{cont}; }
+
+template<class T, std::size_t N>
+constexpr writable_array_view<T> make_writable_array_view(T (&arr)[N]) noexcept
+{ return writable_array_view{arr, N}; }
+
+
+using u8_array_view = array_view<std::uint8_t>;
+using u16_array_view = array_view<std::uint16_t>;
+using u32_array_view = array_view<std::uint32_t>;
+using u64_array_view = array_view<std::uint64_t>;
+
+using writable_u8_array_view = writable_array_view<std::uint8_t>;
+using writable_u16_array_view = writable_array_view<std::uint16_t>;
+using writable_u32_array_view = writable_array_view<std::uint32_t>;
+using writable_u64_array_view = writable_array_view<std::uint64_t>;
+
+using s8_array_view = array_view<std::int8_t>;
+using s16_array_view = array_view<std::int16_t>;
+using s32_array_view = array_view<std::int32_t>;
+using s64_array_view = array_view<std::int64_t>;
+
+using writable_s8_array_view = writable_array_view<std::int8_t>;
+using writable_s16_array_view = writable_array_view<std::int16_t>;
+using writable_s32_array_view = writable_array_view<std::int32_t>;
+using writable_s64_array_view = writable_array_view<std::int64_t>;
+
+using chars_view = array_view<char>;
+using writable_chars_view = writable_array_view<char>;
+
+constexpr chars_view operator "" _av(char const * s, size_t len) noexcept
 {
     return {s, len};
 }
 
-//constexpr array_view_const_u8 operator "" _av(unsigned char const * s, size_t len) noexcept
+//constexpr u8_array_view operator "" _av(unsigned char const * s, size_t len) noexcept
 //{
 //    return {s, len};
 //}
 
-static inline void ap_integer_increment_le(array_view_u8 number) {
+/// TODO other file
+static inline void ap_integer_increment_le(writable_u8_array_view number)
+{
     for (uint8_t& i : number) {
         if (i < 0xFF) {
             i++;
@@ -323,7 +453,9 @@ static inline void ap_integer_increment_le(array_view_u8 number) {
     }
 }
 
-static inline void ap_integer_decrement_le(array_view_u8 number) {
+/// TODO other file
+static inline void ap_integer_decrement_le(writable_u8_array_view number)
+{
     for (uint8_t& i : number) {
         if (i > 0) {
             i--;
@@ -333,24 +465,34 @@ static inline void ap_integer_decrement_le(array_view_u8 number) {
     }
 }
 
-static inline bool are_buffer_equal(array_view_const_u8 a, array_view_const_u8 b)
+#include <cstring> // memcmp
+
+/// TODO other file
+static inline bool are_buffer_equal(u8_array_view a, u8_array_view b)
 {
     return a.size() == b.size() && (0 == memcmp(a.data(), b.data(), a.size()));
 }
 
-static inline std::pair<array_view_const_u8, array_view_const_u8> get_bytes_slice(array_view_const_u8 a, size_t n)
+#include <utility> // std::pair
+
+/// TODO other file
+static inline std::pair<u8_array_view, u8_array_view> get_bytes_slice(u8_array_view a, size_t n)
 {
     return {{a.data(), n},{a.data()+n, a.size()-n}};
 }
 
 
-static inline std::vector<uint8_t> && operator<<(std::vector<uint8_t>&& v, array_view_const_u8 a)
+#include <vector>
+
+/// TODO other file
+static inline std::vector<uint8_t> && operator<<(std::vector<uint8_t>&& v, u8_array_view a)
 {
     v.insert(v.end(), a.begin(), a.end());
     return std::move(v);
 }
 
-static inline std::vector<uint8_t> & operator<<(std::vector<uint8_t> & v, array_view_const_u8 a)
+/// TODO other file
+static inline std::vector<uint8_t> & operator<<(std::vector<uint8_t> & v, u8_array_view a)
 {
     v.insert(v.end(), a.begin(), a.end());
     return v;

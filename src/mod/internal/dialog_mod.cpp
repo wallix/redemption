@@ -30,9 +30,8 @@
 
 DialogMod::DialogMod(
     DialogModVariables vars,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
     const char * cancel_text, ClientExecute & rail_client_execute,
@@ -47,9 +46,8 @@ DialogMod::DialogMod(
     , dc_state(DCState::Wait)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
@@ -62,19 +60,6 @@ DialogMod::DialogMod(
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
     this->screen.set_wh(front_width, front_height);
-    if (this->rail_enabled) {
-        this->graphic_event = 
-        this->graphic_events_.create_action_executor(this->session_reactor)
-        .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (!this->rail_client_execute) {
-                this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height, this->font(),
-                    this->is_resizing_hosted_desktop_allowed());
-
-                this->dvc_manager.ready(this->front);
-            }
-        }));
-    }
 
     this->screen.add_widget(&this->dialog_widget);
     this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
@@ -87,19 +72,25 @@ DialogMod::DialogMod(
 
     if (vars.get<cfg::debug::pass_dialog_box>()) {
         this->timeout_timer = this->timer_events_
-        .create_timer_executor(this->session_reactor)
+        .create_timer_executor(this->time_base)
         .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
         .on_action([this](JLN_TIMER_CTX ctx){
             this->accepted();
             return ctx.terminate();
         });
     }
+}
 
-    this->started_copy_past_event = 
-    this->graphic_events_.create_action_executor(this->session_reactor)
-    .on_action(jln::one_shot([this](gdi::GraphicApi&){
-        this->copy_paste.ready(this->front);
-    }));
+
+void DialogMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+                    *this, this->front_width, this->front_height,
+                    this->font(), this->is_resizing_hosted_desktop_allowed());
+        this->dvc_manager.ready(this->front);
+    }
+    this->copy_paste.ready(this->front);
 }
 
 
@@ -139,7 +130,7 @@ void DialogMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap
                         }
                         else {
                             this->first_click_down_timer = this->timer_events_
-                            .create_timer_executor(this->session_reactor)
+                            .create_timer_executor(this->time_base)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;

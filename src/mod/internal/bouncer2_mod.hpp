@@ -49,14 +49,14 @@ class Bouncer2Mod : public mod_api
     int mouse_x = 0;
     int mouse_y = 0;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     GraphicTimerPtr timer;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     Bouncer2Mod(
-         SessionReactor& session_reactor,
+         TimeBase& time_base,
          GraphicTimerContainer & graphic_timer_events_,
          SesmanInterface & sesman,
          FrontAPI & front,

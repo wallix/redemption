@@ -4,26 +4,26 @@
 
 namespace configs {
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<CaptureFlags> & buf,
     cfg_s_type<CaptureFlags> /*type*/,
     CaptureFlags x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(CaptureFlags & x, spec_type<CaptureFlags> /*type*/, array_view_const_char value)
+parse_error parse(CaptureFlags & x, spec_type<CaptureFlags> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 15>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<Level> & buf,
     cfg_s_type<Level> /*type*/,
     Level x
 ){
-    (void)buf;    static constexpr array_view_const_char arr[]{
+    (void)buf;    static constexpr chars_view arr[]{
         cstr_array_view("low"),
         cstr_array_view("medium"),
         cstr_array_view("high"),
@@ -32,7 +32,7 @@ array_view_const_char assign_zbuf_from_cfg(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(Level & x, spec_type<Level> /*type*/, array_view_const_char value)
+parse_error parse(Level & x, spec_type<Level> /*type*/, chars_view value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("low"), Level::low},
@@ -41,12 +41,12 @@ parse_error parse(Level & x, spec_type<Level> /*type*/, array_view_const_char va
     });
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<Language> & buf,
     cfg_s_type<Language> /*type*/,
     Language x
 ){
-    (void)buf;    static constexpr array_view_const_char arr[]{
+    (void)buf;    static constexpr chars_view arr[]{
         cstr_array_view("en"),
         cstr_array_view("fr"),
     };
@@ -54,7 +54,7 @@ array_view_const_char assign_zbuf_from_cfg(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(Language & x, spec_type<Language> /*type*/, array_view_const_char value)
+parse_error parse(Language & x, spec_type<Language> /*type*/, chars_view value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("en"), Language::en},
@@ -62,12 +62,12 @@ parse_error parse(Language & x, spec_type<Language> /*type*/, array_view_const_c
     });
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<ClipboardEncodingType> & buf,
     cfg_s_type<ClipboardEncodingType> /*type*/,
     ClipboardEncodingType x
 ){
-    (void)buf;    static constexpr array_view_const_char arr[]{
+    (void)buf;    static constexpr chars_view arr[]{
         cstr_array_view("utf8"),
         cstr_array_view("latin1"),
     };
@@ -75,7 +75,7 @@ array_view_const_char assign_zbuf_from_cfg(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(ClipboardEncodingType & x, spec_type<ClipboardEncodingType> /*type*/, array_view_const_char value)
+parse_error parse(ClipboardEncodingType & x, spec_type<ClipboardEncodingType> /*type*/, chars_view value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("utf-8"), ClipboardEncodingType::utf8},
@@ -83,194 +83,194 @@ parse_error parse(ClipboardEncodingType & x, spec_type<ClipboardEncodingType> /*
     });
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<KeyboardLogFlagsCP> & buf,
     cfg_s_type<KeyboardLogFlagsCP> /*type*/,
     KeyboardLogFlagsCP x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(KeyboardLogFlagsCP & x, spec_type<KeyboardLogFlagsCP> /*type*/, array_view_const_char value)
+parse_error parse(KeyboardLogFlagsCP & x, spec_type<KeyboardLogFlagsCP> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 3>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<KeyboardLogFlags> & buf,
     cfg_s_type<KeyboardLogFlags> /*type*/,
     KeyboardLogFlags x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags> /*type*/, array_view_const_char value)
+parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<ClipboardLogFlags> & buf,
     cfg_s_type<ClipboardLogFlags> /*type*/,
     ClipboardLogFlags x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags> /*type*/, array_view_const_char value)
+parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<FileSystemLogFlags> & buf,
     cfg_s_type<FileSystemLogFlags> /*type*/,
     FileSystemLogFlags x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags> /*type*/, array_view_const_char value)
+parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<ServerNotification> & buf,
     cfg_s_type<ServerNotification> /*type*/,
     ServerNotification x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(ServerNotification & x, spec_type<ServerNotification> /*type*/, array_view_const_char value)
+parse_error parse(ServerNotification & x, spec_type<ServerNotification> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<ServerCertCheck> & buf,
     cfg_s_type<ServerCertCheck> /*type*/,
     ServerCertCheck x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(ServerCertCheck & x, spec_type<ServerCertCheck> /*type*/, array_view_const_char value)
+parse_error parse(ServerCertCheck & x, spec_type<ServerCertCheck> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 3>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<TraceType> & buf,
     cfg_s_type<TraceType> /*type*/,
     TraceType x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(TraceType & x, spec_type<TraceType> /*type*/, array_view_const_char value)
+parse_error parse(TraceType & x, spec_type<TraceType> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<KeyboardInputMaskingLevel> & buf,
     cfg_s_type<KeyboardInputMaskingLevel> /*type*/,
     KeyboardInputMaskingLevel x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel> /*type*/, array_view_const_char value)
+parse_error parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 3>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<SessionProbeOnLaunchFailure> & buf,
     cfg_s_type<SessionProbeOnLaunchFailure> /*type*/,
     SessionProbeOnLaunchFailure x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbeOnLaunchFailure> /*type*/, array_view_const_char value)
+parse_error parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbeOnLaunchFailure> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<VncBogusClipboardInfiniteLoop> & buf,
     cfg_s_type<VncBogusClipboardInfiniteLoop> /*type*/,
     VncBogusClipboardInfiniteLoop x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusClipboardInfiniteLoop> /*type*/, array_view_const_char value)
+parse_error parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusClipboardInfiniteLoop> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<ColorDepthSelectionStrategy> & buf,
     cfg_s_type<ColorDepthSelectionStrategy> /*type*/,
     ColorDepthSelectionStrategy x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSelectionStrategy> /*type*/, array_view_const_char value)
+parse_error parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSelectionStrategy> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 1>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<WrmCompressionAlgorithm> & buf,
     cfg_s_type<WrmCompressionAlgorithm> /*type*/,
     WrmCompressionAlgorithm x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAlgorithm> /*type*/, array_view_const_char value)
+parse_error parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAlgorithm> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<RdpCompression> & buf,
     cfg_s_type<RdpCompression> /*type*/,
     RdpCompression x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(RdpCompression & x, spec_type<RdpCompression> /*type*/, array_view_const_char value)
+parse_error parse(RdpCompression & x, spec_type<RdpCompression> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 4>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<OcrLocale> & buf,
     cfg_s_type<OcrLocale> /*type*/,
     OcrLocale x
 ){
-    (void)buf;    static constexpr array_view_const_char arr[]{
+    (void)buf;    static constexpr chars_view arr[]{
         cstr_array_view("latin"),
         cstr_array_view("cyrillic"),
     };
@@ -278,7 +278,7 @@ array_view_const_char assign_zbuf_from_cfg(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(OcrLocale & x, spec_type<OcrLocale> /*type*/, array_view_const_char value)
+parse_error parse(OcrLocale & x, spec_type<OcrLocale> /*type*/, chars_view value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("latin"), OcrLocale::latin},
@@ -286,54 +286,54 @@ parse_error parse(OcrLocale & x, spec_type<OcrLocale> /*type*/, array_view_const
     });
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<BogusNumberOfFastpathInputEvent> & buf,
     cfg_s_type<BogusNumberOfFastpathInputEvent> /*type*/,
     BogusNumberOfFastpathInputEvent x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(BogusNumberOfFastpathInputEvent & x, spec_type<BogusNumberOfFastpathInputEvent> /*type*/, array_view_const_char value)
+parse_error parse(BogusNumberOfFastpathInputEvent & x, spec_type<BogusNumberOfFastpathInputEvent> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<SessionProbeOnKeepaliveTimeout> & buf,
     cfg_s_type<SessionProbeOnKeepaliveTimeout> /*type*/,
     SessionProbeOnKeepaliveTimeout x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(SessionProbeOnKeepaliveTimeout & x, spec_type<SessionProbeOnKeepaliveTimeout> /*type*/, array_view_const_char value)
+parse_error parse(SessionProbeOnKeepaliveTimeout & x, spec_type<SessionProbeOnKeepaliveTimeout> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<SmartVideoCropping> & buf,
     cfg_s_type<SmartVideoCropping> /*type*/,
     SmartVideoCropping x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(SmartVideoCropping & x, spec_type<SmartVideoCropping> /*type*/, array_view_const_char value)
+parse_error parse(SmartVideoCropping & x, spec_type<SmartVideoCropping> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<RdpModeConsole> & buf,
     cfg_s_type<RdpModeConsole> /*type*/,
     RdpModeConsole x
 ){
-    (void)buf;    static constexpr array_view_const_char arr[]{
+    (void)buf;    static constexpr chars_view arr[]{
         cstr_array_view("allow"),
         cstr_array_view("force"),
         cstr_array_view("forbid"),
@@ -342,7 +342,7 @@ array_view_const_char assign_zbuf_from_cfg(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(RdpModeConsole & x, spec_type<RdpModeConsole> /*type*/, array_view_const_char value)
+parse_error parse(RdpModeConsole & x, spec_type<RdpModeConsole> /*type*/, chars_view value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("allow"), RdpModeConsole::allow},
@@ -351,26 +351,26 @@ parse_error parse(RdpModeConsole & x, spec_type<RdpModeConsole> /*type*/, array_
     });
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<SessionProbeDisabledFeature> & buf,
     cfg_s_type<SessionProbeDisabledFeature> /*type*/,
     SessionProbeDisabledFeature x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
+parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 511>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<RdpStoreFile> & buf,
     cfg_s_type<RdpStoreFile> /*type*/,
     RdpStoreFile x
 ){
-    (void)buf;    static constexpr array_view_const_char arr[]{
+    (void)buf;    static constexpr chars_view arr[]{
         cstr_array_view("never"),
         cstr_array_view("always"),
         cstr_array_view("on_invalid_verification"),
@@ -379,7 +379,7 @@ array_view_const_char assign_zbuf_from_cfg(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(RdpStoreFile & x, spec_type<RdpStoreFile> /*type*/, array_view_const_char value)
+parse_error parse(RdpStoreFile & x, spec_type<RdpStoreFile> /*type*/, chars_view value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("never"), RdpStoreFile::never},
@@ -388,30 +388,44 @@ parse_error parse(RdpStoreFile & x, spec_type<RdpStoreFile> /*type*/, array_view
     });
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<SessionProbeOnAccountManipulation> & buf,
     cfg_s_type<SessionProbeOnAccountManipulation> /*type*/,
     SessionProbeOnAccountManipulation x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(SessionProbeOnAccountManipulation & x, spec_type<SessionProbeOnAccountManipulation> /*type*/, array_view_const_char value)
+parse_error parse(SessionProbeOnAccountManipulation & x, spec_type<SessionProbeOnAccountManipulation> /*type*/, chars_view value)
 {
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
+    zstr_buffer_from<ClientAddressSent> & buf,
+    cfg_s_type<ClientAddressSent> /*type*/,
+    ClientAddressSent x
+){
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return chars_view(buf.get(), sz);
+}
+
+parse_error parse(ClientAddressSent & x, spec_type<ClientAddressSent> /*type*/, chars_view value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 2>());
+}
+
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<ColorDepth> & buf,
     cfg_s_type<ColorDepth> /*type*/,
     ColorDepth x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(ColorDepth & x, spec_type<ColorDepth> /*type*/, array_view_const_char value)
+parse_error parse(ColorDepth & x, spec_type<ColorDepth> /*type*/, chars_view value)
 {
     return parse_enum_list(x, value, {
         ColorDepth::depth8,
@@ -422,16 +436,16 @@ parse_error parse(ColorDepth & x, spec_type<ColorDepth> /*type*/, array_view_con
     });
 }
 
-array_view_const_char assign_zbuf_from_cfg(
+chars_view assign_zbuf_from_cfg(
     zstr_buffer_from<OcrVersion> & buf,
     cfg_s_type<OcrVersion> /*type*/,
     OcrVersion x
 ){
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return chars_view(buf.get(), sz);
 }
 
-parse_error parse(OcrVersion & x, spec_type<OcrVersion> /*type*/, array_view_const_char value)
+parse_error parse(OcrVersion & x, spec_type<OcrVersion> /*type*/, chars_view value)
 {
     return parse_enum_list(x, value, {
         OcrVersion::v1,

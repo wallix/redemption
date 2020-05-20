@@ -70,7 +70,7 @@ namespace
             char buf[1024*4];
             auto dsz = dirname.size();
             dirname += getcwd(buf, sizeof(buf));
-            for (char& c : array_view_char(dirname).from_offset(dsz)) {
+            for (char& c : writable_chars_view(dirname).from_offset(dsz)) {
                 if (c == '/') {
                     c = ':';
                 }
@@ -107,7 +107,6 @@ namespace
 #else
         std::string_view comp_type = "__";
 #endif
-        std::string test_module = master_test_suite().p_name.get();
         return str_concat(
             tempbase(),
             '@',

@@ -256,7 +256,7 @@ struct ReplayMod::Reader
 };
 
 ReplayMod::ReplayMod(
-    SessionReactor& session_reactor
+    TimeBase& time_base
   , GraphicTimerContainer & graphic_timer_events_
   , SesmanInterface & sesman
   , gdi::GraphicApi & drawable_
@@ -292,7 +292,7 @@ ReplayMod::ReplayMod(
         this->front_height = this->internal_reader->reader.info.height;
     }
 
-    this->timer = graphic_timer_events_.create_timer_executor(session_reactor)
+    this->timer = graphic_timer_events_.create_timer_executor(time_base)
     .set_delay(std::chrono::seconds(0))
     .on_action([this](auto ctx, gdi::GraphicApi& gd){
         this->draw_event(gd);

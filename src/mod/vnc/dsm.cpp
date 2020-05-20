@@ -505,7 +505,7 @@ bool UltraDSM::getResponse(OutStream &out) {
         }
 
         BufMaker<0x1000> blobKeysBuffer;
-        array_view_u8 blobKeys = blobKeysBuffer.dyn_array(nKeyDataLength);
+        writable_u8_array_view blobKeys = blobKeysBuffer.dyn_array(nKeyDataLength);
 
         m_bTriple = false;
 

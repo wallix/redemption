@@ -378,7 +378,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     struct {
         size_t len = 0;
-        ssize_t write(array_view_const_char d) {
+        ssize_t write(chars_view d) {
             this->len += d.size();
             return len;
         }
@@ -441,7 +441,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     struct {
         size_t len = 0;
-        ssize_t write(array_view_const_char d) {
+        ssize_t write(chars_view d) {
             this->len += d.size();
             return len;
         }

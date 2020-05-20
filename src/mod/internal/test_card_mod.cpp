@@ -34,20 +34,18 @@
 #include "utils/sugar/algostring.hpp"
 
 
-TestCardMod::TestCardMod(
-    SessionReactor& session_reactor,
-    GraphicEventContainer & graphic_events_,
-    uint16_t width, uint16_t height,
-    Font const & font, bool unit_test)
+TestCardMod::TestCardMod(GdProvider & gd_provider, uint16_t width, uint16_t height, Font const & font, bool unit_test)
 : front_width(width)
 , front_height(height)
 , font(font)
 , unit_test(unit_test)
+, gd_provider(gd_provider)
 {
-    this->graphic_event = graphic_events_.create_action_executor(session_reactor)
-    .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
-        this->draw_event(gd);
-    }));
+}
+
+void TestCardMod::init()
+{
+    this->draw_event(this->gd_provider.get_graphics());
 }
 
 Rect TestCardMod::get_screen_rect() const

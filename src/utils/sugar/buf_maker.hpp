@@ -30,19 +30,19 @@ Author(s): Jonathan Poelen
 template<std::size_t StaticLen, class T = uint8_t>
 struct BufMaker
 {
-    array_view<T> dyn_array(std::size_t n) &
+    writable_array_view<T> dyn_array(std::size_t n) &
     {
         T * p = this->buf_;
         if (n > StaticLen) {
             this->dyn_buf_ = std::make_unique<T[]>(n);
             p = this->dyn_buf_.get();
         }
-        return {p, n};
+        return writable_array_view<T>{p, n};
     }
 
-    array_view<T> static_array() & noexcept
+    writable_array_view<T> static_array() & noexcept
     {
-        return make_array_view(this->buf_);
+        return make_writable_array_view(this->buf_);
     }
 
     static constexpr std::size_t min_size() noexcept
@@ -59,7 +59,7 @@ private:
 template<std::size_t StaticLen, class T = uint8_t>
 struct BufArrayMaker
 {
-    array_view<T> dyn_array(std::size_t n) &
+    writable_array_view<T> dyn_array(std::size_t n) &
     {
         T * p = this->buf_;
         if (n > StaticLen) {
@@ -69,12 +69,12 @@ struct BufArrayMaker
             }
             p = this->dyn_buf_.get();
         }
-        return {p, n};
+        return writable_array_view<T>{p, n};
     }
 
-    array_view<T> static_array() & noexcept
+    writable_array_view<T> static_array() & noexcept
     {
-        return make_array_view(this->buf_);
+        return make_writable_array_view(this->buf_);
     }
 
     static constexpr std::size_t min_size() noexcept

@@ -155,7 +155,7 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
@@ -169,7 +169,7 @@ RED_AUTO_TEST_CASE(TestFront)
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        session_reactor, timer_events_, sesman, front_trans, gen1, ini , cctx,
+        time_base, timer_events_, sesman, front_trans, gen1, ini , cctx,
         report_message, fastpath_support);
     null_mod no_mod;
 
@@ -242,7 +242,7 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, ini, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        t, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
@@ -255,7 +255,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     RED_TEST_PASSPOINT();
 
-    execute_mod(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front, 38);
+    execute_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front, 38);
 
 //    front.dump_png("trace_w2008_");
 }
@@ -324,7 +324,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
@@ -335,17 +335,17 @@ RED_AUTO_TEST_CASE(TestFront2)
 
     RED_TEST_PASSPOINT();
     SesmanInterface sesman(ini);
-    MyFront front(session_reactor, timer_events_, sesman, front_trans, gen1, ini
+    MyFront front(time_base, timer_events_, sesman, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support);
     null_mod no_mod;
 
     RED_TEST_PASSPOINT();
 
     RED_REQUIRE(!timer_events_.is_empty());
-    session_reactor.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
+    time_base.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
 
     auto fn = [&]() {
-        auto const end_tv = session_reactor.get_current_time();
+        auto const end_tv = time_base.get_current_time();
         timer_events_.exec_timer(end_tv);
         fd_events_.exec_timeout(end_tv);
     };

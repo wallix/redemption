@@ -8,9 +8,9 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(199);
+constexpr authid_t MAX_AUTHID = authid_t(203);
 
-constexpr array_view_const_char const authstr[] = {
+constexpr chars_view const authstr[] = {
     "capture_chunk"_av,
     "nla_login"_av,
     "login"_av,
@@ -26,7 +26,6 @@ constexpr array_view_const_char const authstr[] = {
     "globals:inactivity_timeout"_av,
     "trace_type"_av,
     "is_rec"_av,
-    "rec_path"_av,
     "unicode_keyboard_event_support"_av,
     "mod_recv_timeout"_av,
     "session_log:keyboard_input_masking_level"_av,
@@ -41,6 +40,8 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:show_common_cipher_list"_av,
     "allow_channels"_av,
     "deny_channels"_av,
+    "mod_rdp:allowed_dynamic_channels"_av,
+    "mod_rdp:denied_dynamic_channels"_av,
     "mod_rdp:server_redirection_support"_av,
     "mod_rdp:load_balance_info"_av,
     "rdp_bogus_sc_net_size"_av,
@@ -77,6 +78,7 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:session_probe_memory_usage_limit"_av,
     "mod_rdp:session_probe_end_of_session_check_delay_time"_av,
     "mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check"_av,
+    "mod_rdp:session_probe_update_disabled_features"_av,
     "mod_rdp:session_probe_childless_window_as_unidentified_input_field"_av,
     "mod_rdp:session_probe_disabled_features"_av,
     "mod_rdp:session_probe_bestsafe_integration"_av,
@@ -97,6 +99,7 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:enable_remotefx"_av,
     "mod_rdp:enable_restricted_admin_mode"_av,
     "mod_rdp:force_smartcard_authentication"_av,
+    "mod_rdp:enable_ipv6"_av,
     "clipboard_up"_av,
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,
@@ -104,6 +107,7 @@ constexpr array_view_const_char const authstr[] = {
     "mod_vnc:server_is_macos"_av,
     "mod_vnc:server_unix_alt"_av,
     "mod_vnc:support_cursor_pseudo_encoding"_av,
+    "mod_vnc:enable_ipv6"_av,
     "file_verification:enable_up"_av,
     "file_verification:enable_down"_av,
     "file_verification:clipboard_text_up"_av,

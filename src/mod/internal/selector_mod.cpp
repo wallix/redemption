@@ -92,7 +92,7 @@ void SelectorMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keym
                         }
                         else {
                             this->first_click_down_timer = timer_events_
-                            .create_timer_executor(this->session_reactor)
+                            .create_timer_executor(this->time_base)
                             .set_delay(std::chrono::seconds(1))
                             .on_action(jln::one_shot([this]{
                                 this->dc_state = DCState::Wait;
@@ -195,9 +195,8 @@ bool SelectorMod::is_resizing_hosted_desktop_allowed() const
 SelectorMod::SelectorMod(
     Inifile & ini,
     SelectorModVariables vars,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
@@ -211,9 +210,8 @@ SelectorMod::SelectorMod(
     , dc_state(DCState::Wait)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
@@ -252,18 +250,6 @@ SelectorMod::SelectorMod(
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
     this->screen.set_wh(front_width, front_height);
-    if (this->rail_enabled) {
-        this->graphic_event = graphic_events_.create_action_executor(session_reactor)
-        .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (!this->rail_client_execute) {
-                this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height, this->font(),
-                    this->is_resizing_hosted_desktop_allowed());
-
-                this->dvc_manager.ready(this->front);
-            }
-        }));
-    }
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     this->screen.add_widget(&this->selector);
     this->screen.set_widget_focus(&this->selector, Widget::focus_reason_tabkey);
@@ -278,11 +264,19 @@ SelectorMod::SelectorMod(
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
+}
 
-    this->started_copy_past_event = graphic_events_.create_action_executor(session_reactor)
-    .on_action(jln::one_shot([this](gdi::GraphicApi&){
-        this->copy_paste.ready(this->front);
-    }));
+
+void SelectorMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+            *this, this->front_width, this->front_height, this->font(),
+            this->is_resizing_hosted_desktop_allowed());
+
+        this->dvc_manager.ready(this->front);
+    }
+    this->copy_paste.ready(this->front);
 }
 
 
@@ -412,7 +406,7 @@ void SelectorMod::refresh_device()
         size_t size_targets = proceed_item(targets);
         size_t size_protocols = proceed_item(protocols);
 
-        array_view_const_char const texts[] {
+        chars_view const texts[] {
             {groups, size_groups},
             {targets, size_targets},
             {protocols, size_protocols},
@@ -436,7 +430,7 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
         auto no_result = TR(trkeys::no_results, language(this->vars));
-        array_view_const_char const texts[] {{}, no_result, {}};
+        chars_view const texts[] {{}, no_result, {}};
         this->selector.add_device(texts);
     }
     else {

@@ -362,11 +362,11 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
         std::string_view name;
         bool has_encryption;
         bool has_checksum;
-        array_view_const_char tfl2_content;
-        array_view_const_char tfl2_hash_content_prefix;
-        array_view_const_char fdx_content;
+        chars_view tfl2_content;
+        chars_view tfl2_hash_content_prefix;
+        chars_view fdx_content;
 
-        array_view_const_char decrypted_fdx_content = {};
+        chars_view decrypted_fdx_content = {};
     };
 
     RED_TEST_CONTEXT_DATA(Data const& data, "encryption: " << data.has_encryption << " checksum: " << data.has_checksum, {

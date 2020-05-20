@@ -155,7 +155,7 @@ bool UTF8InsertUtf16(writable_bytes_view source, std::size_t bytes_used, uint16_
     assert(source.size() >= bytes_used);
 
     uint8_t utf8[4];
-    const auto utf8char = UTF16toUTF8_buf(unicode_char, make_array_view(utf8));
+    const auto utf8char = UTF16toUTF8_buf(unicode_char, make_writable_array_view(utf8));
 
     if (source.size() - bytes_used < utf8char.size()) {
         return false;

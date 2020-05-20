@@ -28,7 +28,7 @@
 
 WidgetLabel::WidgetLabel(
     gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, array_view_const_char text,
+    NotifyApi* notifier, chars_view text,
     int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
     int xtext, int ytext
 )
@@ -80,7 +80,7 @@ void WidgetLabel::set_text(char const* text)
     this->set_text({text, text ? strlen(text) : 0u});
 }
 
-void WidgetLabel::set_text(array_view_const_char text)
+void WidgetLabel::set_text(chars_view text)
 {
     this->buffer[0] = 0;
     if (!text.empty()) {

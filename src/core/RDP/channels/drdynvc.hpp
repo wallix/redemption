@@ -413,7 +413,7 @@ class DVCCreateRequestPDU
     uint8_t     Sp          = 0x00;
     uint8_t     Cmd         = CMD_CREATE;
 
-    uint32_t    ChannelId   = 0;
+    uint32_t    ChannelId_  = 0;
 
     std::string channel_name;
 
@@ -432,17 +432,17 @@ public:
         {
             case 0x00:
                 ::check_throw(stream, 1, "class DVCCreateRequestPDU::receive (1)", ERR_RDPDR_PDU_TRUNCATED);
-                this->ChannelId = stream.in_uint8();
+                this->ChannelId_ = stream.in_uint8();
             break;
 
             case 0x01:
                 ::check_throw(stream, 2, "class DVCCreateRequestPDU::receive (2)", ERR_RDPDR_PDU_TRUNCATED);
-                this->ChannelId = stream.in_uint16_le();
+                this->ChannelId_ = stream.in_uint16_le();
             break;
 
             case 0x02:
                 ::check_throw(stream, 4, "class DVCCreateRequestPDU::receive (3)", ERR_RDPDR_PDU_TRUNCATED);
-                this->ChannelId = stream.in_uint32_le();
+                this->ChannelId_ = stream.in_uint32_le();
             break;
 
             default:
@@ -466,15 +466,15 @@ public:
         switch (this->cbId)
         {
             case 0x00:
-                stream.out_uint8(this->ChannelId);
+                stream.out_uint8(this->ChannelId_);
             break;
 
             case 0x01:
-                stream.out_uint16_le(this->ChannelId);
+                stream.out_uint16_le(this->ChannelId_);
             break;
 
             case 0x02:
-                stream.out_uint32_le(this->ChannelId);
+                stream.out_uint32_le(this->ChannelId_);
             break;
 
             default:
@@ -483,6 +483,14 @@ public:
         }
 
         stream.out_copy_bytes(this->channel_name.c_str(), this->channel_name.length() + 1);
+    }
+
+    uint32_t ChannelId() const {
+        return this->ChannelId_;
+    }
+
+    const char * ChannelName() const {
+        return this->channel_name.c_str();
     }
 
 private:
@@ -498,7 +506,7 @@ private:
             static_cast<unsigned int>(this->cbId),
             static_cast<unsigned int>(this->Sp),
             static_cast<unsigned int>(this->Cmd),
-            static_cast<unsigned int>(this->ChannelId),
+            static_cast<unsigned int>(this->ChannelId_),
             this->channel_name.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -569,6 +577,25 @@ class DVCCreateResponsePDU
     uint32_t CreationStatus = 0;
 
 public:
+    explicit DVCCreateResponsePDU() = default;
+
+    explicit DVCCreateResponsePDU(uint32_t ChannelId, uint32_t CreationStatus)
+    : ChannelId(ChannelId)
+    , CreationStatus(CreationStatus) {
+        if (ChannelId <= std::numeric_limits<uint8_t>::max()) {
+            this->cbId = 0;
+        }
+        else if (ChannelId <= std::numeric_limits<uint16_t>::max()) {
+            this->cbId = 1;
+        }
+        else if (ChannelId <= std::numeric_limits<uint32_t>::max()) {
+            this->cbId = 2;
+        }
+        else {
+            this->cbId = 3;
+        }
+    }
+
     void receive(InStream & stream) {
         // cbId(:2) + Sp(:2) + Cmd(:4)
         ::check_throw(stream, 1, "class DVCCreateResponsePDU::receive (0)", ERR_RDPDR_PDU_TRUNCATED);

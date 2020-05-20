@@ -47,7 +47,7 @@ public:
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
@@ -92,7 +92,7 @@ private:
     SessionProbeLauncher* format_list_response_notifier    = nullptr;
     SessionProbeLauncher* format_data_request_notifier     = nullptr;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
 
     FileValidatorService * file_validator;
 

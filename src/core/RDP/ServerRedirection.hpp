@@ -309,39 +309,39 @@ struct ServerRedirectionPDU {
         this->RedirFlags = stream.in_uint32_le();
         if (this->RedirFlags & LB_TARGET_NET_ADDRESS) {
             this->TargetNetAddressLength = this->recv_field_process(
-                stream, make_array_view(this->TargetNetAddress));
+                stream, make_writable_array_view(this->TargetNetAddress));
         }
         if (this->RedirFlags & LB_LOAD_BALANCE_INFO) {
             this->LoadBalanceInfoLength = this->recv_field_process(
-                stream, make_array_view(this->LoadBalanceInfo));
+                stream, make_writable_array_view(this->LoadBalanceInfo));
         }
         if (this->RedirFlags & LB_USERNAME) {
             this->UserNameLength = this->recv_field_process(
-                stream, make_array_view(this->UserName));
+                stream, make_writable_array_view(this->UserName));
         }
         if (this->RedirFlags & LB_DOMAIN) {
             this->DomainLength = this->recv_field_process(
-                stream, make_array_view(this->Domain));
+                stream, make_writable_array_view(this->Domain));
         }
         if (this->RedirFlags & LB_PASSWORD) {
             this->PasswordLength = this->recv_field_process(
-                stream, make_array_view(this->Password));
+                stream, make_writable_array_view(this->Password));
         }
         if (this->RedirFlags & LB_TARGET_FQDN) {
             this->TargetFQDNLength = this->recv_field_process(
-                stream, make_array_view(this->TargetFQDN));
+                stream, make_writable_array_view(this->TargetFQDN));
         }
         if (this->RedirFlags & LB_TARGET_NETBIOS_NAME) {
             this->TargetNetBiosNameLength = this->recv_field_process(
-                stream, make_array_view(this->TargetNetBiosName));
+                stream, make_writable_array_view(this->TargetNetBiosName));
         }
         if (this->RedirFlags & LB_CLIENT_TSV_URL) {
             this->TsvUrlLength = this->recv_field_process(
-                stream, make_array_view(this->TsvUrl));
+                stream, make_writable_array_view(this->TsvUrl));
         }
         if (this->RedirFlags & LB_TARGET_NET_ADDRESSES) {
             this->TargetNetAddressesLength = this->recv_field_process(
-                stream, make_array_view(this->TargetNetAddresses));
+                stream, make_writable_array_view(this->TargetNetAddresses));
         }
         int remains = this->Length - (stream.get_offset() - offset);
         // LOG(LOG_INFO, "receive RDP_SERVER_REDIRECTION_PACKET pad = %d", remains);

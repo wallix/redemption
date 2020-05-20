@@ -444,7 +444,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         size_t pxtmp = this->cursor_px_pos;
                         size_t ebpos = this->edit_buffer_pos;
                         this->decrement_edit_pos();
-                        UTF8RemoveOne(make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
+                        UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                         this->buffer_size += this->edit_buffer_pos - ebpos;
                         Rect const rect(
                             this->x() + this->cursor_px_pos + this->label.x_text,
@@ -485,7 +485,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
                         this->h_text = tm.height;
                         this->label.buffer[this->edit_buffer_pos + len] = c;
-                        UTF8RemoveOne(make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
+                        UTF8RemoveOne(make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                         this->buffer_size -= len;
                         this->num_chars--;
                         Rect const rect(
@@ -590,7 +590,7 @@ void WidgetEdit::rdp_input_unicode(uint16_t unicode, uint16_t flag)
 
 void WidgetEdit::insert_unicode_char(uint16_t unicode_char)
 {
-    auto buf = make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos);
+    auto buf = make_writable_array_view(this->label.buffer).drop_front(this->edit_buffer_pos);
     if (!UTF8InsertUtf16(buf, this->buffer_size - this->edit_buffer_pos + 1, unicode_char)) {
         return ;
     }

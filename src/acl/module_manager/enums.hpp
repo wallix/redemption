@@ -107,7 +107,6 @@ inline ModuleIndex get_module_id(std::string_view module_name)
 
     ModuleIndex mi = MODULE_UNKNOWN;
     for (auto f: names_id){
-        LOG(LOG_INFO, "%s %.*s ", f.name.data(), int(module_name.size()), module_name.data());
         if (f.name == module_name){
             mi = f.id;
             break;
@@ -145,3 +144,33 @@ inline const char * get_module_name(ModuleIndex module_id) noexcept
 
     return "<unknown>";
 }
+
+//inline bool has_init(ModuleIndex module_id) noexcept
+//{
+//    switch (module_id) {
+//        case MODULE_EXIT:                            return false;
+//        case MODULE_VNC:                             return false;
+//        case MODULE_RDP:                             return false;
+//        case MODULE_XUP:                             return false;
+//        case MODULE_INTERNAL:                        return false;
+//        case MODULE_INTERNAL_CLOSE:                  return false;
+//        case MODULE_INTERNAL_CLOSE_BACK:             return false;
+//        case MODULE_INTERNAL_WIDGET_LOGIN:           return false;
+//        case MODULE_INTERNAL_CARD:                   return false;
+//        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE: return false;
+//        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:   return false;
+//        case MODULE_INTERNAL_DIALOG_CHALLENGE:       return false;
+//        case MODULE_INTERNAL_TARGET:                 return false;
+//        case MODULE_INTERNAL_BOUNCER2:               return false;
+//        case MODULE_INTERNAL_TEST:                   return false;
+//        case MODULE_INTERNAL_WIDGET_SELECTOR:        return false;
+//        case MODULE_INTERNAL_WIDGETTEST:             return false;
+//        case MODULE_INTERNAL_WAIT_INFO:              return false;
+//        case MODULE_INTERNAL_TRANSITION:             return false;
+//        case MODULE_TRANSITORY:                      return false;
+//        case MODULE_AUTH:                            return false;
+//        case MODULE_UNKNOWN: break;
+//    }
+
+//    return false;
+//}

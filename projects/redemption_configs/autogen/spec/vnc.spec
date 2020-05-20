@@ -27,3 +27,6 @@ server_unix_alt = boolean(default=False)
 
 support_cursor_pseudo_encoding = boolean(default=True)
 
+# Enable target connection on ipv6
+enable_ipv6 = boolean(default=False)
+

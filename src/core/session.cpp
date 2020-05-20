@@ -24,7 +24,6 @@
 #include "core/session.hpp"
 
 #include "acl/authentifier.hpp"
-#include "acl/module_manager.hpp"
 #include "acl/sesman.hpp"
 #include "acl/mod_pack.hpp"
 
@@ -97,8 +96,8 @@ class Session
                     - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
             }
 
-//            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us", 
-//                now.tv_sec, now.tv_usec, this->timeout.tv_sec, this->timeout.tv_usec, 
+//            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us",
+//                now.tv_sec, now.tv_usec, this->timeout.tv_sec, this->timeout.tv_usec,
 //                timeoutastv.tv_sec, timeoutastv.tv_usec);
             return ::select(
                 this->max + 1, &this->rfds,
@@ -261,37 +260,56 @@ private:
     }
 
 private:
-    void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
-    {
-        if (ini.check_from_acl()) {
-            auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
-
-            if (ini.get<cfg::client::enable_osd_4_eyes>()) {
-                Translator tr(language(ini));
-                if (rt_status != Capture::RTDisplayResult::Unchanged) {
-                    std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
-                        ?trkeys::enable_rt_display
-                        :trkeys::disable_rt_display
-                            ).to_string();
-
-                    bool is_disable_by_input = true;
-                    if (message != mod_wrapper.get_message()) {
-                        mod_wrapper.clear_osd_message();
-                    }
-                    if (!message.empty()) {
-                        mod_wrapper.set_message(std::move(message), is_disable_by_input);
-                        mod_wrapper.draw_osd_message();
-                    }
-                }
-            }
-
-            if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
-                this->ini.set<cfg::context::forcemodule>(false);
-                // Do not send back the value to sesman.
-            }
+    void wabam_settings(Inifile & ini, Front & front){
+        if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>()
+            &&  ini.get<cfg::context::is_wabam>()) {
+                front.force_using_cache_bitmap_r2();
         }
     }
 
+    void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
+    {
+        auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
+
+        if (ini.get<cfg::client::enable_osd_4_eyes>()) {
+            Translator tr(language(ini));
+            if (rt_status != Capture::RTDisplayResult::Unchanged) {
+                std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
+                    ?trkeys::enable_rt_display
+                    :trkeys::disable_rt_display
+                        ).to_string();
+
+                bool is_disable_by_input = true;
+                if (message != mod_wrapper.get_message()) {
+                    mod_wrapper.clear_osd_message();
+                }
+                if (!message.empty()) {
+                    mod_wrapper.set_message(std::move(message), is_disable_by_input);
+                    mod_wrapper.draw_osd_message();
+                }
+            }
+        }
+
+        if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
+            this->ini.set<cfg::context::forcemodule>(false);
+            // Do not send back the value to sesman.
+        }
+    }
+
+
+    void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Authentifier & authentifier, Front & front)
+    {
+        if (mod_wrapper.current_mod != next_state) {
+            if ((mod_wrapper.current_mod == MODULE_RDP) ||
+                (mod_wrapper.current_mod == MODULE_VNC)) {
+                front.must_be_stop_capture();
+                authentifier.delete_remote_mod();
+            }
+        }
+
+        auto mod_pack = mod_factory.create_mod(next_state);
+        mod_wrapper.set_mod(next_state, mod_pack);
+    }
 
     bool front_up_and_running(std::unique_ptr<Acl> & acl, timeval & now,
                               const time_t start_time, Inifile& ini,
@@ -301,34 +319,9 @@ private:
                               Authentifier & authentifier,
                               ClientExecute & rail_client_execute)
     {
-        if (ini.check_from_acl()) {
-            if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
-                ini.get<cfg::context::is_wabam>()) {
-                front.force_using_cache_bitmap_r2();
-            }
-        }
-
-        if (ini.get<cfg::globals::enable_osd>()) {
-            const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-            if (enddate && mod_wrapper.is_up_and_running()) {
-                LOG(LOG_INFO, "--------------------- End Session OSD Warning");
-                std::string mes = end_session_warning.update_osd_state(
-                    language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
-                if (!mes.empty()) {
-                    bool is_disable_by_input = true;
-                    if (mes != mod_wrapper.get_message()) {
-                        mod_wrapper.clear_osd_message();
-                    }
-                    mod_wrapper.set_message(std::move(mes), is_disable_by_input);
-                    mod_wrapper.draw_osd_message();
-                }
-            }
-        }
-
         if (!acl->keepalive.is_started() && mod_wrapper.is_connected()) {
             acl->keepalive.start(now.tv_sec);
         }
-
 
         // There are modified fields to send to sesman
         if (ini.changed_field_size()) {
@@ -354,31 +347,7 @@ private:
                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                 auto next_state = MODULE_INTERNAL_TRANSITION;
-                if (mod_wrapper.old_target_module != next_state) {
-                    front.must_be_stop_capture();
-                    switch (mod_wrapper.old_target_module){
-                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                    default:;
-                    }
-                }
-                LOG(LOG_INFO, "New_mod %s (was %s)", 
-                        get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                mod_wrapper.old_target_module = next_state;
-                mod_wrapper.connected = false;
-                auto mod_pack = mod_factory.create_mod(next_state);
-                if (next_state == MODULE_INTERNAL_BOUNCER2){
-                    mod_pack.enable_osd = true;
-                }
-
-                if ((next_state == MODULE_XUP)
-                  ||(next_state == MODULE_RDP)
-                  ||(next_state == MODULE_VNC)){
-                    mod_pack.enable_osd = true;
-                    mod_pack.connected = true;
-                }
-                mod_wrapper.set_mod(mod_pack);
+                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
             }
             break;
             case BACK_EVENT_REFRESH:
@@ -430,34 +399,10 @@ private:
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
                     try {
-
-                        if (mod_wrapper.old_target_module != next_state) {
-                            front.must_be_stop_capture();
-                            switch (mod_wrapper.old_target_module){
-                            case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                            case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                            case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                            default:;
-                            }
+                        if (mod_wrapper.current_mod != next_state) {
                             authentifier.new_remote_mod();
                         }
-                        LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                        mod_wrapper.old_target_module = next_state;
-                        mod_wrapper.connected = false;
-                        auto mod_pack = mod_factory.create_mod(next_state);
-                        if (next_state == MODULE_INTERNAL_BOUNCER2){
-                            mod_pack.enable_osd = true;
-                        }
-
-                        if ((next_state == MODULE_XUP)
-                          ||(next_state == MODULE_RDP)
-                          ||(next_state == MODULE_VNC)){
-                            mod_pack.enable_osd = true;
-                            mod_pack.connected = true;
-                        }
-                        mod_wrapper.set_mod(mod_pack);
-
+                        this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                         if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                             ini.get<cfg::globals::allow_using_multiple_monitors>() &&
                             (front.client_info.cs_monitor.monitorCount > 1)) {
@@ -491,33 +436,10 @@ private:
                     log_proxy::set_user(ini.get<cfg::globals::auth_user>().c_str());
 
                     try {
-
-                        if (mod_wrapper.old_target_module != next_state) {
-                            front.must_be_stop_capture();
-                            switch (mod_wrapper.old_target_module){
-                            case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                            case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                            case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                            default:;
-                            }
+                        if (mod_wrapper.current_mod != next_state) {
                             authentifier.new_remote_mod();
                         }
-                        LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                        mod_wrapper.old_target_module = next_state;
-                        mod_wrapper.connected = false;
-                        auto mod_pack = mod_factory.create_mod(next_state);
-                        if (next_state == MODULE_INTERNAL_BOUNCER2){
-                            mod_pack.enable_osd = true;
-                        }
-
-                        if ((next_state == MODULE_XUP)
-                          ||(next_state == MODULE_RDP)
-                          ||(next_state == MODULE_VNC)){
-                            mod_pack.enable_osd = true;
-                            mod_pack.connected = true;
-                        }
-                        mod_wrapper.set_mod(mod_pack);
+                        this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
 
                         LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded");
                         ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
@@ -535,31 +457,7 @@ private:
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
-                        }
-                    }
-                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    auto mod_pack = mod_factory.create_mod(next_state);
-                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                        mod_pack.enable_osd = true;
-                    }
-
-                    if ((next_state == MODULE_XUP)
-                      ||(next_state == MODULE_RDP)
-                      ||(next_state == MODULE_VNC)){
-                        mod_pack.enable_osd = true;
-                        mod_pack.connected = true;
-                    }
-                    mod_wrapper.set_mod(mod_pack);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                 }
                 break;
                 case MODULE_UNKNOWN:
@@ -577,32 +475,7 @@ private:
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
-                        }
-                    }
-                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    auto mod_pack = mod_factory.create_mod(next_state);
-                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                        mod_pack.enable_osd = true;
-                    }
-
-                    if ((next_state == MODULE_XUP)
-                      ||(next_state == MODULE_RDP)
-                      ||(next_state == MODULE_VNC)){
-                        mod_pack.enable_osd = true;
-                        mod_pack.connected = true;
-                    }
-                    mod_wrapper.set_mod(mod_pack);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                 }
                 break;
                 default:
@@ -619,32 +492,7 @@ private:
                         log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                         break;
                     }
-                    if (mod_wrapper.old_target_module != next_state) {
-                        front.must_be_stop_capture();
-
-                        switch (mod_wrapper.old_target_module){
-                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                        default:;
-                        }
-                    }
-                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                    mod_wrapper.old_target_module = next_state;
-                    mod_wrapper.connected = false;
-                    auto mod_pack = mod_factory.create_mod(next_state);
-                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                        mod_pack.enable_osd = true;
-                    }
-
-                    if ((next_state == MODULE_XUP)
-                      ||(next_state == MODULE_RDP)
-                      ||(next_state == MODULE_VNC)){
-                        mod_pack.enable_osd = true;
-                        mod_pack.connected = true;
-                    }
-                    mod_wrapper.set_mod(mod_pack);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                 }
                 }
             }
@@ -741,10 +589,14 @@ private:
     }
 
 
-    void show_ultimatum(std::string info, timeval ultimatum, timeval now) 
+    void show_ultimatum(std::string info, timeval ultimatum, timeval now)
     {
-        timeval timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                    - std::chrono::seconds(now.tv_sec) - std::chrono::microseconds(now.tv_usec));
+        return;
+        timeval timeoutastv = to_timeval(
+                              std::chrono::seconds(ultimatum.tv_sec)
+                            + std::chrono::microseconds(ultimatum.tv_usec)
+                            - std::chrono::seconds(now.tv_sec)
+                            - std::chrono::microseconds(now.tv_usec));
         if (timeoutastv.tv_sec == 0 && timeoutastv.tv_usec == 0){
             LOG(LOG_INFO, "%s %ld.%ld s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
         }
@@ -756,7 +608,6 @@ private:
                 TopFdContainer & fd_events_,
                 GraphicTimerContainer & graphic_timer_events_,
                 GraphicFdContainer & graphic_fd_events_,
-                const GraphicEventContainer & graphic_events_,
                 bool front_pending,
                 bool mod_pending)
     {
@@ -800,11 +651,6 @@ private:
             this->show_ultimatum("(mod tls pending)", ultimatum, now);
         }
 
-        if ((front.state == Front::FRONT_UP_AND_RUNNING and !graphic_events_.is_empty())) {
-            ultimatum = now;
-            this->show_ultimatum("(mod graphic event)", ultimatum, now);
-        }
-
         if (front_pending) {
             ultimatum = now;
             this->show_ultimatum("(front tls pending)", ultimatum, now);
@@ -816,6 +662,7 @@ private:
     void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & sesman)
     {
         if (front.front_must_notify_resize) {
+            LOG(LOG_INFO, "front_incoming_data::notify resize");
             front.notify_resize(mod_wrapper.get_callback());
         }
 
@@ -847,20 +694,21 @@ public:
 
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
-        SessionReactor session_reactor;
+        TimeBase time_base;
         TopFdContainer fd_events_;
         GraphicFdContainer graphic_fd_events_;
         TimerContainer timer_events_;
         GraphicEventContainer graphic_events_;
         GraphicTimerContainer graphic_timer_events_;
-        
+
         TimeSystem timeobj;
 
-        session_reactor.set_current_time(tvtime());
+        time_base.set_current_time(tvtime());
         SesmanInterface sesman(ini);
-        Front front(session_reactor, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
+        Front front(time_base, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
         );
+
         std::unique_ptr<Acl> acl;
 
         try {
@@ -869,13 +717,13 @@ public:
             auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
             LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
             Theme theme;
-            ::load_theme(theme, theme_name);
+            ::load_theme(theme, ini);
 
-            ClientExecute rail_client_execute(session_reactor, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
+            ClientExecute rail_client_execute(time_base, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, session_reactor, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             if (ini.get<cfg::debug::session>()) {
@@ -897,33 +745,33 @@ public:
             //      This state is the initial state of the session when RDP client just connected
             //      to the socket. The connection to the socket has not yet been opened.
             //      No Module.
-            
+
             // SESSION_STATE_RUNNING:         FRONT CONNECTED, ACL, MODULE
             //        Front is still connected (either performaning initial negotiation or
             //        already connected and up and running). ACL is connected.
-            //        For now from proxy point of view we don't make any difference 
+            //        For now from proxy point of view we don't make any difference
             //        if ACL has performed primary authentication or not.
             //        A module is available through mod_wrapper (can be either null module
             //        some internal module of a module actually connected to a remote server)
-            
+
             // SESSION_STATE_BACKEND_CLEANUP: FRONT DISCONNECTED: CLOSING BACKEND (ACL, MODULE)
             //        The front socket raised an error which means it has been disconnected
             //        but we may still have to prperly disconnect from target server,
             //        and to disconnect from ACL.
-            
+
             // SESSION_STATE_CLOSE_BOX:       FRONT CONNECTED: BACKEND CLOSED (NO ACL, NO MODULE)
             //        The front socket is still connected, but the connection to ACL has been closed
             //        the close of ACL may have occured from sesman side or from proxy side
             //        and be caused either a deconnexion (or hang) of proxy, a failure to
             //        reply to keepalive, or as a consequence of disconnection from target server.
 
-           
+
             SessionState session_state = SessionState::SESSION_STATE_INCOMING;
 
             while (run_session) {
 
                 timeval now = tvtime();
-                session_reactor.set_current_time(now);
+                time_base.set_current_time(now);
 
                 Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
 
@@ -960,7 +808,7 @@ public:
                         if (num > 0) { continue; }
                         // if the select stopped on timeout or EINTR we will give a try to reading
                     }
-                    
+
                     // =============================================================
                     // Now prepare select for listening on all read sockets
                     // timeout or immediate wakeups are managed using timeout
@@ -973,18 +821,17 @@ public:
                         ioswitch.set_read_sck(front_trans.sck);
                     }
 
-                    // if event lists are waiting for incoming data 
-                    fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                    // if event lists are waiting for incoming data
+                    fd_events_.for_each([&](int fd, auto& /*top*/){
                             if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}
                     });
-                    
+
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
+                            front,
                             timer_events_,
                             fd_events_,
                             graphic_timer_events_,
                             graphic_fd_events_,
-                            graphic_events_,
                             front_trans.has_tls_pending_data(),
                             false
                             );
@@ -1006,14 +853,14 @@ public:
                     }
 
                     now = tvtime();
-                    session_reactor.set_current_time(now);
-                    
+                    time_base.set_current_time(now);
+
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
                     }
 
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
-                    || (front_trans.sck != INVALID_SOCKET 
+                    bool const front_is_set = front_trans.has_tls_pending_data()
+                    || (front_trans.sck != INVALID_SOCKET
                     && ioswitch.is_set_for_reading(front_trans.sck));
 
                     try {
@@ -1067,31 +914,7 @@ public:
                                 log_proxy::set_user("");
 
                                 auto next_state = MODULE_INTERNAL_CLOSE;
-                                if (mod_wrapper.old_target_module != next_state) {
-                                    front.must_be_stop_capture();
-                                    switch (mod_wrapper.old_target_module){
-                                    case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                                    case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                                    case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                                    default:;
-                                    }
-                                }
-                                LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                        get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                                mod_wrapper.old_target_module = next_state;
-                                mod_wrapper.connected = false;
-                                auto mod_pack = mod_factory.create_mod(next_state);
-                                if (next_state == MODULE_INTERNAL_BOUNCER2){
-                                    mod_pack.enable_osd = true;
-                                }
-
-                                if ((next_state == MODULE_XUP)
-                                  ||(next_state == MODULE_RDP)
-                                  ||(next_state == MODULE_VNC)){
-                                    mod_pack.enable_osd = true;
-                                    mod_pack.connected = true;
-                                }
-                                mod_wrapper.set_mod(mod_pack);
+                                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                                 run_session = true;
                             }
                             continue;
@@ -1135,8 +958,8 @@ public:
                                 continue;
                             }
                         }
-                        if (mod_wrapper.has_mod() 
-                        && mod_wrapper.get_mod_transport() 
+                        if (mod_wrapper.has_mod()
+                        && mod_wrapper.get_mod_transport()
                         && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
                             mod_wrapper.get_mod_transport()->send_waiting_data();
                         }
@@ -1148,7 +971,7 @@ public:
                         if (num > 0) { continue; }
                         // if the select stopped on timeout or EINTR we will give a try to reading
                     }
-                    
+
                     // =============================================================
                     // Now prepare select for listening on all read sockets
                     // timeout or immediate wakeups are managed using timeout
@@ -1169,18 +992,18 @@ public:
                         ioswitch.set_read_sck(front_trans.sck);
                     }
 
-                    // if event lists are waiting for incoming data 
+                    // if event lists are waiting for incoming data
                     fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
+                        [&](int fd, auto& /*top*/){
     //                        LOG(LOG_INFO, "Wait for read event on fd=%d", fd);
                             if (fd != INVALID_SOCKET){
                                 ioswitch.set_read_sck(fd);
                             }
                     });
-                    
+
                     if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
                         graphic_fd_events_.for_each(
-                        [&](int fd, auto& /*top*/){ 
+                        [&](int fd, auto& /*top*/){
     //                        LOG(LOG_INFO, "Wait for read event on graphic fd=%d", fd);
                             if (fd != INVALID_SOCKET){
                                 ioswitch.set_read_sck(fd);
@@ -1195,12 +1018,11 @@ public:
                             && mod_wrapper.get_mod_transport()->has_tls_pending_data());
 
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
+                            front,
                             timer_events_,
                             fd_events_,
                             graphic_timer_events_,
                             graphic_fd_events_,
-                            graphic_events_,
                             front_trans.has_tls_pending_data(),
                             mod_data_pending
                             );
@@ -1222,14 +1044,14 @@ public:
                     }
 
                     now = tvtime();
-                    session_reactor.set_current_time(now);
-                    
+                    time_base.set_current_time(now);
+
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
                     }
 
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
-                    || (front_trans.sck != INVALID_SOCKET 
+                    bool const front_is_set = front_trans.has_tls_pending_data()
+                    || (front_trans.sck != INVALID_SOCKET
                     && ioswitch.is_set_for_reading(front_trans.sck));
 
                     bool acl_is_set = ioswitch.is_set_for_reading(acl->auth_trans.sck);
@@ -1303,7 +1125,7 @@ public:
                                 throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                             }
 
-                            auto const end_tv = session_reactor.get_current_time();
+                            auto const end_tv = time_base.get_current_time();
                             timer_events_.exec_timer(end_tv);
                             fd_events_.exec_timeout(end_tv);
                             graphic_timer_events_.exec_timer(end_tv, mod_wrapper.get_graphic_wrapper());
@@ -1312,13 +1134,33 @@ public:
                                 return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
 
                             // new value incoming from authentifier
-                           this->rt_display(ini, mod_wrapper, front);
+                            if (ini.check_from_acl()) {
+                               this->wabam_settings(ini, front);
+                               this->rt_display(ini, mod_wrapper, front);
+                            }
+
+                            if (ini.get<cfg::globals::enable_osd>()) {
+                                const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
+                                if (enddate && mod_wrapper.is_up_and_running()) {
+                                    LOG(LOG_INFO, "--------------------- End Session OSD Warning");
+                                    std::string mes = end_session_warning.update_osd_state(
+                                        language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
+                                    if (!mes.empty()) {
+                                        bool is_disable_by_input = true;
+                                        if (mes != mod_wrapper.get_message()) {
+                                            mod_wrapper.clear_osd_message();
+                                        }
+                                        mod_wrapper.set_message(std::move(mes), is_disable_by_input);
+                                        mod_wrapper.draw_osd_message();
+                                    }
+                                }
+                            }
 
                            if (BACK_EVENT_NONE == mod_wrapper.get_mod()->get_mod_signal()) {
                                 auto& gd = mod_wrapper.get_graphic_wrapper();
                                 graphic_events_.exec_action(gd);
                                 graphic_fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                                    return fd != INVALID_SOCKET 
+                                    return fd != INVALID_SOCKET
                                         &&  ioswitch.is_set_for_reading(fd);
                                 }, gd);
                             }
@@ -1342,32 +1184,7 @@ public:
                                     log_proxy::set_user("");
 
                                     auto next_state = MODULE_INTERNAL_CLOSE;
-                                    if (mod_wrapper.old_target_module != next_state) {
-                                        front.must_be_stop_capture();
-
-                                        switch (mod_wrapper.old_target_module){
-                                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                                        default:;
-                                        }
-                                    }
-                                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                                    mod_wrapper.old_target_module = next_state;
-                                    mod_wrapper.connected = false;
-                                    auto mod_pack = mod_factory.create_mod(next_state);
-                                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                                        mod_pack.enable_osd = true;
-                                    }
-
-                                    if ((next_state == MODULE_XUP)
-                                      ||(next_state == MODULE_RDP)
-                                      ||(next_state == MODULE_VNC)){
-                                        mod_pack.enable_osd = true;
-                                        mod_pack.connected = true;
-                                    }
-                                    mod_wrapper.set_mod(mod_pack);
+                                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                                     run_session = true;
                                 }
                             }
@@ -1382,32 +1199,7 @@ public:
 
                                 auto next_state = MODULE_RDP;
                                 try {
-                                    if (mod_wrapper.old_target_module != next_state) {
-                                        front.must_be_stop_capture();
-                                        switch (mod_wrapper.old_target_module){
-                                        case MODULE_XUP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_RDP: authentifier.delete_remote_mod(); break;
-                                        case MODULE_VNC: authentifier.delete_remote_mod(); break;
-                                        default:;
-                                        }
-                                        authentifier.new_remote_mod();
-                                    }
-                                    LOG(LOG_INFO, "New_mod %s (was %s)", 
-                                            get_module_name(next_state), get_module_name(mod_wrapper.old_target_module));
-                                    mod_wrapper.old_target_module = next_state;
-                                    mod_wrapper.connected = false;
-                                    auto mod_pack = mod_factory.create_mod(next_state);
-                                    if (next_state == MODULE_INTERNAL_BOUNCER2){
-                                        mod_pack.enable_osd = true;
-                                    }
-
-                                    if ((next_state == MODULE_XUP)
-                                      ||(next_state == MODULE_RDP)
-                                      ||(next_state == MODULE_VNC)){
-                                        mod_pack.enable_osd = true;
-                                        mod_pack.connected = true;
-                                    }
-                                    mod_wrapper.set_mod(mod_pack);
+                                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
 
                                     if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                                         ini.get<cfg::globals::allow_using_multiple_monitors>() &&
@@ -1435,7 +1227,7 @@ public:
                     }
                     break;
                     } // switch
-    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");            
+    //                LOG(LOG_INFO, "while loop run_session=%s", run_session?"true":"false");
                 }
                 break;
 
@@ -1478,33 +1270,32 @@ public:
                         if (num > 0) { continue; }
                         // if the select stopped on timeout or EINTR we will give a try to reading
                     }
-                    
+
                     // =============================================================
                     // Now prepare select for listening on all read sockets
                     // timeout or immediate wakeups are managed using timeout
                     // =============================================================
-                    
+
                     // sockets for mod or front aren't managed using fd events
                     if (front_trans.sck != INVALID_SOCKET) {
                         ioswitch.set_read_sck(front_trans.sck);
                     }
 
-                    // if event lists are waiting for incoming data 
-                    fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                    // if event lists are waiting for incoming data
+                    fd_events_.for_each([&](int fd, auto& /*top*/){
                             if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
 
                     if (mod_wrapper.has_mod() and front.state == Front::FRONT_UP_AND_RUNNING) {
-                        graphic_fd_events_.for_each([&](int fd, auto& /*top*/){ 
+                        graphic_fd_events_.for_each([&](int fd, auto& /*top*/){
                             if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}});
                     }
 
                     timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                            front,  
+                            front,
                             timer_events_,
                             fd_events_,
                             graphic_timer_events_,
                             graphic_fd_events_,
-                            graphic_events_,
                             front_trans.has_tls_pending_data(),
                             false
                             );
@@ -1525,13 +1316,13 @@ public:
                     }
 
                     now = tvtime();
-                    session_reactor.set_current_time(now);
-                    
+                    time_base.set_current_time(now);
+
                     if (ini.get<cfg::debug::performance>() & 0x8000) {
                         this->write_performance_log(now.tv_sec);
                     }
 
-                    bool const front_is_set = front_trans.has_tls_pending_data() 
+                    bool const front_is_set = front_trans.has_tls_pending_data()
                     || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
 
                     try {
@@ -1539,7 +1330,7 @@ public:
                             this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
                         }
 
-                        auto const end_tv = session_reactor.get_current_time();
+                        auto const end_tv = time_base.get_current_time();
                         timer_events_.exec_timer(end_tv);
                         fd_events_.exec_timeout(end_tv);
                         if (EnableGraphics{true}) {
@@ -1547,7 +1338,7 @@ public:
                             graphic_fd_events_.exec_timeout(end_tv, mod_wrapper.get_graphic_wrapper());
                         }
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/)
-                                                { return fd != INVALID_SOCKET 
+                                                { return fd != INVALID_SOCKET
                                                         &&  ioswitch.is_set_for_reading(fd);
                                                 });
                         BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();

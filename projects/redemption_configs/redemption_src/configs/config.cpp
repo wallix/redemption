@@ -27,7 +27,7 @@
 namespace configs
 {
     template<class T, class U>
-    parse_error parse_and_log(const char * context, const char * key, T & x, U u, array_view_const_char av)
+    parse_error parse_and_log(const char * context, const char * key, T & x, U u, chars_view av)
     {
         auto const err = ::configs::parse(x, u, av);
         if (err) {
@@ -50,7 +50,7 @@ REDEMPTION_DIAGNOSTIC_POP
 
 
 template<class T>
-bool Inifile::Field<T>::parse(configs::VariablesConfiguration & variables, array_view_const_char value)
+bool Inifile::Field<T>::parse(configs::VariablesConfiguration & variables, chars_view value)
 {
     return ! ::configs::parse_and_log(
         T::section, T::name,
@@ -60,9 +60,9 @@ bool Inifile::Field<T>::parse(configs::VariablesConfiguration & variables, array
     );
 }
 
-/// \return array_view_const_char::data() guarantee with null terminal
+/// \return chars_view::data() guarantee with null terminal
 template<class T>
-array_view_const_char Inifile::Field<T>::to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const
+chars_view Inifile::Field<T>::to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const
 {
     return ::configs::assign_zbuf_from_cfg(
         static_cast<configs::zstr_buffer_from<typename T::type>&>(

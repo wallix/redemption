@@ -31,13 +31,13 @@ Author(s): Jonathan Poelen
 class ClientExecute;
 class FrontAPI;
 class ReportMessageApi;
-class SessionReactor;
+class TimeBase;
 class Transport;
 class VNCMetrics;
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TopFdContainer & fd_events_,
     GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,

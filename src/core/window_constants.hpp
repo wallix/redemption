@@ -43,7 +43,7 @@ enum {
 };
 
 
-inline array_view_const_char button_state_to_string(int state) noexcept
+inline chars_view button_state_to_string(int state) noexcept
 {
     switch (state) {
         case BST_UNCHECKED:     return "unchecked"_av;

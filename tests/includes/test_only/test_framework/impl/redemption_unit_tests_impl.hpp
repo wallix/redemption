@@ -306,9 +306,8 @@ namespace redemption_unit_test__
     template<> struct is_bytes_view<writable_bytes_view> : std::true_type {};
 
     template<class T> struct is_array_view : std::false_type {};
-    template<class T> struct is_array_view<array_view<T>>
-    : std::integral_constant<bool, !is_bytes_view<array_view<T>>::value>
-    {};
+    template<class T> struct is_array_view<array_view<T>> : std::true_type {};
+    template<class T> struct is_array_view<writable_array_view<T>> : std::true_type {};
     template<> struct is_array_view<::ut::flagged_bytes_view> : std::true_type {};
 
     template<class T, class U>
@@ -344,11 +343,11 @@ namespace redemption_unit_test__
 
     // boost::unit_test::is_forward_iterable<array_view<T>> -> false (see bellow)
     template<class T>
-    struct View : array_view<T const>
+    struct View : array_view<T>
     {
-        using array_view<T const>::array_view;
+        using array_view<T>::array_view;
 
-        View(array_view<T const> v) noexcept : array_view<T const>(v) {}
+        View(array_view<T> v) noexcept : array_view<T>(v) {}
     };
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
@@ -446,6 +445,7 @@ namespace unit_test {
     // but this disable also test_tools::per_element() and test_tools::lexicographic()
     // BOOST_TEST(a == b, tt::per_element())
     template<class T> struct is_forward_iterable<array_view<T>> : mpl::false_ {};
+    template<class T> struct is_forward_iterable<writable_array_view<T>> : mpl::false_ {};
     template<> struct is_forward_iterable<bytes_view> : mpl::false_ {};
     template<> struct is_forward_iterable<writable_bytes_view> : mpl::false_ {};
 }

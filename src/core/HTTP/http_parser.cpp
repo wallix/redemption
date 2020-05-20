@@ -61,7 +61,7 @@ bool HttpParser::onHeadersTreated() {
     return true;
 }
 
-bool HttpParser::onBodyContent(array_view_const_char /*content*/) {
+bool HttpParser::onBodyContent(chars_view /*content*/) {
     return true;
 }
 
@@ -69,7 +69,7 @@ bool HttpParser::onParsingCompleted() {
     return true;
 }
 
-bool HttpParser::parse(array_view_const_char input) {
+bool HttpParser::parse(chars_view input) {
     impl->buffer.append(input.data(), input.size());
 
     while (true) {

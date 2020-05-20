@@ -327,7 +327,7 @@ void TestTransport::set_public_key(bytes_view key)
     memcpy(this->public_key.get(), key.data(), key.size());
 }
 
-array_view_const_u8 TestTransport::get_public_key() const
+u8_array_view TestTransport::get_public_key() const
 {
     return {this->public_key.get(), this->public_key_length};
 }

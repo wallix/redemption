@@ -151,7 +151,7 @@ public Q_SLOTS:
         );
     }
 
-    array_view_const_u8 get_cliboard_text() override {
+    u8_array_view get_cliboard_text() override {
         return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
@@ -159,7 +159,7 @@ public Q_SLOTS:
         return this->_items_list[index]->nameUTF8;
     }
 
-    array_view_const_char get_file_item(int index) override {
+    chars_view get_file_item(int index) override {
         return {this->_items_list[index]->chunk, this->_items_list[index]->size};
     }
 

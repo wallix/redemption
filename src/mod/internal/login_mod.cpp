@@ -30,9 +30,8 @@
 
 LoginMod::LoginMod(
     LoginModVariables vars,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     char const * username, char const * password,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
@@ -47,9 +46,8 @@ LoginMod::LoginMod(
     , dvc_manager(false)
     , dc_state(DCState::Wait)
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
@@ -66,18 +64,6 @@ LoginMod::LoginMod(
     , vars(vars)
 {
     this->screen.set_wh(front_width, front_height);
-    if (this->rail_enabled) {
-        this->graphic_event = graphic_events_.create_action_executor(session_reactor)
-        .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (!this->rail_client_execute) {
-                this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height, this->font(),
-                    this->is_resizing_hosted_desktop_allowed());
-
-                this->dvc_manager.ready(this->front);
-            }
-        }));
-    }
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
             static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));
@@ -98,18 +84,25 @@ LoginMod::LoginMod(
 
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         this->timeout_timer = timer_events_
-        .create_timer_executor(session_reactor)
+        .create_timer_executor(time_base)
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
         .on_action([this](JLN_TIMER_CTX ctx){
             this->set_mod_signal(BACK_EVENT_STOP);
             return ctx.terminate();
         });
     }
+}
 
-    this->started_copy_past_event = graphic_events_.create_action_executor(session_reactor)
-    .on_action(jln::one_shot([this](gdi::GraphicApi&){
-        this->copy_paste.ready(this->front);
-    }));
+
+void LoginMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute) {
+        this->rail_client_execute.ready(
+                    *this, this->front_width, this->front_height,
+                    this->font(), this->is_resizing_hosted_desktop_allowed());
+        this->dvc_manager.ready(this->front);
+    }
+    this->copy_paste.ready(this->front);
 }
 
 LoginMod::~LoginMod()
@@ -155,7 +148,7 @@ void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                     }
                     else {
                         this->first_click_down_timer = timer_events_
-                        .create_timer_executor(this->session_reactor)
+                        .create_timer_executor(this->time_base)
                         .set_delay(std::chrono::seconds(1))
                         .on_action(jln::one_shot([this]{
                             this->dc_state = DCState::Wait;

@@ -132,8 +132,8 @@ bool file_equals(char const* filename1, char const* filename2)
     char buffer2[2048];
 
     for (;;){
-        auto const buf1 = f1.read(make_array_view(buffer1));
-        auto const buf2 = f2.read(make_array_view(buffer2));
+        auto const buf1 = f1.read(make_writable_array_view(buffer1));
+        auto const buf2 = f2.read(make_writable_array_view(buffer2));
         LOG(LOG_INFO, "nb1=%zu nb2=%zu", buf1.size(), buf2.size());
 
         if (buf1.size() != buf2.size()

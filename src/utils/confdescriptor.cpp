@@ -106,9 +106,9 @@ private:
 struct Loader : public ConfigurationHolder
 {
     char const * section_name;
-    array_view<Entry const> entries;
+    array_view<Entry> entries;
 
-    Loader(char const * section_name, array_view<Entry const> entries)
+    Loader(char const * section_name, array_view<Entry> entries)
         : section_name(section_name)
         , entries(entries)
     {}

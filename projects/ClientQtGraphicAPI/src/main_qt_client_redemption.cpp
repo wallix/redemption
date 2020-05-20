@@ -48,7 +48,7 @@ private:
 
 public:
     ClientRedemptionQt(
-        SessionReactor & session_reactor,
+        TimeBase & time_base,
         TopFdContainer& fd_events,
         GraphicFdContainer& graphic_fd_events,
         TimerContainer & timer_events,
@@ -56,14 +56,14 @@ public:
         GraphicTimerContainer & graphic_timer_events,
         ClientRedemptionConfig & config)
     : ClientRedemption(
-        session_reactor, fd_events, graphic_fd_events, timer_events,
+        time_base, fd_events, graphic_fd_events, timer_events,
         graphic_events, graphic_timer_events, config)
     , qt_graphic(&this->_callback, &this->config)
     {
         this->qt_sound = new QtOutputSound(
             this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
         this->qt_socket_listener = new QtInputSocket(
-            session_reactor, fd_events, graphic_fd_events, timer_events,
+            time_base, fd_events, graphic_fd_events, timer_events,
             graphic_events, graphic_timer_events, this, this->qt_graphic.get_static_qwidget());
         this->qt_clipboard = new QtInputOutputClipboard(
             &this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
@@ -119,7 +119,7 @@ public:
             }
         }
 
-        this->session_reactor.set_current_time(tvtime());
+        this->time_base.set_current_time(tvtime());
 
         ClientRedemption::connect(ip, name, pwd, port);
 
@@ -346,7 +346,7 @@ int main(int argc, char** argv)
     set_exception_handler_pretty_message();
 
     Inifile ini;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events;
     GraphicFdContainer graphic_fd_events;
     TimerContainer timer_events;
@@ -362,7 +362,7 @@ int main(int argc, char** argv)
     ScopedSslInit scoped_init;
 
     ClientRedemptionQt client_qt(
-        session_reactor, fd_events, graphic_fd_events, timer_events,
+        time_base, fd_events, graphic_fd_events, timer_events,
         graphic_events, graphic_timer_events, config);
 
     app.exec();

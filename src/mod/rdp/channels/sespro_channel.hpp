@@ -56,7 +56,8 @@ enum {
 
 // Session Probe Options
 enum {
-    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
+    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001,
+    OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002
 };
 
 
@@ -108,7 +109,7 @@ private:
 
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
     TimerContainer& timer_events_;
     GraphicEventContainer & graphic_events_;
     TimerPtr session_probe_timer;
@@ -125,7 +126,7 @@ private:
 
     void log6(LogId id, KVList kv_list)
     {
-        this->report_message.log6(id, this->session_reactor.get_current_time(), kv_list);
+        this->report_message.log6(id, this->time_base.get_current_time(), kv_list);
 
         if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
             std::string msg;
@@ -160,7 +161,7 @@ public:
     };
 
     explicit SessionProbeVirtualChannel(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
         TimerContainer& timer_events_,
         GraphicEventContainer & graphic_events_,
         VirtualChannelDataSender* to_server_sender_,
@@ -188,7 +189,7 @@ public:
     , authentifier(authentifier)
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , timer_events_(timer_events_)
     , graphic_events_(graphic_events_)
     {
@@ -221,7 +222,7 @@ public:
 
             if (!this->session_probe_launch_timeout_timer_started) {
                 this->session_probe_timer = this->timer_events_
-                    .create_timer_executor(this->session_reactor)
+                    .create_timer_executor(this->time_base)
                     .set_delay(this->sespro_params.effective_launch_timeout)
                     .on_action([this, &sesman](JLN_TIMER_CTX ctx){
                         this->process_event_launch(sesman);
@@ -237,7 +238,7 @@ public:
         this->launch_aborted = true;
 
         this->session_probe_timer = this->timer_events_
-            .create_timer_executor(this->session_reactor)
+            .create_timer_executor(this->time_base)
             .set_delay(this->sespro_params.launcher_abort_delay)
             .on_action(jln::one_shot([this, &sesman](){
                 this->process_event_launch(sesman);
@@ -388,7 +389,7 @@ private:
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
-                        this->freeze_mod_screen = this->graphic_events_.create_action_executor(this->session_reactor, mod.get_dim())
+                        this->freeze_mod_screen = this->graphic_events_.create_action_executor(this->time_base, mod.get_dim())
                         .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
                             gdi_freeze_screen(drawable, dim);
                         }));
@@ -570,7 +571,7 @@ public:
                             "Session Probe keep alive requested");
 
                     this->session_probe_timer = this->timer_events_
-                        .create_timer_executor(this->session_reactor)
+                        .create_timer_executor(this->time_base)
                         .set_delay(this->sespro_params.keepalive_timeout)
                         .on_action([this](auto ctx){
                             this->process_event_ready();
@@ -602,6 +603,10 @@ public:
 
                     if (this->sespro_params.ignore_ui_less_processes_during_end_of_session_check) {
                         options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
+                    }
+
+                    if (this->sespro_params.update_disabled_features) {
+                        options |= OPTION_UPDATE_DISABLED_FEATURES;
                     }
 
                     if (options)
@@ -1400,7 +1405,7 @@ public:
                             KVLog("text"_av,         parameters_[0]),
                             KVLog("class_name"_av,   parameters_[1]),
                             KVLog("command_line"_av, (parameters_.size() == 2)
-                                ? array_view_const_char{} : parameters_[2]),
+                                ? chars_view{} : parameters_[2]),
                         });
                     }
                     else {

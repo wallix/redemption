@@ -102,11 +102,11 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx;
     const bool fastpath_support = true;
     NullReportMessage report_message;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TimerContainer timer_events_;
     GraphicEventContainer graphic_events_;
     SesmanInterface sesman(ini);
-    FrontWrapper front(session_reactor, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
+    FrontWrapper front(time_base, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
  
@@ -117,8 +117,11 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.is_up_and_running());
-    TestCardMod mod(session_reactor, graphic_events_, front.screen_info().width, front.screen_info().height, global_font());
-    mod.draw_event(front);
+
+    GdForwarder<FrontWrapper> gd_forwarder(front);
+    TestCardMod mod(gd_forwarder, front.screen_info().width, front.screen_info().height, global_font());
+    mod.init();
+//    mod.draw_event(front);
 
     // Uncomment the code block below to generate testing data.
     //sleep(5);

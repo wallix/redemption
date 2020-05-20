@@ -74,7 +74,7 @@ public:
 
             char finalPathBuffer[256];
             char const* finalPath = captureTemplate.format(
-                make_array_view(finalPathBuffer), connection_counter);
+                make_writable_array_view(finalPathBuffer), connection_counter);
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
             TimeSystem timeobj;
             RecorderFile outFile(timeobj, finalPath);
@@ -94,7 +94,7 @@ public:
                 // but as it is an array view the adress of the array that will contain the key is already ok
                 // henceforth it should work anyway... put the call in the right place after inlining conn.run() and splitting front_step1()
                 uint8_t front_public_key[1024] = {};
-                array_view_u8 front_public_key_av;
+                writable_u8_array_view front_public_key_av;
                 // TODO: move run() code here (as it is not testable putting it in ProxyRecorder instance is troublesome)
 
                 fd_set rset;
@@ -136,9 +136,9 @@ public:
                             conn.frontBuffer.load_data(frontConn);
                             if (conn.frontBuffer.next(TpduBuffer::PDU)) {
                                 conn.front_step1(frontConn);
-                                array_view_const_u8 key = front_nla_tee_trans.get_public_key();
+                                u8_array_view key = front_nla_tee_trans.get_public_key();
                                 memcpy(front_public_key, key.data(), key.size());
-                                front_public_key_av = array_view(front_public_key, key.size());
+                                front_public_key_av = writable_array_view(front_public_key, key.size());
                                 conn.back_step1(front_public_key_av, backConn, this->nla_username, this->nla_password);
                             }
                         }
@@ -179,7 +179,7 @@ public:
                             backConn.set_trace_send(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (FRONT TO BACK)");
                             uint8_t tmpBuffer[0xffff];
-                            size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
+                            size_t ret = frontConn.partial_read(make_writable_array_view(tmpBuffer));
                             if (ret > 0) {
                                 outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
                                 backConn.send(tmpBuffer, ret);
@@ -190,7 +190,7 @@ public:
                             backConn.set_trace_receive(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (BACK to FRONT)");
                             uint8_t tmpBuffer[0xffff];
-                            size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
+                            size_t ret = backConn.partial_read(make_writable_array_view(tmpBuffer));
                             if (ret > 0) {
                                 frontConn.send(tmpBuffer, ret);
                                 outFile.write_packet(PacketType::DataIn, {tmpBuffer, ret});
@@ -240,7 +240,7 @@ private:
             }
         }
 
-        char const* format(array_view_char path, int counter) const
+        char const* format(writable_chars_view path, int counter) const
         {
             if (endDigit) {
                 std::snprintf(path.data(), path.size(), "%.*s%04d%s",

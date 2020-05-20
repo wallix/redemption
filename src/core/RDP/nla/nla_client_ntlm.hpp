@@ -107,7 +107,7 @@ public:
                bytes_view domain,
                uint8_t * pass,
                const char * hostname,
-               array_view_const_u8 public_key,
+               u8_array_view public_key,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
@@ -327,8 +327,8 @@ public:
                 // data_in [signature][data_buffer]
 
                 const unsigned recv_seqno = 0;
-                array_view_const_u8 pubkeyAuth_payload = {ts_request.pubKeyAuth.data()+cbMaxSignature, ts_request.pubKeyAuth.size()-cbMaxSignature};
-                array_view_const_u8 pubkeyAuth_signature = {ts_request.pubKeyAuth.data(),cbMaxSignature};
+                u8_array_view pubkeyAuth_payload = {ts_request.pubKeyAuth.data()+cbMaxSignature, ts_request.pubKeyAuth.size()-cbMaxSignature};
+                u8_array_view pubkeyAuth_signature = {ts_request.pubKeyAuth.data(),cbMaxSignature};
 
                 SslRC4 RecvRc4Seal {};
                 RecvRc4Seal.set_key(::Md5(this->ExportedSessionKey, "session key to server-to-client sealing key magic constant\0"_av));
@@ -351,7 +351,7 @@ public:
 
                 if (ts_request.use_version < 5) {
                     // if we are client and protocol is 2,3,4, then get the public key minus one
-                    ::ap_integer_decrement_le(pubkeyAuth_encrypted_payload);
+                    ::ap_integer_decrement_le(make_writable_array_view(pubkeyAuth_encrypted_payload));
                     if (!are_buffer_equal(this->PublicKey, pubkeyAuth_encrypted_payload)){
                         LOG(LOG_ERR, "Server's public key echo signature verification failed");
                         LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);

@@ -117,8 +117,8 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-    SessionReactor session_reactor;
-    auto mod = new_mod_rdp(t, session_reactor, front, info,
+    TimeBase time_base;
+    auto mod = new_mod_rdp(t, time_base, front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
     RED_CHECK_EQUAL(front.info.width, 800);
     RED_CHECK_EQUAL(front.info.height, 600);
 
-    execute_negociate_mod(session_reactor, *mod, front);
+    execute_negociate_mod(time_base, *mod, front);
     for (int count = 0; count < 25; ++count) {
         LOG(LOG_INFO, "===================> count = %d", count);
         auto fd_is_set = [](int fd, auto& e){ return true; };
@@ -235,7 +235,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     NullLicenseStore license_store;
-    SessionReactor session_reactor;
+    TimeBase time_base;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
@@ -245,7 +245,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
 
-    auto mod = new_mod_rdp(t, ini, session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front.gd(), front, info,
+    auto mod = new_mod_rdp(t, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front.gd(), front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
         nullptr, nullptr, mod_rdp_factory);
@@ -254,7 +254,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
     // Comment the code block below to generate testing data.
-    execute_negociate_mod(session_reactor, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd());
+    execute_negociate_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd());
     for (int count = 0; count < 38; ++count) {
         auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
         graphic_events_.exec_action(front.gd());
@@ -262,7 +262,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     }
 
    
-//    auto const end_tv = session_reactor.get_current_time();
+//    auto const end_tv = time_base.get_current_time();
 //    timer_events_.exec_timer(end_tv);
 //    fd_events_.exec_timeout(end_tv);
 //    graphic_timer_events_.exec_timer(end_tv, front.gd());
@@ -347,8 +347,8 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-    SessionReactor session_reactor;
-    auto mod = new_mod_rdp(t, session_reactor, front, info,
+    TimeBase time_base;
+    auto mod = new_mod_rdp(t, time_base, front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
@@ -358,7 +358,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
     RED_CHECK_EQUAL(front.info.width, 800);
     RED_CHECK_EQUAL(front.info.height, 600);
 
-    execute_negociate_mod(session_reactor, *mod, front);
+    execute_negociate_mod(time_base, *mod, front);
     for (int count = 0; count < 25; ++count) {
         LOG(LOG_INFO, "===================> count = %d", count);
         auto fd_is_set = [](int fd, auto& e){ return true; };
@@ -436,8 +436,8 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-    SessionReactor session_reactor;
-    auto mod = new_mod_rdp(t, session_reactor, front, info,
+    TimeBase time_base;
+    auto mod = new_mod_rdp(t, time_base, front, info,
         ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
@@ -447,7 +447,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     RED_CHECK_EQUAL(front.info.width, 800);
     RED_CHECK_EQUAL(front.info.height, 600);
 
-    execute_negociate_mod(session_reactor, *mod, front);
+    execute_negociate_mod(time_base, *mod, front);
     for (int count = 0; count < 25; ++count) {
         LOG(LOG_INFO, "===================> count = %d", count);
         auto fd_is_set = [](int fd, auto& e){ return true; };

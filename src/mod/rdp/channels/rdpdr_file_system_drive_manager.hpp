@@ -1664,7 +1664,7 @@ public:
             this->upper_name_[0] = 0;
         }
 
-        DriveName(array_view_const_char name, bool reserved = false) noexcept
+        DriveName(chars_view name, bool reserved = false) noexcept
         : read_only_(false)
         {
             if (!name.empty() && name[0] == '*') {
@@ -1703,7 +1703,7 @@ public:
         }
 
         DriveName(std::string_view name, bool reserved = false) noexcept
-        : DriveName(array_view_const_char{name}, reserved)
+        : DriveName(chars_view{name}, reserved)
         {}
 
         [[nodiscard]] char const* upper_name() const noexcept

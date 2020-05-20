@@ -89,7 +89,7 @@ namespace Mwrm3
         view_type mem;                                               \
     }
 
-#define MWRM3_STRONG_STR(name) MWRM3_STRONG_VIEW(name, array_view_const_char, str)
+#define MWRM3_STRONG_STR(name) MWRM3_STRONG_VIEW(name, chars_view, str)
 #define MWRM3_STRONG_BYTES(name) MWRM3_STRONG_VIEW(name, bytes_view, bytes)
 #define MWRM3_STRONG_OPTIONAL_STATIC_BYTES(name, len) \
     MWRM3_STRONG_OPTIONAL_STATIC_VIEW(name, bytes_view, bytes, len)
@@ -436,7 +436,7 @@ namespace Mwrm3
 
             struct u16str_data : u16bytes_data
             {
-                array_view_const_char value() const noexcept
+                chars_view value() const noexcept
                 {
                     return u16bytes_data::value().as_chars();
                 }
@@ -537,7 +537,7 @@ namespace Mwrm3
 
             struct u16str : u16bytes
             {
-                array_view_const_char value() const noexcept
+                chars_view value() const noexcept
                 {
                     return u16bytes::value().as_chars();
                 }

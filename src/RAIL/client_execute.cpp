@@ -52,7 +52,7 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
 ClientExecute::ClientExecute(
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
     gdi::GraphicApi & drawable, FrontAPI & front,
     WindowListCaps const & window_list_caps, bool verbose)
@@ -62,7 +62,7 @@ ClientExecute::ClientExecute(
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , verbose(verbose)
-, session_reactor(session_reactor)
+, time_base(time_base)
 , timer_events_(timer_events_)
 {
 }
@@ -753,7 +753,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     this->button_1_down = this->pressed_mouse_button;
 
                     this->button_1_down_timer = this->timer_events_
-                    .create_timer_executor(this->session_reactor)
+                    .create_timer_executor(this->time_base)
                     .set_delay(std::chrono::milliseconds(400))
                     .on_action(jln::one_shot([this]{
                         assert(bool(*this));
@@ -2979,7 +2979,7 @@ void ClientExecute::destroy_auxiliary_window()
     this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 }
 
-void ClientExecute::set_target_info(array_view_const_char ti)
+void ClientExecute::set_target_info(chars_view ti)
 {
     str_append(this->window_title, ti, (ti.empty() ? "" : " - "), INTERNAL_MODULE_WINDOW_TITLE);
 }

@@ -30,7 +30,7 @@
 #endif
 
 mod_vnc::mod_vnc( Transport & t
-           , SessionReactor& session_reactor
+           , TimeBase& time_base
            , GraphicFdContainer & graphic_fd_events_
            , TimerContainer & timer_events_
            , GraphicEventContainer & graphic_events_
@@ -71,7 +71,7 @@ mod_vnc::mod_vnc( Transport & t
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
     , graphic_events_(graphic_events_)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
@@ -93,7 +93,7 @@ mod_vnc::mod_vnc( Transport & t
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-    this->fd_event = graphic_fd_events_.create_top_executor(session_reactor, this->t.get_fd())
+    this->fd_event = graphic_fd_events_.create_top_executor(time_base, this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
         .on_action([this, &sesman](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
@@ -164,7 +164,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface &
 
     this->report_message.log6(
         LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-        this->session_reactor.get_current_time(),
+        this->time_base.get_current_time(),
         {}
     );
 
@@ -417,7 +417,9 @@ void mod_vnc::update_screen(Rect r, uint8_t incr) {
 }
 
 void mod_vnc::rdp_input_invalidate(Rect r) {
+    LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate");
     if (this->state != UP_AND_RUNNING) {
+        LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate not up and running");
         return;
     }
 
@@ -425,6 +427,9 @@ void mod_vnc::rdp_input_invalidate(Rect r) {
 
     if (!r_.isempty()) {
         this->update_screen(r_, 0);
+    }
+    else {
+        LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate empty rect");
     }
 }
 
@@ -452,7 +457,7 @@ bool mod_vnc::doTlsSwitch()
 
 void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
 {
-    LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
+    LOG_IF(true||bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
     if (this->tlsSwitch) {
         if (this->doTlsSwitch()) {
@@ -1013,7 +1018,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
             // sec result
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
+            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                 if (status) {
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok");
                 }
@@ -1047,7 +1052,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         {
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
+            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                 if (status) {
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok");
                 }
@@ -1067,7 +1072,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         {
             LOG(LOG_ERR, "VNC INVALID Auth");
 
-            if (!this->invalid_auth_ctx.run(this->server_data_buf, [](array_view_u8 av){
+            if (!this->invalid_auth_ctx.run(this->server_data_buf, [](bytes_view av){
                 hexdump_c(av);
             })) {
                 return false;
@@ -1379,13 +1384,13 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
         case FrontAPI::ResizeResult::fail:
             // resizing failed
             // thow an Error ?
-            LOG(LOG_WARNING, "Older RDP client can't resize resolution from server, disconnecting");
+            LOG(LOG_ERR, "Older RDP client can't resize resolution from server, disconnecting");
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
         return true;
 
     case WAIT_CLIENT_UP_AND_RUNNING:
-        LOG(LOG_WARNING, "Waiting for client become up and running");
+        LOG(LOG_INFO, "Waiting for client become up and running");
         break;
 
     default:
@@ -1657,7 +1662,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     ? RDPECLIP::CF_UNICODETEXT
                     : RDPECLIP::CF_TEXT;
 
-                const microseconds usnow        = ustime(this->session_reactor.get_current_time());
+                const microseconds usnow        = ustime(this->time_base.get_current_time());
                 const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                 //LOG(LOG_INFO,
                 //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
@@ -2020,10 +2025,11 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 
 void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
 {
+    LOG(LOG_INFO, "mod_vnc::rdp_gdi_up_and_running");
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->session_reactor)
+        this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->time_base)
         .on_action([this](auto ctx, gdi::GraphicApi & drawable){
             this->initial_clear_screen(drawable, this->sesman);
             return ctx.terminate();
@@ -2054,7 +2060,7 @@ void mod_vnc::draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawab
 
 void mod_vnc::disconnect()
 {
-    uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
+    uint64_t seconds = this->time_base.get_current_time().tv_sec - this->beginning;
     LOG(LOG_INFO, "Client disconnect from VNC module");
 
     char duration_str[128];
@@ -2065,7 +2071,7 @@ void mod_vnc::disconnect()
 
     this->report_message.log6(
         LogId::SESSION_DISCONNECTION,
-        this->session_reactor.get_current_time(), {
+        this->time_base.get_current_time(), {
         KVLog("duration"_av, {duration_str, len}),
     });
 

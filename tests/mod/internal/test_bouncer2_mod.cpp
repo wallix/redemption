@@ -35,8 +35,8 @@ int main()
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    SessionReactor session_reactor;
+    TimeBase time_base;
     GraphicTimerContainer graphic_timer_events_;
-    Bouncer2Mod d(session_reactor, graphic_timer_events_, sesman, front, screen_info.width, screen_info.height);
+    Bouncer2Mod d(time_base, graphic_timer_events_, sesman, front, screen_info.width, screen_info.height);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

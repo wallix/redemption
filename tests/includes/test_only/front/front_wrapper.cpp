@@ -143,7 +143,7 @@ CHANNELS::ChannelDefArray & FrontWrapper::get_mutable_channel_list()
 }
 
 FrontWrapper::FrontWrapper(
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
     TimerContainer& timer_events_,
     SesmanInterface & sesman,
     Transport & trans,
@@ -154,7 +154,7 @@ FrontWrapper::FrontWrapper(
     bool fp_support, // If true, fast-path must be supported
     std::string server_capabilities_filename)
 : d(new D{FrontWrapper::D::MyFront{
-    session_reactor,
+    time_base,
     timer_events_,
     sesman,
     trans, gen, ini, cctx, report_message,

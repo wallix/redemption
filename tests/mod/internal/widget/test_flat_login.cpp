@@ -29,6 +29,9 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+// uncomment to use dump_png24()
+//#include "utils/png.hpp"
+
 constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
 
 RED_AUTO_TEST_CASE(TraceFlatLogin)
@@ -274,4 +277,47 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
     // drawable.save_to_png("flat_login4.png");
 
     RED_CHECK_SIG(drawable, "\x20\x58\xbc\x63\xe4\x07\x75\xea\x32\xec\x7a\x1a\x92\xdd\x2a\xa9\xfa\x53\x89\xb9");
+}
+
+RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
+{
+    TestGraphic drawable(800, 600);
+    WidgetScreen parent(drawable,
+                        800,
+                        600,
+                        global_font_deja_vu_14(),
+                        nullptr,
+                        Theme { });
+    NotifyApi *notifier = nullptr;
+    WidgetFlatButton *extra_button = nullptr;    
+    Theme colors;
+
+    colors.global.logo = true;
+    colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
+    
+    FlatLogin flat_login(drawable,
+                         0,
+                         0,
+                         parent.cx(),
+                         parent.cy(),
+                         parent,
+                         notifier,
+                         "test1",
+                         "rec",
+                         "rec",
+                         "Login",
+                         "Password",
+                         "",
+                         LOGON_MESSAGE,
+                         extra_button,
+                         global_font_deja_vu_14(),
+                         Translator { },
+                         colors);
+
+    flat_login.rdp_input_invalidate(flat_login.get_rect());
+
+    // uncomment to see result in png file
+    //dump_png24("flat_login9.png", drawable, true);
+
+    RED_CHECK_SIG(drawable, "\x0f\x4a\x10\x33\x9b\xf4\xdd\x96\x67\x7c\xf0\x0e\x21\x14\xb7\x21\x9f\x69\x97\xa4");
 }

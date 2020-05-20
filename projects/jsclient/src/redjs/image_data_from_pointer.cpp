@@ -28,7 +28,7 @@ namespace redjs
 
 namespace
 {
-    bool is_empty_mask(array_view_const_u8 av) noexcept
+    bool is_empty_mask(u8_array_view av) noexcept
     {
         for (uint8_t x : av) {
             if (x != 0xff) {

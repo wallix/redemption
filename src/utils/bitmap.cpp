@@ -281,7 +281,7 @@ size_t Bitmap::bmp_size() const noexcept
     return this->data_bitmap->bmp_size();
 }
 
-array_view<uint8_t const> Bitmap::data_compressed() const noexcept
+array_view<uint8_t> Bitmap::data_compressed() const noexcept
 {
     return {this->data_bitmap->compressed_data(), this->data_bitmap->compressed_size()};
 }

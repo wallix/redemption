@@ -64,7 +64,7 @@ RecorderTransport::RecorderTransport(Transport& trans, TimeObj& timeobj, char co
 }
 
 
-void RecorderTransport::add_info(writable_bytes_view info)
+void RecorderTransport::add_info(bytes_view info)
 {
     this->out.write_packet(RecorderFile::PacketType::Info, info);
 }
@@ -84,7 +84,7 @@ void RecorderTransport::enable_server_tls(const char * certificate_password, con
     this->out.write_packet(RecorderFile::PacketType::ServerCert, this->trans.get_public_key());
 }
 
-array_view_const_u8 RecorderTransport::get_public_key() const
+u8_array_view RecorderTransport::get_public_key() const
 {
     return this->trans.get_public_key();
 }
@@ -150,7 +150,7 @@ RecorderTransportHeader read_recorder_transport_header(Transport& trans)
     char data[13];
     InStream headers_stream(data);
 
-    trans.recv_boom(make_array_view(data));
+    trans.recv_boom(make_writable_array_view(data));
 
     return {
         RecorderFile::PacketType(headers_stream.in_uint8()),

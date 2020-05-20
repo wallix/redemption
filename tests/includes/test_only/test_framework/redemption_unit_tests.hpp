@@ -327,9 +327,9 @@ namespace redemption_unit_test__
     {
         BytesView(bytes_view bytes) noexcept : bytes(bytes) {}
         BytesView(writable_bytes_view bytes) noexcept : bytes(bytes) {}
-        BytesView(array_view_const_char bytes) noexcept : bytes(bytes) {}
+        BytesView(chars_view bytes) noexcept : bytes(bytes) {}
+        BytesView(u8_array_view bytes) noexcept : bytes(bytes) {}
         // BytesView(array_view_const_s8 bytes) noexcept : bytes(bytes) {}
-        BytesView(array_view_const_u8 bytes) noexcept : bytes(bytes) {}
 
         bytes_view bytes;
     };

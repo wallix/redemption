@@ -190,6 +190,14 @@ struct ModRDPParams
 
     bool accept_monitor_layout_change_if_capture_is_not_started = true;
 
+    struct DynamicChannelsParams
+    {
+        const char * allowed_channels = "*";
+        const char * denied_channels  = "";
+    };
+
+    DynamicChannelsParams dynamic_channels_params;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -214,7 +222,7 @@ struct ModRDPParams
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
         , close_box_extra_message_ref(close_box_extra_message_ref)
         , verbose(verbose)
-    {}
+    { }
 
     void log() const
     {
@@ -281,6 +289,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.end_of_session_check_delay_time);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.ignore_ui_less_processes_during_end_of_session_check);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.update_disabled_features);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.childless_window_as_unidentified_input_field);
 
@@ -411,6 +420,9 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_license_store);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             accept_monitor_layout_change_if_capture_is_not_started);
+
+        RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
+        RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);
