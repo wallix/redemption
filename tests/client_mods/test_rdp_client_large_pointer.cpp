@@ -35,7 +35,6 @@
 #include "utils/theme.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
-#include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 #include <chrono>
@@ -48,9 +47,6 @@
 
 // Uncomment the code block below to generate testing data.
 //#include <openssl/ssl.h>
-
-// Comment ++ in execute_negociate_mod method in includes/test_only/session_reactor_executor.hpp to generate testing data.
-
 
 RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 {

@@ -38,7 +38,6 @@
 #include "system/linux/system/tls_context.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
-#include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 #include "transport/socket_transport.hpp"
