@@ -100,6 +100,8 @@ template class Inifile::Field<cfg::file_verification::enable_down>;
 template class Inifile::Field<cfg::file_verification::clipboard_text_up>;
 template class Inifile::Field<cfg::file_verification::clipboard_text_down>;
 template class Inifile::Field<cfg::file_verification::log_if_accepted>;
+template class Inifile::Field<cfg::file_verification::verify_before_transfer>;
+template class Inifile::Field<cfg::file_verification::max_file_size_rejected>;
 template class Inifile::Field<cfg::file_storage::store_file>;
 template class Inifile::Field<cfg::mod_replay::replay_on_loop>;
 template class Inifile::Field<cfg::video::hash_path>;

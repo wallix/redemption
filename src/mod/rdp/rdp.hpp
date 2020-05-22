@@ -461,7 +461,9 @@ public:
     {}
 
     void DLP_antivirus_check_channels_files() {
-        this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
+        if (this->clipboard_virtual_channel) {
+            this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
+        }
     }
 
     void init_remote_program_and_session_probe(

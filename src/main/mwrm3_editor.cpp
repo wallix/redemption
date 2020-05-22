@@ -631,7 +631,7 @@ int main(int ac, char** av)
     {
         std::cerr << "Usage: mwrm3_editor [file.mwrm3]\n";
         std::cerr << "Example:\n";
-        std::cerr << R"(echo -e "1\n1\n1\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | mwrm3_editor | mwrm3_editor /dev/stdin))";
+        std::cerr << R"(echo -e "1\n1\n1\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | mwrm3_editor | mwrm3_editor /dev/stdin)";
         std::cerr << "\n";
         return 1;
     }

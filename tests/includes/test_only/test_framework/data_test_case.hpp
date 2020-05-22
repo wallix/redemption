@@ -123,17 +123,18 @@ namespace redemption_unit_test__
     wrap_data_test(T, char const*) -> wrap_data_test<T>;
 
     /*
-    void wrap_data_test_print_elem(std::ostream& out, ::ut::flagged_bytes_view const& x, int)
+    void wrap_data_test_print_elem(std::ostream& out, ::ut::flagged_bytes_view const& v, int)
     {
-        put_mem(out, x, x.min_len);
+        put_view(v.size(), out, v);
     }
     */
 
     template<class View>
     auto wrap_data_test_print_elem(std::ostream& out, View v, int)
-    -> decltype(void(bytes_view{v}))
+    -> decltype(void(ut::flagged_bytes_view{v}))
     {
-        put_mem(out, v, 3);
+        ut::flagged_bytes_view flagged_v{v};
+        put_view(v.size(), out, flagged_v);
     }
 
     template<class T>

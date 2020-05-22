@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(201);
+constexpr authid_t MAX_AUTHID = authid_t(203);
 
 constexpr chars_view const authstr[] = {
     "capture_chunk"_av,
@@ -113,6 +113,8 @@ constexpr chars_view const authstr[] = {
     "file_verification:clipboard_text_up"_av,
     "file_verification:clipboard_text_down"_av,
     "file_verification:log_if_accepted"_av,
+    "file_verification:verify_before_transfer"_av,
+    "file_verification:max_file_size_rejected"_av,
     "file_storage:store_file"_av,
     "replay_on_loop"_av,
     "hash_path"_av,

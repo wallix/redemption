@@ -15,7 +15,7 @@ exception=$esc'1;37m'
 exec=$esc'34m'
 msg=$esc'1m'
 
-sed -E "$@" -e '
+sed -uE "$@" -e '
 s/^\x1b\[0;39;49m//;tx
 /^\x1b/n
 :x
