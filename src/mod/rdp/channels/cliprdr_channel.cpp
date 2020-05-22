@@ -1414,9 +1414,10 @@ struct ClipboardVirtualChannel::D
                                 file_contents.size() - offset,
                                 file_contents_request_pdu.cbRequested());
 
+                            using Views = bytes_view[];
                             send_response_datas(
                                 sender, stream_id,
-                                { file_contents.subarray(offset, len) });
+                                Views{ file_contents.subarray(offset, len) });
 
                             return false;
                         }
@@ -1861,9 +1862,10 @@ struct ClipboardVirtualChannel::D
                         auto file_contents = bytes_view(file_rng.file_contents)
                             .last(known_data_len);
 
+                        using Views = bytes_view[];
                         file_rng.response_size = send_response_datas_with_lengths_and_last_flag(
                             sender, file_rng.stream_id,
-                            { file_contents, in_stream.remaining_bytes() },
+                            Views{ file_contents, in_stream.remaining_bytes() },
                             checked_int(total_length + file_contents.size()),
                             checked_int(in_header.dataLen() + file_contents.size()),
                             flags & CHANNELS::CHANNEL_FLAG_LAST);
