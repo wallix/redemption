@@ -212,24 +212,18 @@ namespace
     };
 }
 
-AclSerializer::AclSerializer(
-    Inifile & ini, time_t acl_start_time, Transport & auth_trans,
-    CryptoContext & cctx, Random & rnd, Fstat & fstat, Verbose verbose)
+AclSerializer::AclSerializer(Inifile & ini)
 : ini(ini)
-, auth_trans(auth_trans)
 , session_id{}
-, log_file(cctx, rnd, fstat, report_error_from_reporter(*this))
 , remote_answer(false)
-, verbose(verbose)
+, verbose(to_verbose_flags(ini.get<cfg::debug::auth>()))
 {
     std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
-    LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "auth::AclSerializer");
 }
 
 AclSerializer::~AclSerializer()
 {
-    this->auth_trans.disconnect();
-    LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "auth::~AclSerializer");
+    this->auth_trans->disconnect();
 }
 
 void AclSerializer::report(const char * reason, const char * message)
@@ -430,7 +424,7 @@ void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
     buffer_info.reserve(kv_list.size() * 50 + 30);
 
     time_t const time_now = time.tv_sec;
-    this->log_file.write_line(time_now, log_format_set_info(buffer_info, id, kv_list));
+    this->log_file->write_line(time_now, log_format_set_info(buffer_info, id, kv_list));
 
     auto target_ip = [this]{
         char c = this->ini.get<cfg::context::target_host>()[0];
@@ -495,12 +489,12 @@ void AclSerializer::start_session_log()
     std::string basename = str_concat(filebase, ".log");
     record_path += basename;
     hash_path += basename;
-    this->log_file.open(record_path, hash_path, groupid, /*derivator=*/basename);
+    this->log_file->open(record_path, hash_path, groupid, /*derivator=*/basename);
 }
 
 void AclSerializer::close_session_log()
 {
-    this->log_file.close();
+    this->log_file->close();
 }
 
 namespace
@@ -654,7 +648,7 @@ namespace
 
 void AclSerializer::in_items()
 {
-    Reader reader(this->auth_trans, this->verbose);
+    Reader reader(*this->auth_trans, this->verbose);
     chars_view key;
 
     while (!(key = reader.key()).empty()) {
@@ -796,7 +790,7 @@ void AclSerializer::send_acl_data()
         auto const password_printing_mode = this->ini.get<cfg::debug::password>();
 
         try {
-            Buffers buffers(this->auth_trans, this->verbose);
+            Buffers buffers(*this->auth_trans, this->verbose);
 
             for (auto field : this->ini.get_fields_changed()) {
                 chars_view key = string_from_authid(field.authid());
@@ -833,23 +827,10 @@ void AclSerializer::send_acl_data()
 }
 
 
-Acl::Acl(
-    Inifile & ini, unique_fd client_sck, time_t now,
-    CryptoContext & cctx, Random & rnd, Fstat & fstat)
-: auth_trans(
-    "Authentifier", std::move(client_sck),
-    ini.get<cfg::globals::authfile>().c_str(), 0,
-    std::chrono::seconds(1),
-    to_verbose_flags(ini.get<cfg::debug::auth>() | (!strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") ? uint64_t(SocketTransport::Verbose::watchdog) : 0)))
-, acl_serial(
-    ini, now, this->auth_trans, cctx, rnd, fstat,
-    to_verbose_flags(ini.get<cfg::debug::auth>()))
-, keepalive(
-    ini.get<cfg::globals::keepalive_grace_delay>(),
-    to_verbose_flags(ini.get<cfg::debug::auth>()))
-, inactivity(
-    ini.get<cfg::globals::session_timeout>(),
-    now, to_verbose_flags(ini.get<cfg::debug::auth>()))
+Acl::Acl(Inifile & ini, time_t now)
+: acl_serial(nullptr)
+, keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
+, inactivity(ini.get<cfg::globals::session_timeout>(), now, to_verbose_flags(ini.get<cfg::debug::auth>()))
 {}
 
 time_t Acl::get_inactivity_timeout()
@@ -859,7 +840,7 @@ time_t Acl::get_inactivity_timeout()
 
 void Acl::update_inactivity_timeout()
 {
-    time_t conn_opts_inactivity_timeout = this->acl_serial.ini.get<cfg::globals::inactivity_timeout>().count();
+    time_t conn_opts_inactivity_timeout = this->acl_serial->ini.get<cfg::globals::inactivity_timeout>().count();
     if (conn_opts_inactivity_timeout > 0) {
         if (this->inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
             this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);

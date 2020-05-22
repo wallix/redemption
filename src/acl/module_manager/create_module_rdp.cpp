@@ -144,8 +144,8 @@ struct RdpData
 
 class ModRDPWithSocketAndMetrics final : public mod_api
 {
-    SocketTransport socket_transport;
 public:
+    SocketTransport socket_transport;
     ModRdpFactory rdp_factory;
     DispatchReportMessage dispatcher;
     mod_rdp mod;
@@ -226,14 +226,14 @@ public:
     , ini(ini)
     {
         this->mod_wrapper.target_info_is_shown = false;
-        this->mod_wrapper.set_mod_transport(&this->socket_transport);
+//        this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
     std::string module_name() override {return "RDP Mod With Socket And Metrics";}
 
     ~ModRDPWithSocketAndMetrics()
     {
-        this->mod_wrapper.set_mod_transport(nullptr);
+//        this->mod_wrapper.set_mod_transport(nullptr);
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
     }
@@ -859,9 +859,11 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         }
     }
 
+    auto tmp_psocket_transport = &(new_mod->socket_transport);
+
     if (!host_mod_in_widget) {
         auto mod = new_mod.release();
-        ModPack mod_pack{mod, &(mod->mod), mod->mod.get_windowing_api(), nullptr};
+        ModPack mod_pack{mod, &(mod->mod), mod->mod.get_windowing_api(), nullptr, false, false, tmp_psocket_transport};
         return mod_pack;
     }
 
@@ -894,6 +896,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     );
     host_mod->init();
 
-    ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod};
+    ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod, false, false, tmp_psocket_transport};
     return mod_pack;
 }

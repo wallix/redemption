@@ -50,8 +50,8 @@ struct ModVNCWithMetrics : public mod_vnc
 
 class ModWithSocketAndMetrics final : public mod_api
 {
-    SocketTransport socket_transport;
 public:
+    SocketTransport socket_transport;
     ModVNCWithMetrics mod;
 private:
     ModWrapper & mod_wrapper;
@@ -100,12 +100,12 @@ public:
     , ini(ini)
     {
         this->mod_wrapper.target_info_is_shown = false;
-        this->mod_wrapper.set_mod_transport(&this->socket_transport);
+//        this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
     ~ModWithSocketAndMetrics()
     {
-        this->mod_wrapper.set_mod_transport(nullptr);
+//        this->mod_wrapper.set_mod_transport(nullptr);
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
     }
@@ -303,9 +303,11 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         ;
     }
 
+    auto tmp_psocket_transport = &(new_mod->socket_transport);
+
     if (!client_info.remote_program) {
         auto mod = new_mod.release();
-        return ModPack{mod, nullptr, nullptr, nullptr};
+        return ModPack{mod, nullptr, nullptr, nullptr, false, false, tmp_psocket_transport};
     }
 
     LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
@@ -336,5 +338,5 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         false
     );
     host_mod->init();
-    return ModPack{host_mod, nullptr, nullptr, host_mod};
+    return ModPack{host_mod, nullptr, nullptr, host_mod, false, false, tmp_psocket_transport};
 }

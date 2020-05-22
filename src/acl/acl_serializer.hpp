@@ -132,9 +132,9 @@ public:
     Inifile & ini;
 
 private:
-    Transport & auth_trans;
+    Transport * auth_trans;
     char session_id[256];
-    SessionLogFile log_file;
+    SessionLogFile * log_file;
 
 public:
     std::string manager_disconnect_reason;
@@ -156,11 +156,11 @@ public:
         arcsight  = 0x20,
     };
 
-    AclSerializer(
-        Inifile & ini, time_t acl_start_time, Transport & auth_trans,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat, Verbose verbose);
-
+    AclSerializer(Inifile & ini);
     ~AclSerializer();
+
+    void set_auth_trans(Transport * auth_trans) { this->auth_trans = auth_trans; }
+    void set_log_file(SessionLogFile * log_file) { this->log_file = log_file; }
 
     void report(const char * reason, const char * message) override;
 
@@ -177,24 +177,25 @@ public:
     void incoming();
 
     void send_acl_data();
-    
+
     void server_redirection_target();
 };
 
 
 struct Acl
 {
-    SocketTransport auth_trans;
-    AclSerializer   acl_serial;
+    AclSerializer  * acl_serial = nullptr;
     KeepAlive keepalive;
     Inactivity inactivity;
-
-    Acl(Inifile & ini, unique_fd client_sck, time_t now,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat);
-  
+    Acl(Inifile & ini, time_t now);
+    void set_acl_serial(AclSerializer * acl_serial) { this->acl_serial = acl_serial;}
     time_t get_inactivity_timeout();
-
     void update_inactivity_timeout();
-
-
+    bool is_connected() { return this->acl_serial == nullptr; }
+    void disconnect() {
+        if (this->acl_serial) {
+            delete this->acl_serial;
+            this->acl_serial = nullptr;
+        }
+    }
 };

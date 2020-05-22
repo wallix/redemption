@@ -218,7 +218,7 @@ public:
 public:
 
     bool target_info_is_shown = false;
-    bool show_osd_flag = false;
+    bool enable_osd = false;
 
     bool is_connected() const {
         return this->connected;
@@ -230,7 +230,7 @@ public:
 
     void last_disconnect()
     {
-        if (this->has_mod()) {
+        if (this->modi != &this->no_mod) {
             try {
                 this->get_mod()->disconnect();
             }
@@ -436,13 +436,9 @@ public:
         return this->modi;
     }
 
-    bool has_mod() const {
-        return (this->modi != &this->no_mod);
-    }
-
     void remove_mod()
     {
-        if (this->has_mod()){
+        if (this->modi != &this->no_mod){
             this->clear_osd_message();
             delete this->modi;
             this->modi = &this->no_mod;
@@ -453,7 +449,7 @@ public:
     }
 
     bool is_up_and_running() const {
-        return this->has_mod() && this->get_mod()->is_up_and_running();
+        return (this->modi != &this->no_mod) && this->get_mod()->is_up_and_running();
     }
 
     void set_mod_transport(SocketTransport * psocket_transport)
@@ -484,7 +480,8 @@ public:
         this->rdpapi = mod_pack.rdpapi;
         this->winapi = mod_pack.winapi;
         this->connected = mod_pack.connected;
-        this->show_osd_flag = mod_pack.enable_osd;
+        this->psocket_transport = mod_pack.psocket_transport;
+        this->enable_osd = mod_pack.enable_osd;
         this->modi->init();
     }
 
@@ -540,7 +537,7 @@ public:
             this->disable_osd();
             return;
         }
-        if (this->show_osd_flag) {
+        if (this->enable_osd) {
 
             if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
                 && keymap->top_kevent() == Keymap2::KEVENT_INSERT
@@ -553,7 +550,7 @@ public:
 
         this->get_mod()->rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-        if (this->show_osd_flag) {
+        if (this->enable_osd) {
             Inifile const& ini = this->ini;
 
             if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
@@ -607,7 +604,7 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (!this->try_input_mouse(device_flags, x, y, keymap)) {
-            if (this->show_osd_flag) {
+            if (this->enable_osd) {
                 if (this->try_input_mouse(device_flags, x, y, keymap)) {
                     this->target_info_is_shown = false;
                     return ;

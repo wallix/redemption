@@ -195,7 +195,7 @@ public:
                             this->front,
                             this->client_info.screen_info.width,
                             this->client_info.screen_info.height);
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_mod_replay() -> ModPack
@@ -222,7 +222,7 @@ public:
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_widget_test_mod() -> ModPack
@@ -236,7 +236,7 @@ public:
             this->client_info.screen_info.height,
             this->glyphs
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_test_card_mod() -> ModPack
@@ -248,7 +248,7 @@ public:
             this->glyphs,
             false
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_selector_mod() -> ModPack
@@ -269,7 +269,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_close_mod() -> ModPack
@@ -298,7 +298,7 @@ public:
             true,
             back_to_selector
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_close_mod_back_to_selector() -> ModPack
@@ -327,7 +327,7 @@ public:
             true,
             back_to_selector
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_interactive_target_mod() -> ModPack
@@ -347,7 +347,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_valid_message_mod() -> ModPack
@@ -373,7 +373,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_display_message_mod() -> ModPack
@@ -399,7 +399,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_dialog_challenge_mod() -> ModPack
@@ -432,7 +432,7 @@ public:
             this->theme,
             challenge
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_wait_info_mod() -> ModPack
@@ -461,7 +461,7 @@ public:
             showform,
             flag
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_transition_mod() -> ModPack
@@ -481,7 +481,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_login_mod() -> ModPack
@@ -528,7 +528,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_xup_mod() -> ModPack
@@ -552,7 +552,7 @@ public:
             this->client_info.screen_info.height,
             safe_int(this->ini.get<cfg::context::opt_bpp>())
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_rdp_mod() -> ModPack

@@ -28,13 +28,15 @@
 #include "mod/mod_api.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "transport/socket_transport.hpp"
 
 struct ModPack {
     not_null_ptr<mod_api> mod;
     rdp_api* rdpapi;
     windowing_api* winapi;
     RailModuleHostMod* rail_module_host_ptr;
-    bool enable_osd = false;
-    bool connected = false;
+    bool enable_osd;
+    bool connected;
+    SocketTransport * psocket_transport;
 };
 
