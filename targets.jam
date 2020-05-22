@@ -2268,11 +2268,6 @@ test-run tests/core/WMF/test_MetaFileFormat :
 :
   <covfile>src/core/WMF/MetaFileFormat.hpp
 ;
-test-run tests/core/test_authid :
-  $(REDEMPTION_TEST_PATH)/core/test_authid.cpp
-:
-  <covfile>src/core/authid.hpp
-;
 test-run tests/core/test_buf64k :
   $(REDEMPTION_TEST_PATH)/core/test_buf64k.cpp
 :
@@ -5534,6 +5529,11 @@ test-run tests/utils/test_stream :
 :
   <covfile>src/utils/stream.hpp
 ;
+test-run tests/utils/test_string_c :
+  $(REDEMPTION_TEST_PATH)/utils/test_string_c.cpp
+:
+  <covfile>src/utils/string_c.hpp
+;
 test-run tests/utils/test_strutils :
   $(REDEMPTION_TEST_PATH)/utils/test_strutils.cpp
 :
@@ -5889,7 +5889,6 @@ alias test_x224 : tests/core/RDP/test_x224 ;
 alias test_audio_output : tests/core/RDPEA/test_audio_output ;
 alias test_MessageSyntax : tests/core/SMB2/test_MessageSyntax ;
 alias test_MetaFileFormat : tests/core/WMF/test_MetaFileFormat ;
-alias test_authid : tests/core/test_authid ;
 alias test_buf64k : tests/core/test_buf64k ;
 alias test_callback : tests/core/test_callback ;
 alias test_channel_list : tests/core/test_channel_list ;
@@ -6086,6 +6085,7 @@ alias test_redirection_info : tests/utils/test_redirection_info ;
 alias test_region : tests/utils/test_region ;
 alias test_rle : tests/utils/test_rle ;
 alias test_stream : tests/utils/test_stream ;
+alias test_string_c : tests/utils/test_string_c ;
 alias test_strutils : tests/utils/test_strutils ;
 alias test_timeval_ops : tests/utils/test_timeval_ops ;
 alias test_translation : tests/utils/test_translation ;
@@ -6223,7 +6223,6 @@ alias test_x224.coverage : tests/core/RDP/test_x224.coverage ;
 alias test_audio_output.coverage : tests/core/RDPEA/test_audio_output.coverage ;
 alias test_MessageSyntax.coverage : tests/core/SMB2/test_MessageSyntax.coverage ;
 alias test_MetaFileFormat.coverage : tests/core/WMF/test_MetaFileFormat.coverage ;
-alias test_authid.coverage : tests/core/test_authid.coverage ;
 alias test_buf64k.coverage : tests/core/test_buf64k.coverage ;
 alias test_callback.coverage : tests/core/test_callback.coverage ;
 alias test_channel_list.coverage : tests/core/test_channel_list.coverage ;
@@ -6410,6 +6409,7 @@ alias test_redirection_info.coverage : tests/utils/test_redirection_info.coverag
 alias test_region.coverage : tests/utils/test_region.coverage ;
 alias test_rle.coverage : tests/utils/test_rle.coverage ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
+alias test_string_c.coverage : tests/utils/test_string_c.coverage ;
 alias test_strutils.coverage : tests/utils/test_strutils.coverage ;
 alias test_timeval_ops.coverage : tests/utils/test_timeval_ops.coverage ;
 alias test_translation.coverage : tests/utils/test_translation.coverage ;
@@ -6601,7 +6601,6 @@ alias tests/core/WMF.norec :
   tests/core/WMF/test_MetaFileFormat
 ;
 alias tests/core.norec :
-  tests/core/test_authid
   tests/core/test_buf64k
   tests/core/test_callback
   tests/core/test_channel_list
@@ -6846,6 +6845,7 @@ alias tests/utils.norec :
   tests/utils/test_region
   tests/utils/test_rle
   tests/utils/test_stream
+  tests/utils/test_string_c
   tests/utils/test_strutils
   tests/utils/test_timeval_ops
   tests/utils/test_translation

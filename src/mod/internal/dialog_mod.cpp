@@ -22,7 +22,6 @@
 #include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "core/front_api.hpp"
-#include "configs/config.hpp"
 #include "utils/translation.hpp"
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"

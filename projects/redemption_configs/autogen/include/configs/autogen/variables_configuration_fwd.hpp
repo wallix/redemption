@@ -4,9 +4,8 @@
 
 #pragma once
 
-enum authid_t : unsigned;
-
-namespace cfg {
+namespace cfg
+{
     struct globals {
         struct capture_chunk;
         struct nla_auth_user;

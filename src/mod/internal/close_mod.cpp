@@ -20,7 +20,6 @@
  */
 
 #include "mod/internal/close_mod.hpp"
-#include "configs/config.hpp"
 #include "core/front_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/slowpath.hpp"
@@ -57,7 +56,7 @@ namespace
 
 CloseMod::CloseMod(
     std::string auth_error_message,
-    CloseModVariables vars, 
+    CloseModVariables vars,
     TimeBase& time_base,
     TimerContainer& timer_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,

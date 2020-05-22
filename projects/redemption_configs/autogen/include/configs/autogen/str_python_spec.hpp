@@ -774,7 +774,7 @@ enable_rdp_metrics = boolean(default=False)
 enable_vnc_metrics = boolean(default=False)
 
 #_hidden
-log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics).to_string()) << R"gen_config_ini(')
+log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
 
 # (is in second)
 #_advanced
@@ -945,13 +945,13 @@ png_limit = integer(min=0, default=5)
 replay_path = string(max=4096, default='/tmp/')
 
 #_hidden
-hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(')
+hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(')
 
 #_hidden
-record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(')
+record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(')
 
 #_hidden
-record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(')
+record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(')
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)

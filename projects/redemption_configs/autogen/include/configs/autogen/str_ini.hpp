@@ -912,7 +912,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics).to_string()) << R"gen_config_ini(
+#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
 
 # (is in second)
 #_advanced
@@ -1110,15 +1110,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#hash_path = )gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(
+#hash_path = )gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(
+#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_path = )gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(
+#record_path = )gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)

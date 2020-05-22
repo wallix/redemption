@@ -66,6 +66,8 @@ RED_AUTO_TEST_CASE(TestIniAssign)
             ini.set<type>(c_s); RED_CHECK_EQUAL(ini.get<type>(), c_s);
         }
         {
+            using std::begin;
+            using std::end;
             using type = cfg::mod_rdp::auth_channel;
             auto & val = ini.get<type>();
             auto first1 = begin(val) + 3;

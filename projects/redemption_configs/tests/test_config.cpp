@@ -25,17 +25,15 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "configs/config.hpp"
-#include <sstream>
+#include "configs/autogen/str_authid.hpp"
 #include <fstream>
 
-template<class Ch, class Tr, class E>
-typename std::enable_if<
-    std::is_enum<E>::value,
-    std::basic_ostream<Ch, Tr>&
->::type
-operator<<(std::basic_ostream<Ch, Tr> & out, E const & e)
+namespace
 {
-    return out << +underlying_cast(e); // '+' for transform u8/s8 to int
+    Inifile::FieldReference get_acl_field(Inifile& ini, configs::authid_t id)
+    {
+        return ini.get_acl_field_by_name(configs::authstr[unsigned(id)]);
+    }
 }
 
 
@@ -1608,106 +1606,57 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
-RED_AUTO_TEST_CASE(TestConfigTools)
-{
-    using namespace configs;
-
-    {
-        unsigned u;
-        spec_type<unsigned> stype;
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("")));
-        RED_CHECK_EQUAL(0, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("0")));
-        RED_CHECK_EQUAL(0, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x")));
-        RED_CHECK_EQUAL(0, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("3")));
-        RED_CHECK_EQUAL(3, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x3")));
-        RED_CHECK_EQUAL(3, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x00000007")));
-        RED_CHECK_EQUAL(7, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0000000000000007")));
-        RED_CHECK_EQUAL(7, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0007")));
-        RED_CHECK_EQUAL(7, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("1357")));
-        RED_CHECK_EQUAL(1357, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x1357")));
-        RED_CHECK_EQUAL(0x1357, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0A")));
-        RED_CHECK_EQUAL(0x0a, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0a")));
-        RED_CHECK_EQUAL(0x0a, u);
-
-        RED_CHECK(!!parse(u, stype, cstr_array_view("0x0000000I")));
-        RED_CHECK(!!parse(u, stype, cstr_array_view("I")));
-
-    }
-
-    {
-        Level level;
-        spec_type<Level> stype;
-
-        RED_CHECK(!parse(level, stype, cstr_array_view("LoW")));
-        RED_CHECK_EQUAL(Level::low, level);
-
-        RED_CHECK(!parse(level, stype, cstr_array_view("mEdIuM")));
-        RED_CHECK_EQUAL(Level::medium, level);
-
-        RED_CHECK(!parse(level, stype, cstr_array_view("High")));
-        RED_CHECK_EQUAL(Level::high, level);
-
-        RED_CHECK(!!parse(level, stype, cstr_array_view("dsifsu")));
-    }
-
-    {
-        int i;
-        spec_type<int> stype;
-
-        RED_CHECK(!parse(i, stype, cstr_array_view("3600")));
-        RED_CHECK_EQUAL(3600, i);
-        RED_CHECK(!parse(i, stype, cstr_array_view("0")));
-        RED_CHECK_EQUAL(0, i);
-        RED_CHECK(!parse(i, stype, cstr_array_view("")));
-        RED_CHECK_EQUAL(0, i);
-        RED_CHECK(!parse(i, stype, cstr_array_view("-3600")));
-        RED_CHECK_EQUAL(-3600, i);
-    }
-}
-
 RED_AUTO_TEST_CASE(TestLogPolicy)
 {
     Inifile ini;
-    RED_CHECK(ini.get_acl_field(cfg::globals::auth_user::index).is_loggable());
-    RED_CHECK(!ini.get_acl_field(cfg::globals::target_application_password::index).is_loggable());
-    RED_CHECK(ini.get_acl_field(cfg::context::auth_channel_answer::index).is_loggable());
-    ini.set<cfg::context::auth_channel_answer>("blah blah password blah blah");
-    RED_CHECK(!ini.get_acl_field(cfg::context::auth_channel_answer::index).is_loggable());
+    using Cat = Inifile::LoggableCategory;
+
+    RED_CHECK(Cat::Loggable ==
+        get_acl_field(ini, cfg::globals::auth_user::index).loggable_category());
+    RED_CHECK(Cat::Unloggable ==
+        get_acl_field(ini, cfg::globals::target_application_password::index).loggable_category());
+    RED_CHECK(Cat::LoggableButWithPassword ==
+        get_acl_field(ini, cfg::context::auth_channel_answer::index).loggable_category());
+}
+
+RED_AUTO_TEST_CASE(TestFieldName)
+{
+    Inifile ini;
+
+    RED_CHECK(not bool(ini.get_acl_field_by_name("Unknown"_av)));
+    RED_CHECK("target_login"_av ==
+        get_acl_field(ini, cfg::globals::target_user::index).get_acl_name());
+    RED_CHECK("width"_av ==
+        get_acl_field(ini, cfg::context::opt_width::index).get_acl_name());
+    RED_CHECK("alternate_shell"_av ==
+        get_acl_field(ini, cfg::mod_rdp::alternate_shell::index).get_acl_name());
+    RED_CHECK("mod_rdp:enable_nla"_av ==
+        get_acl_field(ini, cfg::mod_rdp::enable_nla::index).get_acl_name());
 }
 
 RED_AUTO_TEST_CASE(TestContextSetValue)
 {
-    Inifile             ini;
+    Inifile ini;
+    Inifile::ZStringBuffer zstring_buffer;
+
+    auto get_zstring = [&](configs::authid_t id){
+        auto zstr = get_acl_field(ini, id).to_zstring_view(zstring_buffer);
+        RED_CHECK(zstr.data()[zstr.size()] == '\0');
+        return zstr;
+    };
 
     // bpp, height, width
-    ini.get_acl_field(cfg::context::opt_bpp::index).ask();
-    ini.get_acl_field(cfg::context::opt_height::index).ask();
-    ini.get_acl_field(cfg::context::opt_width::index).ask();
+    get_acl_field(ini, cfg::context::opt_bpp::index).ask();
+    get_acl_field(ini, cfg::context::opt_height::index).ask();
+    get_acl_field(ini, cfg::context::opt_width::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_height>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_width>());
 
-    ini.get_acl_field(cfg::context::opt_bpp::index).set(cstr_array_view("16"));
-    ini.get_acl_field(cfg::context::opt_height::index).set(cstr_array_view("1024"));
-    ini.get_acl_field(cfg::context::opt_width::index).set(cstr_array_view("1280"));
+    get_acl_field(ini, cfg::context::opt_bpp::index).set("16"_av);
+    get_acl_field(ini, cfg::context::opt_height::index).set("1024"_av);
+    get_acl_field(ini, cfg::context::opt_width::index).set("1280"_av);
 
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_height>());
@@ -1717,17 +1666,17 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(1024, ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(1280, ini.get<cfg::context::opt_width>());
 
-    RED_CHECK_EQUAL("16",   ini.get_acl_field(cfg::context::opt_bpp::index).to_string_view().data());
-    RED_CHECK_EQUAL("1024", ini.get_acl_field(cfg::context::opt_height::index).to_string_view().data());
-    RED_CHECK_EQUAL("1280", ini.get_acl_field(cfg::context::opt_width::index).to_string_view().data());
+    RED_CHECK_EQUAL("16"_av,   get_zstring(cfg::context::opt_bpp::index));
+    RED_CHECK_EQUAL("1024"_av, get_zstring(cfg::context::opt_height::index));
+    RED_CHECK_EQUAL("1280"_av, get_zstring(cfg::context::opt_width::index));
 
 
     // selector, ...
-    ini.get_acl_field(cfg::context::selector::index).ask();
-    ini.get_acl_field(cfg::context::selector_current_page::index).ask();
-    ini.get_acl_field(cfg::context::selector_device_filter::index).ask();
-    ini.get_acl_field(cfg::context::selector_group_filter::index).ask();
-    ini.get_acl_field(cfg::context::selector_lines_per_page::index).ask();
+    get_acl_field(ini, cfg::context::selector::index).ask();
+    get_acl_field(ini, cfg::context::selector_current_page::index).ask();
+    get_acl_field(ini, cfg::context::selector_device_filter::index).ask();
+    get_acl_field(ini, cfg::context::selector_group_filter::index).ask();
+    get_acl_field(ini, cfg::context::selector_lines_per_page::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_current_page>());
@@ -1735,12 +1684,12 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_group_filter>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_lines_per_page>());
 
-    ini.get_acl_field(cfg::context::selector::index).set(cstr_array_view("True"));
-    ini.get_acl_field(cfg::context::selector_current_page::index).set(cstr_array_view("2"));
-    ini.get_acl_field(cfg::context::selector_device_filter::index).set(cstr_array_view("Windows"));
-    ini.get_acl_field(cfg::context::selector_group_filter::index).set(cstr_array_view("RDP"));
-    ini.get_acl_field(cfg::context::selector_lines_per_page::index).set(cstr_array_view("25"));
-    ini.get_acl_field(cfg::context::selector_number_of_pages::index).set(cstr_array_view("2"));
+    get_acl_field(ini, cfg::context::selector::index).set("True"_av);
+    get_acl_field(ini, cfg::context::selector_current_page::index).set("2"_av);
+    get_acl_field(ini, cfg::context::selector_device_filter::index).set("Windows"_av);
+    get_acl_field(ini, cfg::context::selector_group_filter::index).set("RDP"_av);
+    get_acl_field(ini, cfg::context::selector_lines_per_page::index).set("25"_av);
+    get_acl_field(ini, cfg::context::selector_number_of_pages::index).set("2"_av);
 
     RED_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector>());
     RED_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector_current_page>());
@@ -1755,21 +1704,21 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(25,        ini.get<cfg::context::selector_lines_per_page>());
     RED_CHECK_EQUAL(2,         ini.get<cfg::context::selector_number_of_pages>());
 
-    RED_CHECK_EQUAL("True",    ini.get_acl_field(cfg::context::selector::index).to_string_view().data());
-    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_current_page::index).to_string_view().data());
-    RED_CHECK_EQUAL("Windows", ini.get_acl_field(cfg::context::selector_device_filter::index).to_string_view().data());
-    RED_CHECK_EQUAL("RDP",     ini.get_acl_field(cfg::context::selector_group_filter::index).to_string_view().data());
-    RED_CHECK_EQUAL("25",      ini.get_acl_field(cfg::context::selector_lines_per_page::index).to_string_view().data());
-    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_number_of_pages::index).to_string_view().data());
+    RED_CHECK_EQUAL("True"_av,    get_zstring(cfg::context::selector::index));
+    RED_CHECK_EQUAL("2"_av,       get_zstring(cfg::context::selector_current_page::index));
+    RED_CHECK_EQUAL("Windows"_av, get_zstring(cfg::context::selector_device_filter::index));
+    RED_CHECK_EQUAL("RDP"_av,     get_zstring(cfg::context::selector_group_filter::index));
+    RED_CHECK_EQUAL("25"_av,      get_zstring(cfg::context::selector_lines_per_page::index));
+    RED_CHECK_EQUAL("2"_av,       get_zstring(cfg::context::selector_number_of_pages::index));
 
 
     // target_xxxx
-    ini.get_acl_field(cfg::globals::target_device::index).set(cstr_array_view("127.0.0.1"));
-    ini.get_acl_field(cfg::context::target_password::index).set(cstr_array_view("12345678"));
-    ini.get_acl_field(cfg::context::target_port::index).set(cstr_array_view("3390"));
-    ini.get_acl_field(cfg::context::target_protocol::index).set(cstr_array_view("RDP"));
-    ini.get_acl_field(cfg::globals::target_user::index).set(cstr_array_view("admin"));
-    ini.get_acl_field(cfg::globals::target_application::index).set(cstr_array_view("wallix@putty"));
+    get_acl_field(ini, cfg::globals::target_device::index).set("127.0.0.1"_av);
+    get_acl_field(ini, cfg::context::target_password::index).set("12345678"_av);
+    get_acl_field(ini, cfg::context::target_port::index).set("3390"_av);
+    get_acl_field(ini, cfg::context::target_protocol::index).set("RDP"_av);
+    get_acl_field(ini, cfg::globals::target_user::index).set("admin"_av);
+    get_acl_field(ini, cfg::globals::target_application::index).set("wallix@putty"_av);
 
     RED_CHECK_EQUAL(false,          ini.is_asked<cfg::globals::target_device>());
     RED_CHECK_EQUAL(false,          ini.is_asked<cfg::context::target_password>());
@@ -1784,111 +1733,109 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL("admin",        ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("wallix@putty", ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL("127.0.0.1",    ini.get_acl_field(cfg::globals::target_device::index).to_string_view().data());
-    RED_CHECK_EQUAL("12345678",     ini.get_acl_field(cfg::context::target_password::index).to_string_view().data());
-    RED_CHECK_EQUAL("3390",         ini.get_acl_field(cfg::context::target_port::index).to_string_view().data());
-    RED_CHECK_EQUAL("RDP",          ini.get_acl_field(cfg::context::target_protocol::index).to_string_view().data());
-    RED_CHECK_EQUAL("admin",        ini.get_acl_field(cfg::globals::target_user::index).to_string_view().data());
-    RED_CHECK_EQUAL("wallix@putty", ini.get_acl_field(cfg::globals::target_application::index).to_string_view().data());
+    RED_CHECK_EQUAL("127.0.0.1"_av,    get_zstring(cfg::globals::target_device::index));
+    RED_CHECK_EQUAL("12345678"_av,     get_zstring(cfg::context::target_password::index));
+    RED_CHECK_EQUAL("3390"_av,         get_zstring(cfg::context::target_port::index));
+    RED_CHECK_EQUAL("RDP"_av,          get_zstring(cfg::context::target_protocol::index));
+    RED_CHECK_EQUAL("admin"_av,        get_zstring(cfg::globals::target_user::index));
+    RED_CHECK_EQUAL("wallix@putty"_av, get_zstring(cfg::globals::target_application::index));
 
 
     // host
-    ini.get_acl_field(cfg::globals::host::index).ask();
+    get_acl_field(ini, cfg::globals::host::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::globals::host>());
 
-    ini.get_acl_field(cfg::globals::host::index).set(cstr_array_view("127.0.0.1"));
+    get_acl_field(ini, cfg::globals::host::index).set("127.0.0.1"_av);
 
     RED_CHECK_EQUAL(false,       ini.is_asked<cfg::globals::host>());
 
     RED_CHECK_EQUAL("127.0.0.1", ini.get<cfg::globals::host>());
 
-    RED_CHECK_EQUAL("127.0.0.1", ini.get_acl_field(cfg::globals::host::index).to_string_view().data());
-    RED_CHECK_EQUAL(9,           ini.get_acl_field(cfg::globals::host::index).to_string_view().size());
-
+    RED_CHECK_EQUAL("127.0.0.1"_av, get_zstring(cfg::globals::host::index));
 
     // target
-    ini.get_acl_field(cfg::globals::target::index).ask();
+    get_acl_field(ini, cfg::globals::target::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::globals::target>());
 
-    ini.get_acl_field(cfg::globals::target::index).set(cstr_array_view("192.168.0.1"));
+    get_acl_field(ini, cfg::globals::target::index).set("192.168.0.1"_av);
 
     RED_CHECK_EQUAL(false,         ini.is_asked<cfg::globals::target>());
 
     RED_CHECK_EQUAL("192.168.0.1", ini.get<cfg::globals::target>());
 
-    RED_CHECK_EQUAL("192.168.0.1", ini.get_acl_field(cfg::globals::target::index).to_string_view().data());
+    RED_CHECK_EQUAL("192.168.0.1"_av, get_zstring(cfg::globals::target::index));
 
 
     // auth_user
-    ini.get_acl_field(cfg::globals::auth_user::index).set(cstr_array_view("admin"));
+    get_acl_field(ini, cfg::globals::auth_user::index).set("admin"_av);
 
     RED_CHECK_EQUAL(false,   ini.is_asked<cfg::globals::auth_user>());
 
     RED_CHECK_EQUAL("admin", ini.get<cfg::globals::auth_user>());
 
-    RED_CHECK_EQUAL("admin", ini.get_acl_field(cfg::globals::auth_user::index).to_string_view().data());
+    RED_CHECK_EQUAL("admin"_av, get_zstring(cfg::globals::auth_user::index));
 
 
     // password
-    ini.get_acl_field(cfg::context::password::index).ask();
+    get_acl_field(ini, cfg::context::password::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::password>());
 
-    ini.get_acl_field(cfg::context::password::index).set(cstr_array_view("12345678"));
+    get_acl_field(ini, cfg::context::password::index).set("12345678"_av);
 
     RED_CHECK_EQUAL(false,      ini.is_asked<cfg::context::password>());
 
     RED_CHECK_EQUAL("12345678", ini.get<cfg::context::password>());
 
-    RED_CHECK_EQUAL("12345678", ini.get_acl_field(cfg::context::password::index).to_string_view().data());
+    RED_CHECK_EQUAL("12345678"_av, get_zstring(cfg::context::password::index));
 
 
     // answer
-    ini.get_acl_field(cfg::context::auth_channel_answer::index).set(cstr_array_view("answer"));
+    get_acl_field(ini, cfg::context::auth_channel_answer::index).set("answer"_av);
 
     RED_CHECK_EQUAL("answer", ini.get<cfg::context::auth_channel_answer>());
 
 
     // authchannel_target
-    ini.get_acl_field(cfg::context::auth_channel_target::index).ask();
+    get_acl_field(ini, cfg::context::auth_channel_target::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::auth_channel_target>());
 
-    ini.get_acl_field(cfg::context::auth_channel_target::index).set(cstr_array_view("target"));
+    get_acl_field(ini, cfg::context::auth_channel_target::index).set("target"_av);
 
     RED_CHECK_EQUAL(false, 	ini.is_asked<cfg::context::auth_channel_target>());
 
     RED_CHECK_EQUAL("target", ini.get<cfg::context::auth_channel_target>());
 
-    RED_CHECK_EQUAL("target", ini.get_acl_field(cfg::context::auth_channel_target::index).to_string_view().data());
+    RED_CHECK_EQUAL("target"_av, get_zstring(cfg::context::auth_channel_target::index));
 
 
     // message
-    ini.get_acl_field(cfg::context::message::index).set(cstr_array_view("message"));
+    get_acl_field(ini, cfg::context::message::index).set("message"_av);
 
     RED_CHECK_EQUAL("message", ini.get<cfg::context::message>());
 
 
     // rejected
-    ini.get_acl_field(cfg::context::rejected::index).set(cstr_array_view("rejected"));
+    get_acl_field(ini, cfg::context::rejected::index).set("rejected"_av);
 
     RED_CHECK_EQUAL("rejected", ini.get<cfg::context::rejected>());
 
-    RED_CHECK_EQUAL("rejected", ini.get_acl_field(cfg::context::rejected::index).to_string_view().data());
+    RED_CHECK_EQUAL("rejected"_av, get_zstring(cfg::context::rejected::index));
 
 
     // authenticated
-    ini.get_acl_field(cfg::context::authenticated::index).set(cstr_array_view("True"));
+    get_acl_field(ini, cfg::context::authenticated::index).set("True"_av);
 
     RED_CHECK_EQUAL(true,   ini.get<cfg::context::authenticated>());
 
-    RED_CHECK_EQUAL("True", ini.get_acl_field(cfg::context::authenticated::index).to_string_view().data());
+    RED_CHECK_EQUAL("True"_av, get_zstring(cfg::context::authenticated::index));
 
 
     // keepalive
-    ini.get_acl_field(cfg::context::keepalive::index).set(cstr_array_view("True"));
+    get_acl_field(ini, cfg::context::keepalive::index).set("True"_av);
 
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::keepalive>());
 
@@ -1896,58 +1843,34 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // session_id
-    ini.get_acl_field(cfg::context::session_id::index).set(cstr_array_view("0123456789"));
+    get_acl_field(ini, cfg::context::session_id::index).set("0123456789"_av);
 
     RED_CHECK_EQUAL("0123456789", ini.get<cfg::context::session_id>());
 
 
     // end_date_cnx
-    ini.get_acl_field(cfg::context::end_date_cnx::index).set(cstr_array_view("12345678"));
+    get_acl_field(ini, cfg::context::end_date_cnx::index).set("12345678"_av);
 
     RED_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>());
 
     // mode_console
-    ini.get_acl_field(cfg::context::mode_console::index).set(cstr_array_view("forbid"));
+    get_acl_field(ini, cfg::context::mode_console::index).set("forbid"_av);
 
     RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::context::mode_console>());
 
     // real_target_device
-    ini.get_acl_field(cfg::context::real_target_device::index).set(cstr_array_view("10.0.0.1"));
+    get_acl_field(ini, cfg::context::real_target_device::index).set("10.0.0.1"_av);
 
     RED_CHECK_EQUAL("10.0.0.1", ini.get<cfg::context::real_target_device>());
 
-    RED_CHECK_EQUAL("10.0.0.1", ini.get_acl_field(cfg::context::real_target_device::index).to_string_view().data());
+    RED_CHECK_EQUAL("10.0.0.1"_av, get_zstring(cfg::context::real_target_device::index));
 
 
     // authentication_challenge
-    ini.get_acl_field(cfg::context::authentication_challenge::index).set(cstr_array_view("true"));
+    get_acl_field(ini, cfg::context::authentication_challenge::index).set("true"_av);
 
     RED_CHECK_EQUAL(true, ini.get<cfg::context::authentication_challenge>());
 }
-
-
-RED_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
-{
-   RED_CHECK_EQUAL(MAX_AUTHID, authid_from_string("unknown"_av));
-   RED_CHECK("target_login"_av == string_from_authid(cfg::globals::target_user::index));
-   RED_CHECK_EQUAL(cfg::globals::target_user::index, authid_from_string("target_login"_av));
-   RED_CHECK_EQUAL(cfg::context::target_password::index, authid_from_string(string_from_authid(cfg::context::target_password::index)));
-   RED_CHECK_EQUAL(cfg::globals::host::index, authid_from_string(string_from_authid(cfg::globals::host::index)));
-   RED_CHECK_EQUAL(cfg::context::password::index, authid_from_string(string_from_authid(cfg::context::password::index)));
-   RED_CHECK_EQUAL(cfg::globals::auth_user::index, authid_from_string(string_from_authid(cfg::globals::auth_user::index)));
-   RED_CHECK_EQUAL(cfg::globals::target_device::index, authid_from_string(string_from_authid(cfg::globals::target_device::index)));
-   RED_CHECK_EQUAL(cfg::context::target_port::index, authid_from_string(string_from_authid(cfg::context::target_port::index)));
-   RED_CHECK_EQUAL(cfg::context::target_protocol::index, authid_from_string(string_from_authid(cfg::context::target_protocol::index)));
-   RED_CHECK_EQUAL(cfg::context::rejected::index, authid_from_string(string_from_authid(cfg::context::rejected::index)));
-   RED_CHECK_EQUAL(cfg::context::message::index, authid_from_string(string_from_authid(cfg::context::message::index)));
-   RED_CHECK_EQUAL(cfg::context::opt_width::index, authid_from_string(string_from_authid(cfg::context::opt_width::index)));
-   RED_CHECK_EQUAL(cfg::context::opt_height::index, authid_from_string(string_from_authid(cfg::context::opt_height::index)));
-   RED_CHECK_EQUAL(cfg::context::opt_bpp::index, authid_from_string(string_from_authid(cfg::context::opt_bpp::index)));
-   RED_CHECK_EQUAL(cfg::context::authenticated::index, authid_from_string(string_from_authid(cfg::context::authenticated::index)));
-   RED_CHECK_EQUAL(cfg::context::selector::index, authid_from_string(string_from_authid(cfg::context::selector::index)));
-   RED_CHECK_EQUAL(cfg::context::keepalive::index, authid_from_string(string_from_authid(cfg::context::keepalive::index)));
-}
-
 
 RED_AUTO_TEST_CASE(TestConfigSet)
 {
@@ -1980,7 +1903,7 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
     RED_CHECK(!ini.check_from_acl());
 
     // auth_user has been changed, so check_from_acl() method will notify that something changed
-    ini.get_acl_field(cfg::globals::auth_user::index).set(cstr_array_view("someoneelse"));
+    get_acl_field(ini, cfg::globals::auth_user::index).set("someoneelse"_av);
     RED_CHECK(ini.check_from_acl());
     RED_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
 

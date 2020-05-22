@@ -29,6 +29,7 @@
 #include "configs/config.hpp"
 #include "main/version.hpp"
 #include "utils/genfstat.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "transport/file_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -98,13 +99,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     StaticOutStream<1024> stream;
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
-    stream.out_copy_bytes("\nASK\n"_av);
-    stream.out_copy_bytes(string_from_authid(cfg::context::password::index));
-    stream.out_copy_bytes("\nASK\n"_av);
+    stream.out_copy_bytes("login\nASK\n"_av);
+    stream.out_copy_bytes("password\nASK\n"_av);
 
-    stream.out_copy_bytes(string_from_authid(cfg::context::session_id::index));
-    stream.out_copy_bytes("\n!6455\n"_av);
+    stream.out_copy_bytes("session_id\n!6455\n"_av);
     stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
 
     LCGRandom rnd;
@@ -131,8 +129,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     OutStream big_stream({u.get(), sz});
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xFFFF);
-    big_stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
-    big_stream.out_copy_bytes("\n!"_av);
+    big_stream.out_copy_bytes("login\n!"_av);
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     big_stream.out_skip_bytes(k64 - big_stream.get_offset());
 
@@ -161,10 +158,8 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
 
     std::string s = str_concat(
         "----",
-        string_from_authid(cfg::context::password::index),
-        "\nASK\n",
-        string_from_authid(cfg::globals::auth_user::index),
-        "\n!didier\n");
+        "password\nASK\n",
+        "login\n!didier\n");
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
 
     LCGRandom rnd;
@@ -195,7 +190,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = string_from_authid(cfg::context::rejected::index);
+    auto const key = "rejected"_av;
     auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream({u.get(), total_sz});
@@ -238,7 +233,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = string_from_authid(cfg::context::rejected::index);
+    auto const key = "rejected"_av;
     auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream({u.get(), total_sz});
@@ -279,8 +274,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     Inifile ini;
     ini.clear_send_index();
 
-    auto const key1 = string_from_authid(cfg::context::rejected::index);
-    auto const key2 = string_from_authid(cfg::context::message::index);
+    auto const key1 = "rejected"_av;
+    auto const key2 = "message"_av;
     size_t const key2_splitted_len = key2.size() / 2;
     auto const total_sz = 4 * 2 + key1.size() + key2.size() + 5 * 2;
     std::unique_ptr<char[]> u(new char[total_sz]);
