@@ -162,26 +162,23 @@ private:
         // now is authentifier start time
         auto acl_serial = new AclSerializer(ini);
 
-        unique_fd client_sck = addr_connect(ini.get<cfg::globals::authfile>().c_str(), 0);
+        unique_fd client_sck = addr_connect_non_blocking(ini.get<cfg::globals::authfile>().c_str(), 0);
         if (!client_sck.is_open()) {
             LOG(LOG_ERR, "Failed to connect to authentifier (%s)", ini.get<cfg::globals::authfile>().c_str());
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
+            acl.connection_failed();
+            throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
         }
 
         Transport * auth_trans = new SocketTransport("Authentifier", std::move(client_sck),
             ini.get<cfg::globals::authfile>().c_str(), 0,
-            std::chrono::seconds(1), 0);
+            std::chrono::seconds(1), SocketTransport::Verbose::none);
 
-        auto log_file = new SessionLogFile(cctx, rnd, fstat, report_error_from_reporter(acl));
+        auto log_file = new SessionLogFile(cctx, rnd, fstat, report_error_from_reporter(acl_serial));
 
         acl_serial->set_auth_trans(auth_trans);
         acl_serial->set_log_file(log_file);
         acl.set_acl_serial(acl_serial);
-
-        const auto sck = acl_connection->sck;
-        fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
         authentifier.set_acl_serial(acl_serial);
-        return acl;
     }
 
 private:
@@ -283,6 +280,7 @@ private:
 
     void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
     {
+        LOG(LOG_INFO, "rt_display");
         auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
 
         if (ini.get<cfg::client::enable_osd_4_eyes>()) {
@@ -305,6 +303,7 @@ private:
 
     void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Authentifier & authentifier, Front & front)
     {
+        LOG(LOG_INFO, "new_mod");
         if (mod_wrapper.current_mod != next_state) {
             if ((mod_wrapper.current_mod == MODULE_RDP) ||
                 (mod_wrapper.current_mod == MODULE_VNC)) {
@@ -324,12 +323,15 @@ private:
                               Authentifier & authentifier,
                               ClientExecute & rail_client_execute)
     {
-        if (!acl.keepalive.is_started() && mod_wrapper.is_connected()) {
+        LOG(LOG_INFO, "front_up_and_running");
+        if (acl.is_connected()
+        && !acl.keepalive.is_started()
+        && mod_wrapper.is_connected()) {
             acl.keepalive.start(now.tv_sec);
         }
 
         // There are modified fields to send to sesman
-        if (ini.changed_field_size()) {
+        if (acl.is_connected() && ini.changed_field_size()) {
             LOG(LOG_INFO, "check_acl: data to send to sesman");
             BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
             if (mod_wrapper.is_connected()) {
@@ -372,7 +374,7 @@ private:
             return true;
         }
 
-        if (acl.acl_serial->remote_answer) {
+        if (acl.is_connected() && acl.acl_serial->remote_answer) {
             BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
             LOG(LOG_INFO, "check_acl remote_answer signal=%s", signal_name(signal));
             acl.acl_serial->remote_answer = false;
@@ -597,7 +599,6 @@ private:
             }
         }
         return true;
-
     }
 
 
@@ -664,6 +665,7 @@ private:
 
     void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & sesman)
     {
+        LOG(LOG_INFO, "Front Incoming Data");
         if (front.front_must_notify_resize) {
             LOG(LOG_INFO, "front_incoming_data::notify resize");
             front.notify_resize(mod_wrapper.get_callback());
@@ -720,10 +722,6 @@ public:
             ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
-            if (ini.get<cfg::debug::session>()) {
-                LOG(LOG_INFO, "Session::session_main_loop() starting");
-            }
-
             const time_t start_time = time(nullptr);
             if (ini.get<cfg::debug::performance>() & 0x8000) {
                 this->write_performance_log(start_time);
@@ -744,8 +742,6 @@ public:
                 bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
                 bool mod_has_waiting_data_to_write   = mod_wrapper.get_mod_transport()
                                                     && mod_wrapper.get_mod_transport()->has_data_to_write();
-
-                LOG(LOG_INFO, "Run session step 1");
 
                 // =============================================================
                 // This block takes care of outgoing data waiting in buffers because system write buffer is full
@@ -789,43 +785,29 @@ public:
                 // timeout or immediate wakeups are managed using timeout
                 // =============================================================
 
-                LOG(LOG_INFO, "Run session step 2");
-
                 // sockets for mod or front aren't managed using fd events
                 if (mod_wrapper.get_mod_transport()) {
-                    LOG(LOG_INFO, "Run session step 2.1");
                     int fd = mod_wrapper.get_mod_transport()->sck;
-//                    LOG(LOG_INFO, "Wait for read event on mod fd=%d", fd);
                     if (fd != INVALID_SOCKET) {
                         ioswitch.set_read_sck(fd);
                     }
                 }
 
                 if (front_trans.sck != INVALID_SOCKET) {
-                    LOG(LOG_INFO, "Run session step 2.2");
-
-//                    LOG(LOG_INFO, "Wait for read event on front fd=%d", front_trans.sck);
                     ioswitch.set_read_sck(front_trans.sck);
                 }
 
-                LOG(LOG_INFO, "Run session step 2.3");
                 // if event lists are waiting for incoming data
                 fd_events_.for_each([&](int fd, auto& /*top*/){
                         if (fd != INVALID_SOCKET){ioswitch.set_read_sck(fd);}
                 });
 
-                LOG(LOG_INFO, "Run session step 2.4");
-
                 if (acl.is_connected()) {
-                    ioswitch.set_read_sck(acl->auth_trans.sck);
+                    ioswitch.set_read_sck(acl.acl_serial->auth_trans->get_sck());
                 }
-
-                LOG(LOG_INFO, "Run session step 2.5");
 
                 bool mod_data_pending = (mod_wrapper.get_mod_transport()
                         && mod_wrapper.get_mod_transport()->has_tls_pending_data());
-
-                LOG(LOG_INFO, "Run session step 2.6");
 
                 timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
                         front,
@@ -851,31 +833,21 @@ public:
                     continue;
                 }
 
-                LOG(LOG_INFO, "Run session step 3");
-
                 now = tvtime();
                 time_base.set_current_time(now);
-
-                LOG(LOG_INFO, "Run session step 3.1");
 
                 if (ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now.tv_sec);
                 }
 
-                LOG(LOG_INFO, "Run session step 3.2");
-
-               bool const front_is_set = front_trans.has_tls_pending_data()
-                || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
-
-                LOG(LOG_INFO, "Run session step 4");
-
                 try {
-                    LOG(LOG_INFO, "Run session step 4.1");
+                    bool const front_is_set = front_trans.has_tls_pending_data()
+                        || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
                     if (front_is_set){
                         this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
                     }
                 } catch (Error const& e) {
-                    LOG(LOG_INFO, "Run session step 4.2");
+                    LOG(LOG_INFO, "Exception in front_incoming data");
                     // RemoteApp disconnection initiated by user
                     // ERR_DISCONNECT_BY_USER == e.id
                     if (
@@ -897,12 +869,10 @@ public:
                     continue;
                 }
 
-                LOG(LOG_INFO, "Run session step 5");
-
                 switch (front.state) {
                 default:
                 {
-                    LOG(LOG_INFO, "Run session step 6");
+                    LOG(LOG_INFO, "Front No Up and Running");
 
                     fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                         return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
@@ -911,14 +881,10 @@ public:
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
                 {
+                    LOG(LOG_INFO, "Front Up and Running");
 
-                    LOG(LOG_INFO, "Run session step 7 %d");
-
-                    bool acl_is_set = acl.is_connected()
-                        && ioswitch.is_set_for_reading(acl.acl_serial.auth_trans.get_sck());
-
-                    if (!acl_is_set) {
-                        LOG(LOG_INFO, "Run session step 8");
+                    if (acl.is_not_yet_connected()) {
+                        LOG(LOG_INFO, "Connect ACL");
                         try {
                             this->connect_acl(acl, cctx, rnd, now, ini, authentifier, fstat);
                             session_state = SessionState::SESSION_STATE_RUNNING;
@@ -941,18 +907,28 @@ public:
                         continue;
                     }
 
-                    LOG(LOG_INFO, "Run session step 9");
 
-                    acl.acl_serial->receive();
-                    if (!ini.changed_field_size()) {
-                        mod_wrapper.acl_update();
-                    }
+                    if (acl.is_connected()){
 
-                    if (!sesman.auth_info_sent){
-                        sesman.set_acl_screen_info();
-                        sesman.set_acl_auth_info();
-                        if (this->ini.changed_field_size()) {
-                            acl.acl_serial->send_acl_data();
+                        LOG(LOG_INFO, "Run session step 9 acl_is_connected");
+
+                        if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
+                            LOG(LOG_INFO, "Receive data from ACL");
+                            acl.acl_serial->receive();
+                        }
+
+                        if (!ini.changed_field_size()) {
+                            LOG(LOG_INFO, "ACL Changed Field Size");
+                            mod_wrapper.acl_update();
+                        }
+
+                        if (!sesman.auth_info_sent){
+                            LOG(LOG_INFO, "Sesman data to send to ACL");
+                            sesman.set_acl_screen_info();
+                            sesman.set_acl_auth_info();
+                            if (this->ini.changed_field_size()) {
+                                acl.acl_serial->send_acl_data();
+                            }
                             continue;
                         }
                     }
@@ -999,12 +975,10 @@ public:
                             }
                         }
 
-                        LOG(LOG_INFO, "Run session step 10");
-
                         run_session = this->front_up_and_running(acl, now, ini, mod_factory, mod_wrapper, front, authentifier, rail_client_execute);
 
                     } catch (Error const& e) {
-                        LOG(LOG_ERR, "Exception in sequencing = %s", e.errmsg());
+                        LOG(LOG_ERR, "Module Close Exception %s", e.errmsg());
                         run_session = false;
                         switch (end_session_exception(e, authentifier, ini)){
                         case 0: // End of session loop
@@ -1012,13 +986,13 @@ public:
                         break;
                         case 1: // Close Box
                         {
-                            LOG(LOG_INFO, "Run session step 12");
+                            LOG(LOG_INFO, "Close Box");
                             mod_wrapper.last_disconnect();
-                            authentifier.set_acl_serial(nullptr);
+//                            authentifier.set_acl_serial(nullptr);
                             acl.disconnect();
                             if (ini.get<cfg::globals::enable_close_box>()) {
+                                LOG(LOG_INFO, "Close Box enabled");
                                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                                log_proxy::set_user("");
 
                                 auto next_state = MODULE_INTERNAL_CLOSE;
                                 this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
@@ -1027,9 +1001,8 @@ public:
                         }
                         break;
                         case 2: // TODO: should we put some counter to avoid retrying indefinitely?
-                            LOG(LOG_INFO, "Run session step 13");
+                            LOG(LOG_INFO, "Retry Current");
                             acl.acl_serial->remote_answer = false;
-                            LOG(LOG_INFO, "Retrying current module");
                             mod_wrapper.remove_mod();
 
                             rail_client_execute.enable_remote_program(front.client_info.remote_program);
@@ -1047,8 +1020,9 @@ public:
                                         front.client_info.screen_info.width, front.client_info.screen_info.height);
                                 }
                                 mod_wrapper.get_mod()->rdp_input_invalidate(
-                                        Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
-                                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
+                                        Rect(0, 0,
+                                            front.client_info.screen_info.width,
+                                            front.client_info.screen_info.height));
                                 ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
                             }
                             catch (...) {
@@ -1065,7 +1039,7 @@ public:
                 }
                 break;
                 } // switch front_state
-                LOG(LOG_INFO, "Run session step 14");
+                LOG(LOG_INFO, "Looping");
             } // loop
 
             if (mod_wrapper.get_mod()) {

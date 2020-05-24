@@ -57,7 +57,7 @@ namespace
 
 CloseMod::CloseMod(
     std::string auth_error_message,
-    CloseModVariables vars, 
+    CloseModVariables vars,
     TimeBase& time_base,
     TimerContainer& timer_events_,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
@@ -88,6 +88,7 @@ CloseMod::CloseMod(
     , time_base(time_base)
     , timer_events_(timer_events_)
 {
+    LOG(LOG_INFO, "CloseMod::CloseMod");
     this->screen.set_wh(this->front_width, this->front_height);
 
     if (vars.get<cfg::globals::close_timeout>().count()) {
@@ -113,6 +114,7 @@ CloseMod::CloseMod(
         .create_timer_executor(time_base, start_timer)
         .set_delay(delay)
         .on_action([this](JLN_TIMER_CTX ctx, std::chrono::seconds& seconds){
+            LOG(LOG_INFO, "CloseMod::timer_event lambda");
             // TODO milliseconds += ctx.time() - previous_time
             ++seconds;
             auto const close_timeout = this->vars.get<cfg::globals::close_timeout>();
@@ -120,6 +122,7 @@ CloseMod::CloseMod(
                 this->close_widget.refresh_timeleft((close_timeout - seconds).count());
                 return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
+            LOG(LOG_INFO, "CloseMod::timer_event lambda BACk EVENT STOP");
             this->set_mod_signal(BACK_EVENT_STOP);
             return ctx.terminate();
         });
@@ -128,6 +131,7 @@ CloseMod::CloseMod(
 
 CloseMod::~CloseMod()
 {
+    LOG(LOG_INFO, "CloseMod::~CloseMod");
     this->vars.set<cfg::context::close_box_extra_message>("");
     this->screen.clear();
     this->rail_client_execute.reset(true);
@@ -135,6 +139,7 @@ CloseMod::~CloseMod()
 
 void CloseMod::init()
 {
+    LOG(LOG_INFO, "CloseMod::init");
     if (this->rail_enabled && !this->rail_client_execute) {
         this->rail_client_execute.ready(
             *this, this->front_width, this->front_height, this->font(),
@@ -146,6 +151,7 @@ void CloseMod::init()
 
 void CloseMod::notify(Widget* sender, notify_event_t event)
 {
+    LOG(LOG_INFO, "CloseMod::notify");
     (void)sender;
     if (NOTIFY_CANCEL == event) {
         this->set_mod_signal(BACK_EVENT_STOP);
@@ -164,6 +170,7 @@ void CloseMod::notify(Widget* sender, notify_event_t event)
 
 void CloseMod::rdp_input_invalidate(Rect r)
 {
+    LOG(LOG_INFO, "CloseMod::rdp_input_invalidate");
     this->screen.rdp_input_invalidate(r);
 
     if (this->rail_enabled) {
@@ -173,6 +180,7 @@ void CloseMod::rdp_input_invalidate(Rect r)
 
 void CloseMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
+    LOG(LOG_INFO, "CloseMod::rdp_input_mouse");
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;
         y = this->old_mouse_y;
@@ -276,6 +284,7 @@ void CloseMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 void CloseMod::rdp_input_scancode(
     long param1, long param2, long param3, long param4, Keymap2 * keymap)
 {
+    LOG(LOG_INFO, "CloseMod::rdp_input_scancode");
     this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
 
     if (this->rail_enabled) {
@@ -299,6 +308,7 @@ void CloseMod::rdp_input_scancode(
 
 void CloseMod::refresh(Rect r)
 {
+    LOG(LOG_INFO, "CloseMod::refresh(%s)", r);
     this->screen.refresh(r);
 
     if (this->rail_enabled) {
@@ -308,6 +318,7 @@ void CloseMod::refresh(Rect r)
 
 void CloseMod::send_to_mod_channel( CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
+    LOG(LOG_INFO, "CloseMod::send_to_mod_channel");
     if (this->rail_enabled && this->rail_client_execute) {
         if (front_channel_name == CHANNELS::channel_names::rail) {
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
@@ -320,6 +331,7 @@ void CloseMod::send_to_mod_channel( CHANNELS::ChannelNameId front_channel_name, 
 
 void CloseMod::cancel_double_click_detection()
 {
+    LOG(LOG_INFO, "CloseMod::cancel_double_click_detection");
     assert(this->rail_enabled);
 
     this->first_click_down_timer.reset();
@@ -329,6 +341,7 @@ void CloseMod::cancel_double_click_detection()
 
 bool CloseMod::is_resizing_hosted_desktop_allowed() const
 {
+    LOG(LOG_INFO, "CloseMod::is_resizing_hosted_desktop_allowed");
     assert(this->rail_enabled);
 
     return false;

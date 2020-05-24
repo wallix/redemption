@@ -36,7 +36,7 @@ class addrinfo;
 struct IpAddress
 {
     char ip_addr[46];
-    
+
     IpAddress();
     IpAddress(const char *ip_addr);
 };
@@ -66,6 +66,8 @@ unique_fd ip_connect_both_ipv4_and_ipv6
 unique_fd local_connect(const char* sck_name, bool no_log);
 
 unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket);
+
+unique_fd addr_connect_non_blocking(const char* addr, bool no_log_for_unix_socket);
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
                        writable_bytes_view transparent_dest, uint32_t verbose);

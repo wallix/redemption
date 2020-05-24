@@ -126,13 +126,13 @@ public:
 };
 
 
-class AclSerializer final : ReportMessageApi
+class AclSerializer final : public ReportMessageApi
 {
 public:
     Inifile & ini;
+    Transport * auth_trans;
 
 private:
-    Transport * auth_trans;
     char session_id[256];
     SessionLogFile * log_file;
 
@@ -184,18 +184,34 @@ public:
 
 struct Acl
 {
+    enum {
+        state_not_yet_connected = 0,
+        state_connected,
+        state_connection_failed,
+        state_disconnected_by_redemption,
+        state_disconnected_by_authentifier
+    } status = state_not_yet_connected;
+
     AclSerializer  * acl_serial = nullptr;
     KeepAlive keepalive;
     Inactivity inactivity;
     Acl(Inifile & ini, time_t now);
-    void set_acl_serial(AclSerializer * acl_serial) { this->acl_serial = acl_serial;}
+    void set_acl_serial(AclSerializer * acl_serial) {
+        this->acl_serial = acl_serial;
+        if (this->acl_serial != nullptr){
+            this->status = state_connected;
+        }
+    }
     time_t get_inactivity_timeout();
     void update_inactivity_timeout();
-    bool is_connected() { return this->acl_serial == nullptr; }
+    bool is_not_yet_connected() { return this->status == state_not_yet_connected; }
+    void connection_failed() { this->status = state_connection_failed; }
+    bool is_connected() { return this->status == state_connected; }
     void disconnect() {
         if (this->acl_serial) {
             delete this->acl_serial;
             this->acl_serial = nullptr;
+            this->status = state_disconnected_by_redemption;
         }
     }
 };

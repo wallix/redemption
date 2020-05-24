@@ -72,7 +72,11 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
+
     ini.set<cfg::context::forcemodule>(true);
     RED_CHECK_NO_THROW(acl.send_acl_data());
 
@@ -84,7 +88,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
         }
     };
     ThrowTransport transexcpt;
-    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini);
+    SessionLogFile log_file_excpt(cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
+    aclexcpt.set_auth_trans(&transexcpt);
+    aclexcpt.set_log_file(&log_file_excpt);
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
@@ -113,7 +120,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     init_keys(cctx);
 
     GeneratorTransport trans(stream.get_produced_bytes());
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     RED_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -150,7 +160,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
-    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini);
+    SessionLogFile log_file_excpt(cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
+    aclexcpt.set_auth_trans(&transexcpt);
+    aclexcpt.set_log_file(&log_file_excpt);
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
@@ -173,7 +186,10 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     init_keys(cctx);
 
     GeneratorTransport trans(s);
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -221,7 +237,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
@@ -264,7 +283,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
 
     std::string result(sz_string, 'a');
     RED_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);
@@ -304,7 +326,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
 
     RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
 
@@ -325,7 +350,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     init_keys(cctx);
 
     GeneratorTransport trans(s);
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -373,7 +401,10 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
     GeneratorTransport trans(""_av);
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    acl.set_auth_trans(&trans);
+    acl.set_log_file(&log_file);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 

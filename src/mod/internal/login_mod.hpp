@@ -141,17 +141,12 @@ public:
     [[nodiscard]] Rect get_screen_rect() const { return this->screen.get_rect(); }
 
     void rdp_gdi_up_and_running(ScreenInfo & ) override {}
-
     void rdp_gdi_down() override {}
 
     void rdp_input_invalidate(Rect r) override;
-
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
-
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override;
-
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override { this->screen.rdp_input_unicode(unicode, flag); }
-
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/, int16_t /*param1*/, int16_t /*param2*/) override {}
 
     void refresh(Rect r) override;

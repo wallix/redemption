@@ -65,7 +65,7 @@ public:
 
     virtual ~Transport() = default;
 
-    virtual bool get_sck() { return INVALID_SOCKET; }
+    virtual int get_sck() { return INVALID_SOCKET; }
 
     [[nodiscard]] uint32_t get_seqno() const
     { return this->seqno; }

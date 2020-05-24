@@ -39,6 +39,7 @@
     fv(ERR_MEMORY_ALLOCATION_FAILED, 200)                    \
                                                              \
     fv(ERR_SOCKET_CONNECT_FAILED, 1000)                      \
+    f(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED)                \
                                                              \
     fv(ERR_TRANSPORT, 1500)                                  \
     f(ERR_TRANSPORT_NO_MORE_DATA)                            \

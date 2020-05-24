@@ -45,7 +45,7 @@ class SocketTransport
 public:
     int sck;
 
-    bool get_sck() override { return sck; }
+    int get_sck() override { return sck; }
 
 protected:
     const char * name;

@@ -229,7 +229,7 @@ unique_fd ip_connect(const char* ip, int port, char const** error_result)
     int nbretry = 3;
     int retry_delai_ms = 1000;
     bool const no_log = false;
-    
+
     return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, no_log, error_result);
 }
 
@@ -269,12 +269,12 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
 {
     AddrInfoPtrWithDel_t addr_info_ptr =
         resolve_both_ipv4_and_ipv6_address(ip, port, error_result);
-    
+
     if (!addr_info_ptr)
     {
         return unique_fd { -1 };
     }
-    
+
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
     // we will try connection several time
@@ -296,7 +296,7 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
         close(sck);
         return unique_fd { -1 };
     }
-    
+
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768))
     {
@@ -321,7 +321,7 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
                                 nullptr,
                                 0,
                                 NI_NUMERICHOST))
-    {        
+    {
         if (error_result)
         {
             *error_result = "Cannot get ip address";
@@ -333,9 +333,9 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
         close(sck);
         return unique_fd { -1 };
     }
-    
+
     char text_target[2048] { };
-    
+
     snprintf(text_target,
              sizeof(text_target),
              "%s:%d (%s)",
@@ -346,7 +346,7 @@ unique_fd ip_connect_both_ipv4_and_ipv6(const char* ip,
     int nbretry = 3;
     int retry_delai_ms = 1000;
     const bool no_log = false;
-    
+
     return connect_sck(sck,
                        nbretry,
                        retry_delai_ms,
@@ -407,6 +407,15 @@ unique_fd addr_connect(const char* addr, bool no_log_for_unix_socket)
 
     std::string ip(addr, pos);
     return ip_connect(ip.c_str(), int(port));
+}
+
+
+unique_fd addr_connect_non_blocking(const char* addr, bool no_log_for_unix_socket)
+{
+    auto fd = addr_connect(addr, no_log_for_unix_socket);
+    const auto sck = fd.fd();
+    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
+    return fd;
 }
 
 
@@ -557,7 +566,7 @@ bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_
         sockaddr_storage ss;
     } u;
     socklen_t namelen = sizeof(u);
-    
+
     std::memset(&u, 0, namelen);
     if (::getsockname(fd, &u.s, &namelen) == -1)
     {

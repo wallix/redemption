@@ -74,12 +74,25 @@ Author(s): Jonathan Poelen
 //    void processEvents(int flags) {}
 //};
 
-class TimeBase;
+struct TimeBase
+{
+    timeval current_time {};
+
+    void set_current_time(timeval const& now)
+    {
+        assert(now >= this->current_time);
+        this->current_time = now;
+    }
+
+    [[nodiscard]] timeval get_current_time() const noexcept
+    {
+        //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
+        return this->current_time;
+    }
+};
 
 namespace jln
 {
-    using Reactor = TimeBase;
-
     template<class... Ts> class TopExecutor;
     template<class... Ts> class GroupExecutor;
     template<class... Ts> class ActionExecutor;
@@ -491,7 +504,7 @@ namespace jln
         [[nodiscard]] int get_fd() const noexcept;
         void set_fd(int fd) noexcept;
 
-        [[nodiscard]] Reactor& get_reactor() const noexcept;
+        [[nodiscard]] TimeBase& get_timebase() const noexcept;
 
         [[nodiscard]] timeval get_current_time() const noexcept;
 
@@ -557,7 +570,7 @@ namespace jln
             return R::Ready;
         }
 
-        [[nodiscard]] Reactor& get_reactor() const noexcept;
+        [[nodiscard]] TimeBase& get_timebase() const noexcept;
 
         [[nodiscard]] timeval get_current_time() const noexcept;
 
@@ -779,15 +792,15 @@ namespace jln
         std::function<R(TimerContext<Ts...>, Ts...)> on_timer;
         timeval tv {};
         std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
-        TimeBase& reactor;
+        TimeBase& timebase;
 
-        TimerExecutor(TimeBase& reactor) noexcept
-        : reactor(reactor)
+        TimerExecutor(TimeBase& timebase) noexcept
+        : timebase(timebase)
         {}
 
-        [[nodiscard]] Reactor& get_reactor() const noexcept
+        [[nodiscard]] TimeBase& get_timebase() const noexcept
         {
-            return this->reactor;
+            return this->timebase;
         }
 
         void set_delay(std::chrono::milliseconds ms) noexcept;
@@ -849,8 +862,8 @@ namespace jln
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         template<class... Us>
-        TimerExecutorWithValues(TimeBase& reactor, Us&&... xs)
-        : TimerExecutor<Ts...>(reactor)
+        TimerExecutorWithValues(TimeBase& timebase, Us&&... xs)
+        : TimerExecutor<Ts...>(timebase)
         , t{static_cast<Us&&>(xs)...}
         {}
         REDEMPTION_DIAGNOSTIC_POP
@@ -1409,9 +1422,9 @@ namespace jln
     {
         using GroupPtr = std::unique_ptr<GroupExecutor<Ts...>, GroupDeleter<Ts...>>;
 
-        TopExecutor(Reactor& reactor, int fd)
+        TopExecutor(TimeBase& timebase, int fd)
         : fd(fd)
-        , reactor(reactor)
+        , timebase(timebase)
         {}
 
         ~TopExecutor()
@@ -1435,9 +1448,9 @@ namespace jln
             return this->fd;
         }
 
-        [[nodiscard]] Reactor& get_reactor() const noexcept
+        [[nodiscard]] TimeBase& get_timebase() const noexcept
         {
-            return this->reactor;
+            return this->timebase;
         }
 
         void set_timeout(std::chrono::milliseconds ms) noexcept
@@ -1713,7 +1726,7 @@ namespace jln
         int fd;
         GroupExecutor<Ts...>* group = nullptr;
         GroupPtr loaded_group;
-        Reactor& reactor;
+        TimeBase& timebase;
 
         REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
 
@@ -2109,7 +2122,7 @@ namespace jln
     public:
         template<class... Us>
         REDEMPTION_JLN_CONCEPT(detail::TopExecutorBuilder_Concept)
-        create_top_executor(Reactor& reactor, int fd, Us&&... xs)
+        create_top_executor(TimeBase& timebase, int fd, Us&&... xs)
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Group = GroupExecutorWithValues<Tuple, Ts...>;
@@ -2117,7 +2130,7 @@ namespace jln
             return detail::TopExecutorBuilder<InitCtx>{
                 InitCtx{
                     std::unique_ptr<Group, GroupDeleter>(new Group{static_cast<Us&&>(xs)...}),
-                    std::unique_ptr<TopData, SharedDataDeleter>(new TopData{reactor, fd}),
+                    std::unique_ptr<TopData, SharedDataDeleter>(new TopData{timebase, fd}),
                     *this
                 },
             };
@@ -2276,7 +2289,7 @@ namespace jln
     public:
         template<class... Us>
         REDEMPTION_JLN_CONCEPT(detail::TimerExecutorBuilder_Concept)
-        create_timer_executor(Reactor& reactor, Us&&... xs)
+        create_timer_executor(TimeBase& timebase, Us&&... xs)
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Timer = TimerExecutorWithValues<Tuple, Ts...>;
@@ -2285,7 +2298,7 @@ namespace jln
             return detail::TimerExecutorBuilder<InitCtx>{
                 InitCtx{
                     std::unique_ptr<LocalTimerData, SharedDataDeleter>(
-                        new LocalTimerData{reactor, static_cast<Us&&>(xs)...}),
+                        new LocalTimerData{timebase, static_cast<Us&&>(xs)...}),
                     *this}
             };
         }
@@ -2417,7 +2430,7 @@ namespace jln
     public:
         template<class... Us>
         REDEMPTION_JLN_CONCEPT(detail::ActionExecutorBuilder_Concept)
-        create_action_executor(Reactor& /*reactor*/, Us&&... xs)
+        create_action_executor(TimeBase& /*timebase*/, Us&&... xs)
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Action = ActionExecutorWithValues<Tuple, Ts...>;
@@ -2426,7 +2439,7 @@ namespace jln
             return detail::ActionExecutorBuilder<InitCtx>{
                 InitCtx{
                     std::unique_ptr<ActionData, SharedDataDeleter>(
-                        new ActionData{/*reactor, */static_cast<Us&&>(xs)...}),
+                        new ActionData{/*timebase, */static_cast<Us&&>(xs)...}),
                     *this}
             };
         }
@@ -2598,15 +2611,15 @@ namespace jln
     }
 
     template<class... Ts>
-    Reactor& GroupContext<Ts...>::get_reactor() const noexcept
+    TimeBase& GroupContext<Ts...>::get_timebase() const noexcept
     {
-        return this->top.get_reactor();
+        return this->top.get_timebase();
     }
 
     template<class... Ts>
     timeval GroupContext<Ts...>::get_current_time() const noexcept
     {
-        return this->get_reactor().get_current_time();
+        return this->get_timebase().get_current_time();
     }
 
 
@@ -2651,15 +2664,15 @@ namespace jln
 
 
     template<class... Ts>
-    Reactor& TimerContext<Ts...>::get_reactor() const noexcept
+    TimeBase& TimerContext<Ts...>::get_timebase() const noexcept
     {
-        return this->timer.get_reactor();
+        return this->timer.get_timebase();
     }
 
     template<class... Ts>
     timeval TimerContext<Ts...>::get_current_time() const noexcept
     {
-        return this->get_reactor().get_current_time();
+        return this->get_timebase().get_current_time();
     }
 
 
@@ -2859,32 +2872,11 @@ namespace jln
 }  // namespace jln
 
 
-class mod_api;
-class Callback;
-class Inifile;
-
 using TimerContainer = jln::TimerContainer<>;
 using TimerPtr = TimerContainer::Ptr;
 using TopFdContainer = jln::TopContainer<>;
 using TopFdPtr = TopFdContainer::Ptr;
 
-// TODO: could be renamed GlobalClock (and 'time_base' renamed 'clock')
-struct TimeBase
-{
-    timeval current_time {};
-
-    void set_current_time(timeval const& now)
-    {
-        assert(now >= this->current_time);
-        this->current_time = now;
-    }
-
-    [[nodiscard]] timeval get_current_time() const noexcept
-    {
-        //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
-        return this->current_time;
-    }
-};
 
 namespace jln
 {
@@ -2893,7 +2885,7 @@ namespace jln
     {
         assert(this->timer_data.delay.count() >= 0);
         this->timer_data.tv = addusectimeval(
-            this->timer_data.delay, this->reactor.get_current_time());
+            this->timer_data.delay, this->timebase.get_current_time());
     }
 
     template<class... Ts>
@@ -2901,6 +2893,6 @@ namespace jln
     {
         assert(ms.count() >= 0);
         this->delay = ms;
-        this->tv = addusectimeval(this->delay, this->reactor.get_current_time());
+        this->tv = addusectimeval(this->delay, this->timebase.get_current_time());
     }
 }  // namespace jln
