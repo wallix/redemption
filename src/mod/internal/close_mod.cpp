@@ -26,8 +26,15 @@
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"
 
-namespace
+FlatWabClose build_close_widget(gdi::GraphicApi & drawable,
+                                Rect const widget_rect,
+                                CloseMod & mod,
+                                WidgetScreen & screen,
+                                std::string auth_error_message,
+                                CloseModVariables vars,
+                                Font const& font, Theme const& theme, bool showtimer, bool back_selector)
 {
+
     struct temporary_text
     {
         char text[255];
@@ -38,7 +45,8 @@ namespace
                 snprintf(text, sizeof(text), "%s", TR(trkeys::selector, language(vars)).c_str());
             }
             else {
-                // TODO target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman
+                // TODO target_application only used for user message,
+                // the two branches of alternative should be unified et message prepared by sesman
                 if (!vars.get<cfg::globals::target_application>().empty()) {
                     snprintf(
                         text, sizeof(text), "%s",
@@ -53,7 +61,24 @@ namespace
             }
         }
     };
-} // namespace
+
+
+    FlatWabClose widget(drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+                        screen, &mod, auth_error_message.c_str(),
+                        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
+                            ? nullptr
+                            : vars.get<cfg::globals::auth_user>().c_str(),
+                        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
+                            ? nullptr
+                            : temporary_text(vars).text,
+                        showtimer,
+                        vars.get<cfg::context::close_box_extra_message>().c_str(),
+                        font, theme, language(vars), back_selector);
+
+    return widget;
+}
+
+
 
 CloseMod::CloseMod(
     std::string auth_error_message,
@@ -64,17 +89,8 @@ CloseMod::CloseMod(
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool showtimer, bool back_selector)
     : close_widget(
-        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this,
-        auth_error_message.c_str(),
-        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
-            ? nullptr
-            : vars.get<cfg::globals::auth_user>().c_str(),
-        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
-            ? nullptr
-            : temporary_text(vars).text,
-        showtimer,
-        vars.get<cfg::context::close_box_extra_message>().c_str(),
-        font, theme, language(vars), back_selector)
+        build_close_widget(drawable, widget_rect, *this, this->screen, auth_error_message,
+                           vars, font, theme, showtimer, back_selector))
     , vars(vars)
     , front_width(width)
     , front_height(height)
@@ -154,6 +170,7 @@ void CloseMod::notify(Widget* sender, notify_event_t event)
     LOG(LOG_INFO, "CloseMod::notify");
     (void)sender;
     if (NOTIFY_CANCEL == event) {
+        LOG(LOG_INFO, "CloseMod::notify BACK_EVENT_STOP");
         this->set_mod_signal(BACK_EVENT_STOP);
     }
     else if (NOTIFY_SUBMIT == event) {
