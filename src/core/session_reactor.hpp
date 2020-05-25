@@ -811,14 +811,14 @@ namespace jln
             this->tv = tv;
         }
 
-        bool exec_action(Ts&... xs)
+        bool exec_action()
         {
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
             )
 
-            switch (this->on_timer(TimerContext<Ts...>{*this}, xs...)) {
+            switch (this->on_timer(TimerContext<Ts...>{*this})) {
                 case R::Terminate:
                 case R::Next:
                     return false;
