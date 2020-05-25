@@ -285,7 +285,7 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
-            this->graphics, this->front,
+            this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
@@ -295,7 +295,6 @@ public:
             this->rail_client_execute,
             this->glyphs,
             this->theme,
-            true,
             back_to_selector
         );
         return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
@@ -314,7 +313,7 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
-            this->graphics, this->front,
+            this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
@@ -324,7 +323,6 @@ public:
             this->rail_client_execute,
             this->glyphs,
             this->theme,
-            true,
             back_to_selector
         );
         return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};

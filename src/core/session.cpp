@@ -79,7 +79,6 @@ class Session
         Select(timeval timeout)
         : timeout{timeout}
         {
-//            LOG(LOG_INFO, "set initial timeout at %u s %u us", this->timeout.tv_sec, this->timeout.tv_usec);
             io_fd_zero(this->rfds);
             io_fd_zero(this->wfds);
         }
@@ -90,8 +89,11 @@ class Session
             const timeval & ultimatum = this->timeout;
             const timeval & starttime = now;
             if (ultimatum > starttime) {
-                timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                    - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
+                timeoutastv = to_timeval(
+                      std::chrono::seconds(ultimatum.tv_sec)
+                    - std::chrono::seconds(starttime.tv_sec)
+                    + std::chrono::microseconds(ultimatum.tv_usec)
+                    - std::chrono::microseconds(starttime.tv_usec));
             }
 
 //            LOG(LOG_INFO, "Waiting on select: now=%d.%d timeout=%d.%d timeout in %u s %u us",
@@ -103,42 +105,12 @@ class Session
                 nullptr, &timeoutastv);
         }
 
-        void set_timeout(timeval next_timeout)
-        {
-//            LOG(LOG_INFO, "set timeout at %u s %u us", next_timeout.tv_sec, next_timeout.tv_usec);
-            this->timeout = next_timeout;
-        }
-
-        timeval get_timeout()
-        {
-            return this->timeout;
-        }
-
-        bool is_set_for_writing(int fd){
-            bool res = io_fd_isset(fd, this->wfds);
-//            if (res){
-//                LOG(LOG_INFO, "is set for writing fd=%u", fd);
-//            }
-            return res;
-        }
-
-        bool is_set_for_reading(int fd){
-            bool res = io_fd_isset(fd, this->rfds);
-//            if (res){
-//                LOG(LOG_INFO, "is set for reading fd=%u", fd);
-//            }
-            return res;
-        }
-
-        void set_read_sck(int sck)
-        {
-//            LOG(LOG_INFO, "--> set for reading fd=%u", sck);
-            this->max = prepare_fds(sck, this->max, this->rfds);
-        }
-
-        void set_write_sck(int sck)
-        {
-//            LOG(LOG_INFO, "--> set for writing fd=%u", sck);
+        void set_timeout(timeval next_timeout){ this->timeout = next_timeout; }
+        timeval get_timeout() { return this->timeout; }
+        bool is_set_for_writing(int fd){ bool res = io_fd_isset(fd, this->wfds); return res; }
+        bool is_set_for_reading(int fd){ bool res = io_fd_isset(fd, this->rfds); return res; }
+        void set_read_sck(int sck) { this->max = prepare_fds(sck, this->max, this->rfds); }
+        void set_write_sck(int sck) {
             if (!this->want_write) {
                 this->want_write = true;
                 io_fd_zero(this->wfds);
@@ -156,11 +128,19 @@ class Session
     static const time_t select_timeout_tv_sec = 3;
 
 private:
-    void connect_acl(Acl & acl, CryptoContext& cctx, Random& rnd, timeval & now, Inifile& ini, Authentifier & authentifier, Fstat & fstat)
+    void connect_acl(Acl & acl,
+                     std::unique_ptr<AclSerializer> & acl_serial,
+                     std::unique_ptr<Transport> & auth_trans,
+                     std::unique_ptr<SessionLogFile> & log_file,
+                     CryptoContext& cctx,
+                     Random& rnd, timeval & now,
+                     Inifile& ini,
+                     Authentifier & authentifier,
+                     Fstat & fstat)
     {
         // authentifier never opened or closed by me (close box)
         // now is authentifier start time
-        auto acl_serial = new AclSerializer(ini);
+        acl_serial = std::make_unique<AclSerializer>(ini);
 
         unique_fd client_sck = addr_connect_non_blocking(ini.get<cfg::globals::authfile>().c_str(), 0);
         if (!client_sck.is_open()) {
@@ -169,16 +149,17 @@ private:
             throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
         }
 
-        Transport * auth_trans = new SocketTransport("Authentifier", std::move(client_sck),
+        auth_trans = std::make_unique<SocketTransport>("Authentifier", std::move(client_sck),
             ini.get<cfg::globals::authfile>().c_str(), 0,
             std::chrono::seconds(1), SocketTransport::Verbose::none);
 
-        auto log_file = new SessionLogFile(cctx, rnd, fstat, report_error_from_reporter(acl_serial));
+        log_file = std::make_unique<SessionLogFile>(cctx, rnd, fstat,
+                                   report_error_from_reporter(acl_serial.get()));
 
-        acl_serial->set_auth_trans(auth_trans);
-        acl_serial->set_log_file(log_file);
-        acl.set_acl_serial(acl_serial);
-        authentifier.set_acl_serial(acl_serial);
+        acl_serial->set_auth_trans(auth_trans.get());
+        acl_serial->set_log_file(log_file.get());
+        acl.set_acl_serial(acl_serial.get());
+        authentifier.set_acl_serial(acl_serial.get());
     }
 
 private:
@@ -324,11 +305,6 @@ private:
                               ClientExecute & rail_client_execute)
     {
         LOG(LOG_INFO, "front_up_and_running");
-        if (acl.is_connected()
-        && !acl.keepalive.is_started()
-        && mod_wrapper.is_connected()) {
-            acl.keepalive.start(now.tv_sec);
-        }
 
         // There are modified fields to send to sesman
         if (acl.is_connected() && ini.changed_field_size()) {
@@ -345,6 +321,7 @@ private:
                     auto next_state = MODULE_INTERNAL_CLOSE_BACK;
                     this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                 }
+                acl.acl_serial->remote_answer = false;
                 acl.acl_serial->send_acl_data();
                 return true;
             }
@@ -706,6 +683,9 @@ public:
         timeval now = tvtime();
 
         Acl acl(this->ini, now.tv_sec);
+        std::unique_ptr<AclSerializer> acl_serial;
+        std::unique_ptr<Transport> auth_trans;
+        std::unique_ptr<SessionLogFile> log_file;
 
         try {
             Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
@@ -886,7 +866,8 @@ public:
                     if (acl.is_not_yet_connected()) {
                         LOG(LOG_INFO, "Connect ACL");
                         try {
-                            this->connect_acl(acl, cctx, rnd, now, ini, authentifier, fstat);
+                            this->connect_acl(acl, acl_serial, auth_trans, log_file,
+                                              cctx, rnd, now, ini, authentifier, fstat);
                             session_state = SessionState::SESSION_STATE_RUNNING;
                         }
                         catch (...) {
@@ -910,23 +891,18 @@ public:
 
                     if (acl.is_connected()){
 
-                        LOG(LOG_INFO, "Run session step 9 acl_is_connected");
-
                         if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
-                            LOG(LOG_INFO, "Receive data from ACL");
                             acl.acl_serial->receive();
-                        }
-
-                        if (!ini.changed_field_size()) {
-                            LOG(LOG_INFO, "ACL Changed Field Size");
-                            mod_wrapper.acl_update();
+                            if (!ini.changed_field_size()) {
+                                mod_wrapper.acl_update();
+                            }
                         }
 
                         if (!sesman.auth_info_sent){
-                            LOG(LOG_INFO, "Sesman data to send to ACL");
                             sesman.set_acl_screen_info();
                             sesman.set_acl_auth_info();
                             if (this->ini.changed_field_size()) {
+                                acl.acl_serial->remote_answer = false;
                                 acl.acl_serial->send_acl_data();
                             }
                             continue;
@@ -973,6 +949,12 @@ public:
                                     language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
                                 mod_wrapper.display_osd_message(message);
                             }
+                        }
+
+                        if (acl.is_connected() && !acl.keepalive.is_started()
+                            && mod_wrapper.is_connected())
+                        {
+                            acl.keepalive.start(now.tv_sec);
                         }
 
                         run_session = this->front_up_and_running(acl, now, ini, mod_factory, mod_wrapper, front, authentifier, rail_client_execute);
