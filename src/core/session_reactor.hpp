@@ -2192,10 +2192,10 @@ namespace jln
         }
 
         template<class Predicate>
-        bool exec_action(Predicate&& predicate, Ts... xs)
+        bool exec_action(Predicate&& predicate)
         {
             return this->_exec(predicate, [&](Top& top) {
-                return top.exec_action(xs...);
+                return top.exec_action();
             });
         }
 
