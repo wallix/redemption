@@ -477,10 +477,6 @@ namespace jln
         , current_group(current_group)
         {}
 
-        template<class... Us>
-        REDEMPTION_JLN_CONCEPT(detail::GroupExecutorBuilder_Concept)
-        create_sub_executor(Us&&... /*xs*/);
-
         R exception(Error const& e) noexcept;
         R ready() noexcept { return R::Ready; }
         R need_more_data() noexcept { return R::NeedMoreData; }
@@ -2569,19 +2565,6 @@ namespace jln
         }
         this->top.disable_timeout();
         return R::Ready;
-    }
-
-
-    template<class... Ts>
-    template<class... Us>
-    REDEMPTION_JLN_CONCEPT(detail::GroupExecutorBuilder_Concept)
-    GroupContext<Ts...>::create_sub_executor(Us&&... xs)
-    {
-        using Top = TopExecutor<Ts...>;
-        using Group = GroupExecutorWithValues<
-            detail::tuple<decay_and_strip_t<Us>...>, Ts...>;
-        return detail::GroupExecutorBuilder<Top, Group>{
-            this->top, std::make_unique<Group>(static_cast<Us&&>(xs)...)};
     }
 
     template<class... Ts>
