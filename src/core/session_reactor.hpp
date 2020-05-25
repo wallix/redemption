@@ -2869,17 +2869,7 @@ namespace jln
         return ActionExecutorBuilderImpl<
             BuilderInit::E(Has | BuilderInit::NotifyDelete), InitCtx>(std::move(this->init_ctx));
     }
-}  // namespace jln
 
-
-using TimerContainer = jln::TimerContainer<>;
-using TimerPtr = TimerContainer::Ptr;
-using TopFdContainer = jln::TopContainer<>;
-using TopFdPtr = TopFdContainer::Ptr;
-
-
-namespace jln
-{
     template<class... Ts>
     void TopExecutor<Ts...>::update_next_time() noexcept
     {
@@ -2896,3 +2886,10 @@ namespace jln
         this->tv = addusectimeval(this->delay, this->timebase.get_current_time());
     }
 }  // namespace jln
+
+using TimerContainer = jln::TimerContainer<>;
+using TimerPtr = TimerContainer::Ptr;
+using TopFdContainer = jln::TopContainer<>;
+using TopFdPtr = TopFdContainer::Ptr;
+
+
