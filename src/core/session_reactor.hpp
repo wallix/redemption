@@ -2357,14 +2357,14 @@ namespace jln
             return !bool(this->node_executors.next);
         }
 
-        bool exec_timer(timeval tv, Ts... xs)
+        bool exec_timer(timeval tv)
         {
             SharedDataBase* node = &this->node_executors;
             while (node->next) {
                 auto* cur = node->next;
                 if (cur->shared_ptr) {
                     auto& timer = to_timer(cur);
-                    if (timer.tv > tv || timer.exec_action(xs...)) {
+                    if (timer.tv > tv || timer.exec_action()) {
                         node = node->next;
                     }
                     else {
