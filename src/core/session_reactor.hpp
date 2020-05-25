@@ -500,8 +500,6 @@ namespace jln
         [[nodiscard]] int get_fd() const noexcept;
         void set_fd(int fd) noexcept;
 
-        [[nodiscard]] TimeBase& get_timebase() const noexcept;
-
         [[nodiscard]] timeval get_current_time() const noexcept;
 
         // void set_timeout(std::chrono::milliseconds ms) noexcept
@@ -565,8 +563,6 @@ namespace jln
             timer.set_delay(ms);
             return R::Ready;
         }
-
-        [[nodiscard]] TimeBase& get_timebase() const noexcept;
 
         [[nodiscard]] timeval get_current_time() const noexcept;
 
@@ -642,9 +638,6 @@ namespace jln
 
         template<class F>
         R replace_timeout(F&& f);
-
-        template<class F>
-        R set_or_disable_timeout(std::chrono::milliseconds ms, F&& f);
 
         TopTimerContext& disable_timeout() noexcept
         {
@@ -793,11 +786,6 @@ namespace jln
         TimerExecutor(TimeBase& timebase) noexcept
         : timebase(timebase)
         {}
-
-        [[nodiscard]] TimeBase& get_timebase() const noexcept
-        {
-            return this->timebase;
-        }
 
         void set_delay(std::chrono::milliseconds ms) noexcept;
 
@@ -1442,11 +1430,6 @@ namespace jln
         [[nodiscard]] int get_fd() const noexcept
         {
             return this->fd;
-        }
-
-        [[nodiscard]] TimeBase& get_timebase() const noexcept
-        {
-            return this->timebase;
         }
 
         void set_timeout(std::chrono::milliseconds ms) noexcept
@@ -2553,20 +2536,6 @@ namespace jln
         return R::SubstituteTimeout;
     }
 
-    template<class Tuple, class... Ts>
-    template<class F>
-    R TopTimerContext<Tuple, Ts...>::set_or_disable_timeout(std::chrono::milliseconds ms, F&& f)
-    {
-        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
-        this->top.set_timeout(ms);
-        if (ms.count()) {
-            this->top.on_timeout_switch = detail::create_on_timeout(group, static_cast<F&&>(f));
-            return R::SubstituteTimeout;
-        }
-        this->top.disable_timeout();
-        return R::Ready;
-    }
-
     template<class... Ts>
     R GroupContext<Ts...>::exception(Error const& e) noexcept
     {
@@ -2594,15 +2563,9 @@ namespace jln
     }
 
     template<class... Ts>
-    TimeBase& GroupContext<Ts...>::get_timebase() const noexcept
-    {
-        return this->top.get_timebase();
-    }
-
-    template<class... Ts>
     timeval GroupContext<Ts...>::get_current_time() const noexcept
     {
-        return this->get_timebase().get_current_time();
+        return this->top.timebase.get_current_time();
     }
 
 
@@ -2645,17 +2608,10 @@ namespace jln
         return R::Exception;
     }
 
-
-    template<class... Ts>
-    TimeBase& TimerContext<Ts...>::get_timebase() const noexcept
-    {
-        return this->timer.get_timebase();
-    }
-
     template<class... Ts>
     timeval TimerContext<Ts...>::get_current_time() const noexcept
     {
-        return this->get_timebase().get_current_time();
+        return this->timer.timebase.get_current_time();
     }
 
 
