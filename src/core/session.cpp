@@ -642,7 +642,6 @@ private:
 
     void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & sesman)
     {
-        LOG(LOG_INFO, "Front Incoming Data");
         if (front.front_must_notify_resize) {
             LOG(LOG_INFO, "front_incoming_data::notify resize");
             front.notify_resize(mod_wrapper.get_callback());

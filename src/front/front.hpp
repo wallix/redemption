@@ -768,6 +768,8 @@ public:
 public:
     Front( TimeBase& time_base
          , TimerContainer& timer_events_
+         // TODO: To Cut dependency with sesman, we should rather provide some front specific callback table
+         // to send data to acl.
          , SesmanInterface & sesman
          , Transport & trans
          , Random & gen
@@ -972,7 +974,9 @@ public:
     bool can_be_start_capture(SesmanInterface & sesman) override
     {
         // Recording is enabled.
-        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
+        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types for set_auth_info set_screen_info
+        // I also should imagine something else for capture needs. Maybe to see after splitting front between
+        // capture related code and network-related code.
 
         if (this->capture) {
             LOG(LOG_INFO, "Front::can_be_start_capture: session capture is already started");

@@ -99,13 +99,19 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    auto end_tv = time_base.get_current_time();
-    end_tv = {end_tv.tv_sec+1, end_tv.tv_usec};
-    timer_events_.exec_timer(end_tv);
-
+    time_base.set_current_time({1, 0});
+    timer_events_.exec_timer(time_base.get_current_time());
     ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
     "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
+
+
+    time_base.set_current_time({300, 0});
+    timer_events_.exec_timer(time_base.get_current_time());
+    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+    RED_CHECK_SIG(ConstImageDataView(front),
+    "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
+
 }
 
 RED_AUTO_TEST_CASE(TestCloseModSelector)
