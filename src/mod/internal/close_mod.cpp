@@ -133,10 +133,12 @@ CloseMod::CloseMod(
         this->timeout_timer = timer_events_.create_timer_executor(time_base, start_timer)
         .set_delay(delay)
         .on_action([this](JLN_TIMER_CTX ctx, std::chrono::seconds& seconds){
+            LOG(LOG_INFO, "timer event %ld", seconds.count());
             // TODO milliseconds += ctx.time() - previous_time
             ++seconds;
             auto const close_timeout = this->vars.get<cfg::globals::close_timeout>();
             if (seconds < close_timeout) {
+                LOG(LOG_INFO, "refresh time");
                 this->close_widget.refresh_timeleft((close_timeout - seconds).count());
                 return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
