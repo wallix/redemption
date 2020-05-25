@@ -914,14 +914,14 @@ namespace jln
 
         std::function<R(ActionContext<Ts...>, Ts...)> on_action;
 
-        bool exec_action(Ts&... xs)
+        bool exec_action()
         {
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
             )
 
-            switch (this->on_action(ActionContext<Ts...>{}, xs...)) {
+            switch (this->on_action(ActionContext<Ts...>{})) {
                 case R::Terminate:
                 case R::Next:
                     return false;
@@ -2478,14 +2478,14 @@ namespace jln
             return !bool(this->node_executors.next);
         }
 
-        bool exec_action(Ts... xs)
+        bool exec_action()
         {
             SharedDataBase* node = &this->node_executors;
             while (node->next) {
                 auto* cur = node->next;
                 if (cur->shared_ptr) {
                     Action& action = static_cast<SharedData<Action>&>(*cur).value();
-                    if (action.exec_action(xs...)) {
+                    if (action.exec_action()) {
                         node = node->next;
                     }
                     else {
