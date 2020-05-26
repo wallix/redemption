@@ -2189,14 +2189,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "load_theme")) {
-            ::config_parse_and_log(
-                context, key,
-                static_cast<cfg::internal_mod::theme&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);

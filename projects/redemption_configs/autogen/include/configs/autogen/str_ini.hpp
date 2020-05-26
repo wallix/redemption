@@ -1356,9 +1356,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_target_field = 1
 
-#_advanced
-#load_theme = 
-
 [theme]
 
 # Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)

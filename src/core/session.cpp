@@ -716,8 +716,6 @@ public:
         try {
             Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
 
-            auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
-            LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
             Theme theme;
             ::load_theme(theme, ini);
 

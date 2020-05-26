@@ -1153,9 +1153,6 @@ password_fr = string(default='')
 #_advanced
 enable_target_field = boolean(default=True)
 
-#_advanced
-load_theme = string(default='')
-
 [theme]
 
 # Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)

@@ -3659,16 +3659,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// type: std::string <br/>
-    /// default: {} <br/>
-    struct internal_mod::theme {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
 
     /// Proxy session log id <br/>
     /// type: std::string <br/>
@@ -5505,8 +5495,7 @@ struct translation
 { static constexpr bool is_section = true; };
 
 struct internal_mod
-: cfg::internal_mod::theme
-, cfg::internal_mod::enable_target_field
+: cfg::internal_mod::enable_target_field
 { static constexpr bool is_section = true; };
 
 struct context
