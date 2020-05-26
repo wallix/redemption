@@ -703,6 +703,8 @@ public:
 
         TimeSystem timeobj;
 
+        const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
+
         time_base.set_current_time(tvtime());
         SesmanInterface sesman(ini);
         Front front(time_base, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
@@ -1379,8 +1381,12 @@ public:
             front.disconnect();
         }
         catch (Error const& e) {
-            disconnection_message_error = e.errmsg();
-            LOG(LOG_INFO, "Session::Session Init exception = %s!", disconnection_message_error);
+            // silent message for localhost for watchdog
+            if (!source_is_localhost
+                || e.id != ERR_TRANSPORT_WRITE_FAILED) {
+                disconnection_message_error = e.errmsg();
+                LOG(LOG_INFO, "Session::Session Init exception = %s!", disconnection_message_error);
+            }
         }
         catch (const std::exception & e) {
             disconnection_message_error = e.what();
@@ -1391,7 +1397,7 @@ public:
             LOG(LOG_ERR, "Session::Session other exception in Init");
         }
         // silent message for localhost for watchdog
-        if (ini.get<cfg::globals::host>() != "127.0.0.1") {
+        if (!source_is_localhost) {
             if (!ini.is_asked<cfg::globals::host>()) {
                 LOG(LOG_INFO, "Session::Client Session Disconnected");
             }
