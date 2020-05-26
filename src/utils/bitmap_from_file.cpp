@@ -95,7 +95,7 @@ Bitmap bitmap_from_file_impl(const char *filename, BGRColor bg_color)
         return Bitmap{};
     }
     if (png_sig_cmp(type1, 0, 8) == 0) {
-        LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file", filename);
+        // LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file", filename);
         return bitmap_from_png_without_sig(file.fd(), bg_color);
     }
 
@@ -121,15 +121,15 @@ namespace
                                                  nullptr,
                                                  nullptr,
                                                  nullptr);
-    
+
     if (!png_ptr)
     {
         LOG(LOG_ERR, "Cannot create PNG read struct");
         return bitmap;
     }
-    
+
     png_infop info_ptr = nullptr;
-    
+
     SCOPE_EXIT(png_destroy_read_struct(&png_ptr, &info_ptr, nullptr));
     if (!(info_ptr = png_create_info_struct(png_ptr)))
     {
@@ -148,7 +148,7 @@ namespace
     // this handle lib png errors for this call
 
     File file(fdopen(fd, "rb"));
-        
+
     if (!file)
     {
         LOG(LOG_ERR, "Cannot open file from file descriptor");
@@ -198,7 +198,7 @@ namespace
     png_set_bgr(png_ptr);
 
     png_color_16 bg_color_16;
-    
+
     bg_color_16.red = bg_color.red();
     bg_color_16.green = bg_color.green();
     bg_color_16.blue = bg_color.blue();
@@ -207,7 +207,7 @@ namespace
                        PNG_BACKGROUND_GAMMA_FILE,
                        0,
                        1.0);
-    
+
     png_read_update_info(png_ptr, info_ptr);
 
     // TODO Looks like there's a shift when width is not divisible by 4
