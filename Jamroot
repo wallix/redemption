@@ -157,7 +157,6 @@ explicit
     install-lib
     install-share
     install-etc
-    install-etc-themes
     install-etc-ppocr
     install-etc-ppocr-latin
     install-etc-ppocr-latin-cyrillic
@@ -169,7 +168,6 @@ alias instexe : install-bin ;
 alias install :
     install-bin install-lib
     install-etc
-    install-etc-themes
     install-etc-ppocr
     install-share
 ;
@@ -211,12 +209,6 @@ install install-etc-ppocr-latin-cyrillic
     : [ glob $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin-cyrillic/* ]
     :
     : <location>$(INSTALLDIR)$(ETC_PREFIX)/ppocr.latin-cyrillic
-    ;
-
-install install-etc-themes
-    : [ glob $(REDEMPTION_SYS_PATH)/etc/rdpproxy/themes/HOWTO ]
-    :
-    : <location>$(INSTALLDIR)$(ETC_PREFIX)/themes
     ;
 
 install install-lib
