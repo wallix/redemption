@@ -1,3 +1,10 @@
+redemption (8.1.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix record filenames
+  * various fixes
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 26 May 2020 21:50:52 +0200
+
 redemption (8.1.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * target in login page
