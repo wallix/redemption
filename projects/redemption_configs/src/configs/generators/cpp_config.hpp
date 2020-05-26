@@ -683,14 +683,14 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
             "    else if (0 == strcmp(context, \"" << body.first << "\")) {\n"
             "        if (0) {}\n" << body.second << "\n"
             "        else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
-            "            LOG(LOG_ERR, \"unknown parameter %s in section [%s]\", key, context);\n"
+            "            LOG(LOG_WARNING, \"unknown parameter %s in section [%s]\", key, context);\n"
             "        }\n"
             "    }\n"
         ;
     }
     out_set_value <<
         "    else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
-        "        LOG(LOG_ERR, \"unknown section [%s]\", context);\n"
+        "        LOG(LOG_WARNING, \"unknown section [%s]\", context);\n"
         "    }\n"
         "}\n"
     ;

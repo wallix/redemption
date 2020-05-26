@@ -249,7 +249,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "session_log")) {
@@ -288,7 +288,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "client")) {
@@ -575,7 +575,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "mod_rdp")) {
@@ -1310,7 +1310,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "mod_vnc")) {
@@ -1389,7 +1389,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "metrics")) {
@@ -1444,7 +1444,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "file_verification")) {
@@ -1515,7 +1515,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "file_storage")) {
@@ -1530,7 +1530,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "icap_server_down")) {
@@ -1585,7 +1585,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "icap_server_up")) {
@@ -1640,7 +1640,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "mod_replay")) {
@@ -1663,7 +1663,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "ocr")) {
@@ -1710,7 +1710,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "video")) {
@@ -1909,7 +1909,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "crypto")) {
@@ -1932,7 +1932,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "websocket")) {
@@ -1963,7 +1963,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "debug")) {
@@ -2130,7 +2130,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "remote_program")) {
@@ -2145,7 +2145,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "translation")) {
@@ -2176,7 +2176,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "internal_mod")) {
@@ -2199,7 +2199,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (0 == strcmp(context, "theme")) {
@@ -2398,10 +2398,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            LOG(LOG_WARNING, "unknown parameter %s in section [%s]", key, context);
         }
     }
     else if (static_cast<cfg::debug::config>(this->variables).value) {
-        LOG(LOG_ERR, "unknown section [%s]", context);
+        LOG(LOG_WARNING, "unknown section [%s]", context);
     }
 }
