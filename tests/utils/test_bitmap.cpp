@@ -3304,7 +3304,7 @@ RED_DATA_TEST_CASE(TestRDP60BitmapCompression, (std::array{
 {
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
-    Bitmap bmp = bitmap_from_file(filename);
+    Bitmap bmp = bitmap_from_file(filename, BLACK);
 
     auto sz = std::max(std::size_t{65536}, 2u * bmp.bmp_size());
     auto uptr = std::make_unique<uint8_t[]>(sz);
@@ -3591,7 +3591,7 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
 {
     //const char * filename = FIXTURES_PATH "/win2008capture10.png";
 
-    //Bitmap bmp24 = bitmap_from_file(filename);
+    //Bitmap bmp24 = bitmap_from_file(filename, BLACK);
 
     BGRPalette palette332(BGRPalette::classic_332());
 
@@ -5343,7 +5343,7 @@ RED_AUTO_TEST_CASE(TestBitmapConv)
 {
     const char * filename = FIXTURES_PATH "/wablogoblue_198x67.png";
 
-    Bitmap bitmap_1 = bitmap_from_file(filename);
+    Bitmap bitmap_1 = bitmap_from_file(filename, BLACK);
 
     RED_CHECK_EQUAL(198, bitmap_1.cx());
     RED_CHECK_EQUAL(198 * 3, bitmap_1.line_size());

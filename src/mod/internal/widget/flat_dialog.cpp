@@ -63,8 +63,8 @@ FlatDialog::FlatDialog(
           app_path(AppPath::LoginWabBlue),
           *this,
           nullptr,
-          -8,
-          &theme.global.bgcolor)
+          theme.global.bgcolor,
+          -8)
     , extra_button(extra_button)
     , font(font)
     , dialog_string(text)

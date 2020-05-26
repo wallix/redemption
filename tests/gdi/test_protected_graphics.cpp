@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
     now.tv_usec = 0;
     now.tv_sec++;
 
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp");
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
 
     RED_CHECK_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
 
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp");
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
 
     RED_CHECK_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
 
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp");
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
