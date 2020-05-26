@@ -2215,7 +2215,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
 
         auto draw_img = [&](char const* filename){
             Bitmap img;
-            RED_CHECK((img = bitmap_from_file(filename)).is_valid());
+            RED_CHECK((img = bitmap_from_file(filename, BLACK)).is_valid());
             capture.draw(
                 RDPMemBlt(0, Rect(0, 0, img.cx(), img.cy()), 0xCC, 0, 0, 0),
                 scr, img);

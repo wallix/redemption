@@ -126,8 +126,8 @@ FlatLogin::FlatLogin(
           app_path(AppPath::LoginWabBlue),
           *this,
           nullptr,
-          -10,
-          &theme.global.bgcolor)
+          theme.global.bgcolor,
+          -10)
     , version_label(drawable, *this, nullptr, caption, -15,
                     theme.global.fgcolor, theme.global.bgcolor,
                     font)

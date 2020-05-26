@@ -29,7 +29,6 @@
 
 #include "utils/bitmap_from_file.hpp"
 
-#include "utils/bitmap.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/file.hpp"
 #include "utils/log.hpp"
@@ -37,13 +36,11 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/colors.hpp"
 #include "cxx/cxx.hpp"
 
 #include <png.h>
 
 #include <cerrno>
-
 
 using std::size_t; /*NOLINT*/
 
@@ -66,18 +63,12 @@ namespace
         return true;
     }
 
-    Bitmap
-    bitmap_from_bmp_without_sig(int fd,
-                                const char * filename);
-    
-    Bitmap
-    bitmap_from_png_without_sig(int fd,
-                                const char * filename,
-                                const BGRColor *bg_color = nullptr);
+    Bitmap bitmap_from_bmp_without_sig(int fd, const char *filename);
+    Bitmap bitmap_from_png_without_sig(int fd, BGRColor bg_color);
 } // namespace
 
 
-Bitmap bitmap_from_file_impl(const char * filename, const BGRColor *bg_color)
+Bitmap bitmap_from_file_impl(const char *filename, BGRColor bg_color)
 {
     using png_byte = uint8_t;
     png_byte type1[8];
@@ -104,17 +95,15 @@ Bitmap bitmap_from_file_impl(const char * filename, const BGRColor *bg_color)
         return Bitmap{};
     }
     if (png_sig_cmp(type1, 0, 8) == 0) {
-        //LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file", filename);
-        return bitmap_from_png_without_sig(file.fd(), filename, bg_color);
+        LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file", filename);
+        return bitmap_from_png_without_sig(file.fd(), bg_color);
     }
 
     LOG(LOG_ERR, "Bitmap: error bitmap file [%s] not BMP or PNG file", filename);
     return Bitmap{};
 }
 
-
-Bitmap bitmap_from_file(const char * filename,
-                        const BGRColor *bg_color)
+Bitmap bitmap_from_file(const char *filename, BGRColor bg_color)
 {
     Bitmap bitmap = bitmap_from_file_impl(filename, bg_color);
     if (bitmap.is_valid()) {
@@ -125,22 +114,26 @@ Bitmap bitmap_from_file(const char * filename,
 
 namespace
 {
-    Bitmap bitmap_from_png_without_sig(int fd,
-                                       const char * /*filename*/,
-                                       const BGRColor *bg_color)
+    Bitmap bitmap_from_png_without_sig(int fd, BGRColor bg_color)
 {
     Bitmap bitmap;
-
-    png_structp png_ptr = png_create_read_struct(
-        PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if (!png_ptr) {
+    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+                                                 nullptr,
+                                                 nullptr,
+                                                 nullptr);
+    
+    if (!png_ptr)
+    {
+        LOG(LOG_ERR, "Cannot create PNG read struct");
         return bitmap;
     }
+    
     png_infop info_ptr = nullptr;
+    
     SCOPE_EXIT(png_destroy_read_struct(&png_ptr, &info_ptr, nullptr));
-
-    info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr) {
+    if (!(info_ptr = png_create_info_struct(png_ptr)))
+    {
+        LOG(LOG_ERR, "Cannot create PNG info struct");
         return bitmap;
     }
 
@@ -155,7 +148,10 @@ namespace
     // this handle lib png errors for this call
 
     File file(fdopen(fd, "rb"));
-    if (!file) {
+        
+    if (!file)
+    {
+        LOG(LOG_ERR, "Cannot open file from file descriptor");
         return bitmap;
     }
     png_init_io(png_ptr, file.get());
@@ -200,33 +196,17 @@ namespace
         png_set_strip_alpha(png_ptr);
     }
     png_set_bgr(png_ptr);
+
+    png_color_16 bg_color_16;
     
-    if (bg_color)
-    {    
-        png_color_16p img_background;
-
-        if (png_get_bKGD(png_ptr, info_ptr, &img_background))
-        {
-            png_set_background(png_ptr,
-                               img_background,
-                               PNG_BACKGROUND_GAMMA_FILE,
-                               1,
-                               1.0);
-        }
-        else
-        {
-            png_color_16 bg_color_16;
-
-            bg_color_16.red = bg_color->red();
-            bg_color_16.green = bg_color->green();
-            bg_color_16.blue = bg_color->blue();
-            png_set_background(png_ptr,
-                               &bg_color_16,
-                               PNG_BACKGROUND_GAMMA_SCREEN,
-                               0,
-                               1.0);
-        }
-    }
+    bg_color_16.red = bg_color.red();
+    bg_color_16.green = bg_color.green();
+    bg_color_16.blue = bg_color.blue();
+    png_set_background(png_ptr,
+                       &bg_color_16,
+                       PNG_BACKGROUND_GAMMA_FILE,
+                       0,
+                       1.0);
     
     png_read_update_info(png_ptr, info_ptr);
 
@@ -250,7 +230,7 @@ namespace
     return bitmap;
 }
 
-Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
+Bitmap bitmap_from_bmp_without_sig(int fd, const char *filename)
 {
     Bitmap bitmap;
     BGRPalette palette1 = BGRPalette::classic_332();
