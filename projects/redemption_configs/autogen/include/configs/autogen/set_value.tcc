@@ -1076,6 +1076,38 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "application_driver_exe_or_file")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::application_driver_exe_or_file&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "application_driver_script_argument")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::application_driver_script_argument&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "application_driver_chrome_uia_script")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::application_driver_chrome_uia_script&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "application_driver_ie_script")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::application_driver_ie_script&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "server_cert_store")) {
             ::configs::parse_and_log(
                 context, key,

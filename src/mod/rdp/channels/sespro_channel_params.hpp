@@ -171,6 +171,9 @@ struct SessionProbeVirtualChannelParams
     SessionProbeOnAccountManipulation on_account_manipulation = SessionProbeOnAccountManipulation::allow;
 
     bool at_end_of_session_freeze_connection_and_wait = true;
+
+    bool launch_application_driver                = false;
+    bool launch_application_driver_then_terminate = false;
 };
 
 
