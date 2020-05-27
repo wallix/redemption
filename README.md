@@ -245,6 +245,7 @@ Exemple call line for proxy_recorder:
 
     ./tools/packager.py --update-version 1.2.7 --git-tag --git-push-tag --git-push
 
+- `--add-changelog`: if you want to add some specific changelogs
 
 # Test files
 
