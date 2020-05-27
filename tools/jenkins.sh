@@ -168,7 +168,7 @@ if [ $fast -eq 0 ]; then
     #set -o pipefail
 
     # clang analyzer
-    CLANG_TIDY=clang-tidy-9 ./tools/c++-analyzer/clang-tidy \
+    CLANG_TIDY=clang-tidy-10 ./tools/c++-analyzer/clang-tidy \
       | sed -E '/^(.+\/|)modules\//,/\^/d'
 
     show_duration clang-tidy
