@@ -27,7 +27,6 @@ Author(s): Jonathan Poelen
 #include "acl/sesman.hpp"
 
 #include <memory>
-#include <string>
 
 class TimeBase;
 class Transport;
@@ -49,8 +48,9 @@ public:
         Inifile & ini,
         CryptoContext & cctx,
         ReportMessageApi & report_message,
-        bool fp_support, // If true, fast-path must be supported
-        std::string server_capabilities_filename = {});
+        bool fp_support // If true, fast-path must be supported
+    );
+
     ~FrontWrapper();
 
     bool can_be_start_capture(SesmanInterface & /*sesman*/) override { return false; }

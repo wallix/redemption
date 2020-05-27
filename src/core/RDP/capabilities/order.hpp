@@ -334,8 +334,8 @@ enum {
 };
 
 
-struct OrderCaps : public Capability {
-
+struct OrderCaps : public Capability
+{
     uint8_t terminalDescriptor[16]{};
     uint32_t pad4octetsA{0};                         // MUST be ignored
     uint16_t desktopSaveXGranularity{1};             // ignored and assumed to be 1
@@ -496,40 +496,5 @@ struct OrderCaps : public Capability {
         LOG(LOG_INFO, "     Order caps::pad2octetsD %u", this->pad2octetsD);
         LOG(LOG_INFO, "     Order caps::textANSICodePage %u", this->textANSICodePage);
         LOG(LOG_INFO, "     Order caps::pad2octetsE %u", this->pad2octetsE);
-    }
-
-    void dump(FILE * f) const
-    {
-       fprintf(f, "[Order Capability Set]\n");
-
-       fprintf(f, "desktopSaveXGranularity=%u\n",         unsigned(this->desktopSaveXGranularity));
-       fprintf(f, "desktopSaveYGranularity=%u\n",         unsigned(this->desktopSaveYGranularity));
-       fprintf(f, "maximumOrderLevel=%u\n",               unsigned(this->maximumOrderLevel));
-       fprintf(f, "numberFonts=%u\n",                     unsigned(this->numberFonts));
-       fprintf(f, "orderFlags=0x%X\n",                    unsigned(this->orderFlags));
-       fprintf(f, "TS_NEG_DSTBLT_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_DSTBLT_INDEX]));
-       fprintf(f, "TS_NEG_PATBLT_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_PATBLT_INDEX]));
-       fprintf(f, "TS_NEG_SCRBLT_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_SCRBLT_INDEX]));
-       fprintf(f, "TS_NEG_MEMBLT_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_MEMBLT_INDEX]));
-       fprintf(f, "TS_NEG_MEM3BLT_INDEX=%u\n",            unsigned(this->orderSupport[TS_NEG_MEM3BLT_INDEX]));
-       fprintf(f, "TS_NEG_DRAWNINEGRID_INDEX=%u\n",       unsigned(this->orderSupport[TS_NEG_DRAWNINEGRID_INDEX]));
-       fprintf(f, "TS_NEG_LINETO_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_LINETO_INDEX]));
-       fprintf(f, "TS_NEG_MULTI_DRAWNINEGRID_INDEX=%u\n", unsigned(this->orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX]));
-       fprintf(f, "TS_NEG_SAVEBITMAP_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_SAVEBITMAP_INDEX]));
-       fprintf(f, "TS_NEG_MULTIDSTBLT_INDEX=%u\n",        unsigned(this->orderSupport[TS_NEG_MULTIDSTBLT_INDEX]));
-       fprintf(f, "TS_NEG_MULTIPATBLT_INDEX=%u\n",        unsigned(this->orderSupport[TS_NEG_MULTIPATBLT_INDEX]));
-       fprintf(f, "TS_NEG_MULTISCRBLT_INDEX=%u\n",        unsigned(this->orderSupport[TS_NEG_MULTISCRBLT_INDEX]));
-       fprintf(f, "TS_NEG_MULTIOPAQUERECT_INDEX=%u\n",    unsigned(this->orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]));
-       fprintf(f, "TS_NEG_FAST_INDEX_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_FAST_INDEX_INDEX]));
-       fprintf(f, "TS_NEG_POLYGON_SC_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_POLYGON_SC_INDEX]));
-       fprintf(f, "TS_NEG_POLYGON_CB_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_POLYGON_CB_INDEX]));
-       fprintf(f, "TS_NEG_POLYLINE_INDEX=%u\n",           unsigned(this->orderSupport[TS_NEG_POLYLINE_INDEX]));
-       fprintf(f, "TS_NEG_FAST_GLYPH_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_FAST_GLYPH_INDEX]));
-       fprintf(f, "TS_NEG_ELLIPSE_SC_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_ELLIPSE_SC_INDEX]));
-       fprintf(f, "TS_NEG_ELLIPSE_CB_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_ELLIPSE_CB_INDEX]));
-       fprintf(f, "TS_NEG_INDEX_INDEX=%u\n",              unsigned(this->orderSupport[TS_NEG_GLYPH_INDEX]));
-       fprintf(f, "orderSupportExFlags=0x%X\n",           unsigned(this->orderSupportExFlags));
-       fprintf(f, "desktopSaveSize=%u\n",                 this->desktopSaveSize);
-       fprintf(f, "textANSICodePage=%u\n\n",              unsigned(this->textANSICodePage));
     }
 };

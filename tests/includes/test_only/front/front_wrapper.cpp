@@ -151,14 +151,14 @@ FrontWrapper::FrontWrapper(
     Inifile & ini,
     CryptoContext & cctx,
     ReportMessageApi & report_message,
-    bool fp_support, // If true, fast-path must be supported
-    std::string server_capabilities_filename)
+    bool fp_support // If true, fast-path must be supported
+)
 : d(new D{FrontWrapper::D::MyFront{
     time_base,
     timer_events_,
     sesman,
     trans, gen, ini, cctx, report_message,
-    fp_support, std::move(server_capabilities_filename)
+    fp_support
 }})
 {}
 

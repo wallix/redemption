@@ -96,7 +96,6 @@
 #include "utils/bitfu.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"
-#include "utils/confdescriptor.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/genfstat.hpp"
@@ -621,8 +620,6 @@ private:
 
     std::unique_ptr<NegoServer> nego_server;
 
-    std::string server_capabilities_filename;
-
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
     ReportMessageApi & report_message;
@@ -775,7 +772,6 @@ public:
          , CryptoContext & cctx
          , ReportMessageApi & report_message
          , bool fp_support // If true, fast-path must be supported
-         , std::string server_capabilities_filename = {}
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
@@ -790,7 +786,6 @@ public:
     , server_fastpath_update_support(false)
     , tls_client_active(true)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , server_capabilities_filename(std::move(server_capabilities_filename))
     , report_message(report_message)
     , time_base(time_base)
     , timer_events_(timer_events_)
@@ -3066,9 +3061,6 @@ private:
                 if (this->fastpath_support) {
                     general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
                 }
-                if (!this->server_capabilities_filename.empty()) {
-                    general_caps_load(general_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     general_caps.log("Front::send_demand_active: Sending to client");
                 }
@@ -3080,9 +3072,6 @@ private:
                 bitmap_caps.desktopWidth = this->client_info.screen_info.width;
                 bitmap_caps.desktopHeight = this->client_info.screen_info.height;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-                if (!this->server_capabilities_filename.empty()) {
-                    bitmap_caps_load(bitmap_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     bitmap_caps.log("Front::send_demand_active: Sending to client");
                 }
@@ -3109,9 +3098,6 @@ private:
                 order_caps.pad4octetsB = 0x0f4240;
                 order_caps.desktopSaveSize = 0x0f4240;
                 order_caps.pad2octetsC = 1;
-                if (!this->server_capabilities_filename.empty()) {
-                    order_caps_load(order_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     order_caps.log("Front::send_demand_active: Sending to client");
                 }

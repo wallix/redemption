@@ -215,7 +215,6 @@ exe rdpproxy :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -2485,7 +2484,6 @@ test-run tests/core/test_mainloop :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -2628,7 +2626,6 @@ test-run tests/core/test_session :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -2723,7 +2720,6 @@ test-run tests/front/test_front :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4657,7 +4653,6 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4716,7 +4711,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4775,7 +4769,6 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -5321,18 +5314,6 @@ test-run tests/utils/test_compression_transport_builder :
   <covfile>src/utils/compression_transport_builder.hpp
   <define>ZLIB_CONST
 ;
-test-run tests/utils/test_confdescriptor :
-  $(REDEMPTION_TEST_PATH)/utils/test_confdescriptor.cpp
-:
-  <library>src/core/error.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/utils/confdescriptor.cpp
-  <covfile>src/utils/confdescriptor.hpp
-;
 test-run tests/utils/test_contiguous_sub_rect_f :
   $(REDEMPTION_TEST_PATH)/utils/test_contiguous_sub_rect_f.cpp
 :
@@ -5724,7 +5705,6 @@ obj src/utils/base64.o : $(REDEMPTION_SRC_PATH)/utils/base64.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
-obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp ;
 obj src/utils/crypto/ssl_mod_exp_direct.o : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/drawable.o : $(REDEMPTION_SRC_PATH)/utils/drawable.cpp ;
@@ -6057,7 +6037,6 @@ alias test_cfgloader : tests/utils/test_cfgloader ;
 alias test_channels_authorizations : tests/utils/test_channels_authorizations ;
 alias test_colors : tests/utils/test_colors ;
 alias test_compression_transport_builder : tests/utils/test_compression_transport_builder ;
-alias test_confdescriptor : tests/utils/test_confdescriptor ;
 alias test_contiguous_sub_rect_f : tests/utils/test_contiguous_sub_rect_f ;
 alias test_d3des : tests/utils/test_d3des ;
 alias test_diffiehellman : tests/utils/test_diffiehellman ;
@@ -6381,7 +6360,6 @@ alias test_bitstream.coverage : tests/utils/test_bitstream.coverage ;
 alias test_cfgloader.coverage : tests/utils/test_cfgloader.coverage ;
 alias test_colors.coverage : tests/utils/test_colors.coverage ;
 alias test_compression_transport_builder.coverage : tests/utils/test_compression_transport_builder.coverage ;
-alias test_confdescriptor.coverage : tests/utils/test_confdescriptor.coverage ;
 alias test_contiguous_sub_rect_f.coverage : tests/utils/test_contiguous_sub_rect_f.coverage ;
 alias test_d3des.coverage : tests/utils/test_d3des.coverage ;
 alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
@@ -6817,7 +6795,6 @@ alias tests/utils.norec :
   tests/utils/test_channels_authorizations
   tests/utils/test_colors
   tests/utils/test_compression_transport_builder
-  tests/utils/test_confdescriptor
   tests/utils/test_contiguous_sub_rect_f
   tests/utils/test_d3des
   tests/utils/test_diffiehellman
