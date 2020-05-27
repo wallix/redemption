@@ -25,6 +25,13 @@ if [ $fast -eq 0 ]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi
 
+timestamp=$(date +%s)
+show_duration()
+{
+    local timestamp2=$(date +%s)
+    echo duration $@ $((($timestamp2-$timestamp)/60)):$((($timestamp2-$timestamp)%60))s
+    timestamp=$timestamp2
+}
 
 # jsclient (emscripten)
 pushd projects/jsclient
@@ -42,6 +49,8 @@ set -o pipefail
 bjam -qj2 toolset=clang-$version debug |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
 popd
+
+show_duration jsclient
 
 
 #These following packages MUST be installed. See README of redemption project
@@ -111,6 +120,8 @@ build $toolset_gcc cxxflags=-g -j2 ocr_tools
 build $toolset_gcc cxxflags=-g $big_mem
 build $toolset_gcc cxxflags=-g -j2
 
+show_duration $toolset_gcc
+
 
 # Warn new files created by tests.
 set -o pipefail
@@ -130,11 +141,14 @@ build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
 
+show_duration $toolset_clang
+
 
 if [ $fast -eq 0 ]; then
     # debug with coverage
     build $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
 
+    show_duration $toolset_gcc coverage
 
     # cppcheck
     # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
@@ -149,6 +163,7 @@ if [ $fast -eq 0 ]; then
       \( -name '*.h' -o -name '*.hpp' -o -name '*.cpp' \) \
       -exec ./tools/c++-analyzer/todo_extractor '{}' +
 
+    show_duration todo_extractor
 
     #set -o pipefail
 
@@ -156,10 +171,13 @@ if [ $fast -eq 0 ]; then
     CLANG_TIDY=clang-tidy-9 ./tools/c++-analyzer/clang-tidy \
       | sed -E '/^(.+\/|)modules\//,/\^/d'
 
+    show_duration clang-tidy
 
     # valgrind
     #find ./bin/$gcc/release/tests/ -type d -exec \
     #  ./tools/c++-analyzer/valgrind -qd '{}' \;
     find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
       parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
+
+    show_duration valgrind
 fi
