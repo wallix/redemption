@@ -1,4 +1,4 @@
-redemption (8.1.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * fix record filenames
   * various fixes

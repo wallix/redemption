@@ -17,7 +17,7 @@ def usage():
 try:
   options, args = getopt.getopt(sys.argv[1:], "h",
                                 ["help", "update-version=", "build-package",
-                                 "no-entry-changelog",
+                                 "no-entry-changelog", "add-changelog",
                                  "no-git-commit", "git-tag", "git-push-tag", "git-push",
                                  "package-distribution=", "force-build",
                                  "debug", "force-target="])
@@ -34,6 +34,7 @@ class opts(object):
 
   debug = False
   entry_changelog = True
+  add_changelog = False
   git_commit = True
   git_tag = False
   git_push_tag = False
@@ -65,6 +66,8 @@ for o,a in options:
     opts.build_package = True
   elif o == "--no-entry-changelog":
     opts.entry_changelog = False
+  elif o == "--add-changelog":
+    opts.add_changelog = True
   elif o == "--no-git-commit":
     opts.git_commit = False
   elif o == "--git-push":
@@ -243,14 +246,43 @@ def copy_and_replace_dict_file(filename, dico, target):
 
 
 # UPDATE VERSION FUNCTIONS
+def get_current_tag():
+    found = False
+    current_tag = None
+    out = readall("include/main/version.hpp")
+    out = out.split('\n')
+    for line in out:
+        res = re.match(r'^[#]define\sVERSION\s"(.*)"\s*$', line)
+        if res:
+            current_tag = res.group(1)
+            found = True
+            break
+    if not found:
+        raise Exception('Source Version not found in file '
+                        'include/main/version.hpp')
+    return current_tag
+
+
+def add_current_tag_changelog_file(current_tag):
+    # Set tag version in changelog
+    out = readall("%s/changelog" % opts.packagetemp)
+    out = re.sub(
+      "redemption \(\%REDEMPTION_VERSION\%\%TARGET_NAME\%\) \%PKG_DISTRIBUTION\%; urgency=low",
+      "redemption (%s%%TARGET_NAME%%) %%PKG_DISTRIBUTION%%; urgency=low" % current_tag,
+      out, 1)
+    writeall("%s/changelog" % opts.packagetemp, out)
+
+
 def update_version_file(newtag):
   # Set tag version in include/main/version.hpp
   out = readall("include/main/version.hpp")
   out = re.sub('#\s*define\sVERSION\s".*"', '#define VERSION "%s"' % newtag, out, 1)
   writeall("include/main/version.hpp", out)
-def update_changelog_template(newtag):
+
+
+def update_changelog_template():
   # write changelog
-  changelog = "redemption (%s%%TARGET_NAME%%) %%PKG_DISTRIBUTION%%; urgency=low\n\n" % newtag
+  changelog = "redemption (%%REDEMPTION_VERSION%%%TARGET_NAME%%) %%PKG_DISTRIBUTION%%; urgency=low\n\n"
   if opts.entry_changelog:
     if not 'EDITOR' in os.environ:
       os.environ['EDITOR'] = 'nano'
@@ -295,6 +327,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
   if newtag in remote_tags:
     raise Exception('tag %s already exists (remote).' % newtag)
 # Check tag version END
+
 
 # Check matching versions BEGIN
 def check_matching_version_changelog():
@@ -379,8 +412,11 @@ try:
     # check tag does not exist
     check_new_tag_version_with_local_and_remote_tags(opts.tag)
     # update changelog and version (write in include/main/version.hpp and changelog template)
+    if opts.add_changelog:
+      current_tag = get_current_tag()
+      add_current_tag_changelog_file(current_tag)
+      update_changelog_template()
     update_version_file(opts.tag)
-    update_changelog_template(opts.tag)
 
     # tags and commits BEGIN
     if opts.git_commit:
@@ -463,12 +499,12 @@ try:
       opts.config["%PKG_DISTRIBUTION%"] = distro_codename
     if not "%TARGET_NAME%" in opts.config:
       opts.config["%TARGET_NAME%"] = target
+    opts.config["%REDEMPTION_VERSION%"] = opts.tag
     copy_and_replace_dict_file("%s/changelog" % opts.packagetemp,
                                opts.config,
                                "debian/changelog")
 
     # write control
-    opts.config["%REDEMPTION_VERSION%"] = opts.tag
     copy_and_replace_dict_file("%s/control" % opts.packagetemp,
                                opts.config,
                                "debian/control")
