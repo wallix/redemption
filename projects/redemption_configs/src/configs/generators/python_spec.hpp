@@ -265,6 +265,12 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L 
     out << "string(default='" << impl::quoted2(s) << "')";
 }
 
+template<class T>
+void write_type(std::ostream& out, type_enumerations&, type_<types::file_permission>, T const & x)
+{
+    out << "string(default='" << impl::stringize_integral(x) << "')";
+}
+
 namespace impl
 {
     struct HexFlag

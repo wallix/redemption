@@ -36,7 +36,8 @@ struct OutMetaSequenceTransport : Transport
         uint16_t width,
         uint16_t height,
         const int groupid,
-        ReportMessageApi * report_message);
+        ReportMessageApi * report_message,
+        uint32_t file_permissions);
 
     ~OutMetaSequenceTransport();
 
@@ -97,4 +98,6 @@ private:
     time_t stop_sec_;
 
     CryptoContext & cctx;
+
+    uint32_t file_permissions_;
 };

@@ -107,7 +107,8 @@ namespace
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0
+            0,
+            S_IRUSR | S_IRGRP
         }
         , capture_params{
             now,
