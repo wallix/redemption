@@ -87,17 +87,23 @@ namespace
     template<class>
     struct ConfigFieldVTableMaker;
 
-    template<class... Ts>
-    struct ConfigFieldVTableMaker<configs::Pack<Ts...>>
+    template<class T, class... Ts>
+    struct ConfigFieldVTableMaker<configs::Pack<T, Ts...>>
     {
         static constexpr auto make_parsers()
         {
-            return std::array{&ConfigFieldVTable<Ts>::parse...};
+            return std::array<decltype(&ConfigFieldVTable<T>::parse), sizeof...(Ts)+1>{
+                &ConfigFieldVTable<T>::parse,
+                &ConfigFieldVTable<Ts>::parse...
+            };
         }
 
         static constexpr auto make_to_zstring_view()
         {
-            return std::array{&ConfigFieldVTable<Ts>::to_zstring_view...};
+            return std::array<decltype(&ConfigFieldVTable<T>::to_zstring_view), sizeof...(Ts)+1>{
+                &ConfigFieldVTable<T>::to_zstring_view,
+                &ConfigFieldVTable<Ts>::to_zstring_view...
+            };
         }
     };
 
