@@ -5282,7 +5282,9 @@ test-run tests/utils/test_cfgloader :
   $(REDEMPTION_TEST_PATH)/utils/test_cfgloader.cpp
 :
   <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <covfile>src/utils/cfgloader.cpp
   <covfile>src/utils/cfgloader.hpp
 ;

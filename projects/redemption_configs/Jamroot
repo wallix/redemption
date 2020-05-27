@@ -103,6 +103,17 @@ obj config.o : redemption_src/configs/config.cpp
     <implicit-dependency>generate_cpp_enumeration
 ;
 
+obj working_directory.o
+:
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp
+:
+    <variant>debug:<define>RED_COMPILE_TYPE=debug
+    <variant>release:<define>RED_COMPILE_TYPE=release
+    <variant>san:<define>RED_COMPILE_TYPE=san
+    $(CXXFLAGS_TEST)
+;
+
+
 rule test-run ( name )
 {
     unit-test $(name) : tests/$(name).cpp generate_config_spec :
@@ -115,6 +126,7 @@ rule test-run ( name )
         <library>fileutils.o
         <library>font.o
         <library>hexdump.o
+        <library>working_directory.o
         # <cxxflags>-frtti
         <include>redemption_src
         <conditional>@defines-for-test

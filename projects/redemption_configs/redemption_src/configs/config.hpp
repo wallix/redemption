@@ -133,7 +133,14 @@ public:
 
     struct ConfigurationHolder : ::ConfigurationHolder
     {
-        void set_value(const char * context, const char * key, const char * value) override;
+        void set_section(zstring_view section) override;
+        void set_value(zstring_view key, zstring_view value) override;
+
+        void start()
+        {
+            this->section_id = 0;
+            this->section_name = "";
+        }
 
     private:
         friend class Inifile;
@@ -142,11 +149,14 @@ public:
         : variables(variables)
         {}
 
+        int section_id;
+        char const* section_name;
         configs::VariablesConfiguration & variables;
     };
 
-    ConfigurationHolder & configuration_holder()
+    ::ConfigurationHolder & configuration_holder()
     {
+        this->conf_holder.start();
         return this->conf_holder;
     }
 
@@ -245,7 +255,7 @@ public:
 
         bool set(char const *) = delete; // use `set("blah blah"_av)` instead
 
-        bool set(chars_view value);
+        bool set(zstring_view value);
 
     private:
         Inifile* ini = nullptr;

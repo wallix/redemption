@@ -145,14 +145,14 @@ private:
 
 constexpr parse_error no_parse_error {nullptr};
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<std::string> /*type*/, chars_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<std::string> /*type*/, zstring_view value)
 {
     x.assign(value.data(), value.size());
     return no_parse_error;
 }
 
 template<std::size_t N>
-parse_error parse_from_cfg(char (&x)[N], ::configs::spec_type<::configs::spec_types::fixed_string> /*type*/, chars_view value)
+parse_error parse_from_cfg(char (&x)[N], ::configs::spec_type<::configs::spec_types::fixed_string> /*type*/, zstring_view value)
 {
     using namespace jln::literals;
     if (value.size() >= N) {
@@ -167,7 +167,7 @@ template<std::size_t N>
 parse_error parse_from_cfg(
     std::array<unsigned char, N> & key,
     ::configs::spec_type<::configs::spec_types::fixed_binary> /*type*/,
-    chars_view value
+    zstring_view value
 ) {
     using namespace jln::literals;
     if (value.size() != N*2) {
@@ -190,7 +190,7 @@ parse_error parse_from_cfg(
     return no_parse_error;
 }
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<std::string>> /*type*/, chars_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<std::string>> /*type*/, zstring_view value)
 {
     x.assign(value.data(), value.size());
     return no_parse_error;
@@ -199,7 +199,7 @@ inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::config
 inline parse_error parse_from_cfg(
     ::configs::spec_types::directory_path & x,
     ::configs::spec_type<::configs::spec_types::directory_path> /*type*/,
-    chars_view value
+    zstring_view value
 ) {
     x = std::string(value.data(), value.size());
     return no_parse_error;
@@ -282,7 +282,7 @@ using zero_integral = std::integral_constant<T, 0>;
 
 template<class TInt>
 typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
-parse_from_cfg(TInt & x, ::configs::spec_type<TInt> /*type*/, chars_view value)
+parse_from_cfg(TInt & x, ::configs::spec_type<TInt> /*type*/, zstring_view value)
 { return parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>()); }
 
 template<class T,
@@ -291,7 +291,7 @@ template<class T,
 parse_error parse_from_cfg(
     T & x,
     ::configs::spec_type<::configs::spec_types::range<T, min, max>> /*type*/,
-    chars_view value
+    zstring_view value
 ) {
     using namespace jln::literals;
     using Int = ::configs::spec_types::underlying_type_for_range_t<T>;
@@ -316,7 +316,7 @@ template<class T, class Ratio>
 parse_error parse_from_cfg(
     std::chrono::duration<T, Ratio> & x,
     ::configs::spec_type<std::chrono::duration<T, Ratio>> /*type*/,
-    chars_view value
+    zstring_view value
 ) {
     T y{}; // create with default value
     if (parse_error err = parse_integral(y, value, zero_integral<T>(), max_integral<T>())) {
@@ -327,7 +327,7 @@ parse_error parse_from_cfg(
 }
 
 template<class IntOrigin>
-parse_error parse_integral_list(std::string & x, chars_view value) {
+parse_error parse_integral_list(std::string & x, zstring_view value) {
     for (auto r : get_split(value, ',')) {
         IntOrigin i;
         auto rng = trim(r);
@@ -343,10 +343,10 @@ parse_error parse_integral_list(std::string & x, chars_view value) {
     return no_parse_error;
 }
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<int>> /*type*/, chars_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<int>> /*type*/, zstring_view value)
 { return parse_integral_list<int>(x, value); }
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<unsigned>> /*type*/, chars_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<unsigned>> /*type*/, zstring_view value)
 { return parse_integral_list<unsigned>(x, value); }
 
 inline bool str_compare(chars_view x, chars_view y)
@@ -398,7 +398,7 @@ constexpr std::size_t str_value_pairs_max_len()
 }
 
 template<auto& Pairs, class T>
-parse_error parse_str_value_pairs(T & x, chars_view value, char const* error_msg)
+parse_error parse_str_value_pairs(T & x, zstring_view value, char const* error_msg)
 {
     UpperArray<str_value_pairs_max_len<Pairs>()> av_value{value};
 
@@ -414,7 +414,7 @@ parse_error parse_str_value_pairs(T & x, chars_view value, char const* error_msg
 
 template<class T>
 typename std::enable_if<std::is_integral<T>::value, parse_error>::type
-parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, chars_view value)
+parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, zstring_view value)
 {
     return parse_str_value_pairs<boolean_strings>(
         x, value, "bad value, expected: 1, on, yes, true, 0, off, no, false");

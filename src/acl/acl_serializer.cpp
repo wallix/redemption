@@ -574,7 +574,7 @@ namespace
             return this->getc() == '\n';
         }
 
-        chars_view get_val()
+        zstring_view get_val()
         {
             if (this->p == this->e) {
                 this->read_packet();
@@ -586,7 +586,8 @@ namespace
             if (m != this->e) {
                 *m = 0;
                 std::size_t const sz = m - this->p;
-                return {std::exchange(this->p, m+1), sz};
+                return zstring_view(zstring_view::is_zero_terminated(),
+                    std::exchange(this->p, m+1), sz);
             }
             data_multipacket.clear();
             do {
@@ -600,7 +601,7 @@ namespace
             } while (m == e);
             data_multipacket.insert(data_multipacket.end(), this->p, m);
             this->p = m + 1;
-            return {data_multipacket.data(), data_multipacket.size()};
+            return data_multipacket;
         }
 
         void hexdump() const

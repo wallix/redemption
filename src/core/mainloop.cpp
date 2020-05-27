@@ -226,7 +226,7 @@ namespace
 
             Inifile ini;
 
-            configuration_load(ini.configuration_holder(), config_filename);
+            configuration_load(ini.configuration_holder(), config_filename.c_str());
             ini.set<cfg::debug::config>(debug_config);
 
             if (ini.get<cfg::debug::session>()){

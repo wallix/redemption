@@ -1780,7 +1780,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         return ClRes::Exit;
     }
 
-    configuration_load(ini.configuration_holder(), recorder.config_filename);
+    configuration_load(ini.configuration_holder(), recorder.config_filename.c_str());
 
     if (options.count("quick") > 0) {
         recorder.quick_check = true;

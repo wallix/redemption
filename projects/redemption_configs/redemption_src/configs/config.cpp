@@ -38,7 +38,7 @@ namespace
 {
     template<class T, class U>
     parse_error config_parse_and_log(
-        const char * context, const char * key, T & x, U u, chars_view av)
+        const char * context, const char * key, T & x, U u, zstring_view av)
     {
         auto const err = parse_from_cfg(x, u, av);
         if (err) {
@@ -53,7 +53,7 @@ namespace
     template<class T>
     struct ConfigFieldVTable
     {
-        static bool parse(configs::VariablesConfiguration & variables, chars_view value)
+        static bool parse(configs::VariablesConfiguration & variables, zstring_view value)
         {
             auto const err = parse_from_cfg(
                 static_cast<T&>(variables).value,
@@ -62,10 +62,8 @@ namespace
 
             if (err) {
                 LOG(LOG_WARNING,
-                    "parsing error with acl parameter '%s' for \"%.*s\": %s",
-                    configs::authstr[unsigned(T::index)],
-                    int(value.size()), value.data(), err.c_str()
-                );
+                    "parsing error with acl parameter '%s' for \"%s\": %s",
+                    configs::authstr[unsigned(T::index)], value, err.c_str());
                 return false;
             }
 
@@ -128,7 +126,7 @@ zstring_view Inifile::FieldConstReference::get_acl_name() const
     return configs::authstr[unsigned(this->id)];
 }
 
-bool Inifile::FieldReference::set(chars_view value)
+bool Inifile::FieldReference::set(zstring_view value)
 {
     bool const err = config_parse_value_fns[unsigned(this->id)](this->ini->variables, value);
     if (err) {
