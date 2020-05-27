@@ -1,4 +1,4 @@
-redemption (8.0.45%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Whitelist DVC
   * Reconnects on Graphic subsystem failure
