@@ -282,7 +282,7 @@ def update_version_file(newtag):
 
 def update_changelog_template():
   # write changelog
-  changelog = "redemption (%%REDEMPTION_VERSION%%%TARGET_NAME%%) %%PKG_DISTRIBUTION%%; urgency=low\n\n"
+  changelog = "redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low\n\n"
   if opts.entry_changelog:
     if not 'EDITOR' in os.environ:
       os.environ['EDITOR'] = 'nano'
