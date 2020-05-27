@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
+#include <charconv>
 
 namespace
 {
@@ -427,6 +428,38 @@ parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, zstring_view value)
 {
     return parse_str_value_pairs<boolean_strings>(
         x, value, "bad value, expected: 1, on, yes, true, 0, off, no, false");
+}
+
+inline parse_error parse_from_cfg(uint32_t& x, ::configs::spec_type<::configs::spec_types::file_permission> /*type*/, zstring_view value)
+{
+    uint32_t tmp = 0;
+    const char *error_msg = nullptr;
+    bool error_from_user_cfg = false;
+
+    if (auto res = std::from_chars(value.begin(), value.end(), tmp, 8);
+        res.ptr != value.end() || res.ec != std::errc())
+    {
+        error_msg = "Cannot parse file permission because it's not an octal number";
+        error_from_user_cfg = true;
+    }
+    else if (tmp > 0777)
+    {
+        error_msg = "Cannot have file permission higher than 0777 number";
+        error_from_user_cfg = true;
+    }
+    if (error_from_user_cfg)
+    {
+        if (x > 0777)
+        {
+            error_msg = "Cannot parse file permission from user config and from default config";
+        }
+        return parse_error { error_msg };
+    }
+    else
+    {
+        x = tmp;
+    }
+    return no_parse_error;
 }
 
 } // anonymous namespace

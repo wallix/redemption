@@ -146,6 +146,7 @@ FdxCapture::FdxCapture(
         str_concat(record_path, '/', fdx_filebase).c_str(),
         str_concat(hash_path, '/', fdx_filebase).c_str(),
         this->groupid,
+        -1,
         /*derivator=*/fdx_filebase);
 
     this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
@@ -160,7 +161,9 @@ FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
     this->trans.open(
         fdx.name_generator.get_current_record_path().c_str(),
         fdx.name_generator.get_current_hash_path().c_str(),
-        fdx.groupid, derivator);
+        fdx.groupid,
+        -1,
+        derivator);
 }
 
 FdxCapture::TflFile FdxCapture::new_tfl(Mwrm3::Direction direction)

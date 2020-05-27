@@ -261,7 +261,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         cctx.set_trace_type(TraceType::cryptofile);
 
-        OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, recorded_wd.dirname(), hash_wd.dirname(), "TESTOFS", tv, 800, 600, groupid, nullptr);
+        OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, recorded_wd.dirname(), hash_wd.dirname(), "TESTOFS", tv, 800, 600, groupid, nullptr, -1);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);

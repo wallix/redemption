@@ -126,6 +126,8 @@ namespace types
     {
         TYPE_REQUIEREMENT(T);
     };
+
+    struct file_permission {};
 }
 
 namespace traits

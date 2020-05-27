@@ -216,6 +216,12 @@ namespace json
         ;
     }
 
+    template<class T>
+    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::file_permission>, T const& x)
+    {
+        write_type(out, type_<uint32_t>{}, x);
+    }
+
     namespace impl
     {
         // uppercase for first letter and replace '_' by ' '

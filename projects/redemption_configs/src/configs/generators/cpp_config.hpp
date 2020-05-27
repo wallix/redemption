@@ -130,6 +130,8 @@ void write_type(std::ostream& out, type_<types::list<T>>) { out << "std::string"
 template<class T>
 void write_type(std::ostream& out, type_<T>) { out << type_name<T>(); }
 
+inline void write_type(std::ostream& out, type_<types::file_permission>)
+{ out << "uint32_t"; }
 
 template<unsigned N>
 void write_type_spec(std::ostream& out, type_<types::fixed_string<N>>)
@@ -152,6 +154,9 @@ void write_type_spec(std::ostream& out, type_<types::list<T>>)
 
 template<class T>
 void write_type_spec(std::ostream& out, type_<T> t) { write_type(out, t); }
+
+inline void write_type_spec(std::ostream& out, type_<types::file_permission>)
+{ out << "::configs::spec_types::file_permission"; }
 
 struct CppConfigWriterBase;
 

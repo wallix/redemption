@@ -45,6 +45,7 @@ struct WrmParams
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
     uint32_t wrm_verbose;
+    uint32_t file_permissions;
 
     WrmParams(BitsPerPixel capture_bpp,
               bool remote_app,
@@ -56,7 +57,8 @@ struct WrmParams
               std::chrono::seconds break_interval,
               WrmCompressionAlgorithm wrm_compression_algorithm,
               // TODO Verbose::WrmCapture
-              uint32_t wrm_verbose)
+              uint32_t wrm_verbose,
+              uint32_t file_permissions)
     : capture_bpp(capture_bpp)
     , remote_app(remote_app)
     , cctx(cctx)
@@ -67,6 +69,7 @@ struct WrmParams
     , break_interval(break_interval)
     , wrm_compression_algorithm(wrm_compression_algorithm)
     , wrm_verbose(wrm_verbose)
+    , file_permissions(file_permissions)
     {
     }
 };
