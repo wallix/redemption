@@ -268,11 +268,12 @@ bool configuration_load(
             LOG(LOG_ERR, "%s: %s", filename, strerror(errno));
             return false;
         }
+
         char* p = buf.get();
         std::size_t remaning = len;
         ssize_t r;
         while ((r = read(fd.fd(), p, remaning)) > 0) {
-            remaning += std::size_t(r);
+            remaning -= std::size_t(r);
             p += r;
         }
 
