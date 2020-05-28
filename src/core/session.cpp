@@ -339,7 +339,7 @@ private:
             switch (signal){
             case BACK_EVENT_NONE:
                 // send message to acl with changed values when connected to
-                // a module (rdp, vnc, xup ...) and something changed.
+                // a module (rdp, vnc ...) and something changed.
                 // used for authchannel and keepalive.
                 if (mod_wrapper.is_connected()) {
                     acl.acl_serial->remote_answer = false;

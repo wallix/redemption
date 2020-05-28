@@ -431,10 +431,10 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
         acl_serial.log6(LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
-            KVLog("msg2"_av, "xup"_av),
+            KVLog("msg2"_av, "vnc"_av),
         });
 
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"xup\"\nJan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 msg=long long\\nmessage\\=|x\\\\y\"z msg2=xup\n");
+        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"vnc\"\nJan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 msg=long long\\nmessage\\=|x\\\\y\"z msg2=vnc\n");
 
         RED_CHECK(logbuf.buf() == expected6);
     }
@@ -459,7 +459,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     RED_CHECK_FILE_CONTENTS(logfile,
         "1970-01-01 01:00:00 type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
-        "1970-01-01 01:00:10 type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"xup\"\n"
+        "1970-01-01 01:00:10 type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"vnc\"\n"
         "1970-01-01 01:50:33 type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\n"_av);
 }
 

@@ -32,7 +32,6 @@ enum ModuleIndex : int
     MODULE_EXIT,
     MODULE_VNC,
     MODULE_RDP,
-    MODULE_XUP,
     MODULE_INTERNAL,
     MODULE_INTERNAL_CLOSE,
     MODULE_INTERNAL_CLOSE_BACK,
@@ -121,7 +120,6 @@ inline const char * get_module_name(ModuleIndex module_id) noexcept
         case MODULE_EXIT:                            return "MODULE_EXIT";
         case MODULE_VNC:                             return "MODULE_VNC";
         case MODULE_RDP:                             return "MODULE_RDP";
-        case MODULE_XUP:                             return "MODULE_XUP";
         case MODULE_INTERNAL:                        return "MODULE_INTERNAL";
         case MODULE_INTERNAL_CLOSE:                  return "MODULE_INTERNAL_CLOSE";
         case MODULE_INTERNAL_CLOSE_BACK:             return "MODULE_INTERNAL_CLOSE_BACK";
@@ -151,7 +149,6 @@ inline const char * get_module_name(ModuleIndex module_id) noexcept
 //        case MODULE_EXIT:                            return false;
 //        case MODULE_VNC:                             return false;
 //        case MODULE_RDP:                             return false;
-//        case MODULE_XUP:                             return false;
 //        case MODULE_INTERNAL:                        return false;
 //        case MODULE_INTERNAL_CLOSE:                  return false;
 //        case MODULE_INTERNAL_CLOSE_BACK:             return false;

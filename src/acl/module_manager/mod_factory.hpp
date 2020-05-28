@@ -46,8 +46,6 @@
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
-#include "mod/xup/xup.hpp"
-#include "acl/module_manager/create_mod_xup.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
@@ -158,13 +156,6 @@ public:
             return this->create_transition_mod();
         case MODULE_INTERNAL_WIDGET_LOGIN:
             return this->create_login_mod();
-        case MODULE_XUP:
-        {
-            auto mod_pack = this->create_xup_mod();
-            mod_pack.enable_osd = true;
-            mod_pack.connected = true;
-            return mod_pack;
-        }
         case MODULE_RDP:
         {
             auto mod_pack = this->create_rdp_mod();
@@ -525,30 +516,6 @@ public:
             this->rail_client_execute,
             this->glyphs,
             this->theme
-        );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
-    }
-
-    auto create_xup_mod() -> ModPack
-    {
-        unique_fd client_sck = connect_to_target_host(
-                    this->ini, this->time_base,
-                    this->report_message, trkeys::authentification_x_fail);
-
-        const char * name = "XUP Target";
-
-        auto new_mod = new XupModWithSocket(
-            this->mod_wrapper,
-            this->ini,
-            name,
-            std::move(client_sck),
-            this->ini.get<cfg::debug::mod_xup>(),
-            nullptr,
-            this->time_base,
-            this->front,
-            this->client_info.screen_info.width,
-            this->client_info.screen_info.height,
-            safe_int(this->ini.get<cfg::context::opt_bpp>())
         );
         return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }

@@ -46,7 +46,6 @@
 #include "mod/mod_api.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "mod/xup/xup.hpp"
 
 #include "transport/socket_transport.hpp"
 
