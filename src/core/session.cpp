@@ -62,12 +62,6 @@ namespace
 
 class Session
 {
-
-    enum class SessionState : int {
-        SESSION_STATE_INCOMING,
-        SESSION_STATE_RUNNING,
-    };
-
     struct Select
     {
         unsigned max = 0;
@@ -134,7 +128,7 @@ private:
                      std::unique_ptr<Transport> & auth_trans,
                      std::unique_ptr<SessionLogFile> & log_file,
                      CryptoContext& cctx,
-                     Random& rnd, timeval & now,
+                     Random& rnd,
                      Inifile& ini,
                      Authentifier & authentifier,
                      Fstat & fstat)
@@ -165,7 +159,7 @@ private:
     }
 
 private:
-    int end_session_exception(Error const& e, Authentifier & authentifier, Inifile & ini) {
+    int end_session_exception(Error const& e, Inifile & ini) {
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)
@@ -186,11 +180,12 @@ private:
             }
             if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
                 this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
+                return 1;
             }
             else {
                 ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
+                return 1;
             }
-            return 1;
         }
         else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
             LOG(LOG_INFO, "====> Retry SESSION_PROBE_DISCONNECTION_RECONNECTION");
@@ -208,9 +203,8 @@ private:
         }
         else if (e.id == ERR_RDP_SERVER_REDIR){
             if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                LOG(LOG_INFO, "====> Retry Server redirection");
-                set_server_redirection_target(ini, authentifier);
-                return 2;
+                LOG(LOG_INFO, "====> Server redirection");
+                return 3;
             }
             else {
                 LOG(LOG_ERR, "Start Session Failed: forbidden redirection = %s", e.errmsg());
@@ -298,8 +292,7 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    bool front_up_and_running(Acl & acl, timeval & now,
-                              Inifile& ini,
+    bool front_up_and_running(Acl & acl, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
                               Authentifier & authentifier,
@@ -364,6 +357,8 @@ private:
                 mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                 return true;
             break;
+            case BACK_EVENT_STOP:
+                throw Error(ERR_UNEXPECTED);
             }
             return true;
         }
@@ -714,13 +709,17 @@ public:
             }
 
             bool run_session = true;
+            auto old_time = now;
 
             using namespace std::chrono_literals;
 
-            SessionState session_state = SessionState::SESSION_STATE_INCOMING;
             unsigned count = 0;
             while (run_session) {
-                LOG(LOG_INFO, "%s", acl.show().c_str());
+                if (count%10==0 || (now.tv_sec > old_time.tv_sec+2)){
+                    LOG(LOG_INFO, "Looping %s", acl.show().c_str());
+                    old_time = now;
+                    count++;
+                }
 
                 time_base.set_current_time(now);
 
@@ -784,17 +783,17 @@ public:
                     ioswitch.set_read_sck(front_trans.sck);
                 }
 
-                LOG(LOG_INFO, "Loop on fd events");
+//                LOG(LOG_INFO, "Loop on fd events");
                 // if event lists are waiting for incoming data
                 fd_events_.for_each([&](int fd, auto& /*top*/){
-                        LOG(LOG_INFO, "set read sock fd=%d", fd);
+//                        LOG(LOG_INFO, "set read sock fd=%d", fd);
                         if (fd != INVALID_SOCKET){
                             ioswitch.set_read_sck(fd);
                         }
                 });
 
                 if (acl.is_connected()) {
-                    LOG(LOG_INFO, "Acl is connected on socket = %d", acl.acl_serial->auth_trans->get_sck());
+//                    LOG(LOG_INFO, "Acl is connected on socket = %d", acl.acl_serial->auth_trans->get_sck());
                     ioswitch.set_read_sck(acl.acl_serial->auth_trans->get_sck());
                 }
 
@@ -876,12 +875,10 @@ public:
                         LOG(LOG_INFO, "Connect ACL");
                         try {
                             this->connect_acl(acl, time_base, acl_serial, auth_trans, log_file,
-                                              cctx, rnd, now, ini, authentifier, fstat);
-                            session_state = SessionState::SESSION_STATE_RUNNING;
+                                              cctx, rnd, ini, authentifier, fstat);
                         }
                         catch (...) {
                             LOG(LOG_INFO, "pokemon exception in acl_connect");
-                            session_state = SessionState::SESSION_STATE_RUNNING;
                             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
                             mod_wrapper.last_disconnect();
                             run_session = false;
@@ -900,7 +897,7 @@ public:
 
 
                     if (acl.is_connected()){
-                        LOG(LOG_INFO, "ACL is connected on %d", acl.acl_serial->auth_trans->get_sck());
+//                        LOG(LOG_INFO, "ACL is connected on %d", acl.acl_serial->auth_trans->get_sck());
                         if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
                             LOG(LOG_INFO, "Data to read from ACL");
                             acl.receive();
@@ -948,9 +945,9 @@ public:
                         auto const end_tv = time_base.get_current_time();
                         timer_events_.exec_timer(end_tv);
                         fd_events_.exec_timeout(end_tv);
-                        LOG(LOG_INFO, "fd_events trigger");
+//                        LOG(LOG_INFO, "fd_events trigger");
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                            LOG(LOG_INFO, "fd=%u", fd);
+//                            LOG(LOG_INFO, "fd=%u", fd);
                             return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
 
                         // new value incoming from authentifier
@@ -976,18 +973,19 @@ public:
                             acl.keepalive.start(now.tv_sec);
                         }
 
-                        run_session = this->front_up_and_running(acl, now, ini, mod_factory, mod_wrapper, front, authentifier, rail_client_execute);
+                        run_session = this->front_up_and_running(acl, ini, mod_factory, mod_wrapper, front, authentifier, rail_client_execute);
 
                     } catch (Error const& e) {
-                        LOG(LOG_ERR, "XXX Module Close Exception XXX %s", e.errmsg());
+                        LOG(LOG_ERR, "Close Module : %s", e.errmsg());
                         run_session = false;
-                        switch (end_session_exception(e, authentifier, ini)){
+                        switch (end_session_exception(e, ini)){
                         case 0: // End of session loop
                             LOG(LOG_INFO, "Run session step 11");
                         break;
                         case 1: // Close Box
                         {
                             acl.keepalive.stop();
+                            authentifier.disconnect_target();
                             LOG(LOG_INFO, "Close Box");
                             mod_wrapper.last_disconnect();
 //                            authentifier.set_acl_serial(nullptr);
@@ -995,15 +993,18 @@ public:
                                 LOG(LOG_INFO, "Close Box enabled");
                                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
 
-                                auto next_state = MODULE_INTERNAL_CLOSE;
+                                auto next_state = MODULE_INTERNAL_CLOSE_BACK;
                                 this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
                                 mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                                 run_session = true;
                             }
                         }
                         break;
+                        case 3:
+                            set_server_redirection_target(ini, authentifier);
+                        REDEMPTION_CXX_FALLTHROUGH;
                         case 2: // TODO: should we put some counter to avoid retrying indefinitely?
-                            LOG(LOG_INFO, "Retry Current");
+                            LOG(LOG_INFO, "Retry RDP");
                             acl.acl_serial->remote_answer = false;
                             mod_wrapper.remove_mod();
 
@@ -1042,7 +1043,6 @@ public:
                 }
                 break;
                 } // switch front_state
-                LOG(LOG_INFO, "Looping %u", count++);
             } // loop
 
             if (mod_wrapper.get_mod()) {

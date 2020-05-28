@@ -2936,13 +2936,13 @@ public:
 
             this->connection_finalization_state = DISCONNECTED;
 
-#ifndef __EMSCRIPTEN__
-            if ((!this->channels.session_probe_virtual_channel
-                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
-             && !this->remote_apps_not_enabled) {
-                this->authentifier.disconnect_target();
-            }
-#endif
+//#ifndef __EMSCRIPTEN__
+//            if ((!this->channels.session_probe_virtual_channel
+//                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
+//             && !this->remote_apps_not_enabled) {
+//                this->authentifier.disconnect_target();
+//            }
+//#endif
             this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
             this->log_disconnection(bool(this->verbose & RDPVerbose::sesprobe));
@@ -6174,7 +6174,7 @@ public:
 
     void sespro_ending_in_progress() override
     {
-        this->authentifier.disconnect_target();
+//        this->authentifier.disconnect_target();
         this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
         this->set_mod_signal(BACK_EVENT_NEXT);
     }

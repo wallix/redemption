@@ -117,14 +117,10 @@ public:
     }
 
     void disconnect_target() override {
-        LOG(LOG_INFO, "!!!!!!!=======!!!!!!!!!!========== DISCONNECT TARGET ======!!!!!!!!============= acl_serial=%s close_box=%s",
-            this->acl_serial?"true":"false",
-            ((this->acl_serial!=nullptr)&&this->acl_serial->ini.get<cfg::globals::enable_close_box>())?"true":"false");
         if (this->acl_serial &&
             // Call disconnect_target >>> Show Close Box (with back to selector)
             this->acl_serial->ini.get<cfg::globals::enable_close_box>()) {
             // TODO: STRMODULE_CLOSE
-            LOG(LOG_INFO, "=================== sending close to ACL ==========");
             this->acl_serial->ini.set_acl<cfg::context::module>("close");
         }
     }
