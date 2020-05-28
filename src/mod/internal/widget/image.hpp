@@ -35,8 +35,8 @@ public:
                 const char *filename,
                 Widget& parent,
                 NotifyApi *notifier,
-                int group_id = 0,
-                const BGRColor *bg_color = nullptr); /*NOLINT*/
+                BGRColor bg_color,
+                int group_id = 0); /*NOLINT*/
 
     ~WidgetImage() override;
 

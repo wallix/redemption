@@ -22,35 +22,14 @@
 #pragma once
 
 #include "utils/sugar/noncopyable.hpp"
-
-#include <iosfwd>
-
+#include "utils/sugar/zstring_view.hpp"
 
 struct ConfigurationHolder : private noncopyable
 {
-    virtual void set_value(const char * section, const char * key, const char * value) = 0;
+    virtual void set_section(zstring_view section) = 0;
+    virtual void set_value(zstring_view key, zstring_view value) = 0;
 
     virtual ~ConfigurationHolder() = default;
 };
 
-bool configuration_load(ConfigurationHolder & configuration_holder, std::istream & inifile_stream);
 bool configuration_load(ConfigurationHolder & configuration_holder, const char * filename);
-bool configuration_load(ConfigurationHolder & configuration_holder, std::string const & filename);
-
-inline
-bool configuration_load(ConfigurationHolder && configuration_holder, std::istream & inifile_stream)
-{
-    return configuration_load(configuration_holder, inifile_stream);
-}
-
-inline
-bool configuration_load(ConfigurationHolder && configuration_holder, const char * filename)
-{
-    return configuration_load(configuration_holder, filename);
-}
-
-inline
-bool configuration_load(ConfigurationHolder && configuration_holder, std::string const & filename)
-{
-    return configuration_load(configuration_holder, filename);
-}

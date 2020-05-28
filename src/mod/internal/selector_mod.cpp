@@ -24,6 +24,9 @@
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"
 
+#include <charconv>
+#include <cassert>
+
 
 namespace
 {
@@ -52,6 +55,26 @@ namespace
     }
 
     constexpr int nb_max_row = 1024;
+
+    struct lexical_string
+    {
+        char buf[32];
+
+        template<class T>
+        lexical_string(T x)
+        {
+            std::to_chars_result result = std::to_chars(std::begin(buf), std::end(buf),
+ x);
+            assert(result.ec == std::errc());
+            assert(result.ptr != std::end(buf));
+            *result.ptr = '\0';
+        }
+
+        char const* c_str() const
+        {
+            return this->buf;
+        }
+    };
 } // namespace
 
 
@@ -237,10 +260,10 @@ SelectorMod::SelectorMod(
         this->screen, this,
         vars.is_asked<cfg::context::selector_current_page>()
             ? ""
-            : configs::make_zstr_buffer(vars.get<cfg::context::selector_current_page>()).get(),
+            : lexical_string(vars.get<cfg::context::selector_current_page>()).c_str(),
         vars.is_asked<cfg::context::selector_number_of_pages>()
             ? ""
-            : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
+            : lexical_string(vars.get<cfg::context::selector_number_of_pages>()).c_str(),
         &this->language_button, this->selector_params, font, theme, language(vars))
 
     , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/

@@ -20,7 +20,6 @@
  */
 
 #include "mod/internal/close_mod.hpp"
-#include "configs/config.hpp"
 #include "core/front_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/slowpath.hpp"

@@ -150,7 +150,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
 
         // replace "priority (31905/31905) -- message" by "priority - message"
         if (format[0] == '%' && format[1] == 's' && format[2] == ' ' && format[3] == '(') {
-            auto p = log_buf.find('(', log_buf.size() - sz + 5);
+            auto p = log_buf.find('(', log_buf.size() - sz + 1);
             auto e = log_buf.find('-', p);
             log_buf.erase(p, e-p);
         }

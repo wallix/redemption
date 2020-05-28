@@ -30,7 +30,7 @@
 #include "test_only/core/font.hpp"
 
 // uncomment to use dump_png24()
-//#include "utils/png.hpp"
+#include "utils/png.cpp"
 
 constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
 
@@ -45,8 +45,10 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         "rec", "rec", "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
+    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier,
+                         "test1", "rec", "rec", "",
+                         "Login", "Password", "Target", "", LOGON_MESSAGE,
+                         extra_button, false, global_font_deja_vu_14(),
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -68,7 +70,10 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test2",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
+                         nullptr, nullptr, nullptr,
+                         "Login", "Password", "Target", "",
+                         LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(),
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -104,8 +109,9 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget::focus_reason_tabkey);
 
@@ -150,8 +156,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test4",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(flat_login.x(),
@@ -167,9 +174,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
                                flat_login.helpicon.y() + flat_login.helpicon.cy() / 2, nullptr);
 
-    // drawable.save_to_png("flat_login-help2.png");
+    // dump_png24("flat_login-help2.png", drawable, true);
 
-    RED_CHECK_SIG(drawable, "\x3c\xc2\xc8\xcb\xf6\xb4\xa8\x3b\x22\xb3\xef\x54\x59\x5c\xc5\x37\xd8\x51\xb3\x10");
+    RED_CHECK_SIG(drawable, "\xc6\x28\xf1\x9a\x68\xa5\xe4\x26\x2e\x34\xff\x2f\x42\x3e\x90\x5f\x70\x49\x1e\xd4");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -184,8 +191,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
@@ -210,8 +218,9 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
@@ -246,8 +255,9 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         nullptr, nullptr, nullptr, "Login", "Password", "Target",
+                         "", LOGON_MESSAGE, extra_button, false,
+                         global_font_deja_vu_14(), Translator{}, Theme{});
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
@@ -265,10 +275,11 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         "rec", "rec", "Login", "Password", "",
+                         "rec", "rec", "rec", "Login", "Password", "Target", "",
                          "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>"
                              "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
-                         extra_button, global_font_deja_vu_14(),
+                         extra_button, false,
+                         global_font_deja_vu_14(),
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -289,12 +300,12 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
                         nullptr,
                         Theme { });
     NotifyApi *notifier = nullptr;
-    WidgetFlatButton *extra_button = nullptr;    
+    WidgetFlatButton *extra_button = nullptr;
     Theme colors;
 
     colors.global.logo = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
-    
+
     FlatLogin flat_login(drawable,
                          0,
                          0,
@@ -305,11 +316,14 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
                          "test1",
                          "rec",
                          "rec",
+                         "rec",
                          "Login",
                          "Password",
+                         "Target",
                          "",
                          LOGON_MESSAGE,
                          extra_button,
+                         false,
                          global_font_deja_vu_14(),
                          Translator { },
                          colors);
@@ -320,4 +334,51 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
     //dump_png24("flat_login9.png", drawable, true);
 
     RED_CHECK_SIG(drawable, "\x0f\x4a\x10\x33\x9b\xf4\xdd\x96\x67\x7c\xf0\x0e\x21\x14\xb7\x21\x9f\x69\x97\xa4");
+}
+
+
+RED_AUTO_TEST_CASE(TraceFlatLogin_target_field)
+{
+    TestGraphic drawable(800, 600);
+    WidgetScreen parent(drawable,
+                        800,
+                        600,
+                        global_font_deja_vu_14(),
+                        nullptr,
+                        Theme { });
+    NotifyApi *notifier = nullptr;
+    WidgetFlatButton *extra_button = nullptr;
+    Theme colors;
+
+    colors.global.logo = true;
+    colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
+
+    FlatLogin flat_login(drawable,
+                         0,
+                         0,
+                         parent.cx(),
+                         parent.cy(),
+                         parent,
+                         notifier,
+                         "test1",
+                         "rec",
+                         "rec",
+                         "",
+                         "Login",
+                         "Password",
+                         "Target",
+                         "",
+                         LOGON_MESSAGE,
+                         extra_button,
+                         true,
+                         global_font_deja_vu_14(),
+                         Translator { },
+                         colors);
+
+    flat_login.rdp_input_invalidate(flat_login.get_rect());
+
+    // uncomment to see result in png file
+    // dump_png24("flat_login10.png", drawable, true);
+
+    RED_CHECK_SIG(drawable, "\x94\x20\xa1\x96\x19\xb9\xc9\xb2\xf6\x9b\x48\x6c\xa2\x4c\xf9\xcf\xc8\x43\xab\x2b");
 }

@@ -417,7 +417,7 @@ int main(int argc, char** argv)
     }
 
     Inifile ini;
-    configuration_load(ini.configuration_holder(), config_filename);
+    configuration_load(ini.configuration_holder(), config_filename.c_str());
 
     ScopedCryptoInit scoped_crypto;
     ScopedSslInit scoped_ssl;

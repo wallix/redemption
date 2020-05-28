@@ -542,7 +542,7 @@ namespace
             return this->getc() == '\n';
         }
 
-        chars_view get_val()
+        zstring_view get_val()
         {
             if (this->p == this->e) {
                 this->read_packet();
@@ -554,7 +554,8 @@ namespace
             if (m != this->e) {
                 *m = 0;
                 std::size_t const sz = m - this->p;
-                return {std::exchange(this->p, m+1), sz};
+                return zstring_view(zstring_view::is_zero_terminated(),
+                    std::exchange(this->p, m+1), sz);
             }
             data_multipacket.clear();
             do {
@@ -568,7 +569,7 @@ namespace
             } while (m == e);
             data_multipacket.insert(data_multipacket.end(), this->p, m);
             this->p = m + 1;
-            return {data_multipacket.data(), data_multipacket.size()};
+            return data_multipacket;
         }
 
         void hexdump() const
@@ -617,6 +618,29 @@ namespace
             }
         }
     };
+
+    chars_view get_loggable_value(
+        zstring_view value,
+        Inifile::LoggableCategory loggable_category,
+        uint32_t printing_mode)
+    {
+        switch (loggable_category) {
+            case Inifile::LoggableCategory::Loggable:
+                return value;
+
+            case Inifile::LoggableCategory::LoggableButWithPassword:
+                if (nullptr == strcasestr(value.c_str(), "password")) {
+                    return value;
+                }
+                [[fallthrough]];
+
+            case Inifile::LoggableCategory::Unloggable:
+                return ::get_printable_password(value, printing_mode);
+        }
+
+        REDEMPTION_UNREACHABLE();
+    }
+
 } // anonymous namespace
 
 
@@ -626,22 +650,24 @@ void AclSerializer::in_items()
     chars_view key;
 
     while (!(key = reader.key()).empty()) {
-        auto authid = authid_from_string(key);
-        if (auto field = this->ini.get_acl_field(authid)) {
+        if (auto field = this->ini.get_acl_field_by_name(key)) {
             if (reader.is_set_value()) {
                 if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
-                    chars_view val         = field.to_string_view();
-                    chars_view display_val = field.is_loggable()
-                        ? val : ::get_printable_password(val, this->ini.get<cfg::debug::password>());
-                    LOG(LOG_INFO, "receiving '%s'='%.*s'",
-                        string_from_authid(authid).data(),
+                    Inifile::ZStringBuffer zstring_buffer;
+                    zstring_view val = field.to_zstring_view(zstring_buffer);
+
+                    chars_view display_val = get_loggable_value(
+                        val, field.loggable_category(), this->ini.get<cfg::debug::password>());
+
+                    LOG(LOG_INFO, "receiving '%.*s'='%.*s'",
+                        int(key.size()), key.data(),
                         int(display_val.size()), display_val.data());
                 }
             }
             else if (reader.consume_ask()) {
                 field.ask();
                 LOG_IF(bool(this->verbose & Verbose::variable), LOG_INFO,
-                    "receiving ASK '%s'", string_from_authid(authid).data());
+                    "receiving ASK '%*s'", int(key.size()), key.data());
             }
             else {
                 reader.hexdump();
@@ -767,23 +793,25 @@ void AclSerializer::send_acl_data()
             Buffers buffers(*this->auth_trans, this->verbose);
 
             for (auto field : this->ini.get_fields_changed()) {
-                chars_view key = string_from_authid(field.authid());
+                zstring_view key = field.get_acl_name();
                 buffers.push(key);
                 buffers.push('\n');
                 if (field.is_asked()) {
                     buffers.push("ASK\n"_av);
                     LOG_IF(bool(this->verbose & Verbose::variable),
-                        LOG_INFO, "sending %.*s=ASK", int(key.size()), key.data());
+                        LOG_INFO, "sending %s=ASK", key);
                 }
                 else {
-                    auto val = field.to_string_view();
+                    Inifile::ZStringBuffer zstring_buffer;
+                    auto val = field.to_zstring_view(zstring_buffer);
                     buffers.push('!');
                     buffers.push(val);
                     buffers.push('\n');
-                    chars_view display_val = field.is_loggable()
-                        ? val : get_printable_password(val, password_printing_mode);
+
+                    chars_view display_val = get_loggable_value(
+                        val, field.loggable_category(), password_printing_mode);
                     LOG_IF(bool(this->verbose & Verbose::variable),
-                        LOG_INFO, "sending %.*s=%.*s", int(key.size()), key.data(),
+                        LOG_INFO, "sending %s=%.*s", key,
                         int(display_val.size()), display_val.data());
                 }
             }

@@ -21,7 +21,6 @@
 
 #include "mod/internal/interactive_target_mod.hpp"
 #include "RAIL/client_execute.hpp"
-#include "configs/config.hpp"
 #include "core/front_api.hpp"
 #include "utils/translation.hpp"
 #include "core/RDP/slowpath.hpp"
@@ -189,7 +188,7 @@ bool InteractiveTargetMod::is_resizing_hosted_desktop_allowed() const
 
 InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
-    TimeBase& time_base, 
+    TimeBase& time_base,
     TimerContainer& timer_events_,
     gdi::GraphicApi & drawable, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,

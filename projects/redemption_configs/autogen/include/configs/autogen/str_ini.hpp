@@ -679,6 +679,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #session_probe_at_end_of_session_freeze_connection_and_wait = 1
 
+# maxlen = 256
+#_hidden
+#application_driver_exe_or_file = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_script_argument = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_chrome_uia_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_ie_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(
+
 # Keep known server certificates on WAB
 # value: 0 or 1
 #_hidden
@@ -896,7 +912,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics).to_string()) << R"gen_config_ini(
+#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
 
 # (is in second)
 #_advanced
@@ -1094,15 +1110,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#hash_path = )gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(
+#hash_path = )gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(
+#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_path = )gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(
+#record_path = )gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
@@ -1335,8 +1351,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [internal_mod]
 
+# Enable target edit field in login page.
+# value: 0 or 1
 #_advanced
-#load_theme = 
+#enable_target_field = 1
 
 [theme]
 

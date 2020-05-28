@@ -66,6 +66,8 @@ RED_AUTO_TEST_CASE(TestIniAssign)
             ini.set<type>(c_s); RED_CHECK_EQUAL(ini.get<type>(), c_s);
         }
         {
+            using std::begin;
+            using std::end;
             using type = cfg::mod_rdp::auth_channel;
             auto & val = ini.get<type>();
             auto first1 = begin(val) + 3;
@@ -222,9 +224,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::target_user>(cs);
     ini.set_acl<cfg::globals::target_user>(s);
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-    ini.set<cfg::internal_mod::theme>(cpath);
-    ini.set<cfg::internal_mod::theme>(spath);
 
     ini.set<cfg::mod_rdp::allow_channels>(cslist);
     ini.set<cfg::mod_rdp::allow_channels>(slist);

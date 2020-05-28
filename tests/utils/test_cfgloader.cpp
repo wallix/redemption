@@ -21,128 +21,163 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/log_buffered.hpp"
 
 #include "utils/cfgloader.hpp"
+#include "utils/sugar/algostring.hpp"
 
-#include <sstream>
-#include <string_view>
+#include <fstream>
 
-using namespace std::string_view_literals;
-
-
-
-RED_AUTO_TEST_CASE(TestCfgloader)
+namespace
 {
-    struct : ConfigurationHolder
+
+struct SectionOrKeyValue
+{
+    enum Type { Section, KeyValue, Unknown, };
+    Type type;
+    zstring_view str1;
+    zstring_view str2;
+
+    SectionOrKeyValue()
+    : type(Unknown)
+    {}
+
+    SectionOrKeyValue(zstring_view section_name)
+    : type(Section)
+    , str1(section_name)
+    {}
+
+    SectionOrKeyValue(zstring_view key_name, zstring_view value_name)
+    : type(KeyValue)
+    , str1(key_name)
+    , str2(value_name)
+    {}
+
+    friend std::ostream& operator<<(std::ostream& out, SectionOrKeyValue const& other)
     {
-        int i = 0;
-        void set_value(const char* section, const char* key, const char* value) override
+        switch (other.type)
         {
-            switch (i++)
-            {
-                case 0:
-                    RED_CHECK(section == "abc"sv);
-                    RED_CHECK(key == "abc"sv);
-                    RED_CHECK(value == "abc"sv);
-                    break;
-                case 1:
-                    RED_CHECK(section == "abc"sv);
-                    RED_CHECK(key == "vv"sv);
-                    RED_CHECK(value == "plop"sv);
-                    break;
-                case 2:
-                    RED_CHECK(section == "s"sv);
-                    RED_CHECK(key == "aaa"sv);
-                    RED_CHECK(value == "bbb"sv);
-                    break;
-                case 3:
-                    RED_CHECK(section == "ss"sv);
-                    RED_CHECK(key == "bbb"sv);
-                    RED_CHECK(value == "aaa"sv);
-                    break;
-                case 4:
-                    RED_CHECK(section == "ss"sv);
-                    RED_CHECK(key == "val2"sv);
-                    RED_CHECK(value == "1"sv);
-                    break;
-                case 5:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "v"sv);
-                    RED_CHECK(value == "1"sv);
-                    break;
-                case 6:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "mac"sv);
-                    RED_CHECK(value == "2"sv);
-                    break;
-                case 7:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "mac"sv);
-                    RED_CHECK(value == "3"sv);
-                    break;
-                case 8:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "mac"sv);
-                    RED_CHECK(value == "4"sv);
-                    break;
-                case 9:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "window"sv);
-                    RED_CHECK(value == "5"sv);
-                    break;
-                case 10:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "window"sv);
-                    RED_CHECK(value == "6"sv);
-                    break;
-                case 11:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "window"sv);
-                    RED_CHECK(value == "7"sv);
-                    break;
-                case 12:
-                    RED_CHECK(section == "a  a"sv);
-                    RED_CHECK(key == "v3"sv);
-                    RED_CHECK(value == "x"sv);
-                    break;
-                default:
-                    RED_FAIL(i-1);
-            }
+            case Section:
+                out << "set_section(\"" << other.str1 << "\")";
+                break;
+            case KeyValue:
+                out << "set_value(\"" << other.str1 << "\", \"" << other.str2 << "\")";
+                break;
+            case Unknown:
+                out << "not value";
+                break;
         }
-    } cfg;
 
-    std::stringstream ss;
-    ss <<
-        "[abc]\n"
-        "abc=abc\n"
-        "\n"
-        "\n"
-        " #blah blah\n"
-        "vv=  plop\n"
-        "\n"
-        "[s]\n"
-        "aaa=bbb   \n"
-        "\n"
-        "[   ss  ]\n"
-        "  bbb=aaa   \n"
-        "\n"
-        "val="
-    ;
-    ss.width(1024);
-    ss.fill('x'); ss << "\n";
-    ss <<
-        "val2   =1\n"
-        "[ a  a ]\n"
-        "  v =  1 \n"
-        "  mac =  2 \n\r"
-        "  mac =  3 \n\r"
-        "  mac =  4 \n\r"
-        "  window =  5 \r\n"
-        "  window =  6 \r\n"
-        "  window =  7 \r\n"
-        "v3=x"
-    ;
+        return out;
+    }
 
-    configuration_load(cfg, ss);
-    RED_CHECK_EQ(cfg.i, 13);
+    bool operator == (SectionOrKeyValue const& other) const
+    {
+        return this->type == other.type
+            && this->str1.to_sv() == other.str1.to_sv()
+        && (this->type == Section || this->str2.to_sv() == other.str2.to_sv());
+    }
+};
+
+struct Cfg : ConfigurationHolder
+{
+    using func_t = void(*)(SectionOrKeyValue const&);
+
+    Cfg(array_view<func_t> funcs, func_t funknown)
+    : funcs(funcs)
+    , f(funcs.data())
+    , funknown(funknown)
+    {}
+
+    void set_section(zstring_view section) override
+    {
+        if (this->f == this->funcs.end()) {
+            funknown(SectionOrKeyValue(section));
+            return ;
+        }
+
+        (*this->f)(SectionOrKeyValue(section));
+        ++this->f;
+    }
+
+    void set_value(zstring_view key, zstring_view value) override
+    {
+        if (this->f == this->funcs.end()) {
+            funknown(SectionOrKeyValue(key, value));
+            return ;
+        }
+
+        (*this->f)(SectionOrKeyValue(key, value));
+        ++this->f;
+    }
+
+    array_view<func_t> funcs;
+    func_t const * f;
+    func_t funknown;
+};
+
+}
+
+RED_AUTO_TEST_CASE_WF(TestCfgloader, wf)
+{
+    std::ofstream file(wf.c_str());
+
+    #define PUSH_F(v) [](SectionOrKeyValue const& expected){ RED_CHECK(v == expected); }
+    #define PUSH(s, v) (void(file << s), PUSH_F(v))
+
+    Cfg::func_t funcs[]{
+        PUSH("[abc]\n", SectionOrKeyValue("abc"_zv)),
+        PUSH("abc=abc\n", SectionOrKeyValue("abc"_zv, "abc"_zv)),
+        PUSH("\n\n   \n #blah blah\nvv=  plop\n", SectionOrKeyValue("vv"_zv, "plop"_zv)),
+        PUSH("#[xx]\n[s]\n", SectionOrKeyValue("s"_zv)),
+        PUSH("aaa=bbb   \n", SectionOrKeyValue("aaa"_zv, "bbb"_zv)),
+        PUSH("[    ss  ]\n", SectionOrKeyValue("ss"_zv)),
+        PUSH("  bbb=aaa\n", SectionOrKeyValue("bbb"_zv, "aaa"_zv)),
+        PUSH("val=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+            SectionOrKeyValue("val"_zv, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"_zv)),
+        PUSH("val2   =1\n", SectionOrKeyValue("val2"_zv, "1"_zv)),
+        PUSH("[ a  a ]\n", SectionOrKeyValue("a  a"_zv)),
+        PUSH("  v =  1 \n", SectionOrKeyValue("v"_zv, "1"_zv)),
+        PUSH("  mac =  2 \n\r", SectionOrKeyValue("mac"_zv, "2"_zv)),
+        PUSH("  mac =  3 \n\r", SectionOrKeyValue("mac"_zv, "3"_zv)),
+        PUSH("  window =  4 \r\n", SectionOrKeyValue("window"_zv, "4"_zv)),
+        PUSH("  window =  5 \r\n", SectionOrKeyValue("window"_zv, "5"_zv)),
+        PUSH("  [bbb]", SectionOrKeyValue("bbb"_zv)),
+        PUSH("v = 1\n", SectionOrKeyValue("v"_zv, "1"_zv)),
+        PUSH("  [b bb]\n", SectionOrKeyValue("b bb"_zv)),
+        PUSH("  [aa]  \n", SectionOrKeyValue("aa"_zv)),
+        PUSH("v = [d] a\n", SectionOrKeyValue("v"_zv, "[d] a"_zv)),
+        PUSH("v3 = x", SectionOrKeyValue("v3"_zv, "x"_zv)),
+    };
+
+    Cfg cfg(funcs, PUSH_F(SectionOrKeyValue()));
+    file.close();
+    configuration_load(cfg, wf.c_str());
+    RED_CHECK(0 == cfg.funcs.end() - cfg.f);
+}
+
+RED_AUTO_TEST_CASE_WF(TestCfgloaderError, wf)
+{
+    std::ofstream file(wf.c_str());
+
+    #define PUSH_F(v) [](SectionOrKeyValue const& expected){ RED_CHECK(v == expected); }
+    #define PUSH(s, v) (void(file << s), PUSH_F(v))
+
+    Cfg::func_t funcs[]{
+        PUSH("[bad\n", SectionOrKeyValue("bad"_zv)),
+        PUSH("abc\n=dds\nx=y\n", SectionOrKeyValue("x"_zv, "y"_zv)),
+    };
+
+    Cfg cfg(funcs, PUSH_F(SectionOrKeyValue()));
+    file.close();
+    tu::log_buffered log;
+    configuration_load(cfg, wf.c_str());
+    RED_CHECK(0 == cfg.funcs.end() - cfg.f);
+    RED_CHECK(array_view(log.buf()) == str_concat(
+        "ERR -- "_zv, wf.string(), ":1:4: ']' not found, assume new section\n"
+        "ERR -- "_zv, wf.string(), ":2:4: invalid syntax, expected '=' ; this line is ignored\n"
+        "ERR -- "_zv, wf.string(), ":3:5: invalid syntax, expected '=' ; this line is ignored\n"
+        ""_zv
+    ));
 }

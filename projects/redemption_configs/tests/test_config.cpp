@@ -23,36 +23,32 @@
 
 #define RED_TEST_MODULE TestConfig
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "configs/config.hpp"
-#include <sstream>
+#include "configs/autogen/str_authid.hpp"
 #include <fstream>
 
-template<class Ch, class Tr, class E>
-typename std::enable_if<
-    std::is_enum<E>::value,
-    std::basic_ostream<Ch, Tr>&
->::type
-operator<<(std::basic_ostream<Ch, Tr> & out, E const & e)
+namespace
 {
-    return out << +underlying_cast(e); // '+' for transform u8/s8 to int
+    Inifile::FieldReference get_acl_field(Inifile& ini, configs::authid_t id)
+    {
+        return ini.get_acl_field_by_name(configs::authstr[unsigned(id)]);
+    }
 }
 
 
-RED_AUTO_TEST_CASE(TestConfigFromFile)
+RED_AUTO_TEST_CASE_WF(TestConfigFromFile, wf)
 {
     // test we can read from a file (and not only from a stream)
-    Inifile             ini;
+    Inifile ini;
     RED_CHECK_EQUAL(true, ini.get<cfg::mod_rdp::bogus_sc_net_size>());
-    {
-        std::ofstream out("/tmp/tmp-rdpproxy.ini");
-        out <<
-          "[mod_rdp]\n"
-          "proxy_managed_drives = /tmp/raw/movie/\n"
-          "bogus_sc_net_size = no\n"
-        ;
-    }
-    configuration_load(ini.configuration_holder(), "/tmp/tmp-rdpproxy.ini");
+    std::ofstream(wf.c_str()) <<
+        "[mod_rdp]\n"
+        "proxy_managed_drives = /tmp/raw/movie/\n"
+        "bogus_sc_net_size = no\n"
+    ;
+    configuration_load(ini.configuration_holder(), wf.c_str());
     RED_CHECK_EQUAL("/tmp/raw/movie/", ini.get<cfg::mod_rdp::proxy_managed_drives>());
     RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::bogus_sc_net_size>());
 }
@@ -267,12 +263,11 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 }
 
 
-RED_AUTO_TEST_CASE(TestConfig1)
+RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
 {
     // test we can read a config file with a global section
-    std::stringstream oss(
+    std::ofstream(wf.c_str()) <<
         "[globals]\n"
-        "bitmap_cache=yes\n"
         "glyph_cache=yes\n"
         "port=3390\n"
         "encryptionLevel=low\n"
@@ -280,10 +275,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
         "listen_address=192.168.1.1\n"
         "enable_transparent_mode=yes\n"
         "certificate_password=redemption\n"
-        "png_path=/var/tmp/wab/recorded/rdp\n"
-        "wrm_path=/var/wab/recorded/rdp\n"
         "enable_bitmap_update=true\n"
-        "persistent_path=/var/tmp/wab/persistent/rdp\n"
         "enable_close_box=false\n"
         "enable_osd=false\n"
         "enable_osd_display_remote_target=false\n"
@@ -302,7 +294,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
         "bogus_neg_request=yes\n"
         "bogus_user_id=yes\n"
         "disable_tsk_switch_shortcuts=yes\n"
-        "max_color_depth=0\n"
+        "max_color_depth=0\n" /* unknown value */
         "persistent_disk_bitmap_cache=yes\n"
         "cache_waiting_list=no\n"
         "persist_bitmap_cache_on_disk=yes\n"
@@ -350,10 +342,10 @@ RED_AUTO_TEST_CASE(TestConfig1)
         "cache=128\n"
         "[translation]\n"
         "\n"
-    );
+    ;
 
-    Inifile             ini;
-    configuration_load(ini.configuration_holder(), oss);
+    Inifile ini;
+    configuration_load(ini.configuration_holder(), wf.c_str());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
@@ -411,16 +403,12 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::key0>().data(),
-                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
-                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
-                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
-                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF", 32));
-    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::key1>().data(),
-                                                               "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88"
-                                                               "\x77\x66\x55\x44\x33\x22\x11\x00"
-                                                               "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88"
-                                                               "\x77\x66\x55\x44\x33\x22\x11\x00", 32));
+    RED_CHECK(ini.get<cfg::crypto::key0>() ==
+        "\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
+        "\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"_av);
+    RED_CHECK(ini.get<cfg::crypto::key1>() ==
+        "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"
+        "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"_av);
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
@@ -493,72 +481,69 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
-RED_AUTO_TEST_CASE(TestConfig1bis)
+RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
 {
     // test we can read a config file with a global section
     // alternative ways to say yes in file, other values
-    std::stringstream oss(
-                          "[globals]\n"
-                          "bitmap_cache=true\n"
-                          "encryptionLevel=medium\n"
-                          "trace_type=0\n"
-                          "listen_address=0.0.0.0\n"
-                          "enable_transparent_mode=no\n"
-                          "certificate_password=\n"
-                          "png_path=/var/tmp/wab/recorded/rdp\n"
-                          "wrm_path=/var/wab/recorded/rdp\n"
-                          "shell_working_directory=\n"
-                          "enable_bitmap_update=no\n"
-                          "[client]\n"
-                          "performance_flags_default=7\n"
-                          "performance_flags_force_present=1\n"
-                          "performance_flags_force_not_present=0\n"
-                          "tls_support=yes\n"
-                          "bogus_neg_request=no\n"
-                          "bogus_user_id=no\n"
-                          "rdp_compression=0\n"
-                          "max_color_depth=8\n"
-                          "persistent_disk_bitmap_cache=no\n"
-                          "cache_waiting_list=yes\n"
-                          "bitmap_compression=on\n"
-                          "fast_path=yes\n"
-                          "[translation]\n"
-                          "[mod_rdp]\n"
-                          "rdp_compression=2\n"
-                          "disconnect_on_logon_user_change=no\n"
-                          "enable_nla=no\n"
-                          "open_session_timeout=30\n"
-                          "persistent_disk_bitmap_cache=yes\n"
-                          "cache_waiting_list=no\n"
-                          "persist_bitmap_cache_on_disk=no\n"
-                          "fast_path=yes\n"
-                          "bogus_sc_net_size=no\n"
-                          "proxy_managed_drives=*docs\n"
-                          "alternate_shell=\n"
-                          "enable_session_probe=false\n"
-                          "session_probe_launch_timeout=3000\n"
-                          "session_probe_keepalive_timeout=6000\n"
-                          "[mod_replay]\n"
-                          "on_end_of_data=1\n"
-                          "[video]\n"
-                          "hash_path=/mnt/wab/hash/\n"
-                          "record_path=/mnt/wab/recorded/rdp/\n"
-                          "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
-                          "disable_keyboard_log=1\n"
-                          "disable_clipboard_log=1\n"
-                          "disable_file_system_log=2\n"
-                          "\n"
-                          "[mod_vnc]\n"
-                          "server_clipboard_encoding_type=utf-8\n"
-                          "bogus_clipboard_infinite_loop=1\n"
-                          "[crypto]\n"
-                          "key0=00112233445566778899AABBCCDDEEFF\n"
-                          "key1=FFEEDDCCBBAA99887766554433221100\n"
-                          "\n"
-                          );
+    std::ofstream(wf.c_str()) <<
+        "[globals]\n"
+        "encryptionLevel=medium\n"
+        "trace_type=0\n"
+        "listen_address=0.0.0.0\n"
+        "enable_transparent_mode=no\n"
+        "certificate_password=\n"
+        "shell_working_directory=aaa\n" /* bad section */
+        "enable_bitmap_update=no\n"
+        "[client]\n"
+        "performance_flags_default=7\n"
+        "performance_flags_force_present=1\n"
+        "performance_flags_force_not_present=0\n"
+        "tls_support=yes\n"
+        "bogus_neg_request=no\n"
+        "bogus_user_id=no\n"
+        "rdp_compression=0\n"
+        "max_color_depth=8\n"
+        "persistent_disk_bitmap_cache=no\n"
+        "cache_waiting_list=yes\n"
+        "bitmap_compression=on\n"
+        "fast_path=yes\n"
+        "[translation]\n"
+        "[mod_rdp]\n"
+        "rdp_compression=2\n"
+        "disconnect_on_logon_user_change=no\n"
+        "enable_nla=no\n"
+        "open_session_timeout=30\n"
+        "persistent_disk_bitmap_cache=yes\n"
+        "cache_waiting_list=no\n"
+        "persist_bitmap_cache_on_disk=no\n"
+        "fast_path=yes\n"
+        "bogus_sc_net_size=no\n"
+        "proxy_managed_drives=*docs\n"
+        "alternate_shell=\n"
+        "enable_session_probe=false\n"
+        "session_probe_launch_timeout=3000\n"
+        "session_probe_keepalive_timeout=6000\n"
+        "[mod_replay]\n"
+        "on_end_of_data=1\n"
+        "[video]\n"
+        "hash_path=/mnt/wab/hash/\n"
+        "record_path=/mnt/wab/recorded/rdp/\n"
+        "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
+        "disable_keyboard_log=1\n"
+        "disable_clipboard_log=1\n"
+        "disable_file_system_log=2\n"
+        "\n"
+        "[mod_vnc]\n"
+        "server_clipboard_encoding_type=utf-8\n"
+        "bogus_clipboard_infinite_loop=1\n"
+        "[crypto]\n"
+        "encryption_key=00112233445566778899AABBCCDDEEFF\n" /* bad length */
+        "sign_key=FFEEDDCCBBAA99887766554433221100\n" /* bad length */
+        "\n"
+    ;
 
-    Inifile             ini;
-    configuration_load(ini.configuration_holder(), oss);
+    Inifile ini;
+    configuration_load(ini.configuration_holder(), wf.c_str());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -615,16 +600,12 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::key0>().data(),
-                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
-                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
-                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
-    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::key1>().data(),
-                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
-                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
-                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
+    RED_CHECK(ini.get<cfg::crypto::key0>() ==
+        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"_av);
+    RED_CHECK(ini.get<cfg::crypto::key1>() ==
+        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"_av);
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
@@ -692,49 +673,47 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
-RED_AUTO_TEST_CASE(TestConfig2)
+RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
 {
     // test we can read a config file with a global section, other values
-    std::stringstream oss(
-                          "[globals]\n"
-                          "bitmap_cache=no\n"
-                          "glyph_cache=no\n"
-                          "encryptionLevel=high\n"
-                          "trace_type=2\n"
-                          "listen_address=127.0.0.1\n"
-                          "certificate_password=rdpproxy\n"
-                          "enable_transparent_mode=true\n"
-                          "png_path=/var/tmp/wab/recorded/rdp\n"
-                          "wrm_path=/var/wab/recorded/rdp\n"
-                          "shell_working_directory=\n"
-                          "[client]\n"
-                          "tls_support=yes\n"
-                          "performance_flags_default=07\n"
-                          "performance_flags_force_present=1\n"
-                          "performance_flags_force_not_present=0x\n"
-                          "max_color_depth=24\n"
-                          "persistent_disk_bitmap_cache=yes\n"
-                          "cache_waiting_list=no\n"
-                          "persist_bitmap_cache_on_disk=no\n"
-                          "bitmap_compression=false\n"
-                          "[mod_rdp]\n"
-                          "rdp_compression=0\n"
-                          "bogus_sc_net_size=yes\n"
-                          "proxy_managed_drives=*\n"
-                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
-                          "enable_session_probe=\n"
-                          "session_probe_on_launch_failure=2\n"
-                          "[mod_replay]\n"
-                          "on_end_of_data=0\n"
-                          "[video]\n"
-                          "disable_keyboard_log=1\n"
-                          "wrm_color_depth_selection_strategy=1\n"
-                          "wrm_compression_algorithm=1\n"
-                          "\n"
-                          );
+    std::ofstream(wf.c_str()) <<
+        "[globals]\n"
+        "bitmap_cache=no\n"
+        "glyph_cache=no\n"
+        "encryptionLevel=high\n"
+        "trace_type=2\n"
+        "listen_address=127.0.0.1\n"
+        "certificate_password=rdpproxy\n"
+        "enable_transparent_mode=true\n"
+        "shell_working_directory=\n"
+        "[client]\n"
+        "tls_support=yes\n"
+        "performance_flags_default=07\n"
+        "performance_flags_force_present=1\n"
+        "performance_flags_force_not_present=0x\n"
+        "max_color_depth=24\n"
+        "persistent_disk_bitmap_cache=yes\n"
+        "cache_waiting_list=no\n"
+        "persist_bitmap_cache_on_disk=no\n"
+        "bitmap_compression=false\n"
+        "[mod_rdp]\n"
+        "rdp_compression=0\n"
+        "bogus_sc_net_size=yes\n"
+        "proxy_managed_drives=*\n"
+        "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
+        "enable_session_probe=\n"
+        "session_probe_on_launch_failure=2\n"
+        "[mod_replay]\n"
+        "on_end_of_data=0\n"
+        "[video]\n"
+        "disable_keyboard_log=1\n"
+        "wrm_color_depth_selection_strategy=1\n"
+        "wrm_compression_algorithm=1\n"
+        "\n"
+    ;
 
-    Inifile             ini;
-    configuration_load(ini.configuration_holder(), oss);
+    Inifile ini;
+    configuration_load(ini.configuration_holder(), wf.c_str());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -860,57 +839,55 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
-RED_AUTO_TEST_CASE(TestConfig3)
+RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 {
     // test we can read a config file with a global section, other values
-    std::stringstream oss(
-                          " [ globals ] \n"
-                          " bitmap_cache\t= no \n"
-                          " glyph_cache = no \n"
-                          "encryptionLevel=high\n"
-                          "trace_type=2\n"
-                          "listen_address=127.0.0.1\n"
-                          "certificate_password=rdpproxy RDP\n"
-                          "enable_transparent_mode=true\n"
-                          "png_path=/var/tmp/wab/recorded/rdp\n"
-                          "wrm_path=/var/wab/recorded/rdp\n"
-                          "close_timeout=300\n"
-                          "handshake_timeout=7\n"
-                          "[client]\t\n"
-                          "tls_support=yes\n"
-                          "bogus_user_id=yes\n"
-                          "performance_flags_default=07\n"
-                          "performance_flags_force_present=1\n"
-                          "performance_flags_force_not_present=0x\n"
-                          "max_color_depth=24\n"
-                          "persistent_disk_bitmap_cache=yes\n"
-                          "cache_waiting_list=no\n"
-                          "persist_bitmap_cache_on_disk=no\n"
-                          "bitmap_compression=false\n"
-                          "\t[mod_rdp]\n"
-                          "rdp_compression=0\n"
-                          "bogus_sc_net_size=no\n"
-                          "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
-                          "shell_working_directory=\n"
-                          "session_probe_launch_timeout=6000\n"
-                          "session_probe_keepalive_timeout=3000\n"
-                          "[mod_replay]\n"
-                          "on_end_of_data=0\n"
-                          "[mod_vnc]\n"
-                          "bogus_clipboard_infinite_loop=2\n"
-                          "[video]\n"
-                          "disable_keyboard_log=1\n"
-                          "wrm_color_depth_selection_strategy=1\n"
-                          "wrm_compression_algorithm=1\n"
-                          "disable_clipboard_log=0\n"
-                          "\n"
-                          );
+    std::ofstream(wf.c_str()) <<
+        " [ globals ] \n"
+        " bitmap_cache\t= no \n"
+        " glyph_cache = no \n"
+        "encryptionLevel=high\n"
+        "trace_type=2\n"
+        "listen_address=127.0.0.1\n"
+        "certificate_password=rdpproxy RDP\n"
+        "enable_transparent_mode=true\n"
+        "close_timeout=300\n"
+        "handshake_timeout=7\n"
+        "[client]\t\n"
+        "tls_support=yes\n"
+        "bogus_user_id=yes\n"
+        "performance_flags_default=07\n"
+        "performance_flags_force_present=1\n"
+        "performance_flags_force_not_present=0x\n"
+        "max_color_depth=24\n"
+        "persistent_disk_bitmap_cache=yes\n"
+        "cache_waiting_list=no\n"
+        "persist_bitmap_cache_on_disk=no\n"
+        "bitmap_compression=false\n"
+        "\t[mod_rdp]\n"
+        "rdp_compression=0\n"
+        "bogus_sc_net_size=no\n"
+        "alternate_shell=C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE   \n"
+        "shell_working_directory=\n"
+        "session_probe_launch_timeout=6000\n"
+        "session_probe_keepalive_timeout=3000\n"
+        "[mod_replay]\n"
+        "on_end_of_data=0\n"
+        "[mod_vnc]\n"
+        "bogus_clipboard_infinite_loop=2\n"
+        "[video]\n"
+        "disable_keyboard_log=1\n"
+        "wrm_color_depth_selection_strategy=1\n"
+        "wrm_compression_algorithm=1\n"
+        "disable_clipboard_log=0\n"
+        "\n"
+    ;
 
-    Inifile             ini;
+    Inifile ini;
 
     ini.set<cfg::mod_rdp::shell_working_directory>("C:\\");
 
-    configuration_load(ini.configuration_holder(), oss);
+    configuration_load(ini.configuration_holder(), wf.c_str());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1035,31 +1012,30 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
-RED_AUTO_TEST_CASE(TestMultiple)
+RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
 {
     // test we can read a config file with a global section
-    std::stringstream oss(
-                          "[globals]\n"
-                          "bitmap_cache=no\n"
-                          "port=3390\n"
-                          "encryptionLevel=low\n"
-                          "trace_type=0\n"
-                          "listen_address=0.0.0.0\n"
-                          "certificate_password=redemption\n"
-                          "enable_transparent_mode=False\n"
-                          "[client]\n"
-                          "bitmap_compression=TRuE\n"
-                          "\n"
-                          "[mod_rdp]\n"
-                          "persistent_disk_bitmap_cache=true\n"
-                          "cache_waiting_list=no\n"
-                          "shell_working_directory=%HOMEDRIVE%%HOMEPATH%\n"
-                          "enable_session_probe=true\n"
-                          "\n"
-                          );
+    std::ofstream(wf.c_str()) <<
+        "[globals]\n"
+        "port=3390\n"
+        "encryptionLevel=low\n"
+        "trace_type=0\n"
+        "listen_address=0.0.0.0\n"
+        "certificate_password=redemption\n"
+        "enable_transparent_mode=False\n"
+        "[client]\n"
+        "bitmap_compression=TRuE\n"
+        "\n"
+        "[mod_rdp]\n"
+        "persistent_disk_bitmap_cache=true\n"
+        "cache_waiting_list=no\n"
+        "shell_working_directory=%HOMEDRIVE%%HOMEPATH%\n"
+        "enable_session_probe=true\n"
+        "\n"
+    ;
 
-    Inifile             ini;
-    configuration_load(ini.configuration_holder(), oss);
+    Inifile ini;
+    configuration_load(ini.configuration_holder(), wf.c_str());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1185,31 +1161,31 @@ RED_AUTO_TEST_CASE(TestMultiple)
 
 
     // see we can change configuration using parse without default setting of existing ini
-    std::stringstream oss2(
-                           "[globals]\n"
-                           "trace_type=2\n"
-                           "listen_address=192.168.1.1\n"
-                           "certificate_password=\n"
-                           "enable_transparent_mode=yes\n"
-                           "glyph_cache=yes\n"
-                           "[client]\n"
-                           "bitmap_compression=no\n"
-                           "persist_bitmap_cache_on_disk=yes\n"
-                           "bogus_user_id=yes\n"
-                           "[mod_rdp]\n"
-                           "persist_bitmap_cache_on_disk=yes\n"
-                           "proxy_managed_drives=docs,apps\n"
-                           "session_probe_launch_timeout=4000\n"
-                           "session_probe_on_launch_failure=0\n"
-                           "session_probe_keepalive_timeout=7000\n"
-                           "[mod_vnc]\n"
-                           "bogus_clipboard_infinite_loop=0\n"
-                           "[debug]\n"
-                           "password=3\n"
-                           "compression=0x3\n"
-                           "cache=0\n"
-                           );
-    configuration_load(ini.configuration_holder(), oss2);
+    std::ofstream(wf.c_str(), std::ios::trunc) <<
+        "[globals]\n"
+        "trace_type=2\n"
+        "listen_address=192.168.1.1\n"
+        "certificate_password=\n"
+        "enable_transparent_mode=yes\n"
+        "glyph_cache=yes\n"
+        "[client]\n"
+        "bitmap_compression=no\n"
+        "persist_bitmap_cache_on_disk=yes\n"
+        "bogus_user_id=yes\n"
+        "[mod_rdp]\n"
+        "persist_bitmap_cache_on_disk=yes\n"
+        "proxy_managed_drives=docs,apps\n"
+        "session_probe_launch_timeout=4000\n"
+        "session_probe_on_launch_failure=0\n"
+        "session_probe_keepalive_timeout=7000\n"
+        "[mod_vnc]\n"
+        "bogus_clipboard_infinite_loop=0\n"
+        "[debug]\n"
+        "password=3\n"
+        "compression=0x3\n"
+        "cache=0\n"
+    ;
+    configuration_load(ini.configuration_holder(), wf.c_str());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1334,7 +1310,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
-RED_AUTO_TEST_CASE(TestNewConf)
+RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 {
     // new behavior:
     // init() load default values from main configuration file
@@ -1469,20 +1445,20 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 
-    std::stringstream ifs2(
-                           "# Here we put global values\n"
-                           "[globals]\n"
-                           "# below we have lines with syntax errors, but they are just ignored\n"
-                           "authentication_timeout=300\n"
-                           "yyy\n"
-                           "zzz\n"
-                           "# unknwon keys are also ignored\n"
-                           "yyy=1\n"
-                           "[client]\n"
-                           "bitmap_compression=no\n"
-                           );
+    std::ofstream(wf.c_str()) <<
+        "# Here we put global values\n"
+        "[globals]\n"
+        "# below we have lines with syntax errors, but they are just ignored\n"
+        "authentication_timeout=300\n"
+        "yyy\n"
+        "zzz\n"
+        "# unknwon keys are also ignored\n"
+        "yyy=1\n"
+        "[client]\n"
+        "bitmap_compression=no\n"
+    ;
 
-    configuration_load(ini.configuration_holder(), ifs2);
+    configuration_load(ini.configuration_holder(), wf.c_str());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1608,106 +1584,57 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
-RED_AUTO_TEST_CASE(TestConfigTools)
-{
-    using namespace configs;
-
-    {
-        unsigned u;
-        spec_type<unsigned> stype;
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("")));
-        RED_CHECK_EQUAL(0, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("0")));
-        RED_CHECK_EQUAL(0, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x")));
-        RED_CHECK_EQUAL(0, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("3")));
-        RED_CHECK_EQUAL(3, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x3")));
-        RED_CHECK_EQUAL(3, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x00000007")));
-        RED_CHECK_EQUAL(7, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0000000000000007")));
-        RED_CHECK_EQUAL(7, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0007")));
-        RED_CHECK_EQUAL(7, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("1357")));
-        RED_CHECK_EQUAL(1357, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x1357")));
-        RED_CHECK_EQUAL(0x1357, u);
-
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0A")));
-        RED_CHECK_EQUAL(0x0a, u);
-        RED_CHECK(!parse(u, stype, cstr_array_view("0x0a")));
-        RED_CHECK_EQUAL(0x0a, u);
-
-        RED_CHECK(!!parse(u, stype, cstr_array_view("0x0000000I")));
-        RED_CHECK(!!parse(u, stype, cstr_array_view("I")));
-
-    }
-
-    {
-        Level level;
-        spec_type<Level> stype;
-
-        RED_CHECK(!parse(level, stype, cstr_array_view("LoW")));
-        RED_CHECK_EQUAL(Level::low, level);
-
-        RED_CHECK(!parse(level, stype, cstr_array_view("mEdIuM")));
-        RED_CHECK_EQUAL(Level::medium, level);
-
-        RED_CHECK(!parse(level, stype, cstr_array_view("High")));
-        RED_CHECK_EQUAL(Level::high, level);
-
-        RED_CHECK(!!parse(level, stype, cstr_array_view("dsifsu")));
-    }
-
-    {
-        int i;
-        spec_type<int> stype;
-
-        RED_CHECK(!parse(i, stype, cstr_array_view("3600")));
-        RED_CHECK_EQUAL(3600, i);
-        RED_CHECK(!parse(i, stype, cstr_array_view("0")));
-        RED_CHECK_EQUAL(0, i);
-        RED_CHECK(!parse(i, stype, cstr_array_view("")));
-        RED_CHECK_EQUAL(0, i);
-        RED_CHECK(!parse(i, stype, cstr_array_view("-3600")));
-        RED_CHECK_EQUAL(-3600, i);
-    }
-}
-
 RED_AUTO_TEST_CASE(TestLogPolicy)
 {
     Inifile ini;
-    RED_CHECK(ini.get_acl_field(cfg::globals::auth_user::index).is_loggable());
-    RED_CHECK(!ini.get_acl_field(cfg::globals::target_application_password::index).is_loggable());
-    RED_CHECK(ini.get_acl_field(cfg::context::auth_channel_answer::index).is_loggable());
-    ini.set<cfg::context::auth_channel_answer>("blah blah password blah blah");
-    RED_CHECK(!ini.get_acl_field(cfg::context::auth_channel_answer::index).is_loggable());
+    using Cat = Inifile::LoggableCategory;
+
+    RED_CHECK(Cat::Loggable ==
+        get_acl_field(ini, cfg::globals::auth_user::index).loggable_category());
+    RED_CHECK(Cat::Unloggable ==
+        get_acl_field(ini, cfg::globals::target_application_password::index).loggable_category());
+    RED_CHECK(Cat::LoggableButWithPassword ==
+        get_acl_field(ini, cfg::context::auth_channel_answer::index).loggable_category());
+}
+
+RED_AUTO_TEST_CASE(TestFieldName)
+{
+    Inifile ini;
+
+    RED_CHECK(not bool(ini.get_acl_field_by_name("Unknown"_av)));
+    RED_CHECK("target_login"_av ==
+        get_acl_field(ini, cfg::globals::target_user::index).get_acl_name());
+    RED_CHECK("width"_av ==
+        get_acl_field(ini, cfg::context::opt_width::index).get_acl_name());
+    RED_CHECK("alternate_shell"_av ==
+        get_acl_field(ini, cfg::mod_rdp::alternate_shell::index).get_acl_name());
+    RED_CHECK("mod_rdp:enable_nla"_av ==
+        get_acl_field(ini, cfg::mod_rdp::enable_nla::index).get_acl_name());
 }
 
 RED_AUTO_TEST_CASE(TestContextSetValue)
 {
-    Inifile             ini;
+    Inifile ini;
+    Inifile::ZStringBuffer zstring_buffer;
+
+    auto get_zstring = [&](configs::authid_t id){
+        auto zstr = get_acl_field(ini, id).to_zstring_view(zstring_buffer);
+        RED_CHECK(zstr.data()[zstr.size()] == '\0');
+        return zstr;
+    };
 
     // bpp, height, width
-    ini.get_acl_field(cfg::context::opt_bpp::index).ask();
-    ini.get_acl_field(cfg::context::opt_height::index).ask();
-    ini.get_acl_field(cfg::context::opt_width::index).ask();
+    get_acl_field(ini, cfg::context::opt_bpp::index).ask();
+    get_acl_field(ini, cfg::context::opt_height::index).ask();
+    get_acl_field(ini, cfg::context::opt_width::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_height>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_width>());
 
-    ini.get_acl_field(cfg::context::opt_bpp::index).set(cstr_array_view("16"));
-    ini.get_acl_field(cfg::context::opt_height::index).set(cstr_array_view("1024"));
-    ini.get_acl_field(cfg::context::opt_width::index).set(cstr_array_view("1280"));
+    get_acl_field(ini, cfg::context::opt_bpp::index).set("16"_zv);
+    get_acl_field(ini, cfg::context::opt_height::index).set("1024"_zv);
+    get_acl_field(ini, cfg::context::opt_width::index).set("1280"_zv);
 
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_height>());
@@ -1717,17 +1644,17 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(1024, ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(1280, ini.get<cfg::context::opt_width>());
 
-    RED_CHECK_EQUAL("16",   ini.get_acl_field(cfg::context::opt_bpp::index).to_string_view().data());
-    RED_CHECK_EQUAL("1024", ini.get_acl_field(cfg::context::opt_height::index).to_string_view().data());
-    RED_CHECK_EQUAL("1280", ini.get_acl_field(cfg::context::opt_width::index).to_string_view().data());
+    RED_CHECK_EQUAL("16"_av,   get_zstring(cfg::context::opt_bpp::index));
+    RED_CHECK_EQUAL("1024"_av, get_zstring(cfg::context::opt_height::index));
+    RED_CHECK_EQUAL("1280"_av, get_zstring(cfg::context::opt_width::index));
 
 
     // selector, ...
-    ini.get_acl_field(cfg::context::selector::index).ask();
-    ini.get_acl_field(cfg::context::selector_current_page::index).ask();
-    ini.get_acl_field(cfg::context::selector_device_filter::index).ask();
-    ini.get_acl_field(cfg::context::selector_group_filter::index).ask();
-    ini.get_acl_field(cfg::context::selector_lines_per_page::index).ask();
+    get_acl_field(ini, cfg::context::selector::index).ask();
+    get_acl_field(ini, cfg::context::selector_current_page::index).ask();
+    get_acl_field(ini, cfg::context::selector_device_filter::index).ask();
+    get_acl_field(ini, cfg::context::selector_group_filter::index).ask();
+    get_acl_field(ini, cfg::context::selector_lines_per_page::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_current_page>());
@@ -1735,12 +1662,12 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_group_filter>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_lines_per_page>());
 
-    ini.get_acl_field(cfg::context::selector::index).set(cstr_array_view("True"));
-    ini.get_acl_field(cfg::context::selector_current_page::index).set(cstr_array_view("2"));
-    ini.get_acl_field(cfg::context::selector_device_filter::index).set(cstr_array_view("Windows"));
-    ini.get_acl_field(cfg::context::selector_group_filter::index).set(cstr_array_view("RDP"));
-    ini.get_acl_field(cfg::context::selector_lines_per_page::index).set(cstr_array_view("25"));
-    ini.get_acl_field(cfg::context::selector_number_of_pages::index).set(cstr_array_view("2"));
+    get_acl_field(ini, cfg::context::selector::index).set("True"_zv);
+    get_acl_field(ini, cfg::context::selector_current_page::index).set("2"_zv);
+    get_acl_field(ini, cfg::context::selector_device_filter::index).set("Windows"_zv);
+    get_acl_field(ini, cfg::context::selector_group_filter::index).set("RDP"_zv);
+    get_acl_field(ini, cfg::context::selector_lines_per_page::index).set("25"_zv);
+    get_acl_field(ini, cfg::context::selector_number_of_pages::index).set("2"_zv);
 
     RED_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector>());
     RED_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector_current_page>());
@@ -1755,21 +1682,21 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(25,        ini.get<cfg::context::selector_lines_per_page>());
     RED_CHECK_EQUAL(2,         ini.get<cfg::context::selector_number_of_pages>());
 
-    RED_CHECK_EQUAL("True",    ini.get_acl_field(cfg::context::selector::index).to_string_view().data());
-    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_current_page::index).to_string_view().data());
-    RED_CHECK_EQUAL("Windows", ini.get_acl_field(cfg::context::selector_device_filter::index).to_string_view().data());
-    RED_CHECK_EQUAL("RDP",     ini.get_acl_field(cfg::context::selector_group_filter::index).to_string_view().data());
-    RED_CHECK_EQUAL("25",      ini.get_acl_field(cfg::context::selector_lines_per_page::index).to_string_view().data());
-    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_number_of_pages::index).to_string_view().data());
+    RED_CHECK_EQUAL("True"_av,    get_zstring(cfg::context::selector::index));
+    RED_CHECK_EQUAL("2"_av,       get_zstring(cfg::context::selector_current_page::index));
+    RED_CHECK_EQUAL("Windows"_av, get_zstring(cfg::context::selector_device_filter::index));
+    RED_CHECK_EQUAL("RDP"_av,     get_zstring(cfg::context::selector_group_filter::index));
+    RED_CHECK_EQUAL("25"_av,      get_zstring(cfg::context::selector_lines_per_page::index));
+    RED_CHECK_EQUAL("2"_av,       get_zstring(cfg::context::selector_number_of_pages::index));
 
 
     // target_xxxx
-    ini.get_acl_field(cfg::globals::target_device::index).set(cstr_array_view("127.0.0.1"));
-    ini.get_acl_field(cfg::context::target_password::index).set(cstr_array_view("12345678"));
-    ini.get_acl_field(cfg::context::target_port::index).set(cstr_array_view("3390"));
-    ini.get_acl_field(cfg::context::target_protocol::index).set(cstr_array_view("RDP"));
-    ini.get_acl_field(cfg::globals::target_user::index).set(cstr_array_view("admin"));
-    ini.get_acl_field(cfg::globals::target_application::index).set(cstr_array_view("wallix@putty"));
+    get_acl_field(ini, cfg::globals::target_device::index).set("127.0.0.1"_zv);
+    get_acl_field(ini, cfg::context::target_password::index).set("12345678"_zv);
+    get_acl_field(ini, cfg::context::target_port::index).set("3390"_zv);
+    get_acl_field(ini, cfg::context::target_protocol::index).set("RDP"_zv);
+    get_acl_field(ini, cfg::globals::target_user::index).set("admin"_zv);
+    get_acl_field(ini, cfg::globals::target_application::index).set("wallix@putty"_zv);
 
     RED_CHECK_EQUAL(false,          ini.is_asked<cfg::globals::target_device>());
     RED_CHECK_EQUAL(false,          ini.is_asked<cfg::context::target_password>());
@@ -1784,111 +1711,109 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL("admin",        ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("wallix@putty", ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL("127.0.0.1",    ini.get_acl_field(cfg::globals::target_device::index).to_string_view().data());
-    RED_CHECK_EQUAL("12345678",     ini.get_acl_field(cfg::context::target_password::index).to_string_view().data());
-    RED_CHECK_EQUAL("3390",         ini.get_acl_field(cfg::context::target_port::index).to_string_view().data());
-    RED_CHECK_EQUAL("RDP",          ini.get_acl_field(cfg::context::target_protocol::index).to_string_view().data());
-    RED_CHECK_EQUAL("admin",        ini.get_acl_field(cfg::globals::target_user::index).to_string_view().data());
-    RED_CHECK_EQUAL("wallix@putty", ini.get_acl_field(cfg::globals::target_application::index).to_string_view().data());
+    RED_CHECK_EQUAL("127.0.0.1"_av,    get_zstring(cfg::globals::target_device::index));
+    RED_CHECK_EQUAL("12345678"_av,     get_zstring(cfg::context::target_password::index));
+    RED_CHECK_EQUAL("3390"_av,         get_zstring(cfg::context::target_port::index));
+    RED_CHECK_EQUAL("RDP"_av,          get_zstring(cfg::context::target_protocol::index));
+    RED_CHECK_EQUAL("admin"_av,        get_zstring(cfg::globals::target_user::index));
+    RED_CHECK_EQUAL("wallix@putty"_av, get_zstring(cfg::globals::target_application::index));
 
 
     // host
-    ini.get_acl_field(cfg::globals::host::index).ask();
+    get_acl_field(ini, cfg::globals::host::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::globals::host>());
 
-    ini.get_acl_field(cfg::globals::host::index).set(cstr_array_view("127.0.0.1"));
+    get_acl_field(ini, cfg::globals::host::index).set("127.0.0.1"_zv);
 
     RED_CHECK_EQUAL(false,       ini.is_asked<cfg::globals::host>());
 
     RED_CHECK_EQUAL("127.0.0.1", ini.get<cfg::globals::host>());
 
-    RED_CHECK_EQUAL("127.0.0.1", ini.get_acl_field(cfg::globals::host::index).to_string_view().data());
-    RED_CHECK_EQUAL(9,           ini.get_acl_field(cfg::globals::host::index).to_string_view().size());
-
+    RED_CHECK_EQUAL("127.0.0.1"_av, get_zstring(cfg::globals::host::index));
 
     // target
-    ini.get_acl_field(cfg::globals::target::index).ask();
+    get_acl_field(ini, cfg::globals::target::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::globals::target>());
 
-    ini.get_acl_field(cfg::globals::target::index).set(cstr_array_view("192.168.0.1"));
+    get_acl_field(ini, cfg::globals::target::index).set("192.168.0.1"_zv);
 
     RED_CHECK_EQUAL(false,         ini.is_asked<cfg::globals::target>());
 
     RED_CHECK_EQUAL("192.168.0.1", ini.get<cfg::globals::target>());
 
-    RED_CHECK_EQUAL("192.168.0.1", ini.get_acl_field(cfg::globals::target::index).to_string_view().data());
+    RED_CHECK_EQUAL("192.168.0.1"_av, get_zstring(cfg::globals::target::index));
 
 
     // auth_user
-    ini.get_acl_field(cfg::globals::auth_user::index).set(cstr_array_view("admin"));
+    get_acl_field(ini, cfg::globals::auth_user::index).set("admin"_zv);
 
     RED_CHECK_EQUAL(false,   ini.is_asked<cfg::globals::auth_user>());
 
     RED_CHECK_EQUAL("admin", ini.get<cfg::globals::auth_user>());
 
-    RED_CHECK_EQUAL("admin", ini.get_acl_field(cfg::globals::auth_user::index).to_string_view().data());
+    RED_CHECK_EQUAL("admin"_av, get_zstring(cfg::globals::auth_user::index));
 
 
     // password
-    ini.get_acl_field(cfg::context::password::index).ask();
+    get_acl_field(ini, cfg::context::password::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::password>());
 
-    ini.get_acl_field(cfg::context::password::index).set(cstr_array_view("12345678"));
+    get_acl_field(ini, cfg::context::password::index).set("12345678"_zv);
 
     RED_CHECK_EQUAL(false,      ini.is_asked<cfg::context::password>());
 
     RED_CHECK_EQUAL("12345678", ini.get<cfg::context::password>());
 
-    RED_CHECK_EQUAL("12345678", ini.get_acl_field(cfg::context::password::index).to_string_view().data());
+    RED_CHECK_EQUAL("12345678"_av, get_zstring(cfg::context::password::index));
 
 
     // answer
-    ini.get_acl_field(cfg::context::auth_channel_answer::index).set(cstr_array_view("answer"));
+    get_acl_field(ini, cfg::context::auth_channel_answer::index).set("answer"_zv);
 
     RED_CHECK_EQUAL("answer", ini.get<cfg::context::auth_channel_answer>());
 
 
     // authchannel_target
-    ini.get_acl_field(cfg::context::auth_channel_target::index).ask();
+    get_acl_field(ini, cfg::context::auth_channel_target::index).ask();
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::auth_channel_target>());
 
-    ini.get_acl_field(cfg::context::auth_channel_target::index).set(cstr_array_view("target"));
+    get_acl_field(ini, cfg::context::auth_channel_target::index).set("target"_zv);
 
     RED_CHECK_EQUAL(false, 	ini.is_asked<cfg::context::auth_channel_target>());
 
     RED_CHECK_EQUAL("target", ini.get<cfg::context::auth_channel_target>());
 
-    RED_CHECK_EQUAL("target", ini.get_acl_field(cfg::context::auth_channel_target::index).to_string_view().data());
+    RED_CHECK_EQUAL("target"_av, get_zstring(cfg::context::auth_channel_target::index));
 
 
     // message
-    ini.get_acl_field(cfg::context::message::index).set(cstr_array_view("message"));
+    get_acl_field(ini, cfg::context::message::index).set("message"_zv);
 
     RED_CHECK_EQUAL("message", ini.get<cfg::context::message>());
 
 
     // rejected
-    ini.get_acl_field(cfg::context::rejected::index).set(cstr_array_view("rejected"));
+    get_acl_field(ini, cfg::context::rejected::index).set("rejected"_zv);
 
     RED_CHECK_EQUAL("rejected", ini.get<cfg::context::rejected>());
 
-    RED_CHECK_EQUAL("rejected", ini.get_acl_field(cfg::context::rejected::index).to_string_view().data());
+    RED_CHECK_EQUAL("rejected"_av, get_zstring(cfg::context::rejected::index));
 
 
     // authenticated
-    ini.get_acl_field(cfg::context::authenticated::index).set(cstr_array_view("True"));
+    get_acl_field(ini, cfg::context::authenticated::index).set("True"_zv);
 
     RED_CHECK_EQUAL(true,   ini.get<cfg::context::authenticated>());
 
-    RED_CHECK_EQUAL("True", ini.get_acl_field(cfg::context::authenticated::index).to_string_view().data());
+    RED_CHECK_EQUAL("True"_av, get_zstring(cfg::context::authenticated::index));
 
 
     // keepalive
-    ini.get_acl_field(cfg::context::keepalive::index).set(cstr_array_view("True"));
+    get_acl_field(ini, cfg::context::keepalive::index).set("True"_zv);
 
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::keepalive>());
 
@@ -1896,58 +1821,34 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // session_id
-    ini.get_acl_field(cfg::context::session_id::index).set(cstr_array_view("0123456789"));
+    get_acl_field(ini, cfg::context::session_id::index).set("0123456789"_zv);
 
     RED_CHECK_EQUAL("0123456789", ini.get<cfg::context::session_id>());
 
 
     // end_date_cnx
-    ini.get_acl_field(cfg::context::end_date_cnx::index).set(cstr_array_view("12345678"));
+    get_acl_field(ini, cfg::context::end_date_cnx::index).set("12345678"_zv);
 
     RED_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>());
 
     // mode_console
-    ini.get_acl_field(cfg::context::mode_console::index).set(cstr_array_view("forbid"));
+    get_acl_field(ini, cfg::context::mode_console::index).set("forbid"_zv);
 
     RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::context::mode_console>());
 
     // real_target_device
-    ini.get_acl_field(cfg::context::real_target_device::index).set(cstr_array_view("10.0.0.1"));
+    get_acl_field(ini, cfg::context::real_target_device::index).set("10.0.0.1"_zv);
 
     RED_CHECK_EQUAL("10.0.0.1", ini.get<cfg::context::real_target_device>());
 
-    RED_CHECK_EQUAL("10.0.0.1", ini.get_acl_field(cfg::context::real_target_device::index).to_string_view().data());
+    RED_CHECK_EQUAL("10.0.0.1"_av, get_zstring(cfg::context::real_target_device::index));
 
 
     // authentication_challenge
-    ini.get_acl_field(cfg::context::authentication_challenge::index).set(cstr_array_view("true"));
+    get_acl_field(ini, cfg::context::authentication_challenge::index).set("true"_zv);
 
     RED_CHECK_EQUAL(true, ini.get<cfg::context::authentication_challenge>());
 }
-
-
-RED_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
-{
-   RED_CHECK_EQUAL(MAX_AUTHID, authid_from_string("unknown"_av));
-   RED_CHECK("target_login"_av == string_from_authid(cfg::globals::target_user::index));
-   RED_CHECK_EQUAL(cfg::globals::target_user::index, authid_from_string("target_login"_av));
-   RED_CHECK_EQUAL(cfg::context::target_password::index, authid_from_string(string_from_authid(cfg::context::target_password::index)));
-   RED_CHECK_EQUAL(cfg::globals::host::index, authid_from_string(string_from_authid(cfg::globals::host::index)));
-   RED_CHECK_EQUAL(cfg::context::password::index, authid_from_string(string_from_authid(cfg::context::password::index)));
-   RED_CHECK_EQUAL(cfg::globals::auth_user::index, authid_from_string(string_from_authid(cfg::globals::auth_user::index)));
-   RED_CHECK_EQUAL(cfg::globals::target_device::index, authid_from_string(string_from_authid(cfg::globals::target_device::index)));
-   RED_CHECK_EQUAL(cfg::context::target_port::index, authid_from_string(string_from_authid(cfg::context::target_port::index)));
-   RED_CHECK_EQUAL(cfg::context::target_protocol::index, authid_from_string(string_from_authid(cfg::context::target_protocol::index)));
-   RED_CHECK_EQUAL(cfg::context::rejected::index, authid_from_string(string_from_authid(cfg::context::rejected::index)));
-   RED_CHECK_EQUAL(cfg::context::message::index, authid_from_string(string_from_authid(cfg::context::message::index)));
-   RED_CHECK_EQUAL(cfg::context::opt_width::index, authid_from_string(string_from_authid(cfg::context::opt_width::index)));
-   RED_CHECK_EQUAL(cfg::context::opt_height::index, authid_from_string(string_from_authid(cfg::context::opt_height::index)));
-   RED_CHECK_EQUAL(cfg::context::opt_bpp::index, authid_from_string(string_from_authid(cfg::context::opt_bpp::index)));
-   RED_CHECK_EQUAL(cfg::context::authenticated::index, authid_from_string(string_from_authid(cfg::context::authenticated::index)));
-   RED_CHECK_EQUAL(cfg::context::selector::index, authid_from_string(string_from_authid(cfg::context::selector::index)));
-   RED_CHECK_EQUAL(cfg::context::keepalive::index, authid_from_string(string_from_authid(cfg::context::keepalive::index)));
-}
-
 
 RED_AUTO_TEST_CASE(TestConfigSet)
 {
@@ -1980,7 +1881,7 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
     RED_CHECK(!ini.check_from_acl());
 
     // auth_user has been changed, so check_from_acl() method will notify that something changed
-    ini.get_acl_field(cfg::globals::auth_user::index).set(cstr_array_view("someoneelse"));
+    get_acl_field(ini, cfg::globals::auth_user::index).set("someoneelse"_zv);
     RED_CHECK(ini.check_from_acl());
     RED_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
 

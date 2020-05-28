@@ -4,9 +4,8 @@
 
 #pragma once
 
-enum authid_t : unsigned;
-
-namespace cfg {
+namespace cfg
+{
     struct globals {
         struct capture_chunk;
         struct nla_auth_user;
@@ -170,6 +169,10 @@ namespace cfg {
         struct session_probe_public_session;
         struct session_probe_on_account_manipulation;
         struct session_probe_at_end_of_session_freeze_connection_and_wait;
+        struct application_driver_exe_or_file;
+        struct application_driver_script_argument;
+        struct application_driver_chrome_uia_script;
+        struct application_driver_ie_script;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;
@@ -345,7 +348,7 @@ namespace cfg {
     };
 
     struct internal_mod {
-        struct theme;
+        struct enable_target_field;
     };
 
     struct context {
@@ -437,6 +440,8 @@ namespace cfg {
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
+        struct application_driver_alternate_shell;
+        struct application_driver_shell_arguments;
     };
 
     struct theme {

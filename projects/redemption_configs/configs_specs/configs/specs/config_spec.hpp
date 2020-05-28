@@ -432,6 +432,12 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_at_end_of_session_freeze_connection_and_wait", set(true));
 
 
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_exe_or_file", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_script_argument", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_chrome_uia_script", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_ie_script", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
+
+
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
@@ -510,7 +516,7 @@ void config_spec_definition(Writer && W)
     {
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_rdp_metrics", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_vnc_metrics", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics).to_string())));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics))));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "log_interval", set(5));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::hours>(), "log_file_turnover_interval", set(24));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "sign_key", desc{"signature key to digest log metrics header info"}, set(default_key));
@@ -576,9 +582,9 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "replay_path", set("/tmp/"));
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash).to_string())));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp).to_string())));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record).to_string())));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash))));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
 
         W.member(advanced_in_gui, allow_connpolicy_and_gui, rdp_connpolicy, L, type_<KeyboardLogFlags>{}, connpolicy::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
@@ -676,7 +682,8 @@ void config_spec_definition(Writer && W)
 
     W.section("internal_mod", [&]
     {
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "theme", spec::name{"load_theme"});
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_target_field",
+                 desc{"Enable target edit field in login page."}, set(true));
     });
 
     W.section("file_verification", [&]
@@ -866,6 +873,9 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "application_driver_alternate_shell");
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "application_driver_shell_arguments");
     });
 
     W.section("theme", [&]

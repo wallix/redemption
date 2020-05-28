@@ -96,7 +96,6 @@
 #include "utils/bitfu.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"
-#include "utils/confdescriptor.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/genfstat.hpp"
@@ -107,6 +106,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "core/stream_throw_helpers.hpp"
@@ -620,8 +620,6 @@ private:
 
     std::unique_ptr<NegoServer> nego_server;
 
-    std::string server_capabilities_filename;
-
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
     ReportMessageApi & report_message;
@@ -777,7 +775,6 @@ public:
          , CryptoContext & cctx
          , ReportMessageApi & report_message
          , bool fp_support // If true, fast-path must be supported
-         , std::string server_capabilities_filename = {}
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
@@ -792,7 +789,6 @@ public:
     , server_fastpath_update_support(false)
     , tls_client_active(true)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , server_capabilities_filename(std::move(server_capabilities_filename))
     , report_message(report_message)
     , time_base(time_base)
     , timer_events_(timer_events_)
@@ -1038,24 +1034,6 @@ public:
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-
-        auto const wrm_path_len = utils::strlcpy(path, app_path(AppPath::Wrm).to_sv());
-        if (wrm_path_len + 2 < std::size(path)) {
-            path[wrm_path_len] = '/';
-            path[wrm_path_len+1] = 0;
-        }
-        utils::strlcpy(basename, record_filebase);
-        extension[0] = 0; // extension is currently ignored
-
-        if (!canonical_path(record_filebase, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
-
         PngParams png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
@@ -1095,7 +1073,7 @@ public:
 
         CaptureParams capture_params{
             this->time_base.get_current_time(),
-            basename,
+            record_filebase,
             record_tmp_path,
             record_path.c_str(),
             groupid,
@@ -3088,9 +3066,6 @@ private:
                 if (this->fastpath_support) {
                     general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
                 }
-                if (!this->server_capabilities_filename.empty()) {
-                    general_caps_load(general_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     general_caps.log("Front::send_demand_active: Sending to client");
                 }
@@ -3102,9 +3077,6 @@ private:
                 bitmap_caps.desktopWidth = this->client_info.screen_info.width;
                 bitmap_caps.desktopHeight = this->client_info.screen_info.height;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-                if (!this->server_capabilities_filename.empty()) {
-                    bitmap_caps_load(bitmap_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     bitmap_caps.log("Front::send_demand_active: Sending to client");
                 }
@@ -3131,9 +3103,6 @@ private:
                 order_caps.pad4octetsB = 0x0f4240;
                 order_caps.desktopSaveSize = 0x0f4240;
                 order_caps.pad2octetsC = 1;
-                if (!this->server_capabilities_filename.empty()) {
-                    order_caps_load(order_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     order_caps.log("Front::send_demand_active: Sending to client");
                 }

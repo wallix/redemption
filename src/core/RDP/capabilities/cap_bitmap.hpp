@@ -132,7 +132,8 @@ enum {
     CAPLEN_BITMAP = 28
 };
 
-struct BitmapCaps : public Capability {
+struct BitmapCaps : public Capability
+{
     uint16_t preferredBitsPerPixel{8};
     uint16_t receive1BitPerPixel{1};
     uint16_t receive4BitsPerPixel{1};
@@ -146,9 +147,9 @@ struct BitmapCaps : public Capability {
     uint8_t  drawingFlags{0};
     uint16_t multipleRectangleSupport{1};
     uint16_t pad2octetsB{0};
+
     BitmapCaps()
     : Capability(CAPSTYPE_BITMAP, CAPLEN_BITMAP)
-
     {
     }
 
@@ -220,22 +221,5 @@ struct BitmapCaps : public Capability {
             (this->drawingFlags & DRAW_ALLOW_SKIP_ALPHA)?"yes":"no");
         LOG(LOG_INFO, "     Bitmap caps::multipleRectangleSupport %u", this->multipleRectangleSupport);
         LOG(LOG_INFO, "     Bitmap caps::pad2octetsB %u", this->pad2octetsB);
-    }
-
-    void dump(FILE * f) const
-    {
-       fprintf(f, "[Bitmap Capability Set]\n");
-
-       fprintf(f, "preferredBitsPerPixel=%u\n",    unsigned(this->preferredBitsPerPixel));
-       fprintf(f, "receive1BitPerPixel=%u\n",      unsigned(this->receive1BitPerPixel));
-       fprintf(f, "receive4BitsPerPixel=%u\n",     unsigned(this->receive4BitsPerPixel));
-       fprintf(f, "receive8BitsPerPixel=%u\n",     unsigned(this->receive8BitsPerPixel));
-       fprintf(f, "desktopWidth=%u\n",             unsigned(this->desktopWidth));
-       fprintf(f, "desktopHeight=%u\n",            unsigned(this->desktopHeight));
-       fprintf(f, "desktopResizeFlag=%u\n",        unsigned(this->desktopResizeFlag));
-       fprintf(f, "bitmapCompressionFlag=%u\n",    unsigned(this->bitmapCompressionFlag));
-       fprintf(f, "highColorFlags=%u\n",           unsigned(this->highColorFlags));
-       fprintf(f, "drawingFlags=%u\n",             unsigned(this->drawingFlags));
-       fprintf(f, "multipleRectangleSupport=%u\n\n", unsigned(this->multipleRectangleSupport));
     }
 };

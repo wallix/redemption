@@ -22,28 +22,49 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "configs/autogen/enums.hpp"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 #include "configs/autogen/enums_func_ini.hpp"
+#include "configs/io.hpp"
+#include "configs/autogen/enums_func_ini.tcc"
+REDEMPTION_DIAGNOSTIC_POP
 
-RED_TEST_DELEGATE_PRINT_ENUM(ServerCertCheck);
-RED_TEST_DELEGATE_PRINT(configs::parse_error, x.c_str());
+RED_TEST_DELEGATE_PRINT(parse_error, (x ? x.c_str() : "no error"));
 
-RED_AUTO_TEST_CASE(TestParser)
+namespace
 {
+    bool operator == (parse_error const& lhs, parse_error const& rhs)
+    {
+        return lhs.c_str() == rhs.c_str();
+    }
+
+    bool operator != (parse_error const& lhs, parse_error const& rhs)
+    {
+        return lhs.c_str() != rhs.c_str();
+    }
+}
+
+RED_AUTO_TEST_CASE(TestParserEnum)
+{
+    char zbuffer[1024];
+    auto zbuf_av = make_writable_array_view(zbuffer);
+
     // increment
     {
         RED_CHECK( is_valid_enum_value(ServerCertCheck(3)));
         RED_CHECK(!is_valid_enum_value(ServerCertCheck(4)));
 
-        ServerCertCheck v{};
-        RED_CHECK(!parse(v, configs::spec_type<ServerCertCheck>{}, cstr_array_view("3")));
-        RED_CHECK_EQ(v, ServerCertCheck(3));
-        RED_CHECK(!!parse(v, configs::spec_type<ServerCertCheck>{}, cstr_array_view("4")));
-        RED_CHECK_EQ(v, ServerCertCheck(3));
+        configs::spec_type<ServerCertCheck> spec{};
 
-        auto x = ServerCertCheck(2);
-        configs::zstr_buffer_from<ServerCertCheck> buf;
-        auto av = configs::assign_zbuf_from_cfg(buf, configs::cfg_s_type<ServerCertCheck>{}, x);
-        RED_CHECK(av == "2"_av);
+        ServerCertCheck v{};
+        RED_CHECK(no_parse_error == parse_from_cfg(v, spec, "3"_zv));
+        RED_CHECK(v == ServerCertCheck(3));
+        RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "4"_zv));
+        RED_CHECK(v == ServerCertCheck(3));
+
+        RED_CHECK("2"_av ==
+            assign_zbuf_from_cfg(zbuf_av, cfg_s_type<ServerCertCheck>{}, ServerCertCheck(2)));
     }
 
     // flags
@@ -51,15 +72,15 @@ RED_AUTO_TEST_CASE(TestParser)
         RED_CHECK( is_valid_enum_value(CaptureFlags(15)));
         RED_CHECK(!is_valid_enum_value(CaptureFlags(16)));
 
-        CaptureFlags v{};
-        RED_CHECK(!parse(v, configs::spec_type<CaptureFlags>{}, cstr_array_view("15")));
-        RED_CHECK_EQ(v, CaptureFlags(15));
-        RED_CHECK(!!parse(v, configs::spec_type<CaptureFlags>{}, cstr_array_view("16")));
+        configs::spec_type<CaptureFlags> spec{};
 
-        auto x = CaptureFlags(15);
-        configs::zstr_buffer_from<CaptureFlags> buf;
-        auto av = configs::assign_zbuf_from_cfg(buf, configs::cfg_s_type<CaptureFlags>{}, x);
-        RED_CHECK(av == "15"_av);
+        CaptureFlags v{};
+        RED_CHECK(no_parse_error == parse_from_cfg(v, spec, "15"_zv));
+        RED_CHECK(v == CaptureFlags(15));
+        RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "16"_zv));
+
+        RED_CHECK("15"_av ==
+            assign_zbuf_from_cfg(zbuf_av, cfg_s_type<CaptureFlags>{}, CaptureFlags(15)));
     }
 
     // str
@@ -67,17 +88,75 @@ RED_AUTO_TEST_CASE(TestParser)
         RED_CHECK( is_valid_enum_value(RdpModeConsole(2)));
         RED_CHECK(!is_valid_enum_value(RdpModeConsole(3)));
 
-        RdpModeConsole v{};
-        RED_CHECK(!parse(v, configs::spec_type<RdpModeConsole>{}, cstr_array_view("forbid")));
-        RED_CHECK_EQ(v, RdpModeConsole::forbid);
-        RED_CHECK(!parse(v, configs::spec_type<RdpModeConsole>{}, cstr_array_view("aLloW")));
-        RED_CHECK_EQ(v, RdpModeConsole::allow);
-        RED_CHECK(!!parse(v, configs::spec_type<RdpModeConsole>{}, cstr_array_view("foRbI")));
-        RED_CHECK_EQ(v, RdpModeConsole::allow);
+        configs::spec_type<RdpModeConsole> spec{};
 
-        auto x = RdpModeConsole(2);
-        configs::zstr_buffer_from<RdpModeConsole> buf;
-        auto av = configs::assign_zbuf_from_cfg(buf, configs::cfg_s_type<RdpModeConsole>{}, x);
-        RED_CHECK(av == "forbid"_av);
+        RdpModeConsole v{};
+        RED_CHECK(no_parse_error == parse_from_cfg(v, spec, "forbid"_zv));
+        RED_CHECK(v == RdpModeConsole::forbid);
+        RED_CHECK(no_parse_error == parse_from_cfg(v, spec, "aLloW"_zv));
+        RED_CHECK(v == RdpModeConsole::allow);
+        RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "foRbI"_zv));
+        RED_CHECK(v == RdpModeConsole::allow);
+
+        RED_CHECK("forbid"_av ==
+            assign_zbuf_from_cfg(zbuf_av, cfg_s_type<RdpModeConsole>{}, RdpModeConsole(2)));
+    }
+}
+
+RED_AUTO_TEST_CASE(TestConfigTools)
+{
+    // unsigned
+    {
+        unsigned u;
+        configs::spec_type<unsigned> stype;
+
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, ""_zv));
+        RED_CHECK_EQUAL(0, u);
+
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0"_zv));
+        RED_CHECK_EQUAL(0, u);
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x"_zv));
+        RED_CHECK_EQUAL(0, u);
+
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "3"_zv));
+        RED_CHECK_EQUAL(3, u);
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x3"_zv));
+        RED_CHECK_EQUAL(3, u);
+
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x00000007"_zv));
+        RED_CHECK_EQUAL(7, u);
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0000000000000007"_zv));
+        RED_CHECK_EQUAL(7, u);
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0007"_zv));
+        RED_CHECK_EQUAL(7, u);
+
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "1357"_zv));
+        RED_CHECK_EQUAL(1357, u);
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x1357"_zv));
+        RED_CHECK_EQUAL(0x1357, u);
+
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0A"_zv));
+        RED_CHECK_EQUAL(0x0a, u);
+        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0a"_zv));
+        RED_CHECK_EQUAL(0x0a, u);
+
+        RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "0x0000000I"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "I"_zv));
+
+    }
+
+    // int
+    {
+        int i;
+        configs::spec_type<int> stype;
+
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "3600"_zv));
+        RED_CHECK_EQUAL(3600, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0"_zv));
+        RED_CHECK_EQUAL(0, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, ""_zv));
+        RED_CHECK_EQUAL(0, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-3600"_zv));
+        RED_CHECK_EQUAL(-3600, i);
     }
 }

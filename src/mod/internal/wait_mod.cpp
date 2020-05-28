@@ -21,7 +21,6 @@
 
 #include "mod/internal/wait_mod.hpp"
 #include "RAIL/client_execute.hpp"
-#include "configs/config.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"

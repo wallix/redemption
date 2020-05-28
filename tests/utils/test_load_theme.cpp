@@ -22,9 +22,10 @@
 #include "configs/config.hpp"
 #include "utils/theme.hpp"
 #include "utils/load_theme.hpp"
+#include "utils/sugar/algostring.hpp"
 
 RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values)
-{    
+{
     Theme colors;
 
     RED_CHECK_EQUAL(colors.global.bgcolor, DARK_BLUE_BIS);
@@ -45,26 +46,26 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values)
 
     RED_CHECK_EQUAL(colors.selector_line1.bgcolor, PALE_BLUE);
     RED_CHECK_EQUAL(colors.selector_line1.fgcolor, BLACK);
-    
+
     RED_CHECK_EQUAL(colors.selector_line2.bgcolor, LIGHT_BLUE);
     RED_CHECK_EQUAL(colors.selector_line2.fgcolor, BLACK);
-    
+
     RED_CHECK_EQUAL(colors.selector_selected.bgcolor, MEDIUM_BLUE);
     RED_CHECK_EQUAL(colors.selector_selected.fgcolor, WHITE);
-    
+
     RED_CHECK_EQUAL(colors.selector_focus.bgcolor, WINBLUE);
     RED_CHECK_EQUAL(colors.selector_focus.fgcolor, WHITE);
-    
+
     RED_CHECK_EQUAL(colors.selector_label.bgcolor, MEDIUM_BLUE);
     RED_CHECK_EQUAL(colors.selector_label.fgcolor, WHITE);
 }
 
 RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values_even_if_inifile_is_set)
-{    
+{
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(false);
-    
+
     ini.set<cfg::theme::bgcolor>("orange");
     ini.set<cfg::theme::fgcolor>("white");
     ini.set<cfg::theme::separator_color>("brown");
@@ -84,7 +85,7 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values_even_if_inifile_i
 
     ini.set<cfg::theme::selector_line1_bgcolor>("pale_orange");
     ini.set<cfg::theme::selector_line1_fgcolor>("white");
-    
+
     ini.set<cfg::theme::selector_line2_bgcolor>("light_orange");
     ini.set<cfg::theme::selector_line2_fgcolor>("white");
 
@@ -96,7 +97,7 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values_even_if_inifile_i
 
     ini.set<cfg::theme::selector_label_bgcolor>("medium_red");
     ini.set<cfg::theme::selector_label_fgcolor>("black");
-    
+
     Theme colors;
 
     load_theme(colors, ini);
@@ -119,16 +120,16 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values_even_if_inifile_i
 
     RED_CHECK_EQUAL(colors.selector_line1.bgcolor, PALE_BLUE);
     RED_CHECK_EQUAL(colors.selector_line1.fgcolor, BLACK);
-    
+
     RED_CHECK_EQUAL(colors.selector_line2.bgcolor, LIGHT_BLUE);
     RED_CHECK_EQUAL(colors.selector_line2.fgcolor, BLACK);
-    
+
     RED_CHECK_EQUAL(colors.selector_selected.bgcolor, MEDIUM_BLUE);
     RED_CHECK_EQUAL(colors.selector_selected.fgcolor, WHITE);
-    
+
     RED_CHECK_EQUAL(colors.selector_focus.bgcolor, WINBLUE);
     RED_CHECK_EQUAL(colors.selector_focus.fgcolor, WHITE);
-    
+
     RED_CHECK_EQUAL(colors.selector_label.bgcolor, MEDIUM_BLUE);
     RED_CHECK_EQUAL(colors.selector_label.fgcolor, WHITE);
 }
@@ -138,7 +139,7 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(true);
-    
+
     ini.set<cfg::theme::bgcolor>("0xDD8015");
     ini.set<cfg::theme::fgcolor>("0xffffff");
     ini.set<cfg::theme::separator_color>("0xC56A00");
@@ -158,7 +159,7 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
 
     ini.set<cfg::theme::selector_line1_bgcolor>("lIgHt_oRaNgE");
     ini.set<cfg::theme::selector_line1_fgcolor>("bLaCk");
-    
+
     ini.set<cfg::theme::selector_line2_bgcolor>("LIght_ORange");
     ini.set<cfg::theme::selector_line2_fgcolor>("BLack");
 
@@ -172,9 +173,9 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
     ini.set<cfg::theme::selector_label_fgcolor>("white");
 
     Theme colors;
-    
+
     load_theme(colors, ini);
-    
+
     RED_CHECK_EQUAL(colors.global.bgcolor, ORANGE);
     RED_CHECK_EQUAL(colors.global.fgcolor, WHITE);
     RED_CHECK_EQUAL(colors.global.separator_color, BROWN);
@@ -195,26 +196,26 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
 
     RED_CHECK_EQUAL(colors.selector_line1.bgcolor, LIGHT_ORANGE);
     RED_CHECK_EQUAL(colors.selector_line1.fgcolor, BLACK);
-    
+
     RED_CHECK_EQUAL(colors.selector_line2.bgcolor, LIGHT_ORANGE);
     RED_CHECK_EQUAL(colors.selector_line2.fgcolor, BLACK);
-    
+
     RED_CHECK_EQUAL(colors.selector_selected.bgcolor, MEDIUM_RED);
     RED_CHECK_EQUAL(colors.selector_selected.fgcolor, WHITE);
-    
+
     RED_CHECK_EQUAL(colors.selector_focus.bgcolor, DARK_RED);
     RED_CHECK_EQUAL(colors.selector_focus.fgcolor, WHITE);
-    
+
     RED_CHECK_EQUAL(colors.selector_label.bgcolor, MEDIUM_RED);
     RED_CHECK_EQUAL(colors.selector_label.fgcolor, WHITE);
 }
 
 RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile_with_wrong_values)
-{    
+{
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(true);
-    
+
     ini.set<cfg::theme::bgcolor>("ABCDEFGH0xDD8015");
     ini.set<cfg::theme::fgcolor>("AC#0xffffffABCDEFGH");
     ini.set<cfg::theme::separator_color>("#0xC56A00MOP");
@@ -232,7 +233,7 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile_with_wrong_values)
 
     ini.set<cfg::theme::selector_line1_bgcolor>("lIgHt_oRaNgE_lIgHt_oRaNgE");
     ini.set<cfg::theme::selector_line1_fgcolor>("bLaCk_bLaCk");
-    
+
     ini.set<cfg::theme::selector_line2_bgcolor>("LIghtLIght_ORangeORange");
     ini.set<cfg::theme::selector_line2_fgcolor>("BLackBLack");
 
@@ -246,11 +247,11 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile_with_wrong_values)
     ini.set<cfg::theme::selector_label_fgcolor>("#");
 
     Theme colors;
-    
+
     load_theme(colors, ini);
 
     constexpr BGRColor null_bgr;
-    
+
     RED_CHECK_EQUAL(colors.global.bgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.global.fgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.global.separator_color, null_bgr);
@@ -268,16 +269,16 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile_with_wrong_values)
 
     RED_CHECK_EQUAL(colors.selector_line1.bgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.selector_line1.fgcolor, null_bgr);
-    
+
     RED_CHECK_EQUAL(colors.selector_line2.bgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.selector_line2.fgcolor, null_bgr);
-    
+
     RED_CHECK_EQUAL(colors.selector_selected.bgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.selector_selected.fgcolor, null_bgr);
-    
+
     RED_CHECK_EQUAL(colors.selector_focus.bgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.selector_focus.fgcolor, null_bgr);
-    
+
     RED_CHECK_EQUAL(colors.selector_label.bgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.selector_label.fgcolor, null_bgr);
 }

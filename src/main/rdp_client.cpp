@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 
     Inifile ini;
     if (!ini_file.empty()) {
-        configuration_load(ini.configuration_holder(), ini_file);
+        configuration_load(ini.configuration_holder(), ini_file.c_str());
     }
     SesmanInterface sesman(ini);
 

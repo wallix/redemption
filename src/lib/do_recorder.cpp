@@ -47,6 +47,7 @@
 #include "utils/log.hpp"
 #include "utils/recording_progress.hpp"
 #include "utils/redemption_info_version.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/iter.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -1779,7 +1780,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         return ClRes::Exit;
     }
 
-    configuration_load(ini.configuration_holder(), recorder.config_filename);
+    configuration_load(ini.configuration_holder(), recorder.config_filename.c_str());
 
     if (options.count("quick") > 0) {
         recorder.quick_check = true;

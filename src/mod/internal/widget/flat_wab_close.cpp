@@ -69,8 +69,8 @@ FlatWabClose::FlatWabClose(
         app_path(AppPath::LoginWabBlue),
       *this,
       nullptr,
-      -10,
-      &theme.global.bgcolor)
+      theme.global.bgcolor,
+      -10)
 , bg_color(theme.global.bgcolor)
 , prev_time(0)
 , lang(lang)
