@@ -546,7 +546,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/hexdump.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
@@ -591,7 +590,6 @@ test-run tests/acl/test_authentifier :
   <library>src/utils/hexdump.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -605,9 +603,7 @@ test-run tests/acl/test_authentifier :
 test-run tests/acl/test_dispatch_report_message :
   $(REDEMPTION_TEST_PATH)/acl/test_dispatch_report_message.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -615,10 +611,8 @@ test-run tests/acl/test_dispatch_report_message :
   <library>src/gdi/graphic_api.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -1122,7 +1116,6 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
@@ -1148,10 +1141,8 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1168,7 +1159,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
@@ -1194,10 +1184,8 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1214,7 +1202,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
@@ -1240,10 +1227,8 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1260,7 +1245,6 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
@@ -1286,10 +1270,8 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1307,7 +1289,6 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
@@ -1333,10 +1314,8 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -2342,13 +2321,8 @@ test-run tests/core/test_font :
 test-run tests/core/test_front_api :
   $(REDEMPTION_TEST_PATH)/core/test_front_api.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/error.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/front_api.hpp
@@ -2945,7 +2919,6 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -2959,9 +2932,7 @@ test-run tests/mod/internal/test_close_mod :
 test-run tests/mod/internal/test_copy_paste :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_copy_paste.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -2977,10 +2948,8 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3025,7 +2994,6 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3070,7 +3038,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3116,7 +3083,6 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3133,7 +3099,6 @@ test-run tests/mod/internal/test_replay_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
@@ -3150,10 +3115,8 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -3196,7 +3159,6 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3261,7 +3223,6 @@ test-run tests/mod/internal/test_wait_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3272,9 +3233,7 @@ test-run tests/mod/internal/test_wait_mod :
 test-run tests/mod/internal/test_widget_test_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_widget_test_mod.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -3284,10 +3243,8 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3572,9 +3529,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
 test-run tests/mod/internal/widget/test_flat_wait :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wait.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3592,10 +3547,8 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3634,9 +3587,7 @@ test-run tests/mod/internal/widget/test_grid :
 test-run tests/mod/internal/widget/test_group_box :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_group_box.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3651,10 +3602,8 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3753,9 +3702,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
 test-run tests/mod/internal/widget/test_language_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3763,9 +3710,7 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4013,12 +3958,8 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
-  <library>app_path_test.o
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/error.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/base_channel.hpp
@@ -4119,16 +4060,13 @@ test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4162,7 +4100,6 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4175,7 +4112,6 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4185,10 +4121,8 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4200,7 +4134,6 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
@@ -4215,10 +4148,8 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4228,12 +4159,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
 test-run tests/mod/rdp/channels/test_sespro_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_launcher.cpp
 :
-  <library>app_path_test.o
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/error.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_launcher.hpp
@@ -4335,7 +4261,6 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/channels_authorizations.o
@@ -4346,10 +4271,8 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4468,7 +4391,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -4489,11 +4411,9 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/mod/vnc/vnc.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4520,18 +4440,14 @@ test-run tests/mod/vnc/test_vnc_metrics :
 test-run tests/mod/xup/test_xup :
   $(REDEMPTION_TEST_PATH)/mod/xup/test_xup.cpp
 :
-  <library>app_path_test.o
   <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/xup/xup.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -5499,9 +5415,7 @@ test-run tests/utils/test_region :
 test-run tests/utils/test_rle :
   $(REDEMPTION_TEST_PATH)/utils/test_rle.cpp
 :
-  <library>crypto
   <library>src/core/error.o
-  <library>src/utils/bitmap.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/rle.cpp

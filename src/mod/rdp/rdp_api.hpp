@@ -21,7 +21,8 @@
 #pragma once
 
 #include <cstdint>
-#include "acl/sesman.hpp"
+
+class SesmanInterface;
 
 struct rdp_api
 {

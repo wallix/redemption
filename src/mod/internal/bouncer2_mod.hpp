@@ -27,13 +27,13 @@
 #include "core/session_reactor.hpp"
 #include "utils/colors.hpp"
 #include "core/front_api.hpp"
-#include "acl/sesman.hpp"
 
+class SesmanInterface;
 
 class Bouncer2Mod : public mod_api
 {
     bool capture_started = false;
-    
+
     uint16_t front_width;
     uint16_t front_height;
     FrontAPI & front;

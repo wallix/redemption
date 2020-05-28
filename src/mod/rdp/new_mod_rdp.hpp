@@ -24,7 +24,6 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/channels_authorizations.hpp"
 #include "core/session_reactor.hpp"
-#include "acl/sesman.hpp"
 
 #include <memory>
 
@@ -43,6 +42,7 @@ class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
 class ModRdpFactory;
+class SesmanInterface;
 
 namespace gdi { class GraphicApi; }
 

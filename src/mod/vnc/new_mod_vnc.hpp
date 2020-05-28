@@ -23,8 +23,6 @@ Author(s): Jonathan Poelen
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "core/session_reactor.hpp"
-#include "acl/sesman.hpp"
-
 
 #include <memory>
 
@@ -34,6 +32,7 @@ class ReportMessageApi;
 class TimeBase;
 class Transport;
 class VNCMetrics;
+class SesmanInterface;
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,

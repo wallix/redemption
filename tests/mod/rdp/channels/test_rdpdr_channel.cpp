@@ -22,6 +22,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
+#include "acl/sesman.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"

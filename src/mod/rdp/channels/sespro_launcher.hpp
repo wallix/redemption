@@ -21,12 +21,12 @@
 #pragma once
 
 #include "core/error.hpp"
-#include "acl/sesman.hpp"
 
 #include <cstdint>
 
 
 class BaseVirtualChannel;
+class SesmanInterface;
 class InStream;
 
 class SessionProbeLauncher {

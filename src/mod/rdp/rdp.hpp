@@ -130,12 +130,12 @@ struct FileValidatorService;
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
-#include "acl/sesman.hpp"
 
 #include <cstdlib>
 #include <deque>
 #include <bitset>
 
+class SesmanInterface;
 
 #ifndef __EMSCRIPTEN__
 // TODO: isn't AsynchronousTaskContainer is general purpose class that should have it's own file ?

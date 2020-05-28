@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "acl/sesman.hpp"
 #include "core/report_message_api.hpp"
 #include "core/callback.hpp"
 #include "gdi/screen_info.hpp"
@@ -37,6 +36,8 @@ namespace CHANNELS {
     class ChannelDefArray;
     class ChannelDef;
 }
+
+class SesmanInterface;
 
 class FrontAPI : noncopyable
 {
