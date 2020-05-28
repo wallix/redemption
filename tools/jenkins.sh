@@ -29,7 +29,7 @@ timestamp=$(date +%s)
 show_duration()
 {
     local timestamp2=$(date +%s)
-    echo duration $@ $((($timestamp2-$timestamp)/60)):$((($timestamp2-$timestamp)%60))s
+    echo duration"[$@]": $((($timestamp2-$timestamp)/60))m $((($timestamp2-$timestamp)%60))s
     timestamp=$timestamp2
 }
 
