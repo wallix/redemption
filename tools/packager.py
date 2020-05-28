@@ -12,7 +12,7 @@ import re
 import platform
 
 def usage():
-  print("Usage: %s [-h|--help] [--force-build] [--update-version version] [--no-entry-changelog] [--no-git-commit] [--git-push] [--git-tag] [--git-push-tag] | --build-package [--package-distribution name] [--force-target target] [--debug]" % sys.argv[0])
+  print("Usage: %s [-h|--help] [--force-build] [--update-version version] [--no-entry-changelog] [--add-changelog] [--no-git-commit] [--git-push] [--git-tag] [--git-push-tag] | --build-package [--package-distribution name] [--force-target target] [--debug]" % sys.argv[0])
 
 try:
   options, args = getopt.getopt(sys.argv[1:], "h",
