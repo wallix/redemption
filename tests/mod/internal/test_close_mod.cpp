@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     FakeFront front(screen_info);
     GdForwarder<gdi::GraphicApi> gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
@@ -236,7 +236,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     FakeFront front(screen_info);
     GdForwarder<gdi::GraphicApi> gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 

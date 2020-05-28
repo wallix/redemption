@@ -136,7 +136,7 @@ private:
 
     void log6(LogId id, KVList kv_list)
     {
-        this->report_message.log6(id, this->time_base.get_current_time(), kv_list);
+        this->report_message.log6(id, kv_list);
 
         if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
             std::string msg;

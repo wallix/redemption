@@ -587,7 +587,7 @@ public:
             }
             this->hidden_masked_char_count = 0;
 
-            this->report_message.log6(LogId::KBD_INPUT, tvtime(), {
+            this->report_message.log6(LogId::KBD_INPUT, {
                 KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
 
@@ -1282,7 +1282,7 @@ public:
                 if (&this->title_extractor.get() != &this->agent_title_extractor
                  && this->report_message)
                 {
-                    this->report_message->log6(LogId::TITLE_BAR, tvtime(), {
+                    this->report_message->log6(LogId::TITLE_BAR, {
                         KVLog("source"_av, "OCR"_av),
                         KVLog("window"_av, title),
                     });

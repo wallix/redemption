@@ -56,7 +56,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & t
             ini.get<cfg::context::target_port>(),
             error_message);
 
-        report_message.log6(LogId::CONNECTION_FAILED, time_base.get_current_time(), {});
+        report_message.log6(LogId::CONNECTION_FAILED, {});
 
        ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(ini)));
 
@@ -77,12 +77,12 @@ static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & t
     const char *error_message = nullptr;
     char resolved_ip_addr[NI_MAXHOST] { };
     unique_fd client_sck { -1 };
-    
+
     // Handle ipv4 or both ipv4 and ipv6
     if (!enable_ipv6)
     {
         in_addr s4_sin_addr;
-        
+
         if ((error_message = resolve_ipv4_address(ip, s4_sin_addr)))
         {
             // TODO: actually this is DNS Failure or invalid address

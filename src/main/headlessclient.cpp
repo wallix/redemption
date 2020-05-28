@@ -140,7 +140,7 @@ int main(int argc, char const** argv)
 
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
-    TimeBase time_base;
+    TimeBase time_base(tvtime());
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
     ScopedSslInit scoped_ssl;

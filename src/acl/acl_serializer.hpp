@@ -29,6 +29,7 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/timebase.hpp"
 
 #include <string>
 #include <chrono>
@@ -135,6 +136,7 @@ public:
 private:
     char session_id[256];
     SessionLogFile * log_file;
+    TimeBase & timebase;
 
 private:
 public:
@@ -153,7 +155,7 @@ public:
         arcsight  = 0x20,
     };
 
-    AclSerializer(Inifile & ini);
+    AclSerializer(Inifile & ini, TimeBase & timebase);
     ~AclSerializer();
 
     void set_auth_trans(Transport * auth_trans) { this->auth_trans = auth_trans; }
@@ -161,7 +163,7 @@ public:
 
     void report(const char * reason, const char * message) override;
 
-    void log6(LogId id, const timeval time, KVList kv_list) override;
+    void log6(LogId id, KVList kv_list) override;
 
     void start_session_log();
 
@@ -209,6 +211,7 @@ struct Acl
     AclSerializer  * acl_serial = nullptr;
     KeepAlive keepalive;
     Inactivity inactivity;
+    // TODO: use timebase
     Acl(Inifile & ini, time_t now);
     void set_acl_serial(AclSerializer * acl_serial) {
         this->acl_serial = acl_serial;

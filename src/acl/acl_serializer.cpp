@@ -212,8 +212,9 @@ namespace
     };
 }
 
-AclSerializer::AclSerializer(Inifile & ini)
+AclSerializer::AclSerializer(Inifile & ini, TimeBase & timebase)
 : ini(ini)
+, timebase(timebase)
 , session_id{}
 , remote_answer(false)
 , verbose(to_verbose_flags(ini.get<cfg::debug::auth>()))
@@ -392,8 +393,9 @@ namespace
     }
 }
 
-void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
+void AclSerializer::log6(LogId id, KVList kv_list)
 {
+    const timeval time = this->timebase.get_current_time();
     std::string buffer_info;
     buffer_info.reserve(kv_list.size() * 50 + 30);
 

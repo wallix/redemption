@@ -40,6 +40,7 @@
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
+#include "utils/timebase.hpp"
 
 // Uncomment the code block below to generate testing data.
 //#include <netinet/tcp.h>
@@ -102,10 +103,10 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx;
     const bool fastpath_support = true;
     NullReportMessage report_message;
-    TimeBase time_base;
+    TimeBase timebase({0,0});
     TimerContainer timer_events_;
     SesmanInterface sesman(ini);
-    FrontWrapper front(time_base, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
+    FrontWrapper front(timebase, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 

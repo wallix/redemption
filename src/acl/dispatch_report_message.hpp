@@ -42,9 +42,9 @@ public:
         this->report_message.report(reason, message);
     }
 
-    void log6(LogId id, const timeval time, KVList kv_list) override
+    void log6(LogId id, KVList kv_list) override
     {
-        this->report_message.log6(id, time, kv_list);
+        this->report_message.log6(id, kv_list);
 
         if (dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
             return ;

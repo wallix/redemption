@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     NullLicenseStore license_store;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
     TopFdContainer fd_events_;
     TimerContainer timer_events_;

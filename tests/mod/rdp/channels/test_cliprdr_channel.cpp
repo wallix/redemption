@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToClientSender to_client_sender(t);
         TestToServerSender to_server_sender(t);
 
-        TimeBase time_base;
+        TimeBase time_base({0,0});
         Inifile ini;
         SesmanInterface sesman(ini);
 
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
-    TimeBase time_base;
+    TimeBase time_base({0,0});
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, time_base,
@@ -206,7 +206,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     Inifile ini;
     SesmanInterface sesman(ini);
 
@@ -629,7 +629,7 @@ namespace
         : msg_comparator(msg_comparator)
         {}
 
-        void log6(LogId id, const timeval /*time*/, KVList kv_list) override
+        void log6(LogId id, KVList kv_list) override
         {
             std::string s = detail::log_id_string_map[int(id)].data();
             for (auto& kv : kv_list) {
@@ -812,7 +812,7 @@ namespace
 
         class ChannelCtx
         {
-            TimeBase time_base;
+            TimeBase & timebase;
 
             ReportMessageTest report_message;
             ValidatorTransportTest validator_transport;
@@ -827,15 +827,18 @@ namespace
             ChannelCtx(
                 MsgComparator& msg_comparator,
                 FdxTestCtx* fdx_ctx,
+                TimeBase & timebase,
                 ClipboardVirtualChannelParams clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
-            : report_message(msg_comparator)
+            : timebase(timebase)
+            , report_message(msg_comparator)
             , validator_transport(msg_comparator)
             , file_validator_service(validator_transport)
             , to_client_sender(msg_comparator)
             , to_server_sender(msg_comparator)
             , clipboard_virtual_channel(
-                &to_client_sender, &to_server_sender, time_base,
+                &to_client_sender, &to_server_sender,
+                timebase,
                 BaseVirtualChannel::Params(report_message, verbose),
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
@@ -977,12 +980,14 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
     ClipDataTest{false, true, true, false}
 })
 {
+    TimeBase timebase({0,0});
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
+        timebase,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1177,12 +1182,14 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
     ClipDataTest{false, true, true},
 })
 {
+    TimeBase timebase({0,0});
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
+        timebase,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1632,6 +1639,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
+    TimeBase timebase({0,0});
 
     auto cliprdr_params = d.default_channel_params();
     cliprdr_params.validator_params.max_file_size_rejected = 30;
@@ -1639,6 +1647,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
+        timebase,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -2711,6 +2720,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
+    TimeBase timebase({0,0});
 
     auto cliprdr_params = d.default_channel_params();
     cliprdr_params.validator_params.max_file_size_rejected = 10;
@@ -2718,6 +2728,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
+        timebase,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 

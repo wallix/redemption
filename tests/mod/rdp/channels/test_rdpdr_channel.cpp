@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         uint32_t     random_number                = 5245;
         const char * proxy_managed_drive_prefix   = "";
 
-        TimeBase time_base;
+        TimeBase time_base({0,0});
         TimerContainer timer_events_;
         Inifile ini;
         SesmanInterface sesman(ini);

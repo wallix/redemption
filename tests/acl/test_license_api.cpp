@@ -267,7 +267,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 #endif
 
-            TimeBase time_base;
+            TimeBase time_base({0,0});
             GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
             TopFdContainer fd_events_;
             TimerContainer timer_events_;
@@ -509,7 +509,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             } license_store(license_client_name, license_version, license_scope, license_company_name,
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 
-            TimeBase time_base;
+            TimeBase time_base({0,0});
             GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
             TopFdContainer fd_events_;
             TimerContainer timer_events_;

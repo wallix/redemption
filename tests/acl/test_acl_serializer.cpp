@@ -72,8 +72,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
+    TimeBase timebase({0, 0});
 
-    AclSerializer acl(ini);
+    AclSerializer acl(ini, timebase);
     SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
     acl.set_log_file(&log_file);
@@ -89,7 +90,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
         }
     };
     ThrowTransport transexcpt;
-    AclSerializer aclexcpt(ini);
+    AclSerializer aclexcpt(ini, timebase);
     SessionLogFile log_file_excpt(cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
     aclexcpt.set_auth_trans(&transexcpt);
     aclexcpt.set_log_file(&log_file_excpt);
@@ -116,9 +117,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
+    TimeBase timebase({0, 0});
 
     GeneratorTransport trans(stream.get_produced_bytes());
-    AclSerializer acl(ini);
+    AclSerializer acl(ini, timebase);
     SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
     acl.set_log_file(&log_file);
@@ -157,7 +159,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
-    AclSerializer aclexcpt(ini);
+    AclSerializer aclexcpt(ini, timebase);
     SessionLogFile log_file_excpt(cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
     aclexcpt.set_auth_trans(&transexcpt);
     aclexcpt.set_log_file(&log_file_excpt);
@@ -179,9 +181,10 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
+    TimeBase timebase({0, 0});
 
     GeneratorTransport trans(s);
-    AclSerializer acl(ini);
+    AclSerializer acl(ini, timebase);
     SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
     acl.set_log_file(&log_file);
@@ -203,6 +206,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 {
     Inifile ini;
     ini.clear_send_index();
+    TimeBase timebase({0, 0});
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
@@ -232,7 +236,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini);
+    AclSerializer acl(ini, timebase);
     SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
     acl.set_log_file(&log_file);
@@ -277,8 +281,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
+    TimeBase timebase({0, 0});
 
-    AclSerializer acl(ini);
+    AclSerializer acl(ini, timebase);
     SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
     acl.set_log_file(&log_file);
@@ -320,8 +325,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
+    TimeBase timebase({0, 0});
 
-    AclSerializer acl(ini);
+    AclSerializer acl(ini, timebase);
     SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
     acl.set_log_file(&log_file);
@@ -338,6 +344,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 
     std::string s("----abcd\n!something\nefg\n!other something\n");
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
+    TimeBase timebase({0, 0});
 
     LCGRandom rnd;
     Fstat fstat;
@@ -345,7 +352,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     init_keys(cctx);
 
     GeneratorTransport trans(s);
-    AclSerializer acl(ini);
+    AclSerializer acl(ini, timebase);
     SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
     acl.set_log_file(&log_file);
@@ -377,7 +384,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
-    timeval time = {0, 0};
+    TimeBase timebase({0, 0});
 
     ini.set_acl<cfg::globals::auth_user>("admin");
     ini.set_acl<cfg::globals::target_user>("user1");
@@ -396,19 +403,19 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
     GeneratorTransport trans(""_av);
-    AclSerializer acl(ini);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
-    acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
+    AclSerializer acl_serial(ini, timebase);
+    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl_serial));
+    acl_serial.set_auth_trans(&trans);
+    acl_serial.set_log_file(&log_file);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
-    acl.start_session_log();
+    acl_serial.start_session_log();
 
     {
         tu::log_buffered logbuf;
 
-        acl.log6(LogId::INPUT_LANGUAGE, time, {
+        acl_serial.log6(LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
             KVLog("display_name"_av, "name"_av),
         });
@@ -417,12 +424,12 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
         RED_CHECK(logbuf.buf() == expected6);
     }
 
-    time.tv_sec += 10;
+    timebase.increment_sec(10);
 
     {
         tu::log_buffered logbuf;
 
-        acl.log6(LogId::CONNECTION_FAILED, time, {
+        acl_serial.log6(LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
             KVLog("msg2"_av, "xup"_av),
         });
@@ -432,12 +439,12 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
         RED_CHECK(logbuf.buf() == expected6);
     }
 
-    time.tv_sec += 3023;
+    timebase.increment_sec(3023);
 
     {
         tu::log_buffered logbuf;
 
-        acl.log6(LogId::DRIVE_REDIRECTION_RENAME, time, {
+        acl_serial.log6(LogId::DRIVE_REDIRECTION_RENAME, {
             KVLog("app"_av, "rdp"_av),
             KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
             KVLog("filePath"_av, "/dir/new_file.ext"_av),
@@ -448,7 +455,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
         RED_CHECK(logbuf.buf() == expected6);
     }
 
-    acl.close_session_log();
+    acl_serial.close_session_log();
 
     RED_CHECK_FILE_CONTENTS(logfile,
         "1970-01-01 01:00:00 type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"

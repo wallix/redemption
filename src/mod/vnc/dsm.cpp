@@ -313,7 +313,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
 
     uint8_t pluginId = s.in_uint8();
     if (pluginId != 1) {
-        LOG(LOG_ERR, "Invalid pluginId 0x%0.2x", pluginId);
+        LOG(LOG_ERR, "Invalid pluginId 0x%.2x", pluginId);
         throw Error(ERR_VNC_CONNECTION_ERROR);
     }
 

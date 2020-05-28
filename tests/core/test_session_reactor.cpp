@@ -58,11 +58,10 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
 {
     using Ptr = jln::SharedPtr;
     using Dt = jln::NotifyDeleteType;
-    TimeBase time_base;
+    TimeBase time_base(timeval{10, 222});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
 
-    time_base.set_current_time(timeval{10, 222});
     RED_CHECK_EQ(time_base.get_current_time().tv_sec, 10);
     RED_CHECK_EQ(time_base.get_current_time().tv_usec, 222);
 
@@ -164,7 +163,7 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
 
 RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
 {
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
 
     std::string s;
@@ -201,9 +200,8 @@ RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
 
 RED_AUTO_TEST_CASE(TestTimeBaseSequence)
 {
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer events_;
-    time_base.set_current_time(timeval{0, 0});
 
     std::string s;
 

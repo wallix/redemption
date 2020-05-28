@@ -35,7 +35,7 @@ int main()
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
     TimerContainer timer_events_;
     Bouncer2Mod d(time_base, gd_provider, timer_events_, sesman, front, screen_info.width, screen_info.height);

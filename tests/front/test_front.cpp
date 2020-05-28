@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
     SesmanInterface sesman(ini);
@@ -326,7 +326,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
 

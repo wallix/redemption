@@ -43,7 +43,6 @@ namespace
 {
     void file_verification_error(
         FrontAPI& front,
-        TimeBase& time_base,
         ReportMessageApi& report_message,
         chars_view up_target_name,
         chars_view down_target_name,
@@ -51,15 +50,12 @@ namespace
     {
         for (auto&& service : {up_target_name, down_target_name}) {
             if (not service.empty()) {
-                report_message.log6(
-                    LogId::FILE_VERIFICATION_ERROR, time_base.get_current_time(), {
-                    KVLog("icap_service"_av, service),
-                    KVLog("status"_av, msg),
-                });
-                front.session_update(LogId::FILE_VERIFICATION_ERROR, {
-                    KVLog("icap_service"_av, service),
-                    KVLog("status"_av, msg),
-                });
+                const KVList data = {
+                        KVLog("icap_service"_av, service),
+                        KVLog("status"_av, msg),
+                };
+                report_message.log6(LogId::FILE_VERIFICATION_ERROR, data);
+                front.session_update(LogId::FILE_VERIFICATION_ERROR, data);
             }
         }
     }
@@ -97,7 +93,6 @@ struct RdpData
             ReportMessageApi & report_message;
             std::string up_target_name;
             std::string down_target_name;
-            TimeBase& time_base;
             TimerContainer& timer_events_;
             FrontAPI& front;
         };
@@ -113,7 +108,6 @@ struct RdpData
         , trans(std::move(fd), ReportError([this](Error err){
             file_verification_error(
                 this->ctx_error.front,
-                this->ctx_error.time_base,
                 this->ctx_error.report_message,
                 this->ctx_error.up_target_name,
                 this->ctx_error.down_target_name,
@@ -717,7 +711,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
                     report_message,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
-                    time_base, timer_events_, front
+                    timer_events_, front
                 });
             file_validator->service.send_infos({
                 "server_ip"_av, ini.get<cfg::context::target_host>(),
@@ -728,7 +722,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         else {
             LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
             file_verification_error(
-                front, time_base, report_message,
+                front, report_message,
                 mod_rdp_params.validator_params.up_target_name,
                 mod_rdp_params.validator_params.down_target_name,
                 "Unable to connect to FileValidator service"_av

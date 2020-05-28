@@ -145,7 +145,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     NullLicenseStore license_store;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
     SesmanInterface sesman(ini);

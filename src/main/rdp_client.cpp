@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
     TimeSystem system_timeobj;
-    TimeBase time_base;
+    TimeBase time_base(tvtime());
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
 

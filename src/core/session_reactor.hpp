@@ -30,6 +30,7 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/unique_fd.hpp"
 
 #include "utils/log.hpp"
+#include "utils/timebase.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -44,52 +45,6 @@ Author(s): Jonathan Poelen
 #else
 # define REDEMPTION_DEBUG_ONLY(...)
 #endif
-
-
-//class REvent {
-//public:
-//    enum Type {
-//        None,
-//        GdiUpAndRunning,
-//        GdiDown
-//    };
-//    Type type;
-
-//    REvent(Type type) : type(type) {}
-//};
-
-//class REventNone : public REvent {REventNone() : REvent(Type::None) {}};
-//class REventGdiUpAndRunning : public REvent {REventGdiUpAndRunning() : REvent(Type::GdiUpAndRunning) {}};
-//class REventGdiDown : public REvent {REventGdiDown() : REvent(Type::GdiDown) {}};
-
-//class REventHandler {
-//    public:
-//    virtual bool event(REvent * event) = 0;
-//};
-
-//class REventDispatcher {
-//    virtual bool notify(REventHandler * receiver, REvent * event){}
-//    void postEvent(REventHandler * receiver, REvent * event, int priority) {}
-//    void sendEvent(REventHandler * receiver, REvent & event) {}
-//    void processEvents(int flags) {}
-//};
-
-struct TimeBase
-{
-    timeval current_time {};
-
-    void set_current_time(timeval const& now)
-    {
-        assert(now >= this->current_time);
-        this->current_time = now;
-    }
-
-    [[nodiscard]] timeval get_current_time() const noexcept
-    {
-        //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
-        return this->current_time;
-    }
-};
 
 namespace jln
 {
@@ -1413,7 +1368,7 @@ namespace jln
 
         ~TopExecutor()
         {
-            LOG(LOG_INFO, "~TopExecutor()");
+//            LOG(LOG_INFO, "~TopExecutor()");
             assert(!this->exec_is_running);
 
             auto* p = this->group;
@@ -1463,7 +1418,7 @@ namespace jln
 
         void add_group(GroupPtr&& group)
         {
-            LOG(LOG_INFO, "add_group() TopExecutor");
+//            LOG(LOG_INFO, "add_group() TopExecutor");
             group->next = this->group;
             this->group = group.release();
         }
@@ -1475,7 +1430,7 @@ namespace jln
 
         bool exec_timeout()
         {
-            LOG(LOG_INFO, "exec_timeout() TopExecutor");
+//            LOG(LOG_INFO, "exec_timeout() TopExecutor");
 
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
@@ -1551,7 +1506,7 @@ namespace jln
 
         bool exec_action()
         {
-            LOG(LOG_INFO, "exec_action() A TopExecutor");
+//            LOG(LOG_INFO, "exec_action() A TopExecutor");
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
@@ -1623,7 +1578,7 @@ namespace jln
     private:
         R _exec_action()
         {
-            LOG(LOG_INFO, "exec_action() B TopExecutor");
+//            LOG(LOG_INFO, "exec_action() B TopExecutor");
 
             R const r = this->group->on_action(GroupContext<Ts...>{*this, *this->group});
             switch (r) {
@@ -1666,7 +1621,7 @@ namespace jln
 
         R _exec_exit(R r)
         {
-            LOG(LOG_INFO, "exec_exit() TopExecutor");
+//            LOG(LOG_INFO, "exec_exit() TopExecutor");
             do {
                 R const re = this->group->on_exit(
                     ExitContext<Ts...>{*this, *this->group},
@@ -2180,7 +2135,7 @@ namespace jln
         template<class Predicate>
         bool exec_action(Predicate&& predicate)
         {
-            LOG(LOG_INFO, "exec_action() C TopContainer");
+//            LOG(LOG_INFO, "exec_action() C TopContainer");
             return this->_exec(predicate, [&](Top& top) {
                 return top.exec_action();
             });
@@ -2188,7 +2143,7 @@ namespace jln
 
         bool exec_timeout(timeval const end_tv)
         {
-            LOG(LOG_INFO, "exec_timeout() C TopContainer");
+//            LOG(LOG_INFO, "exec_timeout() C TopContainer");
 
             auto predicate = [&](int /*fd*/, Top& top){
                 return top.timer_data.is_enabled && top.timer_data.tv <= end_tv;

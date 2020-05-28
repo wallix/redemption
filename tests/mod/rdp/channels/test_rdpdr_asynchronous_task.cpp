@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
     rdpdr_drive_read_task.configure_event(
@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         contents.size(), test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
     rdpdr_send_drive_io_response_task.configure_event(

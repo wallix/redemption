@@ -3182,9 +3182,7 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->report_message.log6(
-                                    LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-                                    this->time_base.get_current_time(), {});
+                                this->report_message.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -6003,11 +6001,8 @@ private:
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
 
-            this->report_message.log6(
-                LogId::SESSION_DISCONNECTION,
-                this->time_base.get_current_time(), {
-                KVLog("duration"_av, {duration_str, len}),
-            });
+            this->report_message.log6(LogId::SESSION_DISCONNECTION,
+                {KVLog("duration"_av, {duration_str, len}),});
 
             LOG_IF(enable_verbose, LOG_INFO,
                 "type=SESSION_DISCONNECTION duration=%s", duration_str);

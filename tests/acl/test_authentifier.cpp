@@ -96,7 +96,7 @@ int main(){}
 //    Theme theme;
 //    ::load_theme(theme, theme_name);
 
-//    TimeBase time_base;
+//    TimeBase time_base({0,0});
 
 //    ClientExecute rail_client_execute(time_base, front.gd(), front,
 //                                    info.window_list_caps,
@@ -212,7 +212,7 @@ int main(){}
 //    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
 //    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
 
-//    TimeBase time_base;
+//    TimeBase time_base({0,0});
 //    MMIni mm(time_base, ini);
 
 //    auto outdata =
@@ -345,7 +345,7 @@ int main(){}
 //    Inifile ini;
 //    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
 //    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{240}); // = 8*30 = 240secs inactivity>
-//    TimeBase time_base;
+//    TimeBase time_base({0,0});
 //    MMIni mm(time_base, ini);
 
 //    auto outdata =

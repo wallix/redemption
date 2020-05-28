@@ -129,6 +129,7 @@ class Session
 
 private:
     void connect_acl(Acl & acl,
+                     TimeBase & time_base,
                      std::unique_ptr<AclSerializer> & acl_serial,
                      std::unique_ptr<Transport> & auth_trans,
                      std::unique_ptr<SessionLogFile> & log_file,
@@ -140,7 +141,7 @@ private:
     {
         // authentifier never opened or closed by me (close box)
         // now is authentifier start time
-        acl_serial = std::make_unique<AclSerializer>(ini);
+        acl_serial = std::make_unique<AclSerializer>(ini, time_base);
 
         unique_fd client_sck = addr_connect_non_blocking(ini.get<cfg::globals::authfile>().c_str(),
                                         (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
@@ -424,7 +425,7 @@ private:
                     }
                     catch (...) {
                         LOG(LOG_INFO, "Exception F");
-                        authentifier.log6(LogId::SESSION_CREATION_FAILED, now, {});
+                        authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
                         front.must_be_stop_capture();
 
                         throw;
@@ -454,7 +455,7 @@ private:
                     }
                     catch (...) {
                         LOG(LOG_INFO, "Exception G");
-                        authentifier.log6(LogId::SESSION_CREATION_FAILED, now, {});
+                        authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
                         throw;
                     }
 
@@ -674,7 +675,7 @@ public:
 
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
-        TimeBase time_base;
+        TimeBase time_base(tvtime());
         TopFdContainer fd_events_;
         TimerContainer timer_events_;
 
@@ -682,7 +683,6 @@ public:
 
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
-        time_base.set_current_time(tvtime());
         SesmanInterface sesman(ini);
         Front front(time_base, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
@@ -875,7 +875,7 @@ public:
                     if (acl.is_not_yet_connected()) {
                         LOG(LOG_INFO, "Connect ACL");
                         try {
-                            this->connect_acl(acl, acl_serial, auth_trans, log_file,
+                            this->connect_acl(acl, time_base, acl_serial, auth_trans, log_file,
                                               cctx, rnd, now, ini, authentifier, fstat);
                             session_state = SessionState::SESSION_STATE_RUNNING;
                         }
@@ -1029,7 +1029,7 @@ public:
                             }
                             catch (...) {
                                 LOG(LOG_INFO, "Pokemon exception A");
-                                authentifier.log6(LogId::SESSION_CREATION_FAILED, now, {});
+                                authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
                                 front.must_be_stop_capture();
 
                                 throw;

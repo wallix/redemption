@@ -733,7 +733,7 @@ public:
             if (!this->session_probe_channel
              || this->client_execute.exe_or_file != serpdu.ExeOrFile()
             ) {
-                this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, tvtime(), {
+                this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, {
                     KVLog("exe_or_file"_av, serpdu.ExeOrFile()),
                 });
             }
