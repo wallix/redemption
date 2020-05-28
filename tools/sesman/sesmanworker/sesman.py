@@ -276,6 +276,11 @@ class AuthentifierSocketClosed(Exception):
     pass
 
 
+class BastionSignal(Exception):
+    def __init__(self, message="BastionSignal"):
+        super(BastionSignal, self).__init__(message)
+
+
 class RTManager(object):
     __slots__ = ("sesman", "time_limit", "last_start")
 
@@ -1376,15 +1381,15 @@ class Sesman():
                 Logger().info(u"Start Select ...")
                 timeout = None if status != APPROVAL_PENDING else 5
                 r, w, x = select([self.proxy_conx], [], [], timeout)
+            except BastionSignal as e:
+                Logger().info("Got Signal %s" % e)
+                got_signal = True
             except Exception as e:
                 if DEBUG:
                     Logger().info("exception: '%s'" % e)
                     import traceback
                     Logger().info("<<<<%s>>>>" % traceback.format_exc())
-                    if e[0] != 4:
-                        raise
-                Logger().info("Got Signal %s" % e)
-                got_signal = True
+                raise
             if self.proxy_conx in r:
                 _status, _error = self.receive_data()
                 if self.shared.get(u'waitinforeturn') == "backselector":
@@ -2015,16 +2020,16 @@ class Sesman():
                             got_signal = False
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
+                            except BastionSignal as e:
+                                Logger().info("Got Signal %s" % e)
+                                got_signal = True
                             except Exception as e:
                                 if DEBUG:
                                     Logger().info("exception: '%s'" % e)
                                     import traceback
                                     Logger().info("<<<<%s>>>>" %
                                                   traceback.format_exc())
-                                if e[0] != 4:
-                                    raise
-                                Logger().info("Got Signal %s" % e)
-                                got_signal = True
+                                raise
                             current_time = time()
                             if self.check_session_parameters:
                                 self.update_session_parameters(current_time)
@@ -2497,7 +2502,7 @@ class Sesman():
         'smartcard_login': ('effective_login', 'str'),
         'native_session_id': ('native_session_id', 'str'),
     }
-    EXPECTING_KEYS = KEYMAPPING.keys()
+    EXPECTING_KEYS = list(KEYMAPPING.keys())
 
     @staticmethod
     def convert_value(value, cotype):
@@ -2541,11 +2546,13 @@ class Sesman():
         # Logger().info("KILL_HANDLER = %s" % signum)
         if signum == signal.SIGUSR1:
             self.kill()
+            raise BastionSignal()
 
     def check_handler(self, signum, frame):
         # Logger().info("CHECK_HANDLER = %s" % signum)
         if signum == signal.SIGUSR2:
             self.check_session_parameters = True
+            raise BastionSignal()
 
     def kill(self):
         try:
