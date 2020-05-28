@@ -223,7 +223,6 @@ AclSerializer::AclSerializer(Inifile & ini)
 
 AclSerializer::~AclSerializer()
 {
-    this->auth_trans->disconnect();
 }
 
 void AclSerializer::report(const char * reason, const char * message)
@@ -234,31 +233,6 @@ void AclSerializer::report(const char * reason, const char * message)
         this->ini.get<cfg::globals::target_device>().c_str(), message);
     this->ini.set_acl<cfg::context::reporting>(report);
     this->send_acl_data();
-}
-
-void AclSerializer::receive()
-{
-    try {
-        this->incoming();
-
-        if (this->ini.get<cfg::context::module>() == "RDP"
-        ||  this->ini.get<cfg::context::module>() == "VNC") {
-            this->session_type = this->ini.get<cfg::context::module>();
-        }
-        this->remote_answer = true;
-    } catch (...) {
-        // acl connection lost
-        this->ini.set_acl<cfg::context::authenticated>(false);
-
-        if (this->manager_disconnect_reason.empty()) {
-            this->ini.set_acl<cfg::context::rejected>(
-                TR(trkeys::manager_close_cnx, language(this->ini)));
-        }
-        else {
-            this->ini.set_acl<cfg::context::rejected>(this->manager_disconnect_reason);
-            this->manager_disconnect_reason.clear();
-        }
-    }
 }
 
 void AclSerializer::server_redirection_target() {
@@ -828,7 +802,8 @@ void AclSerializer::send_acl_data()
 
 
 Acl::Acl(Inifile & ini, time_t now)
-: acl_serial(nullptr)
+: ini(ini)
+, acl_serial(nullptr)
 , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
 , inactivity(ini.get<cfg::globals::session_timeout>(), now, to_verbose_flags(ini.get<cfg::debug::auth>()))
 {}
@@ -838,9 +813,38 @@ time_t Acl::get_inactivity_timeout()
     return this->inactivity.get_inactivity_timeout();
 }
 
+void Acl::receive()
+{
+    try {
+        this->acl_serial->incoming();
+        LOG(LOG_INFO, "AclSerializer::current_module is %s", this->ini.get<cfg::context::module>());
+
+        if (this->ini.get<cfg::context::module>() == "RDP"
+        ||  this->ini.get<cfg::context::module>() == "VNC") {
+            this->acl_serial->session_type = this->ini.get<cfg::context::module>();
+        }
+        this->acl_serial->remote_answer = true;
+    } catch (...) {
+        LOG(LOG_INFO, "Acl::receive() Session lost");
+        // acl connection lost
+        this-> status = state_disconnected_by_authentifier;
+        this->ini.set_acl<cfg::context::authenticated>(false);
+
+        if (this->manager_disconnect_reason.empty()) {
+            this->ini.set_acl<cfg::context::rejected>(
+                TR(trkeys::manager_close_cnx, language(this->ini)));
+        }
+        else {
+            this->ini.set_acl<cfg::context::rejected>(this->manager_disconnect_reason);
+            this->manager_disconnect_reason.clear();
+        }
+    }
+}
+
+
 void Acl::update_inactivity_timeout()
 {
-    time_t conn_opts_inactivity_timeout = this->acl_serial->ini.get<cfg::globals::inactivity_timeout>().count();
+    time_t conn_opts_inactivity_timeout = this->ini.get<cfg::globals::inactivity_timeout>().count();
     if (conn_opts_inactivity_timeout > 0) {
         if (this->inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
             this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);

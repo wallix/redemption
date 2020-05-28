@@ -1413,6 +1413,7 @@ namespace jln
 
         ~TopExecutor()
         {
+            LOG(LOG_INFO, "~TopExecutor()");
             assert(!this->exec_is_running);
 
             auto* p = this->group;
@@ -1462,6 +1463,7 @@ namespace jln
 
         void add_group(GroupPtr&& group)
         {
+            LOG(LOG_INFO, "add_group() TopExecutor");
             group->next = this->group;
             this->group = group.release();
         }
@@ -1471,8 +1473,10 @@ namespace jln
             this->loaded_group = std::move(group);
         }
 
-        bool exec_timeout(Ts&... xs)
+        bool exec_timeout()
         {
+            LOG(LOG_INFO, "exec_timeout() TopExecutor");
+
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
@@ -1483,13 +1487,13 @@ namespace jln
             try {
                 auto& on_timeout = this->timer_data.on_timeout;
                 do {
-                    switch ((r = on_timeout(GroupTimerContext<Ts...>{*this, *this->group}, xs...))) {
+                    switch ((r = on_timeout(GroupTimerContext<Ts...>{*this, *this->group}))) {
                         case R::Terminate:
                         case R::Exception:
                         case R::ExitError:
                         case R::ExitSuccess:
                         case R::Next:
-                            r = this->_exec_exit(r, xs...);
+                            r = this->_exec_exit(r);
                             break;
                         case R::NeedMoreData:
                         case R::Ready:
@@ -1513,7 +1517,7 @@ namespace jln
             }
             catch (Error const& e) {
                 this->error = e;
-                r = this->_exec_exit(R::Exception, xs...);
+                r = this->_exec_exit(R::Exception);
             }
 
             switch (r) {
@@ -1545,8 +1549,9 @@ namespace jln
             return false;
         }
 
-        bool exec_action(Ts&... xs)
+        bool exec_action()
         {
+            LOG(LOG_INFO, "exec_action() A TopExecutor");
             REDEMPTION_DEBUG_ONLY(
                 this->exec_is_running = true;
                 SCOPE_EXIT(this->exec_is_running = false);
@@ -1556,7 +1561,7 @@ namespace jln
 
             try {
                 do {
-                    switch ((r = this->_exec_action(xs...))) {
+                    switch ((r = this->_exec_action())) {
                         case R::ExitSuccess:
                         case R::Exception:
                         case R::Terminate:
@@ -1583,7 +1588,7 @@ namespace jln
             }
             catch (Error const& e) {
                 this->error = e;
-                r = this->_exec_exit(R::Exception, xs...);
+                r = this->_exec_exit(R::Exception);
             }
 
             switch (r) {
@@ -1616,16 +1621,18 @@ namespace jln
         }
 
     private:
-        R _exec_action(Ts&... xs)
+        R _exec_action()
         {
-            R const r = this->group->on_action(GroupContext<Ts...>{*this, *this->group}, xs...);
+            LOG(LOG_INFO, "exec_action() B TopExecutor");
+
+            R const r = this->group->on_action(GroupContext<Ts...>{*this, *this->group});
             switch (r) {
                 case R::Terminate:
                 case R::Exception:
                 case R::ExitError:
                 case R::ExitSuccess:
                 case R::Next:
-                    return this->_exec_exit(r, xs...);
+                    return this->_exec_exit(r);
                 case R::NeedMoreData:
                 case R::Ready:
                     return r;
@@ -1657,13 +1664,13 @@ namespace jln
             return R::Terminate;
         }
 
-        R _exec_exit(R r, Ts&... xs)
+        R _exec_exit(R r)
         {
+            LOG(LOG_INFO, "exec_exit() TopExecutor");
             do {
                 R const re = this->group->on_exit(
                     ExitContext<Ts...>{*this, *this->group},
-                    ExitR{static_cast<ExitR::Status>(r), this->error},
-                    xs...);
+                    ExitR{static_cast<ExitR::Status>(r), this->error});
                 NextMode next_mode;
                 switch (re) {
                     case R::ExitSuccess:
@@ -2173,18 +2180,21 @@ namespace jln
         template<class Predicate>
         bool exec_action(Predicate&& predicate)
         {
+            LOG(LOG_INFO, "exec_action() C TopContainer");
             return this->_exec(predicate, [&](Top& top) {
                 return top.exec_action();
             });
         }
 
-        bool exec_timeout(timeval const end_tv, Ts... xs)
+        bool exec_timeout(timeval const end_tv)
         {
+            LOG(LOG_INFO, "exec_timeout() C TopContainer");
+
             auto predicate = [&](int /*fd*/, Top& top){
                 return top.timer_data.is_enabled && top.timer_data.tv <= end_tv;
             };
             return this->_exec(predicate, [&](Top& top) {
-                return top.exec_timeout(xs...);
+                return top.exec_timeout();
             });
         }
 
@@ -2830,5 +2840,4 @@ using TimerContainer = jln::TimerContainer<>;
 using TimerPtr = TimerContainer::Ptr;
 using TopFdContainer = jln::TopContainer<>;
 using TopFdPtr = TopFdContainer::Ptr;
-
 

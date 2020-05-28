@@ -136,12 +136,9 @@ private:
     char session_id[256];
     SessionLogFile * log_file;
 
-public:
-    std::string manager_disconnect_reason;
-
 private:
-    std::string session_type;
 public:
+    std::string session_type;
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false
@@ -163,8 +160,6 @@ public:
     void set_log_file(SessionLogFile * log_file) { this->log_file = log_file; }
 
     void report(const char * reason, const char * message) override;
-
-    void receive();
 
     void log6(LogId id, const timeval time, KVList kv_list) override;
 
@@ -192,6 +187,25 @@ struct Acl
         state_disconnected_by_authentifier
     } status = state_not_yet_connected;
 
+    std::string manager_disconnect_reason;
+
+    std::string show() {
+        switch (this->status) {
+        case state_not_yet_connected:
+            return "Acl::state_not_yet_connected";
+        case state_connected:
+            return "Acl::state_connected";
+        case state_connection_failed:
+            return "Acl::state_connection_failed";
+        case state_disconnected_by_redemption:
+            return "Acl::state_disconnected_by_redemption";
+        case state_disconnected_by_authentifier:
+            return "Acl::state_disconnected_by_authentifier";
+        }
+        return "Acl::unexpected state";
+    }
+
+    Inifile & ini;
     AclSerializer  * acl_serial = nullptr;
     KeepAlive keepalive;
     Inactivity inactivity;
@@ -209,9 +223,17 @@ struct Acl
     bool is_connected() { return this->status == state_connected; }
     void disconnect() {
         if (this->acl_serial) {
+            this->acl_serial->auth_trans->disconnect();
             delete this->acl_serial;
             this->acl_serial = nullptr;
             this->status = state_disconnected_by_redemption;
         }
     }
+    void receive();
+
+    ~Acl()
+    {
+        this->disconnect();
+    }
+
 };
