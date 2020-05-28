@@ -178,7 +178,6 @@ private:
             std::string file_name;
 
             std::unique_ptr<FdxCapture::TflFile> tfl_file;
-            std::vector<uint8_t> file_contents;
             Sig sig = Sig();
 
             bool is_finalized() const
@@ -220,7 +219,11 @@ private:
             bool is_unicode;
 
             // TextData, FileContentsSize, FileContentsRequestedRange, FileContentsRange
-            FileContentsRange data;
+            struct FileData : FileContentsRange
+            {
+                std::vector<uint8_t> file_contents;
+            };
+            FileData data;
 
             using ValidatorState = FileContentsRange::ValidatorState;
 

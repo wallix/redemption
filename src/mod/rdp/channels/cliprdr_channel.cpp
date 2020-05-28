@@ -1385,7 +1385,7 @@ struct ClipboardVirtualChannel::D
                 return send_error();
             };
 
-            ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
+            ClipCtx::NoLockData::FileData& file_rng = clip.nolock_data.data;
 
             switch (clip.nolock_data)
             {
@@ -1761,7 +1761,7 @@ struct ClipboardVirtualChannel::D
             case ClipCtx::TransferState::RequestedRange: {
                 if (is_ok) {
                     check_stream_id(clip.nolock_data.data.stream_id);
-                    ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
+                    ClipCtx::NoLockData::FileData& file_rng = clip.nolock_data.data;
 
                     auto validator_id = new_file_validator_id(file_rng.file_name);
 
@@ -1847,7 +1847,7 @@ struct ClipboardVirtualChannel::D
             }
 
             case ClipCtx::TransferState::RequestedSyncRange: {
-                ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
+                ClipCtx::NoLockData::FileData& file_rng = clip.nolock_data.data;
 
                 if (is_ok) {
                     check_stream_id(file_rng.stream_id);
@@ -1899,7 +1899,7 @@ struct ClipboardVirtualChannel::D
             }
 
             case ClipCtx::TransferState::GetRange: {
-                ClipCtx::FileContentsRange& file_rng = clip.nolock_data.data;
+                ClipCtx::NoLockData::FileData& file_rng = clip.nolock_data.data;
 
                 auto send_zero_data = [&]{
                     LOG_IF(bool(self.verbose & RDPVerbose::cliprdr), LOG_INFO,
@@ -2009,6 +2009,8 @@ struct ClipboardVirtualChannel::D
             }
         }
         else {
+            assert(not clip.verify_before_transfer);
+
             auto update_locked_file_range = [&](ClipCtx::LockedData::LockedRange& locked_file){
                 auto& file_rng = locked_file.file_contents_range;
 
@@ -2046,14 +2048,7 @@ struct ClipboardVirtualChannel::D
                             req.file_size,
                             0,
                             std::move(req.file_name),
-                            new_tfl(),
-                            clip.verify_before_transfer
-                                ? [&]{
-                                    std::vector<uint8_t> v;
-                                    v.reserve(req.file_size);
-                                    return v;
-                                }()
-                                : std::vector<uint8_t>{}
+                            new_tfl()
                         }
                     });
                     r.file_contents_range.sig.reset();
