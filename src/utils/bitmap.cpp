@@ -49,11 +49,6 @@
 #include <utility>
 
 
-namespace aux_
-{
-    BmpMemAlloc bitmap_data_allocator;
-} // namespace aux_
-
 Bitmap::Bitmap(Bitmap && bmp) noexcept
 : data_bitmap(std::exchange(bmp.data_bitmap, nullptr))
 {}

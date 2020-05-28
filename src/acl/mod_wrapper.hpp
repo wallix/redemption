@@ -63,8 +63,6 @@
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 
-#include "core/session_reactor.hpp"
-
 #include "core/callback_forwarder.hpp"
 #include "acl/time_before_closing.hpp"
 #include "acl/mod_pack.hpp"
@@ -83,7 +81,7 @@ struct ModWrapper : public GdProvider
         BGRPalette const & palette;
         Rect protected_rect;
 
-        GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect) 
+        GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect)
             : sink(sink), callback(callback), palette(palette), protected_rect(rect) {}
 
         template<class Command, class... Args>
@@ -91,7 +89,7 @@ struct ModWrapper : public GdProvider
             { this->sink.draw(cmd); }
         void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
             { this->sink.draw(cmd, content); }
-            
+
         template<class Command, class... Args>
         void draw(Command const & cmd, Rect clip, Args const &... args)
         {
@@ -187,7 +185,7 @@ struct ModWrapper : public GdProvider
             }
         }
 
-        void set_pointer(uint16_t cache_idx, Pointer const& cursor, gdi::GraphicApi::SetPointerMode mode) 
+        void set_pointer(uint16_t cache_idx, Pointer const& cursor, gdi::GraphicApi::SetPointerMode mode)
             {this->sink.set_pointer(cache_idx, cursor, mode); }
         void set_palette(BGRPalette const & palette)
             { this->sink.set_palette(palette); }
@@ -206,8 +204,8 @@ struct ModWrapper : public GdProvider
     struct gdi::GraphicApiForwarder<GFilter> g;
 
     FrontAPI & front;
-    
-    std::string module_name() 
+
+    std::string module_name()
     {
         return this->modi->module_name();
     }

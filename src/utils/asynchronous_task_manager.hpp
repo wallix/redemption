@@ -23,7 +23,8 @@
 
 #include "core/session_reactor.hpp"
 
-class AsynchronousTask {
+class AsynchronousTask
+{
 public:
     virtual ~AsynchronousTask() = default;
 
@@ -66,4 +67,3 @@ public:
 
     virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer&, TerminateEventNotifier) = 0;
 };
-
