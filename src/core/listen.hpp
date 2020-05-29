@@ -31,6 +31,7 @@
 #include <cerrno>
 #include <unistd.h>
 #include <fcntl.h>
+#include <netdb.h>
 
 #include "utils/log.hpp"
 #include "utils/invalid_socket.hpp"
@@ -48,56 +49,11 @@
 
 enum class EnableTransparentMode : bool { No, Yes };
 
-inline unique_fd create_local_server(char const* sck_name)
-{
-    unique_fd unique_sck {socket(PF_INET, SOCK_STREAM, 0)};
-    int const sck = unique_sck.fd();
-
-    /* reuse same port if a previous daemon was stopped */
-    int allow_reuse = 1;
-    setsockopt(sck, SOL_SOCKET, SO_REUSEADDR, &allow_reuse, sizeof(allow_reuse));
-
-    /* set snd buffer to at least 32 Kbytes */
-    int snd_buffer_size = 32768;
-    unsigned int option_len = sizeof(snd_buffer_size);
-    if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
-        if (snd_buffer_size < 32768) {
-            snd_buffer_size = 32768;
-            setsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size));
-        }
-    }
-
-    /* set non blocking */
-    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
-
-    union
-    {
-        sockaddr_un s;
-        sockaddr addr;
-    } u;
-
-    auto len = strnlen(sck_name, sizeof(u.s.sun_path)-1u);
-    memcpy(u.s.sun_path, sck_name, len);
-    u.s.sun_path[len] = 0;
-    u.s.sun_family = AF_UNIX;
-
-    LOG(LOG_INFO, "Listen: binding socket %d on %s", sck, sck_name);
-    if (0 != ::bind(sck, &u.addr, sizeof(u))) {
-        LOG(LOG_ERR, "Listen: error binding socket [errno=%d] %s", errno, strerror(errno));
-        return invalid_fd();
-    }
-
-    LOG(LOG_INFO, "Listen: listening on socket %d", sck);
-    if (0 != listen(sck, 2)) {
-        LOG(LOG_ERR, "Listen: error listening on socket");
-    }
-
-    // OK, keep the temporary socket everything was fine
-    return unique_sck;
-}
-
-inline unique_fd create_server_bind_sck(
-    unique_fd fd_sck, sockaddr& addr, EnableTransparentMode enable_transparent_mode)
+inline unique_fd
+create_server_bind_sck(unique_fd fd_sck,
+                       sockaddr_storage& addr,
+                       socklen_t addrlen,
+                       EnableTransparentMode enable_transparent_mode) noexcept
 {
     const int sck = fd_sck.fd();
 
@@ -118,7 +74,7 @@ inline unique_fd create_server_bind_sck(
     /* set non blocking */
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
-    if (0 != ::bind(sck, &addr, sizeof(addr))) {
+    if (0 != ::bind(sck, &reinterpret_cast<sockaddr&>(addr), addrlen)) {
         LOG(LOG_ERR, "Listen: error binding socket [errno=%d] %s", errno, strerror(errno));
         return invalid_fd();
     }
@@ -142,8 +98,9 @@ inline unique_fd create_server_bind_sck(
     return fd_sck;
 }
 
-inline unique_fd create_unix_server(
-    char const* sck_name, EnableTransparentMode enable_transparent_mode)
+inline unique_fd
+create_unix_server(char const* sck_name,
+                   EnableTransparentMode enable_transparent_mode) noexcept
 {
     unique_fd sck {socket(AF_UNIX, SOCK_STREAM, 0)};
 
@@ -151,6 +108,7 @@ inline unique_fd create_unix_server(
     {
       sockaddr_un s;
       sockaddr addr;
+      sockaddr_storage ss;
     } u;
 
     auto len = strnlen(sck_name, sizeof(u.s.sun_path)-1u);
@@ -159,11 +117,16 @@ inline unique_fd create_unix_server(
     u.s.sun_family = AF_UNIX;
 
     LOG(LOG_INFO, "Listen: binding socket %d on %s", sck.fd(), sck_name);
-    return create_server_bind_sck(std::move(sck), u.addr, enable_transparent_mode);
+    return create_server_bind_sck(std::move(sck),
+                                  u.ss,
+                                  sizeof(u.s),
+                                  enable_transparent_mode);
 }
 
-inline unique_fd create_server(
-    uint32_t s_addr, int port, EnableTransparentMode enable_transparent_mode)
+inline unique_fd
+create_server(uint32_t s_addr,
+              int port,
+              EnableTransparentMode enable_transparent_mode) noexcept
 {
     unique_fd sck {socket(PF_INET, SOCK_STREAM, 0)};
 
@@ -184,7 +147,88 @@ inline unique_fd create_server(
 
     LOG(LOG_INFO, "Listen: binding socket %d on %s:%d",
         sck.fd(), ::inet_ntoa(u.s4.sin_addr), port);
-    return create_server_bind_sck(std::move(sck), u.s, enable_transparent_mode);
+    return create_server_bind_sck(std::move(sck),
+                                  u.ss,
+                                  sizeof(u.s4),
+                                  enable_transparent_mode);
+}
+
+inline unique_fd
+create_ip_dual_stack_server(int port,
+                            EnableTransparentMode enable_transparent_mode)
+    noexcept
+{
+    unique_fd sck(socket(AF_INET6, SOCK_STREAM, 0));
+    
+    if (!sck)
+    {
+        LOG(LOG_ERR, "socket() failed : %s", strerror(errno));
+        return invalid_fd();
+    }
+
+    union
+    {
+        sockaddr s;
+        sockaddr_storage ss;
+        sockaddr_in6 s6;
+    } u;
+
+    memset(&u, 0, sizeof(u));
+    u.s6.sin6_family = AF_INET6;
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
+    u.s6.sin6_port = htons(port);
+    REDEMPTION_DIAGNOSTIC_POP
+    u.s6.sin6_addr = in6addr_any;
+
+    char ip_address[INET6_ADDRSTRLEN] { };
+
+    if (int res = getnameinfo(&u.s,
+                              sizeof(u.s6),
+                              ip_address,
+                              sizeof(ip_address),
+                              nullptr,
+                              0,
+                              NI_NUMERICHOST))
+    {
+        LOG(LOG_ERR,
+            "getnameinfo() failed : %s",
+            (res == EAI_SYSTEM) ? strerror(errno) : gai_strerror(res));
+        return invalid_fd();
+    }
+    LOG(LOG_INFO,
+        "Listen: binding socket %d on [%s]:%d",
+        sck.fd(),
+        ip_address,
+        port);
+    
+    /* Turn off IPV6_V6ONLY option if
+       operating system has net.ipv6.bindv6only equal to 1 */ 
+    if (int allow_ipv6_only = 0; setsockopt(sck.fd(),
+                                            IPPROTO_IPV6,
+                                            IPV6_V6ONLY,
+                                            &allow_ipv6_only,
+                                            sizeof(allow_ipv6_only)) == -1)
+    {
+        LOG(LOG_ERR, "setsockopt() failed: %s", strerror(errno));
+        return invalid_fd();
+    }
+    return create_server_bind_sck(std::move(sck),
+                                  u.ss,
+                                  sizeof(u.s6),
+                                  enable_transparent_mode);
+}
+
+[[nodiscard]]
+inline unique_fd
+interface_create_server(bool enable_ipv6,
+                        uint32_t s_addr,
+                        int port,
+                        EnableTransparentMode enable_transparent_mode) noexcept
+{
+    return enable_ipv6 ?
+        create_ip_dual_stack_server(port, enable_transparent_mode) :
+        create_server(s_addr, port, enable_transparent_mode);
 }
 
 struct ServerLoopIgnoreTimeout

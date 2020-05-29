@@ -220,6 +220,7 @@ exe rdpproxy :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/ip.o
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
@@ -2490,6 +2491,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/ip.o
   <library>src/utils/load_theme.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
@@ -5372,6 +5374,13 @@ test-run tests/utils/test_id_manager :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/id_manager.hpp
 ;
+test-run tests/utils/test_ip :
+  $(REDEMPTION_TEST_PATH)/utils/test_ip.cpp
+:
+  <library>src/utils/ip.o
+  <covfile>src/utils/ip.cpp
+  <covfile>src/utils/ip.hpp
+;
 test-run tests/utils/test_key_qvalue_pairs :
   $(REDEMPTION_TEST_PATH)/utils/test_key_qvalue_pairs.cpp
 :
@@ -5692,6 +5701,7 @@ obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/drawable.o : $(REDEMPTION_SRC_PATH)/utils/drawable.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
+obj src/utils/ip.o : $(REDEMPTION_SRC_PATH)/utils/ip.cpp ;
 obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/log_siem.o : $(REDEMPTION_SRC_PATH)/utils/log_siem.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
@@ -6029,6 +6039,7 @@ alias test_genfstat : tests/utils/test_genfstat ;
 alias test_genrandom : tests/utils/test_genrandom ;
 alias test_get_printable_password : tests/utils/test_get_printable_password ;
 alias test_id_manager : tests/utils/test_id_manager ;
+alias test_ip : tests/utils/test_ip ;
 alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
 alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
@@ -6351,6 +6362,7 @@ alias test_genfstat.coverage : tests/utils/test_genfstat.coverage ;
 alias test_genrandom.coverage : tests/utils/test_genrandom.coverage ;
 alias test_get_printable_password.coverage : tests/utils/test_get_printable_password.coverage ;
 alias test_id_manager.coverage : tests/utils/test_id_manager.coverage ;
+alias test_ip.coverage : tests/utils/test_ip.coverage ;
 alias test_key_qvalue_pairs.coverage : tests/utils/test_key_qvalue_pairs.coverage ;
 alias test_load_theme.coverage : tests/utils/test_load_theme.coverage ;
 alias test_log.coverage : tests/utils/test_log.coverage ;
@@ -6783,6 +6795,7 @@ alias tests/utils.norec :
   tests/utils/test_genrandom
   tests/utils/test_get_printable_password
   tests/utils/test_id_manager
+  tests/utils/test_ip
   tests/utils/test_key_qvalue_pairs
   tests/utils/test_load_theme
   tests/utils/test_log

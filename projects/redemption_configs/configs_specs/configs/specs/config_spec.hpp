@@ -196,6 +196,8 @@ void config_spec_definition(Writer && W)
             "!!!May cause FreeRDP-based client to CRASH!!!\n"
             "Set to 0 to disable this feature."
         }, set(0));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_ipv6", desc { "Enable primary connection on ipv6" }, set(false));
     });
 
     W.section("session_log", [&]
