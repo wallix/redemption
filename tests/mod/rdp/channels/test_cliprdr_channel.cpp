@@ -22,7 +22,6 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
-#include "acl/sesman.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
@@ -37,6 +36,7 @@
 #include "mod/file_validator_service.hpp"
 
 #include "./test_channel.hpp"
+#include "test_only/acl/sesman_wrapper.hpp"
 
 namespace
 {
@@ -136,8 +136,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToServerSender to_server_sender(t);
 
         TimeBase time_base({0,0});
-        Inifile ini;
-        SesmanInterface sesman(ini);
+        SesmanWrapper sesman;
 
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, time_base,
@@ -207,8 +206,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     TimeBase time_base({0,0});
-    Inifile ini;
-    SesmanInterface sesman(ini);
+    SesmanWrapper sesman;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, time_base,
@@ -870,8 +868,7 @@ namespace
 
         private:
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-            Inifile ini;
-            SesmanInterface sesman{ini};
+            SesmanWrapper sesman;
 
         public:
             void process_server_message(

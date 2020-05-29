@@ -32,17 +32,16 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/front/front_wrapper.hpp"
 #include "core/report_message_api.hpp"
-#include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "core/session.hpp"
-//#include "transport/socket_transport.hpp"
+// include "core/listen.hpp"
+// include "core/session.hpp"
+// include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include <netinet/tcp.h>
+// include <netinet/tcp.h>
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
 {

@@ -21,20 +21,16 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "core/error.hpp"
-#include "core/back_event_t.hpp"
 #include "cxx/cxx.hpp"
 #include "cxx/diagnostic.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/string_c.hpp"
 #include "utils/sugar/scope_exit.hpp"
-#include "utils/sugar/unique_fd.hpp"
 
-#include "utils/log.hpp"
 #include "utils/timebase.hpp"
 
 #include <cassert>
 #include <chrono>
-#include <exception>
 #include <functional>
 #include <memory>
 #include <type_traits>

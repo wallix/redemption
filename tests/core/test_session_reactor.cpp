@@ -22,9 +22,10 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
-#include <string>
-
 #include "core/session_reactor.hpp"
+#include "utils/sugar/unique_fd.hpp"
+
+#include <string>
 
 RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 

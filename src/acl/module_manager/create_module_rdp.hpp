@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "keyboard/keymap2.hpp"

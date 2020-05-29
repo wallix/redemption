@@ -922,6 +922,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -1011,6 +1012,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -1075,6 +1077,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -2306,10 +2309,6 @@ test-run tests/core/test_font :
 test-run tests/core/test_front_api :
   $(REDEMPTION_TEST_PATH)/core/test_front_api.cpp
 :
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/front_api.hpp
 ;
 test-run tests/core/test_glyph_to_24_bitmap :
@@ -2867,6 +2866,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2905,11 +2905,13 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -3713,7 +3715,6 @@ test-run tests/mod/internal/widget/test_labelgrid :
 test-run tests/mod/internal/widget/test_language_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
-  <library>crypto
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -4003,6 +4004,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4066,6 +4068,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4244,6 +4247,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -5660,6 +5664,7 @@ obj src/utils/stacktrace.o : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOO
 obj src/utils/strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
+obj tests/includes/test_only/acl/sesman_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/acl/sesman_wrapper.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test_only/core/font.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/front_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/front_wrapper.cpp : $(CXXFLAGS_TEST) ;

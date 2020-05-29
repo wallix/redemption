@@ -29,6 +29,7 @@ class Random;
 class CryptoContext;
 class ReportMessageApi;
 class Inifile;
+class Callback;
 
 namespace gdi
 {

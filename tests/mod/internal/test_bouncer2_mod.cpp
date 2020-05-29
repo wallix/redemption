@@ -22,15 +22,14 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
-#include "acl/sesman.hpp"
+#include "test_only/acl/sesman_wrapper.hpp"
 
 // TEST missing
 int main()
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    Inifile ini;
-    SesmanInterface sesman(ini);
+    SesmanWrapper sesman;
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);

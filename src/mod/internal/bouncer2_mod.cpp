@@ -26,6 +26,8 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "utils/sugar/update_lock.hpp"
+#include "acl/sesman.hpp"
+#include "core/front_api.hpp"
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,

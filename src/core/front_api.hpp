@@ -25,12 +25,10 @@
 #pragma once
 
 #include "core/report_message_api.hpp"
-#include "core/callback.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
-#include "core/RDP/MonitorLayoutPDU.hpp"
 
 namespace CHANNELS {
     class ChannelDefArray;
@@ -38,6 +36,7 @@ namespace CHANNELS {
 }
 
 class SesmanInterface;
+class MonitorLayoutPDU;
 
 class FrontAPI : noncopyable
 {

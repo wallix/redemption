@@ -27,7 +27,6 @@
 #include "RAIL/client_execute.hpp"
 
 
-
 void TransitionMod::rdp_input_invalidate(Rect r)
 {
     this->screen.rdp_input_invalidate(r);
