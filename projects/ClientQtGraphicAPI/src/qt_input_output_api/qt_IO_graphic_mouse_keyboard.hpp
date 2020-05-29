@@ -1360,13 +1360,13 @@ public:
     }
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
-    	LOG(LOG_INFO, "RDPSetSurfaceCommand(x=%d y=%d width=%d height=%d)", cmd.destRect.x, cmd.destRect.y,
-    			cmd.width, cmd.height);
-    	QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBX8888);
-    	this->painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
+        LOG(LOG_INFO, "RDPSetSurfaceCommand(x=%d y=%d width=%d height=%d)", cmd.destRect.x, cmd.destRect.y,
+                cmd.width, cmd.height);
+        QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBX8888);
+        this->painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
     }
 
-	using ClientRemoteAppGraphicAPI::draw;
+    using ClientRemoteAppGraphicAPI::draw;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------

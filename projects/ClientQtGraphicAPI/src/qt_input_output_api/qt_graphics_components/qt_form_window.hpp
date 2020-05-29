@@ -27,6 +27,7 @@
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 
