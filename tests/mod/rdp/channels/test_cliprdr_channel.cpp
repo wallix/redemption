@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
@@ -813,8 +812,6 @@ namespace
 
         class ChannelCtx
         {
-            TimeBase & timebase;
-
             ReportMessageTest report_message;
             ValidatorTransportTest validator_transport;
             FileValidatorService file_validator_service{validator_transport};
@@ -831,8 +828,7 @@ namespace
                 TimeBase & timebase,
                 ClipboardVirtualChannelParams clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
-            : timebase(timebase)
-            , report_message(msg_comparator)
+            : report_message(msg_comparator)
             , validator_transport(msg_comparator)
             , file_validator_service(validator_transport)
             , to_client_sender(msg_comparator)
