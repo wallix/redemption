@@ -1625,7 +1625,7 @@ void RdpNegociation::send_client_info_pdu()
 
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
-        [&infoPacket](StreamSize<1024> /*maxlen*/, OutStream & stream) {
+        [&infoPacket](StreamSize<2048> /*maxlen*/, OutStream & stream) {
             infoPacket.emit(stream);
         },
         SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}
