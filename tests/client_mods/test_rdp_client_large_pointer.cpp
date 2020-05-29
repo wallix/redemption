@@ -26,9 +26,12 @@
 #include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
+#include "acl/gd_provider.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
+#include "core/session_reactor.hpp"
 #include "core/report_message_api.hpp"
+#include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
@@ -40,13 +43,15 @@
 #include <chrono>
 
 // Uncomment the code block below to generate testing data.
-//#include "utils/netutils.hpp"
+// include "utils/netutils.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include "transport/socket_transport.hpp"
+// include "transport/socket_transport.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include <openssl/ssl.h>
+// include <openssl/ssl.h>
+
+using namespace std::chrono_literals;
 
 RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 {

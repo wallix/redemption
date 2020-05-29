@@ -39,7 +39,6 @@
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
-#include "core/session_reactor.hpp"
 
 #include "gdi/screen_functions.hpp"
 #include "gdi/graphic_api.hpp"
@@ -76,10 +75,12 @@ class VNCMetrics;
 #include "mod/vnc/newline_convert.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
-#include "acl/gd_provider.hpp"
-
 class UltraDSM;
 class mod_vnc;
+class GdProvider;
+class TopFdContainer;
+class TimerContainer;
+class TimeBase;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto

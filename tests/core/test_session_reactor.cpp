@@ -23,12 +23,8 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include <string>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 #include "core/session_reactor.hpp"
-#include "mod/mod_api.hpp"
 
 RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 

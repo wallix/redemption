@@ -18,10 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
-#include "core/session_reactor.hpp"
+class TimeBase;
+class TimerContainer;
+class TopFdContainer;
 
 class AsynchronousTask
 {

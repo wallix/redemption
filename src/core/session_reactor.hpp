@@ -2791,8 +2791,7 @@ namespace jln
     }
 }  // namespace jln
 
-using TimerContainer = jln::TimerContainer<>;
+struct TimerContainer : jln::TimerContainer<> {};
 using TimerPtr = TimerContainer::Ptr;
-using TopFdContainer = jln::TopContainer<>;
+struct TopFdContainer : jln::TopContainer<> {};
 using TopFdPtr = TopFdContainer::Ptr;
-

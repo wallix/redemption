@@ -30,7 +30,8 @@
 #include "utils/sugar/not_null_ptr.hpp"
 #include "transport/socket_transport.hpp"
 
-struct ModPack {
+struct ModPack
+{
     not_null_ptr<mod_api> mod;
     rdp_api* rdpapi;
     windowing_api* winapi;

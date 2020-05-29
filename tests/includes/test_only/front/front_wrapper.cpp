@@ -162,4 +162,7 @@ FrontWrapper::FrontWrapper(
 }})
 {}
 
-FrontWrapper::~FrontWrapper() = default;
+FrontWrapper::~FrontWrapper()
+{
+    delete this->d;
+}

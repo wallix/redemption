@@ -36,6 +36,6 @@ public:
     GdForwarder(GD & gd) : gd(gd) {}
     gdi::GraphicApi & get_graphics() override { return this->gd; }
     bool is_ready_to_draw() override { return true; }
-    void display_osd_message(std::string const & message) override {}
+    void display_osd_message(std::string const & message) override { (void)message; }
 };
 

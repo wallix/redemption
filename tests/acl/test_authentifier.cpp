@@ -18,32 +18,32 @@
   Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
 */
 
-//#include "test_only/test_framework/redemption_unit_tests.hpp"
+// include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
-#include "acl/authentifier.hpp"
-#include "core/session_reactor.hpp"
-#include "utils/genfstat.hpp"
-#include "test_only/lcg_random.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/front/fake_front.hpp"
-#include "RAIL/client_execute.hpp"
-
-inline void init_keys(CryptoContext & cctx)
-{
-    cctx.set_master_key(cstr_array_view(
-        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
-        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
-        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-    ));
-    cctx.set_hmac_key(cstr_array_view(
-         "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-         "\x49\x21\x57\x87\x47\x74\x08\x8a"
-         "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-         "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-    ));
-}
+// include "acl/authentifier.hpp"
+// include "core/session_reactor.hpp"
+// include "utils/genfstat.hpp"
+// include "test_only/lcg_random.hpp"
+// include "test_only/transport/test_transport.hpp"
+// include "test_only/front/fake_front.hpp"
+// include "RAIL/client_execute.hpp"
+//
+// inline void init_keys(CryptoContext & cctx)
+// {
+//     cctx.set_master_key(cstr_array_view(
+//         "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+//         "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+//         "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+//         "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+//     ));
+//     cctx.set_hmac_key(cstr_array_view(
+//          "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+//          "\x49\x21\x57\x87\x47\x74\x08\x8a"
+//          "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+//          "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+//     ));
+// }
 
 int main(){}
 

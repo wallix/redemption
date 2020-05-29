@@ -25,6 +25,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "acl/sesman.hpp"
+#include "core/session_reactor.hpp"
 #include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"

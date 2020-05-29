@@ -51,7 +51,6 @@ exe headlessclient :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/dsm.o
@@ -189,7 +188,6 @@ exe rdpproxy :
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/dsm.o
@@ -348,7 +346,6 @@ exe rdpclient :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/dsm.o
@@ -566,43 +563,6 @@ test-run tests/acl/test_auth_api :
 test-run tests/acl/test_authentifier :
   $(REDEMPTION_TEST_PATH)/acl/test_authentifier.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>openssl
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/RAIL/client_execute.o
-  <library>src/acl/acl_serializer.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/core/report_error.o
-  <library>src/core/set_server_redirection_target.o
-  <library>src/gdi/graphic_api.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/log_siem.o
-  <library>src/utils/netutils.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/transport/test_transport.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/authentifier.hpp
 ;
 test-run tests/acl/test_dispatch_report_message :
@@ -668,7 +628,6 @@ test-run tests/acl/test_license_api :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
@@ -941,7 +900,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
@@ -1031,7 +989,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
@@ -1096,7 +1053,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
@@ -2460,7 +2416,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/dsm.o
@@ -2603,7 +2558,6 @@ test-run tests/core/test_session :
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/mod/vnc/dsm.o
@@ -2707,7 +2661,6 @@ test-run tests/front/test_front :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
@@ -4024,10 +3977,7 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
-  <library>src/core/error.o
   <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
@@ -4272,7 +4222,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/tls_check_certificate.o
@@ -4300,7 +4249,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/rdp/rdp.cpp
   <covfile>src/mod/rdp/rdp.hpp
 ;
 test-run tests/mod/rdp/test_rdp_metrics :
@@ -5191,9 +5139,6 @@ test-run tests/utils/sugar/unordered_erase :
 test-run tests/utils/test_asynchronous_task_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/asynchronous_task_manager.hpp
 ;
 test-run tests/utils/test_base64 :
@@ -5665,7 +5610,6 @@ obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 obj src/mod/rdp/channels/cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
-obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
 obj src/mod/vnc/dsm.o : $(REDEMPTION_SRC_PATH)/mod/vnc/dsm.cpp ;

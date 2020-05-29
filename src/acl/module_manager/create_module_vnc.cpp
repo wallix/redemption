@@ -32,6 +32,7 @@
 #include "mod/vnc/vnc.hpp"
 #include "acl/mod_pack.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
+#include "acl/connect_to_target_host.hpp"
 
 struct ModVNCWithMetrics : public mod_vnc
 {

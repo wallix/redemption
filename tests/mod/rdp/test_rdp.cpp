@@ -36,9 +36,12 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
-#include <chrono>
 #include "acl/sesman.hpp"
 #include "acl/gd_provider.hpp"
+#include "core/session_reactor.hpp"
+#include "core/channels_authorizations.hpp"
+
+#include <chrono>
 
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
@@ -49,6 +52,8 @@
 
 // Uncomment the code block below to generate testing data.
 //#include <openssl/ssl.h>
+
+using namespace std::chrono_literals;
 
 RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {

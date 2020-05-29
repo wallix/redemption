@@ -162,7 +162,7 @@ class ClientExecute : public windowing_api
 
 public:
     ClientExecute(
-        TimeBase& time_base, TimerContainer& timer_events_, 
+        TimeBase& time_base, TimerContainer& timer_events_,
         gdi::GraphicApi & drawable, FrontAPI & front,
         WindowListCaps const & window_list_caps, bool verbose);
 

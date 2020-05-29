@@ -22,6 +22,7 @@
 */
 
 #include "mod/vnc/vnc.hpp"
+#include "acl/gd_provider.hpp"
 
 #ifndef __EMSCRIPTEN__
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)

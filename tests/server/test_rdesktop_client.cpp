@@ -31,6 +31,7 @@
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "acl/sesman.hpp"
+#include "core/session_reactor.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
