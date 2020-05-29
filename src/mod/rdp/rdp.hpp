@@ -86,11 +86,12 @@
 #include "core/report_message_api.hpp"
 #include "gdi/screen_functions.hpp"
 
+#ifndef __EMSCRIPTEN__
 // TODO: annoying as it introduces a dependency on openssl in rdp mod
 // see how to extract something more abstract where it's used
 // check : enable_server_cert_external_validation workflow
 #include "system/tls_cert_to_escaped_string.hpp"
-
+#endif
 
 #ifdef __EMSCRIPTEN__
 class RDPMetrics;
