@@ -333,131 +333,136 @@ def archi_to_control_archi(architecture):
 status = 0
 remove_diff = False
 try:
-  update_tag = (opts.update_version and opts.tag)
-  if update_tag or (opts.build_package and not opts.force_build):
-    check_uncommited_changes()
-    remove_diff = True
+    update_tag = (opts.update_version and opts.tag)
+    if update_tag or (opts.build_package and not opts.force_build):
+        check_uncommited_changes()
+        remove_diff = True
 
-  if update_tag:
-    # check tag does not exist
-    check_new_tag_version_with_local_and_remote_tags(opts.tag)
-    # update changelog and version (write in include/main/version.hpp and changelog template)
-    if opts.add_changelog:
-      current_tag = get_current_tag()
-      add_current_tag_changelog_file(current_tag)
-      update_changelog_template()
-    update_version_file(opts.tag)
+    if update_tag:
+        # check tag does not exist
+        check_new_tag_version_with_local_and_remote_tags(opts.tag)
+        # update changelog and version
+        # (write in include/main/version.hpp and changelog template)
+        if opts.add_changelog:
+            current_tag = get_current_tag()
+            add_current_tag_changelog_file(current_tag)
+            update_changelog_template()
+        update_version_file(opts.tag)
 
-    # tags and commits BEGIN
-    if opts.git_commit:
-      status = os.system("git commit -am 'Version %s'" % opts.tag)
-      if status:
-        raise ""
-      if opts.git_push:
-        status = os.system("git push")
+        # tags and commits BEGIN
+        if opts.git_commit:
+            status = os.system("git commit -am 'Version %s'" % opts.tag)
+            if status:
+                raise ""
+            if opts.git_push:
+                status = os.system("git push")
+                if status:
+                    raise ""
+            if opts.git_tag:
+                status = os.system("git tag %s" % opts.tag)
+                if status:
+                    raise ""
+                if opts.git_push_tag:
+                    status = os.system("git push --tags")
+                if status:
+                    raise ""
+        # tags and commits END
+
+    if opts.build_package:
+        opts.tag = check_matching_version_changelog()
+        if not opts.force_build:
+            check_last_version_commited_match_current_version(opts.tag)
+
+        # Set debian (packaging data) directory with distro specific packaging files BEGIN
+        # Create temporary directory
+        os.mkdir("debian", 0o766)
+
+        # existing target parameters
+        if opts.force_target:
+            try:
+                parse_target_param("%s/%s" % (opts.target_param_path,
+                                              opts.force_target))
+            except IOError:
+                raise Exception('Target param file not found (%s/%s)' %
+                                (opts.target_param_path, opts.force_target))
+
+        # check Distro
+        distro, distro_release, distro_codename = distroinfo.get_distro()
+        if opts.config.get("%DISTRO%"):
+            distro = opts.config.get("%DISTRO%")
+        if opts.config.get("%DISTRO_RELEASE%"):
+            distro_release = opts.config["%DISTRO_RELEASE%"]
+        if opts.config.get("%DISTRO_CODENAME%"):
+            distro_codename = opts.config["%DISTRO_CODENAME%"]
+
+        # Check Architecture
+        device_archi = get_device_architecture()
+        if not ((opts.config["%ARCHI%"] == 'any')
+                or (device_archi == opts.config["%ARCHI%"])):
+            raise Exception('Target architecture (%s) does not match current device architecture (%s)' % (opts.config["%ARCHI%"], device_archi))
+        opts.config["%ARCHI%"] = archi_to_control_archi(device_archi)
+
+        # write redemption.install file
+        copy_and_replace_dict_file("%s/redemption.install" % opts.packagetemp,
+                                   opts.config,
+                                   "debian/redemption.install")
+
+        # write redemption.postinst
+        try:
+            copy_and_replace_dict_file("%s/redemption.postinst" %
+                                       opts.packagetemp,
+                                       opts.config,
+                                       "debian/redemption.postinst")
+        except IOError, e:
+            if e.errno != 2:
+                raise e
+
+        # write rules
+        if opts.debug:
+            opts.config["%DEBUG_OPT%"] = "debug"
+        copy_and_replace_dict_file("%s/rules" % opts.packagetemp,
+                                   opts.config,
+                                   "debian/rules")
+        # write changelog
+        target = ''
+        if distro == 'ubuntu':
+            target += '+'
+            target += distro_codename
+        else:
+            # debian codename
+            opts.config["%PKG_DISTRIBUTION%"] = distro_codename
+        if "%TARGET_NAME%" not in opts.config:
+            opts.config["%TARGET_NAME%"] = target
+        opts.config["%REDEMPTION_VERSION%"] = opts.tag
+        copy_and_replace_dict_file("%s/changelog" % opts.packagetemp,
+                                   opts.config,
+                                   "debian/changelog")
+
+        # write control
+        copy_and_replace_dict_file("%s/control" % opts.packagetemp,
+                                   opts.config,
+                                   "debian/control")
+
+        # write compat
+        shutil.copy("%s/compat" % opts.packagetemp, "debian/compat")
+        # write copyright
+        shutil.copy("docs/copyright", "debian/copyright")
+
+        # Set debian (packaging data) directory with
+        # distro specific packaging files END
+
+        status = os.system("dpkg-buildpackage -b -tc -us -uc -r")
         if status:
-          raise ""
-      if opts.git_tag:
-        status = os.system("git tag %s" % opts.tag)
-        if status:
-          raise ""
-        if opts.git_push_tag:
-          status = os.system("git push --tags")
-          if status:
             raise ""
-    # tags and commits END
-
-  if opts.build_package:
-    opts.tag = check_matching_version_changelog()
-    if not opts.force_build:
-      check_last_version_commited_match_current_version(opts.tag)
-
-    # Set debian (packaging data) directory with distro specific packaging files BEGIN
-    # Create temporary directory
-    os.mkdir("debian", 0766)
-
-    # existing target parameters
-    if opts.force_target:
-      try:
-        parse_target_param("%s/%s" % (opts.target_param_path, opts.force_target))
-      except IOError:
-        raise Exception('Target param file not found (%s/%s)' %
-                        (opts.target_param_path, opts.force_target))
-
-    # check Distro
-    distro, distro_release, distro_codename = distroinfo.get_distro()
-    if opts.config.get("%DISTRO%"):
-      distro = opts.config.get("%DISTRO%")
-    if opts.config.get("%DISTRO_RELEASE%"):
-      distro_release = opts.config["%DISTRO_RELEASE%"]
-    if opts.config.get("%DISTRO_CODENAME%"):
-      distro_codename = opts.config["%DISTRO_CODENAME%"]
-
-    # Check Architecture
-    device_archi = get_device_architecture()
-    if not ((opts.config["%ARCHI%"] == 'any') or (device_archi == opts.config["%ARCHI%"])):
-      raise Exception('Target architecture (%s) does not match current device architecture (%s)' % (opts.config["%ARCHI%"], device_archi))
-    opts.config["%ARCHI%"] = archi_to_control_archi(device_archi)
-
-    # write redemption.install file
-    copy_and_replace_dict_file("%s/redemption.install" % opts.packagetemp,
-                               opts.config,
-                               "debian/redemption.install")
-
-    # write redemption.postinst
-    try:
-      copy_and_replace_dict_file("%s/redemption.postinst" % opts.packagetemp,
-                                 opts.config,
-                                 "debian/redemption.postinst")
-    except IOError, e:
-      if e.errno != 2:
-        raise e
-
-    # write rules
-    if opts.debug:
-      opts.config["%DEBUG_OPT%"] = "debug"
-    copy_and_replace_dict_file("%s/rules" % opts.packagetemp,
-                               opts.config,
-                               "debian/rules")
-    # write changelog
-    target = ''
-    if distro == 'ubuntu':
-      target += '+'
-      target += distro_codename
-    else:
-      # debian codename
-      opts.config["%PKG_DISTRIBUTION%"] = distro_codename
-    if not "%TARGET_NAME%" in opts.config:
-      opts.config["%TARGET_NAME%"] = target
-    opts.config["%REDEMPTION_VERSION%"] = opts.tag
-    copy_and_replace_dict_file("%s/changelog" % opts.packagetemp,
-                               opts.config,
-                               "debian/changelog")
-
-    # write control
-    copy_and_replace_dict_file("%s/control" % opts.packagetemp,
-                               opts.config,
-                               "debian/control")
-
-    # write compat
-    shutil.copy("%s/compat" % opts.packagetemp, "debian/compat")
-    # write copyright
-    shutil.copy("docs/copyright", "debian/copyright")
-
-    # Set debian (packaging data) directory with distro specific packaging files END
-
-    status = os.system("dpkg-buildpackage -b -tc -us -uc -r")
-    if status:
-      raise ""
-  exit(0)
+    exit(0)
 except Exception, e:
-  if remove_diff:
-    res = subprocess.Popen(["git", "diff", "--shortstat"],
-                           stdout = subprocess.PIPE,
-                           stderr = subprocess.STDOUT
-                           ).communicate()[0]
-    if res:
-      os.system("git stash")
-      os.system("git stash drop")
-  print "Build failed: %s" % e
-  exit(status if status else -1)
+    if remove_diff:
+        res = subprocess.Popen(["git", "diff", "--shortstat"],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT
+        ).communicate()[0]
+        if res:
+            os.system("git stash")
+            os.system("git stash drop")
+    print "Build failed: %s" % e
+    exit(status if status else -1)
