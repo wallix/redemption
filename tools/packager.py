@@ -339,14 +339,14 @@ def check_matching_version_changelog():
             r'^[#]define\sVERSION\s"(([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)"\s*$',
             line
         )
-    if res:
-        red_source_version = res.group(1)
-        red_num_ver = res.group(2)
-        bas_ver = res.group(3)
-        rel_ver = res.group(4)
-        fix_ver = res.group(5)
-        found = True
-        break
+        if res:
+            red_source_version = res.group(1)
+            red_num_ver = res.group(2)
+            bas_ver = res.group(3)
+            rel_ver = res.group(4)
+            fix_ver = res.group(5)
+            found = True
+            break
     if not found:
         raise Exception(
             'Source Version not found in file include/main/version.hpp'
