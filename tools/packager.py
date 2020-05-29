@@ -179,7 +179,7 @@ def copy_and_replace_dict_file(filename, dico, target):
 
 
 # UPDATE VERSION FUNCTIONS
-def get_current_tag():
+def get_current_tag_from_version_file():
     found = False
     current_tag = None
     out = readall("include/main/version.hpp")
@@ -347,7 +347,7 @@ try:
         # update changelog and version
         # (write in include/main/version.hpp and changelog template)
         if opts.add_changelog:
-            current_tag = get_current_tag()
+            current_tag = get_current_tag_from_version_file()
             add_current_tag_changelog_file(current_tag)
             update_changelog_template()
         update_version_file(opts.tag)
@@ -372,7 +372,7 @@ try:
         # tags and commits END
 
     if opts.build_package:
-        opts.tag = check_matching_version_changelog()
+        opts.tag = get_current_tag_from_version_file()
         if not opts.force_build:
             check_last_version_commited_match_current_version(opts.tag)
 
