@@ -331,47 +331,27 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
 
 # Check matching versions BEGIN
 def check_matching_version_changelog():
-  found = False
-  out = readall("include/main/version.hpp")
-  out = out.split('\n')
-  for line in out:
-    res = re.match('^[#]define\sVERSION\s"(([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)"\s*$', line)
+    found = False
+    out = readall("include/main/version.hpp")
+    out = out.split('\n')
+    for line in out:
+        res = re.match(
+            r'^[#]define\sVERSION\s"(([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)"\s*$',
+            line
+        )
     if res:
-      red_source_version = res.group(1)
-      red_num_ver = res.group(2)
-      bas_ver = res.group(3)
-      rel_ver = res.group(4)
-      fix_ver = res.group(5)
-      found = True
-      break
-  if not found:
-    raise Exception('Source Version not found in file include/main/version.hpp')
-
-  if opts.force_build:
+        red_source_version = res.group(1)
+        red_num_ver = res.group(2)
+        bas_ver = res.group(3)
+        rel_ver = res.group(4)
+        fix_ver = res.group(5)
+        found = True
+        break
+    if not found:
+        raise Exception(
+            'Source Version not found in file include/main/version.hpp'
+        )
     return red_source_version
-
-  found = False
-  out = readall("%s/changelog" % opts.packagetemp)
-  out = out.split('\n')
-  for line in out:
-    res = re.match('^redemption\s*[(](([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)(.*)[)].*$', line)
-    if res:
-      changelog_red_source_version = res.group(1)
-      changelog_red_num_ver = res.group(2)
-      changelog_bas_ver = res.group(3)
-      changelog_rel_ver = res.group(4)
-      changelog_fix_ver = res.group(5)
-      changelog_suffix_ver = res.group(6)
-      found = True
-      break
-
-  if not found:
-    raise Exception('Source Version not found in debian/changelog')
-
-  if changelog_red_source_version != red_source_version:
-    raise Exception('Version mismatch between changelog and include/main/version ("%s" != "%s")' %
-                    (changelog_red_source_version, red_source_version))
-  return red_source_version
 # Check matching versions END
 
 
