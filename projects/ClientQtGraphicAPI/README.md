@@ -90,6 +90,9 @@ Note: Les includes de Qt peuvent être configurés avec les variables d'environn
 
     bjam -a -s qt=5 -s QT5_INCLUDE=~/Qt/5.14.1/gcc_64/include/ -s QT5_TOOL_PATH=~/Qt/5.14.1/gcc_64 -s QT5_LIB=~/Qt/5.14.1/gcc_64/lib
 
+    bjam -a -j1 -s qt=5 -s QT5_INCLUDE=~/Qt/5.14.1/gcc_64/include/ -s QT5_TOOL_PATH=~/Qt/5.14.1/gcc_64 -s QT5_LIB=~/Qt/5.14.1/gcc_64/lib -s QT5_PHONON_INCLUDE=/usr/include/phonon4qt5/KDE/
+
+
 ## Utilisation du client Qt RDP
 
 //Le client Qt RDP contient une implementation de `mod_rdp` ainsi qu'une boite de dialogue

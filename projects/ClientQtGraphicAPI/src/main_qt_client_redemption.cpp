@@ -50,21 +50,16 @@ public:
     ClientRedemptionQt(
         TimeBase & time_base,
         TopFdContainer& fd_events,
-        GraphicFdContainer& graphic_fd_events,
         TimerContainer & timer_events,
-        GraphicEventContainer & graphic_events,
-        GraphicTimerContainer & graphic_timer_events,
         ClientRedemptionConfig & config)
     : ClientRedemption(
-        time_base, fd_events, graphic_fd_events, timer_events,
-        graphic_events, graphic_timer_events, config)
+        time_base, fd_events, timer_events, config)
     , qt_graphic(&this->_callback, &this->config)
     {
         this->qt_sound = new QtOutputSound(
             this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
         this->qt_socket_listener = new QtInputSocket(
-            time_base, fd_events, graphic_fd_events, timer_events,
-            graphic_events, graphic_timer_events, this, this->qt_graphic.get_static_qwidget());
+            time_base, fd_events, timer_events, this, this->qt_graphic.get_static_qwidget());
         this->qt_clipboard = new QtInputOutputClipboard(
             &this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
             this->qt_graphic.get_static_qwidget());
@@ -346,12 +341,9 @@ int main(int argc, char** argv)
     set_exception_handler_pretty_message();
 
     Inifile ini;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events;
-    GraphicFdContainer graphic_fd_events;
     TimerContainer timer_events;
-    GraphicEventContainer graphic_events;
-    GraphicTimerContainer graphic_timer_events;
 
     QApplication app(argc, argv);
 
@@ -361,9 +353,7 @@ int main(int argc, char** argv)
 
     ScopedSslInit scoped_init;
 
-    ClientRedemptionQt client_qt(
-        time_base, fd_events, graphic_fd_events, timer_events,
-        graphic_events, graphic_timer_events, config);
+    ClientRedemptionQt client_qt(time_base, fd_events, timer_events, config);
 
     app.exec();
 }
