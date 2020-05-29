@@ -23,6 +23,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
+#include "acl/sesman.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"

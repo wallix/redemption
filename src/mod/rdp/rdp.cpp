@@ -18,6 +18,7 @@ Copyright (C) Wallix 2018
 Author(s): Jonathan Poelen
 */
 
+#include "acl/sesman.hpp"
 #include "core/session_reactor.hpp"
 #include "gdi/screen_functions.hpp"
 #include "mod/rdp/rdp.hpp"

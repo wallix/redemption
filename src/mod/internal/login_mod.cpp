@@ -19,7 +19,7 @@
  *              Jennifer Inthavong
  */
 
-
+#include "configs/config.hpp"
 #include "mod/internal/login_mod.hpp"
 #include "main/version.hpp"
 #include "core/front_api.hpp"

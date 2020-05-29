@@ -71,7 +71,7 @@ namespace
                 // empty line / left trim
                 case ' ':
                 case '\t':
-                    for (;;) switch (*++p) {
+                    for (;;) switch (*++p) /* NOLINT */ {
                         case ' ': case '\t': continue;
                         case '\n': case '\r': next_line(); ++p; goto loop;
                         case '\0': return has_error;
@@ -80,7 +80,7 @@ namespace
 
                 // section
                 case '[' :
-                    for (;;) switch (*++p) {
+                    for (;;) switch (*++p) /* NOLINT */ {
                         // left trim
                         case ' ': case '\t': continue;
                         case '\n':
@@ -97,7 +97,7 @@ namespace
                         default:
                             section = p;
                         insection:
-                            for (;;) switch (*++p) {
+                            for (;;) switch (*++p) /* NOLINT */ {
                                 default: continue;
 
                                 case '\0':
@@ -118,7 +118,7 @@ namespace
                                 case '\t':
                                     // right trim
                                     end_section = p;
-                                    for (;;) switch (*++p) {
+                                    for (;;) switch (*++p) /* NOLINT */ {
                                         case ' ': case '\t': continue;
                                         default: goto insection;
                                         case ']':
@@ -140,13 +140,13 @@ namespace
                 // value
                 default:
                     key = p;
-                    for (;;) switch (*++p) {
+                    for (;;) switch (*++p) /* NOLINT */ {
                         default: continue;
                         // right trim key
                         case ' ': case '\t':
                             end_key = p;
                             *p = '\0';
-                            for (;;) switch (*++p) {
+                            for (;;) switch (*++p) /* NOLINT */ {
                                 case ' ': case '\t': continue;
                                 case '=': goto set_value;
                                 default: goto set_value_error;
@@ -162,7 +162,7 @@ namespace
                                 goto consume_line;
                             }
 
-                            for (;;) switch (*++p) {
+                            for (;;) switch (*++p) /* NOLINT */ {
                                 // left trim
                                 case ' ': case '\t': continue;
                                 case '\n':
@@ -180,7 +180,7 @@ namespace
                                 default:
                                     value = p;
                                 invalue:
-                                    for (;;) switch (*++p) {
+                                    for (;;) switch (*++p) /* NOLINT */ {
                                         default: continue;
                                         case '\n':
                                         case '\r':
@@ -196,7 +196,7 @@ namespace
                                         case '\t':
                                             // right trim
                                             end_value = p;
-                                            for (;;) switch (*++p) {
+                                            for (;;) switch (*++p) /* NOLINT */ {
                                                 case ' ': case '\t': continue;
                                                 default: goto invalue;
                                                 case '\n':
@@ -232,7 +232,7 @@ namespace
             }
 
             consume_line:
-                for (;;) switch (*p) {
+                for (;;) switch (*p) /*NOLINT*/ {
                     default: ++p; continue;
                     case '\n': case '\r': next_line(); ++p; goto loop;
                     case '\0': return has_error;
@@ -268,11 +268,12 @@ bool configuration_load(
             LOG(LOG_ERR, "%s: %s", filename, strerror(errno));
             return false;
         }
+
         char* p = buf.get();
         std::size_t remaning = len;
         ssize_t r;
         while ((r = read(fd.fd(), p, remaning)) > 0) {
-            remaning += std::size_t(r);
+            remaning -= std::size_t(r);
             p += r;
         }
 

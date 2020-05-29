@@ -61,6 +61,6 @@ int main()
     integer_to_string_c_t<int, -1234567>() = "-1234567"_c;
     integer_to_string_c_t<int, -12345678>() = "-12345678"_c;
     integer_to_string_c_t<int, -123456789>() = "-123456789"_c;
-    integer_to_string_c_t<long long, -9223372036854775807ll - 1>()
+    integer_to_string_c_t<long long, -9223372036854775807LL - 1>()
       = "-9223372036854775808"_c;
 }

@@ -26,7 +26,6 @@ Author(s): Jonathan Poelen
 #include "acl/sesman.hpp"
 #include "acl/gd_provider.hpp"
 
-
 #include <memory>
 
 class ClientExecute;
@@ -35,6 +34,7 @@ class ReportMessageApi;
 class TimeBase;
 class Transport;
 class VNCMetrics;
+class SesmanInterface;
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,

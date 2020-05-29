@@ -19,6 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
+#include "configs/config.hpp"
 #include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "core/front_api.hpp"

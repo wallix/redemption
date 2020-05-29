@@ -18,6 +18,7 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
+#include "configs/config.hpp"
 #include "core/session_reactor.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "RAIL/client_execute.hpp"

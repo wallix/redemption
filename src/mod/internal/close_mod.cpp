@@ -19,6 +19,7 @@
  *
  */
 
+#include "configs/config.hpp"
 #include "mod/internal/close_mod.hpp"
 #include "core/front_api.hpp"
 #include "gdi/graphic_api.hpp"

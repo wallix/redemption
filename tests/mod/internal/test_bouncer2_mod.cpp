@@ -22,6 +22,7 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "acl/sesman.hpp"
 
 // TEST missing
 int main()

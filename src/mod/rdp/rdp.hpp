@@ -142,6 +142,7 @@ struct FileValidatorService;
 #include <deque>
 #include <bitset>
 
+class SesmanInterface;
 
 #ifndef __EMSCRIPTEN__
 // TODO: isn't AsynchronousTaskContainer is general purpose class that should have it's own file ?

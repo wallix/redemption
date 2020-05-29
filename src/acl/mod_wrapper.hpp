@@ -62,8 +62,6 @@
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 
-#include "core/session_reactor.hpp"
-
 #include "core/callback_forwarder.hpp"
 #include "acl/time_before_closing.hpp"
 #include "acl/mod_pack.hpp"

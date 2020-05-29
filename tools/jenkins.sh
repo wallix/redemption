@@ -29,7 +29,7 @@ timestamp=$(date +%s)
 show_duration()
 {
     local timestamp2=$(date +%s)
-    echo duration $@ $((($timestamp2-$timestamp)/60)):$((($timestamp2-$timestamp)%60))s
+    echo duration"[$@]": $((($timestamp2-$timestamp)/60))m $((($timestamp2-$timestamp)%60))s
     timestamp=$timestamp2
 }
 
@@ -168,15 +168,16 @@ if [ $fast -eq 0 ]; then
     #set -o pipefail
 
     # clang analyzer
-    CLANG_TIDY=clang-tidy-10 ./tools/c++-analyzer/clang-tidy \
-      | sed -E '/^(.+\/|)modules\//,/\^/d'
+    CLANG_TIDY=clang-tidy-10 /usr/bin/time --format="%Es - %MK" \
+      ./tools/c++-analyzer/clang-tidy | sed -E '/^(.+\/|)modules\//,/\^/d'
 
     show_duration clang-tidy
 
     # valgrind
     #find ./bin/$gcc/release/tests/ -type d -exec \
     #  ./tools/c++-analyzer/valgrind -qd '{}' \;
-    find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
+    /usr/bin/time --format="%Es - %MK" \
+      find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
       parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
 
     show_duration valgrind

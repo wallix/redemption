@@ -27,6 +27,7 @@
 #include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
 
+#include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 #include "acl/gd_provider.hpp"

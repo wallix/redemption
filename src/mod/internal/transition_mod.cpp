@@ -18,7 +18,7 @@
  *   Author(s): Meng Tan
  */
 
-
+#include "configs/config.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/widget/tooltip.hpp"
 #include "keyboard/keymap2.hpp"

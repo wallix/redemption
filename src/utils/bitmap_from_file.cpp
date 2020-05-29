@@ -197,7 +197,7 @@ namespace
     }
     png_set_bgr(png_ptr);
 
-    png_color_16 bg_color_16;
+    png_color_16 bg_color_16 {};
 
     bg_color_16.red = bg_color.red();
     bg_color_16.green = bg_color.green();

@@ -29,9 +29,9 @@
 #include "transport/mwrm_reader.hpp" // WrmVersion
 #include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
-#include "acl/sesman.hpp"
 
 class FrontAPI;
+class SesmanInterface;
 
 class ReplayMod : public mod_api
 {

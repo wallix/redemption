@@ -24,12 +24,8 @@
 #include "capture/mwrm3.hpp"
 #include "transport/crypto_transport.hpp"
 
-#include <vector>
-#include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
-#include <memory>
 
 #include <cstdint>
 

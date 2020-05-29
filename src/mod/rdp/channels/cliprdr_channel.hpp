@@ -22,16 +22,16 @@
 
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
-#include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_name.hpp"
-#include "capture/fdx_capture.hpp"
 #include "mod/file_validator_service.hpp"
+#include "system/ssl_sha256.hpp"
 
 #include <vector>
 #include <memory>
 #include <string>
 
 
+class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
 
@@ -77,9 +77,6 @@ public:
     void DLP_antivirus_check_channels_files();
 
 private:
-    enum class StreamId : uint32_t;
-    enum class FileGroupId : uint32_t;
-
     std::vector<CliprdFileInfo> file_descr_list;
 
     Cliprdr::FormatNameInventory format_name_inventory;
@@ -104,6 +101,8 @@ private:
 
 private:
     enum class LockId : uint32_t;
+    enum class StreamId : uint32_t;
+    enum class FileGroupId : uint32_t;
 
     struct ClipCtx
     {
@@ -127,15 +126,12 @@ private:
 
             enum class Status : uint8_t;
             operator Status () const { return this->status; }
-        private:
 
+        private:
             SslSha256_Delayed sha256;
             uint8_t array[digest_len];
             Status status;
         };
-
-        using StreamId = ClipboardVirtualChannel::StreamId;
-        using FileGroupId = ClipboardVirtualChannel::FileGroupId;
 
         struct FileContentsSize
         {
@@ -177,8 +173,8 @@ private:
             // FileContentsRequestedRange, FileContentsRange
             std::string file_name;
 
-            std::unique_ptr<FdxCapture::TflFile> tfl_file;
-            std::vector<uint8_t> file_contents;
+            struct TflFile;
+            std::unique_ptr<TflFile> tfl_file_ptr;
             Sig sig = Sig();
 
             bool is_finalized() const
@@ -193,20 +189,7 @@ private:
             bool is_unicode;
         };
 
-        enum class TransferState : uint8_t
-        {
-            Empty,
-            Size,
-            Range,
-            GetRange,
-            SyncRange,
-            RequestedRange,
-            RequestedSyncRange,
-            WaitingContinuationRange,
-            WaitingValidator,
-            Text,
-        };
-
+        enum class TransferState : uint8_t;
         struct NoLockData
         {
             TransferState transfer_state = TransferState();
@@ -220,29 +203,13 @@ private:
             bool is_unicode;
 
             // TextData, FileContentsSize, FileContentsRequestedRange, FileContentsRange
-            FileContentsRange data;
+            struct FileData : FileContentsRange
+            {
+                std::vector<uint8_t> file_contents;
+            };
+            FileData data;
 
-            using ValidatorState = FileContentsRange::ValidatorState;
-
-            void init_empty();
-            void init_text(FileValidatorId file_validator_id, bool is_unicode);
-            void init_size(StreamId stream_id, FileGroupId lindex);
-            void init_requested_range(
-                StreamId stream_id, FileGroupId lindex,
-                uint32_t file_size_requested, uint64_t file_size, std::string_view file_name);
-            void requested_range_to_range(
-                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl);
-            void requested_range_to_get_range(
-                FileValidatorId file_validator_id, std::unique_ptr<FdxCapture::TflFile>&& tfl);
-
-            void set_waiting_continuation_range();
-            void set_waiting_validator();
-            void set_sync_range();
-            void set_requested_sync_range();
-            void set_range();
-
-            class D;
-            friend class D;
+            struct D;
         };
 
         struct LockedData
@@ -343,9 +310,9 @@ private:
         };
 
         ClipCtx(
-          std::string const& target_name,
-          bool verify_before_transfer,
-          uint64_t max_file_size_rejected);
+            std::string const& target_name,
+            bool verify_before_transfer,
+            uint64_t max_file_size_rejected);
 
         uint16_t message_type = 0;
 
@@ -370,9 +337,11 @@ private:
         NoLockData nolock_data;
         LockedData locked_data;
 
-        StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
+        StaticOutStream</*RDPECLIP::FileDescriptor::size()=*/592> file_descriptor_stream;
 
         void clear();
+
+        struct D;
     };
 
     struct FileValidatorDataList;
@@ -394,8 +363,5 @@ private:
     TextValidatorDataList* search_text_validator_by_id(FileValidatorId id);
 
     void remove_text_validator(TextValidatorDataList* p);
-
-    class D;
-    friend class D;
 }; // class ClipboardVirtualChannel
 

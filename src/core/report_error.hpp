@@ -42,9 +42,7 @@ public:
     : impl(new NullImpl)
     {}
 
-    ReportError(ReportError && other) noexcept
-    : impl(std::move(other.impl))
-    {}
+    ReportError(ReportError && other) = default;
 
     ReportError(ReportError const & other)
     : impl(other.impl->clone())

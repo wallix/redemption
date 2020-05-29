@@ -30,6 +30,7 @@
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/stream_throw_helpers.hpp"
+#include "configs/config.hpp"
 
 class FrontAPI;
 

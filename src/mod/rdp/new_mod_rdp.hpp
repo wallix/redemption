@@ -44,6 +44,7 @@ class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
 class ModRdpFactory;
+class SesmanInterface;
 
 namespace gdi { class GraphicApi; }
 

@@ -23,7 +23,6 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "core/session_reactor.hpp"
 #include "acl/gd_provider.hpp"
 
 class BGRPalette;
