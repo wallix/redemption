@@ -26,7 +26,7 @@ struct GdProvider {
     virtual gdi::GraphicApi & get_graphics() = 0;
     virtual bool is_ready_to_draw() = 0;
     virtual void display_osd_message(std::string const & message) = 0;
-    virtual ~GdProvider() {};
+    virtual ~GdProvider() = default;
 };
 
 template<class GD>

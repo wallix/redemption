@@ -18,7 +18,6 @@ exe-js js_client :
   crypto.bc
   gssapi_krb5.bc
   krb5.bc
-  openssl.bc
   src/red_channels/clipboard.bc
   src/red_channels/clipboard_binding.bc
   src/red_channels/js_channel.bc
@@ -42,10 +41,10 @@ exe-js js_client :
   src/gdi/graphic_api.bc
   src/gdi/screen_functions.bc
   src/mod/rdp/new_mod_rdp.bc
-  src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
   src/mod/rdp/rdp_negociation_data.bc
   src/utils/bitmap.bc
+  src/utils/bitmap_data_allocator.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/parse_primary_drawing_orders.bc
@@ -71,6 +70,7 @@ exe-js js_player :
   src/gdi/graphic_api.bc
   src/transport/mwrm_reader.bc
   src/utils/bitmap.bc
+  src/utils/bitmap_data_allocator.bc
   src/utils/hexdump.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
@@ -120,6 +120,7 @@ test-run-js tests/redjs/test_image_data_test_from_bitmap :
   src/redjs/image_data_from_bitmap.bc
   src/core/error.bc
   src/utils/bitmap.bc
+  src/utils/bitmap_data_allocator.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -160,11 +161,11 @@ objjs src/core/report_error.bc : $(REDEMPTION_SRC_PATH)/core/report_error.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
-objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 objjs src/mod/rdp/rdp_negociation_data.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
 objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
+objjs src/utils/bitmap_data_allocator.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/parse_primary_drawing_orders.bc : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
