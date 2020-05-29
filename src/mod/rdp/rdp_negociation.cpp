@@ -1799,7 +1799,7 @@ void RdpNegociation::send_client_info_pdu()
 
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
-        [this, &infoPacket](StreamSize<1024>, OutStream & stream) {
+        [this, &infoPacket](StreamSize<2048>, OutStream & stream) {
             if (bool(this->rdp_compression)) {
                 infoPacket.flags |= INFO_COMPRESSION;
                 infoPacket.flags &= ~CompressionTypeMask;
