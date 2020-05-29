@@ -23,6 +23,7 @@
 #include "test_only/test_framework/file.hpp"
 
 
+#include "utils/sugar/unique_fd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"

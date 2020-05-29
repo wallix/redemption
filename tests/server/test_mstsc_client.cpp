@@ -34,9 +34,9 @@
 #include "core/session_reactor.hpp"
 #include "acl/sesman.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "core/session.hpp"
-//#include "transport/socket_transport.hpp"
+// include "core/listen.hpp"
+// include "core/session.hpp"
+// include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"

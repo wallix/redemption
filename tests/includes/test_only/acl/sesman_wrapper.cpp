@@ -18,24 +18,44 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#pragma once
+#include "test_only/acl/sesman_wrapper.hpp"
+#include "acl/sesman.hpp"
 
-#include "utils/sugar/zstring_view.hpp"
+InifileWrapper::InifileWrapper()
+: ini(new Inifile) /*NOLINT*/
+{}
 
-enum BackEvent_t
+InifileWrapper::~InifileWrapper()
 {
-    BACK_EVENT_NONE = 0,
-    BACK_EVENT_NEXT,     // MODULE FINISHED, ASKING FOR NEXT MODULE
-    BACK_EVENT_STOP = 4, // MODULE FINISHED, ASKING TO LEAVE SESSION
-    BACK_EVENT_REFRESH,  // MODULE ASKED DATA TO ACL, WAITING FOR ACL REFRESH
-};
-
-inline zstring_view signal_name(BackEvent_t signal)
-{
-     return signal == BACK_EVENT_NONE ? "BACK_EVENT_NONE"_zv
-          : signal == BACK_EVENT_NEXT  ?"BACK_EVENT_NEXT"_zv
-          : signal == BACK_EVENT_REFRESH ? "BACK_EVENT_REFRESH"_zv
-          : signal == BACK_EVENT_STOP ? "BACK_EVENT_STOP"_zv
-          : "BACK_EVENT_UNKNOWN"_zv;
+    delete ini; /*NOLINT*/
 }
 
+struct SesmanWrapper::D
+{
+    Inifile ini;
+    SesmanInterface sesman{ini};
+};
+
+SesmanWrapper::SesmanWrapper()
+: d(new D) /*NOLINT*/
+{}
+
+SesmanWrapper::~SesmanWrapper()
+{
+    delete d; /*NOLINT*/
+}
+
+Inifile& SesmanWrapper::get_ini()
+{
+    return d->ini;
+}
+
+RedirectionInfo& SesmanWrapper::redir_info()
+{
+    return d->ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
+}
+
+SesmanWrapper::operator SesmanInterface &() &
+{
+    return d->sesman;
+}

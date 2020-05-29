@@ -40,9 +40,9 @@ class ClientRedemptionQt : public ClientRedemption
 
 private:
     QtIOGraphicMouseKeyboard qt_graphic;
-    QtOutputSound * qt_sound;
-    QtInputSocket * qt_socket_listener;
-    QtInputOutputClipboard * qt_clipboard;
+    QtOutputSound qt_sound;
+    QtInputSocket qt_socket_listener;
+    QtInputOutputClipboard qt_clipboard;
     QtClientRDPKeyLayout qt_rdp_keylayout;
     IODisk ioDisk;
 
@@ -55,17 +55,25 @@ public:
     : ClientRedemption(
         time_base, fd_events, timer_events, config)
     , qt_graphic(&this->_callback, &this->config)
+    , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
+    , qt_socket_listener(time_base, fd_events, timer_events,
+        this, this->qt_graphic.get_static_qwidget())
+    , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
+        this->qt_graphic.get_static_qwidget())
     {
-        this->qt_sound = new QtOutputSound(
-            this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
-        this->qt_socket_listener = new QtInputSocket(
-            time_base, fd_events, timer_events, this, this->qt_graphic.get_static_qwidget());
-        this->qt_clipboard = new QtInputOutputClipboard(
-            &this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
-            this->qt_graphic.get_static_qwidget());
+//<<<<<<< HEAD
+//        this->qt_sound = new QtOutputSound(
+//            this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
+//        this->qt_socket_listener = new QtInputSocket(
+//            time_base, fd_events, timer_events, this, this->qt_graphic.get_static_qwidget());
+//        this->qt_clipboard = new QtInputOutputClipboard(
+//            &this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
+//            this->qt_graphic.get_static_qwidget());
 
-        this->clientRDPSNDChannel.set_api(this->qt_sound);
-        this->clientCLIPRDRChannel.set_api(this->qt_clipboard);
+//        this->clientRDPSNDChannel.set_api(this->qt_sound);
+//        this->clientCLIPRDRChannel.set_api(this->qt_clipboard);
+        this->clientRDPSNDChannel.set_api(&this->qt_sound);
+        this->clientCLIPRDRChannel.set_api(&this->qt_clipboard);
         this->clientRDPDRChannel.set_api(&this->ioDisk);
         this->clientRemoteAppChannel.set_api(&this->qt_graphic);
 
@@ -120,7 +128,7 @@ public:
 
         if (this->config.connected) {
 
-            if (this->qt_socket_listener->start_to_listen(this->client_sck, this->_callback.get_mod())) {
+            if (this->qt_socket_listener.start_to_listen(this->client_sck, this->_callback.get_mod())) {
 
                 this->start_wab_session_time = tvtime();
 
@@ -133,7 +141,7 @@ public:
 
     void disconnect(std::string const & error, bool pipe_broken) override {
         this->qt_graphic.dropScreen();
-        this->qt_socket_listener->disconnect();
+        this->qt_socket_listener.disconnect();
         ClientRedemption::disconnect(error, pipe_broken);
         this->qt_graphic.init_form();
     }
@@ -322,17 +330,17 @@ public:
 
         ClientRedemption::draw(cmd, content);
 
-		QImage img(content.data, content.width, cmd.height, QImage::Format_RGBA8888);
-		img = img.copy(QRect(0, 0, cmd.width, cmd.height));
+        QImage img(content.data, content.width, cmd.height, QImage::Format_RGBA8888);
+        img = img.copy(QRect(0, 0, cmd.width, cmd.height));
 
 #if 0
-		static int frameNo = 0;
-		frameNo++;
-		img.save(QString("/tmp/img%1.png").arg(frameNo), "PNG", 100);
+        static int frameNo = 0;
+        frameNo++;
+        img.save(QString("/tmp/img%1.png").arg(frameNo), "PNG", 100);
 #endif
 
-		this->qt_graphic.painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
-	}
+        this->qt_graphic.painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
+    }
 };
 
 

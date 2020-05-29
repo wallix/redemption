@@ -35,7 +35,6 @@ add_obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mo
 add_obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 add_obj src/mod/rdp/rdp_negociation_data.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation_data.cpp ;
 add_obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
-add_obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 add_obj src/mod/vnc/dsm.o : $(REDEMPTION_SRC_PATH)/mod/vnc/dsm.cpp ;
 add_obj src/mod/vnc/encoder/copyrect.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/copyrect.cpp ;
 add_obj src/mod/vnc/encoder/cursor.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/cursor.cpp ;
@@ -122,7 +121,6 @@ requirement_list += <library>src/mod/rdp/channels/sespro_channel_params.o ;
 requirement_list += <library>src/mod/rdp/new_mod_rdp.o ;
 requirement_list += <library>src/mod/rdp/rdp_negociation_data.o ;
 requirement_list += <library>src/mod/rdp/rdp_negociation.o ;
-requirement_list += <library>src/mod/rdp/rdp.o ;
 requirement_list += <library>src/mod/vnc/dsm.o ;
 requirement_list += <library>src/mod/vnc/encoder/copyrect.o ;
 requirement_list += <library>src/mod/vnc/encoder/cursor.o ;

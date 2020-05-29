@@ -422,7 +422,7 @@ private:
 
 public:
     mod_rdp_channels(
-        const ChannelsAuthorizations channels_authorizations,
+        const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_,
@@ -2043,7 +2043,7 @@ public:
       , RedirectionInfo & redir_info
       , Random & gen
       , TimeObj & timeobj
-      , ChannelsAuthorizations channels_authorizations
+      , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
       , AuthApi & authentifier
@@ -2056,7 +2056,7 @@ public:
     )
         : spvc_callbacks(*this)
         , channels(
-            std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
+            channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
             report_message, gen, metrics, time_base, gd_provider, timer_events_, file_validator_service,
             mod_rdp_factory,
             spvc_callbacks

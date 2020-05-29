@@ -25,7 +25,6 @@
 #include "capture/cryptofile.hpp"
 #include "core/app_path.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"

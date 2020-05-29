@@ -28,6 +28,9 @@
 #include "core/RDP/autoreconnect.hpp"
 #include "core/RDP/lic.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
+#include "core/RDP/gcc/userdata/mcs_channels.hpp"
+#include "core/RDP/gcc/userdata/sc_sec1.hpp"
+#include "core/RDP/gcc.hpp"
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
@@ -1634,7 +1637,7 @@ void RdpNegociation::send_client_info_pdu()
 
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
-        [&infoPacket](StreamSize<1024> /*maxlen*/, OutStream & stream) {
+        [&infoPacket](StreamSize<2048> /*maxlen*/, OutStream & stream) {
             infoPacket.emit(stream);
         },
         SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}

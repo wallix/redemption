@@ -32,6 +32,7 @@
 #include "acl/license_api.hpp"
 #include "acl/gd_provider.hpp"
 
+#include "core/channels_authorizations.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"

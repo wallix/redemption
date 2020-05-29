@@ -26,9 +26,10 @@
 #include "mod/mod_api.hpp"
 #include "core/session_reactor.hpp"
 #include "utils/colors.hpp"
-#include "core/front_api.hpp"
-#include "acl/sesman.hpp"
 #include "acl/gd_provider.hpp"
+
+class FrontAPI;
+class SesmanInterface;
 
 class Bouncer2Mod : public mod_api
 {

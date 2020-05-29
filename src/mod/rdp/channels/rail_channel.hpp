@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "configs/config.hpp"
 #include "utils/log.hpp"
 #include "core/misc.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
@@ -30,7 +31,7 @@
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/stream_throw_helpers.hpp"
-#include "configs/config.hpp"
+
 
 class FrontAPI;
 

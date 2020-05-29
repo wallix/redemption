@@ -20,52 +20,30 @@
 */
 #pragma once
 
-#include "mod/null/null.hpp"
-#include "mod/mod_api.hpp"
-#include "transport/socket_transport.hpp"
-
-#include "acl/end_session_warning.hpp"
 #include "RAIL/client_execute.hpp"
-#include "acl/auth_api.hpp"
-#include "acl/file_system_license_store.hpp"
+#include "acl/gd_provider.hpp"
+#include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
+#include "acl/time_before_closing.hpp"
 #include "configs/config.hpp"
-#include "core/log_id.hpp"
-#include "core/session_reactor.hpp"
-#include "front/front.hpp"
+#include "core/callback_forwarder.hpp"
+#include "core/front_api.hpp"
+#include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
-#include "gdi/clip_from_cmd.hpp"
 #include "gdi/subrect4.hpp"
-#include "utils/sugar/array_view.hpp"
-
-
 #include "mod/internal/rail_module_host_mod.hpp"
-
-#include "mod/rdp/rdp_api.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/windowing_api.hpp"
-
-#include "transport/socket_transport.hpp"
-
-#include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "utils/sugar/update_lock.hpp"
-#include "utils/log_siem.hpp"
-#include "utils/fileutils.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include "acl/module_manager/enums.hpp"
-#include "core/back_event_t.hpp"
 
-#include "core/callback_forwarder.hpp"
-#include "acl/time_before_closing.hpp"
-#include "acl/mod_pack.hpp"
-#include "acl/gd_provider.hpp"
+class SocketTransport;
+class rdp_api;
 
 struct ModWrapper : public GdProvider
 {
@@ -184,27 +162,25 @@ struct ModWrapper : public GdProvider
             }
         }
 
-        void set_pointer(uint16_t cache_idx, Pointer const& cursor, gdi::GraphicApi::SetPointerMode mode)
-            {this->sink.set_pointer(cache_idx, cursor, mode); }
-        void set_palette(BGRPalette const & palette)
-            { this->sink.set_palette(palette); }
-        void sync()
-            {this->sink.sync();}
-        void set_row(std::size_t rownum, bytes_view data)
-            {this->sink.set_row(rownum, data);}
-        void begin_update()
-            {this->sink.begin_update();}
-        void end_update()
-            {this->sink.end_update();}
+        void set_pointer(
+            uint16_t cache_idx, Pointer const& cursor,
+            gdi::GraphicApi::SetPointerMode mode)
+        {
+            this->sink.set_pointer(cache_idx, cursor, mode);
+        }
 
-
+        void set_palette(BGRPalette const & palette) { this->sink.set_palette(palette); }
+        void sync() { this->sink.sync(); }
+        void set_row(std::size_t rownum, bytes_view data) { this->sink.set_row(rownum, data); }
+        void begin_update() { this->sink.begin_update(); }
+        void end_update() { this->sink.end_update(); }
     } gfilter;
 
     struct gdi::GraphicApiForwarder<GFilter> g;
 
     FrontAPI & front;
 
-    std::string module_name()
+    std::string module_name() const
     {
         return this->modi->module_name();
     }

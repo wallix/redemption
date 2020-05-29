@@ -24,6 +24,7 @@
 
 #include "capture/fdx_capture.hpp"
 #include "acl/connect_to_target_host.hpp"
+#include "acl/dispatch_report_message.hpp"
 #include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -37,6 +38,7 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/genfstat.hpp"
 #include "acl/mod_pack.hpp"
 
 namespace

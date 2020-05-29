@@ -21,20 +21,20 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "core/front_api.hpp"
-#include "gdi/graphic_api.hpp"
-#include "utils/image_data_view.hpp"
-#include "core/session_reactor.hpp"
-#include "acl/sesman.hpp"
-
-#include <memory>
 
 class TimeBase;
+class TimerContainer;
 class Transport;
 class Random;
 class CryptoContext;
 class ReportMessageApi;
 class Inifile;
 class Callback;
+
+namespace gdi
+{
+    class GraphicApi;
+}
 
 class FrontWrapper : public FrontAPI
 {
@@ -91,5 +91,5 @@ protected:
 
 private:
     class D;
-    std::unique_ptr<D> d;
+    D* d;
 };

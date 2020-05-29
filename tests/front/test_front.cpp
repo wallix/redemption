@@ -42,7 +42,10 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channel_list.hpp"
+#include "core/session_reactor.hpp"
+#include "core/channels_authorizations.hpp"
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"

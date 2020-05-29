@@ -14,12 +14,46 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2018
+Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#include "acl/sesman.hpp"
-#include "core/session_reactor.hpp"
-#include "gdi/screen_functions.hpp"
-#include "mod/rdp/rdp.hpp"
+#pragma once
 
+class Inifile;
+class SesmanInterface;
+class RedirectionInfo;
+
+struct InifileWrapper
+{
+    InifileWrapper();
+    ~InifileWrapper();
+
+    operator Inifile& () &
+    {
+        return *ini;
+    }
+
+    Inifile& get_ini()
+    {
+        return *ini;
+    }
+
+private:
+    Inifile* ini;
+};
+
+struct SesmanWrapper
+{
+    SesmanWrapper();
+    ~SesmanWrapper();
+
+    operator SesmanInterface& () &;
+
+    Inifile& get_ini();
+    RedirectionInfo& redir_info();
+
+private:
+    class D;
+    D * d;
+};

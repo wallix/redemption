@@ -22,8 +22,6 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
-#include "test_only/check_sig.hpp"
-#include "test_only/gdi/test_graphic.hpp"
 #include "core/font.hpp"
 
 #include "acl/gd_provider.hpp"
@@ -32,7 +30,6 @@
 #include "core/channel_list.hpp"
 #include "core/app_path.hpp"
 
-#include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/internal/close_mod.hpp"
@@ -40,6 +37,10 @@
 
 #include "utils/png.hpp"
 #include "utils/sugar/cast.hpp"
+
+#include "test_only/check_sig.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/acl/sesman_wrapper.hpp"
 
 
 class FakeFront : public FrontAPI
@@ -86,16 +87,18 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
-    Inifile ini;
     Theme theme;
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
+    Font glyphs = Font(app_path(AppPath::DefaultFontFile), false);
 
-    CloseMod d("message", ini, time_base, timer_events_, gd_forwarder, front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, glyphs, theme, false);
+    InifileWrapper ini;
+    CloseMod d("message", ini.get_ini(), time_base, timer_events_, gd_forwarder, front,
+        screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
+        glyphs, theme, false);
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -217,14 +220,14 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     timer_events_.exec_timer(time_base.get_current_time());
     time_base.set_current_time({62, 0});
     timer_events_.exec_timer(time_base.get_current_time());
-    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+    // ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
     "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
 
 
     time_base.set_current_time({300, 0});
     timer_events_.exec_timer(time_base.get_current_time());
-    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+    // ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
     "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
 
@@ -240,23 +243,24 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
-    Inifile ini;
     Theme theme;
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
+    Font glyphs = Font(app_path(AppPath::DefaultFontFile), false);
 
-    CloseMod d("message", ini, time_base, timer_events_, gd_forwarder, front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, glyphs, theme, true);
+    InifileWrapper ini;
+    CloseMod d("message", ini.get_ini(), time_base, timer_events_, gd_forwarder, front,
+        screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
+        glyphs, theme, true);
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     timeval tv1{1, 0};
     timer_events_.exec_timer(tv1);
-    ::dump_png24("TestCloseModSelector1.png", ConstImageDataView(front), true);
+    // ::dump_png24("TestCloseModSelector1.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
-    "\x95\xd0\x6e\x6e\xae\xdf\xa0\x68\xcb\x7b\x3d\x2d\x84\x07\x59\xa1\xb6\xdb\x30\xb8");
-
+        "\x95\xd0\x6e\x6e\xae\xdf\xa0\x68\xcb\x7b\x3d\x2d\x84\x07\x59\xa1\xb6\xdb\x30\xb8");
 }

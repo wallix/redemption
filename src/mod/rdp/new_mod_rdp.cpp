@@ -25,7 +25,7 @@ Author(s): Jonathan Poelen
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     Inifile & ini,
-   TimeBase& time_base,
+    TimeBase& time_base,
     GdProvider & gd_provider,
     TopFdContainer & fd_events_,
     TimerContainer& timer_events_,
@@ -36,7 +36,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     RedirectionInfo& redir_info,
     Random& gen,
     TimeObj& timeobj,
-    const ChannelsAuthorizations channels_authorizations,
+    const ChannelsAuthorizations& channels_authorizations,
     const ModRDPParams& mod_rdp_params,
     const TLSClientParams & tls_client_params,
     AuthApi& authentifier,

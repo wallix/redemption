@@ -24,6 +24,7 @@
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
+#include "core/channels_authorizations.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "client_redemption/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
@@ -42,6 +43,7 @@
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 #include "system/scoped_ssl_init.hpp"
 
 #include <iostream>

@@ -26,6 +26,7 @@ Author(s): Jonathan Poelen
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
+#include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
@@ -93,6 +94,8 @@ struct RdpClient
 
     redjs::BrowserFront front;
     gdi::GraphicApi& gd;
+    GdForwarder<gdi::GraphicApi> gd_forwarder{gd};
+
     JsReportMessage report_message;
     TimeBase time_base;
     TopFdContainer fd_events;
@@ -151,28 +154,25 @@ struct RdpClient
             RDPVerbose(verbose)
         );
 
-        mod_rdp_params.device_id                  = "device_id";
-        mod_rdp_params.enable_tls                 = false;
-        mod_rdp_params.enable_nla                 = false;
-        mod_rdp_params.enable_fastpath            = true;
-        mod_rdp_params.enable_new_pointer         = true;
-        mod_rdp_params.enable_glyph_cache         = true;
-        mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
+        mod_rdp_params.device_id           = "device_id";
+        mod_rdp_params.enable_tls          = false;
+        mod_rdp_params.enable_nla          = false;
+        mod_rdp_params.enable_fastpath     = true;
+        mod_rdp_params.enable_new_pointer  = true;
+        mod_rdp_params.enable_glyph_cache  = true;
+        mod_rdp_params.server_cert_check   = ServerCertCheck::always_succeed;
         mod_rdp_params.ignore_auth_channel = true;
 
 
         if (bool(RDPVerbose(verbose) & RDPVerbose::basic_trace)) {
             mod_rdp_params.log();
         }
-        GdForwarder<gdi::GraphicApi> gd_forwarder(this->gd);
 
-        const ChannelsAuthorizations channels_authorizations("*", std::string{});
+        const ChannelsAuthorizations channels_authorizations("*", std::string_view{});
 
         this->mod = new_mod_rdp(
-            browser_trans, ini, time_base,
-            gd_forwarder,
-            fd_events, timer_events, sesman,
-            gd, front, client_info,
+            browser_trans, ini, time_base, gd_forwarder,
+            fd_events, timer_events, sesman, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
@@ -180,32 +180,30 @@ struct RdpClient
 
     void send_first_packet()
     {
-        fd_events.exec_timeout(time_base.get_current_time());
+        this->fd_events.exec_timeout(this->time_base.get_current_time());
     }
 
     bytes_view get_sending_data_view() const
     {
-        return browser_trans.get_out_buffer();
+        return this->browser_trans.get_out_buffer();
     }
 
     void clear_sending_data()
     {
-        browser_trans.clear_out_buffer();
+        this->browser_trans.clear_out_buffer();
     }
 
     void add_receiving_data(std::string data)
     {
-        browser_trans.add_in_buffer(std::move(data));
-        auto fd_isset = [fd_trans = browser_trans.get_fd()](int fd, auto& /*e*/){
-            return fd == fd_trans;
-        };
+        this->browser_trans.add_in_buffer(std::move(data));
+        this->fd_events.for_each([](int /*fd*/, auto& /*top*/){});
     }
 
     void rdp_input_scancode(uint16_t key, uint16_t flag)
     {
         this->mod->rdp_input_scancode(
             key, 0, flag,
-            time_base.get_current_time().tv_sec,
+            this->time_base.get_current_time().tv_sec,
             nullptr);
     }
 
