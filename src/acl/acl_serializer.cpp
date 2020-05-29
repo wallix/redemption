@@ -129,6 +129,7 @@ Inactivity::Inactivity(std::chrono::seconds timeout, time_t start, Verbose verbo
 
 Inactivity::~Inactivity()
 {
+//    this->disconnect();
     LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "INACTIVITY DESTRUCTOR");
 }
 
@@ -831,11 +832,13 @@ void AclSerializer::send_acl_data()
 }
 
 
-Acl::Acl(Inifile & ini, time_t now)
+Acl::Acl(Inifile & ini, TimeBase & time_base)
 : ini(ini)
 , acl_serial(nullptr)
 , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
-, inactivity(ini.get<cfg::globals::session_timeout>(), now, to_verbose_flags(ini.get<cfg::debug::auth>()))
+, inactivity(ini.get<cfg::globals::session_timeout>(),
+             time_base.get_current_time().tv_sec,
+             to_verbose_flags(ini.get<cfg::debug::auth>()))
 {}
 
 time_t Acl::get_inactivity_timeout()
@@ -847,7 +850,6 @@ void Acl::receive()
 {
     try {
         this->acl_serial->incoming();
-        LOG(LOG_INFO, "AclSerializer::current_module is %s", this->ini.get<cfg::context::module>());
 
         if (this->ini.get<cfg::context::module>() == "RDP"
         ||  this->ini.get<cfg::context::module>() == "VNC") {

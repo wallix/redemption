@@ -134,9 +134,9 @@ public:
     Transport * auth_trans;
 
 private:
+    TimeBase & timebase;
     char session_id[256];
     SessionLogFile * log_file;
-    TimeBase & timebase;
 
 private:
 public:
@@ -157,6 +157,13 @@ public:
 
     AclSerializer(Inifile & ini, TimeBase & timebase);
     ~AclSerializer();
+
+    void disconnect() {
+        if (this->auth_trans){
+            this->auth_trans->disconnect();
+            this->auth_trans = nullptr;
+        }
+    }
 
     void set_auth_trans(Transport * auth_trans) { this->auth_trans = auth_trans; }
     void set_log_file(SessionLogFile * log_file) { this->log_file = log_file; }
@@ -211,8 +218,7 @@ struct Acl
     AclSerializer  * acl_serial = nullptr;
     KeepAlive keepalive;
     Inactivity inactivity;
-    // TODO: use timebase
-    Acl(Inifile & ini, time_t now);
+    Acl(Inifile & ini, TimeBase & time_base);
     void set_acl_serial(AclSerializer * acl_serial) {
         this->acl_serial = acl_serial;
         if (this->acl_serial != nullptr){
@@ -226,17 +232,13 @@ struct Acl
     bool is_connected() { return this->status == state_connected; }
     void disconnect() {
         if (this->acl_serial) {
-            this->acl_serial->auth_trans->disconnect();
-            delete this->acl_serial;
+            this->acl_serial->disconnect();
             this->acl_serial = nullptr;
             this->status = state_disconnected_by_redemption;
         }
     }
     void receive();
 
-    ~Acl()
-    {
-        this->disconnect();
-    }
+    ~Acl() {}
 
 };

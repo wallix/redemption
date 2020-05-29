@@ -685,7 +685,7 @@ public:
 
         timeval now = tvtime();
 
-        Acl acl(this->ini, now.tv_sec);
+        Acl acl(this->ini, time_base);
         std::unique_ptr<AclSerializer> acl_serial;
         std::unique_ptr<Transport> auth_trans;
         std::unique_ptr<SessionLogFile> log_file;
@@ -716,7 +716,8 @@ public:
             unsigned count = 0;
             while (run_session) {
                 if (count%10==0 || (now.tv_sec > old_time.tv_sec+2)){
-                    LOG(LOG_INFO, "Looping %s", acl.show().c_str());
+                    LOG(LOG_INFO, "Looping %s Current Module %s", acl.show().c_str(),
+                        ini.get<cfg::context::module>());
                     old_time = now;
                     count++;
                 }

@@ -387,6 +387,8 @@ private:
             }
         }
         else {
+//            LOG(LOG_INFO, "================== SESSION PROBE KEEPALIVE =====================");
+//            this->callbacks.display_osd_message("Session Probe Keepalive");
             this->request_keep_alive();
         }
     }
