@@ -240,9 +240,10 @@ def update_changelog_template():
 # CHECKERS
 # Check uncommited changes BEGIN
 def check_uncommited_changes():
-    res = subprocess.Popen(["git", "diff", "--shortstat"],
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT
+    res = subprocess.Popen(
+        ["git", "diff", "--shortstat"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
     ).communicate()[0]
     if res:
         raise Exception('your repository has uncommited changes:\n'
@@ -252,18 +253,20 @@ def check_uncommited_changes():
 
 # Check tag version BEGIN
 def check_new_tag_version_with_local_and_remote_tags(newtag):
-    locale_tags = subprocess.Popen(["git", "tag", "--list"],
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT
+    locale_tags = subprocess.Popen(
+        ["git", "tag", "--list"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
     ).communicate()[0].split('\n')
 
     if newtag in locale_tags:
         raise Exception('tag %s already exists (locale).' % newtag)
 
     remote_tags = map(lambda x: x.split('/')[-1],
-                      subprocess.Popen(["git", "ls-remote", "--tags", "origin"],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT
+                      subprocess.Popen(
+                          ["git", "ls-remote", "--tags", "origin"],
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT
                       ).communicate()[0].split('\n'))
 
     if newtag in remote_tags:
@@ -413,7 +416,7 @@ try:
                                        opts.packagetemp,
                                        opts.config,
                                        "debian/redemption.postinst")
-        except IOError, e:
+        except IOError as e:
             if e.errno != 2:
                 raise e
 
@@ -455,14 +458,15 @@ try:
         if status:
             raise ""
     exit(0)
-except Exception, e:
+except Exception as e:
     if remove_diff:
-        res = subprocess.Popen(["git", "diff", "--shortstat"],
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT
+        res = subprocess.Popen(
+            ["git", "diff", "--shortstat"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
         ).communicate()[0]
         if res:
             os.system("git stash")
             os.system("git stash drop")
-    print "Build failed: %s" % e
+    print("Build failed: %s" % e)
     exit(status if status else -1)
