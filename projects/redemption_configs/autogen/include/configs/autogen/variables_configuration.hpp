@@ -558,6 +558,17 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
+    /// Enable primary connection on ipv6 <br/>
+    /// type: bool <br/>
+    /// default: {false} <br/>
+    struct globals::enable_ipv6 {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// type: bool <br/>
     /// default: {true} <br/>
@@ -5197,6 +5208,7 @@ struct globals
 , cfg::globals::experimental_enable_serializer_data_block_size_limit
 , cfg::globals::experimental_support_resize_session_during_recording
 , cfg::globals::support_connection_redirection_during_recording
+, cfg::globals::enable_ipv6
 { static constexpr bool is_section = true; };
 
 struct session_log

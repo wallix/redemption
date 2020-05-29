@@ -50,6 +50,7 @@ namespace cfg
         struct experimental_support_resize_session_during_recording;
         struct support_connection_redirection_during_recording;
         struct rdp_keepalive_connection_interval;
+        struct enable_ipv6;
     };
 
     struct session_log {
