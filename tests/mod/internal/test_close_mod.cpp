@@ -220,14 +220,14 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     timer_events_.exec_timer(time_base.get_current_time());
     time_base.set_current_time({62, 0});
     timer_events_.exec_timer(time_base.get_current_time());
-    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+    // ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
     "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
 
 
     time_base.set_current_time({300, 0});
     timer_events_.exec_timer(time_base.get_current_time());
-    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+    // ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
     "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
 
@@ -260,7 +260,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
 
     timeval tv1{1, 0};
     timer_events_.exec_timer(tv1);
-    ::dump_png24("TestCloseModSelector1.png", ConstImageDataView(front), true);
+    // ::dump_png24("TestCloseModSelector1.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
         "\x95\xd0\x6e\x6e\xae\xdf\xa0\x68\xcb\x7b\x3d\x2d\x84\x07\x59\xa1\xb6\xdb\x30\xb8");
 }
