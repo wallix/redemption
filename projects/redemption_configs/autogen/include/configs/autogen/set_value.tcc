@@ -2148,14 +2148,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "mod_xup"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::mod_xup&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
         else if (key == "password"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

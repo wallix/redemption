@@ -133,7 +133,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -419,7 +418,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(1,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(256,                              ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(128,                              ini.get<cfg::debug::cache>());
@@ -616,7 +614,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -778,7 +775,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -951,7 +947,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1100,7 +1095,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1250,7 +1244,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(3,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(3,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1386,7 +1379,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());
@@ -1524,7 +1516,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_vnc>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_internal>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mod_xup>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::password>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::compression>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::cache>());

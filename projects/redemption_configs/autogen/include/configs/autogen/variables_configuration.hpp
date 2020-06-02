@@ -3512,16 +3512,6 @@ namespace cfg
     };
     /// type: uint32_t <br/>
     /// default: {} <br/>
-    struct debug::mod_xup {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
-    /// type: uint32_t <br/>
-    /// default: {} <br/>
     struct debug::password {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -5486,7 +5476,6 @@ struct debug
 , cfg::debug::mod_rdp
 , cfg::debug::mod_vnc
 , cfg::debug::mod_internal
-, cfg::debug::mod_xup
 , cfg::debug::password
 , cfg::debug::compression
 , cfg::debug::cache

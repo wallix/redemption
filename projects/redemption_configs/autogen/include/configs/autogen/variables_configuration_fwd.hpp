@@ -327,7 +327,6 @@ namespace cfg
         struct mod_rdp;
         struct mod_vnc;
         struct mod_internal;
-        struct mod_xup;
         struct password;
         struct compression;
         struct cache;

@@ -1295,11 +1295,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #mod_internal = 0
 
 # min = 0
-#_advanced
-#_hex
-#mod_xup = 0
-
-# min = 0
 #_hidden
 #password = 0
 

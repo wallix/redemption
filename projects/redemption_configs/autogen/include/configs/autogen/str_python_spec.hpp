@@ -1102,10 +1102,6 @@ mod_vnc = integer(min=0, default=0)
 #_hex
 mod_internal = integer(min=0, default=0)
 
-#_advanced
-#_hex
-mod_xup = integer(min=0, default=0)
-
 #_hidden
 password = integer(min=0, default=0)
 
