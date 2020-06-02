@@ -31,7 +31,6 @@
 
 class SesmanInterface;
 
-using data_size_type = int_fast32_t;
 
 class BaseVirtualChannel
 {
