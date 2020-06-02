@@ -299,7 +299,7 @@ struct Rect {
     }
 };
 
-inline auto log_value(Rect const & rect)
+inline auto log_value(Rect const & rect) noexcept
 {
     struct {
         char buffer[128];
@@ -340,7 +340,7 @@ struct Dimension {
     }
 };
 
-inline auto log_value(Dimension const & dim)
+inline auto log_value(Dimension const & dim) noexcept
 {
     struct {
         char buffer[64];
@@ -362,7 +362,7 @@ struct Point {
 
 };
 
-inline auto log_value(Point const & p)
+inline auto log_value(Point const & p) noexcept
 {
     struct {
         char buffer[64];
@@ -383,7 +383,7 @@ struct Segment {
     {}
 };
 
-inline auto log_value(Segment const & segment)
+inline auto log_value(Segment const & segment) noexcept
 {
     struct {
         char buffer[128];
@@ -519,7 +519,7 @@ class DeltaRect {
     }
 };
 
-inline auto log_value(DeltaRect const & delta)
+inline auto log_value(DeltaRect const & delta) noexcept
 {
     struct {
         char buffer[128];
