@@ -1839,12 +1839,12 @@ class mod_rdp : public mod_api, public rdp_api
 {
     struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks {
         mod_rdp & mod;
-        SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {};
-        virtual void freeze_screen() override { mod.freeze_screen(); };
-        virtual void disable_input_event() override { mod.disable_input_event(); };
-        virtual void enable_input_event() override { mod.enable_input_event(); };
-        virtual void enable_graphics_update() override { mod.enable_graphics_update(); };
-        virtual void disable_graphics_update() override { mod.disable_graphics_update(); };
+        SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {}
+        virtual void freeze_screen() override { mod.freeze_screen(); }
+        virtual void disable_input_event() override { mod.disable_input_event(); }
+        virtual void enable_input_event() override { mod.enable_input_event(); }
+        virtual void enable_graphics_update() override { mod.enable_graphics_update(); }
+        virtual void disable_graphics_update() override { mod.disable_graphics_update(); }
         virtual void display_osd_message(std::string const & message) override  { mod.display_osd_message(message); }
     } spvc_callbacks;
 
