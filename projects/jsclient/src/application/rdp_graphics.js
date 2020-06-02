@@ -54,7 +54,7 @@ class RDPGraphics
     }
 
     drawImage(imageData, rop, ...args) {
-        // rop supposed to 0xCC
+        // assume rop == 0xCC
         if (this.promise) {
             this.promise = this.promise.then(() => {
                 this.canvas.putImageData(imageData, ...args);
@@ -159,7 +159,7 @@ class RDPGraphics
         const u32a = new Uint32Array(imgData.data.buffer);
         const len = imgData.width * imgData.height;
         for (let i = 0; i < len; ++i) {
-            u32a[i] = f(u32a[i] - 0xff000000) + 0xff000000;
+            u32a[i] = f(u32a[i] & 0xff000000) | 0xff000000;
         }
         this.canvas.putImageData(imgData, x, y);
     }
@@ -208,7 +208,7 @@ class RDPGraphics
             const i = y * w;
             for (let x = 0; x < w; ++x) {
                 const selectColor = (brushU8 & ((1 << 7) >> ((x + orgX) % 8)));
-                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] - 0xff000000) + 0xff000000;
+                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] & 0xff000000) | 0xff000000;
             }
         }
         this.canvas.putImageData(imgData, orgX, orgY);
