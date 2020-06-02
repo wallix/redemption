@@ -185,17 +185,17 @@ struct RdpClient
 
     bytes_view get_sending_data_view() const
     {
-        return this->browser_trans.get_out_buffer();
+        return this->browser_trans.get_output_buffer();
     }
 
     void clear_sending_data()
     {
-        this->browser_trans.clear_out_buffer();
+        this->browser_trans.clear_output_buffer();
     }
 
     void add_receiving_data(std::string data)
     {
-        this->browser_trans.add_in_buffer(std::move(data));
+        this->browser_trans.push_input_buffer(std::move(data));
         this->fd_events.for_each([](int /*fd*/, auto& /*top*/){});
     }
 

@@ -26,9 +26,9 @@ RED_AUTO_TEST_CASE(TestBrowserTransport)
 {
     redjs::BrowserTransport trans;
 
-    RED_CHECK(trans.get_out_buffer() == ""_av);
-    trans.add_in_buffer("abc");
-    RED_CHECK(trans.get_out_buffer() == ""_av);
+    RED_CHECK(trans.get_output_buffer() == ""_av);
+    trans.push_input_buffer("abc");
+    RED_CHECK(trans.get_output_buffer() == ""_av);
 
     char buffer[10];
     RED_CHECK(3 == trans.partial_read(make_writable_array_view(buffer)));
@@ -37,14 +37,14 @@ RED_AUTO_TEST_CASE(TestBrowserTransport)
         (void)trans.partial_read(make_writable_array_view(buffer)),
         ERR_TRANSPORT_NO_MORE_DATA);
 
-    trans.add_in_buffer("def");
-    trans.add_in_buffer("ghi");
-    trans.add_in_buffer("jkl");
-    trans.add_in_buffer("mno");
-    trans.add_in_buffer("pqr");
-    trans.add_in_buffer("stu");
-    trans.add_in_buffer("vwx");
-    trans.add_in_buffer("yz");
+    trans.push_input_buffer("def");
+    trans.push_input_buffer("ghi");
+    trans.push_input_buffer("jkl");
+    trans.push_input_buffer("mno");
+    trans.push_input_buffer("pqr");
+    trans.push_input_buffer("stu");
+    trans.push_input_buffer("vwx");
+    trans.push_input_buffer("yz");
     RED_CHECK(3 == trans.partial_read(writable_array_view(buffer, 3)));
     RED_CHECK(array_view(buffer, 3) == "def"_av);
     RED_CHECK(6 == trans.partial_read(writable_array_view(buffer, 6)));
@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TestBrowserTransport)
 
     trans.send("123"_av);
     trans.send("456"_av);
-    RED_CHECK(trans.get_out_buffer() == "123456"_av);
-    trans.clear_out_buffer();
-    RED_CHECK(trans.get_out_buffer() == ""_av);
+    RED_CHECK(trans.get_output_buffer() == "123456"_av);
+    trans.clear_output_buffer();
+    RED_CHECK(trans.get_output_buffer() == ""_av);
 }
