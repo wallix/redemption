@@ -2325,15 +2325,14 @@ namespace jln
         SharedDataBase node_executors;
     };
 
-    template<class... Ts>
     class ActionContainer
     {
-        using Action = ActionExecutor<Ts...>;
+        using Action = ActionExecutor<>;
 
-        using ActionDeleter = ::jln::ActionDeleter<Ts...>;
+        using ActionDeleter = ::jln::ActionDeleter<>;
 
     public:
-        using Ptr = ActionSharedPtr<Ts...>;
+        using Ptr = ActionSharedPtr<>;
         ActionContainer(const ActionContainer&) = delete;
 
     private:
@@ -2343,7 +2342,7 @@ namespace jln
             std::unique_ptr<ActionData, SharedDataDeleter> data_ptr;
             ActionContainer& cont;
 
-            ActionExecutorWithValues<Tuple, Ts...>& action() noexcept
+            ActionExecutorWithValues<Tuple>& action() noexcept
             {
                 return this->data_ptr->value();
             }
@@ -2356,10 +2355,10 @@ namespace jln
                 });
             }
 
-            ActionSharedPtr<Ts...> terminate_init()
+            ActionSharedPtr<> terminate_init()
             {
                 assert(this->data_ptr);
-                return detail::add_shared_ptr_from_data<ActionSharedPtr<Ts...>>(
+                return detail::add_shared_ptr_from_data<ActionSharedPtr<>>(
                     this->cont.node_executors, std::move(this->data_ptr));
             }
         };
@@ -2370,7 +2369,7 @@ namespace jln
         create_action_executor(TimeBase& /*timebase*/, Us&&... xs)
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
-            using Action = ActionExecutorWithValues<Tuple, Ts...>;
+            using Action = ActionExecutorWithValues<Tuple>;
             using ActionData = SharedData<Action>;
             using InitCtx = InitContext<ActionData, Tuple>;
             return detail::ActionExecutorBuilder<InitCtx>{
@@ -2445,7 +2444,6 @@ namespace jln
 
         SharedDataBase node_executors;
     };
-
 
 
     template<class... Ts>
