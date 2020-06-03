@@ -51,7 +51,7 @@ namespace jln
     template<class T> class SharedData;
     class SharedPtr;
     template<class... Ts> class TopSharedPtr;
-    template<class... Ts> class ActionSharedPtr;
+    class ActionSharedPtr;
 
     enum class [[nodiscard]] R : char
     {
@@ -381,7 +381,7 @@ namespace jln
             ActionExecutorBuilder_Concept on_action(Func);
             ActionExecutorBuilder_Concept set_notify_delete(Func);
 
-            template<class... Ts> operator ActionSharedPtr<Ts...> ();
+            operator ActionSharedPtr();
         };
 
         template<class Top, class Group>
@@ -1960,7 +1960,6 @@ namespace jln
         }
     };
 
-    template<class... Ts>
     class ActionSharedPtr : public SharedPtr
     {
         using SharedPtr::SharedPtr;
@@ -2000,28 +1999,27 @@ namespace jln
     }  // namespace detail
 
 
-    template<class... Ts>
     class TopContainer
     {
-        using Top = TopExecutor<Ts...>;
-        using Group = GroupExecutor<Ts...>;
+        using Top = TopExecutor<>;
+        using Group = GroupExecutor<>;
         using TopData = SharedData<Top>;
 
-        using GroupDeleter = ::jln::GroupDeleter<Ts...>;
+        using GroupDeleter = ::jln::GroupDeleter<>;
 
     public:
-        using Ptr = TopSharedPtr<Ts...>;
+        using Ptr = TopSharedPtr<>;
         TopContainer(const TopContainer&) = delete;
 
     private:
         template<class Tuple>
         struct InitContext
         {
-            std::unique_ptr<GroupExecutorWithValues<Tuple, Ts...>, GroupDeleter> g;
+            std::unique_ptr<GroupExecutorWithValues<Tuple>, GroupDeleter> g;
             std::unique_ptr<TopData, SharedDataDeleter> data_ptr;
             TopContainer& cont;
 
-            GroupExecutorWithValues<Tuple, Ts...>& group() noexcept
+            GroupExecutorWithValues<Tuple>& group() noexcept
             {
                 return *this->g;
             }
@@ -2044,11 +2042,11 @@ namespace jln
                     *this->g, static_cast<F&&>(f));
             }
 
-            TopSharedPtr<Ts...> terminate_init()
+            TopSharedPtr<> terminate_init()
             {
                 assert(this->data_ptr);
                 this->top().add_group(std::move(this->g));
-                return detail::add_shared_ptr_from_data<TopSharedPtr<Ts...>>(
+                return detail::add_shared_ptr_from_data<TopSharedPtr<>>(
                     this->cont.node_executors, std::move(this->data_ptr));
             }
 
@@ -2060,7 +2058,7 @@ namespace jln
         create_top_executor(TimeBase& timebase, int fd, Us&&... xs)
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
-            using Group = GroupExecutorWithValues<Tuple, Ts...>;
+            using Group = GroupExecutorWithValues<Tuple>;
             using InitCtx = InitContext<Tuple>;
             return detail::TopExecutorBuilder<InitCtx>{
                 InitCtx{
@@ -2332,7 +2330,7 @@ namespace jln
         using ActionDeleter = ::jln::ActionDeleter<>;
 
     public:
-        using Ptr = ActionSharedPtr<>;
+        using Ptr = ActionSharedPtr;
         ActionContainer(const ActionContainer&) = delete;
 
     private:
@@ -2355,10 +2353,10 @@ namespace jln
                 });
             }
 
-            ActionSharedPtr<> terminate_init()
+            ActionSharedPtr terminate_init()
             {
                 assert(this->data_ptr);
-                return detail::add_shared_ptr_from_data<ActionSharedPtr<>>(
+                return detail::add_shared_ptr_from_data<ActionSharedPtr>(
                     this->cont.node_executors, std::move(this->data_ptr));
             }
         };
@@ -2784,5 +2782,5 @@ namespace jln
 
 struct TimerContainer : jln::TimerContainer {};
 using TimerPtr = TimerContainer::Ptr;
-struct TopFdContainer : jln::TopContainer<> {};
+struct TopFdContainer : jln::TopContainer {};
 using TopFdPtr = TopFdContainer::Ptr;
