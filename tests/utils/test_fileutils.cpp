@@ -209,7 +209,8 @@ const auto file_not_exists = std::not_fn<bool(*)(char const*)>(file_exist);
 
 RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 {
-    RED_TEST_CONTEXT_DATA(char const* subname, subname, {"test_subdir", "test_subdir/"})
+    RED_TEST_CONTEXT_DATA(char const* subname, subname, {"test_subdir", "test_subdir/",
+                                                         "test_subdir/inner", "test_subdir/inner/"})
     {
         WorkingDirectory wd;
         auto dir = wd.dirname().string() + "test_dir/";

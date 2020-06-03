@@ -365,39 +365,34 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
     return status;
 }
 
-int recursive_delete_directory(const char * directory_path)
+int recursive_delete_directory(const char * directory_path_char_ptr)
 {
-    DIR * dir = opendir(directory_path);
+    // TODO: use string for recursive_delete_directory() parameter
+    const std::string directory_path(directory_path_char_ptr);
+    DIR * dir = opendir(directory_path.c_str());
 
     int return_value = 0;
 
     if (dir) {
         struct dirent * ent;
-        size_t const directory_path_len = strlen(directory_path);
 
         while (!return_value && (ent = readdir(dir)))
         {
+            std::string ent_name = ent->d_name;
             /* Skip the names "." and ".." as we don't want to recurse on them. */
-            if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) {
+            if (ent_name == "." || ent_name == "..") {
                 continue;
             }
 
-            size_t entry_path_length = directory_path_len + strlen(ent->d_name) + 2;
-            // TODO don't use alloca !!!
-            char * entry_path = static_cast<char*>(alloca(entry_path_length));
+            std::string entry_path = directory_path+"/"+ent_name;
+            struct stat statbuf;
 
-            if (entry_path) {
-                struct stat statbuf;
-
-                snprintf(entry_path, entry_path_length, "%s/%s", directory_path, ent->d_name);
-
-                if (!stat(entry_path, &statbuf)) {
-                    if (S_ISDIR(statbuf.st_mode)) {
-                        return_value = recursive_delete_directory(entry_path);
-                    }
-                    else {
-                        return_value = unlink(entry_path);
-                    }
+            if (0 == stat(entry_path.c_str(), &statbuf)) {
+                if (S_ISDIR(statbuf.st_mode)) {
+                    return_value = recursive_delete_directory(entry_path.c_str());
+                }
+                else {
+                    return_value = unlink(entry_path.c_str());
                 }
             }
         }
@@ -406,7 +401,7 @@ int recursive_delete_directory(const char * directory_path)
     }
 
     if (!return_value) {
-        return_value = rmdir(directory_path);
+        return_value = rmdir(directory_path.c_str());
     }
 
     return return_value;
