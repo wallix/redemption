@@ -29,6 +29,22 @@
 
 RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
+RED_AUTO_TEST_CASE(TestSimpleTimer)
+{
+    using Ptr = jln::SharedPtr;
+    using Dt = jln::NotifyDeleteType;
+    TimeBase time_base(timeval{1591190078, 222});
+    TimerContainer timer_events_;
+    std::string s;
+
+    auto && a = timer_events_.create_timer_executor(time_base, std::ref(s))
+    .set_notify_delete([](Dt, std::string& s){ s += "d1\n"; })
+    .set_delay(std::chrono::seconds(1))
+    .on_action(jln::one_shot([](std::string& s){s += "timer1\n";}));
+
+}
+
+
 RED_AUTO_TEST_CASE(TestSequencer)
 {
     using R = jln::R;

@@ -2186,15 +2186,14 @@ namespace jln
         }
     };
 
-    template<class... Ts>
     class TimerContainer
     {
-        using Timer = TimerExecutor<Ts...>;
+        using Timer = TimerExecutor<>;
 
-        using TimerDeleter = ::jln::TimerDeleter<Ts...>;
+        using TimerDeleter = ::jln::TimerDeleter<>;
 
     public:
-        using Ptr = TimerSharedPtr<Ts...>;
+        using Ptr = TimerSharedPtr<>;
 
     private:
         template<class TimerData, class Tuple>
@@ -2203,7 +2202,7 @@ namespace jln
             std::unique_ptr<TimerData, SharedDataDeleter> data_ptr;
             TimerContainer& cont;
 
-            TimerExecutorWithValues<Tuple, Ts...>& timer() noexcept
+            TimerExecutorWithValues<Tuple>& timer() noexcept
             {
                 return this->data_ptr->value();
             }
@@ -2216,13 +2215,13 @@ namespace jln
                 });
             }
 
-            TimerSharedPtr<Ts...> terminate_init()
+            TimerSharedPtr<> terminate_init()
             {
                 assert(this->data_ptr);
                 SharedDataBase* data_ptr = this->data_ptr.release();
                 data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
                 data_ptr->shared_ptr = nullptr;
-                return TimerSharedPtr<Ts...>(static_cast<TimerData*>(data_ptr));
+                return TimerSharedPtr<>(static_cast<TimerData*>(data_ptr));
             }
         };
 
@@ -2232,7 +2231,7 @@ namespace jln
         create_timer_executor(TimeBase& timebase, Us&&... xs)
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
-            using Timer = TimerExecutorWithValues<Tuple, Ts...>;
+            using Timer = TimerExecutorWithValues<Tuple>;
             using LocalTimerData = SharedData<Timer>;
             using InitCtx = InitContext<LocalTimerData, Tuple>;
             return detail::TimerExecutorBuilder<InitCtx>{
@@ -2787,7 +2786,7 @@ namespace jln
     }
 }  // namespace jln
 
-struct TimerContainer : jln::TimerContainer<> {};
+struct TimerContainer : jln::TimerContainer {};
 using TimerPtr = TimerContainer::Ptr;
 struct TopFdContainer : jln::TopContainer<> {};
 using TopFdPtr = TopFdContainer::Ptr;
