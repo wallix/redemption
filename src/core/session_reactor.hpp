@@ -52,7 +52,6 @@ namespace jln
     class SharedPtr;
     template<class... Ts> class TopSharedPtr;
     template<class... Ts> class ActionSharedPtr;
-    template<class... Ts> class TimerSharedPtr;
 
     enum class [[nodiscard]] R : char
     {
@@ -371,7 +370,7 @@ namespace jln
 
             operator SharedPtr ();
 
-            template<class... Ts> operator TimerSharedPtr<Ts...> ();
+            operator TimerSharedPtr();
         };
 
         struct /*[[nodiscard]]*/ ActionExecutorBuilder_Concept
@@ -1924,10 +1923,9 @@ namespace jln
         }
     };
 
-    template<class... Ts>
     class TimerSharedPtr : public SharedPtr
     {
-        using Timer = TimerExecutor<Ts...>;
+        using Timer = TimerExecutor<>;
         using Data = SharedData<Timer>;
 
         struct PtrInterface : protected SharedPtr
@@ -2193,7 +2191,7 @@ namespace jln
         using TimerDeleter = ::jln::TimerDeleter<>;
 
     public:
-        using Ptr = TimerSharedPtr<>;
+        using Ptr = TimerSharedPtr;
 
     private:
         template<class TimerData, class Tuple>
@@ -2215,13 +2213,13 @@ namespace jln
                 });
             }
 
-            TimerSharedPtr<> terminate_init()
+            TimerSharedPtr terminate_init()
             {
                 assert(this->data_ptr);
                 SharedDataBase* data_ptr = this->data_ptr.release();
                 data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
                 data_ptr->shared_ptr = nullptr;
-                return TimerSharedPtr<>(static_cast<TimerData*>(data_ptr));
+                return TimerSharedPtr(static_cast<TimerData*>(data_ptr));
             }
         };
 
