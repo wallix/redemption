@@ -584,7 +584,7 @@ namespace
                     break;
                 }
                 auto next_not_ascii = std::find_if_not(first_ascii+1, last, is_printable);
-                auto dist = next_not_ascii - first_ascii;
+                auto dist = unsigned(next_not_ascii - first_ascii);
 
                 if (min_len <= dist) {
                     auto mask_index = first_ascii - v.begin();

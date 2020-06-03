@@ -32,7 +32,10 @@ Author(s): Jonathan Poelen
 #include <tuple>
 #include <vector>
 #include <variant>
-#include <string_view>
+
+#ifdef IN_IDE_PARSER
+# include <ostream>
+#endif
 
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/cat.hpp>
@@ -49,8 +52,44 @@ namespace
 inline namespace test_channel
 {
 
-using DataChan_tuple = std::tuple<
-    CHANNELS::ChannelNameId, std::vector<uint8_t>, std::size_t, uint32_t>;
+struct BasicChannelData
+{
+    CHANNELS::ChannelNameId channel_name;
+    std::vector<uint8_t> data;
+    std::size_t total_len;
+    uint32_t channel_flags;
+
+    BasicChannelData(
+        CHANNELS::ChannelNameId channel_name,
+        bytes_view av,
+        std::size_t total_len,
+        uint32_t channel_flags)
+    : channel_name(channel_name)
+    , data(av.begin(), av.end())
+    , total_len(total_len)
+    , channel_flags(channel_flags)
+    {}
+
+
+    template<class Ch, class Tr>
+    friend std::basic_ostream<Ch, Tr>&
+    operator<<(std::basic_ostream<Ch, Tr>& out, BasicChannelData const& chann)
+    {
+        out << "DataChan{" << chann.channel_name << ", {";
+        ut::put_view(0, out, ut::hex(chann.data));
+        out << "}, " << chann.total_len << ", " << chann.channel_flags << "}";
+        return out;
+    }
+
+    bool operator == (BasicChannelData const& other) const
+    {
+        return channel_name == other.channel_name
+            && data == other.data
+            && total_len == other.total_len
+            && channel_flags == other.channel_flags
+            ;
+    }
+};
 
 template<class>
 struct js_to_tuple;
@@ -60,8 +99,6 @@ struct js_to_tuple<void(Ts...)>
 {
     using type = std::tuple<Ts...>;
 };
-
-void print_bytes(std::ostream& out, bytes_view v);
 
 template<class T>
 struct WVector
@@ -77,186 +114,219 @@ struct WVector
     template<class U>
     friend std::ostream& operator<<(std::ostream& out, WVector<U> const& x)
     {
-        print_bytes(out, x.v);
+        ut::put_view(0, out, ut::hex(x.v));
         return out;
     }
 
     bool operator == (WVector const& x) const { return v == x.v; }
 };
 
-#define JS_c(classname)                                                      \
-    (classname, struct classname {                                           \
+
+//@{
+#define MAKE_BINDING_CPP_STRUCT(r, data, elem) MAKE_BINDING_CPP_STRUCT_I elem
+
+#define MAKE_BINDING_CPP_STRUCT_I(type, ...) \
+    BOOST_PP_CAT(MAKE_BINDING_CPP_STRUCT_I_, type)(__VA_ARGS__)
+
+#define MAKE_BINDING_CPP_STRUCT_I_c(classname)                               \
+    struct classname {                                                       \
         friend std::ostream& operator<<(std::ostream& out, classname const&) \
         { return out << #classname "{}"; }                                   \
         bool operator == (classname const) const { return true; }            \
-    }, +[]() { g_channel_data_received.push_back(classname{}); })
+    };
 
-#define JS_X_MAKE_CLASS(classname, ...)                                        \
+#define MAKE_BINDING_CPP_STRUCT_I_x(classname, ...)                            \
     struct classname : decltype(js_to_tuple<void(__VA_ARGS__)>::type{})        \
     {                                                                          \
         using decltype(js_to_tuple<void(__VA_ARGS__)>::type{})::tuple;         \
         friend std::ostream& operator<<(std::ostream& out, classname const& x) \
         { out << #classname << "{"; print_tuple(out, x); return out << "}"; }  \
+    };
+
+#define MAKE_BINDING_CPP_STRUCT_I_x_f(classname, body_func, ...) \
+    MAKE_BINDING_CPP_STRUCT_I_x(classname, __VA_ARGS__)
+
+#define MAKE_BINDING_CPP_STRUCT_I_d(classname, data_type, ...) \
+    MAKE_BINDING_CPP_STRUCT_I_x(classname, WVector<data_type>, __VA_ARGS__)
+//@}
+
+//@{
+#define MAKE_BINDING_LIST_NAME(r, struct_namespace, elem) \
+    MAKE_BINDING_LIST_NAME_II(struct_namespace, MAKE_BINDING_LIST_NAME_I elem)
+#define MAKE_BINDING_LIST_NAME_I(type, ...) __VA_ARGS__, _
+#define MAKE_BINDING_LIST_NAME_II(...) MAKE_BINDING_LIST_NAME_III(__VA_ARGS__)
+#define MAKE_BINDING_LIST_NAME_III(struct_namespace, classname, ...) \
+    , struct_namespace::classname
+//@}
+
+//@{
+#define MAKE_BINDING_FUNCTION_PTR(r, channel_type, elem) .function_ptr( \
+    MAKE_BINDING_FUNCTION_PTR_II(channel_type, MAKE_BINDING_FUNCTION_PTR_I elem))
+
+#define MAKE_BINDING_FUNCTION_PTR_I(...) __VA_ARGS__
+
+#define MAKE_BINDING_FUNCTION_PTR_II(...) MAKE_BINDING_FUNCTION_PTR_III(__VA_ARGS__)
+
+#define MAKE_BINDING_FUNCTION_PTR_III(channel_type, type, ...) \
+    BOOST_PP_CAT(MAKE_BINDING_FUNCTION_PTR_I_, type)(channel_type, __VA_ARGS__)
+
+#define MAKE_BINDING_FUNCTION_PTR_I_c(channel_type, classname) \
+    #classname, +[](channel_type& channel_ctx_) {              \
+        channel_ctx_.datas.push_back(structs::classname{});    \
     }
 
-#define JS_x(classname, ...) (                                 \
-    classname,                                                 \
-    JS_X_MAKE_CLASS(classname, __VA_ARGS__),                   \
-    static_cast<void(*)(__VA_ARGS__)>([](auto... args) {       \
-        g_channel_data_received.push_back(classname{args...}); \
-    })                                                         \
-)
+#define MAKE_BINDING_FUNCTION_PTR_I_x(channel_type, classname, ...)    \
+    #classname, static_cast<void(*)(channel_type&, __VA_ARGS__)>(      \
+        [](channel_type& channel_ctx_, auto... args) {                 \
+            channel_ctx_.datas.push_back(structs::classname{args...}); \
+        }                                                              \
+    )
 
-#define JS_x_f(classname, body_func, ...) (                         \
-    classname,                                                      \
-    JS_X_MAKE_CLASS(classname, __VA_ARGS__),                        \
-    ([]{                                                            \
-        static auto user_func = [](__VA_ARGS__) { body_func; };     \
-        return static_cast<decltype(+user_func)>([](auto... args) { \
-            g_channel_data_received.push_back(classname{args...});  \
-            return user_func(args...);                              \
-        });                                                         \
-    }())                                                            \
-)
+#define MAKE_BINDING_FUNCTION_PTR_I_x_f(channel_type, classname, body_func, ...) \
+    #classname, []{                                                              \
+        struct FRet_ {                                                           \
+            static auto impl(channel_type&, __VA_ARGS__) { body_func; }          \
+        };                                                                       \
+        return static_cast<decltype(&FRet_::impl)>(                              \
+            [](channel_type& channel_ctx_, auto... args) {                       \
+                channel_ctx_.datas.push_back(structs::classname{args...});       \
+                return FRet_::impl(channel_ctx_, args...);                       \
+            }                                                                    \
+        );                                                                       \
+    }()
 
-#define JS_d(classname, data_type, ...) (                                      \
-    classname,                                                                 \
-    struct classname                                                           \
-    : decltype(js_to_tuple<void(WVector<data_type>, __VA_ARGS__)>::type{})     \
-    {                                                                          \
-        using decltype(js_to_tuple<void(                                       \
-            WVector<data_type>, __VA_ARGS__)>::type{})::tuple;                 \
-        friend std::ostream& operator<<(std::ostream& out, classname const& x) \
-        { out << #classname << "{"; print_tuple(out, x); return out << "}"; }  \
-    },                                                                         \
-    static_cast<void(*)(uintptr_t, uint32_t, __VA_ARGS__)>(                    \
-        [](uintptr_t iptr_, uint32_t n_, auto... args) {                       \
-            auto p_ = reinterpret_cast<data_type*>(iptr_);                     \
-            g_channel_data_received.push_back(classname{                       \
-                WVector<data_type>{{p_, p_+n_}}, args...});                    \
-    })                                                                         \
-)
+#define MAKE_BINDING_FUNCTION_PTR_I_d(channel_type, classname, data_type, ...)         \
+    #classname, static_cast<void(*)(channel_type&, uintptr_t, uint32_t, __VA_ARGS__)>( \
+        [](channel_type& channel_ctx_, uintptr_t iptr_, uint32_t n_, auto... args) {   \
+            auto p_ = reinterpret_cast<data_type*>(iptr_);                             \
+            channel_ctx_.datas.push_back(                                              \
+                structs::classname{WVector<data_type>{{p_, p_+n_}}, args...}           \
+            );                                                                         \
+        }                                                                              \
+    )
+//@}
 
-#define MAKE_TYPE_NAME(classname, ...) classname
+//@{
+#define MAKE_BINDING_JS_FUNCTION(r, data, elem) \
+    MAKE_BINDING_JS_FUNCTION_II(MAKE_BINDING_JS_FUNCTION_I elem)
 
-#define MAKE_BIND_TYPE_E(r, data, elem)                           \
-    template<class... Ts> struct binding_type<__COUNTER__, Ts...> \
-    : binding_type<__COUNTER__-3, Ts..., MAKE_TYPE_NAME elem>     \
-    {};
+#define MAKE_BINDING_JS_FUNCTION_I(type, ...) __VA_ARGS__, 0
+#define MAKE_BINDING_JS_FUNCTION_II(...) MAKE_BINDING_JS_FUNCTION_III(__VA_ARGS__)
+#define MAKE_BINDING_JS_FUNCTION_III(classname, ...) \
+    classname: function(...args) { return this.self_.classname(...args); },
+//@}
 
-#define MAKE_JS_TO_CPP_E(r, data, elem) MAKE_JS_TO_CPP_E_S elem
-#define MAKE_JS_TO_CPP_E_S(classname, struct_def, func) \
-    inline namespace test_channel { struct_def; }
-
-#define MAKE_JS_CALL_E(r, data, elem) \
-    MAKE_TYPE_NAME elem: (...args) => \
-        BOOST_PP_CAT(Module.test_js_chan__, MAKE_TYPE_NAME elem)(...args),
-
-#define MAKE_CPP_BINDING_E(r, data, elem) \
-    redjs::function("test_js_chan__" MAKE_CPP_BINDING_F elem);
-
-#define MAKE_CPP_BINDING_F(classname, struct_def, func) #classname, func
-
-#define MAKE_BINDING_CALLBACKS(ModChannelDataType, S)       \
-    BOOST_PP_SEQ_FOR_EACH(MAKE_JS_TO_CPP_E, _, S)           \
-                                                            \
-    template<int, class...> class binding_type;             \
-    template<class... Ts>                                   \
-    struct binding_type<__COUNTER__-1, Ts...>               \
-    { using type = std::variant<                            \
-        ModChannelDataType, Ts...>; };                      \
-                                                            \
-    BOOST_PP_SEQ_FOR_EACH(MAKE_BIND_TYPE_E, _, S)           \
-                                                            \
-    std::vector<binding_type<__COUNTER__-2>::type>          \
-        g_channel_data_received;                            \
-                                                            \
-    void TestBindingSendModChannel                          \
-        ::send_to_mod_channel(                              \
-        CHANNELS::ChannelNameId front_channel_name,         \
-        InStream & chunk, std::size_t length,               \
-        uint32_t flags)                                     \
-    {                                                       \
-        g_channel_data_received.push_back(                  \
-            ModChannelDataType{front_channel_name, {        \
-                chunk.get_data(),                           \
-                chunk.get_data_end()                        \
-            }, length, flags});                             \
-    }                                                       \
-                                                            \
-    template<class F>                                       \
-    void ::datas_checker::operator = (F f)                  \
-    {                                                       \
-        f(*this);                                           \
-        if (i < g_channel_data_received.size())             \
-        {                                                   \
-            err(*this);                                     \
-        }                                                   \
-        g_channel_data_received.clear();                    \
-    }                                                       \
-                                                            \
-    TestBindingSendModChannel g_send_mod_channel;           \
-                                                            \
-    EMSCRIPTEN_BINDINGS(test_channel_)                      \
-    {                                                       \
-        BOOST_PP_SEQ_FOR_EACH(MAKE_CPP_BINDING_E, _, S)     \
-        auto init = [](emscripten::val&& v){                \
-            _global_create_channel(                         \
-                static_cast<Callback&>(g_send_mod_channel), \
-                std::move(v));                              \
-            g_channel_data_received.clear();                \
-        };                                                  \
-        redjs::function("test_init_js_channel_", init);     \
-    }                                                       \
-                                                            \
-    void init_js_channel()                                  \
-    {                                                       \
-        g_channel_data_received.clear();                    \
-        RED_EM_ASM({Module.test_init_js_channel_({          \
-            BOOST_PP_SEQ_FOR_EACH(MAKE_JS_CALL_E, _, S)     \
-        });});                                              \
+#define MAKE_BINDING_CALLBACKS(ChannelType, ModChannelDataType, S)           \
+    namespace test_channel_data                                              \
+    {                                                                        \
+        namespace ChannelType ## _structs                                    \
+        {                                                                    \
+            BOOST_PP_SEQ_FOR_EACH(MAKE_BINDING_CPP_STRUCT, _, S)             \
+        }                                                                    \
+                                                                             \
+        struct ChannelType ## _js                                            \
+        {                                                                    \
+            using vector_t = std::vector<test_channel::Variant<              \
+                ModChannelDataType                                           \
+                BOOST_PP_SEQ_FOR_EACH(                                       \
+                    MAKE_BINDING_LIST_NAME,                                  \
+                    ChannelType ## _structs,                                 \
+                    S)                                                       \
+            >>;                                                              \
+            using ChannelPtr = std::unique_ptr<ChannelType>;                 \
+            vector_t datas;                                                  \
+            test_channel::TestBindingCallback<                               \
+                ModChannelDataType, vector_t> cb;                            \
+            ChannelPtr channel_ptr;                                          \
+                                                                             \
+            ChannelType ## _js(                                              \
+                emscripten::val&& val,                                       \
+                intptr_t ifunc, intptr_t ictx)                               \
+            : cb(datas)                                                      \
+            , channel_ptr((*reinterpret_cast<ChannelPtr(*)(                  \
+                Callback&, emscripten::val&, intptr_t                        \
+            )>(ifunc))(cb, val, ictx))                                       \
+            {}                                                               \
+                                                                             \
+            struct TestContext                                               \
+            {                                                                \
+                using ferr_type = void(unsigned i, std::size_t n);           \
+                ferr_type* ferr;                                             \
+                vector_t& datas;                                             \
+                unsigned i = 0;                                              \
+                                                                             \
+                template<class F>                                            \
+                void operator = (F f)                                        \
+                {                                                            \
+                    f(*this);                                                \
+                    if (i < datas.size()) {                                  \
+                        ferr(i, datas.size());                               \
+                    }                                                        \
+                    datas.clear();                                           \
+                }                                                            \
+            };                                                               \
+                                                                             \
+            TestContext test_context(TestContext::ferr_type* ferr)           \
+            {                                                                \
+                return TestContext{ferr, datas};                             \
+            }                                                                \
+        };                                                                   \
+    }                                                                        \
+                                                                             \
+    EMSCRIPTEN_BINDINGS(test_channel_)                                       \
+    {                                                                        \
+        namespace structs = test_channel_data::ChannelType ## _structs;      \
+        using Class = test_channel_data::ChannelType ## _js;                 \
+        redjs::class_<Class>(#ChannelType "_test")                           \
+            .constructor<emscripten::val&&, intptr_t, intptr_t>()            \
+            .function_ptr("as_ptr", [](Class& self){                         \
+                return reinterpret_cast<uintptr_t>(&self);                   \
+            })                                                               \
+            BOOST_PP_SEQ_FOR_EACH(                                           \
+                MAKE_BINDING_FUNCTION_PTR,                                   \
+                test_channel_data::ChannelType ## _js,                       \
+                S                                                            \
+            )                                                                \
+        ;                                                                    \
+    }                                                                        \
+                                                                             \
+    template<class... Ts>                                                    \
+    std::unique_ptr<test_channel_data::ChannelType ## _js>                   \
+    ChannelType ## _ctx(Ts&&... xs)                                          \
+    {                                                                        \
+        auto make_channel = [&](Callback& cb, emscripten::val& val) {        \
+            return std::unique_ptr<ChannelType>(new ChannelType{             \
+                cb, std::move(val), static_cast<Ts&&>(xs)...});              \
+        };                                                                   \
+                                                                             \
+        auto func = [](Callback& cb, emscripten::val& val, intptr_t maker) { \
+            auto& make = *reinterpret_cast<decltype(make_channel)*>(maker);  \
+            return make(cb, val);                                            \
+        };                                                                   \
+                                                                             \
+        auto iptr = RED_EM_ASM_INT(                                          \
+            {                                                                \
+                const callbacks = ({                                         \
+                    BOOST_PP_SEQ_FOR_EACH(MAKE_BINDING_JS_FUNCTION, _, S)    \
+                });                                                          \
+                const mod = new Module.ChannelType ## _test(                 \
+                    callbacks, $0, $1);                                      \
+                callbacks.self_ = mod;                                       \
+                return mod.as_ptr();                                         \
+            },                                                               \
+            reinterpret_cast<intptr_t>(+func),                               \
+            reinterpret_cast<intptr_t>(&make_channel)                        \
+        );                                                                   \
+                                                                             \
+        return std::unique_ptr<test_channel_data::ChannelType ## _js>(       \
+            reinterpret_cast<test_channel_data::ChannelType ## _js*>(        \
+                iptr                                                         \
+            )                                                                \
+        );                                                                   \
     }
 
-inline void print_bytes(std::ostream& out, bytes_view v)
-{
-    out << "\"";
-    char const* s = "0123456789abcdef";
-    uint8_t previous = 1;
-    for (auto const& x : v)
-    {
-        if (x >= 0x20 && x < 127)
-        {
-            auto ishex = [](uint8_t c){
-                return ('0' <= c && c <= '9')
-                    || ('a' <= c && c <= 'f')
-                    || ('A' <= c && c <= 'F');
-            };
-
-            if ((!previous && ishex(x)) || ishex(previous))
-            {
-                out << "\"\"";
-                previous = 1;
-            }
-            out << x;
-        }
-        else
-        {
-            previous = x;
-            if (x)
-            {
-                out << "\\x" << s[x>>4] << s[x&0xf];
-            }
-            else
-            {
-                out << "\\0";
-            }
-        }
-    }
-    out << "\"_av";
-}
-
-template<class... Ts>
-void print_tuple(std::ostream& out, std::tuple<Ts...> const& t)
+template<class Ch, class Tr, class... Ts>
+void print_tuple(std::basic_ostream<Ch, Tr>& out, std::tuple<Ts...> const& t)
 {
     std::apply([&](auto const& x, auto const&... xs){
         out << x;
@@ -264,147 +334,90 @@ void print_tuple(std::ostream& out, std::tuple<Ts...> const& t)
     }, t);
 }
 
-struct TestBindingSendModChannel : Callback
+template<class... Ts>
+struct Variant
 {
-    void rdp_input_invalidate(Rect) override {}
-    void rdp_input_mouse(int, int, int, Keymap2*) override {}
-    void rdp_input_scancode(long, long, long, long, Keymap2*) override {}
-    void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
-    void refresh(Rect) override {}
-    void rdp_gdi_down() override {}
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override;
-};
+    std::variant<Ts...> variant;
 
-template<class... Fs>
-struct Overload : Fs...
-{
-    using Fs::operator()...;
-};
+    template<class T>
+    Variant(T&& x)
+    : variant(static_cast<T&&>(x))
+    {}
 
-template<class... Fs>
-Overload(Fs...) -> Overload<Fs...>;
-
-template<class T>
-using remove_cvref_t = std::remove_const_t<std::remove_reference_t<T>>;
-
-template<class T>
-std::string_view get_type()
-{
-    return [](auto&& a) {
-        return std::string_view(a+79, sizeof(a)-81);
-    }(__PRETTY_FUNCTION__);
-}
-
-// template<class F>
-// struct run_f
-// {
-//     int i;
-//     F f;
-//
-//     template<class FT>
-//     void operator=(FT f)
-//     {
-//         std::visit(Overload{f, this->f}, g_channel_data_received[i]);
-//     }
-// };
-//
-// template<class F>
-// run_f(int, F) -> run_f<F>;
-
-// template<class> class extract_p1;
-// template<class T> struct extract_p1<void(T)> { using type = T; };
-// template<class T> using extract_p1_t = remove_cvref_t<typename extract_p1<T>::type>;
-
-// #define RED_CHECK_TYPE(i, Type) ::run_f{i,                    \
-//     [&](auto const& x){ RED_CHECK_MESSAGE(false, "check "     \
-//         << ::get_type<::extract_p1_t<void(Type)>>() << " == " \
-//         << ::get_type<::remove_cvref_t<decltype(x)>>()        \
-//         << " has failed"                                      \
-//     ); } } = [&](Type)
-
-struct datas_checker
-{
-    void(*err)(datas_checker&);
-    unsigned i = 0;
-    template<class F>
-    void operator = (F f);
-};
-
-#define RED_CHECK_V(i, ...) std::visit(Overload{                  \
-    [&](decltype(__VA_ARGS__) const& expected) {                  \
-        RED_CHECK((__VA_ARGS__) == expected); },                  \
-    [&](auto const& x){ RED_CHECK_MESSAGE(false, "check "         \
-        << ::get_type<::remove_cvref_t<decltype(__VA_ARGS__)>>()  \
-        << " == " << ::get_type<::remove_cvref_t<decltype(x)>>()  \
-        << " has failed [" << (__VA_ARGS__) << " != " << x << "]" \
-    ); }                                                          \
-}, ::g_channel_data_received[i])
-
-// #define RED_CHECK_COUNT(n) RED_CHECK(::g_channel_data_received.size() == n);
-
-#define CTX_CHECK_DATAS()                                       \
-    ::datas_checker{[](datas_checker& _data_checker){           \
-        RED_CHECK_MESSAGE(false, "there is "                    \
-            << ::g_channel_data_received.size()                 \
-            << " elements, " << _data_checker.i << " checked"); \
-    }, 0} = [&]([[maybe_unused]] datas_checker& _data_checker)
-
-#define CHECK_NEXT_DATA(...) do {                                     \
-    RED_REQUIRE(_data_checker.i < ::g_channel_data_received.size()); \
-    RED_CHECK_V(_data_checker.i++, __VA_ARGS__);                      \
-} while (0)
-
-struct DataChanPrintable : DataChan_tuple
-{
-    using DataChan_tuple::DataChan_tuple;
-
-    friend std::ostream& operator<<(std::ostream& out, DataChanPrintable const& x)
+    template<class T>
+    bool operator == (T const& other) const
     {
-        auto& t = static_cast<DataChan_tuple const&>(x);
-        out << "DataChan{" << std::get<0>(t) << ", {";
-        print_bytes(out, std::get<1>(t));
-        out << "}, " << std::get<2>(t) << ", " << std::get<3>(t) << "}";
+        T const* value = std::get_if<T>(&variant);
+        return value && *value == other;
+    }
+
+    template<class... Us>
+    friend std::ostream& operator<<(std::ostream& out, Variant<Us...> const& variant)
+    {
+        std::visit([&](auto const& value) { out << value; }, variant.variant);
         return out;
     }
 };
 
-void* _global_channel_instance = nullptr;
-void (*_global_create_channel)(Callback&, emscripten::val&&) = nullptr;
+template<class ChannelData, class Datas>
+struct TestBindingCallback : Callback
+{
+    void rdp_input_invalidate(Rect /*unused*/) override {}
+    void rdp_input_mouse(
+        int /*unused*/, int /*unused*/, int /*unused*/, Keymap2* /*unused*/) override {}
+    void rdp_input_scancode(
+        long /*unused*/, long /*unused*/, long /*unused*/, long /*unused*/, Keymap2* /*unused*/)
+        override {}
+    void rdp_input_synchronize(
+        uint32_t /*unused*/, uint16_t /*unused*/, int16_t /*unused*/, int16_t /*unused*/)
+        override {}
+    void refresh(Rect /*unused*/) override {}
+    void rdp_gdi_down() override {}
+    void rdp_gdi_up_and_running(ScreenInfo & /*unused*/) override {}
+
+    void send_to_mod_channel(
+        CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
+        std::size_t length, uint32_t flags) override
+    {
+        this->datas.push_back(ChannelData{
+            front_channel_name, chunk.remaining_bytes(), length, flags
+        });
+    }
+
+    TestBindingCallback(Datas& datas)
+    : datas(datas)
+    {}
+
+    Datas& datas;
+};
+
+// template<class T>
+// using remove_cvref_t = std::remove_const_t<std::remove_reference_t<T>>;
+//
+// template<class T>
+// std::string_view get_type()
+// {
+//     return [](auto&& a) {
+//         return std::string_view(a+79, sizeof(a)-81);
+//     }(__PRETTY_FUNCTION__);
+// }
+
+#define CTX_CHECK_DATAS(ctx)                           \
+    ctx->test_context([](unsigned i, std::size_t n){   \
+        RED_CHECK_MESSAGE(false, "there is "           \
+            << n << " elements, " << i << " checked"); \
+    }) = [&]([[maybe_unused]] auto& _data_checker)
+
+#define CHECK_NEXT_DATA(...) do {                                     \
+    if (_data_checker.i >= _data_checker.datas.size()) {              \
+        RED_REQUIRE(_data_checker.i < _data_checker.datas.size());    \
+        return;                                                       \
+    }                                                                 \
+    {                                                                 \
+        auto& _current_data = _data_checker.datas[_data_checker.i++]; \
+        RED_CHECK(_current_data == (__VA_ARGS__));                    \
+    }                                                                 \
+} while (0)
 
 }
 }
-
-#define RED_AUTO_TEST_CHANNEL(test_name, create_channel, chann_name)            \
-    namespace {                                                                 \
-        auto CHANNEL_TU_ ## test_name ## create_channel() {                     \
-            return create_channel;                                              \
-        };                                                                      \
-    }                                                                           \
-    struct CHANNEL_TU_ ## test_name {                                           \
-        using channel_type = decltype(                                          \
-            CHANNEL_TU_ ## test_name ## create_channel()(                       \
-                std::declval<Callback&>(), std::declval<emscripten::val&&>())); \
-        static void test(channel_type& chann_name);                             \
-    };                                                                          \
-    RED_AUTO_TEST_CASE(test_name) {                                             \
-        using channel_type = CHANNEL_TU_ ## test_name::channel_type;            \
-                                                                                \
-        ::test_channel::_global_create_channel = [](                            \
-            Callback& cb, emscripten::val&& v                                   \
-        ) {                                                                     \
-            auto* chann = new channel_type{                                     \
-                CHANNEL_TU_ ## test_name ## create_channel()(                   \
-                    cb, static_cast<emscripten::val&&>(v))};                    \
-            ::test_channel::_global_channel_instance = chann;                   \
-        };                                                                      \
-                                                                                \
-        init_js_channel();                                                      \
-        std::unique_ptr<channel_type> pchann{static_cast<channel_type*>(        \
-            ::test_channel::_global_channel_instance)};                         \
-        CHANNEL_TU_ ## test_name ::test(*pchann);                               \
-        pchann.reset();                                                         \
-        ::test_channel::_global_channel_instance = nullptr;                     \
-        CTX_CHECK_DATAS() { CHECK_NEXT_DATA(::test_channel::free{}); };         \
-    }                                                                           \
-    void CHANNEL_TU_ ## test_name ::test(channel_type& chann_name)

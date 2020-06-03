@@ -8,13 +8,13 @@ http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
 wget 'https://github.com/juj/emsdk/archive/master.zip' -Oemsdk-master.zip
 unzip emsdk-master.zip
 cd emsdk-master/
-./emsdk install sdk-1.38.31-64bit
+./emsdk install sdk-fastcomp-1.38.31-64bit
 ```
 
 ## Setting
 
 ```bash
-./emsdk activate sdk-1.38.31-64bit
+./emsdk activate sdk-fastcomp-1.38.31-64bit
 source ./emsdk_env.sh
 ```
 
@@ -24,14 +24,14 @@ source ./emsdk_env.sh
 source ./emsdk_set_env.sh
 ```
 
-## Update
+<!--## Update
 
 ```bash
 ./emsdk update
-./emsdk install sdk-1.38.31-64bit
-./emsdk activate sdk-1.38.31-64bit
+./emsdk install sdk-fastcomp-1.38.31-64bit
+./emsdk activate sdk-fastcomp-1.38.31-64bit
 source ./emsdk_env.sh
-```
+```-->
 
 ## Test
 
