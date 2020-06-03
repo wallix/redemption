@@ -465,7 +465,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
     const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
 
-    ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
+    ini.set<cfg::context::close_box_extra_message>("");
     ModRDPParams mod_rdp_params(
         (smartcard_passthrough ? "" : ini.get<cfg::globals::target_user>().c_str())
       , (smartcard_passthrough ? "" : ini.get<cfg::context::target_password>().c_str())

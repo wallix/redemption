@@ -175,7 +175,7 @@ private:
                     SessionProbeOnLaunchFailure::retry_without_session_probe)
             {
                 LOG(LOG_INFO, "Retry connection without session probe");
-                ini.get_mutable_ref<cfg::mod_rdp::enable_session_probe>() = false;
+                ini.set<cfg::mod_rdp::enable_session_probe>(false);
                 return 2;
             }
             if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
@@ -198,7 +198,7 @@ private:
         }
         else if (e.id == ERR_RAIL_NOT_ENABLED) {
             LOG(LOG_INFO, "Retry without native remoteapp capability");
-            ini.get_mutable_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+            ini.set<cfg::mod_rdp::use_native_remoteapp_capability>(false);
             return 2;
         }
         else if (e.id == ERR_RDP_SERVER_REDIR){
@@ -406,7 +406,7 @@ private:
                         }
                         mod_wrapper.get_mod()->rdp_input_invalidate(
                                 Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
-                        ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+                        ini.set<cfg::context::auth_error_message>("");
                     }
                     catch (...) {
                         authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
@@ -434,7 +434,7 @@ private:
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
 
-                        ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+                        ini.set<cfg::context::auth_error_message>("");
                     }
                     catch (...) {
                         authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
@@ -482,7 +482,7 @@ private:
 
             if (!ini.get<cfg::context::disconnect_reason>().empty()) {
                 acl.manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
-                ini.get_mutable_ref<cfg::context::disconnect_reason>().clear();
+                ini.set<cfg::context::disconnect_reason>("");
                 ini.set_acl<cfg::context::disconnect_reason_ack>(true);
             }
             else if (!ini.get<cfg::context::auth_command>().empty()) {
@@ -526,7 +526,7 @@ private:
                     }
                 }
 
-                ini.get_mutable_ref<cfg::context::auth_command>().clear();
+                ini.set<cfg::context::auth_command>("");
             }
         }
 
@@ -541,7 +541,7 @@ private:
                     // If set, transmit to auth_channel channel
                     mod_wrapper.get_mod()->send_auth_channel_data(ini.get<cfg::context::auth_channel_answer>().c_str());
                     // Erase the context variable
-                    ini.get_mutable_ref<cfg::context::auth_channel_answer>().clear();
+                    ini.set<cfg::context::auth_channel_answer>("");
                 }
             }
 
@@ -555,14 +555,14 @@ private:
                     // If set, transmit to auth_channel channel
                     mod_wrapper.get_mod()->send_checkout_channel_data(ini.get<cfg::context::pm_response>().c_str());
                     // Erase the context variable
-                    ini.get_mutable_ref<cfg::context::pm_response>().clear();
+                    ini.set<cfg::context::pm_response>("");
                 }
             }
 
             if (!ini.get<cfg::context::rd_shadow_type>().empty()) {
                 mod_wrapper.get_mod()->create_shadow_session(ini.get<cfg::context::rd_shadow_userdata>().c_str(),
                     ini.get<cfg::context::rd_shadow_type>().c_str());
-                ini.get_mutable_ref<cfg::context::rd_shadow_type>().clear();
+                ini.set<cfg::context::rd_shadow_type>("");
             }
         }
         return true;
@@ -992,7 +992,7 @@ public:
                                         Rect(0, 0,
                                             front.client_info.screen_info.width,
                                             front.client_info.screen_info.height));
-                                ini.get_mutable_ref<cfg::context::auth_error_message>().clear();
+                                ini.set<cfg::context::auth_error_message>("");
                             }
                             catch (...) {
                                 authentifier.log6(LogId::SESSION_CREATION_FAILED, {});

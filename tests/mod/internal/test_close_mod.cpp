@@ -41,7 +41,7 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/acl/sesman_wrapper.hpp"
-
+#include "configs/config.hpp"
 
 class FakeFront : public FrontAPI
 {
@@ -96,6 +96,15 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     Font glyphs = Font(app_path(AppPath::DefaultFontFile), false);
 
     InifileWrapper ini;
+
+    Inifile ini2;
+    ini2.set<cfg::context::auth_error_message>("toto");
+    RED_CHECK(!ini2.get<cfg::context::auth_error_message>().empty());
+    auto & tmp = ini2.get_mutable_ref<cfg::context::auth_error_message>();
+    ini2.set<cfg::context::auth_error_message>("toto");
+    tmp = "";
+    RED_CHECK(ini2.get<cfg::context::auth_error_message>().empty());
+
     CloseMod d("message", ini.get_ini(), time_base, timer_events_, gd_forwarder, front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         glyphs, theme, false);
