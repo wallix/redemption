@@ -104,7 +104,6 @@ project redjs
 
     # <define>REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING=1
 
-    # <cxxflags>-fno-rtti
     # <define>EMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
     <cxxflags>"-isystem system_include"
     <include>src
@@ -122,6 +121,7 @@ project redjs
     <cxxflags>"-s FILESYSTEM=1" # TODO because ?
     <cxxflags>"-s USE_LIBPNG=0"
     <cxxflags>"-s USE_ZLIB=0"
+    <cxxflags>"-s USE_SDL=0"
 
     # <cxx-lto>on
 
@@ -131,6 +131,9 @@ project redjs
 
     <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
     <variant>debug:<linkflags>"-s DEMANGLE_SUPPORT=1"
+
+    <variant>release:<cxxflags>-fno-rtti
+    <variant>release:<define>EMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
 
     <variant>release:<cxxflags>-O3
     # <variant>release:<cxxflags>-Os
@@ -193,7 +196,6 @@ alias unit_test.bc :
 constant TEST_DEPENDENCIES :
     $(CXXFLAGS_TEST)
     <cxxflags>--bind
-    <cxxflags>-fno-rtti&&-frtti
     # TODO only if include ".../bind.h"
     <cxxflags>-Wno-missing-prototypes
 ;
@@ -263,8 +265,6 @@ rule exe-js ( name : src : objs * : deps * )
     exejs $(name).em : $(src) $(objs) log_print.bc :
         $(deps)
         <cxxflags>--bind
-        # TODO rtti
-        <cxxflags>-fno-rtti&&-frtti
         # TODO only if include ".../bind.h"
         <cxxflags>-Wno-missing-prototypes
         <cxxflags>"-s MODULARIZE=1"
