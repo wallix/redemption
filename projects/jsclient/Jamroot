@@ -58,15 +58,15 @@ rule emcc_flags ( properties * )
             <cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
             <cxxflags>"-s DEMANGLE_SUPPORT=1"
             <linkflags>"-s DEMANGLE_SUPPORT=1"
-            <cxxflags>"-s WASM=1"
+            # <cxxflags>"-s WASM=1"
         ;
     }
-    else
-    {
-        fs +=
-            <cxxflags>"-s WASM=0"
-        ;
-    }
+    # else
+    # {
+    #     fs +=
+    #         <cxxflags>"-s WASM=0"
+    #     ;
+    # }
 
     return $(fs) ;
 }

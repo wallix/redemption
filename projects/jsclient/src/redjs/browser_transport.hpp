@@ -34,7 +34,8 @@ namespace redjs
 
 struct BrowserTransport : Transport
 {
-    TlsResult enable_client_tls(ServerNotifier& server_notifier, const TLSClientParams & tls_client_params) override;
+    TlsResult enable_client_tls(
+        ServerNotifier& server_notifier, const TLSClientParams & tls_client_params) override;
 
     size_t do_partial_read(uint8_t * data, size_t len) override;
 
@@ -42,15 +43,15 @@ struct BrowserTransport : Transport
 
     int get_fd() const override;
 
-    void add_in_buffer(std::string data);
+    void push_input_buffer(std::string&& data);
 
-    bytes_view get_out_buffer() const noexcept;
+    bytes_view get_output_buffer() const noexcept;
 
-    void clear_out_buffer() noexcept;
+    void clear_output_buffer() noexcept;
 
 private:
-    std::vector<std::string> in_buffers;
-    std::vector<uint8_t> out_buffers;
+    std::vector<std::string> input_buffers;
+    std::vector<uint8_t> output_buffer;
     std::size_t current_pos = 0;
 };
 

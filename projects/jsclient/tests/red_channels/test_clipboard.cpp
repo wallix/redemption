@@ -27,56 +27,56 @@ Author(s): Jonathan Poelen
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "utils/literals/utf16.hpp"
 
-#include <tuple>
-#include <vector>
-
 namespace
 {
 
-struct DataChan : DataChan_tuple
+struct ChannelData : BasicChannelData
 {
-    using DataChan_tuple::tuple;
+    using BasicChannelData::BasicChannelData;
 
-    DataChan(bytes_view av, size_t total_len, uint32_t channel_flags)
-    : DataChan(
+    ChannelData(bytes_view av, std::size_t total_len, uint32_t channel_flags)
+    : BasicChannelData{
         channel_names::cliprdr,
-        {av.begin(), av.end()},
+        av,
         total_len != ~0u ? total_len : av.size(),
-        channel_flags)
+        channel_flags}
     {}
 
-    friend std::ostream& operator<<(std::ostream& out, DataChan const& x)
+    friend std::ostream& operator<<(std::ostream& out, ChannelData const& chann)
     {
-        DataChan_tuple const& t = x;
-        out << "DataChan{" << std::get<0>(t) << ", {";
-        InStream in_stream(std::get<1>(t));
+        out << "DataChan{" << chann.channel_name << ", {";
+        InStream in_stream(chann.data);
         RDPECLIP::CliprdrHeader header;
         header.recv(in_stream);
         out << "0x" << std::hex << header.msgType() << ", 0x" << header.msgFlags()
             << std::dec << ", " << header.dataLen() << ", ";
-        print_bytes(out, in_stream.remaining_bytes());
-        out << "}, " << std::get<2>(t) << ", 0x" << std::hex << std::get<3>(t) << std::dec << "}";
+        ut::put_view(0, out, ut::hex(in_stream.remaining_bytes()));
+        out << "}, " << chann.total_len
+            << ", 0x" << std::hex << chann.channel_flags << std::dec << "}";
         return out;
     }
 };
 
+using redjs::ClipboardChannel;
+
 MAKE_BINDING_CALLBACKS(
-    DataChan,
-    (JS_x_f(setGeneralCapability, return generalFlags, uint32_t generalFlags))
-    (JS_c(formatListStart))
-    (JS_d(formatListFormat, uint8_t, uint32_t formatId, uint32_t customFormatId, bool isUTF8))
-    (JS_c(formatListStop))
-    (JS_d(formatDataResponse, uint8_t, uint32_t remainingDataLen, uint32_t formatId, uint32_t channelFlags))
-    (JS_x(formatDataResponseFileStart, uint32_t countFile))
-    (JS_d(formatDataResponseFile, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
-    (JS_c(formatDataResponseFileStop))
-    (JS_d(fileContentsResponse, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
-    (JS_x(formatDataRequest, uint32_t formatId))
-    (JS_x(fileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
-    (JS_x(receiveResponseFail, uint32_t messageType))
-    (JS_x(lock, uint32_t lockId))
-    (JS_x(unlock, uint32_t lockId))
-    (JS_c(free))
+    ClipboardChannel,
+    ChannelData,
+    ((x_f, setGeneralCapability, return generalFlags, uint32_t generalFlags))
+    ((c, formatListStart))
+    ((d, formatListFormat, uint8_t, uint32_t formatId, uint32_t customFormatId, bool isUTF8))
+    ((c, formatListStop))
+    ((d, formatDataResponse, uint8_t, uint32_t remainingDataLen, uint32_t formatId, uint32_t channelFlags))
+    ((x, formatDataResponseFileStart, uint32_t countFile))
+    ((d, formatDataResponseFile, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
+    ((c, formatDataResponseFileStop))
+    ((d, fileContentsResponse, uint8_t, uint32_t streamId, uint32_t remainingDataLen, uint32_t channelFlags))
+    ((x, formatDataRequest, uint32_t formatId))
+    ((x, fileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested))
+    ((x, receiveResponseFail, uint32_t messageType))
+    ((x, lock, uint32_t lockId))
+    ((x, unlock, uint32_t lockId))
+    ((c, free))
 )
 
 constexpr int first_last_show_proto_channel_flags
@@ -123,35 +123,29 @@ void clip_receive(
     clip.receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
 }
 
-DataChan data_chan(
+ChannelData data_chan(
     uint16_t msgType, uint16_t msgFlags,
     bytes_view data = {},
     Padding padding_data = Padding{},
     std::size_t len = ~0u, uint32_t channel_flags = first_last_show_proto_channel_flags)
 {
-    return DataChan{Serializer(msgType, msgFlags, data, padding_data), len, channel_flags};
-}
-
-
-
-std::unique_ptr<redjs::ClipboardChannel> clip;
-
-auto test_init_channel(Callback& cb, emscripten::val&& v)
-{
-    return redjs::ClipboardChannel(cb, std::move(v), true);
+    return ChannelData{Serializer(msgType, msgFlags, data, padding_data), len, channel_flags};
 }
 
 }
 
 
-#define RECEIVE_DATAS(...) ::clip_receive(clip, __VA_ARGS__); CTX_CHECK_DATAS()
-#define CALL_CB(...) clip.__VA_ARGS__; CTX_CHECK_DATAS()
-
-RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
+RED_AUTO_TEST_CASE(TestClipboardChannel)
 {
     using namespace RDPECLIP;
     namespace cbchan = redjs::channels::clipboard;
-    init_js_channel();
+
+    auto p = ClipboardChannel_ctx(/*verbose=*/true);
+
+#define RECEIVE_DATAS(...) ::clip_receive(*p->channel_ptr, __VA_ARGS__); CTX_CHECK_DATAS(p)
+#define CALL_CB(...) p->channel_ptr->__VA_ARGS__; CTX_CHECK_DATAS(p)
+
+    using namespace test_channel_data::ClipboardChannel_structs;
 
     const bool is_utf = true;
     const bool not_utf = false;
@@ -225,13 +219,13 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
     const auto paste1 = "xyz\0"_utf16_le;
     CALL_CB(send_header(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, paste1.size(), 0))
     {
-        CHECK_NEXT_DATA(DataChan{"\x05\0\1\0\x08\0\0\0"_av, paste1.size() + 8,
+        CHECK_NEXT_DATA(ChannelData{"\x05\0\1\0\x08\0\0\0"_av, paste1.size() + 8,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL});
     };
 
     CALL_CB(send_data(paste1, 0, CHANNELS::CHANNEL_FLAG_LAST))
     {
-        CHECK_NEXT_DATA(DataChan{paste1, 0,
+        CHECK_NEXT_DATA(ChannelData{paste1, 0,
             CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL});
     };
 
@@ -467,9 +461,8 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ !
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
         ""_av;
-    clip.receive(file_group_with_3_files.first(1600),
-        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-    CTX_CHECK_DATAS()
+    CALL_CB(receive(file_group_with_3_files.first(1600),
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL))
     {
         CHECK_NEXT_DATA(formatDataResponseFileStart{3});
         CHECK_NEXT_DATA(formatDataResponseFile{"abc"_utf16_le,
@@ -481,14 +474,19 @@ RED_AUTO_TEST_CHANNEL(TestClipboardChannel, test_init_channel, clip)
             /*.sizeLow=*/12, /*.sizeHigh=*/0,
             /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
     };
-    clip.receive(file_group_with_3_files.from_offset(1600),
-        CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-    CTX_CHECK_DATAS()
+    CALL_CB(receive(file_group_with_3_files.from_offset(1600),
+        CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL))
     {
         CHECK_NEXT_DATA(formatDataResponseFile{"ghi"_utf16_le,
             /*.attr=*/0, /*.flags=*/0,
             /*.sizeLow=*/12, /*.sizeHigh=*/0,
             /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
         CHECK_NEXT_DATA(formatDataResponseFileStop{});
+    };
+
+    p->channel_ptr.reset();
+    CTX_CHECK_DATAS(p)
+    {
+        CHECK_NEXT_DATA(test_channel_data::ClipboardChannel_structs::free());
     };
 }
