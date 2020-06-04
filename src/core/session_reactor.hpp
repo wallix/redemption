@@ -45,7 +45,7 @@ Author(s): Jonathan Poelen
 namespace jln
 {
     class TopExecutor;
-    template<class... Ts> class GroupExecutor;
+    class GroupExecutor;
     template<class... Ts> class ActionExecutor;
     template<class... Ts> class TimerExecutor;
     template<class T> class SharedData;
@@ -419,10 +419,9 @@ namespace jln
 
     enum class NextMode { ChildToNext, CreateContinuation, };
 
-    template<class... Ts>
     struct GroupContext
     {
-        GroupContext(TopExecutor& top, GroupExecutor<Ts...>& current_group) noexcept
+        GroupContext(TopExecutor& top, GroupExecutor& current_group) noexcept
         : top(top)
         , current_group(current_group)
         {}
@@ -464,11 +463,11 @@ namespace jln
 
     protected:
         TopExecutor& top;
-        GroupExecutor<Ts...>& current_group;
+        GroupExecutor& current_group;
     };
 
     template<class Tuple, class... Ts>
-    struct TopContext : GroupContext<Ts...>
+    struct TopContext : GroupContext
     {
         template<class F>
         R replace_action(F&& f);
@@ -478,13 +477,13 @@ namespace jln
 
         TopContext& enable_timeout(bool enable = true) noexcept
         {
-            this->GroupContext<Ts...>::enable_timeout(enable);
+            this->GroupContext::enable_timeout(enable);
             return *this;
         }
 
         TopContext& disable_timeout() noexcept
         {
-            this->GroupContext<Ts...>::disable_timeout();
+            this->GroupContext::disable_timeout();
             return *this;
         }
     };
@@ -532,11 +531,10 @@ namespace jln
         R terminate() noexcept { return R::Terminate; }
     };
 
-    template<class... Ts>
     struct ExitContext
     {
         TopExecutor& top;
-        GroupExecutor<Ts...>& current_group;
+        GroupExecutor& current_group;
 
         // R need_more_data() noexcept { return R::NeedMoreData; }
         // R terminate() noexcept { return R::Terminate; }
@@ -553,8 +551,6 @@ namespace jln
         // R replace_action(F&& f);
     };
 
-    // TODO GroupTimerContext
-    template<class... Ts>
     struct GroupTimerContext
     {
         R exception(Error const& e) noexcept;
@@ -574,11 +570,11 @@ namespace jln
         void set_fd(int fd) noexcept;
 
         TopExecutor& top;
-        GroupExecutor<Ts...>& current_group;
+        GroupExecutor& current_group;
     };
 
     template<class Tuple, class... Ts>
-    struct TopTimerContext : GroupTimerContext<Ts...>
+    struct TopTimerContext : GroupTimerContext
     {
         template<class F>
         TopTimerContext& replace_action(F&& f);
@@ -591,18 +587,18 @@ namespace jln
 
         TopTimerContext& disable_timeout() noexcept
         {
-            GroupTimerContext<Ts...>::disable_timeout();
+            GroupTimerContext::disable_timeout();
             return *this;
         }
     };
 
 #ifdef IN_IDE_PARSER
-# define JLN_GROUP_CTX ::jln::GroupContext<>
+# define JLN_GROUP_CTX ::jln::GroupContext
 # define JLN_TOP_CTX ::jln::TopContext < ::jln::detail::tuple<>>
 # define JLN_TIMER_CTX ::jln::TimerContext<>
 # define JLN_ACTION_CTX ::jln::ActionContext<>
-# define JLN_EXIT_CTX ::jln::ExitContext<>
-# define JLN_GROUP_TIMER_CTX ::jln::GroupTimerContext<>
+# define JLN_EXIT_CTX ::jln::ExitContext
+# define JLN_GROUP_TIMER_CTX ::jln::GroupTimerContext
 # define JLN_TOP_TIMER_CTX ::jln::TopTimerContext < ::jln::detail::tuple<>>
 #else
 # define JLN_GROUP_CTX auto
@@ -620,7 +616,7 @@ namespace jln
         bool is_enabled = true;
         timeval tv {};
         std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
-        std::function<R(GroupTimerContext<Ts...>, Ts...)> on_timeout;
+        std::function<R(GroupTimerContext, Ts...)> on_timeout;
 
         void initialize_delay(std::chrono::milliseconds ms)
         {
@@ -630,11 +626,10 @@ namespace jln
     };
 
 
-    template<class... Ts>
     struct GroupExecutor
     {
-        std::function<R(GroupContext<Ts...>, Ts...)> on_action;
-        std::function<R(ExitContext<Ts...>, ExitR er, Ts...)> on_exit;
+        std::function<R(GroupContext)> on_action;
+        std::function<R(ExitContext, ExitR er)> on_exit;
         NextMode next_mode = NextMode::ChildToNext;
         GroupExecutor* next;
 
@@ -654,15 +649,15 @@ namespace jln
     };
 
     template<class Tuple, class... Ts>
-    struct GroupExecutorWithValues final : GroupExecutor<Ts...>
+    struct GroupExecutorWithValues final : GroupExecutor
     {
-        using Base = GroupExecutor<Ts...>;
+        using Base = GroupExecutor;
 
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         template<class... Us>
         GroupExecutorWithValues(Us&&... xs)
-        : GroupExecutor<Ts...>([](GroupExecutor<Ts...>* p) noexcept{
+        : GroupExecutor([](GroupExecutor* p) noexcept{
             delete static_cast<GroupExecutorWithValues*>(p); /*NOLINT*/
         })
         , t{static_cast<Us&&>(xs)...}
@@ -672,7 +667,7 @@ namespace jln
         template<class F>
         void on_action(F&& f)
         {
-            Base::on_action = [f, this](GroupContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+            Base::on_action = [f, this](GroupContext ctx, Ts... xs) mutable /*-> R*/ {
                 return this->t.invoke(
                     f, TopContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
             };
@@ -681,7 +676,7 @@ namespace jln
         template<class F>
         void on_exit(F&& f)
         {
-            Base::on_exit = [f, this](ExitContext<Ts...> ctx, ExitR er, Ts... xs) mutable /*-> R*/ {
+            Base::on_exit = [f, this](ExitContext ctx, ExitR er, Ts... xs) mutable /*-> R*/ {
                 return this->t.invoke(f, ctx, er, static_cast<Ts&>(xs)...);
             };
         }
@@ -693,12 +688,12 @@ namespace jln
     };
 
     template<template<class...> class Tuple, class... Ts>
-    struct GroupExecutorWithValues<Tuple<>, Ts...> final : GroupExecutor<Ts...>
+    struct GroupExecutorWithValues<Tuple<>, Ts...> final : GroupExecutor
     {
-        using Base = GroupExecutor<Ts...>;
+        using Base = GroupExecutor;
 
         GroupExecutorWithValues() noexcept
-        : GroupExecutor<Ts...>([](GroupExecutor<Ts...>* p) noexcept{
+        : GroupExecutor([](GroupExecutor* p) noexcept{
             delete static_cast<GroupExecutorWithValues*>(p); /*NOLINT*/
         })
         {}
@@ -706,7 +701,7 @@ namespace jln
         template<class F>
         void on_action(F&& f)
         {
-            Base::on_action = [f](GroupContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+            Base::on_action = [f](GroupContext ctx, Ts... xs) mutable /*-> R*/ {
                 return f(TopContext<Tuple<>, Ts...>{ctx}, static_cast<Ts&>(xs)...);
             };
         }
@@ -1327,7 +1322,7 @@ namespace jln
     template<class... Ts>
     struct GroupDeleter
     {
-        void operator()(GroupExecutor<Ts...>* p) noexcept
+        void operator()(GroupExecutor* p) noexcept
         {
             p->delete_self();
         }
@@ -1353,7 +1348,7 @@ namespace jln
 
     struct TopExecutor
     {
-        using GroupPtr = std::unique_ptr<GroupExecutor<>, GroupDeleter<>>;
+        using GroupPtr = std::unique_ptr<GroupExecutor, GroupDeleter<>>;
 
         TopExecutor(TimeBase& timebase, int fd)
         : fd(fd)
@@ -1441,7 +1436,7 @@ namespace jln
             try {
                 auto& on_timeout = this->timer_data.on_timeout;
                 do {
-                    switch ((r = on_timeout(GroupTimerContext<>{*this, *this->group}))) {
+                    switch ((r = on_timeout(GroupTimerContext{*this, *this->group}))) {
                         case R::Terminate:
                         case R::Exception:
                         case R::ExitError:
@@ -1579,7 +1574,7 @@ namespace jln
         {
 //            LOG(LOG_INFO, "exec_action() B TopExecutor");
 
-            R const r = this->group->on_action(GroupContext<>{*this, *this->group});
+            R const r = this->group->on_action(GroupContext{*this, *this->group});
             switch (r) {
                 case R::Terminate:
                 case R::Exception:
@@ -1623,7 +1618,7 @@ namespace jln
 //            LOG(LOG_INFO, "exec_exit() TopExecutor");
             do {
                 R const re = this->group->on_exit(
-                    ExitContext<>{*this, *this->group},
+                    ExitContext{*this, *this->group},
                     ExitR{static_cast<ExitR::Status>(r), this->error});
                 NextMode next_mode;
                 switch (re) {
@@ -1664,21 +1659,28 @@ namespace jln
         }
 
         int fd;
-        GroupExecutor<>* group = nullptr;
+        GroupExecutor* group = nullptr;
         GroupPtr loaded_group;
+    public: // TODO to private
         TimeBase& timebase;
 
         REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
 
-    public: // TODO to private
         TimerData<> timer_data;
 
     // private:
-        std::function<R(GroupTimerContext<>)> on_timeout_switch;
+        std::function<R(GroupTimerContext)> on_timeout_switch;
 
     public:
         Error error = Error(NO_ERROR);
     };
+
+
+    inline GroupTimerContext& GroupTimerContext::disable_timeout() noexcept
+    {
+        this->top.disable_timeout();
+        return *this;
+    }
 
     enum class NotifyDeleteType
     {
@@ -1975,13 +1977,13 @@ namespace jln
         {
             if constexpr (std::is_same<Tuple, detail::tuple<>>::value) { /*NOLINT*/
                 (void)g;
-                return [f](GroupTimerContext<> ctx) mutable /*-> R*/ {
+                return [f](GroupTimerContext ctx) mutable /*-> R*/ {
                     return f(TopTimerContext<Tuple>{ctx});
                 };
             }
             else { /*NOLINT*/
                 return [f, &g](
-                    GroupTimerContext<> ctx) mutable /*-> R*/ {
+                    GroupTimerContext ctx) mutable /*-> R*/ {
                     return g.t.invoke(
                         f, TopTimerContext<Tuple>{ctx});
                 };
@@ -2004,7 +2006,7 @@ namespace jln
     class TopContainer
     {
         using Top = TopExecutor;
-        using Group = GroupExecutor<>;
+        using Group = GroupExecutor;
         using TopData = SharedData<Top>;
 
         using GroupDeleter = ::jln::GroupDeleter<>;
@@ -2446,21 +2448,12 @@ namespace jln
     };
 
 
-    template<class... Ts>
-    GroupTimerContext<Ts...>& GroupTimerContext<Ts...>::disable_timeout() noexcept
-    {
-        this->top.disable_timeout();
-        return *this;
-    }
-
-    template<class... Ts>
-    int GroupTimerContext<Ts...>::get_fd() const noexcept
+    inline int GroupTimerContext::get_fd() const noexcept
     {
         return this->top.get_fd();
     }
 
-    template<class... Ts>
-    void GroupTimerContext<Ts...>::set_fd(int fd) noexcept
+    inline void GroupTimerContext::set_fd(int fd) noexcept
     {
         this->top.set_fd(fd);
     }
@@ -2492,34 +2485,29 @@ namespace jln
         return R::SubstituteTimeout;
     }
 
-    template<class... Ts>
-    R GroupContext<Ts...>::exception(Error const& e) noexcept
+    inline R GroupContext::exception(Error const& e) noexcept
     {
         this->top.error = e;
         return R::Exception;
     }
 
-    template<class... Ts>
-    int GroupContext<Ts...>::get_fd() const noexcept
+    inline int GroupContext::get_fd() const noexcept
     {
         return this->top.get_fd();
     }
 
-    template<class... Ts>
-    void GroupContext<Ts...>::set_fd(int fd) noexcept
+    inline void GroupContext::set_fd(int fd) noexcept
     {
         return this->top.set_fd(fd);
     }
 
-    template<class... Ts>
-    GroupContext<Ts...>& GroupContext<Ts...>::enable_timeout(bool enable) noexcept
+    inline GroupContext& GroupContext::enable_timeout(bool enable) noexcept
     {
         this->top.enable_timeout(enable);
         return *this;
     }
 
-    template<class... Ts>
-    timeval GroupContext<Ts...>::get_current_time() const noexcept
+    inline timeval GroupContext::get_current_time() const noexcept
     {
         return this->top.timebase.get_current_time();
     }
@@ -2539,7 +2527,7 @@ namespace jln
         else { /*NOLINT*/
             auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(
                 this->current_group);
-            g->GroupExecutor<Ts...>::on_action = [f, &group](GroupContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+            g->GroupExecutor::on_action = [f, &group](GroupContext ctx, Ts... xs) mutable /*-> R*/ {
                 return group.t.invoke(f, TopContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
             };
         }
@@ -2557,8 +2545,7 @@ namespace jln
     }
 
 
-    template<class... Ts>
-    R GroupTimerContext<Ts...>::exception(Error const& e) noexcept
+    inline R GroupTimerContext::exception(Error const& e) noexcept
     {
         this->top.error = e;
         return R::Exception;
