@@ -122,8 +122,8 @@ cargo build --release --bin websocat
 Create a server at build directory (see `bjam toolset=clang cwd`).
 
     cd "$(bjam toolset=clang cwd | sed '/^CWD/!d;s/^CWD: //')"
-    python -m SimpleHTTPServer 7453 &
-    xdg-open client.html
+    python -m http.server 7453 --bind 127.0.0.1
+    xdg-open http://localhost:7453/client.html
 
 Or run
 

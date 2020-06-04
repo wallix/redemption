@@ -8,7 +8,7 @@ echo "cwd: $d"
 cd "$d"
 
 port=${PORT:=7543}
-python -m SimpleHTTPServer $port&
+python -m http.server $port --bind 127.0.0.1&
 
 sleep .5
 ${BROWSER:=xdg-open} "http://localhost:$port/client.html?ws=${WS}&user=${USER}&pass=${PASSWORD}"
