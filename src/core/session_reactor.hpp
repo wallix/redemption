@@ -44,13 +44,13 @@ Author(s): Jonathan Poelen
 
 namespace jln
 {
-    template<class... Ts> class TopExecutor;
+    class TopExecutor;
     template<class... Ts> class GroupExecutor;
     template<class... Ts> class ActionExecutor;
     template<class... Ts> class TimerExecutor;
     template<class T> class SharedData;
     class SharedPtr;
-    template<class... Ts> class TopSharedPtr;
+    class TopSharedPtr;
     class ActionSharedPtr;
 
     enum class [[nodiscard]] R : char
@@ -353,7 +353,7 @@ namespace jln
 
             operator SharedPtr ();
 
-            template<class... Ts> operator TopSharedPtr<Ts...> ();
+            operator TopSharedPtr ();
         };
 
         struct /*[[nodiscard]]*/ TimerExecutorBuilder_Concept
@@ -422,7 +422,7 @@ namespace jln
     template<class... Ts>
     struct GroupContext
     {
-        GroupContext(TopExecutor<Ts...>& top, GroupExecutor<Ts...>& current_group) noexcept
+        GroupContext(TopExecutor& top, GroupExecutor<Ts...>& current_group) noexcept
         : top(top)
         , current_group(current_group)
         {}
@@ -463,7 +463,7 @@ namespace jln
         // }
 
     protected:
-        TopExecutor<Ts...>& top;
+        TopExecutor& top;
         GroupExecutor<Ts...>& current_group;
     };
 
@@ -535,7 +535,7 @@ namespace jln
     template<class... Ts>
     struct ExitContext
     {
-        TopExecutor<Ts...>& top;
+        TopExecutor& top;
         GroupExecutor<Ts...>& current_group;
 
         // R need_more_data() noexcept { return R::NeedMoreData; }
@@ -573,7 +573,7 @@ namespace jln
         [[nodiscard]] int get_fd() const noexcept;
         void set_fd(int fd) noexcept;
 
-        TopExecutor<Ts...>& top;
+        TopExecutor& top;
         GroupExecutor<Ts...>& current_group;
     };
 
@@ -1351,10 +1351,9 @@ namespace jln
         }
     };
 
-    template<class... Ts>
     struct TopExecutor
     {
-        using GroupPtr = std::unique_ptr<GroupExecutor<Ts...>, GroupDeleter<Ts...>>;
+        using GroupPtr = std::unique_ptr<GroupExecutor<>, GroupDeleter<>>;
 
         TopExecutor(TimeBase& timebase, int fd)
         : fd(fd)
@@ -1389,7 +1388,12 @@ namespace jln
             this->update_next_time();
         }
 
-        void update_next_time() noexcept;
+        void update_next_time() noexcept
+        {
+            assert(this->timer_data.delay.count() >= 0);
+            this->timer_data.tv = addusectimeval(
+                this->timer_data.delay, this->timebase.get_current_time());
+        }
 
         void disable_timeout() noexcept
         {
@@ -1437,7 +1441,7 @@ namespace jln
             try {
                 auto& on_timeout = this->timer_data.on_timeout;
                 do {
-                    switch ((r = on_timeout(GroupTimerContext<Ts...>{*this, *this->group}))) {
+                    switch ((r = on_timeout(GroupTimerContext<>{*this, *this->group}))) {
                         case R::Terminate:
                         case R::Exception:
                         case R::ExitError:
@@ -1575,7 +1579,7 @@ namespace jln
         {
 //            LOG(LOG_INFO, "exec_action() B TopExecutor");
 
-            R const r = this->group->on_action(GroupContext<Ts...>{*this, *this->group});
+            R const r = this->group->on_action(GroupContext<>{*this, *this->group});
             switch (r) {
                 case R::Terminate:
                 case R::Exception:
@@ -1619,7 +1623,7 @@ namespace jln
 //            LOG(LOG_INFO, "exec_exit() TopExecutor");
             do {
                 R const re = this->group->on_exit(
-                    ExitContext<Ts...>{*this, *this->group},
+                    ExitContext<>{*this, *this->group},
                     ExitR{static_cast<ExitR::Status>(r), this->error});
                 NextMode next_mode;
                 switch (re) {
@@ -1660,17 +1664,17 @@ namespace jln
         }
 
         int fd;
-        GroupExecutor<Ts...>* group = nullptr;
+        GroupExecutor<>* group = nullptr;
         GroupPtr loaded_group;
         TimeBase& timebase;
 
         REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
 
     public: // TODO to private
-        TimerData<Ts...> timer_data;
+        TimerData<> timer_data;
 
     // private:
-        std::function<R(GroupTimerContext<Ts...>, Ts...)> on_timeout_switch;
+        std::function<R(GroupTimerContext<>)> on_timeout_switch;
 
     public:
         Error error = Error(NO_ERROR);
@@ -1870,10 +1874,9 @@ namespace jln
         }
     };
 
-    template<class... Ts>
     class TopSharedPtr : public SharedPtr
     {
-        using Top = TopExecutor<Ts...>;
+        using Top = TopExecutor;
         using Data = SharedData<Top>;
 
         struct PtrInterface : protected SharedPtr
@@ -1968,20 +1971,19 @@ namespace jln
     namespace detail
     {
         template<class Tuple, class... Ts, class F>
-        auto create_on_timeout(GroupExecutorWithValues<Tuple, Ts...>& g, F&& f)
+        auto create_on_timeout(GroupExecutorWithValues<Tuple>& g, F&& f)
         {
             if constexpr (std::is_same<Tuple, detail::tuple<>>::value) { /*NOLINT*/
                 (void)g;
-                return [f](GroupTimerContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
-                    return f(TopTimerContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+                return [f](GroupTimerContext<> ctx) mutable /*-> R*/ {
+                    return f(TopTimerContext<Tuple>{ctx});
                 };
             }
             else { /*NOLINT*/
                 return [f, &g](
-                    GroupTimerContext<Ts...> ctx, Ts... xs
-                ) mutable /*-> R*/ {
+                    GroupTimerContext<> ctx) mutable /*-> R*/ {
                     return g.t.invoke(
-                        f, TopTimerContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+                        f, TopTimerContext<Tuple>{ctx});
                 };
             }
         }
@@ -2001,14 +2003,14 @@ namespace jln
 
     class TopContainer
     {
-        using Top = TopExecutor<>;
+        using Top = TopExecutor;
         using Group = GroupExecutor<>;
         using TopData = SharedData<Top>;
 
         using GroupDeleter = ::jln::GroupDeleter<>;
 
     public:
-        using Ptr = TopSharedPtr<>;
+        using Ptr = TopSharedPtr;
         TopContainer(const TopContainer&) = delete;
 
     private:
@@ -2042,11 +2044,11 @@ namespace jln
                     *this->g, static_cast<F&&>(f));
             }
 
-            TopSharedPtr<> terminate_init()
+            TopSharedPtr terminate_init()
             {
                 assert(this->data_ptr);
                 this->top().add_group(std::move(this->g));
-                return detail::add_shared_ptr_from_data<TopSharedPtr<>>(
+                return detail::add_shared_ptr_from_data<TopSharedPtr>(
                     this->cont.node_executors, std::move(this->data_ptr));
             }
 
@@ -2761,14 +2763,6 @@ namespace jln
         this->init_ctx.set_notify_delete(static_cast<F&&>(f));
         return ActionExecutorBuilderImpl<
             BuilderInit::E(Has | BuilderInit::NotifyDelete), InitCtx>(std::move(this->init_ctx));
-    }
-
-    template<class... Ts>
-    void TopExecutor<Ts...>::update_next_time() noexcept
-    {
-        assert(this->timer_data.delay.count() >= 0);
-        this->timer_data.tv = addusectimeval(
-            this->timer_data.delay, this->timebase.get_current_time());
     }
 
     template<class... Ts>
