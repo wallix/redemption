@@ -169,7 +169,7 @@ public:
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, AsynchronousTask::TerminateEventNotifier{this, remover()});
         }
     }
 
@@ -177,7 +177,7 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, AsynchronousTask::TerminateEventNotifier{this, remover()});
         }
     }
 
