@@ -25,8 +25,9 @@ done
 ./tools/bjam/gen_targets.py \
     --main $d/src/main \
     --src $d/src/red_emscripten \
-    --src $d/src/redjs \
     --src $d/src/red_channels \
+    --src $d/src/redjs \
+    --src $d/src/system \
     --deps-src src/mod/rdp/new_mod_rdp.hpp,$d/src/red_channels/\*.cpp \
     --include $d/src/ \
     --src-system emscripten \

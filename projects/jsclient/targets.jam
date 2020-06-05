@@ -28,6 +28,7 @@ exe-js js_client :
   src/redjs/channel_receiver.bc
   src/redjs/image_data_from_bitmap.bc
   src/redjs/image_data_from_pointer.bc
+  src/system/ssl_mod_exp.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   src/core/RDP/dwt.bc
   src/core/RDP/mppc.bc
@@ -45,7 +46,6 @@ exe-js js_client :
   src/mod/rdp/rdp_negociation_data.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
-  src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/parse_primary_drawing_orders.bc
   src/utils/pattutils.bc
@@ -85,10 +85,10 @@ test-run-js tests/red_channels/test_clipboard :
   tests/red_channels/test_clipboard.cpp
 :
   src/red_channels/clipboard.bc
+  src/system/ssl_mod_exp.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/mod/rdp/rdp_negociation_data.bc
-  src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/stacktrace.bc
   src/utils/utf.bc
@@ -98,10 +98,10 @@ test-run-js tests/red_channels/test_js_channel :
   tests/red_channels/test_js_channel.cpp
 :
   src/red_channels/js_channel.bc
+  src/system/ssl_mod_exp.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/mod/rdp/rdp_negociation_data.bc
-  src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/hexdump.bc
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -134,6 +134,11 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
+test-run-js tests/system/test_ssl_mod_exp :
+  tests/system/test_ssl_mod_exp.cpp
+:
+  src/system/ssl_mod_exp.bc
+;
 
 objjs src/main/_dummy.bc : src/main/_dummy.cpp ;
 objjs src/main/js_client.bc : src/main/js_client.cpp ;
@@ -148,6 +153,7 @@ objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
 objjs src/redjs/channel_receiver.bc : src/redjs/channel_receiver.cpp ;
 objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
 objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
+objjs src/system/ssl_mod_exp.bc : src/system/ssl_mod_exp.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 objjs src/core/RDP/dwt.bc : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 objjs src/core/RDP/mppc.bc : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
@@ -166,7 +172,6 @@ objjs src/mod/rdp/rdp_negociation_data.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_n
 objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/bitmap_data_allocator.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
-objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/parse_primary_drawing_orders.bc : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
 objjs src/utils/pattutils.bc : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
@@ -182,6 +187,7 @@ alias test_js_channel : tests/red_channels/test_js_channel ;
 alias test_browser_transport : tests/redjs/test_browser_transport ;
 alias test_image_data_test_from_bitmap : tests/redjs/test_image_data_test_from_bitmap ;
 alias test_image_data_test_from_pointer : tests/redjs/test_image_data_test_from_pointer ;
+alias test_ssl_mod_exp : tests/system/test_ssl_mod_exp ;
 alias tests/red_channels.norec :
   tests/red_channels/test_clipboard
   tests/red_channels/test_js_channel
@@ -191,22 +197,31 @@ alias tests/redjs.norec :
   tests/redjs/test_image_data_test_from_bitmap
   tests/redjs/test_image_data_test_from_pointer
 ;
+alias tests/system.norec :
+  tests/system/test_ssl_mod_exp
+;
 alias tests/red_channels :
   tests/red_channels.norec
 ;
 alias tests :
   tests/red_channels
   tests/redjs
+  tests/system
 ;
 alias tests/redjs :
   tests/redjs.norec
 ;
+alias tests/system :
+  tests/system.norec
+;
 explicit
   tests/red_channels.norec
   tests/redjs.norec
+  tests/system.norec
 ;
 explicit
   tests/red_channels
   tests
   tests/redjs
+  tests/system
 ;

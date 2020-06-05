@@ -5,8 +5,15 @@ ECHO "redemption-src: $(REDEMPTION_PUBLIC_PATH)" ;
 JAM_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/jam ;
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
-
 SYSTEM_TYPE = emscripten ;
+## disable some paths
+## @{
+OCR1_INCLUDE_PATH = "" ;
+MLN_INCLUDES_PATH = "" ;
+PPOCR_INCLUDES_PATH = "" ;
+PROGRAM_OPTIONS_INCLUDES_PATH = "" ;
+SYSTEM_SRC_PATH ?= "" ;
+## }
 
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
