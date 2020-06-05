@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 # define RED_EM_ASM(jscode, ...) [](auto&&...){}(__VA_ARGS__)
 # define RED_EM_ASM_INT(jscode, ...) [](auto&&...){}(__VA_ARGS__)
 #else
+# include <emscripten/emscripten.h> /* fix with 1.39.16 */
 # include <emscripten/em_asm.h>
 # include "cxx/diagnostic.hpp"
 # define RED_EM_ASM(...)                                                      \
