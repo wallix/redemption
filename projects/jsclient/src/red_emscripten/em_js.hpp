@@ -23,6 +23,7 @@ Author(s): Jonathan Poelen
 #ifdef IN_IDE_PARSER
 # define RED_EM_JS(return_type, name, params, ...) return_type name params;
 #else
+# include <emscripten/emscripten.h> /* fix with 1.39.16 */
 # include <emscripten/em_js.h>
 # include "cxx/diagnostic.hpp"
 # define RED_EM_JS(return_type, name, params, ...)             \
