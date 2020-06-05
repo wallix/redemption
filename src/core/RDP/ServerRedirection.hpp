@@ -406,16 +406,16 @@ struct ServerRedirectionPDU {
         }
     }
 
-    bool DontStoreUsername() {
+    bool DontStoreUsername() const {
         return (this->RedirFlags & LB_DONTSTOREUSERNAME);
     }
-    bool ServerTsvCapable() {
+    bool ServerTsvCapable() const {
         return (this->RedirFlags & LB_SERVER_TSV_CAPABLE);
     }
-    bool SmartcardLogon() {
+    bool SmartcardLogon() const {
         return (this->RedirFlags & LB_SMARTCARD_LOGON);
     }
-    bool Noredirect() {
+    bool Noredirect() const {
         return (this->RedirFlags & LB_NOREDIRECT);
     }
     bool UseLoadBalanceInfo() {

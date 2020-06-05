@@ -1173,7 +1173,7 @@ namespace X224
             this->_header_size = stream.get_offset();
         }
 
-        void throw_error() {
+        void throw_error() const {
             if (this->rdp_neg_type == X224::RDP_NEG_FAILURE) {
                 switch (this->rdp_neg_code){
                 case X224::SSL_REQUIRED_BY_SERVER:

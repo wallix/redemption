@@ -417,7 +417,7 @@ namespace MCS
             }
         }
 
-        void set_out_ber_len_uint7(unsigned int v, size_t offset) noexcept
+        void set_out_ber_len_uint7(unsigned int v, size_t offset) const noexcept
         {
             auto out_stream = this->stream.stream_at(offset);
             OutBerStream(out_stream).out_ber_len_uint7(v);
@@ -428,7 +428,7 @@ namespace MCS
             this->stream.out_uint8(static_cast<uint8_t>(v));
         }
 
-        void set_out_ber_len_uint16(unsigned int v, size_t offset) noexcept
+        void set_out_ber_len_uint16(unsigned int v, size_t offset) const noexcept
         {
             auto out_stream = this->stream.stream_at(offset);
             OutBerStream(out_stream).out_ber_len_uint16(v);
