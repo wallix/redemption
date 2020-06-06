@@ -76,10 +76,10 @@
 <script src="redemption_load_module.js"></script>
 <script>
 
-const Module = WallixModule({
-    // TOTAL_MEMORY: 16777216, // 16**6
-    TOTAL_MEMORY: 268435456, // 16**7
-});
+WallixModule({
+    // INITIAL_MEMORY: 16777216, // 16**6
+    // INITIAL_MEMORY: 268435456, // 16**7
+}).then((Module) => {
 
 const redemption = redemptionLoadModule(Module, window);
 
@@ -359,6 +359,7 @@ for (const k in inputs) {
 
 run();
 
+});
 // const bytearray = new Uint8Array(event.data)
 // let text = ""
 // // console.log('Received Binary Message of ' + bytearray.length + ' bytes')

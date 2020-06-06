@@ -71,10 +71,10 @@ namespace
 #ifdef __EMSCRIPTEN__
     RED_EM_JS(int, red_is_loggable_impl, (), {
         if (!ENVIRONMENT_IS_NODE) {
-            return 49 /* '1' */;
+            return 49 /* = '1' */;
         }
         const s = process.env["REDEMPTION_LOG_PRINT"];
-        return (s && s[0]) ? s.charCodeAt(0) : 48 /* '0' */;
+        return (s && s[0]) ? s.charCodeAt(0) : 48 /* = '0' */;
     })
 #else
     int red_is_loggable_impl()

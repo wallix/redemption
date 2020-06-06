@@ -21,22 +21,11 @@
 
 #include "utils/crypto/ssl_mod_exp_direct.hpp"
 
-#include <algorithm>
-#include <memory>
 #include <cassert>
 #include <cstddef>
 
-# include "cxx/diagnostic.hpp"
+#include "cxx/diagnostic.hpp"
 
-#ifdef __EMSCRIPTEN__
-// because _mm_getcsr() and _MM_FLUSH_ZERO_ON not implemented
-REDEMPTION_DIAGNOSTIC_PUSH
-REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-id-macro")
-# ifdef __SSE2__
-#  undef __SSE2__
-# endif
-REDEMPTION_DIAGNOSTIC_POP
-#endif
 #include <boost/multiprecision/cpp_int.hpp>
 
 /**

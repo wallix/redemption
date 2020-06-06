@@ -21,13 +21,11 @@
 
 #pragma once
 
-#include "utils/crypto/ssl_mod_exp_direct.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
-static inline writable_bytes_view mod_exp(
+writable_bytes_view mod_exp(
     writable_bytes_view out,
     bytes_view inr,
     bytes_view modulus,
     bytes_view exponent
-) {
-    return mod_exp_direct(out, inr, modulus, exponent);
-}
+);
