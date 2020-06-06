@@ -48,7 +48,7 @@ void BrowserFront::add_channel_receiver(ChannelReceiver&& channel_receiver)
     this->channel_receivers.emplace_back(std::move(channel_receiver));
 }
 
-bool BrowserFront::can_be_start_capture(SesmanInterface & /*sesman*/)
+bool BrowserFront::can_be_start_capture()
 {
     return false;
 }
