@@ -358,17 +358,6 @@ namespace jln
             operator TimerSharedPtr();
         };
 
-        struct /*[[nodiscard]]*/ ActionExecutorBuilder_Concept
-        {
-            template<class... Ts>
-            explicit ActionExecutorBuilder_Concept(Ts&&...) noexcept;
-
-            ActionExecutorBuilder_Concept on_action(Func);
-            ActionExecutorBuilder_Concept set_notify_delete(Func);
-
-            operator ActionSharedPtr();
-        };
-
         template<class Top, class Group>
         using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
 
@@ -590,22 +579,6 @@ namespace jln
 # define JLN_GROUP_TIMER_CTX auto
 # define JLN_TOP_TIMER_CTX auto
 #endif
-
-    template<class... Ts>
-    struct TimerData
-    {
-        bool is_enabled = true;
-        timeval tv {};
-        std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
-        std::function<R(GroupTimerContext, Ts...)> on_timeout;
-
-        void initialize_delay(std::chrono::milliseconds ms)
-        {
-            // TODO initialize tv
-            this->delay = ms;
-        }
-    };
-
 
     struct GroupExecutor
     {
@@ -1647,7 +1620,13 @@ namespace jln
 
         REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
 
-        TimerData<> timer_data;
+        struct TimerData
+        {
+            bool is_enabled = true;
+            timeval tv {};
+            std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
+            std::function<R(GroupTimerContext)> on_timeout;
+        } timer_data;
 
     // private:
         std::function<R(GroupTimerContext)> on_timeout_switch;
@@ -2177,10 +2156,10 @@ namespace jln
         using Ptr = TimerSharedPtr;
 
     private:
-        template<class TimerData, class Tuple>
+        template<class LocalTimerData, class Tuple>
         struct InitContext
         {
-            std::unique_ptr<TimerData, SharedDataDeleter> data_ptr;
+            std::unique_ptr<LocalTimerData, SharedDataDeleter> data_ptr;
             TimerContainer& cont;
 
             TimerExecutorWithValues<Tuple>& timer() noexcept
@@ -2202,7 +2181,7 @@ namespace jln
                 SharedDataBase* data_ptr = this->data_ptr.release();
                 data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
                 data_ptr->shared_ptr = nullptr;
-                return TimerSharedPtr(static_cast<TimerData*>(data_ptr));
+                return TimerSharedPtr(static_cast<LocalTimerData*>(data_ptr));
             }
         };
 
