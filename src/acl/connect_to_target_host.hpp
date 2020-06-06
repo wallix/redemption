@@ -48,7 +48,7 @@
 
 static inline unique_fd connect_to_target_host(Inifile & ini, const TimeBase & time_base, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail, bool enable_ipv6 = false)
 {
-    auto throw_error = [&ini, time_base, &report_message](char const* error_message, int id) {
+    auto throw_error = [&ini, &report_message](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
             R"(target="%s" host="%s" port="%u" reason="%s")",
             ini.get<cfg::globals::target_user>(),

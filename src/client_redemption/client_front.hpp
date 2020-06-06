@@ -50,7 +50,7 @@ public:
     , screen_info(screen_info)
     {}
 
-    bool can_be_start_capture(SesmanInterface & sesman) override
+    bool can_be_start_capture() override
     {
         return false;
     }
@@ -91,7 +91,7 @@ inline int run_connection_test(
     TimeBase& time_base,
     TopFdContainer & fd_events_,
     TimerContainer & timer_events_,
-    mod_api& mod, gdi::GraphicApi& gd)
+    mod_api& mod)
 {
     int       timeout_counter = 0;
     int const timeout_counter_max = 3;
@@ -132,7 +132,6 @@ inline int wait_for_screenshot(
         TimeBase& time_base,
         TopFdContainer & fd_events_,
         TimerContainer & timer_events_,
-        Callback& callback, gdi::GraphicApi & gd,
     std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time)
 {
     auto const time_start = ustime();
@@ -169,12 +168,11 @@ inline int run_test_client(
         TimeBase& time_base,
         TopFdContainer & fd_events_,
         TimerContainer & timer_events_,
-        mod_api& mod, gdi::GraphicApi& gd,
-    std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
+        mod_api& mod, std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
     std::string const& screen_output)
 {
     try {
-        if (int err = run_connection_test(type, time_base, fd_events_, timer_events_, mod, gd)) {
+        if (int err = run_connection_test(type, time_base, fd_events_, timer_events_, mod)) {
             return err;
         }
 
@@ -191,7 +189,7 @@ inline int run_test_client(
         Dimension dim = mod.get_dim();
         RDPDrawable gd(dim.w, dim.h);
 
-        if (int err = wait_for_screenshot(type, time_base, fd_events_, timer_events_, mod, gd, inactivity_time, max_time)) {
+        if (int err = wait_for_screenshot(type, time_base, fd_events_, timer_events_, inactivity_time, max_time)) {
             return err;
         }
 

@@ -319,7 +319,7 @@ private:
             throw Error(err_id);
         }
 
-        this->rdp.sespro_launch_process_ended(sesman);
+        this->rdp.sespro_launch_process_ended();
     }
 
     void process_event_ready()
@@ -530,7 +530,7 @@ public:
 
                 this->session_probe_timer.reset();
 
-                this->rdp.sespro_launch_process_ended(sesman);
+                this->rdp.sespro_launch_process_ended();
 
                 // The order of the messages sent is very important!
 

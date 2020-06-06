@@ -1516,5 +1516,5 @@ private:
 
     void sespro_ending_in_progress() override {}
 
-    void sespro_launch_process_ended(SesmanInterface & /*sesman*/) override {}
+    void sespro_launch_process_ended() override {}
 };

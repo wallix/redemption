@@ -839,7 +839,7 @@ public:
     };
     ServerInitCtx server_init_ctx;
 
-    void initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface & sesman);
+    void initial_clear_screen(gdi::GraphicApi & drawable);
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
     void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override;

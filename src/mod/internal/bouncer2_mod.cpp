@@ -108,7 +108,7 @@ int Bouncer2Mod::interaction()
 // This should come from BACK!
 void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
-    if (!this->capture_started && this->front.can_be_start_capture(this->sesman)){
+    if (!this->capture_started && this->front.can_be_start_capture()){
         this->capture_started = true;
         LOG(LOG_INFO, "Bouncer Mod : capture started");
     }

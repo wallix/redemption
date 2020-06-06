@@ -181,11 +181,7 @@ int main(int argc, char** argv)
         }
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
-        return run_test_client(
-            is_vnc ? "VNC" : "RDP", time_base,
-                                    fd_events_,
-                                    timer_events_,
-                                    *mod, gdi::null_gd(),
+        return run_test_client(is_vnc ? "VNC" : "RDP", time_base, fd_events_, timer_events_, *mod,
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 

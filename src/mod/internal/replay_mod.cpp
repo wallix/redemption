@@ -249,7 +249,7 @@ struct ReplayMod::Reader
         }
 
         this->reader.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-        front.can_be_start_capture(sesman);
+        front.can_be_start_capture();
         return is_resized;
     }
 };

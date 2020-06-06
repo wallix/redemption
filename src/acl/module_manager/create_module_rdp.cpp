@@ -435,7 +435,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     Random & gen,
     TimeObj & timeobj,
     CryptoContext & cctx,
-
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     switch (ini.get<cfg::context::mode_console>()) {

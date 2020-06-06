@@ -3231,7 +3231,7 @@ public:
                             }
                             else
 #endif
-                            if (this->front.can_be_start_capture(sesman)) {
+                            if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect && this->monitor_count) {
                                     this->rdp_suppress_display_updates();
                                     this->rdp_allow_display_updates(
@@ -6181,11 +6181,11 @@ public:
         this->set_mod_signal(BACK_EVENT_NEXT);
     }
 
-    void sespro_launch_process_ended(SesmanInterface & sesman) override {
+    void sespro_launch_process_ended() override {
         if (this->delayed_start_capture) {
             this->delayed_start_capture = false;
 
-            if (this->front.can_be_start_capture(sesman)) {
+            if (this->front.can_be_start_capture()) {
                 if (this->bogus_refresh_rect && this->monitor_count) {
                     this->rdp_suppress_display_updates();
                     this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
