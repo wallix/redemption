@@ -301,21 +301,6 @@ namespace jln
             InitCtx init_ctx;
         };
 
-        template<BuilderInit::E Has, class InitCtx>
-        struct [[nodiscard]] ActionExecutorBuilderImpl
-        {
-            explicit ActionExecutorBuilderImpl(InitCtx&& init_ctx) noexcept;
-
-            template<class F>
-            auto on_action(F&& f) &&;
-
-            template<class F>
-            auto set_notify_delete(F&& /*f*/) && noexcept;
-
-        private:
-            InitCtx init_ctx;
-        };
-
     #ifdef IN_IDE_PARSER
         struct Func
         {
@@ -393,8 +378,6 @@ namespace jln
         template<class InitCtx>
         using TimerExecutorBuilder = TimerExecutorBuilder_Concept;
 
-        template<class InitCtx>
-        using ActionExecutorBuilder = ActionExecutorBuilder_Concept;
     #else
         template<class Top, class Group>
         using GroupExecutorBuilder = GroupExecutorBuilderImpl<false, false, Top, Group>;
@@ -405,8 +388,6 @@ namespace jln
         template<class InitCtx>
         using TimerExecutorBuilder = TimerExecutorBuilderImpl<BuilderInit::None, InitCtx>;
 
-        template<class InitCtx>
-        using ActionExecutorBuilder = ActionExecutorBuilderImpl<BuilderInit::None, InitCtx>;
     #endif
     }  // namespace detail
 
@@ -2604,31 +2585,6 @@ namespace jln
         static_assert(!(Has & BuilderInit::NotifyDelete), "set_notify_delete is already used");
         this->init_ctx.set_notify_delete(static_cast<F&&>(f));
         return select_timer_result<Has | BuilderInit::NotifyDelete>(this->init_ctx);
-    }
-
-
-    template<detail::BuilderInit::E Has, class InitCtx>
-    detail::ActionExecutorBuilderImpl<Has, InitCtx>::ActionExecutorBuilderImpl(
-        InitCtx&& init_ctx) noexcept
-    : init_ctx(std::move(init_ctx))
-    {}
-
-    template<detail::BuilderInit::E Has, class InitCtx>
-    template<class F>
-    auto detail::ActionExecutorBuilderImpl<Has, InitCtx>::on_action(F&& f) &&
-    {
-        this->init_ctx.action().on_action(static_cast<F&&>(f));
-        return this->init_ctx.terminate_init();
-    }
-
-    template<detail::BuilderInit::E Has, class InitCtx>
-    template<class F>
-    auto detail::ActionExecutorBuilderImpl<Has, InitCtx>::set_notify_delete(F&& f) && noexcept
-    {
-        static_assert(!(Has & BuilderInit::NotifyDelete), "set_notify_delete is already used");
-        this->init_ctx.set_notify_delete(static_cast<F&&>(f));
-        return ActionExecutorBuilderImpl<
-            BuilderInit::E(Has | BuilderInit::NotifyDelete), InitCtx>(std::move(this->init_ctx));
     }
 
     template<class... Ts>
