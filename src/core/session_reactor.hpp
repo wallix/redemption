@@ -215,29 +215,6 @@ namespace jln
 
     namespace detail
     {
-        template<bool HasAct, bool HasExit, class Top, class Group>
-        struct [[nodiscard]] GroupExecutorBuilderImpl
-        {
-            explicit GroupExecutorBuilderImpl(Top& top, std::unique_ptr<Group>&& g) noexcept;
-
-#ifndef NDEBUG
-            ~GroupExecutorBuilderImpl()
-            {
-                assert(!this->g);
-            }
-#endif
-
-            template<class F>
-            auto on_action(F&& f) &&;
-
-            template<class F>
-            auto on_exit(F&& f) &&;
-
-        private:
-            Top& top;
-            std::unique_ptr<Group> g;
-        };
-
         struct BuilderInit
         {
             enum E
@@ -308,20 +285,6 @@ namespace jln
             Func(F) {}
         };
 
-        struct /*[[nodiscard]]*/ GroupExecutorBuilder_Concept
-        {
-            template<class... Ts>
-            explicit GroupExecutorBuilder_Concept(Ts&&...) noexcept;
-
-            GroupExecutorBuilder_Concept on_action(Func);
-            GroupExecutorBuilder_Concept on_exit(Func);
-            GroupExecutorBuilder_Concept propagate_exit();
-
-            GroupExecutorBuilder_Concept set_notify_delete(Func);
-
-            operator R ();
-        };
-
         struct /*[[nodiscard]]*/ TopExecutorBuilder_Concept
         {
             template<class... Ts>
@@ -358,9 +321,6 @@ namespace jln
             operator TimerSharedPtr();
         };
 
-        template<class Top, class Group>
-        using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
-
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilder_Concept;
 
@@ -368,9 +328,6 @@ namespace jln
         using TimerExecutorBuilder = TimerExecutorBuilder_Concept;
 
     #else
-        template<class Top, class Group>
-        using GroupExecutorBuilder = GroupExecutorBuilderImpl<false, false, Top, Group>;
-
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
 
@@ -2395,45 +2352,6 @@ namespace jln
     {
         return this->timer.timebase.get_current_time();
     }
-
-
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::GroupExecutorBuilderImpl(
-        Top& top, std::unique_ptr<Group>&& g) noexcept
-    : top(top)
-    , g(std::move(g))
-    {}
-
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    auto select_group_result(Top& top, std::unique_ptr<Group>&& g)
-    {
-        if constexpr (HasExit && HasAct) {
-            top.sub_group(std::move(g));
-            return R::CreateGroup;
-        }
-        else { /*NOLINT*/
-            return detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>{top, std::move(g)};
-        }
-    }
-
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    template<class F>
-    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_action(F&& f) &&
-    {
-        static_assert(!HasAct, "on_action is already used");
-        this->g->on_action(static_cast<F&&>(f));
-        return select_group_result<1, HasExit, Top, Group>(this->top, std::move(this->g));
-    }
-
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    template<class F>
-    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_exit(F&& f) &&
-    {
-        static_assert(!HasExit, "on_exit or propagate_exit is already used");
-        this->g->on_exit(static_cast<F&&>(f));
-        return select_group_result<HasAct, 1, Top, Group>(this->top, std::move(this->g));
-    }
-
 
     template<detail::BuilderInit::E Has, class InitCtx>
     detail::TopExecutorBuilderImpl<Has, InitCtx>::TopExecutorBuilderImpl(
