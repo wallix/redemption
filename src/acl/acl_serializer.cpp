@@ -500,7 +500,7 @@ namespace
             this->safe_read_packet();
         }
 
-        chars_view key()
+        zstring_view key()
         {
             auto m = std::find(this->p, this->e, '\n');
             if (m == this->e) {
@@ -515,9 +515,10 @@ namespace
                 m = std::find(this->p, this->e, '\n');
             }
 
+            *m = 0;
             std::size_t const len = m - this->p;
-            *m++ = 0;
-            return {std::exchange(this->p, m), len};
+            auto* start_s = std::exchange(this->p, m+1);
+            return zstring_view(zstring_view::is_zero_terminated(), start_s, len);
         }
 
         bool is_set_value()
@@ -556,9 +557,9 @@ namespace
             auto m = std::find(this->p, this->e, '\n');
             if (m != this->e) {
                 *m = 0;
-                std::size_t const sz = m - this->p;
-                return zstring_view(zstring_view::is_zero_terminated(),
-                    std::exchange(this->p, m+1), sz);
+                std::size_t const len = m - this->p;
+                auto* start_s = std::exchange(this->p, m+1);
+                return zstring_view(zstring_view::is_zero_terminated(), start_s, len);
             }
             data_multipacket.clear();
             do {
@@ -650,7 +651,7 @@ namespace
 void AclSerializer::in_items()
 {
     Reader reader(*this->auth_trans, this->verbose);
-    chars_view key;
+    zstring_view key;
 
     while (!(key = reader.key()).empty()) {
         if (auto field = this->ini.get_acl_field_by_name(key)) {
