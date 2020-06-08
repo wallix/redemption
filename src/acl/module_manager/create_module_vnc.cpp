@@ -294,7 +294,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
 
     if (enable_metrics) {
         new_mod->mod.metrics = std::move(metrics);
-        LOG(LOG_INFO, "create_module_vnc::timer_events_.create_timer_executor");
         new_mod->mod.metrics_timer = timer_events_.create_timer_executor(time_base)
             .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
             .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){

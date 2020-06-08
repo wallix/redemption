@@ -870,7 +870,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
     if (enable_metrics) {
         new_mod->rdp_data.metrics = std::move(metrics);
-        LOG(LOG_INFO, "create_module_rdp::timer_events_.create_timer_executor");
         new_mod->rdp_data.metrics->metrics_timer = timer_events_.create_timer_executor(time_base)
             .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
             .on_action([metrics = new_mod->rdp_data.metrics.get()](JLN_TIMER_CTX ctx){

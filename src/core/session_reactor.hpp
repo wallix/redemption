@@ -47,7 +47,7 @@ namespace jln
     class TopExecutor;
     class GroupExecutor;
     template<class... Ts> class ActionExecutor;
-    template<class... Ts> class TimerExecutor;
+    class TimerExecutor;
     template<class T> class SharedData;
     class SharedPtr;
     class TopSharedPtr;
@@ -415,39 +415,23 @@ namespace jln
         }
     };
 
-    template<class... Ts>
     struct TimerContext
     {
         R next() noexcept { return R::Next; }
         R ready() noexcept { return R::Ready; }
         R terminate() noexcept { return R::Terminate; }
+        R ready_to(std::chrono::milliseconds ms) noexcept;
 
-        TimerContext& set_delay(std::chrono::milliseconds ms) noexcept
-        {
-            timer.set_delay(ms);
-            return *this;
-        }
+        TimerContext& set_delay(std::chrono::milliseconds ms) noexcept;
+        TimerContext& set_time(timeval tv) noexcept;
+        timeval get_current_time() const noexcept;
 
-        TimerContext& set_time(timeval tv) noexcept
-        {
-            timer.set_time(tv);
-            return *this;
-        }
-
-        R ready_to(std::chrono::milliseconds ms) noexcept
-        {
-            timer.set_delay(ms);
-            return R::Ready;
-        }
-
-        [[nodiscard]] timeval get_current_time() const noexcept;
-
-        TimerContext(TimerExecutor<Ts...>& timer) noexcept
+        TimerContext(TimerExecutor& timer) noexcept
         : timer(timer)
         {}
 
     private:
-        TimerExecutor<Ts...>& timer;
+        TimerExecutor& timer;
     };
 
     template<class... Ts>
@@ -631,10 +615,9 @@ namespace jln
     using GroupExecutorDefault = GroupExecutorWithValues<detail::tuple<>, Ts...>;
 
 
-    template<class... Ts>
     struct TimerExecutor
     {
-        std::function<R(TimerContext<Ts...>, Ts...)> on_timer;
+        std::function<R(TimerContext)> on_timer;
         timeval tv {};
         std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
         TimeBase& timebase;
@@ -644,12 +627,7 @@ namespace jln
         {}
 
         void set_delay(std::chrono::milliseconds ms) noexcept;
-
-        void set_time(timeval tv) noexcept
-        {
-            this->delay = std::chrono::milliseconds(-1);
-            this->tv = tv;
-        }
+        void set_time(timeval tv) noexcept;
 
         bool exec_action()
         {
@@ -658,7 +636,7 @@ namespace jln
                 SCOPE_EXIT(this->exec_is_running = false);
             )
 
-            switch (this->on_timer(TimerContext<Ts...>{*this})) {
+            switch (this->on_timer(TimerContext{*this})) {
                 case R::Terminate:
                 case R::Next:
                     return false;
@@ -696,14 +674,14 @@ namespace jln
         REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
     };
 
-    template<class Tuple, class... Ts>
-    struct TimerExecutorWithValues final : TimerExecutor<Ts...>
+    template<class Tuple>
+    struct TimerExecutorWithValues final : TimerExecutor
     {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         template<class... Us>
         TimerExecutorWithValues(TimeBase& timebase, Us&&... xs)
-        : TimerExecutor<Ts...>(timebase)
+        : TimerExecutor(timebase)
         , t{static_cast<Us&&>(xs)...}
         {}
         REDEMPTION_DIAGNOSTIC_POP
@@ -711,8 +689,8 @@ namespace jln
         template<class F>
         void on_action(F&& f)
         {
-            this->on_timer = [f, this](TimerContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
-                return this->t.invoke(f, ctx, static_cast<Ts&>(xs)...);
+            this->on_timer = [f, this](TimerContext ctx) mutable /*-> R*/ {
+                return this->t.invoke(f, ctx);
             };
         }
 
@@ -727,10 +705,10 @@ namespace jln
         Tuple t;
     };
 
-    template<template<class...> class Tuple, class... Ts>
-    struct TimerExecutorWithValues<Tuple<>, Ts...> final : TimerExecutor<Ts...>
+    template<template<class...> class Tuple>
+    struct TimerExecutorWithValues<Tuple<>> final : TimerExecutor
     {
-        using Base = TimerExecutor<Ts...>;
+        using Base = TimerExecutor;
         using Base::Base;
 
         template<class F>
@@ -1248,15 +1226,6 @@ namespace jln
         }
     };
 
-    template<class... Ts>
-    struct TimerDeleter
-    {
-        void operator()(TimerExecutor<Ts...>* p) noexcept
-        {
-            p->delete_self();
-        }
-    };
-
     struct TopExecutor
     {
         using GroupPtr = std::unique_ptr<GroupExecutor, GroupDeleter<>>;
@@ -1297,8 +1266,7 @@ namespace jln
         void update_next_time() noexcept
         {
             assert(this->timer_data.delay.count() >= 0);
-            this->timer_data.tv = addusectimeval(
-                this->timer_data.delay, this->timebase.get_current_time());
+            this->timer_data.tv = addusectimeval(this->timer_data.delay, this->timebase.get_current_time());
         }
 
         void disable_timeout() noexcept
@@ -1847,7 +1815,7 @@ namespace jln
 
     class TimerSharedPtr : public SharedPtr
     {
-        using Timer = TimerExecutor<>;
+        using Timer = TimerExecutor;
         using Data = SharedData<Timer>;
 
         struct PtrInterface : protected SharedPtr
@@ -2105,9 +2073,7 @@ namespace jln
 
     class TimerContainer
     {
-        using Timer = TimerExecutor<>;
-
-        using TimerDeleter = ::jln::TimerDeleter<>;
+        using Timer = TimerExecutor;
 
     public:
         using Ptr = TimerSharedPtr;
@@ -2347,8 +2313,7 @@ namespace jln
         return R::Exception;
     }
 
-    template<class... Ts>
-    timeval TimerContext<Ts...>::get_current_time() const noexcept
+    inline timeval TimerContext::get_current_time() const noexcept
     {
         return this->timer.timebase.get_current_time();
     }
@@ -2484,13 +2449,37 @@ namespace jln
         return select_timer_result<Has | BuilderInit::NotifyDelete>(this->init_ctx);
     }
 
-    template<class... Ts>
-    void TimerExecutor<Ts...>::set_delay(std::chrono::milliseconds ms) noexcept
+    inline TimerContext& TimerContext::set_delay(std::chrono::milliseconds ms) noexcept
+    {
+        this->timer.set_delay(ms);
+        return *this;
+    }
+
+    inline TimerContext& TimerContext::set_time(timeval tv) noexcept
+    {
+        this->timer.set_time(tv);
+        return *this;
+    }
+
+    inline R TimerContext::ready_to(std::chrono::milliseconds ms) noexcept
+    {
+        this->timer.set_delay(ms);
+        return R::Ready;
+    }
+
+    inline void TimerExecutor::set_delay(std::chrono::milliseconds ms) noexcept
     {
         assert(ms.count() >= 0);
         this->delay = ms;
         this->tv = addusectimeval(this->delay, this->timebase.get_current_time());
     }
+
+    inline void TimerExecutor::set_time(timeval tv) noexcept
+    {
+        this->delay = std::chrono::milliseconds(-1);
+        this->tv = tv;
+    }
+
 }  // namespace jln
 
 struct TimerContainer : jln::TimerContainer {};

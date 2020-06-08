@@ -24,6 +24,7 @@
 
 #include "core/session_reactor.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/log.hpp"
 
 #include <string>
 
@@ -31,7 +32,38 @@ RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
 RED_AUTO_TEST_CASE(TestSimpleTimer)
 {
-    using Ptr = jln::SharedPtr;
+    LOG(LOG_INFO, "TestSimpleTimer");
+    TimeBase time_base(timeval{1591190078, 222});
+    TimerContainer timer_events_;
+    std::string s;
+
+    auto && a = timer_events_.create_timer_executor(time_base)
+    .set_notify_delete(
+        [](jln::NotifyDeleteType){
+            LOG(LOG_INFO, "Delete timer TestSimpleTimerOneShot");
+        })
+    .set_delay(std::chrono::seconds(1))
+    .on_action(
+        [](jln::TimerContext ctx){
+            LOG(LOG_INFO, "Callback timer TestSimpleTimerOneShot");
+            return ctx.terminate();
+        });
+    // ctx.ready()
+    // ctx.ready_to(fn)
+
+    LOG(LOG_INFO, "TestSimpleTimerOneShot exec_timer1 %s", s);
+    timer_events_.exec_timer(time_base.get_current_time());
+    time_base.increment_sec(1);
+    LOG(LOG_INFO, "TestSimpleTimerOneShot exec_timer2 %s", s);
+    timer_events_.exec_timer(time_base.get_current_time());
+    time_base.increment_sec(1);
+    LOG(LOG_INFO, "TestSimpleTimerOneShot exec_timer3 %s", s);
+    timer_events_.exec_timer(time_base.get_current_time());
+}
+
+RED_AUTO_TEST_CASE(TestSimpleTimerOneShot)
+{
+    LOG(LOG_INFO, "TestSimpleTimer");
     using Dt = jln::NotifyDeleteType;
     TimeBase time_base(timeval{1591190078, 222});
     TimerContainer timer_events_;
@@ -40,10 +72,17 @@ RED_AUTO_TEST_CASE(TestSimpleTimer)
     auto && a = timer_events_.create_timer_executor(time_base, std::ref(s))
     .set_notify_delete([](Dt, std::string& s){ s += "d1\n"; })
     .set_delay(std::chrono::seconds(1))
-    .on_action(jln::one_shot([](std::string& s){s += "timer1\n";}));
+    .on_action(jln::one_shot([](std::string& s){LOG(LOG_INFO, "Callback timer"); s += "timer1\n";}));
 
+    LOG(LOG_INFO, "TestSimpleTimer exec_timer1");
+    timer_events_.exec_timer(time_base.get_current_time());
+    time_base.increment_sec(1);
+    LOG(LOG_INFO, "TestSimpleTimer exec_timer2");
+    timer_events_.exec_timer(time_base.get_current_time());
+    time_base.increment_sec(1);
+    LOG(LOG_INFO, "TestSimpleTimer exec_timer3");
+    timer_events_.exec_timer(time_base.get_current_time());
 }
-
 
 RED_AUTO_TEST_CASE(TestSequencer)
 {
@@ -79,6 +118,8 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     RED_CHECK_EQ(time_base.get_current_time().tv_usec, 222);
 
     std::string s;
+
+    RED_CHECK(true);
 
     Ptr timer1 = timer_events_
     .create_timer_executor(time_base, std::ref(s))

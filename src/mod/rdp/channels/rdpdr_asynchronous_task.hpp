@@ -59,22 +59,6 @@ inline size_t rdpdr_in_file_read(int fd, uint8_t * buffer, size_t len)
     return len - remaining_len;
 }
 
-namespace detail
-{
-    inline auto create_notify_delete_task() noexcept
-    {
-        return [](
-            jln::NotifyDeleteType d,
-            AsynchronousTask& task,
-            AsynchronousTask::TerminateEventNotifier& terminate_notifier
-        ){
-            if (d == jln::NotifyDeleteType::DeleteByAction) {
-                terminate_notifier(task);
-            }
-        };
-    }
-}  // namespace detail
-
 class RdpdrDriveReadTask final : public AsynchronousTask
 {
     const int file_descriptor;
@@ -231,12 +215,17 @@ public:
     void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
-        // TODO create_yield_event
-        // LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendDriveIOResponseTask::configure_event)");
         this->timer_ptr = timer_events_
-        .create_timer_executor(time_base,
-            std::ref(*this), terminate_notifier)
-        .set_notify_delete(detail::create_notify_delete_task())
+        .create_timer_executor(time_base, std::ref(*this), terminate_notifier)
+        .set_notify_delete([](
+            jln::NotifyDeleteType d,
+            AsynchronousTask& task,
+            AsynchronousTask::TerminateEventNotifier& terminate_notifier
+        ){
+            if (d == jln::NotifyDeleteType::DeleteByAction) {
+                terminate_notifier(task);
+            }
+        })
         .set_delay(std::chrono::milliseconds(1))
         .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, TerminateEventNotifier&){
             return self.run() ? ctx.ready() : ctx.terminate();
@@ -311,12 +300,17 @@ public:
     void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
-        // TODO create_yield_event
-        // LOG(LOG_INFO, "rdpdr_asynchronous_task::timer_events_.create_timer_executor (RdpdrSendClientMessageTask::configure_events)");
         this->timer_ptr = timer_events_
-        .create_timer_executor(time_base,
-            std::ref(*this), terminate_notifier)
-        .set_notify_delete(detail::create_notify_delete_task())
+        .create_timer_executor(time_base, std::ref(*this), terminate_notifier)
+        .set_notify_delete([](
+            jln::NotifyDeleteType d,
+            AsynchronousTask& task,
+            AsynchronousTask::TerminateEventNotifier& terminate_notifier
+        ){
+            if (d == jln::NotifyDeleteType::DeleteByAction) {
+                terminate_notifier(task);
+            }
+        })
         .set_delay(std::chrono::milliseconds(1))
         .on_action([](auto ctx, RdpdrSendClientMessageTask& self, TerminateEventNotifier&){
             self.run();
