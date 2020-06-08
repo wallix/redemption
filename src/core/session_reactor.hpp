@@ -278,71 +278,15 @@ namespace jln
             InitCtx init_ctx;
         };
 
-    #ifdef IN_IDE_PARSER
-        struct Func
-        {
-            template<class F>
-            Func(F) {}
-        };
-
-        struct /*[[nodiscard]]*/ TopExecutorBuilder_Concept
-        {
-            template<class... Ts>
-            explicit TopExecutorBuilder_Concept(Ts&&...) noexcept;
-
-            TopExecutorBuilder_Concept disable_timeout();
-            TopExecutorBuilder_Concept set_timeout(std::chrono::milliseconds);
-            TopExecutorBuilder_Concept on_timeout(Func);
-            TopExecutorBuilder_Concept on_action(Func);
-            TopExecutorBuilder_Concept on_exit(Func);
-            TopExecutorBuilder_Concept propagate_exit();
-
-            TopExecutorBuilder_Concept set_notify_delete(Func);
-
-            operator SharedPtr ();
-
-            operator TopSharedPtr ();
-        };
-
-        struct /*[[nodiscard]]*/ TimerExecutorBuilder_Concept
-        {
-            template<class... Ts>
-            explicit TimerExecutorBuilder_Concept(Ts&&...) noexcept;
-
-            TimerExecutorBuilder_Concept on_action(Func);
-
-            TimerExecutorBuilder_Concept set_delay(std::chrono::milliseconds ms);
-            TimerExecutorBuilder_Concept set_time(timeval tv);
-
-            TimerExecutorBuilder_Concept set_notify_delete(Func);
-
-            operator SharedPtr ();
-
-            operator TimerSharedPtr();
-        };
-
-        template<class InitCtx>
-        using TopExecutorBuilder = TopExecutorBuilder_Concept;
-
-        template<class InitCtx>
-        using TimerExecutorBuilder = TimerExecutorBuilder_Concept;
-
-    #else
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
 
         template<class InitCtx>
         using TimerExecutorBuilder = TimerExecutorBuilderImpl<BuilderInit::None, InitCtx>;
-
-    #endif
     }  // namespace detail
 
 
-#ifdef IN_IDE_PARSER
-# define REDEMPTION_JLN_CONCEPT(C) C
-#else
 # define REDEMPTION_JLN_CONCEPT(C) auto
-#endif
 
     enum class NextMode { ChildToNext, CreateContinuation, };
 
@@ -503,15 +447,6 @@ namespace jln
         }
     };
 
-#ifdef IN_IDE_PARSER
-# define JLN_GROUP_CTX ::jln::GroupContext
-# define JLN_TOP_CTX ::jln::TopContext < ::jln::detail::tuple<>>
-# define JLN_TIMER_CTX ::jln::TimerContext<>
-# define JLN_ACTION_CTX ::jln::ActionContext<>
-# define JLN_EXIT_CTX ::jln::ExitContext
-# define JLN_GROUP_TIMER_CTX ::jln::GroupTimerContext
-# define JLN_TOP_TIMER_CTX ::jln::TopTimerContext < ::jln::detail::tuple<>>
-#else
 # define JLN_GROUP_CTX auto
 # define JLN_TOP_CTX auto
 # define JLN_TIMER_CTX auto
@@ -519,7 +454,6 @@ namespace jln
 # define JLN_EXIT_CTX auto
 # define JLN_GROUP_TIMER_CTX auto
 # define JLN_TOP_TIMER_CTX auto
-#endif
 
     struct GroupExecutor
     {
@@ -1071,17 +1005,7 @@ namespace jln
         unsigned& i;
     };
 
-#ifdef IN_IDE_PARSER
-    namespace detail { struct UnknownCtx : ActionContext<> {}; }
-# define JLN_FUNCSEQUENCER_CTX ::jln::FuncSequencerCtx< \
-    ::jln::detail::UnknownCtx,                          \
-    ::jln::detail::named_indexed_pack<                  \
-        ::jln::detail::named_indexed<                   \
-            ::std::integral_constant<std::size_t, 0>,   \
-            ::jln::detail::unamed>>>
-#else
 # define JLN_FUNCSEQUENCER_CTX auto
-#endif
 
     namespace detail
     {
