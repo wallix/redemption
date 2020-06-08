@@ -28,7 +28,7 @@ fi
 
 # jsclient (emscripten)
 pushd projects/jsclient
-source ~/emsdk-master/emsdk_set_env.sh
+source ~/emsdk/emsdk_env.sh
 if [ $fast -eq 0 ]; then
     rm -rf bin
 fi
@@ -39,7 +39,7 @@ if [ ! -d system_include/boost ]; then
     ln -s /usr/include/boost/ system_include
 fi
 set -o pipefail
-bjam -qj2 toolset=clang-$version debug |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
+bjam -qj2 toolset=clang-$version debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
 popd
 
