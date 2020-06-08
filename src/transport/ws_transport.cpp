@@ -51,7 +51,7 @@ WsTransport::WsTransport(
     std::chrono::milliseconds recv_timeout, UseTls use_tls, TlsOptions tls_options,
     Verbose verbose, std::string * error_message)
 : SocketTransport(name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message)
-, state(use_tls == UseTls(false) ? State::HttpHeader : State::StartTls)
+, state(use_tls == UseTls::No ? State::HttpHeader : State::StartTls)
 , tls_options(std::move(tls_options))
 {}
 
@@ -60,7 +60,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
     switch (this->state)
     {
     case State::StartTls: {
-        // if enable_server_tls fail, state = error
+        // if enable_server_tls throw an exception, state = error
         this->state = State::Error;
         SocketTransport::enable_server_tls(
             this->tls_options.certificate_password.c_str(),
@@ -72,6 +72,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
         this->state = State::HttpHeader;
         return 0;
     }
+
     case State::HttpHeader: {
         len = SocketTransport::do_partial_read(buffer, len);
         WsHttpHeader http_header;
@@ -153,8 +154,9 @@ void WsTransport::do_send(const uint8_t * const buffer, size_t const len)
     SocketTransport::do_send(buffer, len);
 }
 
-WsTransport::TlsResult WsTransport::enable_client_tls(ServerNotifier& /*server_notifier*/,
-                                                      const TLSClientParams & /*tls_client_params*/)
+WsTransport::TlsResult WsTransport::enable_client_tls(
+    ServerNotifier& /*server_notifier*/,
+    const TLSClientParams & /*tls_client_params*/)
 {
     LOG(LOG_ERR, "enable_client_tls");
     return TlsResult::Fail;
