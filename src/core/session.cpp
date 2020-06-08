@@ -42,6 +42,7 @@
 #include "utils/select.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/load_theme.hpp"
+#include "utils/difftimeval.hpp"
 
 #include <cassert>
 #include <cerrno>
@@ -569,15 +570,11 @@ private:
     }
 
 
-    void show_ultimatum(std::string info, timeval ultimatum, timeval now)
+    void show_ultimatum(zstring_view info, timeval ultimatum, timeval now)
     {
         return;
-        timeval timeoutastv = to_timeval(
-                              std::chrono::seconds(ultimatum.tv_sec)
-                            + std::chrono::microseconds(ultimatum.tv_usec)
-                            - std::chrono::seconds(now.tv_sec)
-                            - std::chrono::microseconds(now.tv_usec));
-        if (timeoutastv.tv_sec == 0 && timeoutastv.tv_usec == 0){
+        timeval timeoutastv = to_timeval(difftimeval(ultimatum, now));
+        if (timeoutastv == timeval{0, 0}){
             LOG(LOG_INFO, "%s %ld.%ld s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
         }
     }
@@ -589,11 +586,11 @@ private:
                 bool front_pending,
                 bool mod_pending)
     {
-        this->show_ultimatum("", ultimatum, now);
+        this->show_ultimatum(""_zv, ultimatum, now);
         auto top_update_tv = [&](int /*fd*/, auto& top){
             if (top.timer_data.is_enabled) {
                 if (top.timer_data.tv.tv_sec >= 0) {
-                    this->show_ultimatum("top timer =", top.timer_data.tv, now);
+                    this->show_ultimatum("top timer ="_zv, top.timer_data.tv, now);
                     ultimatum = std::min(ultimatum, top.timer_data.tv);
                 }
             }
@@ -601,31 +598,32 @@ private:
 
         auto timer_update_tv = [&](auto& timer){
             if (timer.tv.tv_sec >= 0) {
-                this->show_ultimatum("timer =", timer.tv, now);
+                this->show_ultimatum("timer ="_zv, timer.tv, now);
                 ultimatum = std::min(ultimatum, timer.tv);
             }
         };
 
         timer_events_.for_each(timer_update_tv);
-        this->show_ultimatum("ultimatum (timers) =", ultimatum, now);
+        this->show_ultimatum("ultimatum (timers) ="_zv, ultimatum, now);
 
         fd_events_.for_each(top_update_tv);
-        this->show_ultimatum("ultimatm (fd) =", ultimatum, now);
+        this->show_ultimatum("ultimatm (fd) ="_zv, ultimatum, now);
 
         if (front.front_must_notify_resize) {
             ultimatum = now;
-            this->show_ultimatum("ultimatum (front must notify resize) =", ultimatum, now);
+            this->show_ultimatum("ultimatum (front must notify resize) ="_zv, ultimatum, now);
         }
 
         if (mod_pending) {
             ultimatum = now;
-            this->show_ultimatum("(mod tls pending)", ultimatum, now);
+            this->show_ultimatum("(mod tls pending)"_zv, ultimatum, now);
         }
 
         if (front_pending) {
             ultimatum = now;
-            this->show_ultimatum("(front tls pending)", ultimatum, now);
+            this->show_ultimatum("(front tls pending)"_zv, ultimatum, now);
         }
+
         return ultimatum;
     }
 
@@ -1131,14 +1129,18 @@ private:
 
 template<class SocketType, class... Args>
 void session_start_sck(
-    char const* name, unique_fd sck,
+    char const* name, unique_fd&& sck,
     Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat,
     Args&&... args)
 {
     Session session(SocketType(
         name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
         static_cast<Args&&>(args)...,
-        to_verbose_flags(ini.get<cfg::debug::front>() | (!strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") ? uint64_t(SocketTransport::Verbose::watchdog) : 0))
+        to_verbose_flags(ini.get<cfg::debug::front>() | (
+            (ini.get<cfg::globals::host>() == "127.0.0.1")
+            ? uint64_t(SocketTransport::Verbose::watchdog)
+            : 0u
+        ))
     ), ini, cctx, rnd, fstat);
 }
 
@@ -1152,13 +1154,13 @@ void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random&
 void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
     session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat,
-        WsTransport::UseTls(false), WsTransport::TlsOptions());
+        WsTransport::UseTls::No, WsTransport::TlsOptions());
 }
 
 void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
     session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
-        WsTransport::UseTls(true), WsTransport::TlsOptions{
+        WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),
             ini.get<cfg::client::tls_min_level>(),
